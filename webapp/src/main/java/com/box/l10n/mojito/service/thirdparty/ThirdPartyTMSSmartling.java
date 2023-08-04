@@ -9,8 +9,11 @@ import static com.google.common.collect.Streams.mapWithIndex;
 import com.box.l10n.mojito.android.strings.AndroidStringDocumentMapper;
 import com.box.l10n.mojito.android.strings.AndroidStringDocumentReader;
 import com.box.l10n.mojito.android.strings.AndroidStringDocumentWriter;
+import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
+import com.box.l10n.mojito.entity.ThirdPartyFileChecksum;
+import com.box.l10n.mojito.entity.ThirdPartyFileChecksumId;
 import com.box.l10n.mojito.service.assetExtraction.AssetTextUnitToTMTextUnitRepository;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingFile;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingFileUtils;
@@ -42,6 +45,7 @@ import io.micrometer.core.instrument.Tags;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -51,6 +55,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,6 +103,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
 
   private final MeterRegistry meterRegistry;
 
+  private final ThirdPartyFileChecksumRepository thirdPartyFileChecksumRepository;
+
   private final Set<String> supportedImageExtensions =
       Sets.newHashSet("png", "jpg", "jpeg", "gif", "tiff");
 
@@ -115,7 +122,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       ThirdPartyTMSSmartlingWithJson thirdPartyTMSSmartlingWithJson,
       ThirdPartyTMSSmartlingGlossary thirdPartyTMSSmartlingGlossary,
       AssetTextUnitToTMTextUnitRepository assetTextUnitToTMTextUnitRepository,
-      MeterRegistry meterRegistry) {
+      MeterRegistry meterRegistry,
+      ThirdPartyFileChecksumRepository thirdPartyFileChecksumRepository) {
     this(
         smartlingClient,
         textUnitSearcher,
@@ -126,7 +134,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
         thirdPartyTMSSmartlingGlossary,
         assetTextUnitToTMTextUnitRepository,
         DEFAULT_BATCH_SIZE,
-        meterRegistry);
+        meterRegistry,
+        thirdPartyFileChecksumRepository);
   }
 
   public ThirdPartyTMSSmartling(
@@ -139,7 +148,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       ThirdPartyTMSSmartlingGlossary thirdPartyTMSSmartlingGlossary,
       AssetTextUnitToTMTextUnitRepository assetTextUnitToTMTextUnitRepository,
       int batchSize,
-      MeterRegistry meterRegistry) {
+      MeterRegistry meterRegistry,
+      ThirdPartyFileChecksumRepository thirdPartyFileChecksumRepository) {
     this.smartlingClient = smartlingClient;
     this.assetPathAndTextUnitNameKeys = assetPathAndTextUnitNameKeys;
     this.textUnitBatchImporterService = textUnitBatchImporterService;
@@ -150,6 +160,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
     this.thirdPartyTMSSmartlingGlossary = thirdPartyTMSSmartlingGlossary;
     this.assetTextUnitToTMTextUnitRepository = assetTextUnitToTMTextUnitRepository;
     this.meterRegistry = meterRegistry;
+    this.thirdPartyFileChecksumRepository = thirdPartyFileChecksumRepository;
   }
 
   @Override
@@ -648,6 +659,12 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
                                 new SmartlingClientException(
                                     "Error with download from Smartling, file content string is not present."));
 
+                if (isFileEqualToPreviousRun(
+                    repository, locale.getLocale(), fileName, fileContent)) {
+                  logger.info("Checksum match for " + fileName + ", skipping text unit import.");
+                  return;
+                }
+
                 List<TextUnitDTO> textUnits;
 
                 try {
@@ -671,6 +688,26 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
                 }
               });
     }
+  }
+
+  private boolean isFileEqualToPreviousRun(
+      Repository repository, Locale locale, String fileName, String fileContent) {
+
+    String currentChecksum = DigestUtils.md5Hex(fileContent);
+    ThirdPartyFileChecksumId thirdPartyFileChecksumId =
+        new ThirdPartyFileChecksumId(repository, locale, fileName);
+
+    Optional<ThirdPartyFileChecksum> thirdPartyFileChecksum =
+        thirdPartyFileChecksumRepository.findByThirdPartyFileChecksumId(thirdPartyFileChecksumId);
+    if (thirdPartyFileChecksum.isPresent()
+        && thirdPartyFileChecksum.get().getChecksum().equals(currentChecksum)) {
+      return true;
+    } else {
+      thirdPartyFileChecksumRepository.save(
+          new ThirdPartyFileChecksum(thirdPartyFileChecksumId, currentChecksum));
+    }
+
+    return false;
   }
 
   @Override
@@ -1037,7 +1074,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
     result.setPluralFormsExcluded(pluralFormsExcluded);
     result.setSkipTextUnitWithPattern(skipTextUnitsWithPattern);
     result.setSkipAssetPathWithPattern(skipAssetsWithPathPattern);
-
+    result.setOrdered(true);
     if (!Strings.isNullOrEmpty(pluralFormOther)) {
       result.setPluralFormOther(pluralFormOther);
     }

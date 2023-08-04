@@ -39,6 +39,8 @@ public class TextUnitSearcherParameters {
   boolean untranslatedOrTranslationNeeded = false;
   boolean pluralFormsFiltered = true;
   boolean pluralFormsExcluded = false;
+
+  boolean isOrdered = false;
   Long pluralFormId;
   Boolean doNotTranslateFilter;
   DateTime tmTextUnitCreatedBefore;
@@ -307,5 +309,13 @@ public class TextUnitSearcherParameters {
 
   public void setSkipAssetPathWithPattern(String skipAssetPathWithPattern) {
     this.skipAssetPathWithPattern = skipAssetPathWithPattern;
+  }
+
+  public boolean isOrdered() {
+    return isOrdered;
+  }
+
+  public void setOrdered(boolean ordered) {
+    isOrdered = ordered;
   }
 }
