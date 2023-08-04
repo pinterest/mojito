@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.thirdparty;
 
+import static com.box.l10n.mojito.service.thirdparty.ThirdPartyTMSUtils.isFileEqualToPreviousRun;
 import static com.box.l10n.mojito.service.thirdparty.smartling.SmartlingFileUtils.isPluralFile;
 
 import com.box.l10n.mojito.entity.Repository;
@@ -58,6 +59,8 @@ public class ThirdPartyTMSSmartlingWithJson {
 
   MeterRegistry meterRegistry;
 
+  ThirdPartyFileChecksumRepository thirdPartyFileChecksumRepository;
+
   int batchSize = 5000;
 
   public ThirdPartyTMSSmartlingWithJson(
@@ -66,13 +69,15 @@ public class ThirdPartyTMSSmartlingWithJson {
       TextUnitSearcher textUnitSearcher,
       TextUnitBatchImporterService textUnitBatchImporterService,
       SmartlingJsonKeys smartlingJsonKeys,
-      MeterRegistry meterRegistry) {
+      MeterRegistry meterRegistry,
+      ThirdPartyFileChecksumRepository thirdPartyFileChecksumRepository) {
     this.smartlingClient = smartlingClient;
     this.smartlingJsonConverter = smartlingJsonConverter;
     this.textUnitSearcher = textUnitSearcher;
     this.textUnitBatchImporterService = textUnitBatchImporterService;
     this.smartlingJsonKeys = smartlingJsonKeys;
     this.meterRegistry = meterRegistry;
+    this.thirdPartyFileChecksumRepository = thirdPartyFileChecksumRepository;
   }
 
   void push(
@@ -200,6 +205,19 @@ public class ThirdPartyTMSSmartlingWithJson {
                     String smartlingLocale = getSmartlingLocale(localeMapping, repositoryLocale);
                     String localizedFileContent =
                         getLocalizedFileContent(projectId, file, smartlingLocale, false);
+
+                    if (isFileEqualToPreviousRun(
+                        thirdPartyFileChecksumRepository,
+                        repository,
+                        repositoryLocale.getLocale(),
+                        file.getFileUri(),
+                        localizedFileContent)) {
+                      logger.info(
+                          "Checksum match for "
+                              + file.getFileUri()
+                              + ", skipping text unit import.");
+                      return;
+                    }
 
                     ImmutableList<TextUnitDTO> textUnitDTOS =
                         smartlingJsonConverter.jsonStringToTextUnitDTOs(

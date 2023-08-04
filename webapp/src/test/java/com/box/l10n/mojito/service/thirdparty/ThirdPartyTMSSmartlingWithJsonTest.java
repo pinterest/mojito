@@ -30,6 +30,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.junit.Assert;
@@ -79,6 +80,8 @@ public class ThirdPartyTMSSmartlingWithJsonTest extends ServiceTestBase {
   @Mock TextUnitBatchImporterService textUnitBatchImporterServiceMock;
 
   @Autowired TextUnitSearcher textUnitSearcher;
+
+  @Mock ThirdPartyFileChecksumRepository thirdPartyFileChecksumRepositoryMock;
 
   SmartlingJsonConverter smartlingJsonConverter =
       new SmartlingJsonConverter(ObjectMapper.withIndentedOutput(), new SmartlingJsonKeys());
@@ -250,7 +253,8 @@ public class ThirdPartyTMSSmartlingWithJsonTest extends ServiceTestBase {
         ImmutableList.of(translatedTextUnitDto, untranslatedTextUnitDtoWithOriginalString);
 
     ThirdPartyTMSSmartlingWithJson thirdPartyTMSSmartlingWithJson =
-        new ThirdPartyTMSSmartlingWithJson(null, null, null, null, null, meterRegistryMock);
+        new ThirdPartyTMSSmartlingWithJson(
+            null, null, null, null, null, meterRegistryMock, thirdPartyFileChecksumRepositoryMock);
 
     ImmutableList<TextUnitDTO> result =
         thirdPartyTMSSmartlingWithJson.getTranslatedUnits(
@@ -362,11 +366,18 @@ public class ThirdPartyTMSSmartlingWithJsonTest extends ServiceTestBase {
     thirdPartyTMSSmartlingWithJsonMock.smartlingJsonConverter = smartlingJsonConverter;
     thirdPartyTMSSmartlingWithJsonMock.textUnitBatchImporterService =
         textUnitBatchImporterServiceMock;
+    thirdPartyTMSSmartlingWithJsonMock.thirdPartyFileChecksumRepository =
+        thirdPartyFileChecksumRepositoryMock;
 
     Mockito.when(
             thirdPartyTMSSmartlingWithJsonMock.getLocalizedFileContent(
                 projectId, smartlingFile, smartlingLocale, false))
         .thenReturn(smartlingJsonResponseWithOriginalString);
+
+    Mockito.when(
+            thirdPartyFileChecksumRepositoryMock.findByThirdPartyFileChecksumId(
+                isA(ThirdPartyFileChecksumId.class)))
+        .thenReturn(Optional.empty());
 
     // For the first pass, mock a fully translated response
     thirdPartyTMSSmartlingWithJsonMock.pull(repository, projectId, localeMapping);

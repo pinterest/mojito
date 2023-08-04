@@ -6,12 +6,9 @@ import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Index;
 import javax.persistence.Table;
-import org.hibernate.envers.Audited;
-import org.hibernate.envers.RelationTargetAuditMode;
 
 /** Entity that stores the checksum of a translated file downloaded via a third party sync. */
 @Entity
-@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 @Table(
     name = "third_party_sync_file_checksum",
     indexes = {

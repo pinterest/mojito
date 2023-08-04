@@ -134,7 +134,7 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
 
   @Autowired MeterRegistry meterRegistry;
 
-  @Mock ThirdPartyFileChecksumRepository mockThirdPartyFileChecksumRepository;
+  @Autowired ThirdPartyFileChecksumRepository mockThirdPartyFileChecksumRepository;
 
   StubSmartlingResultProcessor resultProcessor;
 
