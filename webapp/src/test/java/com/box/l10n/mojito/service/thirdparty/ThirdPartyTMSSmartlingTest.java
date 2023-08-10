@@ -1315,8 +1315,9 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
 
     // Execute an initial pull that will record translated files checksums and verify text units are
     // imported
-    tmsSmartling.pull(
-        repository, "projectId", pluralSep, localeMapping, null, null, Collections.emptyList());
+    List<String> options = new ArrayList<>();
+    options.add("delta-pull=true");
+    tmsSmartling.pull(repository, "projectId", pluralSep, localeMapping, null, null, options);
 
     verify(mockTextUnitBatchImporterService, atLeastOnce())
         .importTextUnits(textUnitListCaptor.capture(), eq(false), eq(true));
@@ -1325,8 +1326,7 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
 
     // Now run the same pull again, text unit imports should be skipped as file checksums from
     // previous run exist and match.
-    tmsSmartling.pull(
-        repository, "projectId", pluralSep, localeMapping, null, null, Collections.emptyList());
+    tmsSmartling.pull(repository, "projectId", pluralSep, localeMapping, null, null, options);
 
     verify(mockTextUnitBatchImporterService, times(0))
         .importTextUnits(textUnitListCaptor.capture(), eq(false), eq(true));
@@ -1434,8 +1434,9 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
 
     // Execute an initial pull that will record translated files checksums and verify text units are
     // imported
-    tmsSmartling.pull(
-        repository, "projectId", pluralSep, localeMapping, null, null, Collections.emptyList());
+    List<String> options = new ArrayList<>();
+    options.add("delta-pull=true");
+    tmsSmartling.pull(repository, "projectId", pluralSep, localeMapping, null, null, options);
 
     verify(mockTextUnitBatchImporterService, atLeastOnce())
         .importTextUnits(textUnitListCaptor.capture(), eq(false), eq(true));
@@ -1471,8 +1472,7 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
 
     // Run the same pull again, text unit imports should occur as file checksums have changed since
     // previous run
-    tmsSmartling.pull(
-        repository, "projectId", pluralSep, localeMapping, null, null, Collections.emptyList());
+    tmsSmartling.pull(repository, "projectId", pluralSep, localeMapping, null, null, options);
 
     verify(mockTextUnitBatchImporterService, atLeastOnce())
         .importTextUnits(textUnitListCaptor.capture(), eq(false), eq(true));

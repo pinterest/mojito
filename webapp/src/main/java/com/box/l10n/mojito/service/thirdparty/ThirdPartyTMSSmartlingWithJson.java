@@ -192,7 +192,11 @@ public class ThirdPartyTMSSmartlingWithJson {
                     .block());
   }
 
-  void pull(Repository repository, String projectId, Map<String, String> localeMapping) {
+  void pull(
+      Repository repository,
+      String projectId,
+      Map<String, String> localeMapping,
+      boolean isDeltaPull) {
 
     List<File> repositoryFilesFromProject = getRepositoryFilesFromProject(repository, projectId);
 
@@ -206,12 +210,13 @@ public class ThirdPartyTMSSmartlingWithJson {
                     String localizedFileContent =
                         getLocalizedFileContent(projectId, file, smartlingLocale, false);
 
-                    if (isFileEqualToPreviousRun(
-                        thirdPartyFileChecksumRepository,
-                        repository,
-                        repositoryLocale.getLocale(),
-                        file.getFileUri(),
-                        localizedFileContent)) {
+                    if (isDeltaPull
+                        && isFileEqualToPreviousRun(
+                            thirdPartyFileChecksumRepository,
+                            repository,
+                            repositoryLocale.getLocale(),
+                            file.getFileUri(),
+                            localizedFileContent)) {
                       logger.info(
                           "Checksum match for "
                               + file.getFileUri()

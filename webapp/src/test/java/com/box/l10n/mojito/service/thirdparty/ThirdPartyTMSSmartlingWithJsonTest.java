@@ -176,7 +176,8 @@ public class ThirdPartyTMSSmartlingWithJsonTest extends ServiceTestBase {
         "eventually we should be able to pull",
         () -> {
           logger.debug("Pulling...");
-          thirdPartyTMSSmartlingWithJson.pull(repository, testConfig.projectId, ImmutableMap.of());
+          thirdPartyTMSSmartlingWithJson.pull(
+              repository, testConfig.projectId, ImmutableMap.of(), false);
           return true;
         },
         3,
@@ -346,7 +347,7 @@ public class ThirdPartyTMSSmartlingWithJsonTest extends ServiceTestBase {
 
     Mockito.doCallRealMethod()
         .when(thirdPartyTMSSmartlingWithJsonMock)
-        .pull(repository, projectId, localeMapping);
+        .pull(repository, projectId, localeMapping, false);
     Mockito.when(thirdPartyTMSSmartlingWithJsonMock.hasEmptyTranslations(any()))
         .thenCallRealMethod();
     Mockito.when(thirdPartyTMSSmartlingWithJsonMock.getTranslatedUnits(any(), any()))
@@ -380,7 +381,7 @@ public class ThirdPartyTMSSmartlingWithJsonTest extends ServiceTestBase {
         .thenReturn(Optional.empty());
 
     // For the first pass, mock a fully translated response
-    thirdPartyTMSSmartlingWithJsonMock.pull(repository, projectId, localeMapping);
+    thirdPartyTMSSmartlingWithJsonMock.pull(repository, projectId, localeMapping, false);
 
     ArgumentCaptor<ImmutableList<TextUnitDTO>> dtoListCaptor =
         ArgumentCaptor.forClass(ImmutableList.class);
@@ -404,7 +405,7 @@ public class ThirdPartyTMSSmartlingWithJsonTest extends ServiceTestBase {
                 projectId, smartlingFile, smartlingLocale, true))
         .thenReturn(smartlingJsonResponseWithOriginalString);
 
-    thirdPartyTMSSmartlingWithJsonMock.pull(repository, projectId, localeMapping);
+    thirdPartyTMSSmartlingWithJsonMock.pull(repository, projectId, localeMapping, false);
 
     dtoListCaptor = ArgumentCaptor.forClass(ImmutableList.class);
     Mockito.verify(textUnitBatchImporterServiceMock, times(2))

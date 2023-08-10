@@ -543,7 +543,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
               SmartlingOptions options = SmartlingOptions.parseList(optionList);
 
               if (options.isJsonSync()) {
-                thirdPartyTMSSmartlingWithJson.pull(repository, projectId, localeMapping);
+                thirdPartyTMSSmartlingWithJson.pull(
+                    repository, projectId, localeMapping, options.isDeltaPull());
                 return;
               }
 
@@ -655,12 +656,13 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
                                 new SmartlingClientException(
                                     "Error with download from Smartling, file content string is not present."));
 
-                if (isFileEqualToPreviousRun(
-                    thirdPartyFileChecksumRepository,
-                    repository,
-                    locale.getLocale(),
-                    fileName,
-                    fileContent)) {
+                if (options.isDeltaPull()
+                    && isFileEqualToPreviousRun(
+                        thirdPartyFileChecksumRepository,
+                        repository,
+                        locale.getLocale(),
+                        fileName,
+                        fileContent)) {
                   logger.info("Checksum match for " + fileName + ", skipping text unit import.");
                   return;
                 }
