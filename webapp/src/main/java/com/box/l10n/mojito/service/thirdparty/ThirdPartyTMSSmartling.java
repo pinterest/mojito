@@ -912,7 +912,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       String localeTag,
       String skipTextUnitsWithPattern,
       String skipAssetsWithPathPattern) {
-    return partitionedStream(
+    TextUnitSearcherParameters parameters =
         baseParams(
             repositoryId,
             localeTag,
@@ -920,8 +920,9 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
             skipAssetsWithPathPattern,
             true,
             true,
-            null),
-        textUnitSearcher::search);
+            null);
+    parameters.setOrdered(true);
+    return partitionedStream(parameters, textUnitSearcher::search);
   }
 
   private Stream<List<TextUnitDTO>> partitionSingulars(
@@ -930,7 +931,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       String skipTextUnitsWithPattern,
       String skipAssetsWithPathPattern,
       String includeTextUnitWithPattern) {
-    return partitionedStream(
+    TextUnitSearcherParameters parameters =
         baseParams(
             repositoryId,
             localeTag,
@@ -939,8 +940,9 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
             true,
             true,
             null,
-            includeTextUnitWithPattern),
-        textUnitSearcher::search);
+            includeTextUnitWithPattern);
+    parameters.setOrdered(true);
+    return partitionedStream(parameters, textUnitSearcher::search);
   }
 
   private Stream<List<TextUnitDTO>> partitionPlurals(
@@ -948,7 +950,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       String localeTag,
       String skipTextUnitsWithPattern,
       String skipAssetsWithPathPattern) {
-    return partitionedStream(
+    TextUnitSearcherParameters parameters =
         baseParams(
             repositoryId,
             localeTag,
@@ -956,8 +958,9 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
             skipAssetsWithPathPattern,
             false,
             false,
-            "%"),
-        textUnitSearcher::search);
+            "%");
+    parameters.setOrdered(true);
+    return partitionedStream(parameters, textUnitSearcher::search);
   }
 
   private Stream<List<TextUnitDTO>> partitionPlurals(
@@ -980,7 +983,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
                       .collect(Collectors.toList()));
     }
 
-    return partitionedStream(
+    TextUnitSearcherParameters parameters =
         baseParams(
             repositoryId,
             localeTag,
@@ -989,8 +992,11 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
             false,
             false,
             "%",
-            includeTextUnitsWithPattern),
-        searchFunction);
+            includeTextUnitsWithPattern);
+
+    parameters.setOrdered(true);
+
+    return partitionedStream(parameters, searchFunction);
   }
 
   private Stream<List<TextUnitDTO>> partitionedStream(
@@ -1056,7 +1062,6 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
     result.setPluralFormsExcluded(pluralFormsExcluded);
     result.setSkipTextUnitWithPattern(skipTextUnitsWithPattern);
     result.setSkipAssetPathWithPattern(skipAssetsWithPathPattern);
-    result.setOrdered(true);
     if (!Strings.isNullOrEmpty(pluralFormOther)) {
       result.setPluralFormOther(pluralFormOther);
     }

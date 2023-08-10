@@ -362,6 +362,7 @@ public class ThirdPartyTMSSmartlingWithJson {
                   parameters.setOffset(offset);
                   parameters.setLimit(limit);
                   parameters.setPluralFormsFiltered(true);
+                  parameters.setOrdered(true);
                   List<TextUnitDTO> search = textUnitSearcher.search(parameters);
                   return search;
                 },

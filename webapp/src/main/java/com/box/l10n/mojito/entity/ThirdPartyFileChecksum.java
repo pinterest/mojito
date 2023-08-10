@@ -13,8 +13,8 @@ import javax.persistence.Table;
     name = "third_party_sync_file_checksum",
     indexes = {
       @Index(
-          name = "UK__THIRD_PARTY_FILE_CHECKSUM__REPOSITORY_ID__FILE_NAME",
-          columnList = "repository_id, file_name",
+          name = "I__THIRD_PARTY__CHECKSUM__REPOSITORY_ID__FILE_NAME__LOCALE_ID",
+          columnList = "repository_id, locale_id, file_name",
           unique = true),
     })
 public class ThirdPartyFileChecksum implements Serializable {
