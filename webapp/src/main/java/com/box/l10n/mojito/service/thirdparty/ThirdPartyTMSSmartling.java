@@ -663,7 +663,12 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
                         locale.getLocale(),
                         fileName,
                         fileContent)) {
-                  logger.info("Checksum match for " + fileName + ", skipping text unit import.");
+                  logger.info(
+                      "Checksum match for "
+                          + fileName
+                          + " in locale "
+                          + localeTag
+                          + ", skipping text unit import.");
                   return;
                 }
 

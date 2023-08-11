@@ -220,6 +220,8 @@ public class ThirdPartyTMSSmartlingWithJson {
                       logger.info(
                           "Checksum match for "
                               + file.getFileUri()
+                              + " in locale "
+                              + repositoryLocale.getLocale().getBcp47Tag()
                               + ", skipping text unit import.");
                       return;
                     }
