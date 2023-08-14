@@ -6,7 +6,6 @@ import javax.persistence.Entity;
 import javax.persistence.Index;
 import javax.persistence.PreUpdate;
 import javax.persistence.Table;
-import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
 /** Entity that stores the checksum of a translated file downloaded via a third party sync. */
@@ -19,16 +18,12 @@ import org.joda.time.DateTime;
           columnList = "repository_id, locale_id, file_name",
           unique = true),
     })
-public class ThirdPartyFileChecksum extends SettableAuditableEntity {
+public class ThirdPartyFileChecksum extends AuditableEntity {
 
   @Embedded private ThirdPartyFileChecksumCompositeId thirdPartyFileChecksumCompositeId;
 
   @Column(name = "md5")
   private String md5;
-
-  @Column(name = "last_modified_date")
-  @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-  private DateTime lastModifiedDate;
 
   public ThirdPartyFileChecksum() {}
 
@@ -70,13 +65,5 @@ public class ThirdPartyFileChecksum extends SettableAuditableEntity {
 
   public String getFileName() {
     return thirdPartyFileChecksumCompositeId.getFileName();
-  }
-
-  public DateTime getLastModifiedDate() {
-    return lastModifiedDate;
-  }
-
-  public void setLastModifiedDate(DateTime lastModifiedDate) {
-    this.lastModifiedDate = lastModifiedDate;
   }
 }

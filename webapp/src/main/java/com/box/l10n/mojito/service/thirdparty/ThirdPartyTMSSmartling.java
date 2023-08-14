@@ -536,12 +536,18 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       String skipAssetsWithPathPattern,
       List<String> optionList) {
 
+    SmartlingOptions options = SmartlingOptions.parseList(optionList);
+
     meterRegistry
-        .timer("SmartlingSync.pull", Tags.of("repository", repository.getName()))
+        .timer(
+            "SmartlingSync.pull",
+            Tags.of(
+                "repository",
+                repository.getName(),
+                "deltaPull",
+                Boolean.toString(options.isDeltaPull())))
         .record(
             () -> {
-              SmartlingOptions options = SmartlingOptions.parseList(optionList);
-
               if (options.isJsonSync()) {
                 thirdPartyTMSSmartlingWithJson.pull(
                     repository, projectId, localeMapping, options.isDeltaPull());
@@ -610,7 +616,12 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
           .timer(
               "SmartlingSync.processPullBatch",
               Tags.of(
-                  "repository", repository.getName(), "locale", locale.getLocale().getBcp47Tag()))
+                  "repository",
+                  repository.getName(),
+                  "locale",
+                  locale.getLocale().getBcp47Tag(),
+                  "deltaPull",
+                  Boolean.toString(options.isDeltaPull())))
           .record(
               () -> {
                 String localeTag = locale.getLocale().getBcp47Tag();
@@ -662,7 +673,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
                         repository,
                         locale.getLocale(),
                         fileName,
-                        fileContent)) {
+                        fileContent,
+                        meterRegistry)) {
                   logger.info(
                       "Checksum match for "
                           + fileName

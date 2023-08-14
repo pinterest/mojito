@@ -4,8 +4,11 @@ import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.ThirdPartyFileChecksum;
 import com.box.l10n.mojito.entity.ThirdPartyFileChecksumCompositeId;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import java.util.Optional;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.joda.time.DateTime;
 
 public class ThirdPartyTMSUtils {
 
@@ -14,7 +17,10 @@ public class ThirdPartyTMSUtils {
       Repository repository,
       Locale locale,
       String fileName,
-      String fileContent) {
+      String fileContent,
+      MeterRegistry meterRegistry) {
+
+    boolean isChecksumEqual = false;
 
     String currentChecksum = DigestUtils.md5Hex(fileContent);
     ThirdPartyFileChecksumCompositeId thirdPartyFileChecksumCompositeId =
@@ -25,16 +31,31 @@ public class ThirdPartyTMSUtils {
             thirdPartyFileChecksumCompositeId);
     if (thirdPartyFileChecksumOpt.isPresent()
         && thirdPartyFileChecksumOpt.get().getMd5().equals(currentChecksum)) {
-      return true;
+      isChecksumEqual = true;
     } else if (thirdPartyFileChecksumOpt.isPresent()) {
       ThirdPartyFileChecksum thirdPartyFileChecksum = thirdPartyFileChecksumOpt.get();
       thirdPartyFileChecksum.setMd5(currentChecksum);
+      thirdPartyFileChecksum.setLastModifiedDate(new DateTime());
       thirdPartyFileChecksumRepository.save(thirdPartyFileChecksum);
     } else {
       thirdPartyFileChecksumRepository.save(
           new ThirdPartyFileChecksum(thirdPartyFileChecksumCompositeId, currentChecksum));
     }
 
-    return false;
+    meterRegistry
+        .counter(
+            "ThirdPartyTMSUtils.deltaPullFilesProcessed",
+            Tags.of(
+                "repository",
+                repository.getName(),
+                "locale",
+                locale.getBcp47Tag(),
+                "fileName",
+                fileName,
+                "shortCircuited",
+                Boolean.toString(isChecksumEqual)))
+        .increment();
+
+    return isChecksumEqual;
   }
 }

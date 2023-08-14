@@ -216,7 +216,8 @@ public class ThirdPartyTMSSmartlingWithJson {
                             repository,
                             repositoryLocale.getLocale(),
                             file.getFileUri(),
-                            localizedFileContent)) {
+                            localizedFileContent,
+                            meterRegistry)) {
                       logger.info(
                           "Checksum match for "
                               + file.getFileUri()
