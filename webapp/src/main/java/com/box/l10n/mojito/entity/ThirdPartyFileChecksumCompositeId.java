@@ -8,7 +8,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
 @Embeddable
-public class ThirdPartyFileChecksumId implements Serializable {
+public class ThirdPartyFileChecksumCompositeId implements Serializable {
 
   @ManyToOne(optional = false)
   @JoinColumn(
@@ -25,9 +25,9 @@ public class ThirdPartyFileChecksumId implements Serializable {
       foreignKey = @ForeignKey(name = "FK__THIRD_PARTY_CHECKSUM__LOCALE__ID"))
   private Locale locale;
 
-  public ThirdPartyFileChecksumId() {}
+  public ThirdPartyFileChecksumCompositeId() {}
 
-  public ThirdPartyFileChecksumId(Repository repository, Locale locale, String fileName) {
+  public ThirdPartyFileChecksumCompositeId(Repository repository, Locale locale, String fileName) {
     this.repository = repository;
     this.locale = locale;
     this.fileName = fileName;

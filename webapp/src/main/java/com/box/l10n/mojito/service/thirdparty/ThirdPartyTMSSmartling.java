@@ -926,7 +926,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
             true,
             true,
             null);
-    parameters.setOrdered(true);
+    parameters.setOrderByTextUnitID(true);
     return partitionedStream(parameters, textUnitSearcher::search);
   }
 
@@ -946,7 +946,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
             true,
             null,
             includeTextUnitWithPattern);
-    parameters.setOrdered(true);
+    parameters.setOrderByTextUnitID(true);
     return partitionedStream(parameters, textUnitSearcher::search);
   }
 
@@ -964,7 +964,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
             false,
             false,
             "%");
-    parameters.setOrdered(true);
+    parameters.setOrderByTextUnitID(true);
     return partitionedStream(parameters, textUnitSearcher::search);
   }
 
@@ -999,7 +999,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
             "%",
             includeTextUnitsWithPattern);
 
-    parameters.setOrdered(true);
+    parameters.setOrderByTextUnitID(true);
 
     return partitionedStream(parameters, searchFunction);
   }

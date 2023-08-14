@@ -376,8 +376,8 @@ public class ThirdPartyTMSSmartlingWithJsonTest extends ServiceTestBase {
         .thenReturn(smartlingJsonResponseWithOriginalString);
 
     Mockito.when(
-            thirdPartyFileChecksumRepositoryMock.findByThirdPartyFileChecksumId(
-                isA(ThirdPartyFileChecksumId.class)))
+            thirdPartyFileChecksumRepositoryMock.findByThirdPartyFileChecksumCompositeId(
+                isA(ThirdPartyFileChecksumCompositeId.class)))
         .thenReturn(Optional.empty());
 
     // For the first pass, mock a fully translated response

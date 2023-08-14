@@ -40,7 +40,7 @@ public class TextUnitSearcherParameters {
   boolean pluralFormsFiltered = true;
   boolean pluralFormsExcluded = false;
 
-  boolean isOrdered = false;
+  boolean isOrderedByTextUnitID = false;
   Long pluralFormId;
   Boolean doNotTranslateFilter;
   DateTime tmTextUnitCreatedBefore;
@@ -311,11 +311,11 @@ public class TextUnitSearcherParameters {
     this.skipAssetPathWithPattern = skipAssetPathWithPattern;
   }
 
-  public boolean isOrdered() {
-    return isOrdered;
+  public boolean isOrderedByTextUnitID() {
+    return isOrderedByTextUnitID;
   }
 
-  public void setOrdered(boolean ordered) {
-    isOrdered = ordered;
+  public void setOrderByTextUnitID(boolean ordered) {
+    isOrderedByTextUnitID = ordered;
   }
 }

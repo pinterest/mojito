@@ -1,11 +1,13 @@
 package com.box.l10n.mojito.entity;
 
-import java.io.Serializable;
 import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Index;
+import javax.persistence.PreUpdate;
 import javax.persistence.Table;
+import org.hibernate.annotations.Type;
+import org.joda.time.DateTime;
 
 /** Entity that stores the checksum of a translated file downloaded via a third party sync. */
 @Entity
@@ -17,46 +19,64 @@ import javax.persistence.Table;
           columnList = "repository_id, locale_id, file_name",
           unique = true),
     })
-public class ThirdPartyFileChecksum implements Serializable {
+public class ThirdPartyFileChecksum extends SettableAuditableEntity {
 
-  @EmbeddedId private ThirdPartyFileChecksumId thirdPartyFileChecksumId;
+  @Embedded private ThirdPartyFileChecksumCompositeId thirdPartyFileChecksumCompositeId;
 
-  @Column(name = "checksum")
-  private String checksum;
+  @Column(name = "md5")
+  private String md5;
+
+  @Column(name = "last_modified_date")
+  @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+  private DateTime lastModifiedDate;
 
   public ThirdPartyFileChecksum() {}
 
   public ThirdPartyFileChecksum(
-      ThirdPartyFileChecksumId thirdPartyFileChecksumId, String checksum) {
-    this.thirdPartyFileChecksumId = thirdPartyFileChecksumId;
-    this.checksum = checksum;
+      ThirdPartyFileChecksumCompositeId thirdPartyFileChecksumCompositeId, String md5) {
+    this.thirdPartyFileChecksumCompositeId = thirdPartyFileChecksumCompositeId;
+    this.md5 = md5;
   }
 
-  public ThirdPartyFileChecksumId getThirdPartyFileChecksumId() {
-    return thirdPartyFileChecksumId;
+  @PreUpdate
+  public void preUpdate() {
+    lastModifiedDate = new DateTime();
   }
 
-  public void setThirdPartyFileChecksumId(ThirdPartyFileChecksumId thirdPartyFileChecksumId) {
-    this.thirdPartyFileChecksumId = thirdPartyFileChecksumId;
+  public ThirdPartyFileChecksumCompositeId getThirdPartyFileChecksumCompositeId() {
+    return thirdPartyFileChecksumCompositeId;
   }
 
-  public String getChecksum() {
-    return checksum;
+  public void setThirdPartyFileChecksumCompositeId(
+      ThirdPartyFileChecksumCompositeId thirdPartyFileChecksumCompositeId) {
+    this.thirdPartyFileChecksumCompositeId = thirdPartyFileChecksumCompositeId;
   }
 
-  public void setChecksum(String checksum) {
-    this.checksum = checksum;
+  public String getMd5() {
+    return md5;
+  }
+
+  public void setMd5(String checksum) {
+    this.md5 = checksum;
   }
 
   public Locale getLocale() {
-    return thirdPartyFileChecksumId.getLocale();
+    return thirdPartyFileChecksumCompositeId.getLocale();
   }
 
   public Repository getRepository() {
-    return thirdPartyFileChecksumId.getRepository();
+    return thirdPartyFileChecksumCompositeId.getRepository();
   }
 
   public String getFileName() {
-    return thirdPartyFileChecksumId.getFileName();
+    return thirdPartyFileChecksumCompositeId.getFileName();
+  }
+
+  public DateTime getLastModifiedDate() {
+    return lastModifiedDate;
+  }
+
+  public void setLastModifiedDate(DateTime lastModifiedDate) {
+    this.lastModifiedDate = lastModifiedDate;
   }
 }
