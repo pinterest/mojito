@@ -15,6 +15,7 @@ import org.quartz.impl.matchers.GroupMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -32,6 +33,9 @@ public class QuartzConfig {
   @Autowired(required = false)
   List<JobDetail> jobDetails = new ArrayList<>();
 
+  @Value("${l10n.org.quartz.scheduler.enabled:true}")
+  boolean startScheduler;
+
   /**
    * Starts the scheduler after having removed outdated trigger/jobs
    *
@@ -40,7 +44,10 @@ public class QuartzConfig {
   @PostConstruct
   void startScheduler() throws SchedulerException {
     removeOutdatedJobs();
-    scheduler.startDelayed(2);
+    if (startScheduler) {
+      logger.info("Starting scheduler");
+      scheduler.startDelayed(2);
+    }
   }
 
   void removeOutdatedJobs() throws SchedulerException {
