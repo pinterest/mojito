@@ -13,7 +13,7 @@ public class ThirdPartyFileChecksumCompositeId implements Serializable {
   @ManyToOne(optional = false)
   @JoinColumn(
       name = "repository_id",
-      foreignKey = @ForeignKey(name = "FK__THIRD_PARTY_CHECKSUM__REPO__ID"))
+      foreignKey = @ForeignKey(name = "FK__TP_FILE_CHECKSUM__REPO__ID"))
   private Repository repository;
 
   @Column(name = "file_name")
@@ -22,7 +22,7 @@ public class ThirdPartyFileChecksumCompositeId implements Serializable {
   @ManyToOne(optional = false)
   @JoinColumn(
       name = "locale_id",
-      foreignKey = @ForeignKey(name = "FK__THIRD_PARTY_CHECKSUM__LOCALE__ID"))
+      foreignKey = @ForeignKey(name = "FK__TP_FILE_CHECKSUM__LOCALE__ID"))
   private Locale locale;
 
   public ThirdPartyFileChecksumCompositeId() {}

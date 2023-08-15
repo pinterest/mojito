@@ -4,9 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Index;
-import javax.persistence.PreUpdate;
 import javax.persistence.Table;
-import org.joda.time.DateTime;
 
 /** Entity that stores the checksum of a translated file downloaded via a third party sync. */
 @Entity
@@ -14,7 +12,7 @@ import org.joda.time.DateTime;
     name = "third_party_sync_file_checksum",
     indexes = {
       @Index(
-          name = "I__THIRD_PARTY__CHECKSUM__REPOSITORY_ID__FILE_NAME__LOCALE_ID",
+          name = "I__TP_FILE_CHECKSUM__REPO_ID__LOCALE_ID__FILE_NAME",
           columnList = "repository_id, locale_id, file_name",
           unique = true),
     })
@@ -31,11 +29,6 @@ public class ThirdPartyFileChecksum extends AuditableEntity {
       ThirdPartyFileChecksumCompositeId thirdPartyFileChecksumCompositeId, String md5) {
     this.thirdPartyFileChecksumCompositeId = thirdPartyFileChecksumCompositeId;
     this.md5 = md5;
-  }
-
-  @PreUpdate
-  public void preUpdate() {
-    lastModifiedDate = new DateTime();
   }
 
   public ThirdPartyFileChecksumCompositeId getThirdPartyFileChecksumCompositeId() {
