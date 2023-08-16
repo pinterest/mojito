@@ -8,6 +8,6 @@ create table third_party_sync_file_checksum (
     last_modified_date datetime,
     primary key (id)
 );
-alter table third_party_sync_file_checksum add constraint FK__TP_FILE_CHECKSUM__REPO__ID foreign key (repository_id) references repository (id);
-alter table third_party_sync_file_checksum add constraint FK__TP_FILE_CHECKSUM__LOCALE__ID foreign key (locale_id) references locale (id);
-create unique index I__TP_FILE_CHECKSUM__REPO_ID__LOCALE_ID__FILE_NAME on third_party_sync_file_checksum(repository_id, locale_id, file_name);
+alter table third_party_sync_file_checksum add constraint FK__TPS_FILE_CHECKSUM__REPO__ID foreign key (repository_id) references repository (id);
+alter table third_party_sync_file_checksum add constraint FK__TPS_FILE_CHECKSUM__LOCALE__ID foreign key (locale_id) references locale (id);
+create unique index I__TPS_FILE_CHECKSUM__REPO_ID__LOCALE_ID__FILE_NAME on third_party_sync_file_checksum(repository_id, locale_id, file_name);

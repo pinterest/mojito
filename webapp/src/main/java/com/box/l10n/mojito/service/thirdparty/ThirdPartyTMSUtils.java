@@ -3,7 +3,6 @@ package com.box.l10n.mojito.service.thirdparty;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.ThirdPartyFileChecksum;
-import com.box.l10n.mojito.entity.ThirdPartyFileChecksumCompositeId;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import java.util.Optional;
@@ -23,12 +22,10 @@ public class ThirdPartyTMSUtils {
     boolean isChecksumEqual = false;
 
     String currentChecksum = DigestUtils.md5Hex(fileContent);
-    ThirdPartyFileChecksumCompositeId thirdPartyFileChecksumCompositeId =
-        new ThirdPartyFileChecksumCompositeId(repository, locale, fileName);
 
     Optional<ThirdPartyFileChecksum> thirdPartyFileChecksumOpt =
-        thirdPartyFileChecksumRepository.findByThirdPartyFileChecksumCompositeId(
-            thirdPartyFileChecksumCompositeId);
+        thirdPartyFileChecksumRepository.findByRepositoryAndFileNameAndLocale(
+            repository, fileName, locale);
     if (thirdPartyFileChecksumOpt.isPresent()
         && thirdPartyFileChecksumOpt.get().getMd5().equals(currentChecksum)) {
       isChecksumEqual = true;
@@ -39,7 +36,7 @@ public class ThirdPartyTMSUtils {
       thirdPartyFileChecksumRepository.save(thirdPartyFileChecksum);
     } else {
       thirdPartyFileChecksumRepository.save(
-          new ThirdPartyFileChecksum(thirdPartyFileChecksumCompositeId, currentChecksum));
+          new ThirdPartyFileChecksum(repository, fileName, locale, currentChecksum));
     }
 
     meterRegistry
