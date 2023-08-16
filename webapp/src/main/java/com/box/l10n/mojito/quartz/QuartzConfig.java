@@ -3,6 +3,7 @@ package com.box.l10n.mojito.quartz;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import javax.annotation.PostConstruct;
 import org.quartz.JobDetail;
@@ -15,7 +16,6 @@ import org.quartz.impl.matchers.GroupMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -33,8 +33,7 @@ public class QuartzConfig {
   @Autowired(required = false)
   List<JobDetail> jobDetails = new ArrayList<>();
 
-  @Value("${l10n.org.quartz.scheduler.enabled:true}")
-  boolean startScheduler;
+  @Autowired QuartzPropertiesConfig quartzPropertiesConfig;
 
   /**
    * Starts the scheduler after having removed outdated trigger/jobs
@@ -43,8 +42,9 @@ public class QuartzConfig {
    */
   @PostConstruct
   void startScheduler() throws SchedulerException {
+    Properties quartzProps = quartzPropertiesConfig.getQuartzProperties();
     removeOutdatedJobs();
-    if (startScheduler) {
+    if (Boolean.parseBoolean(quartzProps.getProperty("org.quartz.scheduler.enabled", "true"))) {
       logger.info("Starting scheduler");
       scheduler.startDelayed(2);
     }
