@@ -63,6 +63,7 @@ public class FileFinder {
     fileTypes.add(new JSFileType());
     fileTypes.add(new TSFileType());
     fileTypes.add(new YamlFileType());
+    fileTypes.add(new HtmlFileType());
     // TODO(ja) disable for now because this is likely to pickup a lot of files. it might be better
     // to ask for it explicitly
     // fileTypes.add(new JSONFileType());

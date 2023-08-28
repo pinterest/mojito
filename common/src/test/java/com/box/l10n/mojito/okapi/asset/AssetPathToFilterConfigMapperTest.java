@@ -172,4 +172,14 @@ public class AssetPathToFilterConfigMapperTest {
         assetPathToFilterConfigMapper.getFilterConfigIdFromPath("/path/to/File.yaml");
     assertEquals(YamlFilter.FILTER_CONFIG_ID, filterConfigId);
   }
+
+  @Test
+  public void testGetFilterConfigIdFromTypeWithHTML() throws Exception {
+
+    AssetPathToFilterConfigMapper assetPathToFilterConfigMapper =
+        new AssetPathToFilterConfigMapper();
+    String filterConfigId =
+        assetPathToFilterConfigMapper.getFilterConfigIdFromPath("/path/to/content.html");
+    assertEquals(AssetPathToFilterConfigMapper.HTML_FILTER_CONFIG_ID, filterConfigId);
+  }
 }

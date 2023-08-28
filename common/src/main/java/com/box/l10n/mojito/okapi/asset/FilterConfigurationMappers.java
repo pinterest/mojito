@@ -3,6 +3,7 @@ package com.box.l10n.mojito.okapi.asset;
 import com.box.l10n.mojito.okapi.filters.*;
 import net.sf.okapi.common.filters.DefaultFilters;
 import net.sf.okapi.common.filters.IFilterConfigurationMapper;
+import net.sf.okapi.filters.html.HtmlFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -41,6 +42,7 @@ public class FilterConfigurationMappers {
     mapper.addConfigurations(JSONFilter.class.getName());
     mapper.addConfigurations(XcodeXliffFilter.class.getName());
     mapper.addConfigurations(YamlFilter.class.getName());
+    mapper.addConfigurations(HtmlFilter.class.getName());
 
     return mapper;
   }

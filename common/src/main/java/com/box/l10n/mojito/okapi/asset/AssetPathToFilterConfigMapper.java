@@ -33,6 +33,8 @@ public class AssetPathToFilterConfigMapper {
   public static final String XTB_FILTER_CONFIG_ID = XMLFilter.FILTER_CONFIG_ID + "-xtb";
   public static final String JS_FILTER_CONFIG_ID = JSFilter.FILTER_CONFIG_ID + "-js";
 
+  public static final String HTML_FILTER_CONFIG_ID = "okf_html";
+
   private enum AssetFilterType {
     CSV(CSVFilter.FILTER_CONFIG_ID, "csv"),
     XLIFF(XLIFF_FILTER_CONFIG_ID, "xlf", "xliff", "sdlxliff", "mxliff"),
@@ -45,7 +47,8 @@ public class AssetPathToFilterConfigMapper {
     XTB(XTB_FILTER_CONFIG_ID, "xtb"),
     JS(JS_FILTER_CONFIG_ID, "ts", "js"),
     JSON(JSONFilter.FILTER_CONFIG_ID, "json"),
-    YAML(YamlFilter.FILTER_CONFIG_ID, "yaml");
+    YAML(YamlFilter.FILTER_CONFIG_ID, "yaml"),
+    HTML(HTML_FILTER_CONFIG_ID, "html");
 
     private String configId;
     private Set<String> supportedExtensions = new HashSet<>();

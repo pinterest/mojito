@@ -955,6 +955,51 @@ public class PullCommandTest extends CLITestBase {
   }
 
   @Test
+  public void pullHtml() throws Exception {
+
+    Repository repository = createTestRepoUsingRepoService();
+    System.setProperty("overrideExpectedTestFiles", "true");
+
+    getL10nJCommander()
+        .run(
+            "push",
+            "-r",
+            repository.getName(),
+            "-s",
+            getInputResourcesTestDir("source").getAbsolutePath());
+
+    Asset asset = assetClient.getAssetByPathAndRepositoryId("demo.html", repository.getId());
+    importTranslations(asset.getId(), "source-xliff_", "fr-FR");
+    importTranslations(asset.getId(), "source-xliff_", "ja-JP");
+
+    getL10nJCommander()
+        .run(
+            "pull",
+            "-r",
+            repository.getName(),
+            "-s",
+            getInputResourcesTestDir("source").getAbsolutePath(),
+            "-t",
+            getTargetTestDir("target").getAbsolutePath(),
+            "-lm",
+            "fr:fr-FR,fr-CA:fr-CA,ja:ja-JP");
+
+    getL10nJCommander()
+        .run(
+            "pull",
+            "-r",
+            repository.getName(),
+            "-s",
+            getInputResourcesTestDir("source_modified").getAbsolutePath(),
+            "-t",
+            getTargetTestDir("target_modified").getAbsolutePath(),
+            "-lm",
+            "fr:fr-FR,fr-CA:fr-CA,ja:ja-JP");
+
+    checkExpectedGeneratedResources();
+  }
+
+  @Test
   public void removeUntranslated() throws Exception {
 
     Repository repository = createTestRepoUsingRepoService();
