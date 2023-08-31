@@ -103,6 +103,11 @@ public class FormLoginAuthenticationCsrfTokenInterceptor implements ClientHttpRe
     restTemplateForAuthenticationFlow.setRequestFactory(
         new InterceptingClientHttpRequestFactory(
             restTemplateForAuthenticationFlow.getRequestFactory(), interceptors));
+
+    logger.debug("Set AuthRestTemplate interceptor for authentication");
+    authRestTemplate.restTemplate.setRequestFactory(
+        new InterceptingClientHttpRequestFactory(
+            authRestTemplate.restTemplate.getRequestFactory(), Collections.singletonList(this)));
   }
 
   /**
