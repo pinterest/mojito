@@ -8,6 +8,7 @@ import com.google.common.base.Strings;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.PostConstruct;
@@ -19,7 +20,9 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.client.InterceptingClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.Jackson2ObjectMapperFactoryBean;
@@ -51,6 +54,10 @@ public class AuthenticatedRestTemplate {
   /** Will delegate calls to the {@link RestTemplate} instance that was configured */
   @Autowired CookieStoreRestTemplate restTemplate;
 
+  /** Used to intercept requests and inject CSRF token */
+  @Autowired
+  FormLoginAuthenticationCsrfTokenInterceptor formLoginAuthenticationCsrfTokenInterceptor;
+
   /** Initialize the internal restTemplate instance */
   @PostConstruct
   protected void init() {
@@ -58,6 +65,14 @@ public class AuthenticatedRestTemplate {
 
     makeRestTemplateWithCustomObjectMapper(restTemplate);
     setErrorHandlerWithLogging(restTemplate);
+
+    logger.debug("Set interceptor for authentication");
+    List<ClientHttpRequestInterceptor> interceptors =
+        Collections.<ClientHttpRequestInterceptor>singletonList(
+            formLoginAuthenticationCsrfTokenInterceptor);
+
+    restTemplate.setRequestFactory(
+        new InterceptingClientHttpRequestFactory(restTemplate.getRequestFactory(), interceptors));
   }
 
   void setErrorHandlerWithLogging(RestTemplate restTemplate) {
