@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.PostConstruct;
+import org.apache.http.client.CookieStore;
+import org.apache.http.cookie.Cookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * An interceptor that will check to see if there's a valid request csrf.
@@ -38,26 +41,50 @@ public class FormLoginAuthenticationCsrfTokenInterceptor implements ClientHttpRe
   /** logger */
   Logger logger = LoggerFactory.getLogger(FormLoginAuthenticationCsrfTokenInterceptor.class);
 
-  @Autowired FormLoginConfig formLoginConfig;
+  public static final String CSRF_PARAM_NAME = "_csrf";
+  public static final String CSRF_HEADER_NAME = "X-CSRF-TOKEN";
+  public static final String COOKIE_SESSION_NAME = "JSESSIONID";
 
-  @Autowired private CsrfTokenService csrfTokenService;
+  @Autowired FormLoginConfig formLoginConfig;
 
   @Autowired ResttemplateConfig resttemplateConfig;
 
+  /**
+   * This is used for the authentication flow to keep things separate from the restTemplate that
+   * this interceptor is intercepting
+   */
+  CookieStoreRestTemplate restTemplateForAuthenticationFlow;
+
+  /**
+   * This is so that we obtain access to the cookie store used inside HttpClient to check to see if
+   * we have a session
+   */
+  CookieStore cookieStore;
+
+  /** This is the latest session id that was used to obtain the {@link this#latestCsrfToken} */
+  String latestSessionIdForLatestCsrfToken;
+
+  /**
+   * This is the lastest CSRF token that was obtained from the {@link
+   * this#latestSessionIdForLatestCsrfToken}
+   */
+  CsrfToken latestCsrfToken = null;
+
   @Autowired CredentialProvider credentialProvider;
+  
+  /** Will delegate calls to the {@link RestTemplate} instance that was configured */
+  @Autowired CookieStoreRestTemplate restTemplate;
 
   /** Init */
   @PostConstruct
   protected void init() {
 
-    csrfTokenService.restTemplateForAuthenticationFlow = new CookieStoreRestTemplate();
-    csrfTokenService.cookieStore =
-        csrfTokenService.restTemplateForAuthenticationFlow.getCookieStore();
+    restTemplateForAuthenticationFlow = new CookieStoreRestTemplate();
+    cookieStore = restTemplateForAuthenticationFlow.getCookieStore();
 
     logger.debug(
-        "Inject cookie store used in the rest template for authentication flow into the authRestTemplate so that they will match");
-    csrfTokenService.restTemplateForAuthenticationFlow.setCookieStoreAndUpdateRequestFactory(
-        csrfTokenService.cookieStore);
+        "Inject cookie store used in the rest template for authentication flow into the restTemplate so that they will match");    
+    restTemplate.setCookieStoreAndUpdateRequestFactory(cookieStore);
 
     List<ClientHttpRequestInterceptor> interceptors =
         Collections.singletonList(
@@ -66,17 +93,17 @@ public class FormLoginAuthenticationCsrfTokenInterceptor implements ClientHttpRe
               public ClientHttpResponse intercept(
                   HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
                   throws IOException {
-                if (csrfTokenService.latestCsrfToken != null) {
+                if (latestCsrfToken != null) {
                   // At the beginning of auth flow, there's no token yet
-                  injectCsrfTokenIntoHeader(request, csrfTokenService.latestCsrfToken);
+                  injectCsrfTokenIntoHeader(request, latestCsrfToken);
                 }
                 return execution.execute(request, body);
               }
             });
 
-    csrfTokenService.restTemplateForAuthenticationFlow.setRequestFactory(
+    restTemplateForAuthenticationFlow.setRequestFactory(
         new InterceptingClientHttpRequestFactory(
-            csrfTokenService.restTemplateForAuthenticationFlow.getRequestFactory(), interceptors));
+            restTemplateForAuthenticationFlow.getRequestFactory(), interceptors));
   }
 
   /**
@@ -96,8 +123,8 @@ public class FormLoginAuthenticationCsrfTokenInterceptor implements ClientHttpRe
   @Override
   public ClientHttpResponse intercept(
       HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
-    if (csrfTokenService.doesSessionIdInCookieStoreExistAndMatchLatestSessionId()) {
-      injectCsrfTokenIntoHeader(request, csrfTokenService.latestCsrfToken);
+    if (doesSessionIdInCookieStoreExistAndMatchLatestSessionId()) {
+      injectCsrfTokenIntoHeader(request, latestCsrfToken);
     } else {
       startAuthenticationAndInjectCsrfToken(request);
     }
@@ -176,7 +203,35 @@ public class FormLoginAuthenticationCsrfTokenInterceptor implements ClientHttpRe
     startAuthenticationFlow();
 
     logger.debug("Injecting CSRF token");
-    injectCsrfTokenIntoHeader(request, csrfTokenService.latestCsrfToken);
+    injectCsrfTokenIntoHeader(request, latestCsrfToken);
+  }
+
+  /**
+   * Gets the authenticated session id. If it is not found, an authentication flow will be started
+   * so that a proper session id is available
+   *
+   * @return
+   */
+  protected boolean doesSessionIdInCookieStoreExistAndMatchLatestSessionId() {
+    logger.debug(
+        "Check to see if session id in cookie store matches the session id used to get the latest CSRF token");
+    String sessionId = getAuthenticationSessionIdFromCookieStore();
+
+    return sessionId != null && sessionId.equals(latestSessionIdForLatestCsrfToken);
+  }
+
+  /** @return null if no sesson id cookie is found */
+  protected String getAuthenticationSessionIdFromCookieStore() {
+    List<Cookie> cookies = cookieStore.getCookies();
+    for (Cookie cookie : cookies) {
+      if (cookie.getName().equals(COOKIE_SESSION_NAME)) {
+        String cookieValue = cookie.getValue();
+        logger.debug("Found session cookie: {}", cookieValue);
+        return cookieValue;
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -205,15 +260,13 @@ public class FormLoginAuthenticationCsrfTokenInterceptor implements ClientHttpRe
     logger.debug(
         "Start by loading up the login form to get a valid unauthenticated session and CSRF token");
     ResponseEntity<String> loginResponseEntity =
-        csrfTokenService.restTemplateForAuthenticationFlow.getForEntity(
-            csrfTokenService.getURIForResource(formLoginConfig.getLoginFormPath()), String.class);
+        restTemplateForAuthenticationFlow.getForEntity(
+            resttemplateConfig.getURIForResource(formLoginConfig.getLoginFormPath()), String.class);
 
-    csrfTokenService.latestCsrfToken = getCsrfTokenFromLoginHtml(loginResponseEntity.getBody());
-    csrfTokenService.latestSessionIdForLatestCsrfToken =
-        csrfTokenService.getAuthenticationSessionIdFromCookieStore();
+    latestCsrfToken = getCsrfTokenFromLoginHtml(loginResponseEntity.getBody());
+    latestSessionIdForLatestCsrfToken = getAuthenticationSessionIdFromCookieStore();
     logger.debug(
-        "Update CSRF token for interceptor ({}) from login form",
-        csrfTokenService.latestCsrfToken.getToken());
+        "Update CSRF token for interceptor ({}) from login form", latestCsrfToken.getToken());
 
     MultiValueMap<String, Object> loginPostParams = new LinkedMultiValueMap<>();
     loginPostParams.add("username", credentialProvider.getUsername());
@@ -224,8 +277,8 @@ public class FormLoginAuthenticationCsrfTokenInterceptor implements ClientHttpRe
         credentialProvider.getUsername(),
         credentialProvider.getPassword());
     ResponseEntity<String> postLoginResponseEntity =
-        csrfTokenService.restTemplateForAuthenticationFlow.postForEntity(
-            csrfTokenService.getURIForResource(formLoginConfig.getLoginFormPath()),
+        restTemplateForAuthenticationFlow.postForEntity(
+                resttemplateConfig.getURIForResource(formLoginConfig.getLoginFormPath()),
             loginPostParams,
             String.class);
 
@@ -239,15 +292,13 @@ public class FormLoginAuthenticationCsrfTokenInterceptor implements ClientHttpRe
     if (postLoginResponseEntity.getStatusCode().equals(HttpStatus.FOUND)
         && expectedLocation.equals(locationURI.getPath())) {
 
-      csrfTokenService.latestCsrfToken =
-          csrfTokenService.getCsrfTokenFromEndpoint(
-              csrfTokenService.getURIForResource(formLoginConfig.getCsrfTokenPath()));
-      csrfTokenService.latestSessionIdForLatestCsrfToken =
-          csrfTokenService.getAuthenticationSessionIdFromCookieStore();
+      latestCsrfToken =
+          getCsrfTokenFromEndpoint(
+                  resttemplateConfig.getURIForResource(formLoginConfig.getCsrfTokenPath()));
+      latestSessionIdForLatestCsrfToken = getAuthenticationSessionIdFromCookieStore();
 
       logger.debug(
-          "Update CSRF token interceptor in AuthRestTempplate ({})",
-          csrfTokenService.latestCsrfToken.getToken());
+          "Update CSRF token interceptor in AuthRestTempplate ({})", latestCsrfToken.getToken());
 
     } else {
       throw new SessionAuthenticationException(
@@ -267,7 +318,7 @@ public class FormLoginAuthenticationCsrfTokenInterceptor implements ClientHttpRe
    *
    * @param loginHtml The login page HTML which contains the csrf token. It is assumed that the CSRF
    *     token is embedded on the page inside an input field with name matching {@link
-   *     com.box.l10n.mojito.rest.resttemplate.CsrfTokenService#CSRF_PARAM_NAME}
+   *     com.box.l10n.mojito.rest.resttemplate.FormLoginAuthenticationCsrfTokenInterceptor#CSRF_PARAM_NAME}
    * @return
    * @throws AuthenticationException
    */
@@ -279,17 +330,29 @@ public class FormLoginAuthenticationCsrfTokenInterceptor implements ClientHttpRe
       String csrfTokenString = matcher.group(1);
 
       logger.debug("CSRF token from login html: {}", csrfTokenString);
-      return new DefaultCsrfToken(
-          CsrfTokenService.CSRF_HEADER_NAME, CsrfTokenService.CSRF_PARAM_NAME, csrfTokenString);
+      return new DefaultCsrfToken(CSRF_HEADER_NAME, CSRF_PARAM_NAME, csrfTokenString);
     } else {
       throw new SessionAuthenticationException("Could not find CSRF_TOKEN variable on login page");
     }
   }
 
+  /**
+   * Use the CSRF token endpoint to get the CSRF token corresponding to this session
+   *
+   * @param csrfTokenUrl The full URL to which the CSRF token can be obtained
+   * @return
+   */
+  protected CsrfToken getCsrfTokenFromEndpoint(String csrfTokenUrl) {
+    ResponseEntity<String> csrfTokenEntity =
+        restTemplateForAuthenticationFlow.getForEntity(csrfTokenUrl, String.class, "");
+    logger.debug("CSRF token from {} is {}", csrfTokenUrl, csrfTokenEntity.getBody());
+    return new DefaultCsrfToken(CSRF_HEADER_NAME, CSRF_PARAM_NAME, csrfTokenEntity.getBody());
+  }
+
   @VisibleForTesting
   public void resetAuthentication() {
-    csrfTokenService.cookieStore.clear();
-    csrfTokenService.latestCsrfToken = null;
+    cookieStore.clear();
+    latestCsrfToken = null;
   }
 
   @VisibleForTesting

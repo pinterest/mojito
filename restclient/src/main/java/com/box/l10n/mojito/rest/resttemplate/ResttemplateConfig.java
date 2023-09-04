@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.rest.resttemplate;
 
+import com.google.common.base.Strings;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -54,6 +55,29 @@ public class ResttemplateConfig {
       CONSOLE,
       CONFIG
     }
+  }
+
+  public String getURIForResource(String resourcePath) {
+
+    StringBuilder uri = new StringBuilder();
+
+    if (resourcePath.startsWith(getScheme())) {
+      uri.append(resourcePath);
+    } else {
+      uri.append(getScheme()).append("://").append(getHost());
+
+      if (getPort() != 80) {
+        uri.append(":").append(getPort());
+      }
+
+      if (!Strings.isNullOrEmpty(getContextPath())) {
+        uri.append(getContextPath());
+      }
+
+      uri.append("/").append(resourcePath);
+    }
+
+    return uri.toString();
   }
 
   public String getHost() {

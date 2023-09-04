@@ -48,14 +48,14 @@ public class AuthenticatedRestTemplate {
   /** logger */
   static Logger logger = LoggerFactory.getLogger(AuthenticatedRestTemplate.class);
 
+  @Autowired ResttemplateConfig resttemplateConfig;
+
   /** Will delegate calls to the {@link RestTemplate} instance that was configured */
   @Autowired CookieStoreRestTemplate restTemplate;
 
   /** Used to intercept requests and inject CSRF token */
   @Autowired
   FormLoginAuthenticationCsrfTokenInterceptor formLoginAuthenticationCsrfTokenInterceptor;
-
-  @Autowired CsrfTokenService csrfTokenService;
 
   /** Initialize the internal restTemplate instance */
   @PostConstruct
@@ -149,7 +149,7 @@ public class AuthenticatedRestTemplate {
    */
   public String getURIForResource(String resourcePath) {
 
-    return csrfTokenService.getURIForResource(resourcePath);
+    return resttemplateConfig.getURIForResource(resourcePath);
   }
 
   /**
