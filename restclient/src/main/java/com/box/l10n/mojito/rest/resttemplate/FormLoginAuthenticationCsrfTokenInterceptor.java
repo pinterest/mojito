@@ -71,7 +71,7 @@ public class FormLoginAuthenticationCsrfTokenInterceptor implements ClientHttpRe
   CsrfToken latestCsrfToken = null;
 
   @Autowired CredentialProvider credentialProvider;
-  
+
   /** Will delegate calls to the {@link RestTemplate} instance that was configured */
   @Autowired CookieStoreRestTemplate restTemplate;
 
@@ -83,7 +83,7 @@ public class FormLoginAuthenticationCsrfTokenInterceptor implements ClientHttpRe
     cookieStore = restTemplateForAuthenticationFlow.getCookieStore();
 
     logger.debug(
-        "Inject cookie store used in the rest template for authentication flow into the restTemplate so that they will match");    
+        "Inject cookie store used in the rest template for authentication flow into the restTemplate so that they will match");
     restTemplate.setCookieStoreAndUpdateRequestFactory(cookieStore);
 
     List<ClientHttpRequestInterceptor> interceptors =
@@ -278,7 +278,7 @@ public class FormLoginAuthenticationCsrfTokenInterceptor implements ClientHttpRe
         credentialProvider.getPassword());
     ResponseEntity<String> postLoginResponseEntity =
         restTemplateForAuthenticationFlow.postForEntity(
-                resttemplateConfig.getURIForResource(formLoginConfig.getLoginFormPath()),
+            resttemplateConfig.getURIForResource(formLoginConfig.getLoginFormPath()),
             loginPostParams,
             String.class);
 
@@ -294,7 +294,7 @@ public class FormLoginAuthenticationCsrfTokenInterceptor implements ClientHttpRe
 
       latestCsrfToken =
           getCsrfTokenFromEndpoint(
-                  resttemplateConfig.getURIForResource(formLoginConfig.getCsrfTokenPath()));
+              resttemplateConfig.getURIForResource(formLoginConfig.getCsrfTokenPath()));
       latestSessionIdForLatestCsrfToken = getAuthenticationSessionIdFromCookieStore();
 
       logger.debug(
