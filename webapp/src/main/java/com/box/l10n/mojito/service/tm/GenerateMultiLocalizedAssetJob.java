@@ -20,7 +20,7 @@ public class GenerateMultiLocalizedAssetJob
       QuartzJobInfo<LocalizedAssetBody, LocalizedAssetBody> quartzJobInfo =
           QuartzJobInfo.newBuilder(GenerateLocalizedAssetJob.class)
               .withInlineInput(false)
-              .withParentId(getCurrentPollableTask().getId())
+              .withParentId(getParentId())
               .withInput(createLocalizedAssetBody(localeInfo, input))
               .withScheduler(input.getSchedulerName())
               .withMessage("Generate localized asset for " + localeInfo.getBcp47Tag())
@@ -31,6 +31,10 @@ public class GenerateMultiLocalizedAssetJob
     }
 
     return input;
+  }
+
+  protected long getParentId() {
+    return getCurrentPollableTask().getId();
   }
 
   private LocalizedAssetBody createLocalizedAssetBody(
