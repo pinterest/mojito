@@ -12,12 +12,14 @@ import com.box.l10n.mojito.rest.client.AssetClient;
 import com.box.l10n.mojito.rest.client.exception.AssetNotFoundException;
 import com.box.l10n.mojito.rest.entity.Asset;
 import com.box.l10n.mojito.rest.entity.LocalizedAssetBody;
+import com.box.l10n.mojito.rest.entity.MultiLocalizedAssetBody;
 import com.box.l10n.mojito.rest.entity.PollableTask;
 import com.box.l10n.mojito.rest.entity.Repository;
 import com.box.l10n.mojito.rest.entity.RepositoryLocale;
 import com.box.l10n.mojito.rest.entity.RepositoryLocaleStatistic;
 import com.box.l10n.mojito.rest.entity.RepositoryStatistic;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -158,6 +160,12 @@ public class PullCommand extends Command {
               + "A file will be generated with the pull run name.")
   Boolean recordPullRun = false;
 
+  @Parameter(
+      names = {"--parallel"},
+      required = false,
+      description = "Indicates that the pull should use parallel execution.")
+  Boolean isParallel = false;
+
   @Autowired AssetClient assetClient;
 
   @Autowired CommandHelper commandHelper;
@@ -264,8 +272,39 @@ public class PullCommand extends Command {
 
     logger.debug("Generate localized files (without locale mapping)");
 
-    for (RepositoryLocale repositoryLocale : repositoryLocalesWithoutRootLocale.values()) {
-      generateLocalizedFile(repository, sourceFileMatch, filterOptions, null, repositoryLocale);
+    if (isParallel) {
+
+      Asset assetByPathAndRepositoryId;
+
+      try {
+        logger.debug("Getting the asset for path: {}", sourceFileMatch.getSourcePath());
+        assetByPathAndRepositoryId =
+            assetClient.getAssetByPathAndRepositoryId(
+                sourceFileMatch.getSourcePath(), repository.getId());
+      } catch (AssetNotFoundException e) {
+        throw new CommandException(
+            "Asset with path ["
+                + sourceFileMatch.getSourcePath()
+                + "] was not found in repo ["
+                + repositoryParam
+                + "]",
+            e);
+      }
+      getLocalizedAssetBodyParallel(
+              sourceFileMatch,
+              new ArrayList<>(repositoryLocalesWithoutRootLocale.values()),
+              filterOptions,
+              assetByPathAndRepositoryId,
+              commandHelper.getFileContentWithXcodePatch(sourceFileMatch))
+          .forEach(
+              (bcp47Tag, localizedAsset) -> {
+                consoleWriter.a("Writing locale file: ").fg(Color.CYAN).a(bcp47Tag).print();
+                writeLocalizedAssetToTargetDirectory(localizedAsset, sourceFileMatch);
+              });
+    } else {
+      for (RepositoryLocale repositoryLocale : repositoryLocalesWithoutRootLocale.values()) {
+        generateLocalizedFile(repository, sourceFileMatch, filterOptions, null, repositoryLocale);
+      }
     }
   }
 
@@ -284,11 +323,23 @@ public class PullCommand extends Command {
 
     logger.debug("Generate localzied files with locale mapping");
 
-    for (Map.Entry<String, String> localeMapping : localeMappings.entrySet()) {
-      String outputBcp47tag = localeMapping.getKey();
-      RepositoryLocale repositoryLocale = getRepositoryLocaleForOutputBcp47Tag(outputBcp47tag);
-      generateLocalizedFile(
-          repository, sourceFileMatch, filterOptions, outputBcp47tag, repositoryLocale);
+    if (isParallel) {
+      getLocalizedAssetBodyParallel(
+              sourceFileMatch,
+              new ArrayList<>(repositoryLocalesWithoutRootLocale.values()),
+              filterOptions,
+              null,
+              commandHelper.getFileContentWithXcodePatch(sourceFileMatch))
+          .forEach(
+              (bcp47Tag, localizedAsset) ->
+                  writeLocalizedAssetToTargetDirectory(localizedAsset, sourceFileMatch));
+    } else {
+      for (Map.Entry<String, String> localeMapping : localeMappings.entrySet()) {
+        String outputBcp47tag = localeMapping.getKey();
+        RepositoryLocale repositoryLocale = getRepositoryLocaleForOutputBcp47Tag(outputBcp47tag);
+        generateLocalizedFile(
+            repository, sourceFileMatch, filterOptions, outputBcp47tag, repositoryLocale);
+      }
     }
   }
 
@@ -494,6 +545,46 @@ public class PullCommand extends Command {
     }
 
     return localizedAsset;
+  }
+
+  Map<String, LocalizedAssetBody> getLocalizedAssetBodyParallel(
+      FileMatch sourceFileMatch,
+      List<RepositoryLocale> repositoryLocales,
+      List<String> filterOptions,
+      Asset assetByPathAndRepositoryId,
+      String assetContent)
+      throws CommandException {
+    Map<String, LocalizedAssetBody> localizedAssetBodyMap = new HashMap<>();
+    MultiLocalizedAssetBody multiLocalizedAsset;
+
+    PollableTask localizedAssetForContentParallel =
+        assetClient.getLocalizedAssetForContentParallel(
+            assetByPathAndRepositoryId.getId(),
+            assetContent,
+            repositoryLocales,
+            sourceFileMatch.getFileType().getFilterConfigIdOverride(),
+            filterOptions,
+            status,
+            inheritanceMode,
+            pullRunName);
+    commandHelper.waitForPollableTask(localizedAssetForContentParallel.getId());
+    String jsonOutput =
+        commandHelper.pollableTaskClient.getPollableTaskOutput(
+            localizedAssetForContentParallel.getId());
+
+    multiLocalizedAsset =
+        objectMapper.readValueUnchecked(jsonOutput, MultiLocalizedAssetBody.class);
+    for (String bcp47Tag : multiLocalizedAsset.getGenerateLocalizedAssetJobIds().keySet()) {
+      jsonOutput =
+          commandHelper.pollableTaskClient.getPollableTaskOutput(
+              multiLocalizedAsset.getGenerateLocalizedAssetJobIds().get(bcp47Tag));
+      localizedAssetBodyMap.put(
+          localeMappings != null && localeMappings.containsKey(bcp47Tag)
+              ? localeMappings.get(bcp47Tag)
+              : bcp47Tag,
+          objectMapper.readValueUnchecked(jsonOutput, LocalizedAssetBody.class));
+    }
+    return localizedAssetBodyMap;
   }
 
   LocalizedAssetBody getLocalizedAssetBodyAsync(
