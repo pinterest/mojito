@@ -10,8 +10,9 @@ import com.box.l10n.mojito.localtm.merger.MultiBranchState;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.Optional;
-import org.joda.time.DateTime;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
@@ -35,7 +36,7 @@ public class MultiBranchStateBlobStorageTest extends ServiceTestBase {
             assetExtractionId, version);
     Assertions.assertFalse(multiBranchStateForAssetExtractionId.isPresent());
 
-    Branch branchTest = Branch.builder().name("test").createdAt(new DateTime()).build();
+    Branch branchTest = Branch.builder().name("test").createdAt(ZonedDateTime.now()).build();
     MultiBranchState multiBranchState =
         MultiBranchState.builder()
             .branches(ImmutableSet.of(branchTest))
@@ -58,6 +59,8 @@ public class MultiBranchStateBlobStorageTest extends ServiceTestBase {
         multiBranchStateBlobStorage.getMultiBranchStateForAssetExtractionId(
             assetExtractionId, version);
     assertThat(multiBranchStateForAssetExtractionId.get())
-        .isEqualToComparingFieldByField(multiBranchState);
+        .usingRecursiveComparison()
+        .withComparatorForType(Comparator.comparing(ZonedDateTime::toInstant), ZonedDateTime.class)
+        .isEqualTo(multiBranchState);
   }
 }

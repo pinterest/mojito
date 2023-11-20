@@ -6,12 +6,13 @@ import static org.junit.Assert.assertEquals;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.joda.time.DateTime;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -21,13 +22,22 @@ public class MultiBranchStateMergerTest {
   static Stream<Arguments> merge() {
 
     Branch branch1 =
-        Branch.builder().name("branch1").createdAt(new DateTime(2020, 7, 10, 0, 0)).build();
+        Branch.builder()
+            .name("branch1")
+            .createdAt(ZonedDateTime.of(2020, 7, 10, 0, 0, 0, 0, ZoneId.systemDefault()))
+            .build();
 
     Branch branch2 =
-        Branch.builder().name("branch2").createdAt(new DateTime(2020, 7, 10, 0, 0)).build();
+        Branch.builder()
+            .name("branch2")
+            .createdAt(ZonedDateTime.of(2020, 7, 10, 0, 0, 0, 0, ZoneId.systemDefault()))
+            .build();
 
     Branch branch3 =
-        Branch.builder().name("branch3").createdAt(new DateTime(2020, 6, 10, 0, 0)).build();
+        Branch.builder()
+            .name("branch3")
+            .createdAt(ZonedDateTime.of(2020, 6, 10, 0, 0, 0, 0, ZoneId.systemDefault()))
+            .build();
 
     BranchStateTextUnit state1BranchStateTextUnit1 =
         createBranchStateTextUnit("MD5HASH1", createBranchMap(branch1, branch2));
@@ -95,16 +105,28 @@ public class MultiBranchStateMergerTest {
 
   static Stream<Arguments> mergeBranchesByPriorityThenCreatedDateThenName() {
     Branch branch1 =
-        Branch.builder().name("branch1").createdAt(new DateTime(2020, 7, 10, 0, 0)).build();
+        Branch.builder()
+            .name("branch1")
+            .createdAt(ZonedDateTime.of(2020, 7, 10, 0, 0, 0, 0, ZoneId.systemDefault()))
+            .build();
 
     Branch branch2 =
-        Branch.builder().name("branch2").createdAt(new DateTime(2020, 7, 10, 0, 0)).build();
+        Branch.builder()
+            .name("branch2")
+            .createdAt(ZonedDateTime.of(2020, 7, 10, 0, 0, 0, 0, ZoneId.systemDefault()))
+            .build();
 
     Branch masterBranch =
-        Branch.builder().name("master").createdAt(new DateTime(2020, 8, 10, 0, 0)).build();
+        Branch.builder()
+            .name("master")
+            .createdAt(ZonedDateTime.of(2020, 8, 10, 0, 0, 0, 0, ZoneId.systemDefault()))
+            .build();
 
     Branch branch3 =
-        Branch.builder().name("branch3").createdAt(new DateTime(2020, 6, 10, 0, 0)).build();
+        Branch.builder()
+            .name("branch3")
+            .createdAt(ZonedDateTime.of(2020, 6, 10, 0, 0, 0, 0, ZoneId.systemDefault()))
+            .build();
 
     return Stream.of(
         Arguments.of(
@@ -159,16 +181,28 @@ public class MultiBranchStateMergerTest {
 
   static Stream<Arguments> sortBranchesByPriorityThenCreatedDateThenName() {
     Branch branch1 =
-        Branch.builder().name("branch1").createdAt(new DateTime(2020, 7, 10, 0, 0)).build();
+        Branch.builder()
+            .name("branch1")
+            .createdAt(ZonedDateTime.of(2020, 7, 10, 0, 0, 0, 0, ZoneId.systemDefault()))
+            .build();
 
     Branch branch2 =
-        Branch.builder().name("branch2").createdAt(new DateTime(2020, 7, 10, 0, 0)).build();
+        Branch.builder()
+            .name("branch2")
+            .createdAt(ZonedDateTime.of(2020, 7, 10, 0, 0, 0, 0, ZoneId.systemDefault()))
+            .build();
 
     Branch masterBranch =
-        Branch.builder().name("master").createdAt(new DateTime(2020, 8, 10, 0, 0)).build();
+        Branch.builder()
+            .name("master")
+            .createdAt(ZonedDateTime.of(2020, 8, 10, 0, 0, 0, 0, ZoneId.systemDefault()))
+            .build();
 
     Branch branch3 =
-        Branch.builder().name("branch3").createdAt(new DateTime(2020, 6, 10, 0, 0)).build();
+        Branch.builder()
+            .name("branch3")
+            .createdAt(ZonedDateTime.of(2020, 6, 10, 0, 0, 0, 0, ZoneId.systemDefault()))
+            .build();
 
     return Stream.of(
         Arguments.of("Empty lists", ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of()),
@@ -203,13 +237,22 @@ public class MultiBranchStateMergerTest {
 
   static Stream<Arguments> mergerMultiBranchStateIntoBranchStateTextUnit() {
     Branch branch1 =
-        Branch.builder().name("branch1").createdAt(new DateTime(2020, 7, 10, 0, 0)).build();
+        Branch.builder()
+            .name("branch1")
+            .createdAt(ZonedDateTime.of(2020, 7, 10, 0, 0, 0, 0, ZoneId.systemDefault()))
+            .build();
 
     Branch branch2 =
-        Branch.builder().name("branch2").createdAt(new DateTime(2020, 7, 10, 0, 0)).build();
+        Branch.builder()
+            .name("branch2")
+            .createdAt(ZonedDateTime.of(2020, 7, 10, 0, 0, 0, 0, ZoneId.systemDefault()))
+            .build();
 
     Branch branch3 =
-        Branch.builder().name("branch3").createdAt(new DateTime(2020, 6, 10, 0, 0)).build();
+        Branch.builder()
+            .name("branch3")
+            .createdAt(ZonedDateTime.of(2020, 6, 10, 0, 0, 0, 0, ZoneId.systemDefault()))
+            .build();
 
     BranchStateTextUnit baseBranchStateTextUnit =
         createBranchStateTextUnit("MD5HASH", createBranchMap(branch1, branch2));
@@ -273,16 +316,28 @@ public class MultiBranchStateMergerTest {
 
   static Stream<Arguments> sortBranchDataByBranch() {
     Branch branch1 =
-        Branch.builder().name("branch1").createdAt(new DateTime(2020, 7, 10, 0, 0)).build();
+        Branch.builder()
+            .name("branch1")
+            .createdAt(ZonedDateTime.of(2020, 7, 10, 0, 0, 0, 0, ZoneId.systemDefault()))
+            .build();
 
     Branch branch2 =
-        Branch.builder().name("branch2").createdAt(new DateTime(2020, 7, 10, 0, 0)).build();
+        Branch.builder()
+            .name("branch2")
+            .createdAt(ZonedDateTime.of(2020, 7, 10, 0, 0, 0, 0, ZoneId.systemDefault()))
+            .build();
 
     Branch masterBranch =
-        Branch.builder().name("master").createdAt(new DateTime(2020, 8, 10, 0, 0)).build();
+        Branch.builder()
+            .name("master")
+            .createdAt(ZonedDateTime.of(2020, 8, 10, 0, 0, 0, 0, ZoneId.systemDefault()))
+            .build();
 
     Branch branch3 =
-        Branch.builder().name("branch3").createdAt(new DateTime(2020, 6, 10, 0, 0)).build();
+        Branch.builder()
+            .name("branch3")
+            .createdAt(ZonedDateTime.of(2020, 6, 10, 0, 0, 0, 0, ZoneId.systemDefault()))
+            .build();
 
     return Stream.of(
         Arguments.of("Empty lists", ImmutableMap.of(), ImmutableSet.of(), ImmutableMap.of()),

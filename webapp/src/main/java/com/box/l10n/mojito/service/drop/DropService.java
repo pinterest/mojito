@@ -27,12 +27,12 @@ import com.box.l10n.mojito.service.tm.UpdateTMWithXLIFFResult;
 import com.box.l10n.mojito.service.translationkit.TranslationKitAsXliff;
 import com.box.l10n.mojito.service.translationkit.TranslationKitService;
 import java.text.SimpleDateFormat;
+import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import net.sf.okapi.common.exceptions.OkapiBadFilterInputException;
 import net.sf.okapi.common.exceptions.OkapiIOException;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -225,7 +225,7 @@ public class DropService {
     logger.debug("Start importing drop");
 
     Drop drop = dropRepository.findById(dropId).orElse(null);
-    drop.setLastImportedDate(new DateTime());
+    drop.setLastImportedDate(ZonedDateTime.now());
     drop.setImportPollableTask(currentTask);
     drop.setImportFailed(null);
     dropRepository.save(drop);

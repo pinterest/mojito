@@ -6,8 +6,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import java.time.ZonedDateTime;
 import java.util.List;
-import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +25,7 @@ public class AssetExtractorTextUnitsToMultiBranchStateConverter {
   public MultiBranchState convert(
       List<AssetExtractorTextUnit> assetExtractorTextUnits, Branch branch) {
 
-    DateTime now = DateTime.now();
+    ZonedDateTime now = ZonedDateTime.now();
 
     ImmutableList<BranchStateTextUnit> branchStateTextUnitImmutableMap =
         assetExtractorTextUnits.stream()
@@ -40,7 +40,7 @@ public class AssetExtractorTextUnitsToMultiBranchStateConverter {
   }
 
   BranchStateTextUnit convertToBranchStateTextUnit(
-      AssetExtractorTextUnit assetExtractorTextUnit, Branch branch, DateTime createdDate) {
+      AssetExtractorTextUnit assetExtractorTextUnit, Branch branch, ZonedDateTime createdDate) {
 
     BranchData branchData =
         BranchData.of()

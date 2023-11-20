@@ -20,10 +20,10 @@ import com.box.l10n.mojito.service.repository.RepositoryLocaleRepository;
 import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.test.TestIdWatcher;
 import com.google.common.collect.ImmutableMap;
+import java.time.ZonedDateTime;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -183,7 +183,7 @@ public class TMTestData {
   }
 
   public ImmutableMap<String, TMTextUnit> addPluralString(String basename) {
-    DateTime date = new DateTime();
+    ZonedDateTime date = ZonedDateTime.now();
 
     ImmutableMap<String, TMTextUnit> tmTextUnitsByForm =
         Stream.of("other", "zero", "one", "two", "few", "many")
@@ -194,7 +194,7 @@ public class TMTestData {
     return tmTextUnitsByForm;
   }
 
-  TMTextUnit addPluralForm(String basename, String pluralForm, DateTime date) {
+  TMTextUnit addPluralForm(String basename, String pluralForm, ZonedDateTime date) {
     return tmService.addTMTextUnit(
         tm.getId(),
         asset.getId(),

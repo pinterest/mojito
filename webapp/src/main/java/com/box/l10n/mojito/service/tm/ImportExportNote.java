@@ -2,10 +2,12 @@ package com.box.l10n.mojito.service.tm;
 
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
 import com.box.l10n.mojito.entity.TMTextUnitVariantComment;
+import com.box.l10n.mojito.rest.textunit.CustomZonedDateTimeDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import org.joda.time.DateTime;
 
 /**
  * Used to serialize/deserialize the note element used for import/export.
@@ -24,7 +26,10 @@ public class ImportExportNote {
   boolean includedInLocalizedFile = true;
   TMTextUnitVariant.Status status = TMTextUnitVariant.Status.APPROVED;
   List<TMTextUnitVariantComment> variantComments = new ArrayList<>();
-  DateTime createdDate;
+
+  @JsonDeserialize(using = CustomZonedDateTimeDeserializer.class)
+  ZonedDateTime createdDate;
+
   String pluralForm;
   String pluralFormOther;
 
@@ -68,11 +73,11 @@ public class ImportExportNote {
     this.variantComments = variantComments;
   }
 
-  public DateTime getCreatedDate() {
+  public ZonedDateTime getCreatedDate() {
     return createdDate;
   }
 
-  public void setCreatedDate(DateTime createdDate) {
+  public void setCreatedDate(ZonedDateTime createdDate) {
     this.createdDate = createdDate;
   }
 

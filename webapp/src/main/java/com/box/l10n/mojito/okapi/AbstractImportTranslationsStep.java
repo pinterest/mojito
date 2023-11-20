@@ -17,6 +17,7 @@ import com.box.l10n.mojito.service.tm.TMTextUnitCurrentVariantRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitVariantCommentService;
 import com.box.l10n.mojito.service.tm.TMTextUnitVariantRepository;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import net.sf.okapi.common.Event;
@@ -28,7 +29,6 @@ import net.sf.okapi.common.resource.Property;
 import net.sf.okapi.common.resource.RawDocument;
 import net.sf.okapi.common.resource.StartDocument;
 import net.sf.okapi.common.resource.TextContainer;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,7 +92,7 @@ public abstract class AbstractImportTranslationsStep extends AbstractMd5Computat
   boolean isMultilingual = false;
 
   /** Created date used for all the text unit imported */
-  DateTime createdDate;
+  ZonedDateTime createdDate;
 
   /** Target comment to set during import */
   String targetComment = null;
@@ -126,7 +126,7 @@ public abstract class AbstractImportTranslationsStep extends AbstractMd5Computat
     StartDocument startDocument = event.getStartDocument();
     isMultilingual = startDocument.isMultilingual();
 
-    createdDate = new DateTime();
+    createdDate = ZonedDateTime.now();
     if (dropImporterUsernameOverride == null) {
       createdBy = auditorAwareImpl.getCurrentAuditor().orElse(null);
     } else {
@@ -387,7 +387,7 @@ public abstract class AbstractImportTranslationsStep extends AbstractMd5Computat
       TMTextUnit tmTextUnit,
       TextContainer target,
       TMTextUnitVariant.Status status,
-      DateTime createdDate) {
+      ZonedDateTime createdDate) {
 
     Long targetLocaleId = getTargetLocaleId();
     Long tmTextUnitId = tmTextUnit.getId();

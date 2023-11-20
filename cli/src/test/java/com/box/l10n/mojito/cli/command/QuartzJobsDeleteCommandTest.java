@@ -8,7 +8,9 @@ import com.box.l10n.mojito.quartz.QuartzJobInfo;
 import com.box.l10n.mojito.quartz.QuartzPollableJob;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
 import com.box.l10n.mojito.quartz.QuartzService;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import org.junit.Test;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -46,12 +48,14 @@ public class QuartzJobsDeleteCommandTest extends CLITestBase {
 
     quartzPollableTaskScheduler.scheduleJob(
         QuartzJobInfo.newBuilder(AJob.class)
-            .withTriggerStartDate(DateTime.now().plus(100000).toDate())
+            .withTriggerStartDate(
+                Date.from(ZonedDateTime.now().plus(100, ChronoUnit.SECONDS).toInstant()))
             .withUniqueId(testJobName1)
             .build());
     quartzPollableTaskScheduler.scheduleJob(
         QuartzJobInfo.newBuilder(AJob.class)
-            .withTriggerStartDate(DateTime.now().plus(100000).toDate())
+            .withTriggerStartDate(
+                Date.from(ZonedDateTime.now().plus(100, ChronoUnit.SECONDS).toInstant()))
             .withUniqueId(testJobName2)
             .build());
 

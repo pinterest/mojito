@@ -7,7 +7,7 @@ import com.box.l10n.mojito.entity.MBlob;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
 import com.box.l10n.mojito.service.blobstorage.BlobStorage;
 import com.box.l10n.mojito.service.blobstorage.BlobStorageTestShared;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,7 +77,7 @@ public class DatabaseBlobStorageTest extends ServiceTestBase implements BlobStor
   @Test
   public void testCleanup() {
 
-    DateTime now = DateTime.now();
+    ZonedDateTime now = ZonedDateTime.now();
     MBlob notExperied = new MBlob();
     notExperied.setCreatedDate(now);
     notExperied.setExpireAfterSeconds(1000);

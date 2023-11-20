@@ -24,7 +24,6 @@
         <maven.release.version>2.5.3</maven.release.version>
         <okapi.version>1.43.0</okapi.version>
         <guava.version>29.0-jre</guava.version>
-        <hibernate.joda-time.version>1.4</hibernate.joda-time.version>
         <usertype.core.version>6.0.1.GA</usertype.core.version>
         <aspectj-maven-plugin.version>1.13.1</aspectj-maven-plugin.version>
         <!-- org.codehaus.mojo doesn't support Java 17+, use fork for now -->
@@ -79,6 +78,12 @@
             <groupId>com.ibm.icu</groupId>
             <artifactId>icu4j</artifactId>
             <version>${icu4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.15.3</version>
         </dependency>
     </dependencies>
 

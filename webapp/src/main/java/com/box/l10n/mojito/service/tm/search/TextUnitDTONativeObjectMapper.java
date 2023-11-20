@@ -3,10 +3,10 @@ package com.box.l10n.mojito.service.tm.search;
 import static com.box.l10n.mojito.entity.TMTextUnitVariant.Status.TRANSLATION_NEEDED;
 import static com.box.l10n.mojito.entity.TMTextUnitVariant.Status.valueOf;
 
+import com.box.l10n.mojito.DateTimeUtils;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
 import com.github.pnowy.nc.core.CriteriaResult;
 import com.github.pnowy.nc.core.mappers.NativeObjectMapper;
-import org.joda.time.DateTime;
 
 /** @author jaurambault */
 public class TextUnitDTONativeObjectMapper implements NativeObjectMapper<TextUnitDTO> {
@@ -15,7 +15,6 @@ public class TextUnitDTONativeObjectMapper implements NativeObjectMapper<TextUni
   public TextUnitDTO mapObject(CriteriaResult cr) {
 
     int idx = 0;
-
     TextUnitDTO t = new TextUnitDTO();
     t.setTmTextUnitId(cr.getLong(idx++));
     t.setTmTextUnitVariantId(cr.getLong(idx++));
@@ -40,7 +39,7 @@ public class TextUnitDTONativeObjectMapper implements NativeObjectMapper<TextUni
     // implementation to understand why getBoolean doesn't work. This
     // seems to work fine, use this code for now.
     t.setIncludedInLocalizedFile(Boolean.valueOf(includedInLocalizedFile));
-    t.setCreatedDate(new DateTime(cr.getDate(idx++)));
+    t.setCreatedDate(DateTimeUtils.fromDateToZonedDate(cr.getDate(idx++)));
     String assetDeleted = cr.getString(idx++);
     t.setAssetDeleted(Boolean.valueOf(assetDeleted));
     t.setPluralForm(cr.getString(idx++));
@@ -48,7 +47,7 @@ public class TextUnitDTONativeObjectMapper implements NativeObjectMapper<TextUni
     t.setRepositoryName(cr.getString(idx++));
     t.setAssetPath(cr.getString(idx++));
     t.setAssetTextUnitId(cr.getLong(idx++));
-    t.setTmTextUnitCreatedDate(new DateTime(cr.getDate(idx++)));
+    t.setTmTextUnitCreatedDate(DateTimeUtils.fromDateToZonedDate(cr.getDate(idx++)));
     t.setDoNotTranslate(Boolean.valueOf(includedInLocalizedFile));
 
     String doNotTranslate = cr.getString(idx++);

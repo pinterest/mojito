@@ -7,13 +7,13 @@ import com.box.l10n.mojito.rest.entity.VirtualAssetTextUnit;
 import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
 import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplateTest;
 import com.google.common.base.Strings;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
-import org.joda.time.format.PeriodFormat;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,14 +68,15 @@ public class VirtualAssetPerformanceTest {
 
     logger.debug("virtual asset id: {}", virtualAsset.getId());
 
-    DateTime start = DateTime.now();
+    ZonedDateTime start = ZonedDateTime.now();
     //        createSourceStrings(virtualAsset);
     //        importTranslations(repository, virtualAsset);
 
     pullSourceString(virtualAsset, repository);
 
     pullTranslations(virtualAsset, repository);
-    logger.debug("total: {}", PeriodFormat.getDefault().print(new Period(start, DateTime.now())));
+    Duration duration = Duration.between(start, ZonedDateTime.now());
+    logger.debug("total: {}", duration.toString());
   }
 
   private void pullSourceString(VirtualAsset virtualAsset, Repository repository) {
@@ -89,8 +90,9 @@ public class VirtualAssetPerformanceTest {
                   virtualAssetClient.getLocalizedTextUnits(
                       virtualAsset.getId(), rl.getLocale().getId(), "REMOVE_UNTRANSLATED");
               long end = System.currentTimeMillis();
-              logger.debug(
-                  "file generation: {}", PeriodFormat.getDefault().print(new Period(start, end)));
+              Duration duration =
+                  Duration.between(Instant.ofEpochMilli(start), Instant.ofEpochMilli(end));
+              logger.debug("file generation: {}", duration.toString());
 
               //                    ObjectMapper objectMapper = new ObjectMapper();
               //                    objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
@@ -113,8 +115,9 @@ public class VirtualAssetPerformanceTest {
                   virtualAssetClient.getLocalizedTextUnits(
                       virtualAsset.getId(), rl.getLocale().getId(), "REMOVE_UNTRANSLATED");
               long end = System.currentTimeMillis();
-              logger.debug(
-                  "file generation: {}", PeriodFormat.getDefault().print(new Period(start, end)));
+              Duration duration =
+                  Duration.between(Instant.ofEpochMilli(start), Instant.ofEpochMilli(end));
+              logger.debug("file generation: {}", duration.toString());
 
               //                    ObjectMapper objectMapper = new ObjectMapper();
               //                    objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
@@ -184,7 +187,8 @@ public class VirtualAssetPerformanceTest {
   }
 
   String getElapsedTime(PollableTask pollableTask) {
-    Period period = new Period(pollableTask.getCreatedDate(), pollableTask.getFinishedDate());
-    return PeriodFormat.getDefault().print(period);
+    Duration duration =
+        Duration.between(pollableTask.getCreatedDate(), pollableTask.getFinishedDate());
+    return duration.toString();
   }
 }

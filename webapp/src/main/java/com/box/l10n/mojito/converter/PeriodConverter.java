@@ -1,6 +1,6 @@
 package com.box.l10n.mojito.converter;
 
-import org.joda.time.Period;
+import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
@@ -12,11 +12,11 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ConfigurationPropertiesBinding
-public class PeriodConverter implements Converter<String, Period> {
+public class PeriodConverter implements Converter<String, Duration> {
 
   @Override
-  public Period convert(String source) {
-    long sourceAsLong = Long.valueOf(source);
-    return new Period(sourceAsLong);
+  public Duration convert(String source) {
+    long sourceAsLong = Long.parseLong(source);
+    return Duration.ofMillis(sourceAsLong);
   }
 }

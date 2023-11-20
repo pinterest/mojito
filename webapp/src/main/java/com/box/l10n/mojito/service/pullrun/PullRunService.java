@@ -5,7 +5,7 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.service.commit.CommitToPullRunRepository;
 import java.sql.Timestamp;
 import java.time.Duration;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,8 +46,8 @@ public class PullRunService {
   }
 
   public void deleteAllPullEntitiesOlderThan(Duration retentionDuration) {
-    DateTime beforeDate = DateTime.now().minusSeconds((int) retentionDuration.getSeconds());
-    Timestamp sqlBeforeDate = new Timestamp(beforeDate.toDate().getTime());
+    ZonedDateTime beforeDate = ZonedDateTime.now().minusSeconds(retentionDuration.getSeconds());
+    Timestamp sqlBeforeDate = Timestamp.from(beforeDate.toInstant());
 
     int batchNumber = 1;
     int deleteCount;

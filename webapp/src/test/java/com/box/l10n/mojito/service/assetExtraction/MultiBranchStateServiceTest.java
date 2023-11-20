@@ -16,9 +16,12 @@ import com.box.l10n.mojito.test.TestIdWatcher;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import org.assertj.core.api.Assertions;
-import org.joda.time.DateTime;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +67,9 @@ public class MultiBranchStateServiceTest extends ServiceTestBase {
 
     Assertions.assertThat(multiBranchStateForAssetExtractionId)
         .usingRecursiveComparison()
+        .withComparatorForType(
+            Comparator.comparing(zdt -> zdt.truncatedTo(ChronoUnit.SECONDS).toInstant()),
+            ZonedDateTime.class)
         .isEqualTo(expectedMultiBranchState);
 
     Optional<MultiBranchState> multiBranchStateForAssetExtractionAfter =
@@ -99,12 +105,12 @@ public class MultiBranchStateServiceTest extends ServiceTestBase {
     return expectedMultiBranchState;
   }
 
-  DateTime roundDateTimeToSecond(DateTime dateTime) {
-
-    if (dateTime.getMillisOfSecond() > 500) {
-      dateTime = dateTime.withMillisOfSecond(0).plusSeconds(1);
+  ZonedDateTime roundDateTimeToSecond(ZonedDateTime dateTime) {
+    long millisOfSecond = TimeUnit.NANOSECONDS.toMillis(dateTime.getNano());
+    if (millisOfSecond > 500) {
+      dateTime = dateTime.withNano(0).plusSeconds(1);
     } else {
-      dateTime = dateTime.withMillisOfSecond(0);
+      dateTime = dateTime.withNano(0);
     }
 
     return dateTime;

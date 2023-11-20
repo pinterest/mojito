@@ -5,9 +5,9 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.ThirdPartyFileChecksum;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.joda.time.DateTime;
 
 public class ThirdPartyTMSUtils {
 
@@ -32,7 +32,7 @@ public class ThirdPartyTMSUtils {
     } else if (thirdPartyFileChecksumOpt.isPresent()) {
       ThirdPartyFileChecksum thirdPartyFileChecksum = thirdPartyFileChecksumOpt.get();
       thirdPartyFileChecksum.setMd5(currentChecksum);
-      thirdPartyFileChecksum.setLastModifiedDate(new DateTime());
+      thirdPartyFileChecksum.setLastModifiedDate(ZonedDateTime.now());
       thirdPartyFileChecksumRepository.save(thirdPartyFileChecksum);
     } else {
       thirdPartyFileChecksumRepository.save(

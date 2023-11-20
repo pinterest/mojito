@@ -20,6 +20,8 @@ import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitVariantRepository;
 import java.io.File;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -27,7 +29,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -135,11 +136,15 @@ public class TMImportCommandTest extends CLITestBase {
 
     tmTextUnitVariant = iterator.next();
     assertEquals("1時間", tmTextUnitVariant.getContent());
-    assertEquals(new DateTime(1447198865000L), tmTextUnitVariant.getCreatedDate());
+    assertEquals(
+        Instant.ofEpochMilli(1447198865000L).atZone(ZoneId.systemDefault()),
+        tmTextUnitVariant.getCreatedDate());
 
     tmTextUnitVariant = iterator.next();
     assertEquals("1か月", tmTextUnitVariant.getContent());
-    assertEquals(new DateTime(1447198865000L), tmTextUnitVariant.getCreatedDate());
+    assertEquals(
+        Instant.ofEpochMilli(1447198865000L).atZone(ZoneId.systemDefault()),
+        tmTextUnitVariant.getCreatedDate());
 
     Set<TMTextUnitVariantComment> tmTextUnitVariantComments =
         tmTextUnitVariant.getTmTextUnitVariantComments();

@@ -19,9 +19,9 @@ import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.service.tm.TMTextUnitCurrentVariantRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.test.TestIdWatcher;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -86,7 +86,7 @@ public class CurrentVariantRollbackServiceTest extends ServiceTestBase {
         tmService.addTMTextUnit(
             tm.getId(), asset.getId(), "hello_world", "Hello World!", "Comments about hello world");
     Long tmTextUnitId = tmTextUnit.getId();
-    DateTime dateTimeBeforeAddingVariant = new DateTime();
+    ZonedDateTime dateTimeBeforeAddingVariant = ZonedDateTime.now();
 
     assertOnlyEnglishVariantIsPresent(tmTextUnitId);
 
@@ -116,7 +116,7 @@ public class CurrentVariantRollbackServiceTest extends ServiceTestBase {
         tmService.addTMTextUnit(
             tm.getId(), asset.getId(), "hello_world", "Hello World!", "Comments about hello world");
     Long tmTextUnitId = tmTextUnit.getId();
-    DateTime dateTimeBeforeAddingVariant = new DateTime();
+    ZonedDateTime dateTimeBeforeAddingVariant = ZonedDateTime.now();
 
     assertOnlyEnglishVariantIsPresent(tmTextUnitId);
 
@@ -157,7 +157,7 @@ public class CurrentVariantRollbackServiceTest extends ServiceTestBase {
     tmService.addCurrentTMTextUnitVariant(tmTextUnit.getId(), frLocaleId, "Bonjour le monde!");
     tmService.addCurrentTMTextUnitVariant(tmTextUnit.getId(), jaLocaleId, "こんにちは、世界!");
 
-    DateTime dateTimeBeforeChangingCurrentVariant = new DateTime();
+    ZonedDateTime dateTimeBeforeChangingCurrentVariant = ZonedDateTime.now();
 
     assertVariantContentForCurrentVariantEquals("Bonjour le monde!", frLocaleId, tmTextUnitId);
     assertVariantContentForCurrentVariantEquals("こんにちは、世界!", jaLocaleId, tmTextUnitId);
@@ -191,7 +191,7 @@ public class CurrentVariantRollbackServiceTest extends ServiceTestBase {
     tmService.addCurrentTMTextUnitVariant(tmTextUnit.getId(), frLocaleId, "Bonjour le monde!");
     tmService.addCurrentTMTextUnitVariant(tmTextUnit.getId(), jaLocaleId, "こんにちは、世界!");
 
-    DateTime dateTimeBeforeChangingCurrentVariant = new DateTime();
+    ZonedDateTime dateTimeBeforeChangingCurrentVariant = ZonedDateTime.now();
 
     assertVariantContentForCurrentVariantEquals("Bonjour le monde!", frLocaleId, tmTextUnitId);
     assertVariantContentForCurrentVariantEquals("こんにちは、世界!", jaLocaleId, tmTextUnitId);
@@ -246,7 +246,7 @@ public class CurrentVariantRollbackServiceTest extends ServiceTestBase {
     assertOnlyEnglishVariantIsPresent(tmTextUnit1Id);
     assertOnlyEnglishVariantIsPresent(tmTextUnit2Id);
 
-    DateTime dateTimeBeforeAddingVariant = new DateTime();
+    ZonedDateTime dateTimeBeforeAddingVariant = ZonedDateTime.now();
 
     Thread.sleep(10);
 
@@ -315,7 +315,7 @@ public class CurrentVariantRollbackServiceTest extends ServiceTestBase {
         "Bonjour le nouveau monde!", frLocaleId, tmTextUnit2Id);
     assertVariantContentForCurrentVariantEquals("新しい世界をこんにちは!", jaLocaleId, tmTextUnit2Id);
 
-    DateTime dateTimeBeforeChangingCurrentVariant = new DateTime();
+    ZonedDateTime dateTimeBeforeChangingCurrentVariant = ZonedDateTime.now();
 
     Thread.sleep(10);
 
@@ -388,7 +388,7 @@ public class CurrentVariantRollbackServiceTest extends ServiceTestBase {
         tmTextUnit2.getId(), frLocaleId, "Bonjour le nouveau monde!");
     tmService.addCurrentTMTextUnitVariant(tmTextUnit2.getId(), jaLocaleId, "新しい世界をこんにちは!");
 
-    DateTime dateTimeBeforeChangingCurrentVariant = new DateTime();
+    ZonedDateTime dateTimeBeforeChangingCurrentVariant = ZonedDateTime.now();
 
     Thread.sleep(10);
 

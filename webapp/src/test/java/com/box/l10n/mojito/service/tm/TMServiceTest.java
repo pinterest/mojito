@@ -47,6 +47,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,7 +59,6 @@ import net.sf.okapi.common.resource.TextUnit;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.proxy.HibernateProxy;
-import org.joda.time.DateTime;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -1009,7 +1009,7 @@ public class TMServiceTest extends ServiceTestBase {
             null,
             TMTextUnitVariant.Status.REVIEW_NEEDED,
             true,
-            new DateTime());
+            ZonedDateTime.now());
 
     TMTextUnitVariant variant3 =
         tmService.addCurrentTMTextUnitVariant(
@@ -1409,8 +1409,8 @@ public class TMServiceTest extends ServiceTestBase {
 
   private String removeIdsAndDatesFromJson(String xliff) {
     String cleanXliff = xliff.replaceAll("\"id\":\\d+,?", "");
-    cleanXliff = cleanXliff.replaceAll("\"createdDate\":\\d+,?", "");
-    cleanXliff = cleanXliff.replaceAll("\"lastModifiedDate\":\\d+,?", "");
+    cleanXliff = cleanXliff.replaceAll("\"createdDate\":\\d+\\.\\d+,?", "");
+    cleanXliff = cleanXliff.replaceAll("\"lastModifiedDate\":\\d+\\.\\d+,?", "");
     cleanXliff = cleanXliff.replaceAll(",\\}", "}");
 
     return cleanXliff;

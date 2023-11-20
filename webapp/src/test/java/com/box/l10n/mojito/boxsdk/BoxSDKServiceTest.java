@@ -14,6 +14,7 @@ import com.box.sdk.BoxFile;
 import com.box.sdk.BoxFolder;
 import com.box.sdk.BoxItem;
 import com.box.sdk.BoxSharedLink;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -24,7 +25,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -227,7 +227,7 @@ public class BoxSDKServiceTest extends WSTestBase {
 
     BoxFolder rootFolder = boxSDKService.getRootFolder();
 
-    DateTime dateTime = new DateTime();
+    ZonedDateTime dateTime = ZonedDateTime.now();
     dateTime = dateTime.minusDays(1);
 
     boxSDKService.deleteFolderContentOlderThan(rootFolder.getID(), dateTime);

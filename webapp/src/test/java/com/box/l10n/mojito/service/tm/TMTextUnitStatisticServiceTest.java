@@ -12,11 +12,12 @@ import com.box.l10n.mojito.service.asset.AssetService;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
 import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.test.TestIdWatcher;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import org.joda.time.DateTime;
 import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -52,7 +53,7 @@ public class TMTextUnitStatisticServiceTest extends ServiceTestBase {
   String tmTextComment = "comment";
   Double lastDayEstimatedVolume = 3D;
   Double lastPeriodEstimatedVolume = 42D;
-  DateTime lastSeenDate = new DateTime(2021, 11, 25, 0, 0);
+  ZonedDateTime lastSeenDate = ZonedDateTime.of(2021, 11, 25, 0, 0, 0, 0, ZoneId.systemDefault());
 
   private void createTestTextUnitData(Repository repository) {
     logger.debug("Create data for test");
@@ -132,7 +133,8 @@ public class TMTextUnitStatisticServiceTest extends ServiceTestBase {
     ImportTextUnitStatisticsBody statisticWithNameOnly = getImportTextUnitStatisticsBody();
     statisticWithNameOnly.setContent(null);
     statisticWithNameOnly.setComment(null);
-    statisticWithNameOnly.setLastSeenDate(new DateTime(2000, 1, 1, 0, 0));
+    statisticWithNameOnly.setLastSeenDate(
+        ZonedDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault()));
     textUnitStatistics.add(statisticWithNameOnly);
 
     tmTextUnitStatisticService

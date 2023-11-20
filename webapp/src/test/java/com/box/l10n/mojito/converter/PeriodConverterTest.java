@@ -2,7 +2,7 @@ package com.box.l10n.mojito.converter;
 
 import static org.junit.Assert.assertEquals;
 
-import org.joda.time.Period;
+import java.time.Duration;
 import org.junit.Test;
 
 /** @author jeanaurambault */
@@ -11,8 +11,8 @@ public class PeriodConverterTest {
   @Test
   public void testConvert() {
     PeriodConverter periodConverter = new PeriodConverter();
-    Period expResult = new Period(0, 1, 0, 0);
-    Period result = periodConverter.convert("60000");
+    Duration expResult = Duration.ofMillis(60000);
+    Duration result = periodConverter.convert("60000");
     assertEquals(expResult, result);
   }
 

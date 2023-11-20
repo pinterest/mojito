@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.boxsdk;
 
+import com.box.l10n.mojito.DateTimeUtils;
 import com.box.sdk.BoxAPIConnection;
 import com.box.sdk.BoxAPIException;
 import com.box.sdk.BoxFile;
@@ -11,10 +12,10 @@ import com.google.common.base.Strings;
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.IOUtils;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -344,7 +345,7 @@ public class BoxSDKService {
    * @param olderThan an instant to check against
    * @throws BoxSDKServiceException
    */
-  public void deleteFolderContentOlderThan(String folderId, DateTime olderThan)
+  public void deleteFolderContentOlderThan(String folderId, ZonedDateTime olderThan)
       throws BoxSDKServiceException {
     try {
       BoxFolder boxFolder = new BoxFolder(getBoxAPIConnection(), folderId);
@@ -353,16 +354,18 @@ public class BoxSDKService {
 
         if (itemInfo instanceof BoxFolder.Info) {
           BoxFolder subFolder = (BoxFolder) itemInfo.getResource();
-
-          if (olderThan.isAfter(subFolder.getInfo().getCreatedAt().getTime())) {
+          ZonedDateTime subFolderCreatedAt =
+              DateTimeUtils.fromDateToZonedDate(subFolder.getInfo().getCreatedAt());
+          if (olderThan.isAfter(subFolderCreatedAt)) {
             subFolder.delete(true);
           }
 
         } else if (itemInfo instanceof BoxFile.Info) {
 
           BoxFile file = (BoxFile) itemInfo.getResource();
-
-          if (olderThan.isAfter(file.getInfo().getCreatedAt().getTime())) {
+          ZonedDateTime fileCreatedAt =
+              DateTimeUtils.fromDateToZonedDate(file.getInfo().getCreatedAt());
+          if (olderThan.isAfter(fileCreatedAt)) {
             file.delete();
           }
         }

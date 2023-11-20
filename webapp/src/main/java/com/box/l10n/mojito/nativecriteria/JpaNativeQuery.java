@@ -2,11 +2,12 @@ package com.box.l10n.mojito.nativecriteria;
 
 import com.github.pnowy.nc.core.NativeQuery;
 import com.github.pnowy.nc.core.QueryInfo;
+import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import javax.persistence.Query;
 import javax.persistence.TemporalType;
-import org.joda.time.DateTime;
 
 /** @author jeanaurambault */
 public class JpaNativeQuery implements NativeQuery {
@@ -74,9 +75,9 @@ public class JpaNativeQuery implements NativeQuery {
     return queryInfo;
   }
 
-  public NativeQuery setParameter(String name, DateTime dateTime) {
+  public NativeQuery setParameter(String name, ZonedDateTime dateTime) {
     queryInfo.getParameters().put(name, dateTime);
-    query.setParameter(name, dateTime.toDate(), TemporalType.TIMESTAMP);
+    query.setParameter(name, Date.from(dateTime.toInstant()), TemporalType.TIMESTAMP);
     return this;
   }
 }

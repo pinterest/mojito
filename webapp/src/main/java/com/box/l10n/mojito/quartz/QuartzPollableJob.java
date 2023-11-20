@@ -64,7 +64,8 @@ public abstract class QuartzPollableJob<I, O> implements Job {
     meterRegistry
         .timer("QuartzPollableJob.currentPollableTask.timeFromScheduledToExecution", metricTags)
         .record(
-            System.currentTimeMillis() - currentPollableTask.getCreatedDate().getMillis(),
+            System.currentTimeMillis()
+                - currentPollableTask.getCreatedDate().toInstant().toEpochMilli(),
             TimeUnit.MILLISECONDS);
 
     ExceptionHolder exceptionHolder = new ExceptionHolder(currentPollableTask);
@@ -103,8 +104,8 @@ public abstract class QuartzPollableJob<I, O> implements Job {
       meterRegistry
           .timer("QuartzPollableJob.currentPollableTask.timeFromScheduledToFinish", metricTags)
           .record(
-              currentPollableTask.getFinishedDate().getMillis()
-                  - currentPollableTask.getCreatedDate().getMillis(),
+              currentPollableTask.getFinishedDate().toInstant().toEpochMilli()
+                  - currentPollableTask.getCreatedDate().toInstant().toEpochMilli(),
               TimeUnit.MILLISECONDS);
 
       executeSample.stop(

@@ -18,12 +18,12 @@ import com.box.l10n.mojito.mustache.MustacheTemplateEngine;
 import com.box.l10n.mojito.utils.DateTimeUtils;
 import com.box.l10n.mojito.utils.ServerConfig;
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -86,20 +86,20 @@ public class SlaCheckerEmailServiceTest {
 
   @Test
   public void testShouldResendEmailYes() {
-    DateTime now = new DateTime("2018-06-08T14:00:00.000-07:00");
+    ZonedDateTime now = ZonedDateTime.parse("2018-06-08T14:00:00.000-07:00");
     doReturn(now).when(dateTimeUtils).now();
 
-    DateTime previousEmailDateTime = new DateTime("2018-06-08T12:00:00.000-07:00");
+    ZonedDateTime previousEmailDateTime = ZonedDateTime.parse("2018-06-08T12:00:00.000-07:00");
     boolean shouldResendEmail = slaCheckerEmailService.shouldResendEmail(previousEmailDateTime);
     assertTrue(shouldResendEmail);
   }
 
   @Test
   public void testShouldResendEmailNo() {
-    DateTime now = new DateTime("2018-06-08T14:00:00.000-07:00");
+    ZonedDateTime now = ZonedDateTime.parse("2018-06-08T14:00:00.000-07:00");
     doReturn(now).when(dateTimeUtils).now();
 
-    DateTime previousEmailDateTime = new DateTime("2018-06-08T13:30:00.000-07:00");
+    ZonedDateTime previousEmailDateTime = ZonedDateTime.parse("2018-06-08T13:30:00.000-07:00");
     boolean shouldResendEmail = slaCheckerEmailService.shouldResendEmail(previousEmailDateTime);
     assertFalse(shouldResendEmail);
   }

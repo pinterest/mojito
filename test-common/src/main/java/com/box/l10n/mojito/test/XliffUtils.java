@@ -31,7 +31,7 @@ public class XliffUtils {
 
       @Override
       public String apply(String input) {
-        return input.replaceAll("\"createdDate\":\\d+,?", "").replaceAll(",\\}", "}");
+        return input.replaceAll("\"createdDate\":\\d+\\.\\d+,?", "").replaceAll(",\\}", "}");
       }
     };
   }
