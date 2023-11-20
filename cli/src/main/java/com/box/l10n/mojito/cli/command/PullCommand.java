@@ -273,39 +273,41 @@ public class PullCommand extends Command {
     logger.debug("Generate localized files (without locale mapping)");
 
     if (isParallel) {
-
-      Asset assetByPathAndRepositoryId;
-
-      try {
-        logger.debug("Getting the asset for path: {}", sourceFileMatch.getSourcePath());
-        assetByPathAndRepositoryId =
-            assetClient.getAssetByPathAndRepositoryId(
-                sourceFileMatch.getSourcePath(), repository.getId());
-      } catch (AssetNotFoundException e) {
-        throw new CommandException(
-            "Asset with path ["
-                + sourceFileMatch.getSourcePath()
-                + "] was not found in repo ["
-                + repositoryParam
-                + "]",
-            e);
-      }
-      getLocalizedAssetBodyParallel(
-              sourceFileMatch,
-              new ArrayList<>(repositoryLocalesWithoutRootLocale.values()),
-              filterOptions,
-              assetByPathAndRepositoryId,
-              commandHelper.getFileContentWithXcodePatch(sourceFileMatch))
-          .forEach(
-              (bcp47Tag, localizedAsset) -> {
-                consoleWriter.a("Writing locale file: ").fg(Color.CYAN).a(bcp47Tag).print();
-                writeLocalizedAssetToTargetDirectory(localizedAsset, sourceFileMatch);
-              });
+      generateLocalizedFiles(repository, sourceFileMatch, filterOptions);
     } else {
       for (RepositoryLocale repositoryLocale : repositoryLocalesWithoutRootLocale.values()) {
         generateLocalizedFile(repository, sourceFileMatch, filterOptions, null, repositoryLocale);
       }
     }
+  }
+
+  private void generateLocalizedFiles(
+      Repository repository, FileMatch sourceFileMatch, List<String> filterOptions) {
+    Asset assetByPathAndRepositoryId;
+
+    try {
+      logger.debug("Getting the asset for path: {}", sourceFileMatch.getSourcePath());
+      assetByPathAndRepositoryId =
+          assetClient.getAssetByPathAndRepositoryId(
+              sourceFileMatch.getSourcePath(), repository.getId());
+    } catch (AssetNotFoundException e) {
+      throw new CommandException(
+          "Asset with path ["
+              + sourceFileMatch.getSourcePath()
+              + "] was not found in repo ["
+              + repositoryParam
+              + "]",
+          e);
+    }
+    getLocalizedAssetBodyParallel(
+            sourceFileMatch,
+            new ArrayList<>(repositoryLocalesWithoutRootLocale.values()),
+            filterOptions,
+            assetByPathAndRepositoryId,
+            commandHelper.getFileContentWithXcodePatch(sourceFileMatch))
+        .entrySet()
+        .parallelStream()
+        .forEach(entry -> writeLocalizedAssetToTargetDirectory(entry.getValue(), sourceFileMatch));
   }
 
   /**
@@ -324,11 +326,29 @@ public class PullCommand extends Command {
     logger.debug("Generate localzied files with locale mapping");
 
     if (isParallel) {
+
+      Asset assetByPathAndRepositoryId;
+
+      try {
+        logger.debug("Getting the asset for path: {}", sourceFileMatch.getSourcePath());
+        assetByPathAndRepositoryId =
+            assetClient.getAssetByPathAndRepositoryId(
+                sourceFileMatch.getSourcePath(), repository.getId());
+      } catch (AssetNotFoundException e) {
+        throw new CommandException(
+            "Asset with path ["
+                + sourceFileMatch.getSourcePath()
+                + "] was not found in repo ["
+                + repositoryParam
+                + "]",
+            e);
+      }
+
       getLocalizedAssetBodyParallel(
               sourceFileMatch,
               new ArrayList<>(repositoryLocalesWithoutRootLocale.values()),
               filterOptions,
-              null,
+              assetByPathAndRepositoryId,
               commandHelper.getFileContentWithXcodePatch(sourceFileMatch))
           .forEach(
               (bcp47Tag, localizedAsset) ->
@@ -434,7 +454,21 @@ public class PullCommand extends Command {
 
     Path relativeTargetFilePath = commandDirectories.relativizeWithUserDirectory(targetPath);
 
-    consoleWriter.a(" --> ").fg(Color.MAGENTA).a(relativeTargetFilePath.toString()).println();
+    if (!isParallel) {
+      consoleWriter.a(" --> ").fg(Color.MAGENTA).a(relativeTargetFilePath.toString()).println();
+    } else {
+      synchronized (this) {
+        consoleWriter
+            .a(" - Processed locale: ")
+            .fg(Color.CYAN)
+            .a(localizedAsset.getBcp47Tag())
+            .fg(Color.WHITE)
+            .a(" --> ")
+            .fg(Color.MAGENTA)
+            .a(relativeTargetFilePath.toString())
+            .println();
+      }
+    }
   }
 
   LocalizedAssetBody getLocalizedAsset(
