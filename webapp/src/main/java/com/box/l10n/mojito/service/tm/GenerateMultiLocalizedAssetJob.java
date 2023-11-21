@@ -17,16 +17,20 @@ public class GenerateMultiLocalizedAssetJob
   public MultiLocalizedAssetBody call(MultiLocalizedAssetBody input) throws Exception {
 
     for (LocaleInfo localeInfo : input.getLocaleInfos()) {
+      String outputTag =
+          localeInfo.getOutputBcp47tag() != null
+              ? localeInfo.getOutputBcp47tag()
+              : localeInfo.getBcp47Tag();
       QuartzJobInfo<LocalizedAssetBody, LocalizedAssetBody> quartzJobInfo =
           QuartzJobInfo.newBuilder(GenerateLocalizedAssetJob.class)
               .withInlineInput(false)
               .withParentId(getParentId())
               .withInput(createLocalizedAssetBody(localeInfo, input))
               .withScheduler(input.getSchedulerName())
-              .withMessage("Generate localized asset for " + localeInfo.getBcp47Tag())
+              .withMessage("Generate localized asset for " + outputTag)
               .build();
       input.addGenerateLocalizedAddedJobIdToMap(
-          localeInfo.getBcp47Tag(),
+          outputTag,
           quartzPollableTaskScheduler.scheduleJob(quartzJobInfo).getPollableTask().getId());
     }
 
@@ -44,6 +48,7 @@ public class GenerateMultiLocalizedAssetJob
     localizedAssetBody.setContent(input.getSourceContent());
     localizedAssetBody.setAssetId(input.getAssetId());
     localizedAssetBody.setBcp47Tag(localeInfo.getBcp47Tag());
+    localizedAssetBody.setOutputBcp47tag(localeInfo.getOutputBcp47tag());
     localizedAssetBody.setContent(input.getSourceContent());
     localizedAssetBody.setFilterConfigIdOverride(input.getFilterConfigIdOverride());
     localizedAssetBody.setFilterOptions(input.getFilterOptions());

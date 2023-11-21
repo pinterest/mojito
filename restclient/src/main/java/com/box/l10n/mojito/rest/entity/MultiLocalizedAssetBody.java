@@ -34,13 +34,6 @@ public class MultiLocalizedAssetBody {
   String sourceContent;
 
   /**
-   * Optional, can be null. Allows to generate the file for a bcp47 tag that is different from the
-   * repository locale (which is still used to fetch the translations). This can be used to generate
-   * a file with tag "fr" even if the translations are stored with fr-FR repository locale.
-   */
-  Map<String, String> outputBcp47TagMap;
-
-  /**
    * Optional, can be null. Allows to specify a specific Okapi filter to use to process the asset
    */
   FilterConfigIdOverride filterConfigIdOverride;
@@ -75,14 +68,6 @@ public class MultiLocalizedAssetBody {
 
   public void setSourceContent(String sourceContent) {
     this.sourceContent = sourceContent;
-  }
-
-  public Map<String, String> getOutputBcp47TagMap() {
-    return outputBcp47TagMap;
-  }
-
-  public void setOutputBcp47TagMap(Map<String, String> outputBcp47TagMap) {
-    this.outputBcp47TagMap = outputBcp47TagMap;
   }
 
   public FilterConfigIdOverride getFilterConfigIdOverride() {
