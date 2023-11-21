@@ -13,6 +13,7 @@ import com.box.l10n.mojito.rest.entity.Repository;
 import com.box.l10n.mojito.rest.entity.RepositoryLocale;
 import com.box.l10n.mojito.rest.entity.SourceAsset;
 import com.box.l10n.mojito.rest.entity.XliffExportBody;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,6 +110,7 @@ public class AssetClient extends BaseClient {
       Long assetId,
       String content,
       List<RepositoryLocale> locales,
+      Map<RepositoryLocale, List<String>> localeIdToOutputTagsMap,
       FilterConfigIdOverride filterConfigIdOverride,
       List<String> filterOptions,
       LocalizedAssetBody.Status status,
@@ -121,7 +123,8 @@ public class AssetClient extends BaseClient {
 
     List<LocaleInfo> localeInfos =
         locales.stream()
-            .map(locale -> mapRepoLocaleToLocaleInfo(locale))
+            .map(locale -> mapRepoLocaleToLocaleInfos(locale, localeIdToOutputTagsMap))
+            .flatMap(List::stream)
             .collect(Collectors.toList());
 
     MultiLocalizedAssetBody multiLocalizedAssetBody = new MultiLocalizedAssetBody();
@@ -142,12 +145,25 @@ public class AssetClient extends BaseClient {
     return pollableTask;
   }
 
-  private static LocaleInfo mapRepoLocaleToLocaleInfo(RepositoryLocale locale) {
-    LocaleInfo localeInfo = new LocaleInfo();
-    localeInfo.setLocaleId(locale.getLocale().getId());
-    localeInfo.setBcp47Tag(locale.getLocale().getBcp47Tag());
-    // TODO(mallen): Set output bcp47 Tag
-    return localeInfo;
+  private static List<LocaleInfo> mapRepoLocaleToLocaleInfos(
+      RepositoryLocale locale, Map<RepositoryLocale, List<String>> repoLocaleToOutputTagsMap) {
+    List<LocaleInfo> localeInfos = new ArrayList<>();
+    if (repoLocaleToOutputTagsMap.containsKey(locale)) {
+      for (String outputTag : repoLocaleToOutputTagsMap.get(locale)) {
+        LocaleInfo localeInfo = new LocaleInfo();
+        localeInfo.setLocaleId(locale.getLocale().getId());
+        localeInfo.setBcp47Tag(locale.getLocale().getBcp47Tag());
+        localeInfo.setOutputBcp47tag(outputTag);
+        localeInfos.add(localeInfo);
+      }
+    } else {
+      LocaleInfo localeInfo = new LocaleInfo();
+      localeInfo.setLocaleId(locale.getLocale().getId());
+      localeInfo.setBcp47Tag(locale.getLocale().getBcp47Tag());
+      localeInfos.add(localeInfo);
+    }
+
+    return localeInfos;
   }
 
   public PollableTask getLocalizedAssetForContentAsync(
