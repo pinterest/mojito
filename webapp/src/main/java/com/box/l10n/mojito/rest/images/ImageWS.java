@@ -70,7 +70,8 @@ public class ImageWS {
         (String)
             httpServletRequest.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
 
-    return path.substring(PATH_PREFIX.length());
+    final String substring = path.substring(PATH_PREFIX.length());
+    return substring;
   }
 
   /**
