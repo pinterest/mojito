@@ -260,6 +260,8 @@ public class AssetWS {
       multiLocalizedAssetBody.setAssetId(assetId);
     }
 
+    multiLocalizedAssetBody.setSchedulerName(schedulerName);
+
     Asset asset = assetRepository.getOne(assetId);
     meterRegistry
         .counter(
@@ -271,7 +273,7 @@ public class AssetWS {
         QuartzJobInfo.newBuilder(GenerateMultiLocalizedAssetJob.class)
             .withInlineInput(false)
             .withInput(multiLocalizedAssetBody)
-            .withScheduler(schedulerName)
+            .withScheduler(multiLocalizedAssetBody.getSchedulerName())
             .build();
     PollableFuture<MultiLocalizedAssetBody> multiLocalizedAssetBodyPollableFuture =
         quartzPollableTaskScheduler.scheduleJob(quartzJobInfo);

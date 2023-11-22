@@ -152,14 +152,12 @@ public class AssetClient extends BaseClient {
       for (String outputTag : repoLocaleToOutputTagsMap.get(locale)) {
         LocaleInfo localeInfo = new LocaleInfo();
         localeInfo.setLocaleId(locale.getLocale().getId());
-        localeInfo.setBcp47Tag(locale.getLocale().getBcp47Tag());
         localeInfo.setOutputBcp47tag(outputTag);
         localeInfos.add(localeInfo);
       }
     } else {
       LocaleInfo localeInfo = new LocaleInfo();
       localeInfo.setLocaleId(locale.getLocale().getId());
-      localeInfo.setBcp47Tag(locale.getLocale().getBcp47Tag());
       localeInfos.add(localeInfo);
     }
 
