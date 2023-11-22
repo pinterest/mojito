@@ -29,16 +29,28 @@ public class CommandWaitForPollableTaskListener implements WaitForPollableTaskLi
    */
   int numberAfterPollCallback = 0;
 
+  boolean silent;
+
+  CommandWaitForPollableTaskListener() {
+    this.silent = false;
+  }
+
+  CommandWaitForPollableTaskListener(boolean silent) {
+    this.silent = silent;
+  }
+
   @Override
   public void afterPoll(PollableTask pollableTask) {
 
-    if (numberAfterPollCallback++ > 0) {
-      consoleWriter.erasePreviouslyPrintedLines();
+    if (!silent) {
+      if (numberAfterPollCallback++ > 0) {
+        consoleWriter.erasePreviouslyPrintedLines();
+      }
+
+      printPollableTaskMessages(pollableTask, 0);
+
+      consoleWriter.print();
     }
-
-    printPollableTaskMessages(pollableTask, 0);
-
-    consoleWriter.print();
   }
 
   /**
