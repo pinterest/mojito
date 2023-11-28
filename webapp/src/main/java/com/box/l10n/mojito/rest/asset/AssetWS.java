@@ -266,7 +266,11 @@ public class AssetWS {
     meterRegistry
         .counter(
             "assetWS.getLocalizedAssetForContentParallel",
-            Tags.of("repositoryId", asset.getRepository().getId().toString()))
+            Tags.of(
+                "repositoryId",
+                asset.getRepository().getId().toString(),
+                "repositoryName",
+                asset.getRepository().getName()))
         .increment();
 
     QuartzJobInfo<MultiLocalizedAssetBody, MultiLocalizedAssetBody> quartzJobInfo =

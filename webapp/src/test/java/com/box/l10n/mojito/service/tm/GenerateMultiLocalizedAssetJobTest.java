@@ -20,6 +20,8 @@ import com.box.l10n.mojito.rest.asset.MultiLocalizedAssetBody;
 import com.box.l10n.mojito.service.asset.AssetRepository;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.repository.RepositoryLocaleRepository;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Before;
@@ -48,6 +50,8 @@ public class GenerateMultiLocalizedAssetJobTest {
 
   @Mock Asset assetMock;
 
+  MeterRegistry meterRegistry = new SimpleMeterRegistry();
+
   @Mock RepositoryLocaleRepository repositoryLocaleRepositoryMock;
 
   @Mock Repository repositoryMock;
@@ -72,6 +76,7 @@ public class GenerateMultiLocalizedAssetJobTest {
     when(localeMock.getBcp47Tag()).thenReturn("fr-FR").thenReturn("ga-IE");
     when(repositoryMock.getId()).thenReturn(1L);
     when(assetMock.getRepository()).thenReturn(repositoryMock);
+    when(repositoryMock.getName()).thenReturn("testRepo");
     when(assetRepositoryMock.findById(isA(Long.class)))
         .thenReturn(java.util.Optional.of(assetMock));
     when(pollableFutureMock.getPollableTask()).thenReturn(pollableTaskMock);
@@ -79,6 +84,7 @@ public class GenerateMultiLocalizedAssetJobTest {
     when(quartzPollableTaskSchedulerMock.scheduleJob(isA(QuartzJobInfo.class)))
         .thenReturn(pollableFutureMock);
     generateMultiLocalizedAssetJob.quartzPollableTaskScheduler = quartzPollableTaskSchedulerMock;
+    generateMultiLocalizedAssetJob.meterRegistry = meterRegistry;
     multiLocalizedAssetBody = new MultiLocalizedAssetBody();
     List<LocaleInfo> localeInfos = new ArrayList<>();
     LocaleInfo localeInfo = new LocaleInfo();

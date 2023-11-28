@@ -6,8 +6,6 @@ public class LocaleInfo {
 
   String outputBcp47tag;
 
-  String localizedContent;
-
   public Long getLocaleId() {
     return localeId;
   }
@@ -22,13 +20,5 @@ public class LocaleInfo {
 
   public void setOutputBcp47tag(String outputBcp47tag) {
     this.outputBcp47tag = outputBcp47tag;
-  }
-
-  public String getLocalizedContent() {
-    return localizedContent;
-  }
-
-  public void setLocalizedContent(String localizedContent) {
-    this.localizedContent = localizedContent;
   }
 }
