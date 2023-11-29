@@ -12,13 +12,11 @@ import com.box.l10n.mojito.rest.client.AssetClient;
 import com.box.l10n.mojito.rest.client.exception.AssetNotFoundException;
 import com.box.l10n.mojito.rest.entity.Asset;
 import com.box.l10n.mojito.rest.entity.LocalizedAssetBody;
-import com.box.l10n.mojito.rest.entity.MultiLocalizedAssetBody;
 import com.box.l10n.mojito.rest.entity.PollableTask;
 import com.box.l10n.mojito.rest.entity.Repository;
 import com.box.l10n.mojito.rest.entity.RepositoryLocale;
 import com.box.l10n.mojito.rest.entity.RepositoryLocaleStatistic;
 import com.box.l10n.mojito.rest.entity.RepositoryStatistic;
-import com.google.common.collect.Lists;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
@@ -192,8 +190,6 @@ public class PullCommand extends Command {
 
   String pullRunName;
 
-  Map<Long, FileMatch> pollableTaskIdToFileMatchMap;
-
   @Override
   public void execute() throws CommandException {
 
@@ -206,10 +202,6 @@ public class PullCommand extends Command {
 
     repository = commandHelper.findRepositoryByName(repositoryParam);
 
-    if (isParallel) {
-      pollableTaskIdToFileMatchMap = new HashMap<>();
-    }
-
     if (onlyIfFullyTranslated) {
       initLocaleFullyTranslatedMap(repository);
     }
@@ -221,43 +213,26 @@ public class PullCommand extends Command {
     localeMappings = localeMappingHelper.getLocaleMapping(localeMappingParam);
 
     if (isParallel) {
-      consoleWriter.a("Pulling localized assets in parallel").newLine().println();
-    }
+      PullCommandParallel pullCommandParallel = new PullCommandParallel(this);
+      pullCommandParallel.pull();
+    } else {
+      for (FileMatch sourceFileMatch :
+          commandHelper.getSourceFileMatches(
+              commandDirectories,
+              fileTypes,
+              sourceLocale,
+              sourcePathFilterRegex,
+              directoriesIncludePatterns,
+              directoriesExcludePatterns)) {
 
-    for (FileMatch sourceFileMatch :
-        commandHelper.getSourceFileMatches(
-            commandDirectories,
-            fileTypes,
-            sourceLocale,
-            sourcePathFilterRegex,
-            directoriesIncludePatterns,
-            directoriesExcludePatterns)) {
-
-      if (isParallel) {
-        consoleWriter
-            .a("Sending localize request for: ")
-            .fg(Color.CYAN)
-            .a(sourceFileMatch.getSourcePath())
-            .println();
-      } else {
         consoleWriter.a("Localizing: ").fg(Color.CYAN).a(sourceFileMatch.getSourcePath()).println();
-      }
 
-      List<String> filterOptions =
-          commandHelper.getFilterOptionsOrDefaults(
-              sourceFileMatch.getFileType(), filterOptionsParam);
+        List<String> filterOptions =
+            commandHelper.getFilterOptionsOrDefaults(
+                sourceFileMatch.getFileType(), filterOptionsParam);
 
-      if (isParallel) {
-        sendContentForLocalizedGeneration(sourceFileMatch, filterOptions);
-      } else {
         generateLocalizedFiles(sourceFileMatch, filterOptions);
       }
-    }
-
-    if (isParallel) {
-      consoleWriter.println();
-      consoleWriter.a("Generating localized files").println();
-      pollForLocalizedFiles();
     }
 
     writePullRunFileIfNeeded();
@@ -271,46 +246,6 @@ public class PullCommand extends Command {
     } else {
       generateLocalizedFilesWithoutLocaleMapping(repository, sourceFileMatch, filterOptions);
     }
-  }
-
-  private void sendContentForLocalizedGeneration(
-      FileMatch sourceFileMatch, List<String> filterOptions) {
-    if (localeMappingParam != null) {
-      pollableTaskIdToFileMatchMap.put(
-          generateLocalizedFilesWithLocaleMappingParallel(
-                  repository, sourceFileMatch, filterOptions)
-              .getId(),
-          sourceFileMatch);
-    } else {
-      pollableTaskIdToFileMatchMap.put(
-          generateLocalizedFilesWithoutLocaleMappingParallel(
-                  repository, sourceFileMatch, filterOptions)
-              .getId(),
-          sourceFileMatch);
-    }
-  }
-
-  private void pollForLocalizedFiles() {
-    pollableTaskIdToFileMatchMap
-        .entrySet()
-        .parallelStream()
-        .forEach(
-            entry -> {
-              commandHelper.waitForPollableTaskSilencedOutput(entry.getKey());
-              String jsonOutput =
-                  commandHelper.pollableTaskClient.getPollableTaskOutput(entry.getKey());
-              MultiLocalizedAssetBody multiLocalizedAsset =
-                  objectMapper.readValueUnchecked(jsonOutput, MultiLocalizedAssetBody.class);
-              for (String outputTag :
-                  multiLocalizedAsset.getGenerateLocalizedAssetJobIds().keySet()) {
-                jsonOutput =
-                    commandHelper.pollableTaskClient.getPollableTaskOutput(
-                        multiLocalizedAsset.getGenerateLocalizedAssetJobIds().get(outputTag));
-                writeLocalizedAssetToTargetDirectory(
-                    objectMapper.readValueUnchecked(jsonOutput, LocalizedAssetBody.class),
-                    entry.getValue());
-              }
-            });
   }
 
   void initPullRunName() {
@@ -332,19 +267,6 @@ public class PullCommand extends Command {
     }
   }
 
-  PollableTask generateLocalizedFilesWithoutLocaleMappingParallel(
-      Repository repository, FileMatch sourceFileMatch, List<String> filterOptions)
-      throws CommandException {
-
-    logger.debug("Generate localized files (without locale mapping)");
-
-    return generateLocalizedFiles(
-        repository,
-        sourceFileMatch,
-        filterOptions,
-        Lists.newArrayList(repositoryLocalesWithoutRootLocale.values()));
-  }
-
   /**
    * Default generation, uses the locales defined in the repository to generate the localized files.
    *
@@ -359,71 +281,9 @@ public class PullCommand extends Command {
 
     logger.debug("Generate localized files (without locale mapping)");
 
-    if (isParallel) {
-      generateLocalizedFiles(
-          repository,
-          sourceFileMatch,
-          filterOptions,
-          Lists.newArrayList(repositoryLocalesWithoutRootLocale.values()));
-    } else {
-      for (RepositoryLocale repositoryLocale : repositoryLocalesWithoutRootLocale.values()) {
-        generateLocalizedFile(repository, sourceFileMatch, filterOptions, null, repositoryLocale);
-      }
+    for (RepositoryLocale repositoryLocale : repositoryLocalesWithoutRootLocale.values()) {
+      generateLocalizedFile(repository, sourceFileMatch, filterOptions, null, repositoryLocale);
     }
-  }
-
-  private PollableTask generateLocalizedFiles(
-      Repository repository,
-      FileMatch sourceFileMatch,
-      List<String> filterOptions,
-      List<RepositoryLocale> repositoryLocales) {
-    Asset assetByPathAndRepositoryId;
-
-    String sourcePath =
-        commandHelper.getMappedSourcePath(assetMapping, sourceFileMatch.getSourcePath());
-
-    try {
-      logger.debug("Getting the asset for path: {}", sourceFileMatch.getSourcePath());
-      assetByPathAndRepositoryId =
-          assetClient.getAssetByPathAndRepositoryId(sourcePath, repository.getId());
-    } catch (AssetNotFoundException e) {
-      throw new CommandException(
-          "Asset with path ["
-              + sourceFileMatch.getSourcePath()
-              + "] was not found in repo ["
-              + repositoryParam
-              + "]",
-          e);
-    }
-
-    return getLocalizedAssetBodyParallel(
-        sourceFileMatch,
-        repositoryLocales.stream()
-            .filter(
-                repoLocale -> shouldGenerateLocalizedFileWithCliOutput(sourceFileMatch, repoLocale))
-            .collect(Collectors.toList()),
-        getRepoLocaleToOutputTagsMap(),
-        filterOptions,
-        assetByPathAndRepositoryId,
-        commandHelper.getFileContentWithXcodePatch(sourceFileMatch));
-  }
-
-  private Map<RepositoryLocale, List<String>> getRepoLocaleToOutputTagsMap() {
-    Map<RepositoryLocale, List<String>> localeIdToOutputTagsMap = new HashMap<>();
-
-    if (localeMappings != null) {
-      for (Map.Entry<String, String> mapping : localeMappings.entrySet()) {
-        String outputBcp47tag = mapping.getKey();
-        RepositoryLocale locale = getRepositoryLocaleForOutputBcp47Tag(outputBcp47tag);
-        if (localeIdToOutputTagsMap.containsKey(locale)) {
-          localeIdToOutputTagsMap.get(locale).add(outputBcp47tag);
-        } else {
-          localeIdToOutputTagsMap.put(locale, Lists.newArrayList(outputBcp47tag));
-        }
-      }
-    }
-
-    return localeIdToOutputTagsMap;
   }
 
   /**
@@ -447,28 +307,12 @@ public class PullCommand extends Command {
             .distinct()
             .collect(Collectors.toList());
 
-    if (isParallel) {
-      generateLocalizedFiles(repository, sourceFileMatch, filterOptions, repositoryLocales);
-    } else {
-      for (Map.Entry<String, String> localeMapping : localeMappings.entrySet()) {
-        String outputBcp47tag = localeMapping.getKey();
-        RepositoryLocale repositoryLocale = getRepositoryLocaleForOutputBcp47Tag(outputBcp47tag);
-        generateLocalizedFile(
-            repository, sourceFileMatch, filterOptions, outputBcp47tag, repositoryLocale);
-      }
+    for (Map.Entry<String, String> localeMapping : localeMappings.entrySet()) {
+      String outputBcp47tag = localeMapping.getKey();
+      RepositoryLocale repositoryLocale = getRepositoryLocaleForOutputBcp47Tag(outputBcp47tag);
+      generateLocalizedFile(
+          repository, sourceFileMatch, filterOptions, outputBcp47tag, repositoryLocale);
     }
-  }
-
-  PollableTask generateLocalizedFilesWithLocaleMappingParallel(
-      Repository repository, FileMatch sourceFileMatch, List<String> filterOptions)
-      throws CommandException {
-
-    List<RepositoryLocale> repositoryLocales =
-        localeMappings.entrySet().stream()
-            .map(entry -> getRepositoryLocaleForOutputBcp47Tag(entry.getKey()))
-            .distinct()
-            .collect(Collectors.toList());
-    return generateLocalizedFiles(repository, sourceFileMatch, filterOptions, repositoryLocales);
   }
 
   void generateLocalizedFile(
@@ -561,24 +405,7 @@ public class PullCommand extends Command {
     commandHelper.writeFileContent(localizedAsset.getContent(), targetPath, sourceFileMatch);
 
     Path relativeTargetFilePath = commandDirectories.relativizeWithUserDirectory(targetPath);
-    if (isParallel) {
-      synchronized (consoleWriter) {
-        consoleWriter
-            .a(" - Generated file for locale ")
-            .fg(Color.YELLOW)
-            .a(localizedAsset.getBcp47Tag())
-            .reset()
-            .a(": ")
-            .fg(Color.CYAN)
-            .a(sourceFileMatch.getSourcePath())
-            .a(" --> ")
-            .fg(Color.MAGENTA)
-            .a(relativeTargetFilePath.toString())
-            .println();
-      }
-    } else {
-      consoleWriter.a(" --> ").fg(Color.MAGENTA).a(relativeTargetFilePath.toString()).println();
-    }
+    consoleWriter.a(" --> ").fg(Color.MAGENTA).a(relativeTargetFilePath.toString()).println();
   }
 
   LocalizedAssetBody getLocalizedAsset(
@@ -751,27 +578,7 @@ public class PullCommand extends Command {
     }
   }
 
-  private boolean shouldGenerateLocalizedFileWithCliOutput(
-      FileMatch sourceFileMatch, RepositoryLocale repositoryLocale) {
-    boolean localize = shouldGenerateLocalizedFile(repositoryLocale);
-    if (!localize) {
-      synchronized (consoleWriter) {
-        consoleWriter
-            .a("Skipping locale: ")
-            .fg(Color.CYAN)
-            .a(repositoryLocale.getLocale().getBcp47Tag())
-            .reset()
-            .a(" for: ")
-            .fg(Color.CYAN)
-            .a(sourceFileMatch.getSourcePath())
-            .print();
-        consoleWriter.a(" --> ").fg(Color.MAGENTA).a("as not fully translated").println();
-      }
-    }
-    return localize;
-  }
-
-  private boolean shouldGenerateLocalizedFile(RepositoryLocale repositoryLocale) {
+  protected boolean shouldGenerateLocalizedFile(RepositoryLocale repositoryLocale) {
     boolean localize = true;
 
     if (onlyIfFullyTranslated) {
