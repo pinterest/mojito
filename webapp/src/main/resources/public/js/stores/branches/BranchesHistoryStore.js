@@ -1,5 +1,5 @@
 import alt from "../../alt";
-import BranchesDataSource from "../../actions/branches/BranchesHistoryActions";
+import BranchesHistoryActions from "../../actions/branches/BranchesHistoryActions";
 import BranchesPaginatorStore from "../../stores/branches/BranchesPaginatorStore";
 import BranchesPageActions from "../../actions/branches/BranchesPageActions";
 import BranchesPaginatorActions from "../../actions/branches/BranchesPaginatorActions";
@@ -9,7 +9,7 @@ class BranchesHistoryStore {
 
     constructor() {
         this.setDefaultState();
-        this.bindActions(BranchesDataSource);
+        this.bindActions(BranchesHistoryActions);
         this.bindActions(BranchesPageActions);
         this.bindActions(BranchesPaginatorActions);
         this.bindActions(BranchesSearchParamsActions);
@@ -104,7 +104,7 @@ class BranchesHistoryStore {
 
         let selectedBranchTextUnitIds = query["selectedBranchTextUnitIds[]"];
 
-        BranchesDataSource.disableHistoryUpdate();
+        BranchesHistoryActions.disableHistoryUpdate();
 
         if (selectedBranchTextUnitIds) {
             if (!Array.isArray(selectedBranchTextUnitIds)) {
@@ -139,7 +139,7 @@ class BranchesHistoryStore {
             BranchesPageActions.changeOpenBranchStatistic(parseInt(openBranchStatistic));
         }
 
-        BranchesDataSource.enableHistoryUpdate();
+        BranchesHistoryActions.enableHistoryUpdate();
 
         BranchesPageActions.getBranches();
     }

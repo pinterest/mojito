@@ -18,7 +18,7 @@ import BranchesScreenshotViewerStore from "../../stores/branches/BranchesScreens
 import BranchesScreenshotViewerActions from "../../actions/branches/BranchesScreenshotViewerActions";
 import BranchesPaginatorStore from "../../stores/branches/BranchesPaginatorStore";
 import BranchesPaginatorActions from "../../actions/branches/BranchesPaginatorActions";
-import BranchesDataSource from "../../actions/branches/BranchesHistoryActions";
+import BranchesHistoryActions from "../../actions/branches/BranchesHistoryActions";
 import WorkbenchActions from "../../actions/workbench/WorkbenchActions";
 import Paginator from "../widgets/Paginator";
 import RepositoryStore from "../../stores/RepositoryStore";
@@ -52,20 +52,20 @@ class BranchesPage extends React.Component {
                     <BranchesSearchText
                         onBranchesSearchTextChanged={
                             (text) => {
-                                BranchesDataSource.disableHistoryUpdate();
+                                BranchesHistoryActions.disableHistoryUpdate();
                                 BranchesSearchParamsActions.changeSearchText(text);
                             }
                         }
 
                         onPerformSearch={() => {
-                            BranchesDataSource.disableHistoryUpdate();
+                            BranchesHistoryActions.disableHistoryUpdate();
                             BranchesPaginatorActions.changeCurrentPageNumber(1);
                             BranchesSearchParamsActions.changeOnlyMyBranches(false);
                             BranchesSearchParamsActions.changeDeleted(true);
                             BranchesSearchParamsActions.changeUndeleted(true);
                             BranchesSearchParamsActions.changeEmpty(true);
                             BranchesSearchParamsActions.changeNotEmpty(true);
-                            BranchesDataSource.enableHistoryUpdate();
+                            BranchesHistoryActions.enableHistoryUpdate();
                             BranchesPageActions.getBranches();
                         }}
                     />
@@ -74,58 +74,58 @@ class BranchesPage extends React.Component {
                 <AltContainer store={BranchesSearchParamStore}>
                     <BranchesStatusDropdown
                         onDeletedChanged={(deleted) => {
-                            BranchesDataSource.disableHistoryUpdate();
+                            BranchesHistoryActions.disableHistoryUpdate();
                             BranchesSearchParamsActions.changeDeleted(deleted);
                             BranchesPageActions.changeSelectedBranchTextUnitIds([]);
-                            BranchesDataSource.enableHistoryUpdate();
+                            BranchesHistoryActions.enableHistoryUpdate();
                             BranchesPageActions.getBranches();
                         }}
 
                         onUndeletedChanged={(undeleted) => {
-                            BranchesDataSource.disableHistoryUpdate();
+                            BranchesHistoryActions.disableHistoryUpdate();
                             BranchesSearchParamsActions.changeUndeleted(undeleted);
                             BranchesPageActions.changeSelectedBranchTextUnitIds([]);
-                            BranchesDataSource.enableHistoryUpdate();
+                            BranchesHistoryActions.enableHistoryUpdate();
                             BranchesPageActions.getBranches();
                         }}
 
                         onEmptyChanged={(empty) => {
-                            BranchesDataSource.disableHistoryUpdate();
+                            BranchesHistoryActions.disableHistoryUpdate();
                             BranchesSearchParamsActions.changeEmpty(empty);
                             BranchesPageActions.changeSelectedBranchTextUnitIds([]);
-                            BranchesDataSource.enableHistoryUpdate();
+                            BranchesHistoryActions.enableHistoryUpdate();
                             BranchesPageActions.getBranches();
                         }}
 
                         onNotEmptyChanged={(notEmpty) => {
-                            BranchesDataSource.disableHistoryUpdate();
+                            BranchesHistoryActions.disableHistoryUpdate();
                             BranchesSearchParamsActions.changeNotEmpty(notEmpty);
                             BranchesPageActions.changeSelectedBranchTextUnitIds([]);
-                            BranchesDataSource.enableHistoryUpdate();
+                            BranchesHistoryActions.enableHistoryUpdate();
                             BranchesPageActions.getBranches();
                         }}
 
                         onOnlyMyBranchesChanged={(onlyMyBranches) => {
-                            BranchesDataSource.disableHistoryUpdate();
+                            BranchesHistoryActions.disableHistoryUpdate();
                             BranchesSearchParamsActions.changeOnlyMyBranches(onlyMyBranches);
                             BranchesPageActions.changeSelectedBranchTextUnitIds([]);
-                            BranchesDataSource.enableHistoryUpdate();
+                            BranchesHistoryActions.enableHistoryUpdate();
                             BranchesPageActions.getBranches();
                         }}
 
                         onCreatedBeforeChanged={(createdBefore) => {
-                            BranchesDataSource.disableHistoryUpdate();
+                            BranchesHistoryActions.disableHistoryUpdate();
                             BranchesSearchParamsActions.changeCreatedBefore(createdBefore)
                             BranchesPageActions.changeSelectedBranchTextUnitIds([]);
-                            BranchesDataSource.enableHistoryUpdate();
+                            BranchesHistoryActions.enableHistoryUpdate();
                             BranchesPageActions.getBranches();
                         }}
 
                         onCreatedAfterChanged={(createdAfter) => {
-                            BranchesDataSource.disableHistoryUpdate();
+                            BranchesHistoryActions.disableHistoryUpdate();
                             BranchesSearchParamsActions.changeCreatedAfter(createdAfter)
                             BranchesPageActions.changeSelectedBranchTextUnitIds([]);
-                            BranchesDataSource.enableHistoryUpdate();
+                            BranchesHistoryActions.enableHistoryUpdate();
                             BranchesPageActions.getBranches();
                         }}
                     />
@@ -134,17 +134,17 @@ class BranchesPage extends React.Component {
                 <AltContainer store={BranchesPaginatorStore}>
                     <Paginator
                         onPreviousPageClicked={() => {
-                            BranchesDataSource.disableHistoryUpdate();
+                            BranchesHistoryActions.disableHistoryUpdate();
                             BranchesPaginatorActions.goToPreviousPage();
                             BranchesPageActions.changeSelectedBranchTextUnitIds([]);
-                            BranchesDataSource.enableHistoryUpdate();
+                            BranchesHistoryActions.enableHistoryUpdate();
                             BranchesPageActions.getBranches();
                         }}
                         onNextPageClicked={() => {
-                            BranchesDataSource.disableHistoryUpdate();
+                            BranchesHistoryActions.disableHistoryUpdate();
                             BranchesPaginatorActions.goToNextPage();
                             BranchesPageActions.changeSelectedBranchTextUnitIds([]);
-                            BranchesDataSource.enableHistoryUpdate();
+                            BranchesHistoryActions.enableHistoryUpdate();
                             BranchesPageActions.getBranches();
                         }}/>
                 </AltContainer>
