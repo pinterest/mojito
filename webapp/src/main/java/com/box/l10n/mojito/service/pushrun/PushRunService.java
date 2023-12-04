@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.pushrun;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.PushRun;
 import com.box.l10n.mojito.entity.PushRunAsset;
@@ -148,8 +149,7 @@ public class PushRunService {
 
   public void deleteAllPushEntitiesOlderThan(Duration retentionDuration) {
     ZonedDateTime beforeDate = ZonedDateTime.now().minusSeconds((int) retentionDuration.getSeconds());
-    // TODO(jean) JSR310 - replace
-    Timestamp sqlBeforeDate = new Timestamp(beforeDate.toDate().getTime());
+    Timestamp sqlBeforeDate = new Timestamp(JSR310Migration.dateTimeToDate(beforeDate).getTime());
 
     int batchNumber = 1;
     int deleteCount;

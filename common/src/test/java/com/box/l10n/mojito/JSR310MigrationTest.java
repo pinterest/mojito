@@ -4,6 +4,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
+
 import org.assertj.core.api.Assertions;
 import org.joda.time.DateTime;
 import org.joda.time.Instant;
@@ -142,6 +144,13 @@ public class JSR310MigrationTest {
     Assertions.assertThat(joda).isEqualTo(jsr);
   }
 
+  @Test
+  public void dateTimeToDate() {
+    Date joda = dateTimeToDateOld(dateTime);
+    Date jsr = JSR310Migration.dateTimeToDate(zonedDateTime);
+    Assertions.assertThat(joda).isEqualTo(jsr);
+  }
+
   public static DateTime newDateTimeCtorOld(
       int year, int monthOfYear, int dayOfMonth, int hourOfDay, int minuteOfHour) {
     return new DateTime(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour);
@@ -163,5 +172,8 @@ public class JSR310MigrationTest {
   public static String toWordBaseDurationOld(long start, long end) {
     Period period = new Period(start, end);
     return PeriodFormat.getDefault().print(period.toPeriod());
+  }
+  public static Date dateTimeToDateOld(DateTime dateTime) {
+     return dateTime.toDate();
   }
 }

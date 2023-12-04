@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.pullrun;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.PullRun;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.service.commit.CommitToPullRunRepository;
@@ -47,8 +48,7 @@ public class PullRunService {
 
   public void deleteAllPullEntitiesOlderThan(Duration retentionDuration) {
     ZonedDateTime beforeDate = ZonedDateTime.now().minusSeconds((int) retentionDuration.getSeconds());
-      // TODO(jean) JSR310 - replace
-    Timestamp sqlBeforeDate = new Timestamp(beforeDate.toDate().getTime());
+    Timestamp sqlBeforeDate = new Timestamp(JSR310Migration.dateTimeToDate(beforeDate).getTime());
 
     int batchNumber = 1;
     int deleteCount;

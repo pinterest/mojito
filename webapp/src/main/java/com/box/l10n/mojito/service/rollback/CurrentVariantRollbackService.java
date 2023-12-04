@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.rollback;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant;
 import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant_;
 import com.box.l10n.mojito.service.tm.TMTextUnitCurrentVariantRepository;
@@ -165,7 +166,7 @@ public class CurrentVariantRollbackService {
     logger.trace("Building the insert tmTextUnitCurrentVariants audit query");
 
     AuditReader auditReader = AuditReaderFactory.get(entityManager);
-    Number revNumberAtDate = auditReader.getRevisionNumberForDate(rollbackDateTime.toDate());
+    Number revNumberAtDate = auditReader.getRevisionNumberForDate(JSR310Migration.dateTimeToDate(rollbackDateTime));
 
     AuditQuery auditQuery =
         auditReader

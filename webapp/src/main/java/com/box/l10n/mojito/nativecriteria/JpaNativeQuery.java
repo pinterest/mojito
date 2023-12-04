@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.nativecriteria;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.github.pnowy.nc.core.NativeQuery;
 import com.github.pnowy.nc.core.QueryInfo;
 import java.util.Collection;
@@ -76,8 +77,7 @@ public class JpaNativeQuery implements NativeQuery {
 
   public NativeQuery setParameter(String name, ZonedDateTime dateTime) {
     queryInfo.getParameters().put(name, dateTime);
-    // TODO(jean) JSR310 - replace
-    query.setParameter(name, dateTime.toDate(), TemporalType.TIMESTAMP);
+    query.setParameter(name, JSR310Migration.dateTimeToDate(dateTime), TemporalType.TIMESTAMP);
     return this;
   }
 }

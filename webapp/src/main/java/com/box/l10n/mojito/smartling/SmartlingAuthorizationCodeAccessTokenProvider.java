@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.smartling;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.smartling.response.AuthenticationData;
 import com.box.l10n.mojito.smartling.response.AuthenticationResponse;
 import com.box.l10n.mojito.utils.RestTemplateUtils;
@@ -117,10 +118,10 @@ public class SmartlingAuthorizationCodeAccessTokenProvider implements AccessToke
     AuthenticationData data = authenticationResponse.getData();
     DefaultOAuth2AccessToken defaultOAuth2AccessToken =
         new DefaultOAuth2AccessToken(data.getAccessToken());
-    defaultOAuth2AccessToken.setExpiration(now.plusSeconds(data.getExpiresIn()).toDate());
+    defaultOAuth2AccessToken.setExpiration(JSR310Migration.dateTimeToDate(now.plusSeconds(data.getExpiresIn())));
     defaultOAuth2AccessToken.setRefreshToken(
         new DefaultExpiringOAuth2RefreshToken(
-            data.getRefreshToken(), now.plusSeconds(data.getRefreshExpiresIn()).toDate()));
+            data.getRefreshToken(), JSR310Migration.dateTimeToDate(now.plusSeconds(data.getRefreshExpiresIn()))));
     return defaultOAuth2AccessToken;
   }
 

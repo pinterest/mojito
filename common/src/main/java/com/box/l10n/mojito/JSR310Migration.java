@@ -3,6 +3,7 @@ package com.box.l10n.mojito;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.Locale;
 import org.threeten.extra.AmountFormats;
 import org.threeten.extra.PeriodDuration;
@@ -49,5 +50,9 @@ public class JSR310Migration {
     return toWordBasedDuration(
         Instant.ofEpochMilli(start).atZone(ZoneId.systemDefault()),
         Instant.ofEpochMilli(end).atZone(ZoneId.systemDefault()));
+  }
+
+  public static Date dateTimeToDate(ZonedDateTime zonedDateTime) {
+    return Date.from(zonedDateTime.toInstant());
   }
 }
