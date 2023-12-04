@@ -7,6 +7,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.rest.WSTestBase;
 import com.box.l10n.mojito.test.category.BoxSDKTest;
 import com.box.sdk.BoxComment;
@@ -227,8 +228,7 @@ public class BoxSDKServiceTest extends WSTestBase {
 
     BoxFolder rootFolder = boxSDKService.getRootFolder();
 
-    // TODO(jean) JSR310 - replace
-    ZonedDateTime dateTime = new ZonedDateTime();
+    ZonedDateTime dateTime = JSR310Migration.newDateTimeEmptyCtor();
     dateTime = dateTime.minusDays(1);
 
     boxSDKService.deleteFolderContentOlderThan(rootFolder.getID(), dateTime);

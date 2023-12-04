@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.thirdparty;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.ThirdPartyFileChecksum;
@@ -32,8 +33,7 @@ public class ThirdPartyTMSUtils {
     } else if (thirdPartyFileChecksumOpt.isPresent()) {
       ThirdPartyFileChecksum thirdPartyFileChecksum = thirdPartyFileChecksumOpt.get();
       thirdPartyFileChecksum.setMd5(currentChecksum);
-      // TODO(jean) JSR310 - replace
-      thirdPartyFileChecksum.setLastModifiedDate(new ZonedDateTime());
+      thirdPartyFileChecksum.setLastModifiedDate(JSR310Migration.newDateTimeEmptyCtor());
       thirdPartyFileChecksumRepository.save(thirdPartyFileChecksum);
     } else {
       thirdPartyFileChecksumRepository.save(

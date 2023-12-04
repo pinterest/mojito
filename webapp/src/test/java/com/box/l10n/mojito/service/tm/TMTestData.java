@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.tm;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.AssetExtraction;
 import com.box.l10n.mojito.entity.AssetTextUnit;
@@ -183,8 +184,7 @@ public class TMTestData {
   }
 
   public ImmutableMap<String, TMTextUnit> addPluralString(String basename) {
-    // TODO(jean) JSR310 - replace
-    ZonedDateTime date = new ZonedDateTime();
+    ZonedDateTime date = JSR310Migration.newDateTimeEmptyCtor();
 
     ImmutableMap<String, TMTextUnit> tmTextUnitsByForm =
         Stream.of("other", "zero", "one", "two", "few", "many")

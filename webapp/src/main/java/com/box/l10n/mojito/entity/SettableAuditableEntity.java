@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.entity;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.rest.View;
 import com.fasterxml.jackson.annotation.JsonView;
 import javax.persistence.Column;
@@ -33,7 +34,7 @@ public abstract class SettableAuditableEntity extends BaseEntity {
   @PrePersist
   public void onPrePersist() {
     if (createdDate == null) {
-      createdDate = new ZonedDateTime();
+      createdDate = JSR310Migration.newDateTimeEmptyCtor();
     }
   }
 }

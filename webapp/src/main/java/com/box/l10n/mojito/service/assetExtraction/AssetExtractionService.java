@@ -4,6 +4,7 @@ import static com.box.l10n.mojito.quartz.QuartzSchedulerManager.DEFAULT_SCHEDULE
 import static com.box.l10n.mojito.service.assetExtraction.LocalBranchToEntityBranchConverter.NULL_BRANCH_TEXT_PLACEHOLDER;
 import static java.util.function.Function.identity;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.AssetContent;
 import com.box.l10n.mojito.entity.AssetExtraction;
@@ -362,8 +363,7 @@ public class AssetExtractionService {
 
     logger.debug(
         "Change asset extraction last modified date to create a new version for optimistic locking");
-    // TODO(jean) JSR310 - replace
-    assetExtraction.setLastModifiedDate(new ZonedDateTime());
+    assetExtraction.setLastModifiedDate(JSR310Migration.newDateTimeEmptyCtor());
     assetExtraction.setContentMd5(assetContentMd5s.getContentMd5());
     assetExtraction.setFilterOptionsMd5(assetContentMd5s.getFilterOptionsMd5());
     assetExtractionRepository.save(assetExtraction);

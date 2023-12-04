@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryStatistic;
 import com.box.l10n.mojito.entity.SlaIncident;
@@ -159,8 +160,7 @@ public class SlaCheckerServiceTest {
     List<SlaIncident> incidentIn = Arrays.asList(mock(SlaIncident.class), mock(SlaIncident.class));
     List<SlaIncident> incidentOut = Arrays.asList(mock(SlaIncident.class), mock(SlaIncident.class));
 
-    // TODO(jean) JSR310 - replace
-    ZonedDateTime now = new ZonedDateTime();
+    ZonedDateTime now = JSR310Migration.newDateTimeEmptyCtor();
     doReturn(now).when(dateTimeUtils).now();
 
     doReturn(incidentIn).when(slaIncidentRepository).findByClosedDateIsNull();
@@ -190,8 +190,7 @@ public class SlaCheckerServiceTest {
   }
 
   SlaIncident getSlaIncidentForTest() {
-    // TODO(jean) JSR310 - replace
-    ZonedDateTime createDate = new ZonedDateTime();
+    ZonedDateTime createDate = JSR310Migration.newDateTimeEmptyCtor();
     SlaIncident openIncident = new SlaIncident();
     openIncident.setId(1212L);
     openIncident.setCreatedDate(createDate);

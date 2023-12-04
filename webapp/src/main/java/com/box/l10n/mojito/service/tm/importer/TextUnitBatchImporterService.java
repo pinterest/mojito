@@ -4,6 +4,7 @@ import static com.box.l10n.mojito.entity.TMTextUnitVariant.Status.APPROVED;
 import static com.box.l10n.mojito.quartz.QuartzSchedulerManager.DEFAULT_SCHEDULER_NAME;
 import static com.box.l10n.mojito.utils.Predicates.logIfFalse;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
@@ -215,7 +216,7 @@ public class TextUnitBatchImporterService {
   @Transactional
   void importTextUnitsOfLocaleAndAsset(
       Locale locale, Asset asset, List<TextUnitForBatchMatcherImport> textUnitsToImport) {
-    ZonedDateTime importTime = new ZonedDateTime();
+    ZonedDateTime importTime = JSR310Migration.newDateTimeEmptyCtor();
     logger.debug(
         "Start import text units for asset: {} and locale: {}",
         asset.getPath(),

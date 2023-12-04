@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.okapi;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
@@ -125,8 +126,7 @@ public abstract class AbstractImportTranslationsStep extends AbstractMd5Computat
 
     StartDocument startDocument = event.getStartDocument();
     isMultilingual = startDocument.isMultilingual();
-    // TODO(jean) JSR310 - replace
-    createdDate = new ZonedDateTime();
+    createdDate = JSR310Migration.newDateTimeEmptyCtor();
     if (dropImporterUsernameOverride == null) {
       createdBy = auditorAwareImpl.getCurrentAuditor().orElse(null);
     } else {

@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.drop;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.Drop;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.PollableTask;
@@ -225,8 +226,7 @@ public class DropService {
     logger.debug("Start importing drop");
 
     Drop drop = dropRepository.findById(dropId).orElse(null);
-    // TODO(jean) JSR310 - replace
-    drop.setLastImportedDate(new ZonedDateTime());
+    drop.setLastImportedDate(JSR310Migration.newDateTimeEmptyCtor());
     drop.setImportPollableTask(currentTask);
     drop.setImportFailed(null);
     dropRepository.save(drop);

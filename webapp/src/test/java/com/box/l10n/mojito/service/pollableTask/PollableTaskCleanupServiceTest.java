@@ -4,6 +4,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.PollableTask;
 import com.box.l10n.mojito.service.assetExtraction.AssetExtractionRepository;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
@@ -32,8 +33,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
   public void finishAllPollableTasks() {
     List<PollableTask> pollableTasks = pollableTaskRepository.findAll();
     for (PollableTask pollableTask : pollableTasks) {
-      // TODO(jean) JSR310 - replace
-      pollableTask.setFinishedDate(new ZonedDateTime());
+      pollableTask.setFinishedDate(JSR310Migration.newDateTimeEmptyCtor());
     }
     pollableTaskRepository.saveAll(pollableTasks);
   }

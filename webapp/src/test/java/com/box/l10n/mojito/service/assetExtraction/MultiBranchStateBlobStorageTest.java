@@ -3,6 +3,7 @@ package com.box.l10n.mojito.service.assetExtraction;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.localtm.merger.Branch;
 import com.box.l10n.mojito.localtm.merger.BranchData;
 import com.box.l10n.mojito.localtm.merger.BranchStateTextUnit;
@@ -35,8 +36,7 @@ public class MultiBranchStateBlobStorageTest extends ServiceTestBase {
             assetExtractionId, version);
     Assertions.assertFalse(multiBranchStateForAssetExtractionId.isPresent());
 
-    // TODO(jean) JSR310 - replace
-    Branch branchTest = Branch.builder().name("test").createdAt(new ZonedDateTime()).build();
+    Branch branchTest = Branch.builder().name("test").createdAt(JSR310Migration.newDateTimeEmptyCtor()).build();
     MultiBranchState multiBranchState =
         MultiBranchState.builder()
             .branches(ImmutableSet.of(branchTest))

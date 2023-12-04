@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.PollableTask;
@@ -1009,8 +1010,7 @@ public class TMServiceTest extends ServiceTestBase {
             null,
             TMTextUnitVariant.Status.REVIEW_NEEDED,
             true,
-                // TODO(jean) JSR310 - replace
-            new ZonedDateTime());
+            JSR310Migration.newDateTimeEmptyCtor());
 
     TMTextUnitVariant variant3 =
         tmService.addCurrentTMTextUnitVariant(

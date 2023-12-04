@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.utils;
 
+import com.box.l10n.mojito.JSR310Migration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
@@ -10,8 +11,7 @@ import org.springframework.stereotype.Component;
 public class DateTimeUtils {
 
   public ZonedDateTime now() {
-    // TODO(jean) JSR310 - replace
-    return new ZonedDateTime();
+    return JSR310Migration.newDateTimeEmptyCtor();
   }
 
   public ZonedDateTime now(ZoneId dateTimeZone) {

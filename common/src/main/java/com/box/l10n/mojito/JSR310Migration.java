@@ -15,6 +15,10 @@ public class JSR310Migration {
         year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour, 0, 0, ZoneId.systemDefault());
   }
 
+  public static ZonedDateTime newDateTimeEmptyCtor() {
+    return ZonedDateTime.now();
+  }
+
   public static ZonedDateTime dateTimeNow() {
     return ZonedDateTime.now();
   }
