@@ -55,4 +55,8 @@ public class JSR310Migration {
   public static Date dateTimeToDate(ZonedDateTime zonedDateTime) {
     return Date.from(zonedDateTime.toInstant());
   }
+
+  public static boolean dateTimeIsAfterEpochMillis(ZonedDateTime dateTime, long after) {
+    return dateTime.toInstant().isAfter(Instant.ofEpochMilli(after));
+  }
 }

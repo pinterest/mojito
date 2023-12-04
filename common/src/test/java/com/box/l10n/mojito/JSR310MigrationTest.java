@@ -151,6 +151,17 @@ public class JSR310MigrationTest {
     Assertions.assertThat(joda).isEqualTo(jsr);
   }
 
+  @Test
+  public void dateTimeIsAfter() {
+    Assertions.assertThat(dateTimeIsAfterEpochMillisOld(dateTime, 1594339100000L)).isTrue();
+    Assertions.assertThat(JSR310Migration.dateTimeIsAfterEpochMillis(zonedDateTime, 1594339100000L)).isTrue();
+
+    Assertions.assertThat(dateTimeIsAfterEpochMillisOld(dateTime, 1594339200000L)).isFalse();
+    Assertions.assertThat(JSR310Migration.dateTimeIsAfterEpochMillis(zonedDateTime, 1594339200000L)).isFalse();
+  }
+
+
+
   public static DateTime newDateTimeCtorOld(
       int year, int monthOfYear, int dayOfMonth, int hourOfDay, int minuteOfHour) {
     return new DateTime(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour);
@@ -173,7 +184,12 @@ public class JSR310MigrationTest {
     Period period = new Period(start, end);
     return PeriodFormat.getDefault().print(period.toPeriod());
   }
+
   public static Date dateTimeToDateOld(DateTime dateTime) {
      return dateTime.toDate();
+  }
+
+  public static boolean dateTimeIsAfterEpochMillisOld(DateTime dateTime, long afterMillis) {
+    return dateTime.isAfter(afterMillis);
   }
 }

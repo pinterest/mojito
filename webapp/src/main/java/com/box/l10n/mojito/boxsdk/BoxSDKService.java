@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.boxsdk;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.sdk.BoxAPIConnection;
 import com.box.sdk.BoxAPIException;
 import com.box.sdk.BoxFile;
@@ -354,8 +355,7 @@ public class BoxSDKService {
         if (itemInfo instanceof BoxFolder.Info) {
           BoxFolder subFolder = (BoxFolder) itemInfo.getResource();
 
-          // TODO(jean) JSR310 - find alternative
-          if (olderThan.isAfter(subFolder.getInfo().getCreatedAt().getTime())) {
+          if (JSR310Migration.dateTimeIsAfterEpochMillis(olderThan, subFolder.getInfo().getCreatedAt().getTime())) {
             subFolder.delete(true);
           }
 
@@ -363,7 +363,7 @@ public class BoxSDKService {
 
           BoxFile file = (BoxFile) itemInfo.getResource();
 
-          if (olderThan.isAfter(file.getInfo().getCreatedAt().getTime())) {
+          if (JSR310Migration.dateTimeIsAfterEpochMillis(olderThan, file.getInfo().getCreatedAt().getTime())) {
             file.delete();
           }
         }
