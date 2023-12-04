@@ -5,6 +5,7 @@ import static com.box.l10n.mojito.service.assetExtraction.LocalBranchToEntityBra
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.AssetTextUnit;
 import com.box.l10n.mojito.localtm.merger.Branch;
 import com.box.l10n.mojito.localtm.merger.BranchData;
@@ -99,13 +100,14 @@ public class MultiBranchStateServiceTest extends ServiceTestBase {
     return expectedMultiBranchState;
   }
 
+  // TODO(jean) JSR310 - replace
   ZonedDateTime roundDateTimeToSecond(ZonedDateTime dateTime) {
 
-    // TODO(jean) JSR310 - replace
-    if (dateTime.getMillisOfSecond() > 500) {
-      dateTime = dateTime.withMillisOfSecond(0).plusSeconds(1);
+    // TODO(jean) JSR310 - did in place replacement - consider refactoring
+    if (JSR310Migration.dateTimeGetMillisOfSecond(dateTime) > 500) {
+      dateTime = JSR310Migration.dateTimeWithMillisOfSeconds(dateTime, 0).plusSeconds(1);
     } else {
-      dateTime = dateTime.withMillisOfSecond(0);
+      dateTime = JSR310Migration.dateTimeWithMillisOfSeconds(dateTime, 0);
     }
 
     return dateTime;

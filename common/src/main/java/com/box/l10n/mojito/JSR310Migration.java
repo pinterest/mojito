@@ -1,8 +1,10 @@
 package com.box.l10n.mojito;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoField;
 import java.util.Date;
 import java.util.Locale;
 import org.threeten.extra.AmountFormats;
@@ -58,5 +60,13 @@ public class JSR310Migration {
 
   public static boolean dateTimeIsAfterEpochMillis(ZonedDateTime dateTime, long after) {
     return dateTime.toInstant().isAfter(Instant.ofEpochMilli(after));
+  }
+
+  public static int dateTimeGetMillisOfSecond(ZonedDateTime dateTime) {
+    return dateTime.toInstant().get(ChronoField.MILLI_OF_SECOND);
+  }
+
+  public static ZonedDateTime dateTimeWithMillisOfSeconds(ZonedDateTime dateTime, int millis) {
+    return dateTime.withNano(Duration.ofMillis(millis).getNano());
   }
 }

@@ -13,6 +13,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.mustache.MustacheTemplateEngine;
 import com.box.l10n.mojito.utils.DateTimeUtils;
@@ -86,24 +87,20 @@ public class SlaCheckerEmailServiceTest {
 
   @Test
   public void testShouldResendEmailYes() {
-    // TODO(jean) JSR310 - replace
-    ZonedDateTime now = new ZonedDateTime("2018-06-08T14:00:00.000-07:00");
+    ZonedDateTime now = JSR310Migration.newDateTimeCtorWithISO8601Str("2018-06-08T14:00:00.000-07:00");
     doReturn(now).when(dateTimeUtils).now();
 
-    // TODO(jean) JSR310 - replace
-    ZonedDateTime previousEmailDateTime = new ZonedDateTime("2018-06-08T12:00:00.000-07:00");
+    ZonedDateTime previousEmailDateTime = JSR310Migration.newDateTimeCtorWithISO8601Str("2018-06-08T12:00:00.000-07:00");
     boolean shouldResendEmail = slaCheckerEmailService.shouldResendEmail(previousEmailDateTime);
     assertTrue(shouldResendEmail);
   }
 
   @Test
   public void testShouldResendEmailNo() {
-    // TODO(jean) JSR310 - replace
-    ZonedDateTime now = new ZonedDateTime("2018-06-08T14:00:00.000-07:00");
+    ZonedDateTime now = JSR310Migration.newDateTimeCtorWithISO8601Str("2018-06-08T14:00:00.000-07:00");
     doReturn(now).when(dateTimeUtils).now();
 
-    // TODO(jean) JSR310 - replace
-    ZonedDateTime previousEmailDateTime = new ZonedDateTime("2018-06-08T13:30:00.000-07:00");
+    ZonedDateTime previousEmailDateTime = JSR310Migration.newDateTimeCtorWithISO8601Str("2018-06-08T13:30:00.000-07:00");
     boolean shouldResendEmail = slaCheckerEmailService.shouldResendEmail(previousEmailDateTime);
     assertFalse(shouldResendEmail);
   }
