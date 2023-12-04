@@ -1,7 +1,11 @@
 package com.box.l10n.mojito;
 
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Locale;
+import org.threeten.extra.AmountFormats;
+import org.threeten.extra.PeriodDuration;
 
 public class JSR310Migration {
 
@@ -13,5 +17,22 @@ public class JSR310Migration {
 
   public static ZonedDateTime dateTimeNow() {
     return ZonedDateTime.now();
+  }
+
+  public static long getMillis(ZonedDateTime zonedDateTime) {
+    // TODO(jean) JSR has more precision so there is an issue with conversion?
+    // what about    zonedDateTime.toInstant().truncatedTo(ChronoUnit.MILLIS)
+    return zonedDateTime.toInstant().toEpochMilli();
+  }
+
+  public static String toWordBasedDuration(ZonedDateTime start, ZonedDateTime end) {
+    PeriodDuration between = PeriodDuration.between(start, end);
+    return AmountFormats.wordBased(between.getPeriod(), between.getDuration(), Locale.getDefault());
+  }
+
+  public static String toWordBasedDuration(long start, long end) {
+    return toWordBasedDuration(
+        Instant.ofEpochMilli(start).atZone(ZoneId.systemDefault()),
+        Instant.ofEpochMilli(end).atZone(ZoneId.systemDefault()));
   }
 }
