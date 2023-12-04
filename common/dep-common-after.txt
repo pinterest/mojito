@@ -1,0 +1,112 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------< com.box.l10n.mojito:mojito-common >------------------
+[INFO] Building Mojito - Common 0.111-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:3.3.0:tree (default-cli) @ mojito-common ---
+[INFO] com.box.l10n.mojito:mojito-common:jar:0.111-SNAPSHOT
+[INFO] +- com.box.l10n.mojito:mojito-test-common:jar:0.111-SNAPSHOT:test
+[INFO] |  +- org.springframework.boot:spring-boot-starter-test:jar:2.7.15:test
+[INFO] |  |  +- org.springframework.boot:spring-boot-test:jar:2.7.15:test
+[INFO] |  |  +- org.springframework.boot:spring-boot-test-autoconfigure:jar:2.7.15:test
+[INFO] |  |  +- com.jayway.jsonpath:json-path:jar:2.7.0:test
+[INFO] |  |  |  \- net.minidev:json-smart:jar:2.4.11:test
+[INFO] |  |  |     \- net.minidev:accessors-smart:jar:2.4.11:test
+[INFO] |  |  |        \- org.ow2.asm:asm:jar:9.3:test
+[INFO] |  |  +- jakarta.xml.bind:jakarta.xml.bind-api:jar:2.3.3:test
+[INFO] |  |  |  \- jakarta.activation:jakarta.activation-api:jar:1.2.2:test
+[INFO] |  |  +- org.hamcrest:hamcrest:jar:2.2:test
+[INFO] |  |  +- org.junit.jupiter:junit-jupiter:jar:5.8.2:test
+[INFO] |  |  |  +- org.junit.jupiter:junit-jupiter-api:jar:5.8.2:test
+[INFO] |  |  |  +- org.junit.jupiter:junit-jupiter-params:jar:5.8.2:test
+[INFO] |  |  |  \- org.junit.jupiter:junit-jupiter-engine:jar:5.8.2:test
+[INFO] |  |  +- org.mockito:mockito-core:jar:4.5.1:test
+[INFO] |  |  |  +- net.bytebuddy:byte-buddy:jar:1.12.23:test
+[INFO] |  |  |  +- net.bytebuddy:byte-buddy-agent:jar:1.12.23:test
+[INFO] |  |  |  \- org.objenesis:objenesis:jar:3.2:test
+[INFO] |  |  +- org.mockito:mockito-junit-jupiter:jar:4.5.1:test
+[INFO] |  |  +- org.skyscreamer:jsonassert:jar:1.5.1:test
+[INFO] |  |  +- org.springframework:spring-test:jar:5.3.29:test
+[INFO] |  |  \- org.xmlunit:xmlunit-core:jar:2.9.1:test
+[INFO] |  +- org.springframework.boot:spring-boot-autoconfigure:jar:2.7.15:compile
+[INFO] |  +- commons-io:commons-io:jar:2.5:compile
+[INFO] |  +- org.assertj:assertj-core:jar:3.22.0:test
+[INFO] |  \- org.junit.vintage:junit-vintage-engine:jar:5.8.2:test
+[INFO] |     +- org.junit.platform:junit-platform-engine:jar:1.8.2:test
+[INFO] |     |  +- org.opentest4j:opentest4j:jar:1.2.0:test
+[INFO] |     |  \- org.junit.platform:junit-platform-commons:jar:1.8.2:test
+[INFO] |     +- junit:junit:jar:4.13.2:test
+[INFO] |     \- org.apiguardian:apiguardian-api:jar:1.1.2:test
+[INFO] +- com.fasterxml.jackson.datatype:jackson-datatype-guava:jar:2.13.5:compile
+[INFO] |  +- com.fasterxml.jackson.core:jackson-core:jar:2.13.5:compile
+[INFO] |  \- com.fasterxml.jackson.core:jackson-databind:jar:2.13.5:compile
+[INFO] |     \- com.fasterxml.jackson.core:jackson-annotations:jar:2.13.5:compile
+[INFO] +- org.springframework.boot:spring-boot-starter:jar:2.7.15:compile
+[INFO] |  +- org.springframework.boot:spring-boot:jar:2.7.15:compile
+[INFO] |  |  \- org.springframework:spring-context:jar:5.3.29:compile
+[INFO] |  |     +- org.springframework:spring-aop:jar:5.3.29:compile
+[INFO] |  |     \- org.springframework:spring-expression:jar:5.3.29:compile
+[INFO] |  +- jakarta.annotation:jakarta.annotation-api:jar:1.3.5:compile
+[INFO] |  +- org.springframework:spring-core:jar:5.3.29:compile
+[INFO] |  |  \- org.springframework:spring-jcl:jar:5.3.29:compile
+[INFO] |  \- org.yaml:snakeyaml:jar:1.30:compile
+[INFO] +- org.springframework:spring-tx:jar:5.3.29:compile
+[INFO] |  \- org.springframework:spring-beans:jar:5.3.29:compile
+[INFO] +- org.springframework:spring-web:jar:5.3.29:compile
+[INFO] +- commons-codec:commons-codec:jar:1.9:compile
+[INFO] +- org.apache.commons:commons-lang3:jar:3.9:compile
+[INFO] +- net.sf.okapi:okapi-core:jar:1.43.0:compile
+[INFO] |  \- org.slf4j:slf4j-api:jar:1.7.36:compile
+[INFO] +- net.sf.okapi.filters:okapi-filter-table:jar:1.43.0:compile
+[INFO] |  \- net.sf.okapi.filters:okapi-filter-plaintext:jar:1.43.0:compile
+[INFO] +- net.sf.okapi.lib:okapi-lib-translation:jar:1.43.0:compile
+[INFO] +- net.sf.okapi.filters:okapi-filter-xliff:jar:1.43.0:compile
+[INFO] |  \- com.fasterxml.woodstox:woodstox-core:jar:6.2.7:compile
+[INFO] |     \- org.codehaus.woodstox:stax2-api:jar:4.2.1:compile
+[INFO] +- net.sf.okapi.filters:okapi-filter-po:jar:1.43.0:compile
+[INFO] +- net.sf.okapi.filters:okapi-filter-json:jar:1.43.0:compile
+[INFO] +- net.sf.okapi.filters:okapi-filter-yaml:jar:1.43.0:compile
+[INFO] +- net.sf.okapi.filters:okapi-filter-properties:jar:1.43.0:compile
+[INFO] |  +- net.sf.okapi.filters:okapi-filter-abstractmarkup:jar:1.43.0:compile
+[INFO] |  |  \- net.htmlparser.jericho:jericho-html:jar:3.4:compile
+[INFO] |  \- net.sf.okapi.filters:okapi-filter-html:jar:1.43.0:compile
+[INFO] +- net.sf.okapi.filters:okapi-filter-regex:jar:1.43.0:compile
+[INFO] +- net.sf.okapi.filters:okapi-filter-its:jar:1.43.0:compile
+[INFO] |  \- nu.validator.htmlparser:htmlparser:jar:1.4:compile
+[INFO] +- net.sf.okapi.steps:okapi-step-common:jar:1.43.0:compile
+[INFO] +- net.sf.okapi.steps:okapi-step-qualitycheck:jar:1.43.0:compile
+[INFO] |  \- net.sf.okapi.lib:okapi-lib-verification:jar:1.43.0:compile
+[INFO] |     +- net.sf.okapi.lib:okapi-lib-terminology:jar:1.43.0:compile
+[INFO] |     \- com.googlecode.json-simple:json-simple:jar:1.1.1:compile
+[INFO] +- org.springframework:spring-aspects:jar:5.3.29:compile
+[INFO] |  \- org.aspectj:aspectjweaver:jar:1.9.20:compile
+[INFO] +- org.kohsuke:github-api:jar:1.313:compile
+[INFO] +- io.jsonwebtoken:jjwt-api:jar:0.10.5:compile
+[INFO] +- io.jsonwebtoken:jjwt-impl:jar:0.10.5:runtime
+[INFO] +- io.jsonwebtoken:jjwt-jackson:jar:0.10.5:runtime
+[INFO] +- org.springframework.boot:spring-boot-starter-logging:jar:2.7.15:compile
+[INFO] |  +- ch.qos.logback:logback-classic:jar:1.2.12:compile
+[INFO] |  |  \- ch.qos.logback:logback-core:jar:1.2.12:compile
+[INFO] |  +- org.apache.logging.log4j:log4j-to-slf4j:jar:2.17.2:compile
+[INFO] |  |  \- org.apache.logging.log4j:log4j-api:jar:2.17.2:compile
+[INFO] |  \- org.slf4j:jul-to-slf4j:jar:1.7.36:compile
+[INFO] +- com.google.guava:guava:jar:29.0-jre:compile
+[INFO] |  +- com.google.guava:failureaccess:jar:1.0.1:compile
+[INFO] |  +- com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
+[INFO] |  +- com.google.code.findbugs:jsr305:jar:3.0.2:compile
+[INFO] |  +- org.checkerframework:checker-qual:jar:2.11.1:compile
+[INFO] |  +- com.google.errorprone:error_prone_annotations:jar:2.3.4:compile
+[INFO] |  \- com.google.j2objc:j2objc-annotations:jar:1.3:compile
+[INFO] +- org.immutables:value:jar:2.8.2:provided
+[INFO] +- org.aspectj:aspectjrt:jar:1.9.20:provided
+[INFO] +- org.springframework.boot:spring-boot-properties-migrator:jar:2.7.15:runtime
+[INFO] |  \- org.springframework.boot:spring-boot-configuration-metadata:jar:2.7.15:runtime
+[INFO] |     \- com.vaadin.external.google:android-json:jar:0.0.20131108.vaadin1:runtime
+[INFO] \- com.ibm.icu:icu4j:jar:64.2:compile
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.369 s
+[INFO] Finished at: 2023-12-01T13:22:31-08:00
+[INFO] ------------------------------------------------------------------------
