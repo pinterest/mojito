@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.delta;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.BaseEntity;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.PullRun;
@@ -76,8 +77,7 @@ public class DeltaService {
     }
 
     if (fromDate == null) {
-      // TODO(jean) JSR310 - replace
-      fromDate = new ZonedDateTime(0);
+      fromDate = JSR310Migration.newDateTimeCtorAtEpoch();
     }
 
     if (toDate == null) {
@@ -131,8 +131,7 @@ public class DeltaService {
             // Remove milliseconds as the Mojito DB does not store dates with sub-second precision.
              // TODO(jean) JSR310 - replace
             .map(dateTime -> dateTime.withMillisOfSecond(0))
-                // TODO(jean) JSR310 - replace
-            .orElse(new ZonedDateTime(0));
+            .orElse(JSR310Migration.newDateTimeCtorAtEpoch());
     // TODO(jean) JSR310 - replace
     Instant fromDateInstant = Instant.ofEpochMilli(translationsFromDate.getMillis());
     Timestamp sqlTranslationsFromDate =

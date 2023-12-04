@@ -19,6 +19,17 @@ public class JSR310Migration {
     return ZonedDateTime.now();
   }
 
+  public static ZonedDateTime newDateTimeCtorWithISO8601Str(String str) {
+    return ZonedDateTime.parse(str);
+  }
+
+  public static ZonedDateTime newDateTimeCtorWithEpochMilli(long value) {
+    return Instant.ofEpochMilli(value).atZone(ZoneId.systemDefault());
+  }
+  public static ZonedDateTime newDateTimeCtorAtEpoch() {
+    return newDateTimeCtorWithEpochMilli(Instant.EPOCH.toEpochMilli());
+  }
+
   public static ZonedDateTime dateTimeNow() {
     return ZonedDateTime.now();
   }

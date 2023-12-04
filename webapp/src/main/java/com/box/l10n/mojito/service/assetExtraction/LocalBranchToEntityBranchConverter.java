@@ -1,7 +1,8 @@
 package com.box.l10n.mojito.service.assetExtraction;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.localtm.merger.Branch;
-import java.time.Instant;
+
 import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,9 +12,7 @@ import org.springframework.stereotype.Component;
 public class LocalBranchToEntityBranchConverter {
 
   public static final String NULL_BRANCH_TEXT_PLACEHOLDER = "$$MOJITO_DEFAULT$$";
-  public static final ZonedDateTime NULL_BRANCH_DATE_PLACEHODLER =
-          // TODO(jean) JSR310 - replace
-      new ZonedDateTime(Instant.EPOCH.toEpochMilli());
+  public static final ZonedDateTime NULL_BRANCH_DATE_PLACEHODLER = JSR310Migration.newDateTimeCtorAtEpoch();
 
   /** logger */
   static Logger logger = LoggerFactory.getLogger(LocalBranchToEntityBranchConverter.class);

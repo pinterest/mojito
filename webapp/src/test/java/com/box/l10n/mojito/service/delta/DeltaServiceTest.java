@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.delta;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.AssetExtraction;
 import com.box.l10n.mojito.entity.AssetTextUnit;
@@ -108,8 +109,7 @@ public class DeltaServiceTest extends ServiceTestBase {
             .getDeltasForDates(
                 tmTestData.repository,
                 Arrays.asList(tmTestData.frFR, tmTestData.frCA, tmTestData.koKR, tmTestData.jaJP),
-                // TODO(jean) JSR310 - replace
-                new ZonedDateTime(0),
+                JSR310Migration.newDateTimeCtorAtEpoch(),
                 ZonedDateTime.now().plusHours(1),
                 PageRequest.of(0, 1, Sort.Direction.ASC, "id"))
             .getContent();
@@ -137,8 +137,8 @@ public class DeltaServiceTest extends ServiceTestBase {
             .getDeltasForDates(
                 tmTestData.repository,
                 Arrays.asList(tmTestData.frFR, tmTestData.frCA, tmTestData.koKR, tmTestData.jaJP),
-                new ZonedDateTime(0),
-                new ZonedDateTime(0),
+                JSR310Migration.newDateTimeCtorAtEpoch(),
+                JSR310Migration.newDateTimeCtorAtEpoch(),
                 PageRequest.of(0, 1, Sort.Direction.ASC, "id"))
             .getContent();
 
@@ -191,7 +191,7 @@ public class DeltaServiceTest extends ServiceTestBase {
     List<TextUnitVariantDeltaDTO> deltasFromBeggining =
         deltaService
             .getDeltasForDates(
-                repository, null, new ZonedDateTime(0), ZonedDateTime.now().plusHours(1), Pageable.unpaged())
+                repository, null, JSR310Migration.newDateTimeCtorAtEpoch(), ZonedDateTime.now().plusHours(1), Pageable.unpaged())
             .getContent();
 
     Assert.assertEquals(2, deltasFromBeggining.size());
@@ -244,7 +244,7 @@ public class DeltaServiceTest extends ServiceTestBase {
     List<TextUnitVariantDeltaDTO> deltasFromBeggining =
         deltaService
             .getDeltasForDates(
-                repository, null, new ZonedDateTime(0), ZonedDateTime.now().plusHours(1), Pageable.unpaged())
+                repository, null, JSR310Migration.newDateTimeCtorAtEpoch(), ZonedDateTime.now().plusHours(1), Pageable.unpaged())
             .getContent();
 
     Assert.assertEquals(1, deltasFromBeggining.size());
@@ -309,7 +309,7 @@ public class DeltaServiceTest extends ServiceTestBase {
             .getDeltasForDates(
                 repository,
                 Collections.singletonList(frFR),
-                new ZonedDateTime(0),
+                JSR310Migration.newDateTimeCtorAtEpoch(),
                 ZonedDateTime.now().plusHours(1),
                 Pageable.unpaged())
             .getContent();
@@ -320,7 +320,7 @@ public class DeltaServiceTest extends ServiceTestBase {
             .getDeltasForDates(
                 repository,
                 Collections.singletonList(koKR),
-                new ZonedDateTime(0),
+                JSR310Migration.newDateTimeCtorAtEpoch(),
                 ZonedDateTime.now().plusHours(1),
                 Pageable.unpaged())
             .getContent();
@@ -329,7 +329,7 @@ public class DeltaServiceTest extends ServiceTestBase {
     List<TextUnitVariantDeltaDTO> noSpecificLocalesDeltasFromStart =
         deltaService
             .getDeltasForDates(
-                repository, null, new ZonedDateTime(0), ZonedDateTime.now().plusHours(1), Pageable.unpaged())
+                repository, null, JSR310Migration.newDateTimeCtorAtEpoch(), ZonedDateTime.now().plusHours(1), Pageable.unpaged())
             .getContent();
     Assert.assertEquals(3, noSpecificLocalesDeltasFromStart.size());
 
@@ -338,7 +338,7 @@ public class DeltaServiceTest extends ServiceTestBase {
             .getDeltasForDates(
                 repository,
                 Arrays.asList(koKR, frFR),
-                new ZonedDateTime(0),
+                JSR310Migration.newDateTimeCtorAtEpoch(),
                 ZonedDateTime.now().plusHours(1),
                 Pageable.unpaged())
             .getContent();
