@@ -17,7 +17,7 @@ import javax.persistence.OrderBy;
 import javax.persistence.Table;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.springframework.data.annotation.CreatedBy;
 
 /**
@@ -62,7 +62,7 @@ public class RepositoryStatistic extends AuditableEntity {
 
   @JsonView(View.RepositorySummary.class)
   @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-  private DateTime ooslaCreatedBefore;
+  private ZonedDateTime ooslaCreatedBefore;
 
   /** The number of text unit without comments */
   private Long uncommentedTextUnitCount = 0L;
@@ -186,11 +186,11 @@ public class RepositoryStatistic extends AuditableEntity {
     this.ooslaTextUnitWordCount = ooslaTextUnitWordCount;
   }
 
-  public DateTime getOoslaCreatedBefore() {
+  public ZonedDateTime getOoslaCreatedBefore() {
     return ooslaCreatedBefore;
   }
 
-  public void setOoslaCreatedBefore(DateTime ooslaCreatedBefore) {
+  public void setOoslaCreatedBefore(ZonedDateTime ooslaCreatedBefore) {
     this.ooslaCreatedBefore = ooslaCreatedBefore;
   }
 

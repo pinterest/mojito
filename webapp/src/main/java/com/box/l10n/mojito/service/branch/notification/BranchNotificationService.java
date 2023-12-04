@@ -24,7 +24,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -165,7 +165,8 @@ public class BranchNotificationService {
    * @param notifierId
    */
   void scheduleMissingScreenshotNotificationsForBranch(Branch branch, String notifierId) {
-    Date date = DateTime.now().plusMinutes(30).toDate();
+    // TODO(jean) JSR310 - replace
+    Date date = ZonedDateTime.now().plusMinutes(30).toDate();
 
     BranchNotificationMissingScreenshotsJobInput branchNotificationMissingScreenshotsJobInput =
         new BranchNotificationMissingScreenshotsJobInput();

@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -97,7 +97,7 @@ public class DeltaServiceTest extends ServiceTestBase {
             .getDeltasForDates(
                 tmTestData.repository,
                 Arrays.asList(tmTestData.frFR, tmTestData.frCA, tmTestData.koKR, tmTestData.jaJP),
-                DateTime.now().plusSeconds(1),
+                ZonedDateTime.now().plusSeconds(1),
                 null,
                 Pageable.unpaged())
             .getContent();
@@ -108,8 +108,9 @@ public class DeltaServiceTest extends ServiceTestBase {
             .getDeltasForDates(
                 tmTestData.repository,
                 Arrays.asList(tmTestData.frFR, tmTestData.frCA, tmTestData.koKR, tmTestData.jaJP),
-                new DateTime(0),
-                DateTime.now().plusHours(1),
+                // TODO(jean) JSR310 - replace
+                new ZonedDateTime(0),
+                ZonedDateTime.now().plusHours(1),
                 PageRequest.of(0, 1, Sort.Direction.ASC, "id"))
             .getContent();
     Assert.assertNotEquals(0, deltasFromCreation.size());
@@ -125,7 +126,7 @@ public class DeltaServiceTest extends ServiceTestBase {
             .getDeltasForDates(
                 tmTestData.repository,
                 Arrays.asList(tmTestData.frFR, tmTestData.frCA, tmTestData.koKR, tmTestData.jaJP),
-                DateTime.now().plusSeconds(1),
+                ZonedDateTime.now().plusSeconds(1),
                 null,
                 Pageable.unpaged())
             .getContent();
@@ -136,8 +137,8 @@ public class DeltaServiceTest extends ServiceTestBase {
             .getDeltasForDates(
                 tmTestData.repository,
                 Arrays.asList(tmTestData.frFR, tmTestData.frCA, tmTestData.koKR, tmTestData.jaJP),
-                new DateTime(0),
-                new DateTime(0),
+                new ZonedDateTime(0),
+                new ZonedDateTime(0),
                 PageRequest.of(0, 1, Sort.Direction.ASC, "id"))
             .getContent();
 
@@ -190,7 +191,7 @@ public class DeltaServiceTest extends ServiceTestBase {
     List<TextUnitVariantDeltaDTO> deltasFromBeggining =
         deltaService
             .getDeltasForDates(
-                repository, null, new DateTime(0), DateTime.now().plusHours(1), Pageable.unpaged())
+                repository, null, new ZonedDateTime(0), ZonedDateTime.now().plusHours(1), Pageable.unpaged())
             .getContent();
 
     Assert.assertEquals(2, deltasFromBeggining.size());
@@ -243,7 +244,7 @@ public class DeltaServiceTest extends ServiceTestBase {
     List<TextUnitVariantDeltaDTO> deltasFromBeggining =
         deltaService
             .getDeltasForDates(
-                repository, null, new DateTime(0), DateTime.now().plusHours(1), Pageable.unpaged())
+                repository, null, new ZonedDateTime(0), ZonedDateTime.now().plusHours(1), Pageable.unpaged())
             .getContent();
 
     Assert.assertEquals(1, deltasFromBeggining.size());
@@ -308,8 +309,8 @@ public class DeltaServiceTest extends ServiceTestBase {
             .getDeltasForDates(
                 repository,
                 Collections.singletonList(frFR),
-                new DateTime(0),
-                DateTime.now().plusHours(1),
+                new ZonedDateTime(0),
+                ZonedDateTime.now().plusHours(1),
                 Pageable.unpaged())
             .getContent();
     Assert.assertEquals(2, frDeltasFromStart.size());
@@ -319,8 +320,8 @@ public class DeltaServiceTest extends ServiceTestBase {
             .getDeltasForDates(
                 repository,
                 Collections.singletonList(koKR),
-                new DateTime(0),
-                DateTime.now().plusHours(1),
+                new ZonedDateTime(0),
+                ZonedDateTime.now().plusHours(1),
                 Pageable.unpaged())
             .getContent();
     Assert.assertEquals(1, koKrDeltasFromStart.size());
@@ -328,7 +329,7 @@ public class DeltaServiceTest extends ServiceTestBase {
     List<TextUnitVariantDeltaDTO> noSpecificLocalesDeltasFromStart =
         deltaService
             .getDeltasForDates(
-                repository, null, new DateTime(0), DateTime.now().plusHours(1), Pageable.unpaged())
+                repository, null, new ZonedDateTime(0), ZonedDateTime.now().plusHours(1), Pageable.unpaged())
             .getContent();
     Assert.assertEquals(3, noSpecificLocalesDeltasFromStart.size());
 
@@ -337,8 +338,8 @@ public class DeltaServiceTest extends ServiceTestBase {
             .getDeltasForDates(
                 repository,
                 Arrays.asList(koKR, frFR),
-                new DateTime(0),
-                DateTime.now().plusHours(1),
+                new ZonedDateTime(0),
+                ZonedDateTime.now().plusHours(1),
                 Pageable.unpaged())
             .getContent();
     Assert.assertEquals(3, allLocalesDeltasFromStart.size());

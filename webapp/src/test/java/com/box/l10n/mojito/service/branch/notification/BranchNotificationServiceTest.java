@@ -19,7 +19,7 @@ import com.box.l10n.mojito.service.tm.search.TextUnitSearcherParameters;
 import com.box.l10n.mojito.test.TestIdWatcher;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -113,7 +113,7 @@ public class BranchNotificationServiceTest extends ServiceTestBase {
     BranchNotification branchNotification =
         branchNotificationRepository.findByBranchAndNotifierId(
             branchTestData.getBranch1(), branchNotifierId);
-    branchNotification.setScreenshotMissingMsgSentAt(DateTime.now().minusMinutes(31));
+    branchNotification.setScreenshotMissingMsgSentAt(ZonedDateTime.now().minusMinutes(31));
     branchNotificationRepository.save(branchNotification);
 
     branchNotificationService.scheduleMissingScreenshotNotificationsForBranch(

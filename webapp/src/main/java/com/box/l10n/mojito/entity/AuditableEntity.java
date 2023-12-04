@@ -8,7 +8,7 @@ import javax.persistence.Column;
 import javax.persistence.EntityListeners;
 import javax.persistence.MappedSuperclass;
 import org.hibernate.annotations.Type;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -27,28 +27,28 @@ public abstract class AuditableEntity extends BaseEntity implements Serializable
   @Column(name = "created_date")
   @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
   @JsonView(View.IdAndNameAndCreated.class)
-  protected DateTime createdDate;
+  protected ZonedDateTime createdDate;
 
   @LastModifiedDate
   @Column(name = "last_modified_date")
   @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
   @JsonView(View.Modified.class)
-  protected DateTime lastModifiedDate;
+  protected ZonedDateTime lastModifiedDate;
 
-  public DateTime getCreatedDate() {
+  public ZonedDateTime getCreatedDate() {
     return createdDate;
   }
 
-  public DateTime getLastModifiedDate() {
+  public ZonedDateTime getLastModifiedDate() {
     return lastModifiedDate;
   }
 
   @VisibleForTesting
-  public void setCreatedDate(DateTime createdDate) {
+  public void setCreatedDate(ZonedDateTime createdDate) {
     this.createdDate = createdDate;
   }
 
-  public void setLastModifiedDate(DateTime lastModifiedDate) {
+  public void setLastModifiedDate(ZonedDateTime lastModifiedDate) {
     this.lastModifiedDate = lastModifiedDate;
   }
 }

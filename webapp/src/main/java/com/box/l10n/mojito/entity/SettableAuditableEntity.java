@@ -6,7 +6,7 @@ import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.PrePersist;
 import org.hibernate.annotations.Type;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 
 /**
  * Similar to {@link AuditableEntity} but allows to override the attributes.
@@ -20,20 +20,20 @@ public abstract class SettableAuditableEntity extends BaseEntity {
   @Column(name = "created_date")
   @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
   @JsonView(View.IdAndNameAndCreated.class)
-  protected DateTime createdDate;
+  protected ZonedDateTime createdDate;
 
-  public DateTime getCreatedDate() {
+  public ZonedDateTime getCreatedDate() {
     return createdDate;
   }
 
-  public void setCreatedDate(DateTime createdDate) {
+  public void setCreatedDate(ZonedDateTime createdDate) {
     this.createdDate = createdDate;
   }
 
   @PrePersist
   public void onPrePersist() {
     if (createdDate == null) {
-      createdDate = new DateTime();
+      createdDate = new ZonedDateTime();
     }
   }
 }

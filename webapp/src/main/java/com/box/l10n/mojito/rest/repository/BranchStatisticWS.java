@@ -22,7 +22,7 @@ import com.box.l10n.mojito.service.branch.SparseBranchStatisticRepository;
 import com.fasterxml.jackson.annotation.JsonView;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -60,8 +60,9 @@ public class BranchStatisticWS {
       @RequestParam(value = "empty", required = false) Boolean empty,
       @RequestParam(value = "totalCountLte", required = false, defaultValue = "30000")
           Long totalCountLte,
-      @RequestParam(value = "createdBefore", required = false) DateTime createdBefore,
-      @RequestParam(value = "createdAfter", required = false) DateTime createdAfter,
+      // TODO(jean) JSR310 - same
+      @RequestParam(value = "createdBefore", required = false) ZonedDateTime createdBefore,
+      @RequestParam(value = "createdAfter", required = false) ZonedDateTime createdAfter,
       @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
     // Two phase querying: 1. retrieve BranchStatistic IDs for pagination first
     // Retrieve all the Branch Statistic Ids without the totalCountLte filter:

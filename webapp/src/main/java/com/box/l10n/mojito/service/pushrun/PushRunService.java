@@ -17,7 +17,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
@@ -147,7 +147,8 @@ public class PushRunService {
   }
 
   public void deleteAllPushEntitiesOlderThan(Duration retentionDuration) {
-    DateTime beforeDate = DateTime.now().minusSeconds((int) retentionDuration.getSeconds());
+    ZonedDateTime beforeDate = ZonedDateTime.now().minusSeconds((int) retentionDuration.getSeconds());
+    // TODO(jean) JSR310 - replace
     Timestamp sqlBeforeDate = new Timestamp(beforeDate.toDate().getTime());
 
     int batchNumber = 1;

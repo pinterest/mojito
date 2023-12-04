@@ -7,7 +7,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import java.util.Optional;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 
 public class ThirdPartyTMSUtils {
 
@@ -32,7 +32,8 @@ public class ThirdPartyTMSUtils {
     } else if (thirdPartyFileChecksumOpt.isPresent()) {
       ThirdPartyFileChecksum thirdPartyFileChecksum = thirdPartyFileChecksumOpt.get();
       thirdPartyFileChecksum.setMd5(currentChecksum);
-      thirdPartyFileChecksum.setLastModifiedDate(new DateTime());
+      // TODO(jean) JSR310 - replace
+      thirdPartyFileChecksum.setLastModifiedDate(new ZonedDateTime());
       thirdPartyFileChecksumRepository.save(thirdPartyFileChecksum);
     } else {
       thirdPartyFileChecksumRepository.save(

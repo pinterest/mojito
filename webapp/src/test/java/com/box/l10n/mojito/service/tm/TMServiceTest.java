@@ -58,7 +58,7 @@ import net.sf.okapi.common.resource.TextUnit;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.proxy.HibernateProxy;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -1009,7 +1009,8 @@ public class TMServiceTest extends ServiceTestBase {
             null,
             TMTextUnitVariant.Status.REVIEW_NEEDED,
             true,
-            new DateTime());
+                // TODO(jean) JSR310 - replace
+            new ZonedDateTime());
 
     TMTextUnitVariant variant3 =
         tmService.addCurrentTMTextUnitVariant(

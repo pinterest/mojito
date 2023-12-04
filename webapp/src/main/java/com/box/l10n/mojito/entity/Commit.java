@@ -15,7 +15,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 
 /** @author garion */
 @Entity
@@ -67,7 +67,7 @@ public class Commit extends AuditableEntity {
   @JsonView(View.Commit.class)
   @Column(name = "source_creation_date")
   @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-  private DateTime sourceCreationDate;
+  private ZonedDateTime sourceCreationDate;
 
   @JsonView(View.CommitDetailed.class)
   @JsonManagedReference
@@ -111,11 +111,11 @@ public class Commit extends AuditableEntity {
     this.name = name;
   }
 
-  public DateTime getSourceCreationDate() {
+  public ZonedDateTime getSourceCreationDate() {
     return sourceCreationDate;
   }
 
-  public void setSourceCreationDate(DateTime sourceCreationDate) {
+  public void setSourceCreationDate(ZonedDateTime sourceCreationDate) {
     this.sourceCreationDate = sourceCreationDate;
   }
 

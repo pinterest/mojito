@@ -24,7 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -227,7 +227,8 @@ public class BoxSDKServiceTest extends WSTestBase {
 
     BoxFolder rootFolder = boxSDKService.getRootFolder();
 
-    DateTime dateTime = new DateTime();
+    // TODO(jean) JSR310 - replace
+    ZonedDateTime dateTime = new ZonedDateTime();
     dateTime = dateTime.minusDays(1);
 
     boxSDKService.deleteFolderContentOlderThan(rootFolder.getID(), dateTime);

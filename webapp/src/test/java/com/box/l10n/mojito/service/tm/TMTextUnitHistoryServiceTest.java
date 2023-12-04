@@ -22,7 +22,7 @@ import com.box.l10n.mojito.test.TestIdWatcher;
 import java.util.Iterator;
 import java.util.List;
 import org.hibernate.proxy.HibernateProxy;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -189,7 +189,7 @@ public class TMTextUnitHistoryServiceTest extends ServiceTestBase {
         frLocaleId,
         "FR[this is the content]",
         "0a30a359b20fd4095fc17fb586e8db4d");
-    DateTime now = DateTime.now();
+    ZonedDateTime now = ZonedDateTime.now();
     tmService.addTMTextUnitVariant(
         tmTextUnit.getId(),
         frLocaleId,

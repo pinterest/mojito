@@ -78,7 +78,7 @@ import net.sf.okapi.filters.xliff.XLIFFFilter;
 import net.sf.okapi.steps.common.FilterEventsWriterStep;
 import net.sf.okapi.steps.common.RawDocumentToFilterEventsStep;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -186,7 +186,7 @@ public class TMService {
       String name,
       String content,
       String comment,
-      DateTime createdDate,
+      ZonedDateTime createdDate,
       PluralForm pluralForm,
       String pluralFormOther) {
 
@@ -215,7 +215,7 @@ public class TMService {
       String content,
       String comment,
       User createdByUser,
-      DateTime createdDate,
+      ZonedDateTime createdDate,
       PluralForm pluralForm,
       String pluralFormOther) {
 
@@ -246,7 +246,7 @@ public class TMService {
       final String content,
       final String comment,
       final User createdByUser,
-      final DateTime createdDate,
+      final ZonedDateTime createdDate,
       final PluralForm pluralForm,
       final String pluralFormOther,
       final Long sourceLocaleId) {
@@ -357,7 +357,7 @@ public class TMService {
       String content,
       TMTextUnitVariant.Status status,
       boolean includedInLocalizedFile,
-      DateTime createdDate) {
+      ZonedDateTime createdDate) {
     return addTMTextUnitCurrentVariant(
             tmTextUnitId, localeId, content, null, status, includedInLocalizedFile, createdDate)
         .getTmTextUnitVariant();
@@ -462,7 +462,7 @@ public class TMService {
       String comment,
       TMTextUnitVariant.Status status,
       boolean includedInLocalizedFile,
-      DateTime createdDate) {
+      ZonedDateTime createdDate) {
 
     return addTMTextUnitCurrentVariantWithResult(
             tmTextUnitId, localeId, content, comment, status, includedInLocalizedFile, createdDate)
@@ -498,7 +498,7 @@ public class TMService {
       String comment,
       TMTextUnitVariant.Status status,
       boolean includedInLocalizedFile,
-      DateTime createdDate) {
+      ZonedDateTime createdDate) {
 
     logger.debug("Check if there is a current TMTextUnitVariant");
     TMTextUnitCurrentVariant currentTmTextUnitCurrentVariant =
@@ -564,7 +564,7 @@ public class TMService {
       String comment,
       TMTextUnitVariant.Status status,
       boolean includedInLocalizedFile,
-      DateTime createdDate,
+      ZonedDateTime createdDate,
       User createdBy) {
 
     boolean noUpdate = false;
@@ -709,7 +709,7 @@ public class TMService {
       String comment,
       TMTextUnitVariant.Status status,
       boolean includedInLocalizedFile,
-      DateTime createdDate) {
+      ZonedDateTime createdDate) {
     User createdBy = auditorAwareImpl.getCurrentAuditor().orElse(null);
     return addTMTextUnitVariant(
         tmTextUnitId,
@@ -749,7 +749,7 @@ public class TMService {
       String comment,
       TMTextUnitVariant.Status status,
       boolean includedInLocalizedFile,
-      DateTime createdDate,
+      ZonedDateTime createdDate,
       User createdBy) {
 
     logger.debug(

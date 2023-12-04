@@ -6,7 +6,7 @@ import com.box.l10n.mojito.utils.RestTemplateUtils;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import java.util.HashMap;
 import java.util.Map;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
@@ -59,7 +59,7 @@ public class SmartlingAuthorizationCodeAccessTokenProvider implements AccessToke
           refreshAccessToken(details, existingToken.getRefreshToken(), accessTokenRequest);
     } else {
       try {
-        DateTime now = getNowForToken();
+        ZonedDateTime now = getNowForToken();
         AuthenticationResponse authenticationResponse =
             getRestTemplate()
                 .postForObject(details.getAccessTokenUri(), request, AuthenticationResponse.class);
@@ -90,7 +90,7 @@ public class SmartlingAuthorizationCodeAccessTokenProvider implements AccessToke
 
     DefaultOAuth2AccessToken defaultOAuth2AccessToken = null;
     try {
-      DateTime now = getNowForToken();
+      ZonedDateTime now = getNowForToken();
       AuthenticationResponse authenticationResponse =
           getRestTemplate()
               .postForObject(
@@ -113,7 +113,7 @@ public class SmartlingAuthorizationCodeAccessTokenProvider implements AccessToke
   }
 
   DefaultOAuth2AccessToken getDefaultOAuth2AccessToken(
-      DateTime now, AuthenticationResponse authenticationResponse) {
+      ZonedDateTime now, AuthenticationResponse authenticationResponse) {
     AuthenticationData data = authenticationResponse.getData();
     DefaultOAuth2AccessToken defaultOAuth2AccessToken =
         new DefaultOAuth2AccessToken(data.getAccessToken());
@@ -131,8 +131,8 @@ public class SmartlingAuthorizationCodeAccessTokenProvider implements AccessToke
    *
    * @return
    */
-  DateTime getNowForToken() {
-    return DateTime.now().minusSeconds(15);
+  ZonedDateTime getNowForToken() {
+    return ZonedDateTime.now().minusSeconds(15);
   }
 
   protected RestTemplate getRestTemplate() {

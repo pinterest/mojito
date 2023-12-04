@@ -3,7 +3,7 @@ package com.box.l10n.mojito.converter;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.joda.time.LocalTime;
+import java.time.LocalTime;
 import org.junit.Test;
 
 /** @author jeanaurambault */
@@ -13,6 +13,7 @@ public class LocalTimeConverterTest {
   public void testConvert() {
     String source = "14:00";
     LocalTimeConverter localTimeConverter = new LocalTimeConverter();
+    // TODO(jean) JSR310 - replace
     LocalTime expResult = new LocalTime(14, 0, 0);
     LocalTime result = localTimeConverter.convert(source);
     assertEquals(expResult, result);

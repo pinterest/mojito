@@ -18,7 +18,7 @@ import com.box.l10n.mojito.utils.DateTimeUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
@@ -159,7 +159,8 @@ public class SlaCheckerServiceTest {
     List<SlaIncident> incidentIn = Arrays.asList(mock(SlaIncident.class), mock(SlaIncident.class));
     List<SlaIncident> incidentOut = Arrays.asList(mock(SlaIncident.class), mock(SlaIncident.class));
 
-    DateTime now = new DateTime();
+    // TODO(jean) JSR310 - replace
+    ZonedDateTime now = new ZonedDateTime();
     doReturn(now).when(dateTimeUtils).now();
 
     doReturn(incidentIn).when(slaIncidentRepository).findByClosedDateIsNull();
@@ -189,7 +190,8 @@ public class SlaCheckerServiceTest {
   }
 
   SlaIncident getSlaIncidentForTest() {
-    DateTime createDate = new DateTime();
+    // TODO(jean) JSR310 - replace
+    ZonedDateTime createDate = new ZonedDateTime();
     SlaIncident openIncident = new SlaIncident();
     openIncident.setId(1212L);
     openIncident.setCreatedDate(createDate);

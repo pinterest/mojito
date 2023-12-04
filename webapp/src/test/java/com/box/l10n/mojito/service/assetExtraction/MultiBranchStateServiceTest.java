@@ -18,7 +18,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Optional;
 import org.assertj.core.api.Assertions;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,8 +99,9 @@ public class MultiBranchStateServiceTest extends ServiceTestBase {
     return expectedMultiBranchState;
   }
 
-  DateTime roundDateTimeToSecond(DateTime dateTime) {
+  ZonedDateTime roundDateTimeToSecond(ZonedDateTime dateTime) {
 
+    // TODO(jean) JSR310 - replace
     if (dateTime.getMillisOfSecond() > 500) {
       dateTime = dateTime.withMillisOfSecond(0).plusSeconds(1);
     } else {

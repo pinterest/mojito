@@ -1,6 +1,6 @@
 package com.box.l10n.mojito.service.sla.email;
 
-import org.joda.time.Period;
+import java.time.Period;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,6 +18,7 @@ public class SlaCheckerEmailConfig {
    *
    * <p>The config property is a value in milliseconds.
    */
+  // TODO(jean) JSR310 - update
   Period periodBetweenEmail = new Period(1, 0, 0, 0);
 
   public String getFrom() {

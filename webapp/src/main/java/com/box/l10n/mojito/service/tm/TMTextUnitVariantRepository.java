@@ -7,7 +7,7 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
 import java.sql.Timestamp;
 import java.util.List;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -63,8 +63,8 @@ public interface TMTextUnitVariantRepository extends JpaRepository<TMTextUnitVar
   Page<TextUnitVariantDeltaDTO> findAllUsedForRepositoryAndLocalesInDateRange(
       @Param("repository") Repository repository,
       @Param("locales") List<Locale> locales,
-      @Param("fromDate") DateTime fromDate,
-      @Param("toDate") DateTime toDate,
+      @Param("fromDate") ZonedDateTime fromDate,
+      @Param("toDate") ZonedDateTime toDate,
       Pageable pageable);
 
   /**
@@ -79,7 +79,7 @@ public interface TMTextUnitVariantRepository extends JpaRepository<TMTextUnitVar
    * to provided deltas relevant for a specific snapshot.
    *
    * @param translationsFromDate A java.sql.Date type needs to be provided for native queries,
-   *     otherwise, if Joda Time's DateTime is used, that parameter is passed in as a VARBINARY to
+   *     otherwise, if Joda Time's ZonedDateTime is used, that parameter is passed in as a VARBINARY to
    *     the SQL query and will silently mis-behave.
    */
   @Query(

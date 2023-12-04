@@ -11,7 +11,7 @@ import java.util.Objects;
 import net.sf.okapi.common.Event;
 import net.sf.okapi.common.resource.StartSubDocument;
 import net.sf.okapi.common.resource.TextContainer;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,7 +116,7 @@ public class ImportTranslationsWithTranslationKitStep extends ImportTranslations
       TMTextUnit tmTextUnit,
       TextContainer target,
       TMTextUnitVariant.Status status,
-      DateTime createdDate) {
+      ZonedDateTime createdDate) {
     TMTextUnitVariant importTextUnit =
         super.importTextUnit(tmTextUnit, target, status, createdDate);
     translationKitService.markTranslationKitTextUnitAsImported(translationKit, importTextUnit);

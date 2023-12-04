@@ -8,7 +8,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import org.hibernate.annotations.Type;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 
 /**
  * Entity to keep track of which repository's statistics are outdated.
@@ -34,7 +34,7 @@ public class StatisticsSchedule extends BaseEntity {
 
   @Column(name = "time_to_update")
   @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-  protected DateTime timeToUpdate;
+  protected ZonedDateTime timeToUpdate;
 
   public Repository getRepository() {
     return repository;
@@ -44,11 +44,11 @@ public class StatisticsSchedule extends BaseEntity {
     this.repository = repository;
   }
 
-  public DateTime getTimeToUpdate() {
+  public ZonedDateTime getTimeToUpdate() {
     return timeToUpdate;
   }
 
-  public void setTimeToUpdate(DateTime timeToUpdate) {
+  public void setTimeToUpdate(ZonedDateTime timeToUpdate) {
     this.timeToUpdate = timeToUpdate;
   }
 }

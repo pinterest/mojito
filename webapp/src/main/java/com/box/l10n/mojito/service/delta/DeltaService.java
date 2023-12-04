@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -65,8 +65,8 @@ public class DeltaService {
   public Page<TextUnitVariantDeltaDTO> getDeltasForDates(
       Repository repository,
       List<Locale> locales,
-      DateTime fromDate,
-      DateTime toDate,
+      ZonedDateTime fromDate,
+      ZonedDateTime toDate,
       Pageable pageable) {
     if (locales == null || locales.size() == 0) {
       locales =
@@ -76,11 +76,12 @@ public class DeltaService {
     }
 
     if (fromDate == null) {
-      fromDate = new DateTime(0);
+      // TODO(jean) JSR310 - replace
+      fromDate = new ZonedDateTime(0);
     }
 
     if (toDate == null) {
-      toDate = DateTime.now();
+      toDate = ZonedDateTime.now();
     }
 
     return tmTextUnitVariantRepository.findAllUsedForRepositoryAndLocalesInDateRange(
@@ -123,13 +124,16 @@ public class DeltaService {
     List<Long> pushRunIds = getIds(pushRuns);
     List<Long> pullRunIds = getIds(pullRuns);
 
-    DateTime translationsFromDate =
+    ZonedDateTime translationsFromDate =
         Optional.ofNullable(pullRuns).orElse(Collections.emptyList()).stream()
             .min(Comparator.comparing(PullRun::getCreatedDate))
             .map(PullRun::getCreatedDate)
             // Remove milliseconds as the Mojito DB does not store dates with sub-second precision.
+             // TODO(jean) JSR310 - replace
             .map(dateTime -> dateTime.withMillisOfSecond(0))
-            .orElse(new DateTime(0));
+                // TODO(jean) JSR310 - replace
+            .orElse(new ZonedDateTime(0));
+    // TODO(jean) JSR310 - replace
     Instant fromDateInstant = Instant.ofEpochMilli(translationsFromDate.getMillis());
     Timestamp sqlTranslationsFromDate =
         Timestamp.valueOf(LocalDateTime.ofInstant(fromDateInstant, ZoneOffset.UTC));

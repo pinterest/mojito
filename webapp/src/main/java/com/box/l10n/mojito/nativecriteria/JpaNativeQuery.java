@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.List;
 import javax.persistence.Query;
 import javax.persistence.TemporalType;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 
 /** @author jeanaurambault */
 public class JpaNativeQuery implements NativeQuery {
@@ -74,8 +74,9 @@ public class JpaNativeQuery implements NativeQuery {
     return queryInfo;
   }
 
-  public NativeQuery setParameter(String name, DateTime dateTime) {
+  public NativeQuery setParameter(String name, ZonedDateTime dateTime) {
     queryInfo.getParameters().put(name, dateTime);
+    // TODO(jean) JSR310 - replace
     query.setParameter(name, dateTime.toDate(), TemporalType.TIMESTAMP);
     return this;
   }

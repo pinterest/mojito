@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.mail.internet.MimeMessage;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,8 +49,9 @@ public class SlaCheckerEmailService {
     sendEmail(incidentId, getOpenIncidentEmailContent(incidentId, ooslaRepositories));
   }
 
-  public boolean shouldResendEmail(DateTime previousEmailDateTime) {
-    DateTime now = dateTimeUtils.now();
+  public boolean shouldResendEmail(ZonedDateTime previousEmailDateTime) {
+    ZonedDateTime now = dateTimeUtils.now();
+    // TODO(jean) JSR310 - replace
     return previousEmailDateTime.isBefore(now.minus(slaCheckerEmailConfig.getPeriodBetweenEmail()));
   }
 

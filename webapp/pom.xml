@@ -261,30 +261,33 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Joda Time -->
-        <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time-hibernate</artifactId>
-            <version>${hibernate.joda-time.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jadira.usertype</groupId>
-            <artifactId>usertype.core</artifactId>
-            <version>${usertype.core.version}</version>
-        </dependency>
+<!--        &lt;!&ndash; Joda Time &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>joda-time</groupId>-->
+<!--            <artifactId>joda-time-hibernate</artifactId>-->
+<!--            <version>${hibernate.joda-time.version}</version>-->
+<!--        </dependency>-->
+<!--        -->
 
-        <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-            <version>2.10.6</version>
-        </dependency>
 
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-joda</artifactId>
-        </dependency>
 
-        <!-- Joda Time -->
+<!--        <dependency>-->
+<!--            <groupId>org.jadira.usertype</groupId>-->
+<!--            <artifactId>usertype.core</artifactId>-->
+<!--            <version>${usertype.core.version}</version>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>joda-time</groupId>-->
+<!--            <artifactId>joda-time</artifactId>-->
+<!--            <version>2.10.6</version>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>com.fasterxml.jackson.datatype</groupId>-->
+<!--            <artifactId>jackson-datatype-joda</artifactId>-->
+<!--        </dependency>-->
+
 
         <!-- TODO(P1) to be removed? -->
         <dependency>

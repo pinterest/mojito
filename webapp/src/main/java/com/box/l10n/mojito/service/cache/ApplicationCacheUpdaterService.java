@@ -8,7 +8,7 @@ import com.box.l10n.mojito.service.DBUtils;
 import java.util.Optional;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
@@ -56,7 +56,7 @@ public class ApplicationCacheUpdaterService {
       Optional<ApplicationCache> existingEntry =
           applicationCacheRepository.findByApplicationCacheTypeAndKeyMD5(
               applicationCacheType, keyMD5);
-      DateTime currentSqlTimestamp = getCurrentSqlTimestamp();
+      ZonedDateTime currentSqlTimestamp = getCurrentSqlTimestamp();
 
       ApplicationCache applicationCache;
 
@@ -104,7 +104,7 @@ public class ApplicationCacheUpdaterService {
           applicationCacheRepository.findByApplicationCacheTypeAndKeyMD5(
               applicationCacheType, keyMD5);
       ApplicationCache applicationCache;
-      DateTime currentSqlTimestamp = getCurrentSqlTimestamp();
+      ZonedDateTime currentSqlTimestamp = getCurrentSqlTimestamp();
 
       if (existingEntry.isPresent()) {
         applicationCache = existingEntry.get();
@@ -118,19 +118,20 @@ public class ApplicationCacheUpdaterService {
     }
   }
 
-  private DateTime getCurrentSqlTimestamp() {
-    DateTime currentTimestamp;
+  private ZonedDateTime getCurrentSqlTimestamp() {
+    ZonedDateTime currentTimestamp;
 
     try {
+      // TODO(jean) JSR310 - replace
       currentTimestamp =
-          new DateTime(
+          new ZonedDateTime(
               entityManager
                   .createNativeQuery(
                       "SELECT TOP 1 CURRENT_TIMESTAMP FROM INFORMATION_SCHEMA.TABLES")
                   .getSingleResult());
     } catch (Exception ex) {
       logger.error("Could not retrieve current timestamp from the SQL DB", ex);
-      currentTimestamp = DateTime.now();
+      currentTimestamp = ZonedDateTime.now();
     }
     return currentTimestamp;
   }

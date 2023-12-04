@@ -6,7 +6,7 @@ import com.google.common.base.Throwables;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,7 +86,7 @@ public class PollableTaskService {
       Integer expectedSubTaskNumberOverride) {
 
     PollableTask pollableTask = getPollableTask(id);
-    pollableTask.setFinishedDate(DateTime.now());
+    pollableTask.setFinishedDate(ZonedDateTime.now());
 
     if (exceptionHolder != null && exceptionHolder.getException() != null) {
       pollableTask.setErrorStack(Throwables.getStackTraceAsString(exceptionHolder.getException()));

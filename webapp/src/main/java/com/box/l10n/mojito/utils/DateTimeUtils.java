@@ -1,18 +1,21 @@
 package com.box.l10n.mojito.utils;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 import org.springframework.stereotype.Component;
 
 /** @author jeanaurambault */
 @Component
 public class DateTimeUtils {
 
-  public DateTime now() {
-    return new DateTime();
+  public ZonedDateTime now() {
+    // TODO(jean) JSR310 - replace
+    return new ZonedDateTime();
   }
 
-  public DateTime now(DateTimeZone dateTimeZone) {
-    return new DateTime(dateTimeZone);
+  public ZonedDateTime now(ZoneId dateTimeZone) {
+    // TODO(jean) JSR310 - replace
+    return new ZonedDateTime(dateTimeZone);
   }
 }

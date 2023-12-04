@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -183,7 +183,8 @@ public class TMTestData {
   }
 
   public ImmutableMap<String, TMTextUnit> addPluralString(String basename) {
-    DateTime date = new DateTime();
+    // TODO(jean) JSR310 - replace
+    ZonedDateTime date = new ZonedDateTime();
 
     ImmutableMap<String, TMTextUnit> tmTextUnitsByForm =
         Stream.of("other", "zero", "one", "two", "few", "many")
@@ -194,7 +195,7 @@ public class TMTestData {
     return tmTextUnitsByForm;
   }
 
-  TMTextUnit addPluralForm(String basename, String pluralForm, DateTime date) {
+  TMTextUnit addPluralForm(String basename, String pluralForm, ZonedDateTime date) {
     return tmService.addTMTextUnit(
         tm.getId(),
         asset.getId(),

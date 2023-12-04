@@ -13,7 +13,7 @@ import javax.persistence.criteria.Join;
 import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 
 /** @author jeanaurambault */
 public class BranchStatisticSpecification {
@@ -86,7 +86,7 @@ public class BranchStatisticSpecification {
   }
 
   public static SingleParamSpecification<BranchStatistic> createdBefore(
-      final DateTime createdBefore) {
+      final ZonedDateTime createdBefore) {
     return new SingleParamSpecification<BranchStatistic>(createdBefore) {
       @Override
       public Predicate toPredicate(
@@ -99,7 +99,7 @@ public class BranchStatisticSpecification {
   }
 
   public static SingleParamSpecification<BranchStatistic> createdAfter(
-      final DateTime createdAfter) {
+      final ZonedDateTime createdAfter) {
     return new SingleParamSpecification<BranchStatistic>(createdAfter) {
       @Override
       public Predicate toPredicate(

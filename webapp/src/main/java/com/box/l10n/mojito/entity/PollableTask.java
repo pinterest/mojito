@@ -24,7 +24,7 @@ import javax.persistence.OrderBy;
 import javax.persistence.Table;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.springframework.data.annotation.CreatedBy;
 
 /** @author jaurambault */
@@ -51,7 +51,7 @@ public class PollableTask extends AuditableEntity {
 
   @Column(name = "finished_date")
   @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-  private DateTime finishedDate;
+  private ZonedDateTime finishedDate;
 
   @JsonIgnore
   @Column(name = "message", length = Integer.MAX_VALUE)
@@ -107,11 +107,11 @@ public class PollableTask extends AuditableEntity {
     this.name = name;
   }
 
-  public DateTime getFinishedDate() {
+  public ZonedDateTime getFinishedDate() {
     return finishedDate;
   }
 
-  public void setFinishedDate(DateTime finishedDate) {
+  public void setFinishedDate(ZonedDateTime finishedDate) {
     this.finishedDate = finishedDate;
   }
 

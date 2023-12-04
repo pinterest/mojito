@@ -1,9 +1,9 @@
 package com.box.l10n.mojito.service.sla;
 
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalTime;
+import java.time.LocalTime;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -12,21 +12,24 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "l10n.drop-schedule")
 public class DropScheduleConfig {
 
-  DateTimeZone timezone = DateTimeZone.forID("PST8PDT");
+  // TODO(jean) JSR310 - update
+  ZoneId timezone = ZoneId.forID("PST8PDT");
 
   List<Integer> createdDays = Arrays.asList(1, 2, 3, 4, 5);
 
   List<Integer> dueDays = Arrays.asList(3, 4, 5, 1, 2);
 
+  // TODO(jean) JSR310 - replace
   LocalTime createdLocalTime = new LocalTime("20:00");
 
+  // TODO(jean) JSR310 - replace
   LocalTime dueLocalTime = new LocalTime("14:00");
 
-  public DateTimeZone getTimezone() {
+  public ZoneId getTimezone() {
     return timezone;
   }
 
-  public void setTimezone(DateTimeZone timezone) {
+  public void setTimezone(ZoneId timezone) {
     this.timezone = timezone;
   }
 

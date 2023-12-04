@@ -80,7 +80,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.persistence.EntityManager;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -362,7 +362,8 @@ public class AssetExtractionService {
 
     logger.debug(
         "Change asset extraction last modified date to create a new version for optimistic locking");
-    assetExtraction.setLastModifiedDate(new DateTime());
+    // TODO(jean) JSR310 - replace
+    assetExtraction.setLastModifiedDate(new ZonedDateTime());
     assetExtraction.setContentMd5(assetContentMd5s.getContentMd5());
     assetExtraction.setFilterOptionsMd5(assetContentMd5s.getFilterOptionsMd5());
     assetExtractionRepository.save(assetExtraction);
@@ -940,7 +941,7 @@ public class AssetExtractionService {
         asset.getRepository().getTm().getId(),
         asset.getId());
 
-    DateTime createdDate = DateTime.now();
+    ZonedDateTime createdDate = ZonedDateTime.now();
 
     ImmutableList<BranchStateTextUnit> createdTmTextUnits =
         Lists.partition(textUnits, BATCH_SIZE).stream()
@@ -951,7 +952,7 @@ public class AssetExtractionService {
   }
 
   Function<List<BranchStateTextUnit>, Stream<? extends BranchStateTextUnit>> createTmTextUnitsBatch(
-      Asset asset, User createdByUser, DateTime createdDate) {
+      Asset asset, User createdByUser, ZonedDateTime createdDate) {
     return textUnits -> {
       ImmutableList<BranchStateTextUnit> subCreatedTmTextUnits =
           textUnits.stream()

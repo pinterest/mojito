@@ -32,7 +32,7 @@ import java.util.Date;
 import java.util.List;
 import net.sf.okapi.common.exceptions.OkapiBadFilterInputException;
 import net.sf.okapi.common.exceptions.OkapiIOException;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -225,7 +225,8 @@ public class DropService {
     logger.debug("Start importing drop");
 
     Drop drop = dropRepository.findById(dropId).orElse(null);
-    drop.setLastImportedDate(new DateTime());
+    // TODO(jean) JSR310 - replace
+    drop.setLastImportedDate(new ZonedDateTime());
     drop.setImportPollableTask(currentTask);
     drop.setImportFailed(null);
     dropRepository.save(drop);

@@ -16,7 +16,7 @@ import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.test.TestIdWatcher;
 import java.util.Arrays;
 import java.util.List;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,7 +111,8 @@ public class AssetExtractionCleanupServiceTest extends ServiceTestBase {
     Asset asset = createOrUpdateAssetAndWaitUntilProcessingEnds(repository, assetPath, 0, null);
     PollableTask pollableTask = new PollableTask();
     pollableTask.setName("fortest");
-    pollableTask.setFinishedDate(new DateTime());
+    // TODO(jean) JSR310 - replace
+    pollableTask.setFinishedDate(new ZonedDateTime());
     pollableTaskRepository.save(pollableTask);
     AssetExtraction createAssetExtraction =
         assetExtractionService.createAssetExtraction(asset, pollableTask);

@@ -48,7 +48,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -215,7 +215,7 @@ public class TextUnitBatchImporterService {
   @Transactional
   void importTextUnitsOfLocaleAndAsset(
       Locale locale, Asset asset, List<TextUnitForBatchMatcherImport> textUnitsToImport) {
-    DateTime importTime = new DateTime();
+    ZonedDateTime importTime = new ZonedDateTime();
     logger.debug(
         "Start import text units for asset: {} and locale: {}",
         asset.getPath(),

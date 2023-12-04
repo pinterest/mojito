@@ -6,8 +6,8 @@ import static org.mockito.Mockito.doReturn;
 
 import com.box.l10n.mojito.utils.DateTimeUtils;
 import java.util.Arrays;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -25,50 +25,59 @@ public class DropScheduleServiceTest {
 
   @Spy DropScheduleConfig dropScheduleConfig;
 
-  DateTimeZone dateTimeZone = DateTimeZone.forID("PST8PDT");
+  // TODO(jean) JSR310 - update
+  ZoneId dateTimeZone = ZoneId.forID("PST8PDT");
 
   @Test
   public void testGetLastDropCreatedDate() {
-    DateTime now = new DateTime("2018-06-08T14:00:00.000-07:00", dateTimeZone);
+    // TODO(jean) JSR310 - replace
+    ZonedDateTime now = new ZonedDateTime("2018-06-08T14:00:00.000-07:00", dateTimeZone);
     doReturn(now).when(dateTimeUtils).now(dateTimeZone);
-    DateTime expResult = new DateTime("2018-06-06T20:00:00.000-07:00", dateTimeZone);
-    DateTime result = dropSchedule.getLastDropCreatedDate();
+    // TODO(jean) JSR310 - replace
+    ZonedDateTime expResult = new ZonedDateTime("2018-06-06T20:00:00.000-07:00", dateTimeZone);
+    ZonedDateTime result = dropSchedule.getLastDropCreatedDate();
     assertEquals(expResult, result);
   }
 
   @Test
   public void testGetLastDropCreatedDatePreviousWeek() {
-    DateTime now = new DateTime("2018-06-05T14:00:00.000-07:00", dateTimeZone);
+    // TODO(jean) JSR310 - replace
+    ZonedDateTime now = new ZonedDateTime("2018-06-05T14:00:00.000-07:00", dateTimeZone);
     doReturn(now).when(dateTimeUtils).now(dateTimeZone);
-    DateTime expResult = new DateTime("2018-06-01T20:00:00.000-07:00", dateTimeZone);
-    DateTime result = dropSchedule.getLastDropCreatedDate();
+    // TODO(jean) JSR310 - replace
+    ZonedDateTime expResult = new ZonedDateTime("2018-06-01T20:00:00.000-07:00", dateTimeZone);
+    ZonedDateTime result = dropSchedule.getLastDropCreatedDate();
     assertEquals(expResult, result);
   }
 
   @Test
   public void testGetLastDropDueDateDuringWeekend() {
-    DateTime before = new DateTime("2018-06-09T21:00:00.000-07:00", dateTimeZone);
+    // TODO(jean) JSR310 - replace
+    ZonedDateTime before = new ZonedDateTime("2018-06-09T21:00:00.000-07:00", dateTimeZone);
     assertEquals(
         "2018-06-08T14:00:00.000-07:00", dropSchedule.getLastDropDueDate(before).toString());
   }
 
   @Test
   public void testGetLastDropDueDateExactSameTime() {
-    DateTime before = new DateTime("2018-06-08T14:00:00.000-07:00", dateTimeZone);
+    // TODO(jean) JSR310 - replace
+    ZonedDateTime before = new ZonedDateTime("2018-06-08T14:00:00.000-07:00", dateTimeZone);
     assertEquals(
         "2018-06-08T14:00:00.000-07:00", dropSchedule.getLastDropDueDate(before).toString());
   }
 
   @Test
   public void testGetLastDropDueDateSameDayBeforeDropTime() {
-    DateTime before = new DateTime("2018-06-08T11:00:00.000-07:00", dateTimeZone);
+    // TODO(jean) JSR310 - replace
+    ZonedDateTime before = new ZonedDateTime("2018-06-08T11:00:00.000-07:00", dateTimeZone);
     assertEquals(
         "2018-06-07T14:00:00.000-07:00", dropSchedule.getLastDropDueDate(before).toString());
   }
 
   @Test
   public void testGetLastDropDueDateSameDayAfterDropTime() {
-    DateTime before = new DateTime("2018-06-08T16:00:00.000-07:00", dateTimeZone);
+    // TODO(jean) JSR310 - replace
+    ZonedDateTime before = new ZonedDateTime("2018-06-08T16:00:00.000-07:00", dateTimeZone);
     assertEquals(
         "2018-06-08T14:00:00.000-07:00", dropSchedule.getLastDropDueDate(before).toString());
   }
@@ -76,14 +85,16 @@ public class DropScheduleServiceTest {
   @Test
   public void testGetLastDropDueDateEmptyWorkingDays() {
     doReturn(Arrays.asList()).when(dropScheduleConfig).getDueDays();
-    DateTime before = new DateTime("2018-06-08T16:00:00.000-07:00", dateTimeZone);
+    // TODO(jean) JSR310 - replace
+    ZonedDateTime before = new ZonedDateTime("2018-06-08T16:00:00.000-07:00", dateTimeZone);
     assertNull(dropSchedule.getLastDropDueDate(before));
   }
 
   @Test
   public void testGetLastDropDueDatePreviousWeek() {
     doReturn(Arrays.asList(5)).when(dropScheduleConfig).getDueDays();
-    DateTime before = new DateTime("2018-06-06T16:00:00.000-07:00", dateTimeZone);
+    // TODO(jean) JSR310 - replace
+    ZonedDateTime before = new ZonedDateTime("2018-06-06T16:00:00.000-07:00", dateTimeZone);
     assertEquals(
         "2018-06-01T14:00:00.000-07:00", dropSchedule.getLastDropDueDate(before).toString());
   }
@@ -91,21 +102,24 @@ public class DropScheduleServiceTest {
   @Test
   public void testGetLastDropDueDateOneWeekAgo() {
     doReturn(Arrays.asList(5)).when(dropScheduleConfig).getDueDays();
-    DateTime before = new DateTime("2018-06-08T11:00:00.000-07:00", dateTimeZone);
+    // TODO(jean) JSR310 - replace
+    ZonedDateTime before = new ZonedDateTime("2018-06-08T11:00:00.000-07:00", dateTimeZone);
     assertEquals(
         "2018-06-01T14:00:00.000-07:00", dropSchedule.getLastDropDueDate(before).toString());
   }
 
   @Test
   public void testGetDropCreatedDate() {
-    DateTime before = new DateTime("2018-06-08T14:00:00.000-07:00", dateTimeZone);
+    // TODO(jean) JSR310 - replace
+    ZonedDateTime before = new ZonedDateTime("2018-06-08T14:00:00.000-07:00", dateTimeZone);
     assertEquals(
         "2018-06-06T20:00:00.000-07:00", dropSchedule.getDropCreatedDate(before).toString());
   }
 
   @Test
   public void testGetDropCreatedDatePreviousWeek() {
-    DateTime before = new DateTime("2018-06-05T14:00:00.000-07:00", dateTimeZone);
+    // TODO(jean) JSR310 - replace
+    ZonedDateTime before = new ZonedDateTime("2018-06-05T14:00:00.000-07:00", dateTimeZone);
     assertEquals(
         "2018-06-01T20:00:00.000-07:00", dropSchedule.getDropCreatedDate(before).toString());
   }

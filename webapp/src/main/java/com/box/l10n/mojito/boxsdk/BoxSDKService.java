@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.IOUtils;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -344,7 +344,7 @@ public class BoxSDKService {
    * @param olderThan an instant to check against
    * @throws BoxSDKServiceException
    */
-  public void deleteFolderContentOlderThan(String folderId, DateTime olderThan)
+  public void deleteFolderContentOlderThan(String folderId, ZonedDateTime olderThan)
       throws BoxSDKServiceException {
     try {
       BoxFolder boxFolder = new BoxFolder(getBoxAPIConnection(), folderId);
@@ -354,6 +354,7 @@ public class BoxSDKService {
         if (itemInfo instanceof BoxFolder.Info) {
           BoxFolder subFolder = (BoxFolder) itemInfo.getResource();
 
+          // TODO(jean) JSR310 - find alternative
           if (olderThan.isAfter(subFolder.getInfo().getCreatedAt().getTime())) {
             subFolder.delete(true);
           }
