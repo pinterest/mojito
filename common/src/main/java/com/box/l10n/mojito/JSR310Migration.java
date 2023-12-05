@@ -1,5 +1,6 @@
 package com.box.l10n.mojito;
 
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalTime;
@@ -88,5 +89,12 @@ public class JSR310Migration {
 
   public static LocalTime newLocalTimeWithHMS(int hourOfDay, int minuteOfHour, int secondOfMinute) {
     return LocalTime.of(hourOfDay, minuteOfHour, secondOfMinute);
+  }
+  public static Integer dateTimeGetDayOfWeek(ZonedDateTime dateTime) {
+    return dateTime.getDayOfWeek().getValue();
+  }
+
+  public static ZonedDateTime dateTimeWithDayOfWeek(ZonedDateTime dateTime, int dayOfWeek) {
+    return dateTime.with(DayOfWeek.of(dayOfWeek));
   }
 }

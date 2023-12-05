@@ -231,6 +231,17 @@ public class JSR310MigrationTest {
     Assertions.assertThat(joda.getMillisOfSecond() * 1000).isEqualTo(jsr.getNano());
   }
 
+  @Test
+  public void dateTimeGetDayOfWeek() {
+    Assertions.assertThat(dateTimeGetDayOfWeekOld(dateTime)).isEqualTo(JSR310Migration.dateTimeGetDayOfWeek(zonedDateTime));
+  }
+
+  @Test
+  public void dateTimeWithDayOfWeek() {
+    Assertions.assertThat(dateTimeWithDayOfWeekOld(dateTime, 4).toInstant().getMillis())
+            .isEqualTo(JSR310Migration.dateTimeWithDayOfWeek(zonedDateTime, 4).toInstant().toEpochMilli());
+  }
+
   public static DateTime newDateTimeCtorOld(
           int year, int monthOfYear, int dayOfMonth, int hourOfDay, int minuteOfHour) {
     return new DateTime(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour);
@@ -294,4 +305,10 @@ public class JSR310MigrationTest {
   public static LocalTime newLocalTimeWithHMSOld(int hourOfDay, int minuteOfHour, int secondOfMinute) {
     return new LocalTime(hourOfDay, minuteOfHour, secondOfMinute);
   }
+
+  public static Integer dateTimeGetDayOfWeekOld(DateTime dateTime) {
+    return dateTime.getDayOfWeek();
+  }
+
+  public static DateTime dateTimeWithDayOfWeekOld(DateTime dateTime, int dayOfWeek) { return dateTime.withDayOfWeek(dayOfWeek);}
 }

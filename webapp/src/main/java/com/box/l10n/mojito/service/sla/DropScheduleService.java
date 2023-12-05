@@ -30,15 +30,13 @@ public class DropScheduleService {
 
   ZonedDateTime getDropCreatedDate(ZonedDateTime dropDueDate) {
 
-    // TODO(jean) JSR310 - replaced by candiate for refactoring
+    // TODO(jean) JSR310 - replaced but candiate for refactoring with all block below
     ZonedDateTime dropCreatedDate = JSR310Migration.dateTimeWithLocalTime(dropDueDate, dropScheduleConfig.getCreatedLocalTime());
 
-    // TODO(jean) JSR310 - replace
-    Integer dropDueDateDay = dropDueDate.getDayOfWeek();
+    Integer dropDueDateDay = JSR310Migration.dateTimeGetDayOfWeek(dropDueDate);
     Integer dropStartDateDay = getDueDayToStartDay().get(dropDueDateDay);
 
-    // TODO(jean) JSR310 - replace
-    dropCreatedDate = dropCreatedDate.withDayOfWeek(dropStartDateDay);
+    dropCreatedDate = JSR310Migration.dateTimeWithDayOfWeek(dropCreatedDate, dropStartDateDay);
 
     if (dropStartDateDay > dropDueDateDay) {
       dropCreatedDate = dropCreatedDate.minusWeeks(1);
@@ -54,7 +52,6 @@ public class DropScheduleService {
     HashSet<Integer> dropDueDaysSet = Sets.newHashSet(dropScheduleConfig.getDueDays());
 
     for (int daysToSubstract = 0; daysToSubstract <= 7; daysToSubstract++) {
-      // TODO(jean) JSR310 - replace
       ZonedDateTime candidate = JSR310Migration.dateTimeWithLocalTime(before.minusDays(daysToSubstract), dropScheduleConfig.getDueLocalTime());
 
       if (dropDueDaysSet.contains(candidate.getDayOfWeek()) && !candidate.isAfter(before)) {
