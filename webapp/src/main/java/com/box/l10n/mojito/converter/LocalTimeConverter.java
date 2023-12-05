@@ -1,6 +1,8 @@
 package com.box.l10n.mojito.converter;
 
 import java.time.LocalTime;
+
+import com.box.l10n.mojito.JSR310Migration;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
@@ -12,12 +14,11 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ConfigurationPropertiesBinding
+// TODO(jean) JSR310 - replaced by since it standard types converter might not be required
 public class LocalTimeConverter implements Converter<String, LocalTime> {
 
   @Override
   public LocalTime convert(String source) {
-
-    // TODO(jean) JSR310 - replace
-    return new LocalTime(source);
+    return JSR310Migration.newLocalTimeWithString(source);
   }
 }

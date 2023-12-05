@@ -81,4 +81,12 @@ public class JSR310Migration {
   public static ZonedDateTime dateTimeWithLocalTime(ZonedDateTime dateTime, LocalTime localTime) {
     return dateTime.with(localTime);
   }
+
+  public static LocalTime newLocalTimeWithString(String source) {
+    return source == null ? LocalTime.now() : LocalTime.parse(source);
+  }
+
+  public static LocalTime newLocalTimeWithHMS(int hourOfDay, int minuteOfHour, int secondOfMinute) {
+    return LocalTime.of(hourOfDay, minuteOfHour, secondOfMinute);
+  }
 }

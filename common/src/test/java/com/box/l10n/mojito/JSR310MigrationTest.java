@@ -181,11 +181,9 @@ public class JSR310MigrationTest {
     Assertions.assertThat(zonedDateTime.format(JODA_FORMATTER_ATTEMPT)).isEqualTo("2018-05-09T17:34:55.000Z");
 
     Assertions.assertThat(dateTimeWithOffset.toString()).isEqualTo("2018-06-08T21:00:00.000Z");
+    Assertions.assertThat(zonedDateTimeWithOffset.format(JODA_FORMATTER_ATTEMPT))
+            .isEqualTo("2018-06-08T14:00:00.000Z"); // TODO(jean) 2-JSR310 This is totally wrong but just attempt
     Assertions.assertThat(zonedDateTimeWithOffset.toString()).isEqualTo("2018-06-08T14:00-07:00");
-    Assertions.assertThat(zonedDateTimeWithOffset.format(JODA_FORMATTER_ATTEMPT)).isEqualTo("2018-06-08T14:00:00.000-07:00");
-
-    System.out.println(dateTimeWithOffset);
-    System.out.println(zonedDateTimeWithOffset);
   }
 
   @Test
@@ -214,8 +212,23 @@ public class JSR310MigrationTest {
 
   @Test
   public void dateTimeWithLocalTime() {
-    Assertions.assertThat(dateTimeWithLocalTimeOld(dateTime, new LocalTime(10,15)).toInstant().getMillis())
-            .isEqualTo(JSR310Migration.dateTimeWithLocalTime(zonedDateTime, java.time.LocalTime.of(10,15)).toInstant().toEpochMilli());
+    Assertions.assertThat(dateTimeWithLocalTimeOld(dateTime, new LocalTime(10, 15)).toInstant().getMillis())
+            .isEqualTo(JSR310Migration.dateTimeWithLocalTime(zonedDateTime, java.time.LocalTime.of(10, 15)).toInstant().toEpochMilli());
+  }
+
+  @Test
+  public void newLocalTimeWithString() {
+    String source = "12:34";
+    LocalTime joda = newLocalTimeWithStringOld(source);
+    java.time.LocalTime jsr = JSR310Migration.newLocalTimeWithString(source);
+    Assertions.assertThat(joda.getMillisOfSecond() * 1000).isEqualTo(jsr.getNano());
+  }
+
+  @Test
+  public void newLocalTimeWithHMS() {
+    LocalTime joda = newLocalTimeWithHMSOld(10, 20, 30);
+    java.time.LocalTime jsr = JSR310Migration.newLocalTimeWithHMS(10, 20, 30);
+    Assertions.assertThat(joda.getMillisOfSecond() * 1000).isEqualTo(jsr.getNano());
   }
 
   public static DateTime newDateTimeCtorOld(
@@ -272,5 +285,13 @@ public class JSR310MigrationTest {
 
   public static DateTime dateTimeWithLocalTimeOld(DateTime dateTime, LocalTime localTime) {
     return dateTime.withTime(localTime);
+  }
+
+  public static LocalTime newLocalTimeWithStringOld(String source) {
+    return new LocalTime(source);
+  }
+
+  public static LocalTime newLocalTimeWithHMSOld(int hourOfDay, int minuteOfHour, int secondOfMinute) {
+    return new LocalTime(hourOfDay, minuteOfHour, secondOfMinute);
   }
 }

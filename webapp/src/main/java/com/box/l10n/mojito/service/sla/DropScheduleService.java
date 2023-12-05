@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.sla;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.utils.DateTimeUtils;
 import com.google.common.collect.Sets;
 import java.util.HashMap;
@@ -29,8 +30,8 @@ public class DropScheduleService {
 
   ZonedDateTime getDropCreatedDate(ZonedDateTime dropDueDate) {
 
-    // TODO(jean) JSR310 - replace
-    ZonedDateTime dropCreatedDate = dropDueDate.withTime(dropScheduleConfig.getCreatedLocalTime());
+    // TODO(jean) JSR310 - replaced by candiate for refactoring
+    ZonedDateTime dropCreatedDate = JSR310Migration.dateTimeWithLocalTime(dropDueDate, dropScheduleConfig.getCreatedLocalTime());
 
     // TODO(jean) JSR310 - replace
     Integer dropDueDateDay = dropDueDate.getDayOfWeek();
@@ -54,8 +55,7 @@ public class DropScheduleService {
 
     for (int daysToSubstract = 0; daysToSubstract <= 7; daysToSubstract++) {
       // TODO(jean) JSR310 - replace
-      ZonedDateTime candidate =
-          before.minusDays(daysToSubstract).withTime(dropScheduleConfig.getDueLocalTime());
+      ZonedDateTime candidate = JSR310Migration.dateTimeWithLocalTime(before.minusDays(daysToSubstract), dropScheduleConfig.getDueLocalTime());
 
       if (dropDueDaysSet.contains(candidate.getDayOfWeek()) && !candidate.isAfter(before)) {
         lastDropDueDate = candidate;

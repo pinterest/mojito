@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.sla;
 
+import com.box.l10n.mojito.JSR310Migration;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
@@ -19,11 +20,9 @@ public class DropScheduleConfig {
 
   List<Integer> dueDays = Arrays.asList(3, 4, 5, 1, 2);
 
-  // TODO(jean) JSR310 - replace
-  LocalTime createdLocalTime = new LocalTime("20:00");
+  LocalTime createdLocalTime = JSR310Migration.newLocalTimeWithString("20:00");
 
-  // TODO(jean) JSR310 - replace
-  LocalTime dueLocalTime = new LocalTime("14:00");
+  LocalTime dueLocalTime = JSR310Migration.newLocalTimeWithString("14:00");
 
   public ZoneId getTimezone() {
     return timezone;
