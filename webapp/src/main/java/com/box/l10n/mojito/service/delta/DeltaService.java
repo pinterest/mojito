@@ -124,16 +124,16 @@ public class DeltaService {
     List<Long> pushRunIds = getIds(pushRuns);
     List<Long> pullRunIds = getIds(pullRuns);
 
+    // TODO(jean) JSR310 - did replacement but could be candidate for refactoring given previous comment, see all block
     ZonedDateTime translationsFromDate =
         Optional.ofNullable(pullRuns).orElse(Collections.emptyList()).stream()
             .min(Comparator.comparing(PullRun::getCreatedDate))
             .map(PullRun::getCreatedDate)
             // Remove milliseconds as the Mojito DB does not store dates with sub-second precision.
-             // TODO(jean) JSR310 - replace
-            .map(dateTime -> dateTime.withMillisOfSecond(0))
+            .map(dateTime -> JSR310Migration.dateTimeWithMillisOfSeconds(dateTime, 0))
             .orElse(JSR310Migration.newDateTimeCtorAtEpoch());
-    // TODO(jean) JSR310 - replace
-    Instant fromDateInstant = Instant.ofEpochMilli(translationsFromDate.getMillis());
+
+    Instant fromDateInstant = Instant.ofEpochMilli(JSR310Migration.getMillis(translationsFromDate));
     Timestamp sqlTranslationsFromDate =
         Timestamp.valueOf(LocalDateTime.ofInstant(fromDateInstant, ZoneOffset.UTC));
 

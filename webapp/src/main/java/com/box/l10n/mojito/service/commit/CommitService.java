@@ -4,6 +4,7 @@ import static com.box.l10n.mojito.rest.commit.CommitSpecification.*;
 import static com.box.l10n.mojito.specification.Specifications.distinct;
 import static com.box.l10n.mojito.specification.Specifications.ifParamNotNull;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.Commit;
 import com.box.l10n.mojito.entity.CommitToPullRun;
 import com.box.l10n.mojito.entity.CommitToPushRun;
@@ -128,11 +129,11 @@ public class CommitService {
             "authorName", commit.getAuthorName(), authorName);
       }
 
-      // TODO(jean) JSR310 - replace
+      // TODO(jean) JSR310 - did replacement but could be candidate for refactoring. eg. setnano and compare the date with equals
       // Remove milliseconds when comparing as the dates are not stored with sub-second precision.
-      ZonedDateTime existingCreationDateWithoutMs = commit.getSourceCreationDate().withMillisOfSecond(0);
-      ZonedDateTime sourceCreationDateWithoutMs = sourceCreationDate.withMillisOfSecond(0);
-      if (existingCreationDateWithoutMs.getMillis() != sourceCreationDateWithoutMs.getMillis()) {
+      ZonedDateTime existingCreationDateWithoutMs = JSR310Migration.dateTimeWithMillisOfSeconds(commit.getSourceCreationDate(), 0);
+      ZonedDateTime sourceCreationDateWithoutMs = JSR310Migration.dateTimeWithMillisOfSeconds(sourceCreationDate, 0);
+      if (JSR310Migration.getMillis(existingCreationDateWithoutMs) != JSR310Migration.getMillis(sourceCreationDateWithoutMs)) {
         throw new SaveCommitMismatchedExistingDataException(
             "sourceCreationDate",
             commit.getSourceCreationDate().toString(),
