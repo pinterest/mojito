@@ -5,13 +5,13 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-
 import org.assertj.core.api.Assertions;
 import org.joda.time.DateTime;
 import org.joda.time.Instant;
 import org.joda.time.LocalTime;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormat;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -187,6 +187,27 @@ public class JSR310MigrationTest {
   }
 
   @Test
+  public void newDateTimeCtorWithLongAndString() {
+    Assertions.assertThat(
+            newDateTimeCtorWithLongAndStringOld("2018-05-09T17:34:55.000Z").toInstant().getMillis())
+        .isEqualTo(
+            JSR310Migration.newDateTimeCtorWithLongAndString("2018-05-09T17:34:55.000Z")
+                .toInstant()
+                .toEpochMilli());
+
+    Assertions.assertThat(
+            newDateTimeCtorWithLongAndStringOld(1594339100000L).toInstant().getMillis())
+        .isEqualTo(
+            JSR310Migration.newDateTimeCtorWithLongAndString(1594339100000L)
+                .toInstant()
+                .toEpochMilli());
+
+    Assert.assertThrows(
+        IllegalStateException.class,
+        () -> JSR310Migration.newDateTimeCtorWithLongAndString(new Date()));
+  }
+
+  @Test
   public void dateTimeGetMillisOfSecond() {
     DateTime start = new DateTime(2020, 7, 10, 0, 0, 12, 345);
     ZonedDateTime zstart =
@@ -280,6 +301,16 @@ public class JSR310MigrationTest {
   public static DateTime newDateTimeCtorWithISO8601StrOld(String str) {
     // from doc: the String formats are described by ISODateTimeFormat.dateTimeParser().
     return new DateTime(str);
+  }
+
+  /**
+   * Same as above
+   *
+   * <p>TODO(jean) JSR310 this is actually new DateTime(Object instant) behind the scene. There is a
+   * ussage with Long and String
+   */
+  public static DateTime newDateTimeCtorWithLongAndStringOld(Object instant) {
+    return new DateTime(instant);
   }
 
   public static int dateTimeGetMillisOfSecondOld(DateTime dateTime) {

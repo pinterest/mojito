@@ -28,6 +28,17 @@ public class JSR310Migration {
     return ZonedDateTime.parse(str);
   }
 
+  public static ZonedDateTime newDateTimeCtorWithLongAndString(Object instant) {
+
+    if (instant instanceof Long) {
+      return newDateTimeCtorWithEpochMilli((long) instant);
+    } else if (instant instanceof String) {
+      return newDateTimeCtorWithISO8601Str((String) instant);
+    } else {
+      throw new IllegalStateException();
+    }
+  }
+
   public static ZonedDateTime newDateTimeCtorWithEpochMilli(long value) {
     return Instant.ofEpochMilli(value).atZone(ZoneId.systemDefault());
   }
@@ -90,6 +101,7 @@ public class JSR310Migration {
   public static LocalTime newLocalTimeWithHMS(int hourOfDay, int minuteOfHour, int secondOfMinute) {
     return LocalTime.of(hourOfDay, minuteOfHour, secondOfMinute);
   }
+
   public static Integer dateTimeGetDayOfWeek(ZonedDateTime dateTime) {
     return dateTime.getDayOfWeek().getValue();
   }

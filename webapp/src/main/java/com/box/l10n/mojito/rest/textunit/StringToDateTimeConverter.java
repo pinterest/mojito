@@ -1,6 +1,8 @@
 package com.box.l10n.mojito.rest.textunit;
 
 import java.time.ZonedDateTime;
+
+import com.box.l10n.mojito.JSR310Migration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
@@ -27,8 +29,8 @@ public class StringToDateTimeConverter implements Converter<String, ZonedDateTim
       } catch (NumberFormatException nfe) {
         instant = source;
       }
-      // TODO(jean) JSR310 - replace
-      converted = new ZonedDateTime(instant);
+      // TODO(jean) JSR310 - replaced but may be refactored?
+      converted = JSR310Migration.newDateTimeCtorWithLongAndString(instant);
     }
 
     return converted;
