@@ -2,6 +2,7 @@ package com.box.l10n.mojito;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoField;
@@ -75,5 +76,9 @@ public class JSR310Migration {
 
   public static ZonedDateTime dateTimeWithMillisOfSeconds(ZonedDateTime dateTime, int millis) {
     return dateTime.withNano(Duration.ofMillis(millis).getNano());
+  }
+
+  public static ZonedDateTime dateTimeWithLocalTime(ZonedDateTime dateTime, LocalTime localTime) {
+    return dateTime.with(localTime);
   }
 }

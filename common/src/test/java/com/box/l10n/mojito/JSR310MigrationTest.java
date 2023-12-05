@@ -9,6 +9,7 @@ import java.util.Date;
 import org.assertj.core.api.Assertions;
 import org.joda.time.DateTime;
 import org.joda.time.Instant;
+import org.joda.time.LocalTime;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormat;
 import org.junit.Test;
@@ -211,6 +212,12 @@ public class JSR310MigrationTest {
         .isEqualTo(JSR310Migration.newDateTimeCtorWithDate(null).toInstant().toEpochMilli());
   }
 
+  @Test
+  public void dateTimeWithLocalTime() {
+    Assertions.assertThat(dateTimeWithLocalTimeOld(dateTime, new LocalTime(10,15)).toInstant().getMillis())
+            .isEqualTo(JSR310Migration.dateTimeWithLocalTime(zonedDateTime, java.time.LocalTime.of(10,15)).toInstant().toEpochMilli());
+  }
+
   public static DateTime newDateTimeCtorOld(
           int year, int monthOfYear, int dayOfMonth, int hourOfDay, int minuteOfHour) {
     return new DateTime(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour);
@@ -261,5 +268,9 @@ public class JSR310MigrationTest {
 
   public static DateTime newDateTimeCtorWithDateOld(Date date) {
     return new DateTime(date);
+  }
+
+  public static DateTime dateTimeWithLocalTimeOld(DateTime dateTime, LocalTime localTime) {
+    return dateTime.withTime(localTime);
   }
 }
