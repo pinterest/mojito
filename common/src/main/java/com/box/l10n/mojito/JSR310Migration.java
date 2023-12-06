@@ -54,8 +54,15 @@ public class JSR310Migration {
         : ZonedDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
   }
 
-  public static ZonedDateTime dateTimeNow() {
-    return ZonedDateTime.now();
+  public static ZonedDateTime newDateTimeCtorWithStringAndDateTimeZone(String str, ZoneId zoneId) {
+    return newDateTimeCtorWithISO8601Str(str).withZoneSameInstant(zoneId);
+  }
+
+  public static ZonedDateTime newDateTimeCtorWithDateTimeZone(ZoneId zoneId) {
+    return ZonedDateTime.now(zoneId);
+  }
+
+  public static ZonedDateTime dateTimeNow() {   return ZonedDateTime.now();
   }
 
   public static long getMillis(ZonedDateTime zonedDateTime) {
@@ -121,4 +128,9 @@ public class JSR310Migration {
   public static PeriodDuration newPeriodCtorWithHMSM(int hours, int minutes, int seconds, int millis) {
     return PeriodDuration.of(Period.ZERO, Duration.ofHours(hours).plusMinutes(minutes).plusSeconds(seconds).plusMillis(millis));
   }
+
+  public static ZoneId dateTimeZoneForId(String id) {
+    return ZoneId.of(id);
+  }
+
 }

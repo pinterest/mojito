@@ -13,8 +13,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "l10n.drop-schedule")
 public class DropScheduleConfig {
 
-  // TODO(jean) JSR310 - update
-  ZoneId timezone = ZoneId.forID("PST8PDT");
+  ZoneId timezone = JSR310Migration.dateTimeZoneForId("PST8PDT");
 
   List<Integer> createdDays = Arrays.asList(1, 2, 3, 4, 5);
 

@@ -15,7 +15,6 @@ public class DateTimeUtils {
   }
 
   public ZonedDateTime now(ZoneId dateTimeZone) {
-    // TODO(jean) JSR310 - replace
-    return new ZonedDateTime(dateTimeZone);
+    return JSR310Migration.newDateTimeCtorWithDateTimeZone(dateTimeZone);
   }
 }
