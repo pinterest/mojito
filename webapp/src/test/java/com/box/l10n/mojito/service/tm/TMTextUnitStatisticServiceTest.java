@@ -2,6 +2,7 @@ package com.box.l10n.mojito.service.tm;
 
 import static org.junit.Assert.*;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnit;
@@ -52,8 +53,7 @@ public class TMTextUnitStatisticServiceTest extends ServiceTestBase {
   String tmTextComment = "comment";
   Double lastDayEstimatedVolume = 3D;
   Double lastPeriodEstimatedVolume = 42D;
-  // TODO(jean) JSR310 - replace
-  ZonedDateTime lastSeenDate = new ZonedDateTime(2021, 11, 25, 0, 0);
+  ZonedDateTime lastSeenDate = JSR310Migration.newDateTimeCtor(2021, 11, 25, 0, 0);
 
   private void createTestTextUnitData(Repository repository) {
     logger.debug("Create data for test");
@@ -133,8 +133,7 @@ public class TMTextUnitStatisticServiceTest extends ServiceTestBase {
     ImportTextUnitStatisticsBody statisticWithNameOnly = getImportTextUnitStatisticsBody();
     statisticWithNameOnly.setContent(null);
     statisticWithNameOnly.setComment(null);
-    // TODO(jean) JSR310 - replace
-    statisticWithNameOnly.setLastSeenDate(new ZonedDateTime(2000, 1, 1, 0, 0));
+    statisticWithNameOnly.setLastSeenDate(JSR310Migration.newDateTimeCtor(2000, 1, 1, 0, 0));
     textUnitStatistics.add(statisticWithNameOnly);
 
     tmTextUnitStatisticService
