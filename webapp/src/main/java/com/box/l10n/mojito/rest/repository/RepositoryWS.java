@@ -236,7 +236,6 @@ public class RepositoryWS {
       @RequestParam(value = "name", required = false) String branchName,
       @RequestParam(value = "deleted", required = false) Boolean deleted,
       @RequestParam(value = "translated", required = false) Boolean translated,
-      // TODO(jean) JSR310 - same
       @RequestParam(value = "createdBefore", required = false) ZonedDateTime createdBefore)
       throws RepositoryWithIdNotFoundException {
     ResponseEntity<Repository> result;

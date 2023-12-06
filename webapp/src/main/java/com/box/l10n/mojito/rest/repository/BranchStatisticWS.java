@@ -60,7 +60,6 @@ public class BranchStatisticWS {
       @RequestParam(value = "empty", required = false) Boolean empty,
       @RequestParam(value = "totalCountLte", required = false, defaultValue = "30000")
           Long totalCountLte,
-      // TODO(jean) JSR310 - same
       @RequestParam(value = "createdBefore", required = false) ZonedDateTime createdBefore,
       @RequestParam(value = "createdAfter", required = false) ZonedDateTime createdAfter,
       @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
