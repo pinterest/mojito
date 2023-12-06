@@ -34,6 +34,11 @@ public class ObjectMapper extends com.fasterxml.jackson.databind.ObjectMapper {
   private final void registerJavaTimeModule() {
     JavaTimeModule javaTimeModule = new JavaTimeModule();
     registerModule(javaTimeModule);
+
+    // To keep backward compatibility with the Joda output, disable write/reading nano seconds with Java time
+    // and ZonedDateTime
+    disable(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS);
+    disable(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS);
   }
 
   private final void registerGuavaModule() {
