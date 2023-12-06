@@ -51,7 +51,6 @@ public class SlaCheckerEmailService {
 
   public boolean shouldResendEmail(ZonedDateTime previousEmailDateTime) {
     ZonedDateTime now = dateTimeUtils.now();
-    // TODO(jean) JSR310 - replace
     return previousEmailDateTime.isBefore(now.minus(slaCheckerEmailConfig.getPeriodBetweenEmail()));
   }
 

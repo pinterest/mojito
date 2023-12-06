@@ -254,14 +254,31 @@ public class JSR310MigrationTest {
 
   @Test
   public void dateTimeGetDayOfWeek() {
-    Assertions.assertThat(dateTimeGetDayOfWeekOld(dateTime)).isEqualTo(JSR310Migration.dateTimeGetDayOfWeek(zonedDateTime));
+    Assertions.assertThat(dateTimeGetDayOfWeekOld(dateTime))
+        .isEqualTo(JSR310Migration.dateTimeGetDayOfWeek(zonedDateTime));
   }
 
   @Test
   public void dateTimeWithDayOfWeek() {
     Assertions.assertThat(dateTimeWithDayOfWeekOld(dateTime, 4).toInstant().getMillis())
-            .isEqualTo(JSR310Migration.dateTimeWithDayOfWeek(zonedDateTime, 4).toInstant().toEpochMilli());
+        .isEqualTo(
+            JSR310Migration.dateTimeWithDayOfWeek(zonedDateTime, 4).toInstant().toEpochMilli());
   }
+
+  @Test
+  public void newPeriodCtorWithLong() {
+    Assertions.assertThat(newPeriodCtorWithLongOld(100_000L).toStandardDuration().getMillis())
+            .isEqualTo(
+                    JSR310Migration.newPeriodCtorWithLong(100_000L).getDuration().toNanos() / 1000_000L);
+  }
+
+  @Test
+  public void newPeriodCtorWithHMS() {
+    Assertions.assertThat(newPeriodCtorWithHMSMOld(10, 50, 30, 987).toStandardDuration().getMillis())
+            .isEqualTo(
+                    JSR310Migration.newPeriodCtorWithHMSM(10, 50, 30, 987).getDuration().toNanos() / 1000_000L) ;
+  }
+
 
   public static DateTime newDateTimeCtorOld(
           int year, int monthOfYear, int dayOfMonth, int hourOfDay, int minuteOfHour) {
@@ -341,5 +358,15 @@ public class JSR310MigrationTest {
     return dateTime.getDayOfWeek();
   }
 
-  public static DateTime dateTimeWithDayOfWeekOld(DateTime dateTime, int dayOfWeek) { return dateTime.withDayOfWeek(dayOfWeek);}
+  public static DateTime dateTimeWithDayOfWeekOld(DateTime dateTime, int dayOfWeek) {
+    return dateTime.withDayOfWeek(dayOfWeek);
+  }
+
+  public static Period newPeriodCtorWithLongOld(long value) {
+    return new Period(value);
+  }
+
+  public static Period newPeriodCtorWithHMSMOld(int hours, int minutes, int seconds, int millis) {
+    return new Period(hours, minutes, seconds, millis);
+  }
 }

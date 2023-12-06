@@ -3,17 +3,21 @@ package com.box.l10n.mojito.converter;
 import static org.junit.Assert.assertEquals;
 
 import java.time.Period;
+
+import com.box.l10n.mojito.JSR310Migration;
 import org.junit.Test;
+import org.threeten.extra.PeriodDuration;
 
 /** @author jeanaurambault */
+// TODO(jean) JSR310 - rename test if renaming the class
 public class PeriodConverterTest {
 
   @Test
   public void testConvert() {
     PeriodConverter periodConverter = new PeriodConverter();
     // TODO(jean) JSR310 - update
-    Period expResult = new Period(0, 1, 0, 0);
-    Period result = periodConverter.convert("60000");
+    PeriodDuration expResult = JSR310Migration.newPeriodCtorWithHMSM(0, 1, 0, 0);
+    PeriodDuration result = periodConverter.convert("60000");
     assertEquals(expResult, result);
   }
 

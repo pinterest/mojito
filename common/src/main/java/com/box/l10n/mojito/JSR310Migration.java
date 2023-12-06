@@ -4,6 +4,7 @@ import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalTime;
+import java.time.Period;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoField;
@@ -108,5 +109,16 @@ public class JSR310Migration {
 
   public static ZonedDateTime dateTimeWithDayOfWeek(ZonedDateTime dateTime, int dayOfWeek) {
     return dateTime.with(DayOfWeek.of(dayOfWeek));
+  }
+
+  /**
+   * This is used by Spring converter, which should be only used by the drop schedule check ... not critical
+   */
+  public static PeriodDuration newPeriodCtorWithLong(long value) {
+    return PeriodDuration.of(Duration.ofMillis(value));
+  }
+
+  public static PeriodDuration newPeriodCtorWithHMSM(int hours, int minutes, int seconds, int millis) {
+    return PeriodDuration.of(Period.ZERO, Duration.ofHours(hours).plusMinutes(minutes).plusSeconds(seconds).plusMillis(millis));
   }
 }
