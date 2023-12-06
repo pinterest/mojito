@@ -3,10 +3,16 @@ package com.box.l10n.mojito;
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Period;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.chrono.IsoChronology;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
 import java.time.temporal.ChronoField;
 import java.util.Date;
 import java.util.Locale;
@@ -25,6 +31,9 @@ public class JSR310Migration {
     return ZonedDateTime.now();
   }
 
+  /**
+   * this must have a zone, but that's the case for this usage ...
+   */
   public static ZonedDateTime newDateTimeCtorWithISO8601Str(String str) {
     return ZonedDateTime.parse(str);
   }
@@ -34,7 +43,13 @@ public class JSR310Migration {
     if (instant instanceof Long) {
       return newDateTimeCtorWithEpochMilli((long) instant);
     } else if (instant instanceof String) {
-      return newDateTimeCtorWithISO8601Str((String) instant);
+      // TODO(jean) 2-JSR310 So can't find a way to use ZoneDateTime and be lenient / default is not TZ provided
+      // having to use exception is not great though
+      try {
+        return ZonedDateTime.parse((String)instant);
+      } catch (DateTimeParseException dateTimeParseException) {
+        return LocalDateTime.parse((String)instant).atZone(ZoneId.systemDefault());
+      }
     } else {
       throw new IllegalStateException();
     }

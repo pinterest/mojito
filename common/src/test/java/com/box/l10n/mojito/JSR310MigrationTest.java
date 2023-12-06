@@ -199,6 +199,13 @@ public class JSR310MigrationTest {
                 .toEpochMilli());
 
     Assertions.assertThat(
+                    newDateTimeCtorWithLongAndStringOld("2018-05-09T17:34:55.000").toInstant().getMillis())
+            .isEqualTo(
+                    JSR310Migration.newDateTimeCtorWithLongAndString("2018-05-09T17:34:55.000")
+                            .toInstant()
+                            .toEpochMilli());
+
+    Assertions.assertThat(
             newDateTimeCtorWithLongAndStringOld(1594339100000L).toInstant().getMillis())
         .isEqualTo(
             JSR310Migration.newDateTimeCtorWithLongAndString(1594339100000L)
@@ -430,5 +437,9 @@ public class JSR310MigrationTest {
 
   public static DateTimeZone dateTimeZoneForIdOld(String id) {
     return DateTimeZone.forID(id);
+  }
+
+  public static void junitAssertEqualsOld(DateTime dateTime1, DateTime dateTime2) {
+    Assert.assertEquals(dateTime1, dateTime2);
   }
 }
