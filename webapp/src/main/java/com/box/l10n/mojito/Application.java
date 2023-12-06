@@ -4,6 +4,8 @@ import com.box.l10n.mojito.entity.BaseEntity;
 import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.xml.XmlParsingConfiguration;
 import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.util.Optional;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -13,6 +15,7 @@ import org.springframework.context.annotation.AdviceMode;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.aspectj.EnableSpringConfigured;
+import org.springframework.data.auditing.DateTimeProvider;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.http.converter.json.Jackson2ObjectMapperFactoryBean;
@@ -31,7 +34,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
       QuartzAutoConfiguration.class, // We integrated with Quartz before spring supported it
     })
 @EnableSpringConfigured
-@EnableJpaAuditing
+@EnableJpaAuditing(dateTimeProviderRef = "zonedDateTimeProvider")
 @EnableJpaRepositories
 @EnableScheduling
 @EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
@@ -114,5 +117,11 @@ public class Application {
     template.setThrowLastExceptionOnExhausted(true);
 
     return template;
+  }
+
+  // TODO(jean) 2-JSR310 wondering why this is not available by default
+  @Bean(name = "zonedDateTimeProvider")
+  public DateTimeProvider dateTimeProvider() {
+    return () -> Optional.of(ZonedDateTime.now());
   }
 }
