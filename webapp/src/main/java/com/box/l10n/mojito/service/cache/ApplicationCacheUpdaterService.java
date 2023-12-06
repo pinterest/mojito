@@ -122,13 +122,14 @@ public class ApplicationCacheUpdaterService {
     ZonedDateTime currentTimestamp;
 
     try {
-      // TODO(jean) JSR310 - replace
-      currentTimestamp =
-          new ZonedDateTime(
-              entityManager
-                  .createNativeQuery(
-                      "SELECT TOP 1 CURRENT_TIMESTAMP FROM INFORMATION_SCHEMA.TABLES")
-                  .getSingleResult());
+      // TODO(jean) 2-JSR310 - This SQL query does not seem to work ...
+//      currentTimestamp =
+//          new ZonedDateTime(
+//              entityManager
+//                  .createNativeQuery(
+//                      "SELECT TOP 1 CURRENT_TIMESTAMP FROM INFORMATION_SCHEMA.TABLES")
+//                  .getSingleResult());
+      currentTimestamp = ZonedDateTime.now();
     } catch (Exception ex) {
       logger.error("Could not retrieve current timestamp from the SQL DB", ex);
       currentTimestamp = ZonedDateTime.now();

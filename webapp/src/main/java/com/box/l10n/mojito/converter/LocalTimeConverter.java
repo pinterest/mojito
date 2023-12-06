@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ConfigurationPropertiesBinding
-// TODO(jean) JSR310 - replaced by since it standard types converter might not be required
+// TODO(jean) 2-JSR310 - replaced by since it standard types converter might not be required
 public class LocalTimeConverter implements Converter<String, LocalTime> {
 
   @Override

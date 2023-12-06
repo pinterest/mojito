@@ -129,7 +129,7 @@ public class CommitService {
             "authorName", commit.getAuthorName(), authorName);
       }
 
-      // TODO(jean) JSR310 - did replacement but could be candidate for refactoring. eg. setnano and compare the date with equals
+      // TODO(jean) 2-JSR310 - did replacement but could be candidate for refactoring. eg. setnano and compare the date with equals
       // Remove milliseconds when comparing as the dates are not stored with sub-second precision.
       ZonedDateTime existingCreationDateWithoutMs = JSR310Migration.dateTimeWithMillisOfSeconds(commit.getSourceCreationDate(), 0);
       ZonedDateTime sourceCreationDateWithoutMs = JSR310Migration.dateTimeWithMillisOfSeconds(sourceCreationDate, 0);

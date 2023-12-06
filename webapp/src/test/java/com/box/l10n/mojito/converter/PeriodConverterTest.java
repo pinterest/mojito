@@ -9,13 +9,13 @@ import org.junit.Test;
 import org.threeten.extra.PeriodDuration;
 
 /** @author jeanaurambault */
-// TODO(jean) JSR310 - rename test if renaming the class
+// TODO(jean) 2-JSR310 - rename test if renaming the class
 public class PeriodConverterTest {
 
   @Test
   public void testConvert() {
     PeriodConverter periodConverter = new PeriodConverter();
-    // TODO(jean) JSR310 - update
+    // TODO(jean) 2-JSR310 - update
     PeriodDuration expResult = JSR310Migration.newPeriodCtorWithHMSM(0, 1, 0, 0);
     PeriodDuration result = periodConverter.convert("60000");
     assertEquals(expResult, result);

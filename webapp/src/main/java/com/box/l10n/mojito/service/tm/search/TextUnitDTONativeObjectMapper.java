@@ -41,7 +41,7 @@ public class TextUnitDTONativeObjectMapper implements NativeObjectMapper<TextUni
     // implementation to understand why getBoolean doesn't work. This
     // seems to work fine, use this code for now.
     t.setIncludedInLocalizedFile(Boolean.valueOf(includedInLocalizedFile));
-    // TODO(jean) JSR310 - converted but need review DB access in general
+    // TODO(jean) 2-JSR310 - converted but need review DB access in general
     t.setCreatedDate(JSR310Migration.newDateTimeCtorWithDate(cr.getDate(idx++)));
     String assetDeleted = cr.getString(idx++);
     t.setAssetDeleted(Boolean.valueOf(assetDeleted));
@@ -50,7 +50,7 @@ public class TextUnitDTONativeObjectMapper implements NativeObjectMapper<TextUni
     t.setRepositoryName(cr.getString(idx++));
     t.setAssetPath(cr.getString(idx++));
     t.setAssetTextUnitId(cr.getLong(idx++));
-    // TODO(jean) JSR310 - converted but need review DB access in general
+    // TODO(jean) 2-JSR310 - converted but need review DB access in general
     t.setTmTextUnitCreatedDate(JSR310Migration.newDateTimeCtorWithDate(cr.getDate(idx++)));
     t.setDoNotTranslate(Boolean.valueOf(includedInLocalizedFile));
 

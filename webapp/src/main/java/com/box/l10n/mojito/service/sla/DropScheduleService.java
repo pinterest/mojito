@@ -30,7 +30,7 @@ public class DropScheduleService {
 
   ZonedDateTime getDropCreatedDate(ZonedDateTime dropDueDate) {
 
-    // TODO(jean) JSR310 - replaced but candiate for refactoring with all block below
+    // TODO(jean) 2-JSR310 - replaced but candiate for refactoring with all block below
     ZonedDateTime dropCreatedDate = JSR310Migration.dateTimeWithLocalTime(dropDueDate, dropScheduleConfig.getCreatedLocalTime());
 
     Integer dropDueDateDay = JSR310Migration.dateTimeGetDayOfWeek(dropDueDate);

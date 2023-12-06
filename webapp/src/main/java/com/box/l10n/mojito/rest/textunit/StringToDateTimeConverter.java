@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
  *
  * @author jeanaurambault
  */
-// TODO(jean) JSR310 - I guess that's the key for API to be backward compatible - removing all TODO from controllers
+// TODO(jean) 2-JSR310 - I guess that's the key for API to be backward compatible - removing all TODO from controllers
 // need to test a few controller query though
 @Component
 public class StringToDateTimeConverter implements Converter<String, ZonedDateTime> {
@@ -31,7 +31,7 @@ public class StringToDateTimeConverter implements Converter<String, ZonedDateTim
       } catch (NumberFormatException nfe) {
         instant = source;
       }
-      // TODO(jean) JSR310 - replaced but may be refactored?
+      // TODO(jean) 2-JSR310 - replaced but may be refactored?
       converted = JSR310Migration.newDateTimeCtorWithLongAndString(instant);
     }
 

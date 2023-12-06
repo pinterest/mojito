@@ -124,7 +124,7 @@ public class DeltaService {
     List<Long> pushRunIds = getIds(pushRuns);
     List<Long> pullRunIds = getIds(pullRuns);
 
-    // TODO(jean) JSR310 - did replacement but could be candidate for refactoring given previous comment, see all block
+    // TODO(jean) 2-JSR310 - did replacement but could be candidate for refactoring given previous comment, see all block
     ZonedDateTime translationsFromDate =
         Optional.ofNullable(pullRuns).orElse(Collections.emptyList()).stream()
             .min(Comparator.comparing(PullRun::getCreatedDate))

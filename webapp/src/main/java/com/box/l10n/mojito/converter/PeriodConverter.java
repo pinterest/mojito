@@ -15,9 +15,9 @@ import org.threeten.extra.PeriodDuration;
  */
 @Component
 @ConfigurationPropertiesBinding
-// TODO(jean) JSR310 - Period exist in both Joda and JSR .. but it is not the same. The equivalent for our usage
+// TODO(jean) 2-JSR310 - Period exist in both Joda and JSR .. but it is not the same. The equivalent for our usage
 // is actually ThreeTen PeriodDuration
-// TODO(jean) JSR310 - Rename the class eventually but keep it for now for visibility on the change
+// TODO(jean) 2-JSR310 - Rename the class eventually but keep it for now for visibility on the change
 public class PeriodConverter implements Converter<String, PeriodDuration> {
 
   @Override

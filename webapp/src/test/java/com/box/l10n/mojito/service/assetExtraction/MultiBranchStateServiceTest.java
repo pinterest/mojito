@@ -100,10 +100,10 @@ public class MultiBranchStateServiceTest extends ServiceTestBase {
     return expectedMultiBranchState;
   }
 
-  // TODO(jean) JSR310 - replace
+  // TODO(jean) 2-JSR310 - replace
   ZonedDateTime roundDateTimeToSecond(ZonedDateTime dateTime) {
 
-    // TODO(jean) JSR310 - did in place replacement - consider refactoring
+    // TODO(jean) 2-JSR310 - did in place replacement - consider refactoring
     if (JSR310Migration.dateTimeGetMillisOfSecond(dateTime) > 500) {
       dateTime = JSR310Migration.dateTimeWithMillisOfSeconds(dateTime, 0).plusSeconds(1);
     } else {
