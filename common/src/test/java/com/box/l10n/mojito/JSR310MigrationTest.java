@@ -344,6 +344,13 @@ public class JSR310MigrationTest {
     Assertions.assertThat(dateTimeWith0MillisAsMillisOld(withMillis)).isEqualTo(JSR310Migration.dateTimeWith0MillisAsMillis(zWithMillis));
   }
 
+  @Test
+  public void dateTimeNowInUTC() {
+    System.out.println(dateTimeNowInUTCOld()); // 2023-12-07T21:04:04.288Z
+    System.out.println(JSR310Migration.dateTimeNowInUTC()); // 2023-12-07T21:04:04.304416Z
+    System.out.println(ZonedDateTime.now(ZoneId.of("UTC"))); // 2023-12-07T21:04:04.304619Z[UTC]
+  }
+
   public static DateTime newDateTimeCtorOld(
       int year, int monthOfYear, int dayOfMonth, int hourOfDay, int minuteOfHour) {
     return new DateTime(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour);
@@ -453,5 +460,9 @@ public class JSR310MigrationTest {
 
   public static long dateTimeWith0MillisAsMillisOld(DateTime dateTime) {
     return dateTime.withMillisOfSecond(0).getMillis();
+  }
+
+  public static DateTime dateTimeNowInUTCOld() {
+    return DateTime.now(DateTimeZone.UTC);
   }
 }

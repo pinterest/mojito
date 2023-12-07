@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Period;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
@@ -155,5 +156,9 @@ public class JSR310Migration {
 
   public static ZoneId dateTimeZoneForId(String id) {
     return ZoneId.of(id);
+  }
+
+  public static ZonedDateTime dateTimeNowInUTC() {
+    return ZonedDateTime.now(ZoneOffset.UTC);
   }
 }

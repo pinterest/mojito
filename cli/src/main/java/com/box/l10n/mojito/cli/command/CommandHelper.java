@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.cli.command;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.filefinder.FileFinder;
 import com.box.l10n.mojito.cli.filefinder.FileFinderException;
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.ZoneOffset;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -353,8 +355,7 @@ public class CommandHelper {
   ZonedDateTime getLastWeekDateIfTrue(boolean condition) {
     ZonedDateTime dateTime = null;
     if (condition) {
-      // TODO(jean) JSR310 - review
-      dateTime = ZonedDateTime.now(ZoneId.UTC).minusWeeks(1);
+      dateTime = JSR310Migration.dateTimeNowInUTC();
     }
     return dateTime;
   }
