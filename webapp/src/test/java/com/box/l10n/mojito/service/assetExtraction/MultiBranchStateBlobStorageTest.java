@@ -12,7 +12,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Optional;
-import java.time.ZonedDateTime;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
@@ -36,7 +35,11 @@ public class MultiBranchStateBlobStorageTest extends ServiceTestBase {
             assetExtractionId, version);
     Assertions.assertFalse(multiBranchStateForAssetExtractionId.isPresent());
 
-    Branch branchTest = Branch.builder().name("test").createdAt(JSR310Migration.newDateTimeEmptyCtor()).build();
+    // TODO(jean) 2-JSR310 loss of precision here, supposedly  due to JSON serialization/deserialization
+    // Must understand better the implication of those... ser/des could support nano second for some use case
+    // but for the API layer we need to keep backward compatibility
+    Branch branchTest =
+        Branch.builder().name("test").createdAt(JSR310Migration.newDateTimeEmptyCtor().withNano(0)).build();
     MultiBranchState multiBranchState =
         MultiBranchState.builder()
             .branches(ImmutableSet.of(branchTest))
