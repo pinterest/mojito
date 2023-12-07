@@ -2,6 +2,7 @@ package com.box.l10n.mojito.cli.command;
 
 import static org.junit.Assert.assertEquals;
 
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.cli.CLITestBase;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.entity.Commit;
@@ -65,10 +66,8 @@ public class CommitCreateCommandTest extends CLITestBase {
     assertEquals(commitHash, createdCommit.getName());
     assertEquals(authorEmail, createdCommit.getAuthorEmail());
     assertEquals(authorName, createdCommit.getAuthorName());
-    assertEquals(
-            // TODO(jean) JSR310 - review
-            creationDate.withMillisOfSecond(0).getMillis(),
-        createdCommit.getSourceCreationDate().withMillisOfSecond(0).getMillis());
+    assertEquals(JSR310Migration.dateTimeWith0MillisAsMillis(creationDate),
+        JSR310Migration.dateTimeWith0MillisAsMillis(createdCommit.getSourceCreationDate()));
   }
 
   @Test
@@ -129,9 +128,8 @@ public class CommitCreateCommandTest extends CLITestBase {
     assertEquals(authorEmail, createdCommit.getAuthorEmail());
     assertEquals(authorName, createdCommit.getAuthorName());
     assertEquals(
-            // TODO(jean) JSR310 - review
-            creationDate.withMillisOfSecond(0).getMillis(),
-        createdCommit.getSourceCreationDate().withMillisOfSecond(0).getMillis());
+            JSR310Migration.dateTimeWith0MillisAsMillis(creationDate),
+            JSR310Migration.dateTimeWith0MillisAsMillis(createdCommit.getSourceCreationDate()));
   }
 
   @Test

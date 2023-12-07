@@ -22,6 +22,9 @@ import org.junit.Test;
  */
 public class JSR310MigrationTest {
 
+  static final DateTime DATE_TIME_WITH_MILLIS = new DateTime(2020, 7, 10, 0, 0, 12, 345);
+  static final ZonedDateTime ZONED_DATE_TIME_WITH_MILLIS = ZonedDateTime.of(2020, 7, 10, 0, 0, 12, 345000000, ZoneId.systemDefault());
+
   @Test
   public void makeDefaultTestRunUTC() {
     // The TZ is currently hardcoded to UTC in the pom.xml
@@ -105,8 +108,7 @@ public class JSR310MigrationTest {
     System.out.println(end.toInstant().getMillis());
     String joda = toWordBaseDurationOld(start, end);
 
-    ZonedDateTime zstart =
-        ZonedDateTime.of(2020, 7, 10, 0, 0, 12, 345000000, ZoneId.systemDefault());
+    ZonedDateTime zstart = ZONED_DATE_TIME_WITH_MILLIS;
     ZonedDateTime zend = ZonedDateTime.of(2020, 8, 10, 0, 0, 13, 450000000, ZoneId.systemDefault());
     String jsr = JSR310Migration.toWordBasedDuration(zstart, zend);
 
@@ -126,10 +128,9 @@ public class JSR310MigrationTest {
     DateTime end = new DateTime(2020, 10, 25, 0, 0, 13, 450);
     String joda = toWordBaseDurationOld(start, end);
 
-    ZonedDateTime zstart =
-        ZonedDateTime.of(2020, 7, 10, 0, 0, 12, 345000000, ZoneId.systemDefault());
+    ZonedDateTime zstart = ZONED_DATE_TIME_WITH_MILLIS;
     ZonedDateTime zend =
-        ZonedDateTime.of(2020, 10, 25, 0, 0, 13, 450000000, ZoneId.systemDefault());
+            ZonedDateTime.of(2020, 10, 25, 0, 0, 13, 450000000, ZoneId.systemDefault());
     String jsr = JSR310Migration.toWordBasedDuration(zstart, zend);
 
     Assertions.assertThat(joda)
@@ -219,10 +220,10 @@ public class JSR310MigrationTest {
 
   @Test
   public void dateTimeGetMillisOfSecond() {
-    DateTime start = new DateTime(2020, 7, 10, 0, 0, 12, 345);
-    ZonedDateTime zstart =
-            ZonedDateTime.of(2020, 7, 10, 0, 0, 12, 345000000, ZoneId.systemDefault());
-    Assertions.assertThat(dateTimeGetMillisOfSecondOld(start)).isEqualTo(JSR310Migration.dateTimeGetMillisOfSecond(zstart));
+    DateTime start = DATE_TIME_WITH_MILLIS;
+    ZonedDateTime zstart = ZONED_DATE_TIME_WITH_MILLIS;
+    Assertions.assertThat(dateTimeGetMillisOfSecondOld(start))
+        .isEqualTo(JSR310Migration.dateTimeGetMillisOfSecond(zstart));
   }
 
   @Test
@@ -336,6 +337,13 @@ public class JSR310MigrationTest {
     Assertions.assertThat(dateTimeZone.getID()).isEqualTo(zoneId.getId());
   }
 
+  @Test
+  public void dateTimeWith0MillisAsMillis() {
+    DateTime withMillis = DATE_TIME_WITH_MILLIS;
+    ZonedDateTime zWithMillis = ZONED_DATE_TIME_WITH_MILLIS;
+    Assertions.assertThat(dateTimeWith0MillisAsMillisOld(withMillis)).isEqualTo(JSR310Migration.dateTimeWith0MillisAsMillis(zWithMillis));
+  }
+
   public static DateTime newDateTimeCtorOld(
       int year, int monthOfYear, int dayOfMonth, int hourOfDay, int minuteOfHour) {
     return new DateTime(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour);
@@ -441,5 +449,9 @@ public class JSR310MigrationTest {
 
   public static void junitAssertEqualsOld(DateTime dateTime1, DateTime dateTime2) {
     Assert.assertEquals(dateTime1, dateTime2);
+  }
+
+  public static long dateTimeWith0MillisAsMillisOld(DateTime dateTime) {
+    return dateTime.withMillisOfSecond(0).getMillis();
   }
 }

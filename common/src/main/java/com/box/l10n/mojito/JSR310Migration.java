@@ -87,6 +87,10 @@ public class JSR310Migration {
     return zonedDateTime.toInstant().toEpochMilli();
   }
 
+  public static long dateTimeWith0MillisAsMillis(ZonedDateTime dateTime) {
+    return dateTime.withNano(0).toInstant().toEpochMilli();
+  }
+
   public static String toWordBasedDuration(ZonedDateTime start, ZonedDateTime end) {
     PeriodDuration between = PeriodDuration.between(start, end);
     return AmountFormats.wordBased(between.getPeriod(), between.getDuration(), Locale.getDefault());
