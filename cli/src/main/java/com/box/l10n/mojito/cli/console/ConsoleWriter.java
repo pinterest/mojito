@@ -2,7 +2,7 @@ package com.box.l10n.mojito.cli.console;
 
 import com.google.common.base.CharMatcher;
 import org.fusesource.jansi.Ansi;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,7 +86,7 @@ public class ConsoleWriter {
    * @param value
    * @return this instance
    */
-  public ConsoleWriter a(DateTime value) {
+  public ConsoleWriter a(ZonedDateTime value) {
     stringBuilder.append(value.toString());
     ansi.a(value);
     return this;

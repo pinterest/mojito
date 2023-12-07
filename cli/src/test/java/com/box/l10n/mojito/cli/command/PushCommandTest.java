@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -459,7 +459,7 @@ public class PushCommandTest extends CLITestBase {
     String commitHash = "ABC123";
     Commit commit =
         commitService.getOrCreateCommit(
-            repository, commitHash, "authorEmail", "authorName", DateTime.now());
+            repository, commitHash, "authorEmail", "authorName", ZonedDateTime.now());
     assertNull(
         commitRepository
             .findById(commit.getId())

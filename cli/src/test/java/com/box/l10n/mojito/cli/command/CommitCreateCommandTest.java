@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.junit.Assume;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +32,7 @@ public class CommitCreateCommandTest extends CLITestBase {
     String commitHash = "ABC123";
     String authorEmail = "authorEmail";
     String authorName = "authorName";
-    DateTime creationDate = DateTime.now();
+    ZonedDateTime creationDate = ZonedDateTime.now();
 
     L10nJCommander l10nJCommander = getL10nJCommander();
     l10nJCommander.run(
@@ -66,7 +66,8 @@ public class CommitCreateCommandTest extends CLITestBase {
     assertEquals(authorEmail, createdCommit.getAuthorEmail());
     assertEquals(authorName, createdCommit.getAuthorName());
     assertEquals(
-        creationDate.withMillisOfSecond(0).getMillis(),
+            // TODO(jean) JSR310 - review
+            creationDate.withMillisOfSecond(0).getMillis(),
         createdCommit.getSourceCreationDate().withMillisOfSecond(0).getMillis());
   }
 
@@ -77,7 +78,7 @@ public class CommitCreateCommandTest extends CLITestBase {
     String commitHash = "ABC456";
     String authorEmail = "authorEmail";
     String authorName = "authorName";
-    DateTime creationDate = DateTime.now();
+    ZonedDateTime creationDate = ZonedDateTime.now();
 
     L10nJCommander l10nJCommanderFirstRun = getL10nJCommander();
     l10nJCommanderFirstRun.run(
@@ -128,7 +129,8 @@ public class CommitCreateCommandTest extends CLITestBase {
     assertEquals(authorEmail, createdCommit.getAuthorEmail());
     assertEquals(authorName, createdCommit.getAuthorName());
     assertEquals(
-        creationDate.withMillisOfSecond(0).getMillis(),
+            // TODO(jean) JSR310 - review
+            creationDate.withMillisOfSecond(0).getMillis(),
         createdCommit.getSourceCreationDate().withMillisOfSecond(0).getMillis());
   }
 
@@ -153,7 +155,7 @@ public class CommitCreateCommandTest extends CLITestBase {
     assertEquals("Jean Aurambault", commit.getAuthorName());
     assertEquals("aurambaj@users.noreply.github.com", commit.getAuthorEmail());
     assertEquals(
-        DateTime.parse("2022-09-20T10:55:39.000-07:00").toInstant(),
+        ZonedDateTime.parse("2022-09-20T10:55:39.000-07:00").toInstant(),
         commit.getSourceCreationDate().toInstant());
   }
 

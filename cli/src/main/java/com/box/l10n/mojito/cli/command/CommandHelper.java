@@ -35,8 +35,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
 import org.fusesource.jansi.Ansi;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -350,10 +350,11 @@ public class CommandHelper {
    * @param condition
    * @return
    */
-  DateTime getLastWeekDateIfTrue(boolean condition) {
-    DateTime dateTime = null;
+  ZonedDateTime getLastWeekDateIfTrue(boolean condition) {
+    ZonedDateTime dateTime = null;
     if (condition) {
-      dateTime = DateTime.now(DateTimeZone.UTC).minusWeeks(1);
+      // TODO(jean) JSR310 - review
+      dateTime = ZonedDateTime.now(ZoneId.UTC).minusWeeks(1);
     }
     return dateTime;
   }
