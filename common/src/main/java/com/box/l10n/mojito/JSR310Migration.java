@@ -161,4 +161,7 @@ public class JSR310Migration {
   public static ZonedDateTime dateTimeNowInUTC() {
     return ZonedDateTime.now(ZoneOffset.UTC);
   }
+  public static ZonedDateTime dateTimeOfEpochSecond(int epochSecond) {
+    return Instant.ofEpochSecond(epochSecond).atZone(ZoneId.systemDefault());
+  }
 }

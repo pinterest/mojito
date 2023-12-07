@@ -9,6 +9,7 @@ import org.assertj.core.api.Assertions;
 import org.joda.time.DateTime;
 import org.joda.time.Instant;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Instant;
 import org.joda.time.LocalTime;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormat;
@@ -351,6 +352,14 @@ public class JSR310MigrationTest {
     System.out.println(ZonedDateTime.now(ZoneId.of("UTC"))); // 2023-12-07T21:04:04.304619Z[UTC]
   }
 
+  @Test
+  public  void dateTimeOfEpochSecond() {
+    int epochSecond = 1597017613;
+    Assertions.assertThat(dateTimeOfEpochSecondOld(epochSecond).toInstant().getMillis())
+            .isEqualTo(JSR310Migration.dateTimeOfEpochSecond(epochSecond).toInstant().toEpochMilli());
+  }
+
+
   public static DateTime newDateTimeCtorOld(
       int year, int monthOfYear, int dayOfMonth, int hourOfDay, int minuteOfHour) {
     return new DateTime(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour);
@@ -464,5 +473,9 @@ public class JSR310MigrationTest {
 
   public static DateTime dateTimeNowInUTCOld() {
     return DateTime.now(DateTimeZone.UTC);
+  }
+
+  public static DateTime dateTimeOfEpochSecondOld(int epochSecond) {
+    return Instant.ofEpochSecond(epochSecond).toDateTime();
   }
 }

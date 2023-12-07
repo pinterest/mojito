@@ -43,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.threeten.extra.Weeks;
 
 /** @author wyau */
 @Component
@@ -355,7 +356,7 @@ public class CommandHelper {
   ZonedDateTime getLastWeekDateIfTrue(boolean condition) {
     ZonedDateTime dateTime = null;
     if (condition) {
-      dateTime = JSR310Migration.dateTimeNowInUTC();
+      dateTime = JSR310Migration.dateTimeNowInUTC().minusWeeks(1);
     }
     return dateTime;
   }

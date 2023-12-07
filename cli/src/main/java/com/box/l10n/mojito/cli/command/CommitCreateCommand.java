@@ -2,6 +2,7 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.rest.client.CommitClient;
@@ -151,7 +152,7 @@ public class CommitCreateCommand extends Command {
               revCommit.getName(),
               authorIdent.getEmailAddress(),
               authorIdent.getName(),
-              Instant.ofEpochSecond(revCommit.getCommitTime()).toDateTime());
+                  JSR310Migration.dateTimeOfEpochSecond(revCommit.getCommitTime()));
 
       consoleWriter
           .a("Read from Git - hash: '")
