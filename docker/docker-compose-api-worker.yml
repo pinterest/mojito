@@ -19,15 +19,18 @@ services:
       - --collation-server=utf8mb4_bin
       - --max-connections=1000
       - --log_error_verbosity=2
+    volumes:
+        - mysql-data:/var/lib/mysql
+
   api:
     deploy:
       mode: replicated
       replicas: 1
       endpoint_mode: vip
       resources:
-        limits:
-          cpus: '2'
-          memory: 1G
+#        limits:
+#          cpus: '2'
+#          memory: 1G
         reservations:
           cpus: '1'
           memory: 200M
@@ -103,9 +106,9 @@ services:
       replicas: 2
       endpoint_mode: vip
       resources:
-        limits:
-          cpus: '2'
-          memory: 1G
+#        limits:
+#          cpus: '2'
+#          memory: 1G
         reservations:
           cpus: '1'
           memory: 200M
@@ -173,3 +176,6 @@ services:
         "logging.level.com.box.l10n.mojito.service.repository.statistics.RepositoryStatisticsJob" : "DEBUG",
         "logging.level.com.box.l10n.mojito.service.thirdparty.smartling.quartz" : "DEBUG"
         }'
+
+volumes:
+  mysql-data:
