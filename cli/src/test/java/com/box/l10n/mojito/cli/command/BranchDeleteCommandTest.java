@@ -8,12 +8,12 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.rest.client.RepositoryClient;
 import com.box.l10n.mojito.rest.entity.Branch;
 import com.box.l10n.mojito.service.branch.BranchRepository;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.time.ZonedDateTime;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 

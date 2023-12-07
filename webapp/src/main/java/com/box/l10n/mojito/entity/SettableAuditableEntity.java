@@ -7,7 +7,6 @@ import java.time.ZonedDateTime;
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.PrePersist;
-import org.hibernate.annotations.Type;
 
 /**
  * Similar to {@link AuditableEntity} but allows to override the attributes.

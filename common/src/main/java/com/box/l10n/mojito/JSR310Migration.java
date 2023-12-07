@@ -9,12 +9,9 @@ import java.time.Period;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.chrono.IsoChronology;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
-import java.time.format.ResolverStyle;
 import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Locale;
 import org.threeten.extra.AmountFormats;
@@ -32,9 +29,7 @@ public class JSR310Migration {
     return ZonedDateTime.now();
   }
 
-  /**
-   * this must have a zone, but that's the case for this usage ...
-   */
+  /** this must have a zone, but that's the case for this usage ... */
   public static ZonedDateTime newDateTimeCtorWithISO8601Str(String str) {
     return ZonedDateTime.parse(str);
   }
@@ -44,12 +39,13 @@ public class JSR310Migration {
     if (instant instanceof Long) {
       return newDateTimeCtorWithEpochMilli((long) instant);
     } else if (instant instanceof String) {
-      // TODO(jean) 2-JSR310 So can't find a way to use ZoneDateTime and be lenient / default is not TZ provided
+      // TODO(jean) 2-JSR310 So can't find a way to use ZoneDateTime and be lenient / default is not
+      // TZ provided
       // having to use exception is not great though
       try {
-        return ZonedDateTime.parse((String)instant);
+        return ZonedDateTime.parse((String) instant);
       } catch (DateTimeParseException dateTimeParseException) {
-        return LocalDateTime.parse((String)instant).atZone(ZoneId.systemDefault());
+        return LocalDateTime.parse((String) instant).atZone(ZoneId.systemDefault());
       }
     } else {
       throw new IllegalStateException();
@@ -161,7 +157,12 @@ public class JSR310Migration {
   public static ZonedDateTime dateTimeNowInUTC() {
     return ZonedDateTime.now(ZoneOffset.UTC);
   }
+
   public static ZonedDateTime dateTimeOfEpochSecond(int epochSecond) {
     return Instant.ofEpochSecond(epochSecond).atZone(ZoneId.systemDefault());
+  }
+
+  public static Date dateTimePlusAsDate(ZonedDateTime dateTime, long millis) {
+    return Date.from(dateTime.plus(millis, ChronoUnit.MILLIS).toInstant());
   }
 }

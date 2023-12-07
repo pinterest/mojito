@@ -20,6 +20,7 @@ import com.box.l10n.mojito.service.locale.LocaleService;
 import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitVariantRepository;
+import com.box.l10n.mojito.test.JSR310MigrationForTesting;
 import java.io.File;
 import java.util.Collections;
 import java.util.Comparator;
@@ -28,9 +29,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.time.ZonedDateTime;
-
-import com.box.l10n.mojito.test.JSR310MigrationForTesting;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -138,11 +136,15 @@ public class TMImportCommandTest extends CLITestBase {
 
     tmTextUnitVariant = iterator.next();
     assertEquals("1時間", tmTextUnitVariant.getContent());
-    JSR310MigrationForTesting.junitAssertEquals(JSR310Migration.newDateTimeCtorWithEpochMilli(1447198865000L), tmTextUnitVariant.getCreatedDate());
+    JSR310MigrationForTesting.junitAssertEquals(
+        JSR310Migration.newDateTimeCtorWithEpochMilli(1447198865000L),
+        tmTextUnitVariant.getCreatedDate());
 
     tmTextUnitVariant = iterator.next();
     assertEquals("1か月", tmTextUnitVariant.getContent());
-    JSR310MigrationForTesting.junitAssertEquals(JSR310Migration.newDateTimeCtorWithEpochMilli(1447198865000L), tmTextUnitVariant.getCreatedDate());
+    JSR310MigrationForTesting.junitAssertEquals(
+        JSR310Migration.newDateTimeCtorWithEpochMilli(1447198865000L),
+        tmTextUnitVariant.getCreatedDate());
 
     Set<TMTextUnitVariantComment> tmTextUnitVariantComments =
         tmTextUnitVariant.getTmTextUnitVariantComments();

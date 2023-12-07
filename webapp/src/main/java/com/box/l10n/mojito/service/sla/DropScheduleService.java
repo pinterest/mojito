@@ -54,9 +54,11 @@ public class DropScheduleService {
     for (int daysToSubstract = 0; daysToSubstract <= 7; daysToSubstract++) {
       ZonedDateTime candidate = JSR310Migration.dateTimeWithLocalTime(before.minusDays(daysToSubstract), dropScheduleConfig.getDueLocalTime());
 
-      // TODO(jean) 2-JSR310 - this type of change didn't break compilation, and only got caught from tests ...
+      // TODO(jean) 2-JSR310 - this type of change didn't break compilation, and only got caught
+      // from tests ...
       // are there more, untested? or similar
-      if (dropDueDaysSet.contains(candidate.getDayOfWeek().getValue()) && !candidate.isAfter(before)) {
+      if (dropDueDaysSet.contains(candidate.getDayOfWeek().getValue())
+          && !candidate.isAfter(before)) {
         lastDropDueDate = candidate;
         break;
       }

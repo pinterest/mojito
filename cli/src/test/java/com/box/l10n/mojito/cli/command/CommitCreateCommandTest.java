@@ -9,12 +9,12 @@ import com.box.l10n.mojito.entity.Commit;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.service.commit.CommitService;
 import com.google.common.collect.Streams;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.revwalk.RevCommit;
-import java.time.ZonedDateTime;
 import org.junit.Assume;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +66,8 @@ public class CommitCreateCommandTest extends CLITestBase {
     assertEquals(commitHash, createdCommit.getName());
     assertEquals(authorEmail, createdCommit.getAuthorEmail());
     assertEquals(authorName, createdCommit.getAuthorName());
-    assertEquals(JSR310Migration.dateTimeWith0MillisAsMillis(creationDate),
+    assertEquals(
+        JSR310Migration.dateTimeWith0MillisAsMillis(creationDate),
         JSR310Migration.dateTimeWith0MillisAsMillis(createdCommit.getSourceCreationDate()));
   }
 
@@ -128,8 +129,8 @@ public class CommitCreateCommandTest extends CLITestBase {
     assertEquals(authorEmail, createdCommit.getAuthorEmail());
     assertEquals(authorName, createdCommit.getAuthorName());
     assertEquals(
-            JSR310Migration.dateTimeWith0MillisAsMillis(creationDate),
-            JSR310Migration.dateTimeWith0MillisAsMillis(createdCommit.getSourceCreationDate()));
+        JSR310Migration.dateTimeWith0MillisAsMillis(creationDate),
+        JSR310Migration.dateTimeWith0MillisAsMillis(createdCommit.getSourceCreationDate()));
   }
 
   @Test

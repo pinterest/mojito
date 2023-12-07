@@ -11,6 +11,7 @@ import com.box.l10n.mojito.rest.entity.Commit;
 import com.box.l10n.mojito.rest.entity.Repository;
 import com.google.common.collect.Streams;
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
@@ -18,8 +19,6 @@ import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.fusesource.jansi.Ansi;
-import java.time.ZonedDateTime;
-import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -152,7 +151,7 @@ public class CommitCreateCommand extends Command {
               revCommit.getName(),
               authorIdent.getEmailAddress(),
               authorIdent.getName(),
-                  JSR310Migration.dateTimeOfEpochSecond(revCommit.getCommitTime()));
+              JSR310Migration.dateTimeOfEpochSecond(revCommit.getCommitTime()));
 
       consoleWriter
           .a("Read from Git - hash: '")
@@ -179,7 +178,8 @@ public class CommitCreateCommand extends Command {
     String authorName;
     ZonedDateTime creationDate;
 
-    public CommitInfo(String hash, String authorEmail, String authorName, ZonedDateTime creationDate) {
+    public CommitInfo(
+        String hash, String authorEmail, String authorName, ZonedDateTime creationDate) {
       this.hash = hash;
       this.authorEmail = authorEmail;
       this.authorName = authorName;

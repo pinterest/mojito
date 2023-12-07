@@ -24,7 +24,8 @@ import org.junit.Test;
 public class JSR310MigrationTest {
 
   static final DateTime DATE_TIME_WITH_MILLIS = new DateTime(2020, 7, 10, 0, 0, 12, 345);
-  static final ZonedDateTime ZONED_DATE_TIME_WITH_MILLIS = ZonedDateTime.of(2020, 7, 10, 0, 0, 12, 345000000, ZoneId.systemDefault());
+  static final ZonedDateTime ZONED_DATE_TIME_WITH_MILLIS =
+      ZonedDateTime.of(2020, 7, 10, 0, 0, 12, 345000000, ZoneId.systemDefault());
 
   @Test
   public void makeDefaultTestRunUTC() {
@@ -131,7 +132,7 @@ public class JSR310MigrationTest {
 
     ZonedDateTime zstart = ZONED_DATE_TIME_WITH_MILLIS;
     ZonedDateTime zend =
-            ZonedDateTime.of(2020, 10, 25, 0, 0, 13, 450000000, ZoneId.systemDefault());
+        ZonedDateTime.of(2020, 10, 25, 0, 0, 13, 450000000, ZoneId.systemDefault());
     String jsr = JSR310Migration.toWordBasedDuration(zstart, zend);
 
     Assertions.assertThat(joda)
@@ -201,11 +202,11 @@ public class JSR310MigrationTest {
                 .toEpochMilli());
 
     Assertions.assertThat(
-                    newDateTimeCtorWithLongAndStringOld("2018-05-09T17:34:55.000").toInstant().getMillis())
-            .isEqualTo(
-                    JSR310Migration.newDateTimeCtorWithLongAndString("2018-05-09T17:34:55.000")
-                            .toInstant()
-                            .toEpochMilli());
+            newDateTimeCtorWithLongAndStringOld("2018-05-09T17:34:55.000").toInstant().getMillis())
+        .isEqualTo(
+            JSR310Migration.newDateTimeCtorWithLongAndString("2018-05-09T17:34:55.000")
+                .toInstant()
+                .toEpochMilli());
 
     Assertions.assertThat(
             newDateTimeCtorWithLongAndStringOld(1594339100000L).toInstant().getMillis())
@@ -342,7 +343,8 @@ public class JSR310MigrationTest {
   public void dateTimeWith0MillisAsMillis() {
     DateTime withMillis = DATE_TIME_WITH_MILLIS;
     ZonedDateTime zWithMillis = ZONED_DATE_TIME_WITH_MILLIS;
-    Assertions.assertThat(dateTimeWith0MillisAsMillisOld(withMillis)).isEqualTo(JSR310Migration.dateTimeWith0MillisAsMillis(zWithMillis));
+    Assertions.assertThat(dateTimeWith0MillisAsMillisOld(withMillis))
+        .isEqualTo(JSR310Migration.dateTimeWith0MillisAsMillis(zWithMillis));
   }
 
   @Test
@@ -353,12 +355,11 @@ public class JSR310MigrationTest {
   }
 
   @Test
-  public  void dateTimeOfEpochSecond() {
+  public void dateTimeOfEpochSecond() {
     int epochSecond = 1597017613;
     Assertions.assertThat(dateTimeOfEpochSecondOld(epochSecond).toInstant().getMillis())
-            .isEqualTo(JSR310Migration.dateTimeOfEpochSecond(epochSecond).toInstant().toEpochMilli());
+        .isEqualTo(JSR310Migration.dateTimeOfEpochSecond(epochSecond).toInstant().toEpochMilli());
   }
-
 
   public static DateTime newDateTimeCtorOld(
       int year, int monthOfYear, int dayOfMonth, int hourOfDay, int minuteOfHour) {
@@ -477,5 +478,9 @@ public class JSR310MigrationTest {
 
   public static DateTime dateTimeOfEpochSecondOld(int epochSecond) {
     return Instant.ofEpochSecond(epochSecond).toDateTime();
+  }
+
+  public static Date dateTimePlusAsDateOld(DateTime dateTime, long millis) {
+    return dateTime.plus(millis).toDate();
   }
 }

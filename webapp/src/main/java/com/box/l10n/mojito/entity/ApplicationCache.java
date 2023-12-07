@@ -10,7 +10,6 @@ import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.Type;
 
 /**
  * Entity that contains the cache entry details for a database-backed application cache. Each entity

@@ -6,7 +6,6 @@ import static org.junit.Assert.assertNotNull;
 import com.box.l10n.mojito.JSR310Migration;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
-
 import org.junit.Test;
 
 /** @author jeanaurambault */

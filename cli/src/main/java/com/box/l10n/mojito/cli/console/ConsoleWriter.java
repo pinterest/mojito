@@ -1,8 +1,8 @@
 package com.box.l10n.mojito.cli.console;
 
 import com.google.common.base.CharMatcher;
-import org.fusesource.jansi.Ansi;
 import java.time.ZonedDateTime;
+import org.fusesource.jansi.Ansi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
