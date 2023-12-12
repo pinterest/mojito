@@ -269,33 +269,40 @@ public class JSR310MigrationTest {
   @Test
   public void newPeriodCtorWithLong() {
     Assertions.assertThat(newPeriodCtorWithLongOld(100_000L).toStandardDuration().getMillis())
-            .isEqualTo(
-                    JSR310Migration.newPeriodCtorWithLong(100_000L).getDuration().toNanos() / 1000_000L);
+        .isEqualTo(
+            JSR310Migration.newPeriodCtorWithLong(100_000L).getDuration().toNanos() / 1000_000L);
   }
 
   @Test
   public void newPeriodCtorWithHMS() {
-    Assertions.assertThat(newPeriodCtorWithHMSMOld(10, 50, 30, 987).toStandardDuration().getMillis())
-            .isEqualTo(
-                    JSR310Migration.newPeriodCtorWithHMSM(10, 50, 30, 987).getDuration().toNanos() / 1000_000L);
+    Assertions.assertThat(
+            newPeriodCtorWithHMSMOld(10, 50, 30, 987).toStandardDuration().getMillis())
+        .isEqualTo(
+            JSR310Migration.newPeriodCtorWithHMSM(10, 50, 30, 987).getDuration().toNanos()
+                / 1000_000L);
   }
 
   @Test
   public void newDateTimeCtorWithStringAndDateTimeZone() {
     String zoneId = "America/Los_Angeles";
     String dateTimeStr = "2020-07-10T00:00:00-04:00";
-    Assertions.assertThat(newDateTimeCtorWithStringAndDateTimeZoneOld(dateTimeStr, DateTimeZone.forID(zoneId)).getMillis())
-            .isEqualTo(
-                    JSR310Migration.newDateTimeCtorWithStringAndDateTimeZone(dateTimeStr, ZoneId.of(zoneId)).toInstant().toEpochMilli());
+    Assertions.assertThat(
+            newDateTimeCtorWithStringAndDateTimeZoneOld(dateTimeStr, DateTimeZone.forID(zoneId))
+                .getMillis())
+        .isEqualTo(
+            JSR310Migration.newDateTimeCtorWithStringAndDateTimeZone(dateTimeStr, ZoneId.of(zoneId))
+                .toInstant()
+                .toEpochMilli());
   }
 
   @Test
   public void newDateTimeCtorWithDateTimeZone() {
     String zoneId = "America/Los_Angeles";
     // can't compare time, just look at the zone
-    Assertions.assertThat(newDateTimeCtorWithDateTimeZoneOld(DateTimeZone.forID(zoneId)).getZone().getID())
-            .isEqualTo(
-                    JSR310Migration.newDateTimeCtorWithDateTimeZone(ZoneId.of(zoneId)).getZone().getId());
+    Assertions.assertThat(
+            newDateTimeCtorWithDateTimeZoneOld(DateTimeZone.forID(zoneId)).getZone().getID())
+        .isEqualTo(
+            JSR310Migration.newDateTimeCtorWithDateTimeZone(ZoneId.of(zoneId)).getZone().getId());
   }
 
   @Test
@@ -307,7 +314,7 @@ public class JSR310MigrationTest {
   }
 
   public static DateTime newDateTimeCtorOld(
-          int year, int monthOfYear, int dayOfMonth, int hourOfDay, int minuteOfHour) {
+      int year, int monthOfYear, int dayOfMonth, int hourOfDay, int minuteOfHour) {
     return new DateTime(year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour);
   }
 
@@ -368,7 +375,8 @@ public class JSR310MigrationTest {
     return new DateTime(date);
   }
 
-  public static DateTime newDateTimeCtorWithStringAndDateTimeZoneOld(String str, DateTimeZone dateTimeZone) {
+  public static DateTime newDateTimeCtorWithStringAndDateTimeZoneOld(
+      String str, DateTimeZone dateTimeZone) {
     return new DateTime(dateTime, dateTimeZone);
   }
 
@@ -407,5 +415,4 @@ public class JSR310MigrationTest {
   public static DateTimeZone dateTimeZoneForIdOld(String id) {
     return DateTimeZone.forID(id);
   }
-
 }
