@@ -3,11 +3,11 @@ package com.box.l10n.mojito.entity;
 import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.rest.View;
 import com.fasterxml.jackson.annotation.JsonView;
+import java.time.ZonedDateTime;
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.PrePersist;
 import org.hibernate.annotations.Type;
-import java.time.ZonedDateTime;
 
 /**
  * Similar to {@link AuditableEntity} but allows to override the attributes.
@@ -19,7 +19,7 @@ import java.time.ZonedDateTime;
 public abstract class SettableAuditableEntity extends BaseEntity {
 
   @Column(name = "created_date")
-  @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+  // TODO(jean) 2-JSR310 @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
   @JsonView(View.IdAndNameAndCreated.class)
   protected ZonedDateTime createdDate;
 

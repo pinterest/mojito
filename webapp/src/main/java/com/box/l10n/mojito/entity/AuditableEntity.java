@@ -4,11 +4,11 @@ import com.box.l10n.mojito.rest.View;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.Serializable;
+import java.time.ZonedDateTime;
 import javax.persistence.Column;
 import javax.persistence.EntityListeners;
 import javax.persistence.MappedSuperclass;
 import org.hibernate.annotations.Type;
-import java.time.ZonedDateTime;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -25,13 +25,13 @@ public abstract class AuditableEntity extends BaseEntity implements Serializable
 
   @CreatedDate
   @Column(name = "created_date")
-  @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+  // TODO(jean) 2-JSR310 @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
   @JsonView(View.IdAndNameAndCreated.class)
   protected ZonedDateTime createdDate;
 
   @LastModifiedDate
   @Column(name = "last_modified_date")
-  @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+  // TODO(jean) 2-JSR310 @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
   @JsonView(View.Modified.class)
   protected ZonedDateTime lastModifiedDate;
 

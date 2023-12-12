@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.entity;
 
+import java.time.ZonedDateTime;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ForeignKey;
@@ -10,7 +11,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
-import java.time.ZonedDateTime;
 
 /**
  * Entity that contains the cache entry details for a database-backed application cache. Each entity
@@ -45,19 +45,21 @@ public class ApplicationCache extends BaseEntity {
   @Lob
   private byte[] value;
 
-  // TODO(jean) JSR310 - what to do with this
   @Column(name = "created_date")
-  @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+  // TODO(jean) 2-JSR310 @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
   private ZonedDateTime createdDate;
 
   @Column(name = "expiry_date")
-  @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+  // TODO(jean) 2-JSR310 @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
   private ZonedDateTime expiryDate;
 
   public ApplicationCache() {}
 
   public ApplicationCache(
-      ApplicationCacheType applicationCacheType, String keyMD5, byte[] value, ZonedDateTime expiryDate) {
+      ApplicationCacheType applicationCacheType,
+      String keyMD5,
+      byte[] value,
+      ZonedDateTime expiryDate) {
     this.applicationCacheType = applicationCacheType;
     this.keyMD5 = keyMD5;
     this.value = value;

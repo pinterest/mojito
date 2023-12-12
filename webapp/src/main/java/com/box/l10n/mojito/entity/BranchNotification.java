@@ -2,6 +2,7 @@ package com.box.l10n.mojito.entity;
 
 import com.box.l10n.mojito.rest.View;
 import com.fasterxml.jackson.annotation.JsonView;
+import java.time.ZonedDateTime;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ForeignKey;
@@ -10,7 +11,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import org.hibernate.annotations.Type;
-import java.time.ZonedDateTime;
 
 /** @author jeanaurambault */
 @Entity
@@ -32,19 +32,19 @@ public class BranchNotification extends BaseEntity {
   private Branch branch;
 
   @Column(name = "new_msg_sent_at")
-  @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+  // TODO(jean) 2-JSR310 @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
   ZonedDateTime newMsgSentAt;
 
   @Column(name = "updated_msg_sent_at")
-  @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+  // TODO(jean) 2-JSR310 @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
   ZonedDateTime updatedMsgSentAt;
 
   @Column(name = "screenshot_missing_msg_sent_at")
-  @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+  // TODO(jean) 2-JSR310 @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
   ZonedDateTime screenshotMissingMsgSentAt;
 
   @Column(name = "translated_msg_sent_at")
-  @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+  // TODO(jean) 2-JSR310 @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
   ZonedDateTime translatedMsgSentAt;
 
   @Column(name = "content_md5")

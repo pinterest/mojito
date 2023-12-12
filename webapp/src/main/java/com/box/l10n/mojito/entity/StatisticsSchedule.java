@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.entity;
 
+import java.time.ZonedDateTime;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ForeignKey;
@@ -8,7 +9,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import org.hibernate.annotations.Type;
-import java.time.ZonedDateTime;
 
 /**
  * Entity to keep track of which repository's statistics are outdated.
@@ -33,7 +33,7 @@ public class StatisticsSchedule extends BaseEntity {
   private Repository repository;
 
   @Column(name = "time_to_update")
-  @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+  // TODO(jean) 2-JSR310 @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
   protected ZonedDateTime timeToUpdate;
 
   public Repository getRepository() {

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
+import java.time.ZonedDateTime;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ForeignKey;
@@ -15,7 +16,6 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
-import java.time.ZonedDateTime;
 
 /** @author garion */
 @Entity
@@ -66,7 +66,7 @@ public class Commit extends AuditableEntity {
    */
   @JsonView(View.Commit.class)
   @Column(name = "source_creation_date")
-  @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+  // TODO(jean) 2-JSR310 @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
   private ZonedDateTime sourceCreationDate;
 
   @JsonView(View.CommitDetailed.class)
