@@ -3,8 +3,8 @@ package com.box.l10n.mojito.rest.textunit;
 import com.box.l10n.mojito.service.tm.search.SearchType;
 import com.box.l10n.mojito.service.tm.search.StatusFilter;
 import com.box.l10n.mojito.service.tm.search.UsedFilter;
-import java.util.ArrayList;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 
 class TextUnitSearchBody {
   ArrayList<Long> repositoryIds;

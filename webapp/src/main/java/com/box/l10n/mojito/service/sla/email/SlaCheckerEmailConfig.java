@@ -1,7 +1,5 @@
 package com.box.l10n.mojito.service.sla.email;
 
-import java.time.Period;
-
 import com.box.l10n.mojito.JSR310Migration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;

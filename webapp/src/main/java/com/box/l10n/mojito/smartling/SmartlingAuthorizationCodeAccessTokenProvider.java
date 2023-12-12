@@ -5,9 +5,9 @@ import com.box.l10n.mojito.smartling.response.AuthenticationData;
 import com.box.l10n.mojito.smartling.response.AuthenticationResponse;
 import com.box.l10n.mojito.utils.RestTemplateUtils;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
@@ -118,10 +118,12 @@ public class SmartlingAuthorizationCodeAccessTokenProvider implements AccessToke
     AuthenticationData data = authenticationResponse.getData();
     DefaultOAuth2AccessToken defaultOAuth2AccessToken =
         new DefaultOAuth2AccessToken(data.getAccessToken());
-    defaultOAuth2AccessToken.setExpiration(JSR310Migration.dateTimeToDate(now.plusSeconds(data.getExpiresIn())));
+    defaultOAuth2AccessToken.setExpiration(
+        JSR310Migration.dateTimeToDate(now.plusSeconds(data.getExpiresIn())));
     defaultOAuth2AccessToken.setRefreshToken(
         new DefaultExpiringOAuth2RefreshToken(
-            data.getRefreshToken(), JSR310Migration.dateTimeToDate(now.plusSeconds(data.getRefreshExpiresIn()))));
+            data.getRefreshToken(),
+            JSR310Migration.dateTimeToDate(now.plusSeconds(data.getRefreshExpiresIn()))));
     return defaultOAuth2AccessToken;
   }
 

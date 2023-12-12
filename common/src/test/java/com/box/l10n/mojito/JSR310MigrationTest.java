@@ -7,7 +7,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import org.assertj.core.api.Assertions;
 import org.joda.time.DateTime;
-import org.joda.time.Instant;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Instant;
 import org.joda.time.LocalTime;
@@ -159,30 +158,40 @@ public class JSR310MigrationTest {
   @Test
   public void dateTimeIsAfter() {
     Assertions.assertThat(dateTimeIsAfterEpochMillisOld(dateTime, 1594339100000L)).isTrue();
-    Assertions.assertThat(JSR310Migration.dateTimeIsAfterEpochMillis(zonedDateTime, 1594339100000L)).isTrue();
+    Assertions.assertThat(JSR310Migration.dateTimeIsAfterEpochMillis(zonedDateTime, 1594339100000L))
+        .isTrue();
 
     Assertions.assertThat(dateTimeIsAfterEpochMillisOld(dateTime, 1594339200000L)).isFalse();
-    Assertions.assertThat(JSR310Migration.dateTimeIsAfterEpochMillis(zonedDateTime, 1594339200000L)).isFalse();
+    Assertions.assertThat(JSR310Migration.dateTimeIsAfterEpochMillis(zonedDateTime, 1594339200000L))
+        .isFalse();
   }
 
   @Test
   public void newDateTimeCtorWithISO8601Str() {
-    // TODO(jean) JSR310 - review - usage of this method, seems mostly for test + lots of dupplication
+    // TODO(jean) JSR310 - review - usage of this method, seems mostly for test + lots of
+    // dupplication
     DateTime dateTime = newDateTimeCtorWithISO8601StrOld("2018-05-09T17:34:55.000Z");
-    ZonedDateTime zonedDateTime = JSR310Migration.newDateTimeCtorWithISO8601Str("2018-05-09T17:34:55.000Z");
-    Assertions.assertThat(dateTime.toInstant().getMillis()).isEqualTo(zonedDateTime.toInstant().toEpochMilli());
+    ZonedDateTime zonedDateTime =
+        JSR310Migration.newDateTimeCtorWithISO8601Str("2018-05-09T17:34:55.000Z");
+    Assertions.assertThat(dateTime.toInstant().getMillis())
+        .isEqualTo(zonedDateTime.toInstant().toEpochMilli());
 
     DateTime dateTimeWithOffset = newDateTimeCtorWithISO8601StrOld("2018-06-08T14:00:00.000-07:00");
-    ZonedDateTime zonedDateTimeWithOffset = JSR310Migration.newDateTimeCtorWithISO8601Str("2018-06-08T14:00:00.000-07:00");
-    Assertions.assertThat(dateTimeWithOffset.toInstant().getMillis()).isEqualTo(zonedDateTimeWithOffset.toInstant().toEpochMilli());
+    ZonedDateTime zonedDateTimeWithOffset =
+        JSR310Migration.newDateTimeCtorWithISO8601Str("2018-06-08T14:00:00.000-07:00");
+    Assertions.assertThat(dateTimeWithOffset.toInstant().getMillis())
+        .isEqualTo(zonedDateTimeWithOffset.toInstant().toEpochMilli());
 
     // TODO(jean) JSR310 - that's another toString difference to review
-    // instant are same but the round trip str -> date -> str is lost with zonedDateTime while there is not change
+    // instant are same but the round trip str -> date -> str is lost with zonedDateTime while there
+    // is not change
     // with dateTime
-    DateTimeFormatter JODA_FORMATTER_ATTEMPT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    DateTimeFormatter JODA_FORMATTER_ATTEMPT =
+        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     Assertions.assertThat(dateTime.toString()).isEqualTo("2018-05-09T17:34:55.000Z");
     Assertions.assertThat(zonedDateTime.toString()).isEqualTo("2018-05-09T17:34:55Z");
-    Assertions.assertThat(zonedDateTime.format(JODA_FORMATTER_ATTEMPT)).isEqualTo("2018-05-09T17:34:55.000Z");
+    Assertions.assertThat(zonedDateTime.format(JODA_FORMATTER_ATTEMPT))
+        .isEqualTo("2018-05-09T17:34:55.000Z");
 
     Assertions.assertThat(dateTimeWithOffset.toString()).isEqualTo("2018-06-08T21:00:00.000Z");
     Assertions.assertThat(zonedDateTimeWithOffset.format(JODA_FORMATTER_ATTEMPT))
@@ -231,7 +240,10 @@ public class JSR310MigrationTest {
   @Test
   public void dateTimeWithMillisOfSeconds() {
     Assertions.assertThat(dateTimeWithMillisOfSecondsOld(dateTime, 963).toInstant().getMillis())
-            .isEqualTo(JSR310Migration.dateTimeWithMillisOfSeconds(zonedDateTime, 963).toInstant().toEpochMilli());
+        .isEqualTo(
+            JSR310Migration.dateTimeWithMillisOfSeconds(zonedDateTime, 963)
+                .toInstant()
+                .toEpochMilli());
   }
 
   @Test
@@ -246,8 +258,12 @@ public class JSR310MigrationTest {
 
   @Test
   public void dateTimeWithLocalTime() {
-    Assertions.assertThat(dateTimeWithLocalTimeOld(dateTime, new LocalTime(10, 15)).toInstant().getMillis())
-            .isEqualTo(JSR310Migration.dateTimeWithLocalTime(zonedDateTime, java.time.LocalTime.of(10, 15)).toInstant().toEpochMilli());
+    Assertions.assertThat(
+            dateTimeWithLocalTimeOld(dateTime, new LocalTime(10, 15)).toInstant().getMillis())
+        .isEqualTo(
+            JSR310Migration.dateTimeWithLocalTime(zonedDateTime, java.time.LocalTime.of(10, 15))
+                .toInstant()
+                .toEpochMilli());
   }
 
   @Test
@@ -385,7 +401,7 @@ public class JSR310MigrationTest {
   }
 
   public static Date dateTimeToDateOld(DateTime dateTime) {
-     return dateTime.toDate();
+    return dateTime.toDate();
   }
 
   public static boolean dateTimeIsAfterEpochMillisOld(DateTime dateTime, long afterMillis) {
@@ -393,8 +409,8 @@ public class JSR310MigrationTest {
   }
 
   /**
-   * TODO(jean) JSR310 this is actually new DateTime(Object instant) behind the scene. Start with string test
-   * but this can be replaced
+   * TODO(jean) JSR310 this is actually new DateTime(Object instant) behind the scene. Start with
+   * string test but this can be replaced
    */
   public static DateTime newDateTimeCtorWithISO8601StrOld(String str) {
     // from doc: the String formats are described by ISODateTimeFormat.dateTimeParser().
@@ -440,7 +456,8 @@ public class JSR310MigrationTest {
     return new LocalTime(source);
   }
 
-  public static LocalTime newLocalTimeWithHMSOld(int hourOfDay, int minuteOfHour, int secondOfMinute) {
+  public static LocalTime newLocalTimeWithHMSOld(
+      int hourOfDay, int minuteOfHour, int secondOfMinute) {
     return new LocalTime(hourOfDay, minuteOfHour, secondOfMinute);
   }
 

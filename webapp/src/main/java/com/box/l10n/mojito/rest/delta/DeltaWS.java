@@ -18,10 +18,10 @@ import com.box.l10n.mojito.service.pullrun.PullRunRepository;
 import com.box.l10n.mojito.service.pushrun.PushRunRepository;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.tm.TextUnitVariantDeltaDTO;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import javax.persistence.EntityManager;
-import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -78,7 +78,7 @@ public class DeltaWS {
   public Page<TextUnitVariantDeltaDTO> getDeltasFromDate(
       @RequestParam(value = "repositoryId") Long repositoryId,
       @RequestParam(value = "bcp47Tags", required = false) List<String> bcp47Tags,
-      //TODO(jean) what is the impact on the leniency of the WS ??
+      // TODO(jean) what is the impact on the leniency of the WS ??
       @RequestParam(value = "fromDate", required = false) ZonedDateTime fromDate,
       @RequestParam(value = "toDate", required = false) ZonedDateTime toDate,
       @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable)

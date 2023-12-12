@@ -5,10 +5,10 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.box.l10n.mojito.entity.ApplicationCache;
 import com.box.l10n.mojito.entity.ApplicationCacheType;
 import com.box.l10n.mojito.service.DBUtils;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
@@ -123,12 +123,12 @@ public class ApplicationCacheUpdaterService {
 
     try {
       // TODO(jean) 2-JSR310 - This SQL query does not seem to work ...
-//      currentTimestamp =
-//          new ZonedDateTime(
-//              entityManager
-//                  .createNativeQuery(
-//                      "SELECT TOP 1 CURRENT_TIMESTAMP FROM INFORMATION_SCHEMA.TABLES")
-//                  .getSingleResult());
+      //      currentTimestamp =
+      //          new ZonedDateTime(
+      //              entityManager
+      //                  .createNativeQuery(
+      //                      "SELECT TOP 1 CURRENT_TIMESTAMP FROM INFORMATION_SCHEMA.TABLES")
+      //                  .getSingleResult());
       currentTimestamp = ZonedDateTime.now();
     } catch (Exception ex) {
       logger.error("Could not retrieve current timestamp from the SQL DB", ex);

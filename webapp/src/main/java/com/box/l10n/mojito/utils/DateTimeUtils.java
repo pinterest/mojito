@@ -3,7 +3,6 @@ package com.box.l10n.mojito.utils;
 import com.box.l10n.mojito.JSR310Migration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-
 import org.springframework.stereotype.Component;
 
 /** @author jeanaurambault */

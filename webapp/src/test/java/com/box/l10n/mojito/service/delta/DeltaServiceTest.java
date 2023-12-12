@@ -36,6 +36,7 @@ import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitVariantRepository;
 import com.box.l10n.mojito.service.tm.TextUnitVariantDeltaDTO;
 import com.box.l10n.mojito.test.TestIdWatcher;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -43,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.time.ZonedDateTime;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -191,7 +191,11 @@ public class DeltaServiceTest extends ServiceTestBase {
     List<TextUnitVariantDeltaDTO> deltasFromBeggining =
         deltaService
             .getDeltasForDates(
-                repository, null, JSR310Migration.newDateTimeCtorAtEpoch(), ZonedDateTime.now().plusHours(1), Pageable.unpaged())
+                repository,
+                null,
+                JSR310Migration.newDateTimeCtorAtEpoch(),
+                ZonedDateTime.now().plusHours(1),
+                Pageable.unpaged())
             .getContent();
 
     Assert.assertEquals(2, deltasFromBeggining.size());
@@ -244,7 +248,11 @@ public class DeltaServiceTest extends ServiceTestBase {
     List<TextUnitVariantDeltaDTO> deltasFromBeggining =
         deltaService
             .getDeltasForDates(
-                repository, null, JSR310Migration.newDateTimeCtorAtEpoch(), ZonedDateTime.now().plusHours(1), Pageable.unpaged())
+                repository,
+                null,
+                JSR310Migration.newDateTimeCtorAtEpoch(),
+                ZonedDateTime.now().plusHours(1),
+                Pageable.unpaged())
             .getContent();
 
     Assert.assertEquals(1, deltasFromBeggining.size());
@@ -329,7 +337,11 @@ public class DeltaServiceTest extends ServiceTestBase {
     List<TextUnitVariantDeltaDTO> noSpecificLocalesDeltasFromStart =
         deltaService
             .getDeltasForDates(
-                repository, null, JSR310Migration.newDateTimeCtorAtEpoch(), ZonedDateTime.now().plusHours(1), Pageable.unpaged())
+                repository,
+                null,
+                JSR310Migration.newDateTimeCtorAtEpoch(),
+                ZonedDateTime.now().plusHours(1),
+                Pageable.unpaged())
             .getContent();
     Assert.assertEquals(3, noSpecificLocalesDeltasFromStart.size());
 

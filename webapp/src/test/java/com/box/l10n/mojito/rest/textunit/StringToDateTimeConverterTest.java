@@ -5,8 +5,6 @@ import static org.junit.Assert.assertEquals;
 import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.test.JSR310MigrationForTesting;
 import java.time.ZonedDateTime;
-
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 // TODO(jean) 2-JSR310 - review++

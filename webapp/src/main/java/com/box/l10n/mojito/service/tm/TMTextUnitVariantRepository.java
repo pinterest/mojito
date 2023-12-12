@@ -6,8 +6,8 @@ import com.box.l10n.mojito.entity.PushRun;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
 import java.sql.Timestamp;
-import java.util.List;
 import java.time.ZonedDateTime;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -79,8 +79,8 @@ public interface TMTextUnitVariantRepository extends JpaRepository<TMTextUnitVar
    * to provided deltas relevant for a specific snapshot.
    *
    * @param translationsFromDate A java.sql.Date type needs to be provided for native queries,
-   *     otherwise, if Joda Time's ZonedDateTime is used, that parameter is passed in as a VARBINARY to
-   *     the SQL query and will silently mis-behave.
+   *     otherwise, if Joda Time's ZonedDateTime is used, that parameter is passed in as a VARBINARY
+   *     to the SQL query and will silently mis-behave.
    */
   @Query(
       nativeQuery = true,

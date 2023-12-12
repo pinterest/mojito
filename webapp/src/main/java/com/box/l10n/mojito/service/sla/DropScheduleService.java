@@ -3,10 +3,10 @@ package com.box.l10n.mojito.service.sla;
 import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.utils.DateTimeUtils;
 import com.google.common.collect.Sets;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +31,9 @@ public class DropScheduleService {
   ZonedDateTime getDropCreatedDate(ZonedDateTime dropDueDate) {
 
     // TODO(jean) 2-JSR310 - replaced but candiate for refactoring with all block below
-    ZonedDateTime dropCreatedDate = JSR310Migration.dateTimeWithLocalTime(dropDueDate, dropScheduleConfig.getCreatedLocalTime());
+    ZonedDateTime dropCreatedDate =
+        JSR310Migration.dateTimeWithLocalTime(
+            dropDueDate, dropScheduleConfig.getCreatedLocalTime());
 
     Integer dropDueDateDay = JSR310Migration.dateTimeGetDayOfWeek(dropDueDate);
     Integer dropStartDateDay = getDueDayToStartDay().get(dropDueDateDay);
@@ -52,7 +54,9 @@ public class DropScheduleService {
     HashSet<Integer> dropDueDaysSet = Sets.newHashSet(dropScheduleConfig.getDueDays());
 
     for (int daysToSubstract = 0; daysToSubstract <= 7; daysToSubstract++) {
-      ZonedDateTime candidate = JSR310Migration.dateTimeWithLocalTime(before.minusDays(daysToSubstract), dropScheduleConfig.getDueLocalTime());
+      ZonedDateTime candidate =
+          JSR310Migration.dateTimeWithLocalTime(
+              before.minusDays(daysToSubstract), dropScheduleConfig.getDueLocalTime());
 
       // TODO(jean) 2-JSR310 - this type of change didn't break compilation, and only got caught
       // from tests ...

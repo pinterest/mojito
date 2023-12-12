@@ -7,7 +7,6 @@ import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
 import com.github.pnowy.nc.core.CriteriaResult;
 import com.github.pnowy.nc.core.mappers.NativeObjectMapper;
-import java.time.ZonedDateTime;
 
 /** @author jaurambault */
 public class TextUnitDTONativeObjectMapper implements NativeObjectMapper<TextUnitDTO> {

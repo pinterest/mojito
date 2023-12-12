@@ -2,8 +2,6 @@ package com.box.l10n.mojito.converter;
 
 import static org.junit.Assert.assertEquals;
 
-import java.time.Period;
-
 import com.box.l10n.mojito.JSR310Migration;
 import org.junit.Test;
 import org.threeten.extra.PeriodDuration;

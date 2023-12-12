@@ -1,10 +1,10 @@
 package com.box.l10n.mojito.service.sla;
 
 import com.box.l10n.mojito.JSR310Migration;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
-import java.time.LocalTime;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 

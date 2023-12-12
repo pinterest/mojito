@@ -13,12 +13,12 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import org.apache.commons.lang3.StringUtils;
-import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
@@ -148,7 +148,8 @@ public class PushRunService {
   }
 
   public void deleteAllPushEntitiesOlderThan(Duration retentionDuration) {
-    ZonedDateTime beforeDate = ZonedDateTime.now().minusSeconds((int) retentionDuration.getSeconds());
+    ZonedDateTime beforeDate =
+        ZonedDateTime.now().minusSeconds((int) retentionDuration.getSeconds());
     Timestamp sqlBeforeDate = new Timestamp(JSR310Migration.dateTimeToDate(beforeDate).getTime());
 
     int batchNumber = 1;

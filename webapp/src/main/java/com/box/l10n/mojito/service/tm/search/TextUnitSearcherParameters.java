@@ -1,11 +1,11 @@
 package com.box.l10n.mojito.service.tm.search;
 
 import com.box.l10n.mojito.service.NormalizationUtils;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.time.ZonedDateTime;
 
 /**
  * Parameters for {@link

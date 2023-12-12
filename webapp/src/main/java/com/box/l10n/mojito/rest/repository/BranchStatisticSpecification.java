@@ -7,13 +7,13 @@ import com.box.l10n.mojito.entity.Branch_;
 import com.box.l10n.mojito.entity.security.user.User;
 import com.box.l10n.mojito.entity.security.user.User_;
 import com.box.l10n.mojito.specification.SingleParamSpecification;
+import java.time.ZonedDateTime;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import java.time.ZonedDateTime;
 
 /** @author jeanaurambault */
 public class BranchStatisticSpecification {

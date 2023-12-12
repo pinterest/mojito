@@ -5,6 +5,7 @@ import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant;
 import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant_;
 import com.box.l10n.mojito.service.tm.TMTextUnitCurrentVariantRepository;
 import com.google.common.base.Preconditions;
+import java.time.ZonedDateTime;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -16,7 +17,6 @@ import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
-import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -166,7 +166,8 @@ public class CurrentVariantRollbackService {
     logger.trace("Building the insert tmTextUnitCurrentVariants audit query");
 
     AuditReader auditReader = AuditReaderFactory.get(entityManager);
-    Number revNumberAtDate = auditReader.getRevisionNumberForDate(JSR310Migration.dateTimeToDate(rollbackDateTime));
+    Number revNumberAtDate =
+        auditReader.getRevisionNumberForDate(JSR310Migration.dateTimeToDate(rollbackDateTime));
 
     AuditQuery auditQuery =
         auditReader

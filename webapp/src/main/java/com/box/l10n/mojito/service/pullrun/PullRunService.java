@@ -47,7 +47,8 @@ public class PullRunService {
   }
 
   public void deleteAllPullEntitiesOlderThan(Duration retentionDuration) {
-    ZonedDateTime beforeDate = ZonedDateTime.now().minusSeconds((int) retentionDuration.getSeconds());
+    ZonedDateTime beforeDate =
+        ZonedDateTime.now().minusSeconds((int) retentionDuration.getSeconds());
     Timestamp sqlBeforeDate = new Timestamp(JSR310Migration.dateTimeToDate(beforeDate).getTime());
 
     int batchNumber = 1;

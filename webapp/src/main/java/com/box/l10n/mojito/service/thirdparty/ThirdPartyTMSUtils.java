@@ -8,7 +8,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import java.util.Optional;
 import org.apache.commons.codec.digest.DigestUtils;
-import java.time.ZonedDateTime;
 
 public class ThirdPartyTMSUtils {
 

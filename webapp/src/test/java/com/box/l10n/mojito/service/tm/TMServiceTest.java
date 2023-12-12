@@ -59,7 +59,6 @@ import net.sf.okapi.common.resource.TextUnit;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.proxy.HibernateProxy;
-import java.time.ZonedDateTime;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;

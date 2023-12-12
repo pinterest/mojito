@@ -1,8 +1,7 @@
 package com.box.l10n.mojito.rest.textunit;
 
-import java.time.ZonedDateTime;
-
 import com.box.l10n.mojito.JSR310Migration;
+import java.time.ZonedDateTime;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +12,8 @@ import org.springframework.stereotype.Component;
  *
  * @author jeanaurambault
  */
-// TODO(jean) 2-JSR310 - I guess that's the key for API to be backward compatible - removing all TODO from controllers
+// TODO(jean) 2-JSR310 - I guess that's the key for API to be backward compatible - removing all
+// TODO from controllers
 // need to test a few controller query though
 @Component
 public class StringToDateTimeConverter implements Converter<String, ZonedDateTime> {

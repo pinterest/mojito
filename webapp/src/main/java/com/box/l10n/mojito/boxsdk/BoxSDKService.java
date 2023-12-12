@@ -12,10 +12,10 @@ import com.google.common.base.Strings;
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.IOUtils;
-import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -355,7 +355,8 @@ public class BoxSDKService {
         if (itemInfo instanceof BoxFolder.Info) {
           BoxFolder subFolder = (BoxFolder) itemInfo.getResource();
 
-          if (JSR310Migration.dateTimeIsAfterEpochMillis(olderThan, subFolder.getInfo().getCreatedAt().getTime())) {
+          if (JSR310Migration.dateTimeIsAfterEpochMillis(
+              olderThan, subFolder.getInfo().getCreatedAt().getTime())) {
             subFolder.delete(true);
           }
 
@@ -363,7 +364,8 @@ public class BoxSDKService {
 
           BoxFile file = (BoxFile) itemInfo.getResource();
 
-          if (JSR310Migration.dateTimeIsAfterEpochMillis(olderThan, file.getInfo().getCreatedAt().getTime())) {
+          if (JSR310Migration.dateTimeIsAfterEpochMillis(
+              olderThan, file.getInfo().getCreatedAt().getTime())) {
             file.delete();
           }
         }

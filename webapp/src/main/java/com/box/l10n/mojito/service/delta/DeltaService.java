@@ -20,6 +20,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -28,7 +29,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.time.ZonedDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -124,7 +124,8 @@ public class DeltaService {
     List<Long> pushRunIds = getIds(pushRuns);
     List<Long> pullRunIds = getIds(pullRuns);
 
-    // TODO(jean) 2-JSR310 - did replacement but could be candidate for refactoring given previous comment, see all block
+    // TODO(jean) 2-JSR310 - did replacement but could be candidate for refactoring given previous
+    // comment, see all block
     ZonedDateTime translationsFromDate =
         Optional.ofNullable(pullRuns).orElse(Collections.emptyList()).stream()
             .min(Comparator.comparing(PullRun::getCreatedDate))

@@ -3,9 +3,9 @@ package com.box.l10n.mojito.service.tm;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
 import com.box.l10n.mojito.entity.TMTextUnitVariantComment;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.time.ZonedDateTime;
 
 /**
  * Used to serialize/deserialize the note element used for import/export.

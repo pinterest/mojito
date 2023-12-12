@@ -19,9 +19,9 @@ import com.box.l10n.mojito.service.pullrun.PullRunWithNameNotFoundException;
 import com.box.l10n.mojito.service.pushrun.PushRunRepository;
 import com.box.l10n.mojito.service.pushrun.PushRunWithNameNotFoundException;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -129,11 +129,15 @@ public class CommitService {
             "authorName", commit.getAuthorName(), authorName);
       }
 
-      // TODO(jean) 2-JSR310 - did replacement but could be candidate for refactoring. eg. setnano and compare the date with equals
+      // TODO(jean) 2-JSR310 - did replacement but could be candidate for refactoring. eg. setnano
+      // and compare the date with equals
       // Remove milliseconds when comparing as the dates are not stored with sub-second precision.
-      ZonedDateTime existingCreationDateWithoutMs = JSR310Migration.dateTimeWithMillisOfSeconds(commit.getSourceCreationDate(), 0);
-      ZonedDateTime sourceCreationDateWithoutMs = JSR310Migration.dateTimeWithMillisOfSeconds(sourceCreationDate, 0);
-      if (JSR310Migration.getMillis(existingCreationDateWithoutMs) != JSR310Migration.getMillis(sourceCreationDateWithoutMs)) {
+      ZonedDateTime existingCreationDateWithoutMs =
+          JSR310Migration.dateTimeWithMillisOfSeconds(commit.getSourceCreationDate(), 0);
+      ZonedDateTime sourceCreationDateWithoutMs =
+          JSR310Migration.dateTimeWithMillisOfSeconds(sourceCreationDate, 0);
+      if (JSR310Migration.getMillis(existingCreationDateWithoutMs)
+          != JSR310Migration.getMillis(sourceCreationDateWithoutMs)) {
         throw new SaveCommitMismatchedExistingDataException(
             "sourceCreationDate",
             commit.getSourceCreationDate().toString(),
