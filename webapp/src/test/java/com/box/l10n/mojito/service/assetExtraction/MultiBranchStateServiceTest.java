@@ -18,6 +18,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import org.assertj.core.api.Assertions;
 import org.junit.Rule;
@@ -95,6 +96,21 @@ public class MultiBranchStateServiceTest extends ServiceTestBase {
           expectedMultiBranchState.withBranches(
               expectedMultiBranchState.getBranches().stream()
                   .map(b -> b.withCreatedAt(roundDateTimeToSecond(b.getCreatedAt())))
+                  .collect(ImmutableSet.toImmutableSet()));
+    } else {
+      expectedMultiBranchState =
+          expectedMultiBranchState.withBranchStateTextUnits(
+              expectedMultiBranchState.getBranchStateTextUnits().stream()
+                  .map(
+                      bstu ->
+                          bstu.withCreatedDate(
+                              bstu.getCreatedDate().truncatedTo(ChronoUnit.MICROS)))
+                  .collect(ImmutableList.toImmutableList()));
+
+      expectedMultiBranchState =
+          expectedMultiBranchState.withBranches(
+              expectedMultiBranchState.getBranches().stream()
+                  .map(b -> b.withCreatedAt(b.getCreatedAt().truncatedTo(ChronoUnit.MICROS)))
                   .collect(ImmutableSet.toImmutableSet()));
     }
     return expectedMultiBranchState;
