@@ -9,6 +9,7 @@ import java.time.Period;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
@@ -164,5 +165,15 @@ public class JSR310Migration {
 
   public static Date dateTimePlusAsDate(ZonedDateTime dateTime, long millis) {
     return Date.from(dateTime.plus(millis, ChronoUnit.MILLIS).toInstant());
+  }
+
+  /**
+   * Millisecond precision. Mysql tables are currently with second precision and HSQL
+   */
+  static DateTimeFormatter SQL_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+
+  public static String toRawSQL(ZonedDateTime zonedDateTime) {
+    // will depend on hsql vs mysql
+    return zonedDateTime.format(SQL_FORMATTER);
   }
 }
