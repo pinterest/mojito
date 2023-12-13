@@ -87,7 +87,8 @@ public class AssetExtractorTextUnitsToMultiBranchStateConverterTest {
             assetExtractorTextUnit, branch, createdDate);
 
     assertThat(branchStateTextUnit)
-        .isEqualToComparingFieldByField(
+        .usingRecursiveComparison()
+        .isEqualTo(
             BranchStateTextUnit.builder()
                 .name("name_one")
                 .source("source")

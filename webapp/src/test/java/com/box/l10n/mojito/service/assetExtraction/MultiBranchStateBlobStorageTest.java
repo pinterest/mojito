@@ -67,6 +67,7 @@ public class MultiBranchStateBlobStorageTest extends ServiceTestBase {
         multiBranchStateBlobStorage.getMultiBranchStateForAssetExtractionId(
             assetExtractionId, version);
     assertThat(multiBranchStateForAssetExtractionId.get())
-        .isEqualToComparingFieldByField(multiBranchState);
+        .usingRecursiveComparison()
+        .isEqualTo(multiBranchState);
   }
 }
