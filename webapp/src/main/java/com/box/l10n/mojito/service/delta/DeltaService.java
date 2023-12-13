@@ -16,10 +16,6 @@ import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.service.tm.TMTextUnitVariantRepository;
 import com.box.l10n.mojito.service.tm.TextUnitVariantDelta;
 import com.box.l10n.mojito.service.tm.TextUnitVariantDeltaDTO;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
@@ -134,13 +130,9 @@ public class DeltaService {
             .map(dateTime -> JSR310Migration.dateTimeWithMillisOfSeconds(dateTime, 0))
             .orElse(JSR310Migration.newDateTimeCtorAtEpoch());
 
-    Instant fromDateInstant = Instant.ofEpochMilli(JSR310Migration.getMillis(translationsFromDate));
-    Timestamp sqlTranslationsFromDate =
-        Timestamp.valueOf(LocalDateTime.ofInstant(fromDateInstant, ZoneOffset.UTC));
-
     List<TextUnitVariantDelta> variants =
         tmTextUnitVariantRepository.findDeltasForRuns(
-            repository.getId(), localeIds, pushRunIds, pullRunIds, sqlTranslationsFromDate);
+            repository.getId(), localeIds, pushRunIds, pullRunIds, translationsFromDate);
 
     Map<String, DeltaLocaleDataDTO> deltaLocaleDataByBcp47Tags =
         getStringDeltaLocaleDataDTOMap(variants);

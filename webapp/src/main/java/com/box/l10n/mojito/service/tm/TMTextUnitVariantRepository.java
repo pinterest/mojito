@@ -5,7 +5,6 @@ import com.box.l10n.mojito.entity.PullRun;
 import com.box.l10n.mojito.entity.PushRun;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
-import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -129,5 +128,5 @@ public interface TMTextUnitVariantRepository extends JpaRepository<TMTextUnitVar
       @Param("localeIds") List<Long> localeIds,
       @Param("pushRunIds") List<Long> pushRunIds,
       @Param("pullRunIds") List<Long> pullRunIds,
-      @Param("translationsFromDate") Timestamp translationsFromDate);
+      @Param("translationsFromDate") ZonedDateTime translationsFromDate);
 }
