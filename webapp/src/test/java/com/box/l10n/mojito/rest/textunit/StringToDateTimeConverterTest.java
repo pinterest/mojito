@@ -4,7 +4,10 @@ import static org.junit.Assert.assertEquals;
 
 import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.test.JSR310MigrationForTesting;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import org.junit.Assume;
 import org.junit.Test;
 
 // TODO(jean) 2-JSR310 - review++
@@ -40,18 +43,29 @@ public class StringToDateTimeConverterTest {
     assertEquals(expResult, result);
   }
 
+  /**
+   * If there is no timezone specified in the source string, then the system default is used.
+   *
+   * <p>In practice, on the server side, the default TZ is UTC, see test below.
+   */
   @Test
   public void testConvertISONoTZ() {
     String source = "2018-05-09T17:34:55.000";
     StringToDateTimeConverter instance = new StringToDateTimeConverter();
     ZonedDateTime expResult =
-        JSR310Migration.newDateTimeCtorWithISO8601Str("2018-05-09T17:34:55.000Z");
+        JSR310Migration.newDateTimeCtorWithISO8601Str("2018-05-09T17:34:55.000Z")
+            .withZoneSameLocal(ZoneId.systemDefault());
     ZonedDateTime result = instance.convert(source);
     JSR310MigrationForTesting.junitAssertEquals(expResult, result);
   }
 
+  /**
+   * This test will typically run on CI, and the behavior is mimicking a production deployment which
+   * usually is in UTC.
+   */
   @Test
-  public void testConvertISOUTC() {
+  public void testConvertISONoTZAssumeUTC() {
+    Assume.assumeTrue(ZoneId.systemDefault().equals(ZoneOffset.UTC));
     String source = "2018-05-09T17:34:55.000";
     StringToDateTimeConverter instance = new StringToDateTimeConverter();
     ZonedDateTime expResult =

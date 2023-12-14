@@ -1,6 +1,7 @@
 package com.box.l10n.mojito;
 
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -375,6 +376,26 @@ public class JSR310MigrationTest {
     int epochSecond = 1597017613;
     Assertions.assertThat(dateTimeOfEpochSecondOld(epochSecond).toInstant().getMillis())
         .isEqualTo(JSR310Migration.dateTimeOfEpochSecond(epochSecond).toInstant().toEpochMilli());
+  }
+
+  /**
+   * TODO(jean) 2-JSR310 - Must be really careful, basically anywhere we compare dates it must be
+   * either in the same timezone or using instant comparison instead.
+   *
+   * <p>Some tests failed (when run locally) because of that but 1) it is not obvious to spot all
+   * the usages. 2) when test are run in UTC, it hides the issue.
+   */
+  @Test
+  public void zonedDateTimeEquals() {
+    ZonedDateTime utc = ZonedDateTime.of(2020, 7, 10, 0, 0, 12, 345000000, ZoneOffset.UTC);
+    ZonedDateTime pst = utc.withZoneSameInstant(ZoneId.of("America/Los_Angeles"));
+    Assertions.assertThat(utc.isEqual(pst)).isTrue();
+
+    // Needs to pay close attention to not use "equals()" but "isEqualsTo"
+    Assertions.assertThat(utc.equals(pst)).isFalse();
+
+    // Be careful AssertJ "isEqualTo" does not use ZonedDateTime.equals()
+    Assertions.assertThat(utc).isEqualTo(pst);
   }
 
   public static DateTime newDateTimeCtorOld(

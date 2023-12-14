@@ -203,7 +203,14 @@ public class MultiBranchStateMerger {
                           return idx == -1 ? Integer.MAX_VALUE : idx;
                         })
                     .thenComparing(
-                        Branch::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                        // TODO(jean) 2-JSR310 we must compare on instant here, else the order may
+                        // be wrong because of the timezones. Probably need null check since
+                        // Comparator.nullsLast. Not covered by test though
+                        branch ->
+                            branch.getCreatedAt() == null
+                                ? null
+                                : branch.getCreatedAt().toInstant(),
+                        Comparator.nullsLast(Comparator.naturalOrder()))
                     .thenComparing(
                         Branch::getName, Comparator.nullsLast(Comparator.naturalOrder())))
             .collect(ImmutableSet.toImmutableSet());

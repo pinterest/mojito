@@ -11,7 +11,11 @@ import com.box.l10n.mojito.localtm.merger.MultiBranchState;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import java.time.ZonedDateTime;
+import java.time.chrono.ChronoZonedDateTime;
+import java.util.Comparator;
 import java.util.Optional;
+import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
@@ -66,8 +70,19 @@ public class MultiBranchStateBlobStorageTest extends ServiceTestBase {
     multiBranchStateForAssetExtractionId =
         multiBranchStateBlobStorage.getMultiBranchStateForAssetExtractionId(
             assetExtractionId, version);
+
+    // TODO(jean) 2-JSR310 we must compare on instant here, else the order may be wrong because of
+    // the timezones.
+    // not clear why assertThat(zd1).isEqualsTo(zd2) is fine but not the recursive version
+    // what happens with null pointer here
+    RecursiveComparisonConfiguration recursiveComparisonConfiguration =
+        RecursiveComparisonConfiguration.builder()
+            .withComparatorForType(
+                Comparator.comparing(ChronoZonedDateTime::toInstant), ZonedDateTime.class)
+            .build();
+
     assertThat(multiBranchStateForAssetExtractionId.get())
-        .usingRecursiveComparison()
+        .usingRecursiveComparison(recursiveComparisonConfiguration)
         .isEqualTo(multiBranchState);
   }
 }
