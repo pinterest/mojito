@@ -66,6 +66,7 @@ public class CommitCreateCommandTest extends CLITestBase {
     assertEquals(commitHash, createdCommit.getName());
     assertEquals(authorEmail, createdCommit.getAuthorEmail());
     assertEquals(authorName, createdCommit.getAuthorName());
+    // That test seems brittle because of different rounding / truncating?
     assertEquals(
         JSR310Migration.dateTimeWith0MillisAsMillis(creationDate),
         JSR310Migration.dateTimeWith0MillisAsMillis(createdCommit.getSourceCreationDate()));

@@ -247,6 +247,11 @@ public class JSR310MigrationTest {
                 .toEpochMilli());
   }
 
+  /**
+   * This test might be brittle but cannot reproduce.
+   *
+   * <p>Saw a failure with: "expected: 1702591002127L but was: 1702591002126L"
+   */
   @Test
   public void newDateTimeCtorWithDate() {
     Date date = new Date();

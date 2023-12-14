@@ -112,7 +112,7 @@ public class AuthenticatedRestTemplate {
         mappingJackson2HttpMessageConverter.setSupportedMediaTypes(
             Arrays.asList(MediaType.APPLICATION_JSON));
 
-        // TODO(jean) review those notes on jackson
+        // TODO(jean) 2-JSR310 - review those notes on jackson
         // This helps with joda deserialize of joda date time string
         logger.debug("Creating custom jackson2 objectmapper with serialization inclusion changes");
         Jackson2ObjectMapperFactoryBean jackson2ObjectMapperFactoryBean =
