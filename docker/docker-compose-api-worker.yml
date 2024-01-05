@@ -34,16 +34,11 @@ services:
         reservations:
           cpus: '1'
           memory: 200M
-    healthcheck:
-      test: [ "CMD", "curl", "localhost:8080/" ]
-      interval: 5s
-      timeout: 10s
-      retries: 50
     depends_on:
       db:
         condition: service_healthy
     build:
-      dockerfile: docker/Dockerfile-bk8
+      dockerfile: docker/Dockerfile-bk17
       context: ../
     image: mojito:latest
     pull_policy: never
@@ -112,15 +107,8 @@ services:
         reservations:
           cpus: '1'
           memory: 200M
-    healthcheck:
-      test: [ "CMD", "curl", "localhost:8080/" ]
-      interval: 5s
-      timeout: 10s
-      retries: 50
     depends_on:
       db:
-        condition: service_healthy
-      api:
         condition: service_healthy
     image: mojito:latest
     pull_policy: never
