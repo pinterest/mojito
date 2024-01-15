@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -21,8 +22,6 @@ public class PullRunService {
   /** Logger */
   static Logger logger = LoggerFactory.getLogger(PullRunService.class);
 
-  static final int DELETE_BATCH_SIZE = 100000;
-
   @Autowired PullRunRepository pullRunRepository;
 
   @Autowired CommitToPullRunRepository commitToPullRunRepository;
@@ -30,6 +29,9 @@ public class PullRunService {
   @Autowired PullRunAssetRepository pullRunAssetRepository;
 
   @Autowired PullRunTextUnitVariantRepository pullRunTextUnitVariantRepository;
+
+  @Value("${l10n.PullRunService.cleanup-job.batchsize:100000}")
+  int DELETE_BATCH_SIZE;
 
   public PullRun getOrCreate(String pullRunName, Repository repository) {
     return pullRunRepository
@@ -56,10 +58,19 @@ public class PullRunService {
               beforeDate, DELETE_BATCH_SIZE);
       logger.debug(
           "Deleted {} pullRunTextUnitVariant rows in batch: {}", deleteCount, batchNumber++);
+      waitFor2Seconds();
     } while (deleteCount == DELETE_BATCH_SIZE);
 
     pullRunAssetRepository.deleteAllByPullRunWithCreatedDateBefore(beforeDate);
     commitToPullRunRepository.deleteAllByPullRunWithCreatedDateBefore(beforeDate);
     pullRunRepository.deleteAllByCreatedDateBefore(beforeDate);
+  }
+
+  private void waitFor2Seconds() {
+    try {
+      Thread.sleep(2000);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
