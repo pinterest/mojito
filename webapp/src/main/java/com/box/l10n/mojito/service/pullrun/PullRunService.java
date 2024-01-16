@@ -31,7 +31,10 @@ public class PullRunService {
   @Autowired PullRunTextUnitVariantRepository pullRunTextUnitVariantRepository;
 
   @Value("${l10n.PullRunService.cleanup-job.batchsize:100000}")
-  int DELETE_BATCH_SIZE;
+  int deleteBatchSize;
+
+  @Value("${l10n.PullRunService.cleanup-job.waitMs:2000}")
+  int deleteWaitMs;
 
   public PullRun getOrCreate(String pullRunName, Repository repository) {
     return pullRunRepository
@@ -55,20 +58,20 @@ public class PullRunService {
     do {
       deleteCount =
           pullRunTextUnitVariantRepository.deleteAllByPullRunWithCreatedDateBefore(
-              beforeDate, DELETE_BATCH_SIZE);
+              beforeDate, deleteBatchSize);
       logger.debug(
           "Deleted {} pullRunTextUnitVariant rows in batch: {}", deleteCount, batchNumber++);
-      waitFor2Seconds();
-    } while (deleteCount == DELETE_BATCH_SIZE);
+      waitForConfiguredTime();
+    } while (deleteCount == deleteBatchSize);
 
     pullRunAssetRepository.deleteAllByPullRunWithCreatedDateBefore(beforeDate);
     commitToPullRunRepository.deleteAllByPullRunWithCreatedDateBefore(beforeDate);
     pullRunRepository.deleteAllByCreatedDateBefore(beforeDate);
   }
 
-  private void waitFor2Seconds() {
+  private void waitForConfiguredTime() {
     try {
-      Thread.sleep(2000);
+      Thread.sleep(deleteWaitMs);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
