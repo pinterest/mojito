@@ -3,11 +3,11 @@ package com.box.l10n.mojito.rest.locale;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Locale_;
 import com.box.l10n.mojito.specification.SingleParamSpecification;
-import java.util.List;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import java.util.List;
 import org.springframework.data.jpa.domain.Specification;
 
 /** @author aloison */

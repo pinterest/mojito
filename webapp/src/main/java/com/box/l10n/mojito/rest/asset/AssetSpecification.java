@@ -7,7 +7,6 @@ import com.box.l10n.mojito.entity.Asset_;
 import com.box.l10n.mojito.entity.Branch;
 import com.box.l10n.mojito.entity.Branch_;
 import com.box.l10n.mojito.specification.SingleParamSpecification;
-import java.util.List;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Join;
@@ -15,6 +14,7 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.SetJoin;
+import java.util.List;
 import org.springframework.data.jpa.domain.Specification;
 
 /** @author wyau */

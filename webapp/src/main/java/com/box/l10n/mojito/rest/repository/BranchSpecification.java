@@ -6,13 +6,13 @@ import com.box.l10n.mojito.entity.BranchStatistic_;
 import com.box.l10n.mojito.entity.Branch_;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.specification.SingleParamSpecification;
-import java.time.ZonedDateTime;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import java.time.ZonedDateTime;
 
 /** @author jeanaurambault */
 public class BranchSpecification {

@@ -1,7 +1,5 @@
 package com.box.l10n.mojito.entity;
 
-import java.time.ZonedDateTime;
-import java.util.Set;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -10,6 +8,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import java.time.ZonedDateTime;
+import java.util.Set;
 
 /** @author jaurambault */
 @Entity
