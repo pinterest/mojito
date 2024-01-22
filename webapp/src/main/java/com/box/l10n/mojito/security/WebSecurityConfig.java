@@ -3,22 +3,25 @@ package com.box.l10n.mojito.security;
 import com.box.l10n.mojito.ActuatorHealthLegacyConfig;
 import com.box.l10n.mojito.service.security.user.UserService;
 import com.google.common.base.Preconditions;
+import jakarta.servlet.Filter;
 import java.util.ArrayList;
 import java.util.List;
-import javax.servlet.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.AdviceMode;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.authentication.configurers.ldap.LdapAuthenticationProviderConfigurer;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
@@ -33,7 +36,7 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 // TOOD(spring2) we don't use method level security, do we? remove?
 @EnableGlobalMethodSecurity(securedEnabled = true, mode = AdviceMode.ASPECTJ)
 @Configuration
-public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+public class WebSecurityConfig {
 
   static final String LOGIN_PAGE = "/login";
   /** logger */
@@ -62,6 +65,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
   @Autowired UserService userService;
 
   @Autowired UserDetailsServiceImpl userDetailsService;
+
+  @Autowired AuthenticationConfiguration authenticationConfiguration;
 
   @Autowired
   public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
@@ -135,56 +140,66 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     auth.authenticationProvider(preAuthenticatedAuthenticationProvider);
   }
 
-  @Override
   protected void configure(HttpSecurity http) throws Exception {
     logger.debug("Configuring web security");
 
     // TODO should we just enable caching of static assets, this disabling cache control for
     // everything
     // https://docs.spring.io/spring-security/site/docs/current/reference/html5/#headers-cache-control
-    http.headers().cacheControl().disable();
+    http.headers(headers -> headers.cacheControl(HeadersConfigurer.CacheControlConfig::disable));
 
     // no csrf on rotation end point - they are accessible only locally
-    http.csrf().ignoringAntMatchers("/actuator/shutdown", "/actuator/loggers/**", "/api/rotation");
+    http.csrf(
+        csrf ->
+            csrf.ignoringRequestMatchers(
+                new AntPathRequestMatcher("/actuator/shutdown"),
+                new AntPathRequestMatcher("/actuator/loggers/**"),
+                new AntPathRequestMatcher("/api/rotation")));
 
     // matcher order matters - "everything else" mapping must be last
     http.authorizeRequests(
         authorizeRequests ->
             authorizeRequests
-                .antMatchers(
-                    "/intl/*",
-                    "/img/*",
-                    "/login/**",
-                    "/favicon.ico",
-                    "/fonts/*",
-                    "/cli/**",
-                    "/js/**",
-                    "/css/**")
+                .requestMatchers(
+                    new AntPathRequestMatcher("/intl/*"),
+                    new AntPathRequestMatcher("/img/*"),
+                    new AntPathRequestMatcher("/login/**"),
+                    new AntPathRequestMatcher("/favicon.ico"),
+                    new AntPathRequestMatcher("/fonts/*"),
+                    new AntPathRequestMatcher("/cli/**"),
+                    new AntPathRequestMatcher("/js/**"),
+                    new AntPathRequestMatcher("/css/**"))
                 .permitAll()
                 . // always accessible to serve the frontend
-                antMatchers(getHeathcheckPatterns())
+                requestMatchers(getHealthcheckPatterns())
                 .permitAll()
                 . // allow health entry points
-                antMatchers("/actuator/shutdown", "/actuator/loggers/**", "/api/rotation")
+                requestMatchers(
+                    new AntPathRequestMatcher("/actuator/shutdown"),
+                    new AntPathRequestMatcher("/actuator/loggers/**"),
+                    new AntPathRequestMatcher("/api/rotation"))
                 .hasIpAddress("127.0.0.1")
                 . // local access only for rotation management and logger config
-                antMatchers("/**")
+                requestMatchers(new AntPathRequestMatcher("/**"))
                 .authenticated() // everything else must be authenticated
         );
 
     logger.debug("For APIs, we don't redirect to login page. Instead we return a 401");
-    http.exceptionHandling()
-        .defaultAuthenticationEntryPointFor(
-            new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED), new AntPathRequestMatcher("/api/*"));
+    http.exceptionHandling(
+        (exception) ->
+            exception.defaultAuthenticationEntryPointFor(
+                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                new AntPathRequestMatcher("/api/*")));
 
     if (securityConfig.getUnauthRedirectTo() != null) {
       logger.debug(
           "Redirect to: {} instead of login page on authorization exceptions",
           securityConfig.getUnauthRedirectTo());
-      http.exceptionHandling()
-          .defaultAuthenticationEntryPointFor(
-              new LoginUrlAuthenticationEntryPoint(securityConfig.getUnauthRedirectTo()),
-              new AntPathRequestMatcher("/*"));
+      http.exceptionHandling(
+          (exception) ->
+              exception.defaultAuthenticationEntryPointFor(
+                  new LoginUrlAuthenticationEntryPoint(securityConfig.getUnauthRedirectTo()),
+                  new AntPathRequestMatcher("/*")));
     }
 
     for (SecurityConfig.AuthenticationType authenticationType :
@@ -240,12 +255,17 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
    *
    * @return
    */
-  String[] getHeathcheckPatterns() {
-    List<String> patterns = new ArrayList<>();
-    patterns.add("/actuator/health");
+  AntPathRequestMatcher[] getHealthcheckPatterns() {
+    List<AntPathRequestMatcher> patterns = new ArrayList<>();
+    patterns.add(new AntPathRequestMatcher("/actuator/health"));
     if (actuatorHealthLegacyConfig.isForwarding()) {
-      patterns.add("/health");
+      patterns.add(new AntPathRequestMatcher("/health"));
     }
-    return patterns.toArray(new String[patterns.size()]);
+    return patterns.toArray(new AntPathRequestMatcher[0]);
+  }
+
+  @Bean
+  public AuthenticationManager authenticationManager() throws Exception {
+    return authenticationConfiguration.getAuthenticationManager();
   }
 }
