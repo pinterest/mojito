@@ -7,7 +7,7 @@ import com.google.common.base.Strings;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.fusesource.jansi.Ansi;
 import org.slf4j.Logger;

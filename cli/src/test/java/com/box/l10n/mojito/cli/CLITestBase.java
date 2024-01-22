@@ -25,7 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
