@@ -81,6 +81,12 @@
             <artifactId>icu4j</artifactId>
             <version>${icu4j.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-ant</artifactId>
+            <version>6.2.9.Final</version>
+        </dependency>
     </dependencies>
 
     <!-- SCM setup to push changes to the Github repo on release -->
