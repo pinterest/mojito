@@ -1,7 +1,7 @@
 package com.box.l10n.mojito.nativecriteria;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import org.hibernate.annotations.common.util.StringHelper;
+import org.hibernate.internal.util.StringHelper;
 
 /** @author jeanaurambault */
 public class VarGenerator {
