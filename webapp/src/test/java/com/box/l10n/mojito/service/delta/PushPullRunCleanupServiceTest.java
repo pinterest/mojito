@@ -31,7 +31,7 @@ import com.box.l10n.mojito.test.TestIdWatcher;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;

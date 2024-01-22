@@ -21,7 +21,7 @@ import com.box.l10n.mojito.service.tm.TextUnitVariantDeltaDTO;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;

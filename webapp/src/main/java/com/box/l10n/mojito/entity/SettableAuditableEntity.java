@@ -4,9 +4,9 @@ import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.rest.View;
 import com.fasterxml.jackson.annotation.JsonView;
 import java.time.ZonedDateTime;
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.PrePersist;
+import jakarta.persistence.Column;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.PrePersist;
 
 /**
  * Similar to {@link AuditableEntity} but allows to override the attributes.

@@ -6,8 +6,8 @@ import com.github.pnowy.nc.core.QueryInfo;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
-import javax.persistence.Query;
-import javax.persistence.TemporalType;
+import jakarta.persistence.Query;
+import jakarta.persistence.TemporalType;
 
 /** @author jeanaurambault */
 public class JpaNativeQuery implements NativeQuery {

@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import javax.persistence.*;
+import jakarta.persistence.*;
 import org.springframework.data.annotation.CreatedBy;
 
 /**
