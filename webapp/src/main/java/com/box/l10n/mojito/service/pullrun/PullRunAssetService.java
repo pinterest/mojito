@@ -5,6 +5,7 @@ import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.PullRun;
 import com.box.l10n.mojito.entity.PullRunAsset;
 import com.box.l10n.mojito.entity.Repository;
+import com.box.l10n.mojito.retry.DeadLockLoserExceptionRetryTemplate;
 import com.google.common.collect.Lists;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
@@ -33,6 +34,8 @@ public class PullRunAssetService {
 
   @Autowired MeterRegistry meterRegistry;
 
+  @Autowired DeadLockLoserExceptionRetryTemplate deadLockLoserExceptionRetryTemplate;
+
   public PullRunAsset createPullRunAsset(PullRun pullRun, Asset asset) {
     PullRunAsset pullRunAsset = new PullRunAsset();
     pullRunAsset.setPullRun(pullRun);
@@ -59,18 +62,28 @@ public class PullRunAssetService {
             Tags.of("repositoryId", Objects.toString(repository.getId())))
         .record(
             () -> {
-              deleteExistingVariants(pullRunAsset, localeId, outputBcp47Tag);
+              deadLockLoserExceptionRetryTemplate.execute(
+                  context -> {
+                    deleteExistingVariants(pullRunAsset, localeId, outputBcp47Tag);
+                    return null;
+                  });
+
               Lists.partition(uniqueTmTextUnitVariantIds, BATCH_SIZE)
                   .forEach(
                       tuvIdsBatch ->
-                          saveTextUnitVariantsMultiRowBatch(
-                              pullRunAsset, localeId, tuvIdsBatch, outputBcp47Tag));
+                          deadLockLoserExceptionRetryTemplate.execute(
+                              context -> {
+                                saveTextUnitVariantsMultiRowBatch(
+                                    pullRunAsset, localeId, tuvIdsBatch, outputBcp47Tag);
+                                return null;
+                              }));
             });
   }
 
   @Transactional
   void deleteExistingVariants(PullRunAsset pullRunAsset, Long localeId, String outputBcp47Tag) {
     // Delete and insert steps split into two transactions to avoid deadlocks occurring
+
     jdbcTemplate.update(
         "delete from pull_run_text_unit_variant where pull_run_asset_id = ? and locale_id = ? and output_bcp47_tag = ?",
         pullRunAsset.getId(),
