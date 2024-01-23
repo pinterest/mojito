@@ -84,8 +84,15 @@ public class PullRunAssetService {
   void deleteExistingVariants(PullRunAsset pullRunAsset, Long localeId, String outputBcp47Tag) {
     // Delete and insert steps split into two transactions to avoid deadlocks occurring
 
+    // Lock the rows for deletion
+    jdbcTemplate.queryForList(
+        "SELECT * FROM pull_run_text_unit_variant WHERE pull_run_asset_id = ? AND locale_id = ? AND output_bcp47_tag = ? FOR UPDATE",
+        pullRunAsset.getId(),
+        localeId,
+        outputBcp47Tag);
+    // Delete the rows
     jdbcTemplate.update(
-        "delete from pull_run_text_unit_variant where pull_run_asset_id = ? and locale_id = ? and output_bcp47_tag = ?",
+        "DELETE FROM pull_run_text_unit_variant WHERE pull_run_asset_id = ? AND locale_id = ? AND output_bcp47_tag = ?",
         pullRunAsset.getId(),
         localeId,
         outputBcp47Tag);
