@@ -14,7 +14,6 @@ import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.entity.TM;
 import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
-import com.box.l10n.mojito.retry.DeadLockLoserExceptionRetryListener;
 import com.box.l10n.mojito.service.asset.AssetService;
 import com.box.l10n.mojito.service.assetExtraction.AssetExtractionRepository;
 import com.box.l10n.mojito.service.assetExtraction.AssetExtractionService;
@@ -88,8 +87,6 @@ public class DeltaServiceTest extends ServiceTestBase {
   @Autowired AssetExtractionService assetExtractionService;
 
   @Autowired AssetTextUnitToTMTextUnitRepository assetTextUnitToTMTextUnitRepository;
-
-  @Autowired DeadLockLoserExceptionRetryListener deadLockLoserExceptionRetryListener;
 
   @Test
   public void testGetDeltasFromDateWorks() {
