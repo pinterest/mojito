@@ -4,6 +4,7 @@ import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.PullRun;
 import com.box.l10n.mojito.entity.PullRunAsset;
+import com.box.l10n.mojito.entity.PullRunTextUnitVariant;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.retry.DeadLockLoserExceptionRetryTemplate;
 import com.google.common.collect.Lists;
@@ -15,6 +16,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +32,8 @@ public class PullRunAssetService {
   static final int BATCH_SIZE = 1000;
 
   @Autowired PullRunAssetRepository pullRunAssetRepository;
+
+  @Autowired PullRunTextUnitVariantRepository pullRunTextUnitVariantRepository;
 
   @Autowired JdbcTemplate jdbcTemplate;
 
@@ -84,18 +89,28 @@ public class PullRunAssetService {
   void deleteExistingVariants(PullRunAsset pullRunAsset, Long localeId, String outputBcp47Tag) {
     // Delete and insert steps split into two transactions to avoid deadlocks occurring
 
-    // Lock the rows for deletion
-    jdbcTemplate.queryForList(
-        "SELECT * FROM pull_run_text_unit_variant WHERE pull_run_asset_id = ? AND locale_id = ? AND output_bcp47_tag = ? FOR UPDATE",
-        pullRunAsset.getId(),
-        localeId,
-        outputBcp47Tag);
-    // Delete the rows
-    jdbcTemplate.update(
-        "DELETE FROM pull_run_text_unit_variant WHERE pull_run_asset_id = ? AND locale_id = ? AND output_bcp47_tag = ?",
-        pullRunAsset.getId(),
-        localeId,
-        outputBcp47Tag);
+    List<PullRunTextUnitVariant> pullRunTextUnitVariants =
+        pullRunTextUnitVariantRepository.findByPullRunAssetIdAndLocaleIdAndOutputBcp47Tag(
+            pullRunAsset.getId(), localeId, outputBcp47Tag);
+
+    if (!pullRunTextUnitVariants.isEmpty()) {
+      // Delete the rows if ids are not empty
+      NamedParameterJdbcTemplate namedParameterJdbcTemplate =
+          new NamedParameterJdbcTemplate(jdbcTemplate);
+
+      Lists.partition(
+              pullRunTextUnitVariants.stream()
+                  .map(PullRunTextUnitVariant::getId)
+                  .collect(Collectors.toList()),
+              BATCH_SIZE)
+          .forEach(
+              idsBatch -> {
+                MapSqlParameterSource parameters = new MapSqlParameterSource();
+                parameters.addValue("ids", idsBatch);
+                namedParameterJdbcTemplate.update(
+                    "delete from pull_run_text_unit_variant where id in (:ids)", parameters);
+              });
+    }
   }
 
   @Transactional
