@@ -13,7 +13,8 @@ public class DeadLockLoserExceptionRetryTemplate {
 
   RetryTemplate retryTemplate;
 
-  public DeadLockLoserExceptionRetryTemplate() {
+  public DeadLockLoserExceptionRetryTemplate(
+      DeadLockLoserExceptionRetryListener deadLockLoserExceptionRetryListener) {
     SimpleRetryPolicy retryPolicy =
         new SimpleRetryPolicy(5, ImmutableMap.of(DeadlockLoserDataAccessException.class, true));
 
@@ -27,6 +28,7 @@ public class DeadLockLoserExceptionRetryTemplate {
     retryTemplate.setRetryPolicy(retryPolicy);
     retryTemplate.setBackOffPolicy(exponentialRandomBackOffPolicy);
     retryTemplate.setThrowLastExceptionOnExhausted(true);
+    retryTemplate.registerListener(deadLockLoserExceptionRetryListener);
   }
 
   public <T, E extends Throwable> T execute(RetryCallback<T, E> retryCallback) throws E {
