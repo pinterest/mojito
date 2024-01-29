@@ -40,6 +40,7 @@
         <docker.compose.remove.volumes>true</docker.compose.remove.volumes>
         <aspectj.version>1.9.20</aspectj.version>
         <httpclient.version>5.2.1</httpclient.version>
+        <git.commit.plugin.version>7.0.0</git.commit.plugin.version>
     </properties>
 
     <dependencies>
