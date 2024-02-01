@@ -147,7 +147,8 @@ public class RepositoryStatisticService {
               }
 
               logger.debug("Update branch statistics");
-              branchStatisticService.computeAndSaveBranchStatistics(repositoryId, UpdateType.NEVER);
+              branchStatisticService.computeAndSaveBranchStatistics(
+                  repositoryId, repository.getName(), UpdateType.NEVER);
 
               logger.debug("Stats updated");
             });
