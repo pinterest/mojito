@@ -9,8 +9,10 @@ import com.box.l10n.mojito.service.pollableTask.PollableTaskBlobStorage;
 import com.box.l10n.mojito.service.pollableTask.PollableTaskService;
 import com.ibm.icu.text.MessageFormat;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
@@ -88,6 +90,15 @@ public class QuartzPollableTaskScheduler {
 
     Scheduler scheduler = schedulerManager.getScheduler(quartzJobInfo.getScheduler());
 
+    if (quartzJobInfo.getClazz().isAnnotationPresent(DisallowConcurrentExecution.class)
+        && quartzJobInfo.getUniqueId() != null) {
+      QuartzPollableFutureTask<O> pollableTask =
+          getPendingPollableFutureIfExists(quartzJobInfo, scheduler);
+      if (pollableTask != null) {
+        return pollableTask;
+      }
+    }
+
     String pollableTaskName = getPollableTaskName(quartzJobInfo.getClazz());
 
     logger.debug("Create currentPollableTask with name: {}", pollableTaskName);
@@ -159,6 +170,34 @@ public class QuartzPollableTaskScheduler {
 
     Class<O> jobOutputType = getJobOutputType(quartzJobInfo);
     return new QuartzPollableFutureTask<O>(pollableTask, jobOutputType);
+  }
+
+  private <I, O> QuartzPollableFutureTask<O> getPendingPollableFutureIfExists(
+      QuartzJobInfo<I, O> quartzJobInfo, Scheduler scheduler) {
+    logger.debug(
+        "DisallowConcurrentExecution is set, checking if the job already has a trigger in a blocked state");
+    String jobKeyName = getKeyName(quartzJobInfo.getClazz(), quartzJobInfo.getUniqueId());
+    try {
+      List<Trigger> triggers =
+          (List<Trigger>) scheduler.getTriggersOfJob(new JobKey(jobKeyName, DYNAMIC_GROUP_NAME));
+      for (Trigger trigger : triggers) {
+        if (scheduler.getTriggerState(trigger.getKey()).equals(Trigger.TriggerState.BLOCKED)) {
+          // Should only ever be one trigger in this state when @DisallowConcurrentExecution is set
+          logger.debug(
+              "Trigger {} is in blocked state, retrieving associated pollable task",
+              trigger.getKey());
+          PollableTask pollableTask =
+              pollableTaskService.getPollableTask(
+                  Long.valueOf(
+                      trigger.getJobDataMap().getString(QuartzPollableJob.POLLABLE_TASK_ID)));
+          return new QuartzPollableFutureTask<>(pollableTask, getJobOutputType(quartzJobInfo));
+        }
+      }
+    } catch (SchedulerException e) {
+      logger.debug(
+          "Error retrieving details of the job, assuming it doesn't exist. Continue scheduling as normal");
+    }
+    return null;
   }
 
   <I, O> Class<O> getJobOutputType(QuartzJobInfo<I, O> quartzJobInfo) {

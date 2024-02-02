@@ -10,6 +10,7 @@ import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.pollableTask.PollableTaskBlobStorage;
 import java.util.concurrent.ExecutionException;
 import org.junit.Test;
+import org.quartz.DisallowConcurrentExecution;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class QuartzPollableTaskSchedulerTest extends ServiceTestBase {
@@ -59,6 +60,62 @@ public class QuartzPollableTaskSchedulerTest extends ServiceTestBase {
         quartzPollableTaskScheduler.getShortClassName(
             ALongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongNameClassForTest
                 .class));
+  }
+
+  @Test
+  public void testRescheduleNonConcurrentJobs() throws ExecutionException, InterruptedException {
+    /**
+     * This test verifies that in the event of a rescheduling of a job that disallows concurrent
+     * execution, the pollable task associated with the Quartz Trigger in a BLOCKED state is
+     * returned for multiple calls to scheduleJob with the same uniqueId set.
+     *
+     * <p>This ensures that no more than 2 pollable tasks (the executing tasks and the task waiting
+     * to execute) are present at the same time for the same uniqueId.
+     *
+     * <p>The tests steps are as follows: 1. Schedule a job with a uniqueId 2. Schedule a job with
+     * the same uniqueId, this time with different output 3. Schedule a job with the same uniqueId,
+     * this time with the same output as the first job 4. Verify that the output of the first job is
+     * returned as expected 5. Verify that the output of the second job is returned as expected 6.
+     * Verify that the output of the third job is returned however its output is the same as the
+     * second job, as the associated pollable task for job 2 was returned as it was in a BLOCKED
+     * state due to job 1 executing.
+     */
+    QuartzJobInfo<Long, AQuartzPollableJobOutput> quartzJobInfo =
+        QuartzJobInfo.newBuilder(AQuartzPollableJob3.class)
+            .withUniqueId("test1")
+            .withInput(10L)
+            .build();
+    QuartzJobInfo<Long, AQuartzPollableJobOutput> quartzJobInfo2 =
+        QuartzJobInfo.newBuilder(AQuartzPollableJob3.class)
+            .withUniqueId("test1")
+            .withInput(20L)
+            .build();
+    QuartzJobInfo<Long, AQuartzPollableJobOutput> quartzJobInfo3 =
+        QuartzJobInfo.newBuilder(AQuartzPollableJob3.class)
+            .withUniqueId("test1")
+            .withInput(10L)
+            .build();
+    PollableFuture<AQuartzPollableJobOutput> pollableFuture =
+        quartzPollableTaskScheduler.scheduleJob(quartzJobInfo);
+    PollableFuture<AQuartzPollableJobOutput> pollableFuture2 =
+        quartzPollableTaskScheduler.scheduleJob(quartzJobInfo2);
+    PollableFuture<AQuartzPollableJobOutput> pollableFuture3 =
+        quartzPollableTaskScheduler.scheduleJob(quartzJobInfo3);
+    AQuartzPollableJobOutput s = pollableFuture.get();
+    assertEquals("output: 10", s.getOutput());
+    AQuartzPollableJobOutput s2 = pollableFuture2.get();
+    assertEquals("output: 20", s2.getOutput());
+    AQuartzPollableJobOutput s3 = pollableFuture3.get();
+    assertEquals("output: 20", s3.getOutput());
+  }
+
+  @DisallowConcurrentExecution
+  public static class AQuartzPollableJob3 extends AQuartzPollableJob2 {
+    @Override
+    public AQuartzPollableJobOutput call(Long input) throws Exception {
+      Thread.sleep(5000);
+      return super.call(input);
+    }
   }
 
   public static class AQuartzPollableJob extends AQuartzPollableJob2 {}
