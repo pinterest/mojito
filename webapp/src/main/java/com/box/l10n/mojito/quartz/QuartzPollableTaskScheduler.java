@@ -4,6 +4,7 @@ import static com.box.l10n.mojito.quartz.QuartzConfig.DYNAMIC_GROUP_NAME;
 
 import com.box.l10n.mojito.entity.PollableTask;
 import com.box.l10n.mojito.json.ObjectMapper;
+import com.box.l10n.mojito.service.DBUtils;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.pollableTask.PollableTaskBlobStorage;
 import com.box.l10n.mojito.service.pollableTask.PollableTaskService;
@@ -11,6 +12,7 @@ import com.ibm.icu.text.MessageFormat;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
@@ -22,6 +24,7 @@ import org.quartz.TriggerKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -36,6 +39,11 @@ public class QuartzPollableTaskScheduler {
   @Autowired PollableTaskBlobStorage pollableTaskBlobStorage;
 
   @Autowired ObjectMapper objectMapper;
+
+  @Autowired DBUtils dbUtils;
+
+  @Value("${l10n.quartz.pollableTask.cleanupOnUniqueIdReschedule:false}")
+  boolean cleanupOnUniqueIdReschedule;
 
   public <I, O> PollableFuture<O> scheduleJob(
       Class<? extends QuartzPollableJob<I, O>> clazz, I input, String schedulerName) {
@@ -148,6 +156,12 @@ public class QuartzPollableTaskScheduler {
         scheduler.scheduleJob(jobDetail, trigger);
       } else {
         logger.debug("Job already scheduled for key: {}, reschedule", keyName);
+        if (cleanupOnUniqueIdReschedule
+            && dbUtils.isQuartzMysql()
+            && quartzJobInfo.getClazz().isAnnotationPresent(DisallowConcurrentExecution.class)
+            && quartzJobInfo.getUniqueId() != null) {
+          skipPendingPollablesWithMatchingId(scheduler, jobKey, trigger, pollableTask);
+        }
         scheduler.rescheduleJob(triggerKey, trigger);
       }
     } catch (SchedulerException se) {
@@ -159,6 +173,38 @@ public class QuartzPollableTaskScheduler {
 
     Class<O> jobOutputType = getJobOutputType(quartzJobInfo);
     return new QuartzPollableFutureTask<O>(pollableTask, jobOutputType);
+  }
+
+  private void skipPendingPollablesWithMatchingId(
+      Scheduler scheduler, JobKey jobKey, Trigger trigger, PollableTask pollableTask) {
+    try {
+      for (Trigger existingTrigger : scheduler.getTriggersOfJob(jobKey)) {
+        if (scheduler
+            .getTriggerState(existingTrigger.getKey())
+            .equals(Trigger.TriggerState.BLOCKED)) {
+          logger.debug(
+              "Trigger {} is in blocked state, finishing associated pollable task",
+              trigger.getKey());
+          PollableTask pendingPollable =
+              pollableTaskService.getPollableTask(
+                  Long.valueOf(
+                      existingTrigger
+                          .getJobDataMap()
+                          .getString(QuartzPollableJob.POLLABLE_TASK_ID)));
+          logger.debug("Ending pollable task: {}", pendingPollable.getId());
+          pollableTaskService.finishTask(
+              pendingPollable.getId(),
+              "Job skipped as new job re-scheduled with the same unique id, tracked by pollable task id: "
+                  + pollableTask.getId(),
+              null,
+              pendingPollable.getExpectedSubTaskNumber());
+        }
+      }
+    } catch (SchedulerException e) {
+      logger.error(
+          "Error retrieving details of the job, assuming it doesn't exist. Continue scheduling as normal",
+          e);
+    }
   }
 
   <I, O> Class<O> getJobOutputType(QuartzJobInfo<I, O> quartzJobInfo) {

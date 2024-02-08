@@ -2,14 +2,18 @@ package com.box.l10n.mojito.quartz;
 
 import static com.box.l10n.mojito.quartz.QuartzSchedulerManager.DEFAULT_SCHEDULER_NAME;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.box.l10n.mojito.service.DBUtils;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.pollableTask.PollableTaskBlobStorage;
 import java.util.concurrent.ExecutionException;
+import org.junit.Assume;
 import org.junit.Test;
+import org.quartz.DisallowConcurrentExecution;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class QuartzPollableTaskSchedulerTest extends ServiceTestBase {
@@ -17,6 +21,8 @@ public class QuartzPollableTaskSchedulerTest extends ServiceTestBase {
   @Autowired QuartzPollableTaskScheduler quartzPollableTaskScheduler;
 
   @Autowired PollableTaskBlobStorage pollableTaskBlobStorage;
+
+  @Autowired DBUtils dbUtils;
 
   @Test
   public void test() throws ExecutionException, InterruptedException {
@@ -59,6 +65,63 @@ public class QuartzPollableTaskSchedulerTest extends ServiceTestBase {
         quartzPollableTaskScheduler.getShortClassName(
             ALongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongNameClassForTest
                 .class));
+  }
+
+  @Test
+  public void testRescheduleNonConcurrentJobs() throws ExecutionException, InterruptedException {
+    /**
+     * This test verifies that in the event of a rescheduling of a job that disallows concurrent
+     * execution, the pollable task associated with the Quartz Trigger in a BLOCKED state is
+     * returned for multiple calls to scheduleJob with the same uniqueId set.
+     *
+     * <p>This ensures that no more than 2 pollable tasks (the executing tasks and the task waiting
+     * to execute) are present at the same time for the same uniqueId.
+     *
+     * <p>The tests steps are as follows: 1. Schedule a job with a uniqueId 2. Schedule a job with
+     * the same uniqueId, this time with different output 3. Schedule a job with the same uniqueId,
+     * this time with the same output as the first job 4. Verify that the output of the first job is
+     * returned as expected 5. Verify that the output of the second job is null as it has been
+     * skipped due to the rescheduling caused by the third task. Verify that the output of the third
+     * job is returned.
+     */
+    Assume.assumeTrue(dbUtils.isQuartzMysql());
+    QuartzJobInfo<Long, AQuartzPollableJobOutput> quartzJobInfo =
+        QuartzJobInfo.newBuilder(AQuartzPollableJob3.class)
+            .withUniqueId("test1")
+            .withInput(10L)
+            .build();
+    QuartzJobInfo<Long, AQuartzPollableJobOutput> quartzJobInfo2 =
+        QuartzJobInfo.newBuilder(AQuartzPollableJob3.class)
+            .withUniqueId("test1")
+            .withInput(20L)
+            .build();
+    QuartzJobInfo<Long, AQuartzPollableJobOutput> quartzJobInfo3 =
+        QuartzJobInfo.newBuilder(AQuartzPollableJob3.class)
+            .withUniqueId("test1")
+            .withInput(10L)
+            .build();
+    quartzPollableTaskScheduler.cleanupOnUniqueIdReschedule = true;
+    PollableFuture<AQuartzPollableJobOutput> pollableFuture =
+        quartzPollableTaskScheduler.scheduleJob(quartzJobInfo);
+    PollableFuture<AQuartzPollableJobOutput> pollableFuture2 =
+        quartzPollableTaskScheduler.scheduleJob(quartzJobInfo2);
+    PollableFuture<AQuartzPollableJobOutput> pollableFuture3 =
+        quartzPollableTaskScheduler.scheduleJob(quartzJobInfo3);
+    AQuartzPollableJobOutput s = pollableFuture.get();
+    assertEquals("output: 10", s.getOutput());
+    AQuartzPollableJobOutput s2 = pollableFuture2.get();
+    assertNull(s2.getOutput());
+    AQuartzPollableJobOutput s3 = pollableFuture3.get();
+    assertEquals("output: 10", s3.getOutput());
+  }
+
+  @DisallowConcurrentExecution
+  public static class AQuartzPollableJob3 extends AQuartzPollableJob2 {
+    @Override
+    public AQuartzPollableJobOutput call(Long input) throws Exception {
+      Thread.sleep(2000);
+      return super.call(input);
+    }
   }
 
   public static class AQuartzPollableJob extends AQuartzPollableJob2 {}
