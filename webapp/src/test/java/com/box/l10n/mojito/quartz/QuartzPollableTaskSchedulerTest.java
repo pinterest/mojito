@@ -3,11 +3,15 @@ package com.box.l10n.mojito.quartz;
 import static com.box.l10n.mojito.quartz.QuartzSchedulerManager.DEFAULT_SCHEDULER_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
+import com.box.l10n.mojito.entity.PollableTask;
 import com.box.l10n.mojito.service.DBUtils;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.pollableTask.PollableTaskBlobStorage;
+import com.box.l10n.mojito.service.pollableTask.PollableTaskRepository;
 import java.util.concurrent.ExecutionException;
 import org.junit.Assume;
 import org.junit.Test;
@@ -21,6 +25,8 @@ public class QuartzPollableTaskSchedulerTest extends ServiceTestBase {
   @Autowired PollableTaskBlobStorage pollableTaskBlobStorage;
 
   @Autowired DBUtils dbUtils;
+
+  @Autowired PollableTaskRepository pollableTaskRepository;
 
   @Test
   public void test() throws ExecutionException, InterruptedException {
@@ -44,8 +50,13 @@ public class QuartzPollableTaskSchedulerTest extends ServiceTestBase {
             VoidQuartzPollableJob.class, 10L, DEFAULT_SCHEDULER_NAME);
     Void aVoid = pollableFuture.get();
     assertEquals(null, aVoid);
-    assertEquals(
-        "{}", pollableTaskBlobStorage.getOutputJson(pollableFuture.getPollableTask().getId()));
+    try {
+      Object output =
+          pollableTaskBlobStorage.getOutputJson(pollableFuture.getPollableTask().getId());
+      fail();
+    } catch (RuntimeException re) {
+      assertTrue(re.getMessage().startsWith("Can't get the output json for:"));
+    }
   }
 
   @Test
@@ -78,40 +89,40 @@ public class QuartzPollableTaskSchedulerTest extends ServiceTestBase {
      * job is returned.
      */
     Assume.assumeTrue(dbUtils.isQuartzMysql());
-    QuartzJobInfo<Long, AQuartzPollableJobOutput> quartzJobInfo =
-        QuartzJobInfo.newBuilder(AQuartzPollableJob3.class)
-            .withUniqueId("test1")
-            .withInput(10L)
-            .build();
-    QuartzJobInfo<Long, AQuartzPollableJobOutput> quartzJobInfo2 =
-        QuartzJobInfo.newBuilder(AQuartzPollableJob3.class)
-            .withUniqueId("test1")
-            .withInput(20L)
-            .build();
-    QuartzJobInfo<Long, AQuartzPollableJobOutput> quartzJobInfo3 =
-        QuartzJobInfo.newBuilder(AQuartzPollableJob3.class)
-            .withUniqueId("test1")
-            .withInput(10L)
-            .build();
+    QuartzJobInfo<Long, Void> quartzJobInfo =
+        QuartzJobInfo.newBuilder(AQuartzPollableJob3.class).withUniqueId("test1").build();
+    QuartzJobInfo<Long, Void> quartzJobInfo2 =
+        QuartzJobInfo.newBuilder(AQuartzPollableJob3.class).withUniqueId("test1").build();
+    QuartzJobInfo<Long, Void> quartzJobInfo3 =
+        QuartzJobInfo.newBuilder(AQuartzPollableJob3.class).withUniqueId("test1").build();
     quartzPollableTaskScheduler.cleanupOnUniqueIdReschedule = true;
-    PollableFuture<AQuartzPollableJobOutput> pollableFuture =
-        quartzPollableTaskScheduler.scheduleJob(quartzJobInfo);
-    PollableFuture<AQuartzPollableJobOutput> pollableFuture2 =
-        quartzPollableTaskScheduler.scheduleJob(quartzJobInfo2);
-    PollableFuture<AQuartzPollableJobOutput> pollableFuture3 =
-        quartzPollableTaskScheduler.scheduleJob(quartzJobInfo3);
-    AQuartzPollableJobOutput s = pollableFuture.get();
-    assertEquals("output: 10", s.getOutput());
-    AQuartzPollableJobOutput s2 = pollableFuture2.get();
-    assertNull(s2.getOutput());
-    AQuartzPollableJobOutput s3 = pollableFuture3.get();
-    assertEquals("output: 10", s3.getOutput());
+    PollableFuture<Void> pollableFuture = quartzPollableTaskScheduler.scheduleJob(quartzJobInfo);
+    PollableFuture<Void> pollableFuture2 = quartzPollableTaskScheduler.scheduleJob(quartzJobInfo2);
+    PollableFuture<Void> pollableFuture3 = quartzPollableTaskScheduler.scheduleJob(quartzJobInfo3);
+
+    // Wait for all tasks to complete
+    pollableFuture3.get();
+
+    PollableTask pollableTask =
+        pollableTaskRepository.findById(pollableFuture.getPollableTask().getId()).get();
+
+    assertTrue(pollableTask.isAllFinished());
+    assertNull(pollableTask.getMessage());
+
+    pollableTask = pollableTaskRepository.findById(pollableFuture2.getPollableTask().getId()).get();
+    assertTrue(pollableTask.isAllFinished());
+    assertEquals(
+        "Job skipped as new job re-scheduled with the same unique id, tracked by pollable task id: 3",
+        pollableTask.getMessage());
+
+    pollableTask = pollableTaskRepository.findById(pollableFuture3.getPollableTask().getId()).get();
+    assertTrue(pollableTask.isAllFinished());
+    assertNull(pollableTask.getMessage());
   }
 
   @DisallowConcurrentExecution
-  public static class AQuartzPollableJob3 extends AQuartzPollableJob2 {
-    @Override
-    public AQuartzPollableJobOutput call(Long input) throws Exception {
+  public static class AQuartzPollableJob3 extends VoidQuartzPollableJob {
+    public Void call(Long input) throws Exception {
       Thread.sleep(2000);
       return super.call(input);
     }

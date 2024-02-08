@@ -50,13 +50,8 @@ public class PollableTaskBlobStorage {
     String outputJson =
         structuredBlobStorage
             .getString(POLLABLE_TASK, outputName)
-            .orElseGet(
-                () -> {
-                  logger.warn(
-                      "Can't get the output json for pollable id {}, assuming task has been skipped, returning empty object.",
-                      pollableTaskId);
-                  return "{}";
-                });
+            .orElseThrow(
+                () -> new RuntimeException("Can't get the output json for: " + pollableTaskId));
     return outputJson;
   }
 

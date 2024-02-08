@@ -12,7 +12,6 @@ import com.ibm.icu.text.MessageFormat;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
@@ -113,6 +112,7 @@ public class QuartzPollableTaskScheduler {
             : pollableTask.getId().toString();
 
     String keyName = getKeyName(quartzJobInfo.getClazz(), uniqueId);
+    Class<O> jobOutputType = getJobOutputType(quartzJobInfo);
 
     try {
       TriggerKey triggerKey = new TriggerKey(keyName, DYNAMIC_GROUP_NAME);
@@ -158,8 +158,8 @@ public class QuartzPollableTaskScheduler {
         logger.debug("Job already scheduled for key: {}, reschedule", keyName);
         if (cleanupOnUniqueIdReschedule
             && dbUtils.isQuartzMysql()
-            && quartzJobInfo.getClazz().isAnnotationPresent(DisallowConcurrentExecution.class)
-            && quartzJobInfo.getUniqueId() != null) {
+            && quartzJobInfo.getUniqueId() != null
+            && jobOutputType.equals(Void.class)) {
           skipPendingPollablesWithMatchingId(scheduler, jobKey, trigger, pollableTask);
         }
         scheduler.rescheduleJob(triggerKey, trigger);
@@ -171,7 +171,6 @@ public class QuartzPollableTaskScheduler {
       throw new RuntimeException(msg, se);
     }
 
-    Class<O> jobOutputType = getJobOutputType(quartzJobInfo);
     return new QuartzPollableFutureTask<O>(pollableTask, jobOutputType);
   }
 
