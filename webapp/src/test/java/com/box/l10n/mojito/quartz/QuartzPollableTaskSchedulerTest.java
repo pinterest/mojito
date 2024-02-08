@@ -3,8 +3,6 @@ package com.box.l10n.mojito.quartz;
 import static com.box.l10n.mojito.quartz.QuartzSchedulerManager.DEFAULT_SCHEDULER_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import com.box.l10n.mojito.service.DBUtils;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
@@ -46,13 +44,8 @@ public class QuartzPollableTaskSchedulerTest extends ServiceTestBase {
             VoidQuartzPollableJob.class, 10L, DEFAULT_SCHEDULER_NAME);
     Void aVoid = pollableFuture.get();
     assertEquals(null, aVoid);
-    try {
-      Object output =
-          pollableTaskBlobStorage.getOutputJson(pollableFuture.getPollableTask().getId());
-      fail();
-    } catch (RuntimeException re) {
-      assertTrue(re.getMessage().startsWith("Can't get the output json for:"));
-    }
+    assertEquals(
+        "{}", pollableTaskBlobStorage.getOutputJson(pollableFuture.getPollableTask().getId()));
   }
 
   @Test
