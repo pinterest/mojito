@@ -9,6 +9,7 @@ import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.pollableTask.PollableTaskBlobStorage;
 import com.box.l10n.mojito.service.pollableTask.PollableTaskService;
 import com.ibm.icu.text.MessageFormat;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,6 +39,8 @@ public class QuartzPollableTaskScheduler {
   @Autowired PollableTaskBlobStorage pollableTaskBlobStorage;
 
   @Autowired ObjectMapper objectMapper;
+
+  @Autowired MeterRegistry meterRegistry;
 
   @Autowired DBUtils dbUtils;
 
@@ -198,6 +201,7 @@ public class QuartzPollableTaskScheduler {
                   + pollableTask.getId(),
               null,
               pendingPollable.getExpectedSubTaskNumber());
+          meterRegistry.counter("QuartzPollableTaskScheduler.skippedJobs").increment();
         }
       }
     } catch (SchedulerException e) {
