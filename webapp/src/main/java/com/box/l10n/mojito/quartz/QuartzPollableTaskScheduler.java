@@ -160,6 +160,7 @@ public class QuartzPollableTaskScheduler {
             && dbUtils.isQuartzMysql()
             && quartzJobInfo.getUniqueId() != null
             && jobOutputType.equals(Void.class)) {
+          // Only done for jobs with Void output as a skipped job will have no output
           skipPendingPollablesWithMatchingId(scheduler, jobKey, trigger, pollableTask);
         }
         scheduler.rescheduleJob(triggerKey, trigger);

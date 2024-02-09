@@ -5,16 +5,12 @@ import static com.box.l10n.mojito.service.blobstorage.StructuredBlobStorage.Pref
 import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.service.blobstorage.Retention;
 import com.box.l10n.mojito.service.blobstorage.StructuredBlobStorage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 @Component
 public class PollableTaskBlobStorage {
-
-  static Logger logger = LoggerFactory.getLogger(PollableTaskBlobStorage.class);
 
   @Autowired StructuredBlobStorage structuredBlobStorage;
 
