@@ -425,7 +425,7 @@
                 <configuration>
                     <!-- Sets the VM argument line used when unit tests are run. -->
                     <argLine>-Dspring.config.additional-location=optional:file://${user.home}/.l10n/config/webapp/
-                        -Dspring.profiles.active=${user.name},test -Xmx1024m
+                        -Dspring.profiles.active=${user.name},test -Xmx1024m -XX:+FlightRecorder -XX:StartFlightRecording=filename=recording.jfr,dumponexit=true
                     </argLine>
 
                     <rerunFailingTestsCount>1</rerunFailingTestsCount>
