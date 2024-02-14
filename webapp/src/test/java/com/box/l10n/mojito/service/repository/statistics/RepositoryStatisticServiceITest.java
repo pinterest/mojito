@@ -12,18 +12,14 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class RepositoryStatisticServiceITest extends ServiceTestBase {
 
-  /**
-   * logger
-   */
+  /** logger */
   static Logger logger = getLogger(RepositoryStatisticServiceITest.class);
 
-  @Autowired
-  RepositoryStatisticService repositoryStatisticService;
+  @Autowired RepositoryStatisticService repositoryStatisticService;
 
   @Test
   public void updateStatistics() {
     System.out.println("update statistic");
     repositoryStatisticService.updateStatistics(50L);
   }
-
 }

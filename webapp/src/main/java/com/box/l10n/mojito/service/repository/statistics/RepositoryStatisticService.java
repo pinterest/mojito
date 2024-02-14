@@ -345,159 +345,107 @@ public class RepositoryStatisticService {
             () -> {
               long repositoryId = repositoryLocale.getRepository().getId();
 
+              RepositoryLocaleStatisticCalculation repositoryLocaleStatisticCalculation =
+                  new RepositoryLocaleStatisticCalculation();
+
+              assetRepository.findIdByRepositoryIdAndDeleted(repositoryId, false).stream()
+                  .forEach(
+                      assetId -> {
+                        Map<String, TextUnitDTO> textUnitDTOsForLocaleByMD5 =
+                            textUnitDTOsCacheService.getTextUnitDTOsForAssetAndLocaleByMD5(
+                                assetId,
+                                repositoryLocale.getLocale().getId(),
+                                null,
+                                false,
+                                UpdateType.ALWAYS);
+
+                        textUnitDTOsForLocaleByMD5.values().stream()
+                            .forEach(
+                                textUnitDTO -> {
+                                  if (textUnitDTO.isTranslated() && textUnitDTO.isUsed()) {
+                                    repositoryLocaleStatisticCalculation.incrementTranslatedCount();
+                                    repositoryLocaleStatisticCalculation
+                                        .incrementTranslatedWordCount(
+                                            Long.valueOf(
+                                                wordCountService.getEnglishWordCount(
+                                                    textUnitDTO.getSource())));
+                                  }
+
+                                  if (textUnitDTO.isUsed()
+                                      && textUnitDTOsCacheService
+                                          .statusPredicate(StatusFilter.TRANSLATION_NEEDED)
+                                          .test(textUnitDTO)) {
+                                    repositoryLocaleStatisticCalculation
+                                        .incrementTranslationNeededCount();
+                                    repositoryLocaleStatisticCalculation
+                                        .incrementTranslationNeededWordCount(
+                                            Long.valueOf(
+                                                wordCountService.getEnglishWordCount(
+                                                    textUnitDTO.getSource())));
+                                  }
+
+                                  if (textUnitDTO.isUsed()
+                                      && textUnitDTOsCacheService
+                                          .statusPredicate(StatusFilter.REVIEW_NEEDED)
+                                          .test(textUnitDTO)) {
+                                    repositoryLocaleStatisticCalculation
+                                        .incrementReviewNeededCount();
+                                    repositoryLocaleStatisticCalculation
+                                        .incrementReviewNeededWordCount(
+                                            Long.valueOf(
+                                                wordCountService.getEnglishWordCount(
+                                                    textUnitDTO.getSource())));
+                                  }
+
+                                  if (textUnitDTO.isUsed()
+                                      && textUnitDTO.isIncludedInLocalizedFile()) {
+                                    repositoryLocaleStatisticCalculation
+                                        .incrementIncludeInFileCount();
+                                    repositoryLocaleStatisticCalculation
+                                        .incrementIncludeInFileWordCount(
+                                            Long.valueOf(
+                                                wordCountService.getEnglishWordCount(
+                                                    textUnitDTO.getSource())));
+                                  }
+
+                                  if (textUnitDTO.isUsed()
+                                      && !textUnitDTO.isDoNotTranslate()
+                                      && textUnitDTOsCacheService
+                                          .statusPredicate(StatusFilter.FOR_TRANSLATION)
+                                          .test(textUnitDTO)) {
+                                    repositoryLocaleStatisticCalculation
+                                        .incrementForTranslationCount();
+                                    repositoryLocaleStatisticCalculation
+                                        .incrementForTranslationWordCount(
+                                            Long.valueOf(
+                                                wordCountService.getEnglishWordCount(
+                                                    textUnitDTO.getSource())));
+                                  }
+                                });
+                      });
+
               RepositoryLocaleStatistic repositoryLocaleStatisticNew =
-                  assetRepository.findIdByRepositoryIdAndDeleted(repositoryId, false).stream()
-                      .map(
-                          assetId -> {
-                            Map<String, TextUnitDTO> textUnitDTOsForLocaleByMD5 =
-                                textUnitDTOsCacheService.getTextUnitDTOsForAssetAndLocaleByMD5(
-                                    assetId,
-                                    repositoryLocale.getLocale().getId(),
-                                    null,
-                                    false,
-                                    UpdateType.ALWAYS);
-
-                            RepositoryLocaleStatistic repositoryLocaleStatistic =
-                                new RepositoryLocaleStatistic();
-
-                            repositoryLocaleStatistic.setTranslatedCount(
-                                textUnitDTOsForLocaleByMD5.values().stream()
-                                    .filter(TextUnitDTO::isTranslated)
-                                    .filter(TextUnitDTO::isUsed)
-                                    .peek(
-                                        t ->
-                                            logger.debug(
-                                                "translated for {}: {}",
-                                                t.getTargetLocale(),
-                                                t.getName()))
-                                    .count());
-
-                            repositoryLocaleStatistic.setTranslatedWordCount(
-                                textUnitDTOsForLocaleByMD5.values().stream()
-                                    .filter(TextUnitDTO::isTranslated)
-                                    .filter(TextUnitDTO::isUsed)
-                                    .mapToLong(wordCountFunction())
-                                    .sum());
-
-                            repositoryLocaleStatistic.setTranslationNeededCount(
-                                textUnitDTOsForLocaleByMD5.values().stream()
-                                    .filter(TextUnitDTO::isUsed)
-                                    .filter(
-                                        textUnitDTOsCacheService.statusPredicate(
-                                            StatusFilter.TRANSLATION_NEEDED))
-                                    .peek(
-                                        t ->
-                                            logger.debug(
-                                                "translation needed for {}: {}",
-                                                t.getTargetLocale(),
-                                                t.getName()))
-                                    .count());
-
-                            repositoryLocaleStatistic.setTranslationNeededWordCount(
-                                textUnitDTOsForLocaleByMD5.values().stream()
-                                    .filter(TextUnitDTO::isUsed)
-                                    .filter(
-                                        textUnitDTOsCacheService.statusPredicate(
-                                            StatusFilter.TRANSLATION_NEEDED))
-                                    .mapToLong(wordCountFunction())
-                                    .sum());
-
-                            repositoryLocaleStatistic.setReviewNeededCount(
-                                textUnitDTOsForLocaleByMD5.values().stream()
-                                    .filter(TextUnitDTO::isUsed)
-                                    .filter(
-                                        textUnitDTOsCacheService.statusPredicate(
-                                            StatusFilter.REVIEW_NEEDED))
-                                    .peek(
-                                        t ->
-                                            logger.debug(
-                                                "review needed for {}: {}",
-                                                t.getTargetLocale(),
-                                                t.getName()))
-                                    .count());
-
-                            repositoryLocaleStatistic.setReviewNeededWordCount(
-                                textUnitDTOsForLocaleByMD5.values().stream()
-                                    .filter(TextUnitDTO::isUsed)
-                                    .filter(
-                                        textUnitDTOsCacheService.statusPredicate(
-                                            StatusFilter.REVIEW_NEEDED))
-                                    .mapToLong(wordCountFunction())
-                                    .sum());
-
-                            repositoryLocaleStatistic.setIncludeInFileCount(
-                                textUnitDTOsForLocaleByMD5.values().stream()
-                                    .filter(TextUnitDTO::isUsed)
-                                    .filter(TextUnitDTO::isIncludedInLocalizedFile)
-                                    .peek(
-                                        t ->
-                                            logger.debug(
-                                                "include in file for {}: {}",
-                                                t.getTargetLocale(),
-                                                t.getName()))
-                                    .count());
-
-                            repositoryLocaleStatistic.setIncludeInFileWordCount(
-                                textUnitDTOsForLocaleByMD5.values().stream()
-                                    .filter(TextUnitDTO::isUsed)
-                                    .filter(TextUnitDTO::isIncludedInLocalizedFile)
-                                    .mapToLong(wordCountFunction())
-                                    .sum());
-
-                            repositoryLocaleStatistic.setForTranslationCount(
-                                textUnitDTOsForLocaleByMD5.values().stream()
-                                    .filter(TextUnitDTO::isUsed)
-                                    .filter(not(TextUnitDTO::isDoNotTranslate))
-                                    .filter(
-                                        textUnitDTOsCacheService.statusPredicate(
-                                            StatusFilter.FOR_TRANSLATION))
-                                    .peek(
-                                        t ->
-                                            logger.debug(
-                                                "for translation for {}: {}",
-                                                t.getTargetLocale(),
-                                                t.getName()))
-                                    .count());
-
-                            repositoryLocaleStatistic.setForTranslationWordCount(
-                                textUnitDTOsForLocaleByMD5.values().stream()
-                                    .filter(TextUnitDTO::isUsed)
-                                    .filter(not(TextUnitDTO::isDoNotTranslate))
-                                    .filter(
-                                        textUnitDTOsCacheService.statusPredicate(
-                                            StatusFilter.FOR_TRANSLATION))
-                                    .mapToLong(wordCountFunction())
-                                    .sum());
-
-                            return repositoryLocaleStatistic;
-                          })
-                      .reduce(
-                          new RepositoryLocaleStatistic(),
-                          (r1, r2) -> {
-                            RepositoryLocaleStatistic sum = new RepositoryLocaleStatistic();
-                            sum.setTranslatedCount(
-                                r1.getTranslatedCount() + r2.getTranslatedCount());
-                            sum.setTranslatedWordCount(
-                                r1.getTranslatedWordCount() + r2.getTranslatedWordCount());
-                            sum.setTranslationNeededCount(
-                                r1.getTranslationNeededCount() + r2.getTranslationNeededCount());
-                            sum.setTranslationNeededWordCount(
-                                r1.getTranslationNeededWordCount()
-                                    + r2.getTranslationNeededWordCount());
-                            sum.setReviewNeededCount(
-                                r1.getReviewNeededCount() + r2.getReviewNeededCount());
-                            sum.setReviewNeededWordCount(
-                                r1.getReviewNeededWordCount() + r2.getReviewNeededWordCount());
-                            sum.setIncludeInFileCount(
-                                r1.getIncludeInFileCount() + r2.getIncludeInFileCount());
-                            sum.setIncludeInFileWordCount(
-                                r1.getIncludeInFileWordCount() + r2.getIncludeInFileWordCount());
-                            sum.setForTranslationCount(
-                                r1.getForTranslationCount() + r2.getForTranslationCount());
-                            sum.setForTranslationWordCount(
-                                r1.getForTranslationWordCount() + r2.getForTranslationWordCount());
-                            return sum;
-                          });
+                  new RepositoryLocaleStatistic();
+              repositoryLocaleStatisticNew.setTranslatedCount(
+                  repositoryLocaleStatisticCalculation.getTranslatedCount());
+              repositoryLocaleStatisticNew.setTranslatedWordCount(
+                  repositoryLocaleStatisticCalculation.getTranslatedWordCount());
+              repositoryLocaleStatisticNew.setTranslationNeededCount(
+                  repositoryLocaleStatisticCalculation.getTranslationNeededCount());
+              repositoryLocaleStatisticNew.setTranslationNeededWordCount(
+                  repositoryLocaleStatisticCalculation.getTranslationNeededWordCount());
+              repositoryLocaleStatisticNew.setReviewNeededCount(
+                  repositoryLocaleStatisticCalculation.getReviewNeededCount());
+              repositoryLocaleStatisticNew.setReviewNeededWordCount(
+                  repositoryLocaleStatisticCalculation.getReviewNeededWordCount());
+              repositoryLocaleStatisticNew.setIncludeInFileCount(
+                  repositoryLocaleStatisticCalculation.getIncludeInFileCount());
+              repositoryLocaleStatisticNew.setIncludeInFileWordCount(
+                  repositoryLocaleStatisticCalculation.getIncludeInFileWordCount());
+              repositoryLocaleStatisticNew.setForTranslationCount(
+                  repositoryLocaleStatisticCalculation.getForTranslationCount());
+              repositoryLocaleStatisticNew.setForTranslationWordCount(
+                  repositoryLocaleStatisticCalculation.getForTranslationWordCount());
 
               repositoryLocaleStatisticNew.setDiffToSourcePluralCount(
                   computeDiffToSourceLocaleCount(repositoryLocale.getLocale().getBcp47Tag()));
