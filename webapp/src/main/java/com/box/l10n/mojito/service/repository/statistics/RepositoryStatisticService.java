@@ -101,14 +101,7 @@ public class RepositoryStatisticService {
         Timer.resource(meterRegistry, "RepositoryStatisticsService.updateStatistics")
             .tag("repository", repository.getName())) {
 
-      logger.debug("Get the current repository statistics");
-      RepositoryStatistic repositoryStatistic = repository.getRepositoryStatistic();
-
-      if (repositoryStatistic == null) {
-        logger.debug(
-            "No current repository statistics (shouldn't happen if repository was created via the service), Create it.");
-        repositoryStatistic = new RepositoryStatistic();
-      }
+      RepositoryStatistic repositoryStatistic = getRepositoryStatistic(repository);
 
       logger.debug("Update current entity with new statitsitcs");
       RepositoryStatistic newRepositoryStatistics =
@@ -134,10 +127,10 @@ public class RepositoryStatisticService {
       repositoryStatisticRepository.save(repositoryStatistic);
 
       logger.debug("Update locale statistics");
-      for (RepositoryLocale repositoryLocale :
-          repositoryService.getRepositoryLocalesWithoutRootLocale(repository)) {
-        updateLocaleStatistics(repositoryLocale, repositoryStatistic);
-      }
+
+      repositoryService.getRepositoryLocalesWithoutRootLocale(repository).parallelStream()
+          .forEach(
+              repositoryLocale -> updateLocaleStatistics(repositoryLocale, repositoryStatistic));
 
       logger.debug("Update branch statistics");
       branchStatisticService.computeAndSaveBranchStatistics(
@@ -145,6 +138,19 @@ public class RepositoryStatisticService {
 
       logger.debug("Stats updated");
     }
+  }
+
+  private RepositoryStatistic getRepositoryStatistic(Repository repository) {
+    logger.debug("Get the current repository statistics");
+    RepositoryStatistic repositoryStatistic = repository.getRepositoryStatistic();
+
+    if (repositoryStatistic == null) {
+      logger.debug(
+          "No current repository statistics (shouldn't happen if repository was created via the service), Create it.");
+      repositoryStatistic = new RepositoryStatistic();
+    }
+
+    return repositoryStatistic;
   }
 
   /**
@@ -322,7 +328,7 @@ public class RepositoryStatisticService {
       long repositoryId = repositoryLocale.getRepository().getId();
 
       RepositoryLocaleStatistic repositoryLocaleStatisticNew =
-          assetRepository.findIdByRepositoryIdAndDeleted(repositoryId, false).stream()
+          assetRepository.findIdByRepositoryIdAndDeleted(repositoryId, false).parallelStream()
               .map(
                   assetId -> {
                     Map<String, TextUnitDTO> textUnitDTOsForLocaleByMD5 =
