@@ -31,13 +31,17 @@ import com.ibm.icu.util.ULocale;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.ToLongFunction;
 import javax.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 /**
@@ -128,9 +132,7 @@ public class RepositoryStatisticService {
 
       logger.debug("Update locale statistics");
 
-      repositoryService.getRepositoryLocalesWithoutRootLocale(repository).parallelStream()
-          .forEach(
-              repositoryLocale -> updateLocaleStatistics(repositoryLocale, repositoryStatistic));
+      executeLocaleStatisticUpdates(repository, repositoryStatistic);
 
       logger.debug("Update branch statistics");
       branchStatisticService.computeAndSaveBranchStatistics(
@@ -138,6 +140,18 @@ public class RepositoryStatisticService {
 
       logger.debug("Stats updated");
     }
+  }
+
+  private void executeLocaleStatisticUpdates(
+      Repository repository, RepositoryStatistic repositoryStatistic) {
+    List<CompletableFuture<Void>> futures = new ArrayList<>();
+    repositoryService.getRepositoryLocalesWithoutRootLocale(repository).stream()
+        .forEach(
+            repositoryLocale ->
+                futures.add(updateLocaleStatistics(repositoryLocale, repositoryStatistic)));
+
+    // wait for all locale statistic calculations to complete
+    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
   }
 
   private RepositoryStatistic getRepositoryStatistic(Repository repository) {
@@ -159,7 +173,8 @@ public class RepositoryStatisticService {
    * @param repositoryLocale the repository locale
    * @param repositoryStatistic the parent entity that old the repository statistics
    */
-  void updateLocaleStatistics(
+  @Async("statisticsTaskExecutor")
+  CompletableFuture<Void> updateLocaleStatistics(
       RepositoryLocale repositoryLocale, RepositoryStatistic repositoryStatistic) {
 
     try (var timer =
@@ -210,6 +225,8 @@ public class RepositoryStatisticService {
 
       repositoryLocaleStatisticRepository.save(repositoryLocaleStatistic);
     }
+
+    return CompletableFuture.completedFuture(null);
   }
 
   /**
