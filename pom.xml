@@ -13,7 +13,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.18</version>
+        <version>3.0.13</version>
     </parent>
 
     <properties>
@@ -75,6 +75,7 @@
         </dependency>
 
         <!-- TODO(spring2) remove -->
+        <!-- TODO(ja-lib) ^ spring2! -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-properties-migrator</artifactId>
@@ -86,6 +87,7 @@
             <artifactId>icu4j</artifactId>
             <version>${icu4j.version}</version>
         </dependency>
+
     </dependencies>
 
     <!-- SCM setup to push changes to the Github repo on release -->

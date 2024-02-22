@@ -31,6 +31,7 @@ import com.ibm.icu.text.PluralRules;
 import com.ibm.icu.util.ULocale;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import jakarta.persistence.EntityManager;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;

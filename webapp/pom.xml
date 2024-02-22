@@ -187,9 +187,18 @@
             <artifactId>mysql-connector-j</artifactId>
         </dependency>
 
+        <!-- TODO(ja-lib) review version if we can get it from spring -->
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-envers</artifactId>
+            <version>6.4.2.Final</version>
+        </dependency>
+
+        <!-- TODO(ja-lib) or intro configuration to share -->
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-ant</artifactId>
+            <version>6.4.2.Final</version>
         </dependency>
 
         <dependency>
@@ -203,6 +212,7 @@
             <artifactId>flyway-mysql</artifactId>
         </dependency>
 
+        <!-- TODO(ja-lib) ^ spring2! -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-properties-migrator</artifactId>
@@ -274,8 +284,8 @@
         <!-- TODO(P1) to be removed? -->
 
         <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
         </dependency>
 
         <dependency>
@@ -469,12 +479,13 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>pl.project13.maven</groupId>
-                        <artifactId>git-commit-id-plugin</artifactId>
+                        <groupId>io.github.git-commit-id</groupId>
+                        <artifactId>git-commit-id-maven-plugin</artifactId>
                         <configuration>
                             <failOnNoGitDirectory>false</failOnNoGitDirectory>
                             <offline>true</offline>
                         </configuration>
+                        <version>7.0.0</version>
                     </plugin>
                 </plugins>
             </build>
