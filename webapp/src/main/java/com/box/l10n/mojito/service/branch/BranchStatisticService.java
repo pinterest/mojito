@@ -4,6 +4,7 @@ import static com.box.l10n.mojito.quartz.QuartzSchedulerManager.DEFAULT_SCHEDULE
 import static com.box.l10n.mojito.service.assetExtraction.AssetExtractionService.PRIMARY_BRANCH;
 import static com.box.l10n.mojito.service.tm.search.StatusFilter.FOR_TRANSLATION;
 import static com.box.l10n.mojito.utils.Predicates.not;
+import static com.box.l10n.mojito.utils.TaskExecutorUtils.waitForAllFutures;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.box.l10n.mojito.entity.AssetExtraction;
@@ -35,7 +36,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -117,10 +117,10 @@ public class BranchStatisticService {
   }
 
   private void sendBranchNotifications(List<Branch> branchesToCheck) {
-    List<CompletableFuture<PollableFuture<Void>>> futures = new ArrayList<>();
-    branchesToCheck.stream().forEach(branch -> futures.add(scheduleBranchNotification(branch)));
-    // wait for all notifications to be scheduled
-    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+    waitForAllFutures(
+        branchesToCheck.stream()
+            .map(branch -> scheduleBranchNotification(branch))
+            .collect(Collectors.toList()));
   }
 
   /**
