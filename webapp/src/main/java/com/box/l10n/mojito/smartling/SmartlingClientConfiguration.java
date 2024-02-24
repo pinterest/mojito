@@ -75,8 +75,7 @@ public class SmartlingClientConfiguration {
     oAuth2RestTemplate.setAccessTokenProvider(new SmartlingAuthorizationCodeAccessTokenProvider());
     oAuth2RestTemplate.setRetryBadAccessTokens(true);
 
-    DefaultUriBuilderFactory defaultUriTemplateHandler = new DefaultUriBuilderFactory(baseUri);
-    oAuth2RestTemplate.setUriTemplateHandler(defaultUriTemplateHandler);
+    oAuth2RestTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory(baseUri));
 
     oAuth2RestTemplate.setErrorHandler(
         new DefaultResponseErrorHandler() {
