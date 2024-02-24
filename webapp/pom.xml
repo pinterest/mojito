@@ -189,16 +189,17 @@
 
         <!-- TODO(ja-lib) review version if we can get it from spring -->
         <dependency>
-            <groupId>org.hibernate</groupId>
+            <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-envers</artifactId>
-            <version>6.4.2.Final</version>
+<!--            <version>6.4.2.Final</version>-->
         </dependency>
+
 
         <!-- TODO(ja-lib) or intro configuration to share -->
         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-ant</artifactId>
-            <version>6.4.2.Final</version>
+<!--            <version>6.4.2.Final</version>-->
         </dependency>
 
         <dependency>
