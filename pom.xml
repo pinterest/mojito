@@ -24,8 +24,6 @@
         <maven.release.version>2.5.3</maven.release.version>
         <okapi.version>1.45.0</okapi.version>
         <guava.version>29.0-jre</guava.version>
-        <hibernate.joda-time.version>1.4</hibernate.joda-time.version>
-        <usertype.core.version>6.0.1.GA</usertype.core.version>
         <aspectj-maven-plugin.version>1.13.1</aspectj-maven-plugin.version>
         <!-- org.codehaus.mojo doesn't support Java 17+, use fork for now -->
         <aspectj-maven-plugin.group-id>dev.aspectj</aspectj-maven-plugin.group-id>
