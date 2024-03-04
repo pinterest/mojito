@@ -459,6 +459,9 @@ public class AssetService {
         virtual,
         branchId);
 
+
+
+
     Specification<Asset> assetSpecifications =
         distinct(ifParamNotNull(repositoryIdEquals(repositoryId)))
             .and(ifParamNotNull(pathEquals(path)))

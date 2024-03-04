@@ -6,6 +6,7 @@ import com.box.l10n.mojito.entity.AssetExtractionByBranch_;
 import com.box.l10n.mojito.entity.Asset_;
 import com.box.l10n.mojito.entity.Branch;
 import com.box.l10n.mojito.entity.Branch_;
+import com.box.l10n.mojito.entity.Repository_;
 import com.box.l10n.mojito.specification.SingleParamSpecification;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -48,7 +49,7 @@ public class AssetSpecification {
     return new SingleParamSpecification<Asset>(repositoryId) {
       public Predicate toPredicate(
           Root<Asset> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
-        return builder.equal(root.get(Asset_.repository), repositoryId);
+        return builder.equal(root.get(Asset_.repository).get(Repository_.id), repositoryId);
       }
     };
   }

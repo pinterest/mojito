@@ -1,8 +1,11 @@
 package com.box.l10n.mojito.service.rollback;
 
 import com.box.l10n.mojito.JSR310Migration;
+import com.box.l10n.mojito.entity.Locale_;
 import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant;
 import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant_;
+import com.box.l10n.mojito.entity.TMTextUnit_;
+import com.box.l10n.mojito.entity.TM_;
 import com.box.l10n.mojito.service.tm.TMTextUnitCurrentVariantRepository;
 import com.google.common.base.Preconditions;
 import jakarta.persistence.EntityManager;
@@ -106,14 +109,14 @@ public class CurrentVariantRollbackService {
 
     Predicate whereClause = criteriaBuilder.conjunction();
 
-    Predicate tmPredicate = criteriaBuilder.equal(root.get(TMTextUnitCurrentVariant_.tm), tmId);
+    Predicate tmPredicate = criteriaBuilder.equal(root.get(TMTextUnitCurrentVariant_.tm).get(TM_.id), tmId);
     whereClause = criteriaBuilder.and(whereClause, tmPredicate);
 
     List<Long> localeIdsToRollback = extraParameters.getLocaleIds();
     if (localeIdsToRollback != null && !localeIdsToRollback.isEmpty()) {
       Predicate localesPredicate =
           criteriaBuilder.isTrue(
-              root.get(TMTextUnitCurrentVariant_.locale).in(localeIdsToRollback));
+              root.get(TMTextUnitCurrentVariant_.locale).get(Locale_.id).in(localeIdsToRollback));
       whereClause = criteriaBuilder.and(whereClause, localesPredicate);
     }
 
@@ -121,7 +124,7 @@ public class CurrentVariantRollbackService {
     if (tmTextUnitIdsToRollback != null && !tmTextUnitIdsToRollback.isEmpty()) {
       Predicate tmTextUnitPredicate =
           criteriaBuilder.isTrue(
-              root.get(TMTextUnitCurrentVariant_.tmTextUnit).in(tmTextUnitIdsToRollback));
+              root.get(TMTextUnitCurrentVariant_.tmTextUnit).get(TMTextUnit_.id).in(tmTextUnitIdsToRollback));
       whereClause = criteriaBuilder.and(whereClause, tmTextUnitPredicate);
     }
 

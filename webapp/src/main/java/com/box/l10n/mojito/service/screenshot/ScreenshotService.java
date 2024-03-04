@@ -266,7 +266,7 @@ public class ScreenshotService {
       Path<ScreenshotRun> screenshotRunPath = repositoryJoin.get(Repository_.manualScreenshotRun);
       conjunction
           .getExpressions()
-          .add(builder.equal(screenshotRunPath, screenshotRunJoin.get(ScreenshotRun_.id)));
+          .add(builder.equal(screenshotRunPath.get(ScreenshotRun_.id), screenshotRunJoin.get(ScreenshotRun_.id)));
     }
 
     if (repositoryIds != null) {

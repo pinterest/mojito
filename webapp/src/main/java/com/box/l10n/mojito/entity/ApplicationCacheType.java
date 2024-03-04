@@ -23,7 +23,7 @@ import org.hibernate.annotations.BatchSize;
 public class ApplicationCacheType {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   @JsonView(View.IdAndName.class)
   protected short id;
 

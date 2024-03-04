@@ -437,7 +437,7 @@
                         -Dspring.profiles.active=${user.name},test -Xmx1024m
                     </argLine>
 
-                    <rerunFailingTestsCount>1</rerunFailingTestsCount>
+                    <rerunFailingTestsCount>0</rerunFailingTestsCount>
 
                     <!--<excludedGroups>com.box.l10n.mojito.test.category.BoxSDKTest</excludedGroups>-->
 

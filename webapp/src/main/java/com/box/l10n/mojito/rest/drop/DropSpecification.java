@@ -3,6 +3,7 @@ package com.box.l10n.mojito.rest.drop;
 import com.box.l10n.mojito.entity.Drop;
 import com.box.l10n.mojito.entity.Drop_;
 import com.box.l10n.mojito.entity.PollableTask_;
+import com.box.l10n.mojito.entity.Repository_;
 import com.box.l10n.mojito.specification.SingleParamSpecification;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -92,7 +93,7 @@ public class DropSpecification {
     return new SingleParamSpecification<Drop>(repositoryId) {
       public Predicate toPredicate(
           Root<Drop> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
-        return builder.equal(root.get(Drop_.repository), repositoryId);
+        return builder.equal(root.get(Drop_.repository).get(Repository_.id), repositoryId);
       }
     };
   }

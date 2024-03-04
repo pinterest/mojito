@@ -188,7 +188,8 @@ public class VirtualAssetService {
 
     Predicate conjunction = criteriaBuilder.conjunction();
 
-    ParameterExpression<Long> assetExtractionIdParameter = criteriaBuilder.parameter(Long.class);
+
+    ParameterExpression<AssetTextUnit> assetExtractionIdParameter = criteriaBuilder.parameter(AssetTextUnit.class);
     conjunction
         .getExpressions()
         .add(
@@ -224,6 +225,7 @@ public class VirtualAssetService {
     TypedQuery<AssetTextUnitDTO> typedQuery = em.createQuery(query);
 
     typedQuery.setParameter(assetExtractionIdParameter, assetExtractionId);
+
     if (doNotTranslateFilterParameter != null) {
       typedQuery.setParameter(doNotTranslateFilterParameter, doNotTranslateFilter);
     }

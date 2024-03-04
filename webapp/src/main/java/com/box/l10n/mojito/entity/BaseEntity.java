@@ -17,7 +17,7 @@ public abstract class BaseEntity implements Serializable {
   protected static final String CreatedByUserColumnName = "created_by_user_id";
 
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   @JsonView(View.IdAndName.class)
   protected Long id;
 

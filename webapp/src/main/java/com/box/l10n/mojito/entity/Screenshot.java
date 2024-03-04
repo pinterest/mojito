@@ -84,6 +84,7 @@ public class Screenshot extends SettableAuditableEntity {
   @Column(name = "comment", length = Integer.MAX_VALUE)
   private String comment;
 
+  // TODO(ja-lib) maybe that mapping
   @JsonView({View.Screenshots.class, View.BranchStatistic.class, View.GitBlameWithUsage.class})
   @JsonManagedReference
   @OneToMany(mappedBy = "screenshot", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
