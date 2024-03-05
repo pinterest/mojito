@@ -104,8 +104,8 @@ public final class StringHelper {
 		}
 		else {
 			final boolean actuallyReplace = !wholeWords ||
-					loc + placeholder.length() == template.length() ||
-					!Character.isJavaIdentifierPart( template.charAt( loc + placeholder.length() ) );
+																			loc + placeholder.length() == template.length() ||
+																			!Character.isJavaIdentifierPart( template.charAt( loc + placeholder.length() ) );
 			String actualReplacement = actuallyReplace ? replacement : placeholder;
 			return new StringBuffer( template.substring( 0, loc ) )
 					.append( actualReplacement )
@@ -121,7 +121,7 @@ public final class StringHelper {
 		if ( template == null ) {
 			return template; // returnign null!
 		}
-        int loc = template.indexOf( placeholder );
+		int loc = template.indexOf( placeholder );
 		if ( loc < 0 ) {
 			return template;
 		}
@@ -385,8 +385,8 @@ public final class StringHelper {
 	 */
 	public static String generateAlias(String description, int unique) {
 		return generateAliasRoot(description) +
-			Integer.toString(unique) +
-			'_';
+					 Integer.toString(unique) +
+					 '_';
 	}
 
 	/**
@@ -400,7 +400,7 @@ public final class StringHelper {
 	private static String generateAliasRoot(String description) {
 		String result = truncate( unqualifyEntityName(description), ALIAS_TRUNCATE_LENGTH )
 				.toLowerCase()
-		        .replace( '/', '_' ) // entityNames may now include slashes for the representations
+				.replace( '/', '_' ) // entityNames may now include slashes for the representations
 				.replace( '$', '_' ); //classname may be an inner class
 		result = cleanAlias( result );
 		if ( Character.isDigit( result.charAt(result.length()-1) ) ) {
