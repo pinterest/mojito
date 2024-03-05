@@ -41,6 +41,7 @@ import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.security.user.UserService;
 import com.google.common.base.Joiner;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -459,17 +460,30 @@ public class AssetService {
         virtual,
         branchId);
 
+    final ArrayList<Specification> specifications = new ArrayList<>();
 
+    if (repositoryId != null) {
+      specifications.add(repositoryIdEquals(repositoryId));
+    }
 
+    if (path != null) {
+      specifications.add(pathEquals(path));
+    }
 
-    Specification<Asset> assetSpecifications =
-        distinct(ifParamNotNull(repositoryIdEquals(repositoryId)))
-            .and(ifParamNotNull(pathEquals(path)))
-            .and(ifParamNotNull(deletedEquals(deleted)))
-            .and(ifParamNotNull(virtualEquals(virtual)))
-            .and(ifParamNotNull(branchId(branchId, deleted)));
+    if (deleted != null) {
+      specifications.add(deletedEquals(deleted));
+    }
 
-    List<Asset> all = assetRepository.findAll(assetSpecifications);
+    if (virtual != null) {
+      specifications.add(virtualEquals(virtual));
+    }
+
+    if (branchId != null) {
+      specifications.add(branchId(branchId, deleted));
+    }
+
+    List<Asset> all = assetRepository.findAll(
+        Specification.allOf(specifications.toArray(new Specification[specifications.size()])));
     return all;
   }
 

@@ -15,6 +15,7 @@ import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
@@ -107,17 +108,17 @@ public class CurrentVariantRollbackService {
         criteriaBuilder.createCriteriaDelete(TMTextUnitCurrentVariant.class);
     Root<TMTextUnitCurrentVariant> root = deleteCriteria.from(TMTextUnitCurrentVariant.class);
 
-    Predicate whereClause = criteriaBuilder.conjunction();
+    List<Predicate> predicates = new ArrayList<>();
 
     Predicate tmPredicate = criteriaBuilder.equal(root.get(TMTextUnitCurrentVariant_.tm).get(TM_.id), tmId);
-    whereClause = criteriaBuilder.and(whereClause, tmPredicate);
+    predicates.add(tmPredicate);
 
     List<Long> localeIdsToRollback = extraParameters.getLocaleIds();
     if (localeIdsToRollback != null && !localeIdsToRollback.isEmpty()) {
       Predicate localesPredicate =
           criteriaBuilder.isTrue(
               root.get(TMTextUnitCurrentVariant_.locale).get(Locale_.id).in(localeIdsToRollback));
-      whereClause = criteriaBuilder.and(whereClause, localesPredicate);
+      predicates.add(localesPredicate);
     }
 
     List<Long> tmTextUnitIdsToRollback = extraParameters.getTmTextUnitIds();
@@ -125,10 +126,10 @@ public class CurrentVariantRollbackService {
       Predicate tmTextUnitPredicate =
           criteriaBuilder.isTrue(
               root.get(TMTextUnitCurrentVariant_.tmTextUnit).get(TMTextUnit_.id).in(tmTextUnitIdsToRollback));
-      whereClause = criteriaBuilder.and(whereClause, tmTextUnitPredicate);
+      predicates.add(tmTextUnitPredicate);
     }
 
-    deleteCriteria.where(whereClause);
+    deleteCriteria.where(predicates.toArray(new Predicate[predicates.size()]));
 
     return entityManager.createQuery(deleteCriteria);
   }

@@ -44,7 +44,9 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.ParameterExpression;
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import java.util.ArrayList;
@@ -186,26 +188,37 @@ public class VirtualAssetService {
 
     Root<AssetTextUnit> assetTextUnitRoot = query.from(AssetTextUnit.class);
 
-    Predicate conjunction = criteriaBuilder.conjunction();
+    ParameterExpression<Long> assetExtractionIdParameter = criteriaBuilder.parameter(Long.class);
+
+    final List<Predicate> predicates = new ArrayList<>();
+
+    // TODO(ja-lib) can't figure out why the conjunction does not work... will come back to it later
+    // sounds like by using select with varg predicate it works ...
+//    conjunction
+//        .getExpressions()
+//        .add(
+//            criteriaBuilder.equal(
+//                assetTextUnitRoot.get(AssetTextUnit_.assetExtraction).get(AssetExtraction_.id),
+//                assetExtractionIdParameter));
 
 
-    ParameterExpression<AssetTextUnit> assetExtractionIdParameter = criteriaBuilder.parameter(AssetTextUnit.class);
-    conjunction
-        .getExpressions()
-        .add(
-            criteriaBuilder.equal(
-                assetTextUnitRoot.get(AssetTextUnit_.assetExtraction).get(AssetExtraction_.id),
-                assetExtractionIdParameter));
+    predicates.add(criteriaBuilder.equal(
+        assetTextUnitRoot.get(AssetTextUnit_.assetExtraction).get(AssetExtraction_.id),
+        assetExtractionIdParameter));
 
     ParameterExpression<Boolean> doNotTranslateFilterParameter = null;
     if (doNotTranslateFilter != null) {
       doNotTranslateFilterParameter = criteriaBuilder.parameter(Boolean.class);
-      conjunction
-          .getExpressions()
-          .add(
-              criteriaBuilder.equal(
-                  assetTextUnitRoot.get(AssetTextUnit_.doNotTranslate),
-                  doNotTranslateFilterParameter));
+//      conjunction
+//          .getExpressions()
+//          .add(
+//              criteriaBuilder.equal(
+//                  assetTextUnitRoot.get(AssetTextUnit_.doNotTranslate),
+//                  doNotTranslateFilterParameter));
+
+      predicates.add(criteriaBuilder.equal(
+          assetTextUnitRoot.get(AssetTextUnit_.doNotTranslate),
+          doNotTranslateFilterParameter));
     }
 
     query.select(
@@ -219,7 +232,7 @@ public class VirtualAssetService {
             assetTextUnitRoot.get(AssetTextUnit_.md5),
             assetTextUnitRoot.get(AssetTextUnit_.doNotTranslate)));
 
-    query.where(conjunction);
+    query.where(predicates.toArray(new Predicate[predicates.size()]));
     query.orderBy(criteriaBuilder.asc(assetTextUnitRoot.get(AssetTextUnit_.name)));
 
     TypedQuery<AssetTextUnitDTO> typedQuery = em.createQuery(query);

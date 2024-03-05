@@ -74,12 +74,7 @@ public class CommitSpecification {
         Join<CommitToPushRun, PushRun> pushRunJoin =
             commitToPushRunJoin.join(CommitToPushRun_.pushRun, JoinType.LEFT);
 
-        Predicate conjunction = builder.conjunction();
-        conjunction
-            .getExpressions()
-            .add(builder.equal(pushRunJoin.get(PushRun_.name), pushRunName));
-
-        return conjunction;
+        return builder.equal(pushRunJoin.get(PushRun_.name), pushRunName);
       }
     };
   }
@@ -101,12 +96,7 @@ public class CommitSpecification {
         Join<CommitToPullRun, PullRun> pullRunJoin =
             commitToPullRunJoin.join(CommitToPullRun_.pullRun, JoinType.LEFT);
 
-        Predicate conjunction = builder.conjunction();
-        conjunction
-            .getExpressions()
-            .add(builder.equal(pullRunJoin.get(PullRun_.name), pullRunName));
-
-        return conjunction;
+        return builder.equal(pullRunJoin.get(PullRun_.name), pullRunName);
       }
     };
   }
@@ -123,16 +113,10 @@ public class CommitSpecification {
           Root<Commit> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
         Join<Commit, CommitToPushRun> commitToPushRunJoin =
             root.join(Commit_.commitToPushRun, JoinType.LEFT);
-        Predicate conjunction = builder.conjunction();
 
-        conjunction
-            .getExpressions()
-            .add(
-                hasPushRun != null && hasPushRun
+       return hasPushRun != null && hasPushRun
                     ? builder.isNotNull(commitToPushRunJoin.get(CommitToPushRun_.pushRun))
-                    : builder.isNull(commitToPushRunJoin.get(CommitToPushRun_.pushRun)));
-
-        return conjunction;
+                    : builder.isNull(commitToPushRunJoin.get(CommitToPushRun_.pushRun));
       }
     };
   }
@@ -149,16 +133,10 @@ public class CommitSpecification {
           Root<Commit> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
         Join<Commit, CommitToPullRun> commitToPullRunJoin =
             root.join(Commit_.commitToPullRun, JoinType.LEFT);
-        Predicate conjunction = builder.conjunction();
 
-        conjunction
-            .getExpressions()
-            .add(
-                hasPullRun != null && hasPullRun
+       return hasPullRun != null && hasPullRun
                     ? builder.isNotNull(commitToPullRunJoin.get(CommitToPullRun_.pullRun))
-                    : builder.isNull(commitToPullRunJoin.get(CommitToPullRun_.pullRun)));
-
-        return conjunction;
+                    : builder.isNull(commitToPullRunJoin.get(CommitToPullRun_.pullRun));
       }
     };
   }

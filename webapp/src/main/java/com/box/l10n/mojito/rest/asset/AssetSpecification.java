@@ -15,6 +15,7 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.SetJoin;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -114,21 +115,18 @@ public class AssetSpecification {
             assetAssetExtractionByBranchSetJoin.join(
                 AssetExtractionByBranch_.branch, JoinType.LEFT);
 
-        Predicate conjunction = builder.conjunction();
-        conjunction
-            .getExpressions()
-            .add(builder.equal(assetExtractionByBranchBranchJoin.get(Branch_.id), branchId));
+        final List<Predicate> predicates = new ArrayList<>();
+        predicates.add(builder.equal(assetExtractionByBranchBranchJoin.get(Branch_.id), branchId));
 
         if (deleted != null) {
-          conjunction
-              .getExpressions()
+          predicates
               .add(
                   builder.equal(
                       assetAssetExtractionByBranchSetJoin.get(AssetExtractionByBranch_.deleted),
                       deleted));
         }
 
-        return conjunction;
+        return builder.and(predicates.toArray(new Predicate[predicates.size()]));
       }
     };
   }
