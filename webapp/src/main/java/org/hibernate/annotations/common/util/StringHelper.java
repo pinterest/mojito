@@ -1,3 +1,8 @@
+/**
+ * Temporary for solution since com.github.pnowy.nc.core is not compatible with new Hibernate.
+ * Package name changed.
+ */
+
 /*
  * Hibernate, Relational Persistence for Idiomatic Java
  *
