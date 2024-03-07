@@ -72,7 +72,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>-Dspring.config.additional-location=optional:file://${user.home}/.l10n/config/restclient/
-                        -Dspring.profiles.active=${user.name},test -Xmx1024m
+                        -Dspring.profiles.active=${user.name},test -Xmx2048m
                     </argLine>
                 </configuration>
             </plugin>

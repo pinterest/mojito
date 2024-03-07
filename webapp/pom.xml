@@ -434,7 +434,7 @@
                 <configuration>
                     <!-- Sets the VM argument line used when unit tests are run. -->
                     <argLine>-Dspring.config.additional-location=optional:file://${user.home}/.l10n/config/webapp/
-                        -Dspring.profiles.active=${user.name},test -Xmx1024m
+                        -Dspring.profiles.active=${user.name},test -Xmx2048m
                     </argLine>
 
                     <rerunFailingTestsCount>0</rerunFailingTestsCount>
