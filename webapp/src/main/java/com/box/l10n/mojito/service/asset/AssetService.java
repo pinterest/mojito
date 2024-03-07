@@ -6,8 +6,6 @@ import static com.box.l10n.mojito.rest.asset.AssetSpecification.deletedEquals;
 import static com.box.l10n.mojito.rest.asset.AssetSpecification.pathEquals;
 import static com.box.l10n.mojito.rest.asset.AssetSpecification.repositoryIdEquals;
 import static com.box.l10n.mojito.rest.asset.AssetSpecification.virtualEquals;
-import static com.box.l10n.mojito.specification.Specifications.distinct;
-import static com.box.l10n.mojito.specification.Specifications.ifParamNotNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.box.l10n.mojito.entity.Asset;
@@ -482,8 +480,9 @@ public class AssetService {
       specifications.add(branchId(branchId, deleted));
     }
 
-    List<Asset> all = assetRepository.findAll(
-        Specification.allOf(specifications.toArray(new Specification[specifications.size()])));
+    List<Asset> all =
+        assetRepository.findAll(
+            Specification.allOf(specifications.toArray(new Specification[specifications.size()])));
     return all;
   }
 

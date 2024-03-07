@@ -91,9 +91,12 @@ public class MultiBranchStateServiceTest extends ServiceTestBase {
       expectedMultiBranchState =
           expectedMultiBranchState.withBranchStateTextUnits(
               expectedMultiBranchState.getBranchStateTextUnits().stream()
-                  //TODO(ja-lib) why would this be needed now, 3x to 3.1x?
-                  .map(bstu -> bstu.withCreatedDate(roundDateTimeToSecond(bstu.getCreatedDate().withZoneSameInstant(
-                      ZoneId.of("Z")))))
+                  // TODO(ja-lib) why would this be needed now, 3x to 3.1x?
+                  .map(
+                      bstu ->
+                          bstu.withCreatedDate(
+                              roundDateTimeToSecond(
+                                  bstu.getCreatedDate().withZoneSameInstant(ZoneId.of("Z")))))
                   .collect(ImmutableList.toImmutableList()));
 
       expectedMultiBranchState =

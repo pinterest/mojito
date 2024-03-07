@@ -14,24 +14,18 @@ import com.box.l10n.mojito.entity.Image;
 import com.box.l10n.mojito.service.blobstorage.s3.S3BlobStorage;
 import java.util.Optional;
 import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.test.context.event.annotation.BeforeTestClass;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 // TODO(ja-lib) disable for now, review with Mark
-//@RunWith(SpringJUnit4ClassRunner.class)
-//@SpringBootTest(
+// @RunWith(SpringJUnit4ClassRunner.class)
+// @SpringBootTest(
 //    classes = {
 //      S3FallbackImageServiceTest.class,
 //      ImageServiceConfiguration.class,
@@ -44,7 +38,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 //    })
 public class S3FallbackImageServiceTest {
 
-//  @Configuration
+  //  @Configuration
   static class S3FallbackImageServiceTestConfiguration {
 
     // TODO(ja-lib) disable for now, review with Mark

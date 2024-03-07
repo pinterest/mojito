@@ -56,8 +56,8 @@ public class TMTextUnitStatisticServiceTest extends ServiceTestBase {
   String tmTextComment = "comment";
   Double lastDayEstimatedVolume = 3D;
   Double lastPeriodEstimatedVolume = 42D;
-  ZonedDateTime lastSeenDate = JSR310Migration.newDateTimeCtor(2021, 11, 25, 0, 0).withZoneSameInstant(
-      ZoneId.of("Z"));
+  ZonedDateTime lastSeenDate =
+      JSR310Migration.newDateTimeCtor(2021, 11, 25, 0, 0).withZoneSameInstant(ZoneId.of("Z"));
 
   private void createTestTextUnitData(Repository repository) {
     logger.debug("Create data for test");

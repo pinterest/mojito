@@ -44,9 +44,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.ParameterExpression;
-import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import java.util.ArrayList;
@@ -194,31 +192,32 @@ public class VirtualAssetService {
 
     // TODO(ja-lib) can't figure out why the conjunction does not work... will come back to it later
     // sounds like by using select with varg predicate it works ...
-//    conjunction
-//        .getExpressions()
-//        .add(
-//            criteriaBuilder.equal(
-//                assetTextUnitRoot.get(AssetTextUnit_.assetExtraction).get(AssetExtraction_.id),
-//                assetExtractionIdParameter));
+    //    conjunction
+    //        .getExpressions()
+    //        .add(
+    //            criteriaBuilder.equal(
+    //
+    // assetTextUnitRoot.get(AssetTextUnit_.assetExtraction).get(AssetExtraction_.id),
+    //                assetExtractionIdParameter));
 
-
-    predicates.add(criteriaBuilder.equal(
-        assetTextUnitRoot.get(AssetTextUnit_.assetExtraction).get(AssetExtraction_.id),
-        assetExtractionIdParameter));
+    predicates.add(
+        criteriaBuilder.equal(
+            assetTextUnitRoot.get(AssetTextUnit_.assetExtraction).get(AssetExtraction_.id),
+            assetExtractionIdParameter));
 
     ParameterExpression<Boolean> doNotTranslateFilterParameter = null;
     if (doNotTranslateFilter != null) {
       doNotTranslateFilterParameter = criteriaBuilder.parameter(Boolean.class);
-//      conjunction
-//          .getExpressions()
-//          .add(
-//              criteriaBuilder.equal(
-//                  assetTextUnitRoot.get(AssetTextUnit_.doNotTranslate),
-//                  doNotTranslateFilterParameter));
+      //      conjunction
+      //          .getExpressions()
+      //          .add(
+      //              criteriaBuilder.equal(
+      //                  assetTextUnitRoot.get(AssetTextUnit_.doNotTranslate),
+      //                  doNotTranslateFilterParameter));
 
-      predicates.add(criteriaBuilder.equal(
-          assetTextUnitRoot.get(AssetTextUnit_.doNotTranslate),
-          doNotTranslateFilterParameter));
+      predicates.add(
+          criteriaBuilder.equal(
+              assetTextUnitRoot.get(AssetTextUnit_.doNotTranslate), doNotTranslateFilterParameter));
     }
 
     query.select(

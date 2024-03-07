@@ -69,7 +69,8 @@ public class PollableTask extends AuditableEntity {
   private int expectedSubTaskNumber = 0;
 
   @OneToMany(mappedBy = "parentTask", fetch = FetchType.EAGER)
-  @OrderBy("id") // TODO(ja-lib) we don't have error on that one? there was an issue on orderby for RepositoryStatistic
+  @OrderBy("id") // TODO(ja-lib) we don't have error on that one? there was an issue on orderby for
+  // RepositoryStatistic
   @BatchSize(size = 1000)
   private Set<PollableTask> subTasks;
 

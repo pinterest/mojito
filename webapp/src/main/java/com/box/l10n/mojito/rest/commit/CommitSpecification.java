@@ -114,9 +114,9 @@ public class CommitSpecification {
         Join<Commit, CommitToPushRun> commitToPushRunJoin =
             root.join(Commit_.commitToPushRun, JoinType.LEFT);
 
-       return hasPushRun != null && hasPushRun
-                    ? builder.isNotNull(commitToPushRunJoin.get(CommitToPushRun_.pushRun))
-                    : builder.isNull(commitToPushRunJoin.get(CommitToPushRun_.pushRun));
+        return hasPushRun != null && hasPushRun
+            ? builder.isNotNull(commitToPushRunJoin.get(CommitToPushRun_.pushRun))
+            : builder.isNull(commitToPushRunJoin.get(CommitToPushRun_.pushRun));
       }
     };
   }
@@ -134,9 +134,9 @@ public class CommitSpecification {
         Join<Commit, CommitToPullRun> commitToPullRunJoin =
             root.join(Commit_.commitToPullRun, JoinType.LEFT);
 
-       return hasPullRun != null && hasPullRun
-                    ? builder.isNotNull(commitToPullRunJoin.get(CommitToPullRun_.pullRun))
-                    : builder.isNull(commitToPullRunJoin.get(CommitToPullRun_.pullRun));
+        return hasPullRun != null && hasPullRun
+            ? builder.isNotNull(commitToPullRunJoin.get(CommitToPullRun_.pullRun))
+            : builder.isNull(commitToPullRunJoin.get(CommitToPullRun_.pullRun));
       }
     };
   }

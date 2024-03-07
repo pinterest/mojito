@@ -119,11 +119,10 @@ public class AssetSpecification {
         predicates.add(builder.equal(assetExtractionByBranchBranchJoin.get(Branch_.id), branchId));
 
         if (deleted != null) {
-          predicates
-              .add(
-                  builder.equal(
-                      assetAssetExtractionByBranchSetJoin.get(AssetExtractionByBranch_.deleted),
-                      deleted));
+          predicates.add(
+              builder.equal(
+                  assetAssetExtractionByBranchSetJoin.get(AssetExtractionByBranch_.deleted),
+                  deleted));
         }
 
         return builder.and(predicates.toArray(new Predicate[predicates.size()]));

@@ -11,7 +11,6 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -68,14 +67,20 @@ public class RepositoryStatistic extends AuditableEntity {
   @JsonView(View.RepositorySummary.class)
   @JsonManagedReference
   @OneToMany(mappedBy = "repositoryStatistic", fetch = FetchType.EAGER)
-  // TODO(ja/lib) Caused by: org.hibernate.NotYetImplementedFor6Exception: Ordering for ToOneAttributeMapping(NavigableRole[com.box.l10n.mojito.entity.RepositoryLocaleStatistic.locale])@501185817 not supported
+  // TODO(ja/lib) Caused by: org.hibernate.NotYetImplementedFor6Exception: Ordering for
+  // ToOneAttributeMapping(NavigableRole[com.box.l10n.mojito.entity.RepositoryLocaleStatistic.locale])@501185817 not supported
   // is that fine now?
-//  @OrderBy(value = "locale")
+  //  @OrderBy(value = "locale")
 
-//  Association laziness now respected
-//Prior to Hibernate 6.0, lazy associations that used fetch="join" or @Fetch(FetchMode.JOIN) were considered eager when loaded by-id i.e. through Session#get/EntityManager#find, even though for queries the association was treated as lazy.
-//
-//Starting with Hibernate 6.0, the laziness of such associations is properly respected, regardless of the fetch mechanism. Backwards compatibility can be achieved by specifying lazy="false" or @ManyToOne(fetch = EAGER)/@OneToOne(fetch = EAGER)/@OneToMany(fetch = EAGER)/@ManyToMany(fetch = EAGER).
+  //  Association laziness now respected
+  // Prior to Hibernate 6.0, lazy associations that used fetch="join" or @Fetch(FetchMode.JOIN) were
+  // considered eager when loaded by-id i.e. through Session#get/EntityManager#find, even though for
+  // queries the association was treated as lazy.
+  //
+  // Starting with Hibernate 6.0, the laziness of such associations is properly respected,
+  // regardless of the fetch mechanism. Backwards compatibility can be achieved by specifying
+  // lazy="false" or @ManyToOne(fetch = EAGER)/@OneToOne(fetch = EAGER)/@OneToMany(fetch =
+  // EAGER)/@ManyToMany(fetch = EAGER).
   private Set<RepositoryLocaleStatistic> repositoryLocaleStatistics = new HashSet<>();
 
   @CreatedBy

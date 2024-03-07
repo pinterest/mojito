@@ -110,7 +110,8 @@ public class CurrentVariantRollbackService {
 
     List<Predicate> predicates = new ArrayList<>();
 
-    Predicate tmPredicate = criteriaBuilder.equal(root.get(TMTextUnitCurrentVariant_.tm).get(TM_.id), tmId);
+    Predicate tmPredicate =
+        criteriaBuilder.equal(root.get(TMTextUnitCurrentVariant_.tm).get(TM_.id), tmId);
     predicates.add(tmPredicate);
 
     List<Long> localeIdsToRollback = extraParameters.getLocaleIds();
@@ -125,7 +126,9 @@ public class CurrentVariantRollbackService {
     if (tmTextUnitIdsToRollback != null && !tmTextUnitIdsToRollback.isEmpty()) {
       Predicate tmTextUnitPredicate =
           criteriaBuilder.isTrue(
-              root.get(TMTextUnitCurrentVariant_.tmTextUnit).get(TMTextUnit_.id).in(tmTextUnitIdsToRollback));
+              root.get(TMTextUnitCurrentVariant_.tmTextUnit)
+                  .get(TMTextUnit_.id)
+                  .in(tmTextUnitIdsToRollback));
       predicates.add(tmTextUnitPredicate);
     }
 

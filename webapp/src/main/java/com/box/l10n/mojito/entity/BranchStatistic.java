@@ -54,7 +54,8 @@ public class BranchStatistic extends AuditableEntity {
   @JsonView(View.BranchStatistic.class)
   @JsonManagedReference
   @OneToMany(mappedBy = "branchStatistic")
-  @OrderBy("tmTextUnit.id") // TODO(ja-lib) we don't have error on that one? there was an issue on orderby for RepositoryStatistic
+  @OrderBy("tmTextUnit.id") // TODO(ja-lib) we don't have error on that one? there was an issue on
+  // orderby for RepositoryStatistic
   private Set<BranchTextUnitStatistic> branchTextUnitStatistics = new HashSet<>();
 
   @JsonView(View.BranchStatistic.class)

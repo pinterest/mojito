@@ -259,12 +259,12 @@ public class ScreenshotService {
     List<Predicate> predicates = new ArrayList<>();
 
     if (ScreenshotRunType.LAST_SUCCESSFUL_RUN.equals(screenshotRunType)) {
-      predicates
-          .add(builder.isTrue(screenshotRunJoin.get(ScreenshotRun_.lastSuccessfulRun)));
+      predicates.add(builder.isTrue(screenshotRunJoin.get(ScreenshotRun_.lastSuccessfulRun)));
     } else {
       Path<ScreenshotRun> screenshotRunPath = repositoryJoin.get(Repository_.manualScreenshotRun);
-      predicates
-          .add(builder.equal(screenshotRunPath.get(ScreenshotRun_.id), screenshotRunJoin.get(ScreenshotRun_.id)));
+      predicates.add(
+          builder.equal(
+              screenshotRunPath.get(ScreenshotRun_.id), screenshotRunJoin.get(ScreenshotRun_.id)));
     }
 
     if (repositoryIds != null) {
