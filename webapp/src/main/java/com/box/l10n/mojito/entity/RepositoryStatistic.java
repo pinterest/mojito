@@ -69,6 +69,7 @@ public class RepositoryStatistic extends AuditableEntity {
   @JsonManagedReference
   @OneToMany(mappedBy = "repositoryStatistic", fetch = FetchType.EAGER)
   // TODO(ja/lib) Caused by: org.hibernate.NotYetImplementedFor6Exception: Ordering for ToOneAttributeMapping(NavigableRole[com.box.l10n.mojito.entity.RepositoryLocaleStatistic.locale])@501185817 not supported
+  // is that fine now?
 //  @OrderBy(value = "locale")
 
 //  Association laziness now respected
