@@ -10,6 +10,7 @@ public class S3BlobStorageConfigurationProperties {
   String bucket = "mojito";
   String prefix = "mojito";
 
+
   public String getBucket() {
     return bucket;
   }

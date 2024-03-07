@@ -6,21 +6,28 @@ import com.box.l10n.mojito.service.blobstorage.database.DatabaseBlobStorage;
 import com.box.l10n.mojito.service.blobstorage.database.DatabaseBlobStorageCleanupJob;
 import com.box.l10n.mojito.service.blobstorage.database.DatabaseBlobStorageConfigurationProperties;
 import com.box.l10n.mojito.service.blobstorage.database.MBlobRepository;
+import com.box.l10n.mojito.service.blobstorage.redis.RedisBlobStorage;
+import com.box.l10n.mojito.service.blobstorage.redis.RedisBlobStorageConfigurationProperties;
 import com.box.l10n.mojito.service.blobstorage.s3.S3BlobStorage;
 import com.box.l10n.mojito.service.blobstorage.s3.S3BlobStorageConfigurationProperties;
 import java.time.Duration;
+
+import com.box.l10n.mojito.service.blobstorage.s3.S3WithRedisCacheBlobStorage;
+import nu.validator.htmlparser.annotation.Auto;
 import org.quartz.JobDetail;
 import org.quartz.SimpleTrigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.quartz.JobDetailFactoryBean;
 import org.springframework.scheduling.quartz.SimpleTriggerFactoryBean;
+import redis.clients.jedis.Jedis;
 
 /**
  * Configuration for {@link BlobStorage}
@@ -93,6 +100,66 @@ public class BlobStorageConfiguration {
       trigger.setRepeatInterval(Duration.ofMinutes(5).toMillis());
       trigger.setRepeatCount(SimpleTrigger.REPEAT_INDEFINITELY);
       return trigger;
+    }
+  }
+
+  @ConditionalOnProperty(
+          value = "l10n.blob-storage.type",
+          havingValue = "redis")
+  @Configuration
+  static class RedisBlobStorageConfiguration {
+
+    @Autowired
+    RedisBlobStorageConfigurationProperties redisBlobStorageConfigurationProperties;
+
+    @Bean
+    public RedisBlobStorage elasticacheRedisBlobStorage(@Autowired Jedis redisClient) {
+      return new RedisBlobStorage(redisClient);
+    }
+
+    @Bean
+    public Jedis redisClient() {
+      logger.debug("Creating Redis client for hostname: {}, port: {}, clientTimeoutInSeconds: {}", redisBlobStorageConfigurationProperties.getHostname(), redisBlobStorageConfigurationProperties.getPort(), redisBlobStorageConfigurationProperties.getClientTimeoutInSeconds());
+      Jedis redisClient = new Jedis(redisBlobStorageConfigurationProperties.getHostname(), redisBlobStorageConfigurationProperties.getPort(), redisBlobStorageConfigurationProperties.getClientTimeoutInSeconds());
+      logger.debug("Completed creating Redis client");
+      return redisClient;
+    }
+  }
+
+  @ConditionalOnProperty(value = "l10n.blob-storage.type", havingValue = "s3WithRedisCache")
+  @Configuration
+  static class S3WithRedisCacheBlobStorageConfigurationConfiguration {
+
+    @Autowired AmazonS3 amazonS3;
+
+    @Autowired S3BlobStorageConfigurationProperties s3BlobStorageConfigurationProperties;
+
+    @Autowired
+    RedisBlobStorageConfigurationProperties redisBlobStorageConfigurationProperties;
+
+    @Bean
+    public S3WithRedisCacheBlobStorage s3WithRedisCacheBlobStorage(@Autowired S3BlobStorage s3BlobStorage, @Autowired RedisBlobStorage redisBlobStorage) {
+      logger.info("Configure S3WithRedisCacheBlobStorage");
+      return new S3WithRedisCacheBlobStorage(s3BlobStorage, redisBlobStorage);
+    }
+
+    @Bean
+    public S3BlobStorage s3BlobStorage() {
+      logger.info("Configure S3BlobStorage");
+      return new S3BlobStorage(amazonS3, s3BlobStorageConfigurationProperties);
+    }
+
+    @Bean
+    public RedisBlobStorage elasticacheRedisBlobStorage(@Autowired Jedis redisClient) {
+      return new RedisBlobStorage(redisClient);
+    }
+
+    @Bean
+    public Jedis redisClient() {
+      logger.debug("Creating Redis client for hostname: {}, port: {}, clientTimeoutInSeconds: {}", redisBlobStorageConfigurationProperties.getHostname(), redisBlobStorageConfigurationProperties.getPort(), redisBlobStorageConfigurationProperties.getClientTimeoutInSeconds());
+      Jedis redisClient = new Jedis(redisBlobStorageConfigurationProperties.getHostname(), redisBlobStorageConfigurationProperties.getPort(), redisBlobStorageConfigurationProperties.getClientTimeoutInSeconds());
+      logger.debug("Completed creating Redis client");
+      return redisClient;
     }
   }
 }
