@@ -5,7 +5,9 @@ import com.box.l10n.mojito.service.blobstorage.Retention;
 import com.box.l10n.mojito.service.blobstorage.redis.RedisBlobStorage;
 import org.springframework.scheduling.annotation.Async;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 public class S3WithRedisCacheBlobStorage implements BlobStorage {
 
@@ -13,9 +15,12 @@ public class S3WithRedisCacheBlobStorage implements BlobStorage {
 
     RedisBlobStorage redisBlobStorage;
 
-    public S3WithRedisCacheBlobStorage(S3BlobStorage s3BlobStorage, RedisBlobStorage redisBlobStorage) {
+    Set<String> redisCacheKeyPrefixes;
+
+    public S3WithRedisCacheBlobStorage(S3BlobStorage s3BlobStorage, RedisBlobStorage redisBlobStorage, Set<String> redisCacheKeyPrefixes) {
         this.s3BlobStorage = s3BlobStorage;
         this.redisBlobStorage = redisBlobStorage;
+        this.redisCacheKeyPrefixes = redisCacheKeyPrefixes;
     }
 
     @Override
@@ -25,7 +30,7 @@ public class S3WithRedisCacheBlobStorage implements BlobStorage {
             bytes = redisBlobStorage.getBytes(name);
         } else {
             Optional<byte[]> s3Bytes = s3BlobStorage.getBytes(name);
-            s3Bytes.ifPresent(b -> putRedisAsync(name, b, Retention.MIN_1_DAY));
+            s3Bytes.ifPresent(b -> putRedisAsync(name, b, Retention.PERMANENT));
             bytes = s3Bytes;
         }
 

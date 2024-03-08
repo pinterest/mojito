@@ -11,7 +11,7 @@ public class RedisBlobStorageConfigurationProperties {
 
     private int port;
 
-    private int clientTimeoutInSeconds;
+    private int clientTimeoutInSeconds = 60;
 
     public String getHostname() {
         return hostname;

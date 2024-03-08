@@ -28,6 +28,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.quartz.JobDetailFactoryBean;
 import org.springframework.scheduling.quartz.SimpleTriggerFactoryBean;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
 
 /**
  * Configuration for {@link BlobStorage}
@@ -113,16 +115,17 @@ public class BlobStorageConfiguration {
     RedisBlobStorageConfigurationProperties redisBlobStorageConfigurationProperties;
 
     @Bean
-    public RedisBlobStorage elasticacheRedisBlobStorage(@Autowired Jedis redisClient) {
-      return new RedisBlobStorage(redisClient);
+    public RedisBlobStorage elasticacheRedisBlobStorage(@Autowired JedisPool redisClientPool) {
+      return new RedisBlobStorage(redisClientPool);
     }
 
     @Bean
-    public Jedis redisClient() {
+    public JedisPool redisClientPool() {
       logger.debug("Creating Redis client for hostname: {}, port: {}, clientTimeoutInSeconds: {}", redisBlobStorageConfigurationProperties.getHostname(), redisBlobStorageConfigurationProperties.getPort(), redisBlobStorageConfigurationProperties.getClientTimeoutInSeconds());
-      Jedis redisClient = new Jedis(redisBlobStorageConfigurationProperties.getHostname(), redisBlobStorageConfigurationProperties.getPort(), redisBlobStorageConfigurationProperties.getClientTimeoutInSeconds());
+      // TODO(mallen): Allow config of the jedis pool
+      JedisPool redisClientPool = new JedisPool(new JedisPoolConfig(), redisBlobStorageConfigurationProperties.getHostname(), redisBlobStorageConfigurationProperties.getPort(), redisBlobStorageConfigurationProperties.getClientTimeoutInSeconds());
       logger.debug("Completed creating Redis client");
-      return redisClient;
+      return redisClientPool;
     }
   }
 
@@ -150,16 +153,16 @@ public class BlobStorageConfiguration {
     }
 
     @Bean
-    public RedisBlobStorage elasticacheRedisBlobStorage(@Autowired Jedis redisClient) {
-      return new RedisBlobStorage(redisClient);
+    public RedisBlobStorage elasticacheRedisBlobStorage(@Autowired JedisPool redisClientPool) {
+      return new RedisBlobStorage(redisClientPool);
     }
 
     @Bean
-    public Jedis redisClient() {
-      logger.debug("Creating Redis client for hostname: {}, port: {}, clientTimeoutInSeconds: {}", redisBlobStorageConfigurationProperties.getHostname(), redisBlobStorageConfigurationProperties.getPort(), redisBlobStorageConfigurationProperties.getClientTimeoutInSeconds());
-      Jedis redisClient = new Jedis(redisBlobStorageConfigurationProperties.getHostname(), redisBlobStorageConfigurationProperties.getPort(), redisBlobStorageConfigurationProperties.getClientTimeoutInSeconds());
-      logger.debug("Completed creating Redis client");
-      return redisClient;
+    public JedisPool redisClientPool() {
+      logger.debug("Creating Redis client pool for hostname: {}, port: {}, clientTimeoutInSeconds: {}", redisBlobStorageConfigurationProperties.getHostname(), redisBlobStorageConfigurationProperties.getPort(), redisBlobStorageConfigurationProperties.getClientTimeoutInSeconds());
+      JedisPool redisClientPool = new JedisPool(new JedisPoolConfig(), redisBlobStorageConfigurationProperties.getHostname(), redisBlobStorageConfigurationProperties.getPort(), redisBlobStorageConfigurationProperties.getClientTimeoutInSeconds());
+      logger.debug("Completed creating Redis client pool");
+      return redisClientPool;
     }
   }
 }
