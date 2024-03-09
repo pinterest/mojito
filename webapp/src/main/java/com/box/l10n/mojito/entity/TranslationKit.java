@@ -76,7 +76,7 @@ public class TranslationKit extends AuditableEntity {
     REVIEW
   }
 
-  @OneToOne
+  @ManyToOne
   @JoinColumn(
       name = "locale_id",
       foreignKey = @ForeignKey(name = "FK__TRANSLATION_KIT__LOCALE__ID"))
