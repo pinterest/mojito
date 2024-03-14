@@ -21,8 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.reactive.function.client.WebClient;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(
@@ -44,7 +44,7 @@ public class SmartlingClientTest {
 
   @Autowired SmartlingTestConfig smartlingTestConfig;
 
-  @Mock OAuth2RestTemplate mockedOAuth2RestTemplate;
+  @Mock WebClient webClient;
 
   @Before
   public void init() {

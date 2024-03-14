@@ -13,10 +13,10 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.util.retry.RetryBackoffSpec;
 
 public class SmartlingClient {
@@ -90,13 +90,12 @@ public class SmartlingClient {
 
   static final int LIMIT = 500;
 
-  OAuth2RestTemplate oAuth2RestTemplate;
+  WebClient webClient;
 
   RetryBackoffSpec retryConfiguration;
 
-  public SmartlingClient(
-      OAuth2RestTemplate oAuth2RestTemplate, RetryBackoffSpec retryConfiguration) {
-    this.oAuth2RestTemplate = oAuth2RestTemplate;
+  public SmartlingClient(WebClient webClient, RetryBackoffSpec retryConfiguration) {
+    this.webClient = webClient;
     this.objectMapper = new ObjectMapper();
 
     this.retryConfiguration = retryConfiguration;
@@ -123,7 +122,12 @@ public class SmartlingClient {
   public Items<File> getFiles(String projectId) {
     try {
       FilesResponse filesResponse =
-          oAuth2RestTemplate.getForObject(API_FILES_LIST, FilesResponse.class, projectId);
+          webClient
+              .get()
+              .uri(API_FILES_LIST, projectId)
+              .retrieve()
+              .bodyToMono(FilesResponse.class)
+              .block();
       throwExceptionOnError(filesResponse, ERROR_CANT_GET_FILES);
       return filesResponse.getData();
     } catch (HttpClientErrorException httpClientErrorException) {
@@ -139,14 +143,18 @@ public class SmartlingClient {
       RetrievalType retrievalType) {
     try {
       String file =
-          oAuth2RestTemplate.getForObject(
-              API_FILES_DOWNLOAD,
-              String.class,
-              projectId,
-              locale,
-              fileUri,
-              includeOriginalStrings,
-              retrievalType.getValue());
+          webClient
+              .get()
+              .uri(
+                  API_FILES_DOWNLOAD,
+                  projectId,
+                  locale,
+                  fileUri,
+                  includeOriginalStrings,
+                  retrievalType.getValue())
+              .retrieve()
+              .bodyToMono(String.class)
+              .block();
       return file;
     } catch (HttpClientErrorException e) {
       throw wrapIntoSmartlingException(e, ERROR_CANT_DOWNLOAD_FILE, fileUri, projectId, locale);
@@ -156,8 +164,12 @@ public class SmartlingClient {
   public String downloadGlossaryFile(String accountId, String glossaryId) {
     try {
       String file =
-          oAuth2RestTemplate.getForObject(
-              API_GLOSSARY_DOWNLOAD_TBX, String.class, accountId, glossaryId);
+          webClient
+              .get()
+              .uri(API_GLOSSARY_DOWNLOAD_TBX, accountId, glossaryId)
+              .retrieve()
+              .bodyToMono(String.class)
+              .block();
       return file;
     } catch (HttpClientErrorException e) {
       throw wrapIntoSmartlingException(e, ERROR_CANT_DOWNLOAD_GLOSSARY_FILE, accountId, glossaryId);
@@ -167,8 +179,12 @@ public class SmartlingClient {
   public String downloadSourceGlossaryFile(String accountId, String glossaryId, String locale) {
     try {
       String file =
-          oAuth2RestTemplate.getForObject(
-              API_GLOSSARY_SOURCE_TBX_DOWNLOAD, String.class, accountId, glossaryId, locale);
+          webClient
+              .get()
+              .uri(API_GLOSSARY_SOURCE_TBX_DOWNLOAD, accountId, glossaryId, locale)
+              .retrieve()
+              .bodyToMono(String.class)
+              .block();
       return file;
     } catch (HttpClientErrorException e) {
       throw wrapIntoSmartlingException(
@@ -180,13 +196,13 @@ public class SmartlingClient {
       String accountId, String glossaryId, String locale, String sourceLocale) {
     try {
       String file =
-          oAuth2RestTemplate.getForObject(
-              API_GLOSSARY_TRANSLATED_TBX_DOWNLOAD,
-              String.class,
-              accountId,
-              glossaryId,
-              locale,
-              sourceLocale);
+          webClient
+              .get()
+              .uri(
+                  API_GLOSSARY_TRANSLATED_TBX_DOWNLOAD, accountId, glossaryId, locale, sourceLocale)
+              .retrieve()
+              .bodyToMono(String.class)
+              .block();
       return file;
     } catch (HttpClientErrorException e) {
       throw wrapIntoSmartlingException(
@@ -211,8 +227,12 @@ public class SmartlingClient {
 
     try {
       Response response =
-          oAuth2RestTemplate.postForObject(
-              API_FILES_DELETE, requestEntity, Response.class, projectId);
+          webClient
+              .post()
+              .uri(API_FILES_DELETE, requestEntity, projectId)
+              .retrieve()
+              .bodyToMono(Response.class)
+              .block();
       throwExceptionOnError(response, ERROR_CANT_DELETE_FILE, fileUri);
     } catch (HttpClientErrorException e) {
       throw wrapIntoSmartlingException(e, ERROR_CANT_DELETE_FILE, fileUri);
@@ -246,8 +266,12 @@ public class SmartlingClient {
 
     try {
       FileUploadResponse response =
-          oAuth2RestTemplate.postForObject(
-              API_FILES_UPLOAD, requestEntity, FileUploadResponse.class, projectId);
+          webClient
+              .post()
+              .uri(API_FILES_UPLOAD, requestEntity, projectId)
+              .retrieve()
+              .bodyToMono(FileUploadResponse.class)
+              .block();
       throwExceptionOnError(response, ERROR_CANT_UPLOAD_FILE, fileUri);
       return response;
     } catch (HttpClientErrorException e) {
@@ -282,12 +306,12 @@ public class SmartlingClient {
 
     try {
       FileUploadResponse response =
-          oAuth2RestTemplate.postForObject(
-              API_FILES_UPLOAD_LOCALIZED,
-              requestEntity,
-              FileUploadResponse.class,
-              projectId,
-              localeId);
+          webClient
+              .post()
+              .uri(API_FILES_UPLOAD_LOCALIZED, requestEntity, projectId, localeId)
+              .retrieve()
+              .bodyToMono(FileUploadResponse.class)
+              .block();
       throwExceptionOnError(response, ERROR_CANT_UPLOAD_FILE, fileUri);
       return response;
     } catch (HttpClientErrorException e) {
@@ -300,8 +324,12 @@ public class SmartlingClient {
       throws SmartlingClientException {
     try {
       SourceStringsResponse sourceStringsResponse =
-          oAuth2RestTemplate.getForObject(
-              API_SOURCE_STRINGS, SourceStringsResponse.class, projectId, fileUri, offset, limit);
+          webClient
+              .get()
+              .uri(API_SOURCE_STRINGS, projectId, fileUri, offset, limit)
+              .retrieve()
+              .bodyToMono(SourceStringsResponse.class)
+              .block();
       throwExceptionOnError(sourceStringsResponse, ERROR_CANT_GET_SOURCE_STRINGS);
       return sourceStringsResponse.getData();
     } catch (HttpClientErrorException e) {
@@ -323,8 +351,12 @@ public class SmartlingClient {
 
     try {
       ContextResponse contextResponse =
-          oAuth2RestTemplate.postForObject(
-              API_CONTEXTS, requestEntity, ContextResponse.class, projectId);
+          webClient
+              .post()
+              .uri(API_CONTEXTS, requestEntity, projectId)
+              .retrieve()
+              .bodyToMono(ContextResponse.class)
+              .block();
       throwExceptionOnError(contextResponse, ERROR_CANT_UPLOAD_CONTEXT, name);
       return contextResponse.getData();
     } catch (HttpClientErrorException e) {
@@ -338,7 +370,12 @@ public class SmartlingClient {
     HttpEntity<Bindings> requestEntity = new HttpEntity<>(bindings, headers);
     try {
       String s =
-          oAuth2RestTemplate.postForObject(API_BINDINGS, requestEntity, String.class, projectId);
+          webClient
+              .post()
+              .uri(API_BINDINGS, requestEntity, projectId)
+              .retrieve()
+              .bodyToMono(String.class)
+              .block();
       logger.debug("create binding: {}", s);
     } catch (HttpClientErrorException e) {
       throw wrapIntoSmartlingException(
@@ -349,8 +386,12 @@ public class SmartlingClient {
   public GlossaryDetails getGlossaryDetails(String accountId, String glossaryId) {
     try {
       GetGlossaryDetailsResponse getGlossaryDetailsResponse =
-          oAuth2RestTemplate.getForObject(
-              API_GLOSSARY_DETAILS, GetGlossaryDetailsResponse.class, accountId, glossaryId);
+          webClient
+              .get()
+              .uri(API_GLOSSARY_DETAILS, accountId, glossaryId)
+              .retrieve()
+              .bodyToMono(GetGlossaryDetailsResponse.class)
+              .block();
       throwExceptionOnError(
           getGlossaryDetailsResponse, ERROR_CANT_GET_GLOSSARY_DETAILS, accountId, glossaryId);
       return getGlossaryDetailsResponse.getData();
@@ -425,8 +466,15 @@ public class SmartlingClient {
 
   public void deleteContext(String projectId, String contextId) {
     try {
-      oAuth2RestTemplate.delete(
-          API_CONTEXTS_DETAILS.replace("{projectId}", projectId).replace("{contextId}", contextId));
+      webClient
+          .delete()
+          .uri(
+              API_CONTEXTS_DETAILS
+                  .replace("{projectId}", projectId)
+                  .replace("{contextId}", contextId))
+          .retrieve()
+          .bodyToMono(Void.class)
+          .block();
     } catch (HttpClientErrorException e) {
       throw wrapIntoSmartlingException(e, ERROR_CANT_DELETE_CONTEXT, contextId);
     }
@@ -435,8 +483,12 @@ public class SmartlingClient {
   public Context getContext(String projectId, String contextId) {
     try {
       ContextResponse contextResponse =
-          oAuth2RestTemplate.getForObject(
-              API_CONTEXTS_DETAILS, ContextResponse.class, projectId, contextId);
+          webClient
+              .get()
+              .uri(API_CONTEXTS_DETAILS, projectId, contextId)
+              .retrieve()
+              .bodyToMono(ContextResponse.class)
+              .block();
 
       throwExceptionOnError(contextResponse, ERROR_CANT_GET_CONTEXT, contextId);
       return contextResponse.getData();

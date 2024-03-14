@@ -1,8 +1,5 @@
 package com.box.l10n.mojito.smartling;
 
-import com.box.l10n.mojito.utils.RestTemplateUtils;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import java.io.IOException;
 import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,14 +7,17 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.ClientHttpResponse;
-import org.springframework.security.oauth2.client.DefaultOAuth2ClientContext;
-import org.springframework.security.oauth2.client.OAuth2RestTemplate;
-import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResourceDetails;
-import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
-import org.springframework.web.client.DefaultResponseErrorHandler;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.util.DefaultUriBuilderFactory;
+import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.InMemoryOAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.util.retry.Retry;
 import reactor.util.retry.RetryBackoffSpec;
 
@@ -25,7 +25,6 @@ import reactor.util.retry.RetryBackoffSpec;
  * @author jaurambault
  */
 @Configuration
-@EnableOAuth2Client
 @ConfigurationProperties("l10n.smartling")
 public class SmartlingClientConfiguration {
 
@@ -50,50 +49,38 @@ public class SmartlingClientConfiguration {
         Retry.backoff(getRetryMaxAttempts(), Duration.ofSeconds(getRetryMinDurationSeconds()))
             .maxBackoff(Duration.ofSeconds(getRetryMaxBackoffDurationSeconds()));
 
-    return new SmartlingClient(smartlingRestTemplate(), retryConfiguration);
+    return new SmartlingClient(webClient(), retryConfiguration);
   }
 
   @Bean
-  public OAuth2ProtectedResourceDetails smartling() {
-    SmartlingOAuth2ProtectedResourceDetails details = new SmartlingOAuth2ProtectedResourceDetails();
-    details.setId("Smartling");
-    details.setGrantType("smartling");
-    details.setClientId(clientID);
-    details.setClientSecret(clientSecret);
-    details.setAccessTokenUri(accessTokenUri);
-    details.setRefreshUri(refreshTokenUri);
-    return details;
+  public WebClient webClient() {
+
+    ClientRegistration clientRegistration = smartlingClientCredentials();
+    ClientRegistrationRepository clientRegistrationRepository =
+        new InMemoryClientRegistrationRepository(clientRegistration);
+    OAuth2AuthorizedClientProvider authorizedClientProvider =
+        OAuth2AuthorizedClientProviderBuilder.builder().clientCredentials().refreshToken().build();
+    OAuth2AuthorizedClientService authorizedClientService =
+        new InMemoryOAuth2AuthorizedClientService(clientRegistrationRepository);
+    AuthorizedClientServiceOAuth2AuthorizedClientManager authorizedClientManager =
+        new AuthorizedClientServiceOAuth2AuthorizedClientManager(
+            clientRegistrationRepository, authorizedClientService);
+    authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider);
+    ServletOAuth2AuthorizedClientExchangeFilterFunction oauth2client =
+        new ServletOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
+    WebClient webClient = WebClient.builder().baseUrl(baseUri).filter(oauth2client).build();
+
+    return webClient;
   }
 
-  public OAuth2RestTemplate smartlingRestTemplate() {
-    OAuth2RestTemplate oAuth2RestTemplate =
-        new OAuth2RestTemplate(smartling(), new DefaultOAuth2ClientContext());
-
-    RestTemplateUtils restTemplateUtils = new RestTemplateUtils();
-    restTemplateUtils.enableFeature(oAuth2RestTemplate, DeserializationFeature.UNWRAP_ROOT_VALUE);
-
-    oAuth2RestTemplate.setAccessTokenProvider(new SmartlingAuthorizationCodeAccessTokenProvider());
-    oAuth2RestTemplate.setRetryBadAccessTokens(true);
-
-    DefaultUriBuilderFactory defaultUriTemplateHandler = new DefaultUriBuilderFactory(baseUri);
-    oAuth2RestTemplate.setUriTemplateHandler(defaultUriTemplateHandler);
-
-    oAuth2RestTemplate.setErrorHandler(
-        new DefaultResponseErrorHandler() {
-          @Override
-          public void handleError(ClientHttpResponse response) throws IOException {
-            try {
-              super.handleError(response);
-            } catch (HttpClientErrorException e) {
-              if (resttemplateLogger.isDebugEnabled()) {
-                resttemplateLogger.debug(e.getResponseBodyAsString());
-              }
-              throw e;
-            }
-          }
-        });
-
-    return oAuth2RestTemplate;
+  @Bean
+  public ClientRegistration smartlingClientCredentials() {
+    return ClientRegistration.withRegistrationId("Smartling")
+        .clientId(clientID)
+        .clientSecret(clientSecret)
+        .tokenUri(accessTokenUri)
+        .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+        .build();
   }
 
   public String getAccessTokenUri() {
