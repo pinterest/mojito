@@ -574,9 +574,13 @@ public class TMService {
 
     TMTextUnitVariant tmTextUnitVariant;
 
+    int i = 0;
+    logger.error("step: 1".formatted(i++));
+
     if (tmTextUnitCurrentVariant == null
         || tmTextUnitCurrentVariant.getTmTextUnitVariant() == null) {
       logger.debug("There is no currrent text unit variant, add entities");
+      logger.error("step: %d".formatted(i++));
       tmTextUnitVariant =
           addTMTextUnitVariant(
               tmTextUnitId,
@@ -588,23 +592,27 @@ public class TMService {
               createdDate,
               createdBy);
 
+      logger.error("step: 2".formatted(i++));
+
       if (tmTextUnitCurrentVariant == null) {
+        logger.error("step: 3".formatted(i++));
         tmTextUnitCurrentVariant =
             makeTMTextUnitVariantCurrent(
                 tmId, tmTextUnitId, localeId, tmTextUnitVariant.getId(), assetId);
       } else {
+        logger.error("step: 4".formatted(i++));
         tmTextUnitCurrentVariant.setTmTextUnitVariant(tmTextUnitVariant);
         tmTextUnitCurrentVariant =
             tmTextUnitCurrentVariantRepository.save(tmTextUnitCurrentVariant);
       }
-
+      logger.error("step: 5".formatted(i++));
       logger.trace("Put the actual tmTextUnitVariant instead of the proxy");
       tmTextUnitCurrentVariant.setTmTextUnitVariant(tmTextUnitVariant);
     } else {
-
+      logger.error("step: 6".formatted(i++));
       logger.debug("There is a current text unit variant, check if an update is needed");
       TMTextUnitVariant currentTmTextUnitVariant = tmTextUnitCurrentVariant.getTmTextUnitVariant();
-
+      logger.error("step: 7".formatted(i++));
       boolean updateNeeded =
           isUpdateNeededForTmTextUnitVariant(
               currentTmTextUnitVariant.getStatus(),
@@ -617,6 +625,7 @@ public class TMService {
               comment);
 
       if (updateNeeded) {
+        logger.error("step: 8".formatted(i++));
         logger.debug(
             "The current text unit variant has different content, comment or needs review. Add entities");
         tmTextUnitVariant =
@@ -629,18 +638,24 @@ public class TMService {
                 includedInLocalizedFile,
                 createdDate,
                 createdBy);
-
+        logger.error("step: 9".formatted(i++));
         logger.debug(
             "Updating the current TextUnitVariant with id: {} current for locale: {}",
             tmTextUnitVariant.getId(),
             localeId);
+
+        logger.error("step: 10a".formatted(i++));
+        tmTextUnitCurrentVariantRepository.flush();
+        logger.error("step: 10c".formatted(i++));
         tmTextUnitCurrentVariant.setTmTextUnitVariant(tmTextUnitVariant);
         tmTextUnitCurrentVariantRepository.save(tmTextUnitCurrentVariant);
+        logger.error("step: 11".formatted(i++));
       } else {
         logger.debug(
             "The current text unit variant has same content, comment and review status, don't add entities and return it instead");
         noUpdate = true;
       }
+      logger.error("END: 12".formatted(i++));
     }
 
     return new AddTMTextUnitCurrentVariantResult(!noUpdate, tmTextUnitCurrentVariant);

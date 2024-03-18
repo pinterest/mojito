@@ -192,16 +192,18 @@ public class RepositoryStatisticServiceTest extends ServiceTestBase {
 
     logger.debug("Mark one translated string as not included and needs review");
 
+    final Long id1 = tmTestData.addCurrentTMTextUnitVariant1FrFR.getTmTextUnit().getId();
     tmService.addTMTextUnitCurrentVariant(
-        tmTestData.addCurrentTMTextUnitVariant1FrFR.getTmTextUnit().getId(),
+        id1,
         tmTestData.frFR.getId(),
         tmTestData.addCurrentTMTextUnitVariant1FrFR.getContent(),
         "this translation fails compilation",
         TMTextUnitVariant.Status.REVIEW_NEEDED,
         false);
 
+    final Long id = tmTestData.addCurrentTMTextUnitVariant1KoKR.getTmTextUnit().getId();
     tmService.addTMTextUnitCurrentVariant(
-        tmTestData.addCurrentTMTextUnitVariant1KoKR.getTmTextUnit().getId(),
+        id,
         tmTestData.koKR.getId(),
         tmTestData.addCurrentTMTextUnitVariant1KoKR.getContent(),
         "this translation fails compilation",

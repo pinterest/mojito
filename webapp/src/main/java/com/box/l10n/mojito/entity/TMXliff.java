@@ -24,7 +24,7 @@ public class TMXliff extends AuditableEntity {
       nullable = false)
   private Asset asset;
 
-  @OneToOne
+  @ManyToOne
   @JoinColumn(name = "locale_id", foreignKey = @ForeignKey(name = "FK__TM_XLIFF__LOCALE__ID"))
   private Locale locale;
 

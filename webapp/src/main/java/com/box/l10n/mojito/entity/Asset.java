@@ -42,6 +42,9 @@ public class Asset extends AuditableEntity {
   @JsonView(View.AssetSummary.class)
   private Boolean virtual = false;
 
+  // TODO(ja-lib) that seems there is a single last extraction per asset, if i have the asset i hvae
+  // the last and vice versa, that column should be unique
+  // remove the comment when sure
   @OneToOne
   @JoinColumn(
       name = "last_successful_asset_extraction_id",
@@ -51,7 +54,7 @@ public class Asset extends AuditableEntity {
   private AssetExtraction lastSuccessfulAssetExtraction;
 
   @CreatedBy
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = BaseEntity.CreatedByUserColumnName,
       foreignKey = @ForeignKey(name = "FK__ASSET__USER__ID"))

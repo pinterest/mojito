@@ -2,10 +2,10 @@ package com.box.l10n.mojito.entity;
 
 import com.box.l10n.mojito.entity.security.user.User;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import org.springframework.data.annotation.CreatedBy;
 
@@ -22,14 +22,14 @@ public class TranslationKitTextUnit extends AuditableEntity {
       foreignKey = @ForeignKey(name = "FK__TRANSLATION_KIT_TEXT_UNIT__TRANSLATION_KIT__ID"))
   private TranslationKit translationKit;
 
-  @OneToOne
+  @ManyToOne
   @JoinColumn(
       name = "tm_text_unit_id",
       foreignKey = @ForeignKey(name = "FK__TRANSLATION_KIT_TEXT_UNIT__TM_TEXT_UNIT__ID"))
   private TMTextUnit tmTextUnit;
 
   /** The {@link TMTextUnitVariant} created when importing the translation kit */
-  @OneToOne
+  @ManyToOne
   @JoinColumn(
       name = "imported_tm_text_unit_variant_id",
       foreignKey =
@@ -40,7 +40,7 @@ public class TranslationKitTextUnit extends AuditableEntity {
    * Stores the current {@link TMTextUnitVariant} if a translation exists for the {@link
    * TMTextUnit}.
    */
-  @OneToOne
+  @ManyToOne
   @JoinColumn(
       name = "exported_tm_text_unit_variant_id",
       foreignKey =
@@ -48,7 +48,7 @@ public class TranslationKitTextUnit extends AuditableEntity {
   private TMTextUnitVariant exportedTmTextUnitVariant;
 
   @CreatedBy
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = BaseEntity.CreatedByUserColumnName,
       foreignKey = @ForeignKey(name = "FK__TRANSLATION_KIT_TEXT_UNIT__USER__ID"))

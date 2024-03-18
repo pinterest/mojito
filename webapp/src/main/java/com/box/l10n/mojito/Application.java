@@ -67,7 +67,9 @@ public class Application {
   @Bean
   @Primary
   public ObjectMapper getObjectMapper() {
-    return new ObjectMapper();
+    final ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerHibernateModule();
+    return objectMapper;
   }
 
   @Bean(name = "fail_on_unknown_properties_false")
@@ -103,7 +105,8 @@ public class Application {
         DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS);
     jomfb.afterPropertiesSet();
 
-    mjhmc.setObjectMapper(jomfb.getObject());
+    //    mjhmc.setObjectMapper(jomfb.getObject());
+    mjhmc.setObjectMapper(getObjectMapper());
     return mjhmc;
   }
 

@@ -90,6 +90,7 @@ public class PollableTask extends AuditableEntity {
   @JoinColumn(
       name = BaseEntity.CreatedByUserColumnName,
       foreignKey = @ForeignKey(name = "FK__POLLABLE_TASK__USER__ID"))
+  // TODO(ja-lib) should it be lazy?
   protected User createdByUser;
 
   public User getCreatedByUser() {

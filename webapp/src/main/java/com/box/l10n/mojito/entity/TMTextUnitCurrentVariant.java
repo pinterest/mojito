@@ -4,6 +4,7 @@ import com.box.l10n.mojito.entity.security.user.User;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Basic;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -36,7 +37,7 @@ public class TMTextUnitCurrentVariant extends AuditableEntity {
   // Without this field, it would not be possible to filter on a TM, as Envers does not support
   // joins
   @Basic(optional = false)
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "tm_id",
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_CURRENT_VARIANT__TM__ID"))
@@ -44,14 +45,14 @@ public class TMTextUnitCurrentVariant extends AuditableEntity {
 
   /** Denormalization to optimize lookup by asset id, with no joins */
   @Basic(optional = false)
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "asset_id",
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_CURRENT_VARIANT__ASSET__ID"))
   private Asset asset;
 
   @Basic(optional = false)
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "tm_text_unit_id",
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_CURRENT_VARIANT__TM_TEXT_UNIT__ID"))
@@ -65,14 +66,14 @@ public class TMTextUnitCurrentVariant extends AuditableEntity {
   private TMTextUnitVariant tmTextUnitVariant;
 
   @Basic(optional = false)
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "locale_id",
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_CURRENT_VARIANT__LOCALE__ID"))
   private Locale locale;
 
   @CreatedBy
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = BaseEntity.CreatedByUserColumnName,
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_CURRENT_VARIANT__USER__ID"))

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -70,7 +71,7 @@ public class AssetExtraction extends AuditableEntity {
   private Long version = 0L;
 
   @CreatedBy
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = BaseEntity.CreatedByUserColumnName,
       foreignKey = @ForeignKey(name = "FK__ASSET_EXTRACTION__USER__ID"))

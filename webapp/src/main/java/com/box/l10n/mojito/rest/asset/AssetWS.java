@@ -9,6 +9,7 @@ import com.box.l10n.mojito.entity.PushRun;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.entity.TMXliff;
+import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.okapi.asset.UnsupportedAssetFilterTypeException;
 import com.box.l10n.mojito.quartz.QuartzJobInfo;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
@@ -157,8 +158,17 @@ public class AssetWS {
 
     sourceAsset.setPollableTask(assetFuture.getPollableTask());
 
+    try {
+      logger.error("jackson-test-before");
+      objectMapper.writeValueAsStringUnchecked(sourceAsset);
+    } catch (Exception e) {
+      logger.error("jackson-test-exception", e);
+    }
+
     return sourceAsset;
   }
+
+  @Autowired ObjectMapper objectMapper;
 
   /**
    * Localizes the payload content with translations of a given {@link Asset}.

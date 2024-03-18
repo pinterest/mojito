@@ -4,6 +4,7 @@ import com.box.l10n.mojito.entity.AuditableEntity;
 import com.box.l10n.mojito.entity.BaseEntity;
 import com.box.l10n.mojito.rest.View;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
@@ -72,7 +73,8 @@ public class User extends AuditableEntity implements Serializable {
 
   @JsonIgnore
   @CreatedBy
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
   @JoinColumn(
       name = BaseEntity.CreatedByUserColumnName,
       foreignKey = @ForeignKey(name = "FK__USER__USER__ID"))

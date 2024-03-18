@@ -112,7 +112,7 @@ public class TMTextUnitVariant extends SettableAuditableEntity {
   private boolean includedInLocalizedFile = true;
 
   @CreatedBy
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = BaseEntity.CreatedByUserColumnName,
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_VARIANT__USER__ID"))

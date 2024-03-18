@@ -513,6 +513,10 @@ public class TextUnitSearcherTest extends ServiceTestBase {
     List<TextUnitDTO> search = textUnitSearcher.search(textUnitSearcherParameters);
     assertEquals(8, search.size());
 
+    search.stream()
+        .forEach(
+            t -> logger.warn("{} , {} , {} , {}", t.getName(), t.getSource(), t.getCreatedDate()));
+
     textUnitSearcherParameters.setTmTextUnitCreatedBefore(secondsBefore);
     search = textUnitSearcher.search(textUnitSearcherParameters);
     assertEquals(0, search.size());
@@ -522,6 +526,7 @@ public class TextUnitSearcherTest extends ServiceTestBase {
     search = textUnitSearcher.search(textUnitSearcherParameters);
     assertEquals(8, search.size());
 
+    // TODO(ja-lib) more odd behavior with dates? mysql fine, hsqldb no?
     textUnitSearcherParameters.setTmTextUnitCreatedAfter(secondsBefore);
     textUnitSearcherParameters.setTmTextUnitCreatedBefore(secondsAfter);
     search = textUnitSearcher.search(textUnitSearcherParameters);

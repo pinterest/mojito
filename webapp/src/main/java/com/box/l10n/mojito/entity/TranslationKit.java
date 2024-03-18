@@ -15,7 +15,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.SqlResultSetMapping;
 import jakarta.persistence.Table;
 import java.util.Set;
