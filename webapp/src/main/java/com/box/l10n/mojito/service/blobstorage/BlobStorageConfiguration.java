@@ -11,6 +11,7 @@ import com.box.l10n.mojito.service.blobstorage.redis.RedisBlobStorageConfigurati
 import com.box.l10n.mojito.service.blobstorage.s3.S3BlobStorage;
 import com.box.l10n.mojito.service.blobstorage.s3.S3BlobStorageConfigurationProperties;
 import java.time.Duration;
+import java.util.Set;
 
 import com.box.l10n.mojito.service.blobstorage.s3.S3WithRedisCacheBlobStorage;
 import nu.validator.htmlparser.annotation.Auto;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.quartz.JobDetailFactoryBean;
 import org.springframework.scheduling.quartz.SimpleTriggerFactoryBean;
@@ -141,9 +143,10 @@ public class BlobStorageConfiguration {
     RedisBlobStorageConfigurationProperties redisBlobStorageConfigurationProperties;
 
     @Bean
+    @Primary
     public S3WithRedisCacheBlobStorage s3WithRedisCacheBlobStorage(@Autowired S3BlobStorage s3BlobStorage, @Autowired RedisBlobStorage redisBlobStorage) {
       logger.info("Configure S3WithRedisCacheBlobStorage");
-      return new S3WithRedisCacheBlobStorage(s3BlobStorage, redisBlobStorage);
+      return new S3WithRedisCacheBlobStorage(s3BlobStorage, redisBlobStorage, redisBlobStorageConfigurationProperties.getCacheKeyPrefixes());
     }
 
     @Bean

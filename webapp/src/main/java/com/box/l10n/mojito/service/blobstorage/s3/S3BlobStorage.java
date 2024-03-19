@@ -70,7 +70,7 @@ public class S3BlobStorage implements BlobStorage {
   public Optional<byte[]> getBytes(String name) {
 
     byte[] bytes = null;
-
+    long startTime = System.currentTimeMillis();
     try (S3Object object =
         amazonS3.getObject(s3BlobStorageConfigurationProperties.getBucket(), getFullName(name))) {
       S3ObjectInputStream objectContent = object.getObjectContent();
@@ -83,6 +83,8 @@ public class S3BlobStorage implements BlobStorage {
       throw new UncheckedIOException(e);
     }
 
+    long endTime = System.currentTimeMillis();
+    System.out.println("S3 get took: " + (endTime - startTime) + "ms");
     return Optional.ofNullable(bytes);
   }
 

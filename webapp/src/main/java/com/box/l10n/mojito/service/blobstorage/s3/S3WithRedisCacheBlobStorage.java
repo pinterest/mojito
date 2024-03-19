@@ -26,11 +26,16 @@ public class S3WithRedisCacheBlobStorage implements BlobStorage {
     @Override
     public Optional<byte[]> getBytes(String name) {
         Optional<byte[]> bytes;
-        if (redisBlobStorage.exists(name)) {
+        long start = System.currentTimeMillis();
+        if (isACachedPrefix(name) && redisBlobStorage.exists(name)) {
             bytes = redisBlobStorage.getBytes(name);
+            long end = System.currentTimeMillis();
+            System.out.println("Redis get took: " + (end - start) + "ms");
         } else {
             Optional<byte[]> s3Bytes = s3BlobStorage.getBytes(name);
-            s3Bytes.ifPresent(b -> putRedisAsync(name, b, Retention.PERMANENT));
+            if (isACachedPrefix(name) && s3Bytes.isPresent()) {
+                s3Bytes.ifPresent(b -> putRedisAsync(name, b, Retention.PERMANENT));
+            }
             bytes = s3Bytes;
         }
 
@@ -39,19 +44,23 @@ public class S3WithRedisCacheBlobStorage implements BlobStorage {
 
     @Override
     public void put(String name, byte[] content, Retention retention) {
-        redisBlobStorage.put(name, content, retention);
+        if (isACachedPrefix(name)) {
+            redisBlobStorage.put(name, content, retention);
+        }
         putS3Async(name, content, retention);
     }
 
     @Override
     public void delete(String name) {
-        redisBlobStorage.delete(name);
-        s3BlobStorage.delete(name);
+        if (isACachedPrefix(name)) {
+            redisBlobStorage.delete(name);
+        }
+        deleteS3Async(name);
     }
 
     @Override
     public boolean exists(String name) {
-        return redisBlobStorage.exists(name) || s3BlobStorage.exists(name);
+        return (isACachedPrefix(name) && redisBlobStorage.exists(name)) || s3BlobStorage.exists(name);
     }
 
     @Async
@@ -62,5 +71,15 @@ public class S3WithRedisCacheBlobStorage implements BlobStorage {
     @Async
     public void putRedisAsync(String name, byte[] content, Retention retention) {
         redisBlobStorage.put(name, content, retention);
+    }
+
+    @Async
+    public void deleteS3Async(String name) {
+        s3BlobStorage.delete(name);
+    }
+
+    private boolean isACachedPrefix(String name) {
+        // if no cache key prefixes are configured then all prefixes are cached
+        return redisCacheKeyPrefixes.isEmpty() || redisCacheKeyPrefixes.stream().anyMatch(name::startsWith);
     }
 }

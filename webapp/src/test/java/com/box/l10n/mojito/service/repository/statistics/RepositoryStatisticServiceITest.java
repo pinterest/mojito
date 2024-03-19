@@ -23,7 +23,7 @@ public class RepositoryStatisticServiceITest extends ServiceTestBase {
   @Test
   public void updateStatistics() {
     System.out.println("update statistic");
-    repositoryStatisticService.updateStatistics(1L);
+    repositoryStatisticService.updateStatistics(2L);
   }
 
 }
