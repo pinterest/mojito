@@ -3,6 +3,7 @@ package com.box.l10n.mojito.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -27,20 +28,20 @@ import jakarta.persistence.Table;
     })
 public class AssetExtractionByBranch extends AuditableEntity {
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "asset_id",
       foreignKey = @ForeignKey(name = "FK__ASSET_EXTRACTION_BY_BRANCH__ASSET__ID"))
   private Asset asset;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "branch_id",
       foreignKey = @ForeignKey(name = "FK__ASSET_EXTRACTION_BY_BRANCH__BRANCH__ID"))
   private Branch branch;
 
   @JsonBackReference("assetExtractionByBranches")
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "asset_extraction_id",
       foreignKey = @ForeignKey(name = "FK__ASSET_EXTRACTION_BY_BRANCH__ASSET_EXTRACTION__ID"))

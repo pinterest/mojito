@@ -79,12 +79,12 @@ public class RepositoryStatistic extends AuditableEntity {
   //
   // Starting with Hibernate 6.0, the laziness of such associations is properly respected,
   // regardless of the fetch mechanism. Backwards compatibility can be achieved by specifying
-  // lazy="false" or @ManyToOne(fetch = EAGER)/@OneToOne(fetch = EAGER)/@OneToMany(fetch =
+  // lazy="false" or @ManyToOne(fetch = FetchType.LAZY)(fetch = EAGER)/@OneToOne(fetch = EAGER)/@OneToMany(fetch =
   // EAGER)/@ManyToMany(fetch = EAGER).
   private Set<RepositoryLocaleStatistic> repositoryLocaleStatistics = new HashSet<>();
 
   @CreatedBy
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = BaseEntity.CreatedByUserColumnName,
       foreignKey = @ForeignKey(name = "FK__REPOSITORY_STATISTIC__USER__ID"))

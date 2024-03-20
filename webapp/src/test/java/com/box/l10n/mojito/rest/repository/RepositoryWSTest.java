@@ -15,6 +15,7 @@ import com.box.l10n.mojito.rest.client.exception.ResourceNotUpdatedException;
 import com.box.l10n.mojito.rest.client.exception.RestClientException;
 import com.box.l10n.mojito.rest.entity.Locale;
 import com.box.l10n.mojito.rest.entity.RepositoryLocale;
+import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
 import com.box.l10n.mojito.service.locale.LocaleService;
 import com.box.l10n.mojito.service.repository.RepositoryNameAlreadyUsedException;
 import com.box.l10n.mojito.service.repository.RepositoryService;
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import org.hibernate.Hibernate;
 import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -189,6 +191,16 @@ public class RepositoryWSTest extends WSTestBase {
           "de-DE should have been deleted",
           "de-DE".equals(repositoryLocale.getLocale().getBcp47Tag()));
     }
+  }
+  @Test
+  public void rawPayload() throws RepositoryNameAlreadyUsedException {
+    // TODO(ja-lib) just testing the outputs - remove later, but actually it might be nice to have
+    // some similar way to test for regressions
+
+    Repository expectedRepository = wsTestDataFactory.createRepository(testIdWatcher);
+    final String actualRepository = repositoryClient.getRepositoryByIdAsString(
+        expectedRepository.getId());
+    logger.warn(actualRepository);
   }
 
   protected void assertRepositoriesAreEqual(

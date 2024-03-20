@@ -2,6 +2,7 @@ package com.box.l10n.mojito.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -31,7 +32,7 @@ import org.hibernate.annotations.BatchSize;
     })
 @BatchSize(size = 1000)
 public class ApplicationCache extends BaseEntity {
-  @ManyToOne(optional = false)
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(
       name = "cache_type_id",
       foreignKey = @ForeignKey(name = "FK__APPLICATION_CACHE__CACHE_TYPE_ID"))

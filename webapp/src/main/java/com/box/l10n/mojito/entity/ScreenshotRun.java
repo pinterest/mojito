@@ -32,7 +32,7 @@ import org.hibernate.annotations.BatchSize;
 @BatchSize(size = 1000)
 public class ScreenshotRun extends SettableAuditableEntity {
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "repository_id",
       foreignKey = @ForeignKey(name = "FK__SCREENSHOT_RUN__REPOSITORY__ID"),

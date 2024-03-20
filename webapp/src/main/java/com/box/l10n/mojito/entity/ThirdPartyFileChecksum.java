@@ -2,6 +2,7 @@ package com.box.l10n.mojito.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -20,7 +21,7 @@ import jakarta.persistence.Table;
     })
 public class ThirdPartyFileChecksum extends AuditableEntity {
 
-  @ManyToOne(optional = false)
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(
       name = "repository_id",
       foreignKey = @ForeignKey(name = "FK__TPS_FILE_CHECKSUM__REPO__ID"))
@@ -29,7 +30,7 @@ public class ThirdPartyFileChecksum extends AuditableEntity {
   @Column(name = "file_name")
   private String fileName;
 
-  @ManyToOne(optional = false)
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(
       name = "locale_id",
       foreignKey = @ForeignKey(name = "FK__TPS_FILE_CHECKSUM__LOCALE__ID"))

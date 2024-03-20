@@ -50,20 +50,20 @@ public class Screenshot extends SettableAuditableEntity {
 
   @JsonView(View.Screenshots.class)
   @Basic(optional = false)
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "screenshot_run_id",
       foreignKey = @ForeignKey(name = "FK__SCREENSHOT__SCREENSHOT_RUN__ID"))
   private ScreenshotRun screenshotRun;
 
   @JsonView(View.Screenshots.class)
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "branch_id", foreignKey = @ForeignKey(name = "FK__SCREENSHOT__BRANCH__ID"))
   private Branch branch;
 
   @JsonView(View.Screenshots.class)
   @Basic(optional = false)
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "locale_id", foreignKey = @ForeignKey(name = "FK__SCREENSHOT__LOCALE__ID"))
   private Locale locale;
 

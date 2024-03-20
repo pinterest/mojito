@@ -75,7 +75,7 @@ public class PollableTask extends AuditableEntity {
   private Set<PollableTask> subTasks;
 
   @JsonBackReference
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "parent_task_id",
       foreignKey = @ForeignKey(name = "FK__POLLABLE_TASK__POLLABLE_TASK__ID"))
@@ -86,7 +86,7 @@ public class PollableTask extends AuditableEntity {
   private Long timeout;
 
   @CreatedBy
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = BaseEntity.CreatedByUserColumnName,
       foreignKey = @ForeignKey(name = "FK__POLLABLE_TASK__USER__ID"))

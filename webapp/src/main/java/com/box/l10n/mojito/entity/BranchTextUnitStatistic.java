@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -27,7 +28,7 @@ import jakarta.persistence.Table;
     })
 public class BranchTextUnitStatistic extends BaseEntity {
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JsonBackReference
   @JoinColumn(
       name = "branch_statistic_id",
@@ -35,7 +36,7 @@ public class BranchTextUnitStatistic extends BaseEntity {
   private BranchStatistic branchStatistic;
 
   @JsonView(View.BranchStatistic.class)
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "tm_text_unit_id",
       foreignKey = @ForeignKey(name = "FK__BTU_STAT_BRANCH__TM_TEXT_UNIT__ID"))

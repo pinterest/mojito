@@ -48,20 +48,20 @@ public class AssetTextUnit extends AuditableEntity {
   private String comment;
 
   @JsonBackReference("assetTextUnits")
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "asset_extraction_id",
       foreignKey = @ForeignKey(name = "FK__ASSET_TEXT_UNIT__ASSET_EXTRACTION__ID"))
   private AssetExtraction assetExtraction;
 
   @CreatedBy
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = BaseEntity.CreatedByUserColumnName,
       foreignKey = @ForeignKey(name = "FK__ASSET_TEXT_UNIT__USER__ID"))
   private User createdByUser;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "plural_form_id",
       foreignKey = @ForeignKey(name = "FK__ASSET_TEXT_UNIT__PLURAL_FORM__ID"))
@@ -80,7 +80,7 @@ public class AssetTextUnit extends AuditableEntity {
   @Column(name = "do_not_translate", nullable = false)
   private boolean doNotTranslate = false;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "branch_id",
       foreignKey = @ForeignKey(name = "FK__ASSET_TEXT_UNIT__BRANCH__ID"))

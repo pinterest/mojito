@@ -74,7 +74,6 @@ public class User extends AuditableEntity implements Serializable {
   @JsonIgnore
   @CreatedBy
   @ManyToOne(fetch = FetchType.LAZY)
-  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
   @JoinColumn(
       name = BaseEntity.CreatedByUserColumnName,
       foreignKey = @ForeignKey(name = "FK__USER__USER__ID"))

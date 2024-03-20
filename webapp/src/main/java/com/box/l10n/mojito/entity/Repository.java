@@ -46,8 +46,7 @@ public class Repository extends AuditableEntity {
   private DropExporterType dropExporterType;
 
   @JsonView({View.RepositorySummary.class, View.BranchStatistic.class})
-  @ManyToOne
-  @Basic(optional = false)
+  @ManyToOne(fetch = FetchType.EAGER, optional = false) // TODO(ja-lib) explicit eager for ut to pass
   @JoinColumn(
       name = "source_locale_id",
       foreignKey = @ForeignKey(name = "FK__REPOSITORY__LOCALE__ID"))
@@ -59,8 +58,7 @@ public class Repository extends AuditableEntity {
   Set<RepositoryLocale> repositoryLocales = new HashSet<>();
 
   @JsonView(View.RepositorySummary.class)
-  @OneToOne
-  @Basic(optional = false)
+  @OneToOne(optional = false)
   @JoinColumn(
       name = "repository_statistic_id",
       foreignKey = @ForeignKey(name = "FK__REPOSITORY__REPOSITORY_STATISTIC__ID"))
@@ -75,14 +73,13 @@ public class Repository extends AuditableEntity {
   @NotAudited
   Set<Branch> branches = new HashSet<>();
 
-  @OneToOne
-  @Basic(optional = false)
+  @ManyToOne(optional = false)
   @JoinColumn(name = "tm_id", foreignKey = @ForeignKey(name = "FK__REPOSITORY__TM__ID"))
   @JsonView(View.Repository.class)
   TM tm;
 
   @CreatedBy
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = BaseEntity.CreatedByUserColumnName,
       foreignKey = @ForeignKey(name = "FK__REPOSITORY__USER__ID"))

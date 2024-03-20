@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -32,7 +33,7 @@ import org.hibernate.annotations.BatchSize;
     })
 @BatchSize(size = 1000)
 public class PullRunTextUnitVariant extends SettableAuditableEntity {
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JsonBackReference
   @JoinColumn(
       name = "pull_run_asset_id",
@@ -40,13 +41,13 @@ public class PullRunTextUnitVariant extends SettableAuditableEntity {
   private PullRunAsset pullRunAsset;
 
   @Basic(optional = false)
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "locale_id",
       foreignKey = @ForeignKey(name = "FK__PULL_RUN_TEXT_UNIT_VARIANT__LOCALE__ID"))
   private Locale locale;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JsonManagedReference
   @JoinColumn(
       name = "tm_text_unit_variant_id",

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -25,7 +26,7 @@ import org.hibernate.annotations.BatchSize;
     indexes = {@Index(name = "UK__PULL_RUN__NAME", columnList = "name", unique = true)})
 @BatchSize(size = 1000)
 public class PullRun extends SettableAuditableEntity {
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "repository_id",
       foreignKey = @ForeignKey(name = "FK__PULL_RUN__REPOSITORY_ID"))

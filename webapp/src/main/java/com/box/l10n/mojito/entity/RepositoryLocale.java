@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -31,7 +32,7 @@ import org.hibernate.envers.RelationTargetAuditMode;
     })
 public class RepositoryLocale extends BaseEntity {
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JsonBackReference("repositoryLocales")
   @JoinColumn(
       name = "repository_id",
@@ -40,7 +41,7 @@ public class RepositoryLocale extends BaseEntity {
   private Repository repository;
 
   @JsonView(View.LocaleSummary.class)
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.EAGER)  // TODO(ja-lib) explicit eager for ut to pass
   @JoinColumn(
       name = "locale_id",
       foreignKey = @ForeignKey(name = "FK__REPOSITORY_LOCALE__LOCALE__ID"),
@@ -83,7 +84,7 @@ public class RepositoryLocale extends BaseEntity {
    * <code>
    */
   @JsonView(View.RepositorySummary.class)
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "parent_locale",
       foreignKey = @ForeignKey(name = "FK__REPOSITORY_LOCALE__PARENT_LOCALE__ID"))

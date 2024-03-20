@@ -30,7 +30,7 @@ import org.springframework.data.annotation.CreatedBy;
 public class AssetExtraction extends AuditableEntity {
 
   @JsonBackReference("asset")
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "asset_id", foreignKey = @ForeignKey(name = "FK__ASSET_EXTRACTION__ASSET__ID"))
   private Asset asset;
 
@@ -40,7 +40,7 @@ public class AssetExtraction extends AuditableEntity {
    * there)
    */
   @JsonBackReference("assetContent")
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "asset_content_id",
       foreignKey = @ForeignKey(name = "FK__ASSET_EXTRACTION__ASSET_CONTENT__ID"))

@@ -5,6 +5,7 @@ import com.box.l10n.mojito.service.tm.search.TextUnitSearcher;
 import jakarta.persistence.ColumnResult;
 import jakarta.persistence.ConstructorResult;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -48,20 +49,20 @@ import org.hibernate.annotations.NamedNativeQuery;
         resultSetMapping = "AssetTextUnitToTMTextUnit.getExactMatches"))
 public class AssetTextUnitToTMTextUnit extends BaseEntity {
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "tm_text_unit_id",
       foreignKey = @ForeignKey(name = "FK__ASSET_TEXT_UNIT_TO_TM_TEXT_UNIT__TM_TEXT_UNIT__ID"))
   private TMTextUnit tmTextUnit;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "asset_text_unit_id",
       foreignKey = @ForeignKey(name = "FK__ASSET_TEXT_UNIT_TO_TM_TEXT_UNIT__ASSET_TEXT_UNIT__ID"))
   private AssetTextUnit assetTextUnit;
 
   /** Denormalize to able to do search on used/unused text unit, see {@link TextUnitSearcher} */
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "asset_extraction_id",
       foreignKey = @ForeignKey(name = "FK__ASSET_TEXT_UNIT_TO_TM_TEXT_UNIT__ASSET_EXTRACTION__ID"))

@@ -28,7 +28,7 @@ import org.springframework.data.annotation.CreatedBy;
 @BatchSize(size = 1000)
 public class Asset extends AuditableEntity {
 
-  @ManyToOne(optional = false)
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "repository_id", foreignKey = @ForeignKey(name = "FK__ASSET__REPOSITORY__ID"))
   @JsonView(View.AssetSummary.class)
   private Repository repository;

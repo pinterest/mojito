@@ -4,6 +4,7 @@ import com.box.l10n.mojito.rest.View;
 import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -26,7 +27,7 @@ import java.time.ZonedDateTime;
 public class BranchNotification extends BaseEntity {
 
   @JsonView(View.BranchStatistic.class)
-  @ManyToOne(optional = false)
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(
       name = "branch_id",
       foreignKey = @ForeignKey(name = "FK__BRANCH_NOTIFICATION__BRANCH__ID"))

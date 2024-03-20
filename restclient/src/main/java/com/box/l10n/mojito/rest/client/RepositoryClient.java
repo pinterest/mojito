@@ -52,6 +52,14 @@ public class RepositoryClient extends BaseClient {
         getBasePathForResource(repositoryId), Repository.class);
   }
 
+
+  // TODO(ja-lib) remove just testing
+  public String getRepositoryByIdAsString(Long repositoryId) {
+    logger.debug("Getting repository by id = [{}]", repositoryId);
+    return authenticatedRestTemplate.getForObject(
+        getBasePathForResource(repositoryId), String.class);
+  }
+
   /**
    * Get a list of {@link Repository}s matching the given parameters
    *

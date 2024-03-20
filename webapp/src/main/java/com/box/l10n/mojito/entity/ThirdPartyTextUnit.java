@@ -2,6 +2,7 @@ package com.box.l10n.mojito.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -23,7 +24,7 @@ public class ThirdPartyTextUnit extends AuditableEntity {
   @Column(name = "third_party_id")
   String thirdPartyId;
 
-  @ManyToOne(optional = false)
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(
       name = "asset_id",
       foreignKey = @ForeignKey(name = "FK__THIRD_PARTY_TEXT_UNIT__ASSET__ID"))

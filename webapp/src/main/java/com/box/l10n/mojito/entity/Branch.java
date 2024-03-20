@@ -33,7 +33,7 @@ import org.springframework.data.annotation.CreatedBy;
     })
 public class Branch extends SettableAuditableEntity {
 
-  @ManyToOne(optional = false)
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "repository_id", foreignKey = @ForeignKey(name = "FK__BRANCH__REPOSITORY__ID"))
   @JsonView(View.BranchSummary.class)
   Repository repository;
@@ -44,7 +44,7 @@ public class Branch extends SettableAuditableEntity {
 
   @JsonView(View.BranchSummary.class)
   @CreatedBy
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = BaseEntity.CreatedByUserColumnName,
       foreignKey = @ForeignKey(name = "FK__BRANCH__USER__ID"))

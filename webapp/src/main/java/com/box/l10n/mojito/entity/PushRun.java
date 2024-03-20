@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -30,7 +31,7 @@ import org.hibernate.annotations.BatchSize;
 public class PushRun extends SettableAuditableEntity {
 
   @JsonIgnore
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "repository_id",
       foreignKey = @ForeignKey(name = "FK__PUSH_RUN__REPOSITORY_ID"))
