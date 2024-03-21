@@ -30,7 +30,7 @@ import org.springframework.data.annotation.CreatedBy;
 public class AssetExtraction extends AuditableEntity {
 
   @JsonBackReference("asset")
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER)  // TODO(ja-lib) needed for tests
   @JoinColumn(name = "asset_id", foreignKey = @ForeignKey(name = "FK__ASSET_EXTRACTION__ASSET__ID"))
   private Asset asset;
 

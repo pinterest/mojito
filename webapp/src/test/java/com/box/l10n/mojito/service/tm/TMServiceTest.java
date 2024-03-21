@@ -1388,6 +1388,7 @@ public class TMServiceTest extends ServiceTestBase {
     exportAssetAsXLIFF = removeIdsAndDatesFromJson(exportAssetAsXLIFF);
     logger.debug(exportAssetAsXLIFF);
 
+    // TODO(ja-lib) rel. 6 - user will be null if using LAZY, and maybe it is fine
     assertEquals(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             + "<xliff version=\"1.2\" xmlns=\"urn:oasis:names:tc:xliff:document:1.2\" xmlns:okp=\"okapi-framework:xliff-extensions\">\n"

@@ -63,14 +63,11 @@ public class TMTextUnit extends SettableAuditableEntity {
 
   @Column(name = "word_count")
   private Integer wordCount;
-
-  @Basic(optional = false)
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "tm_id", foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT__TM__ID"))
   private TM tm;
 
-  @Basic(optional = false)
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests - rel:1
   @JoinColumn(
       name = "asset_id",
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT__ASSET__ID"),

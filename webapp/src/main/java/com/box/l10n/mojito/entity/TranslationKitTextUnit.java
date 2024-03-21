@@ -22,7 +22,7 @@ public class TranslationKitTextUnit extends AuditableEntity {
       foreignKey = @ForeignKey(name = "FK__TRANSLATION_KIT_TEXT_UNIT__TRANSLATION_KIT__ID"))
   private TranslationKit translationKit;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests - rel. 7
   @JoinColumn(
       name = "tm_text_unit_id",
       foreignKey = @ForeignKey(name = "FK__TRANSLATION_KIT_TEXT_UNIT__TM_TEXT_UNIT__ID"))

@@ -24,11 +24,11 @@ import java.util.Set;
 @Table(name = "asset_content")
 public class AssetContent extends AuditableEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests
   @JoinColumn(name = "asset_id", foreignKey = @ForeignKey(name = "FK__ASSET_CONTENT__ASSET__ID"))
   private Asset asset;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests
   @JoinColumn(name = "branch_id", foreignKey = @ForeignKey(name = "FK__ASSET_CONTENT__BRANCH__ID"))
   private Branch branch;
 

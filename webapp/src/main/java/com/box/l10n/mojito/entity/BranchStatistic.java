@@ -19,7 +19,7 @@ import java.util.Set;
 @NamedEntityGraph(
     name = "BranchStatisticGraph",
     attributeNodes = {
-      @NamedAttributeNode(value = "branch", subgraph = "branchGraph"),
+      @NamedAttributeNode(value = "branch", subgraph = "branchGraph"), // TODO(ja-lib) why is that specified if using EntityGraphType.LOAD?
       @NamedAttributeNode("branchTextUnitStatistics")
     },
     subgraphs =
@@ -29,6 +29,25 @@ import java.util.Set;
               @NamedAttributeNode(value = "screenshots"),
               @NamedAttributeNode(value = "repository"),
             }))
+@NamedEntityGraph(
+    name = "BranchStatisticGraphTextUnits", // TODO(ja-lib) this to make test pass but it could be merge with previous graph?
+    attributeNodes = {
+        @NamedAttributeNode(value = "branch", subgraph = "branchGraph"),
+        @NamedAttributeNode(value = "branchTextUnitStatistics",  subgraph = "branchTextUnitStatisticsGraph")
+    },
+    subgraphs =
+        {@NamedSubgraph(
+        name = "branchGraph",
+        attributeNodes = {
+            @NamedAttributeNode(value = "screenshots"),
+            @NamedAttributeNode(value = "repository"),
+        }),
+    @NamedSubgraph(
+        name = "branchTextUnitStatisticsGraph",
+        attributeNodes = {
+            @NamedAttributeNode(value = "tmTextUnit"),
+        })})
+
 @NamedEntityGraph(
     name = "BranchStatisticGraphWithoutTextUnits",
     attributeNodes = {

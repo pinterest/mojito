@@ -328,6 +328,7 @@ public class BranchStatisticServiceTest extends ServiceTestBase {
   @Transactional
   BranchStatistic getByBranchWithBranchTextUnitStatistics(Branch branch) {
     BranchStatistic byBranch = branchStatisticRepository.findByBranch(branch);
+    // TODO(ja-lib) interesting ...
     byBranch.getBranchTextUnitStatistics().forEach(t -> logger.trace("force initialize"));
     return byBranch;
   }

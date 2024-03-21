@@ -73,7 +73,7 @@ public class Repository extends AuditableEntity {
   @NotAudited
   Set<Branch> branches = new HashSet<>();
 
-  @ManyToOne(optional = false)
+  @ManyToOne(optional = false, fetch = FetchType.EAGER) // TODO(ja-lib) i would expect that to be eager
   @JoinColumn(name = "tm_id", foreignKey = @ForeignKey(name = "FK__REPOSITORY__TM__ID"))
   @JsonView(View.Repository.class)
   TM tm;

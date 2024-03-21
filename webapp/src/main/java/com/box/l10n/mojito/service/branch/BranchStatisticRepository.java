@@ -31,5 +31,6 @@ public interface BranchStatisticRepository
       """)
   List<BranchStatistic> findAllGreaterThanById(List<Long> branchStatisticIds, Long totalCountLte);
 
+  @EntityGraph(value = "BranchStatisticGraphTextUnits")
   BranchStatistic findByBranch(Branch branch);
 }

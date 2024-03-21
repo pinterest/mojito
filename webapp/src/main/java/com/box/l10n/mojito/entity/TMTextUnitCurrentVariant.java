@@ -36,37 +36,32 @@ public class TMTextUnitCurrentVariant extends AuditableEntity {
   // This field has been added to be able to rollback a TM to a previous state.
   // Without this field, it would not be possible to filter on a TM, as Envers does not support
   // joins
-  @Basic(optional = false)
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(
       name = "tm_id",
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_CURRENT_VARIANT__TM__ID"))
   private TM tm;
 
   /** Denormalization to optimize lookup by asset id, with no joins */
-  @Basic(optional = false)
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(
       name = "asset_id",
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_CURRENT_VARIANT__ASSET__ID"))
   private Asset asset;
 
-  @Basic(optional = false)
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(
       name = "tm_text_unit_id",
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_CURRENT_VARIANT__TM_TEXT_UNIT__ID"))
   private TMTextUnit tmTextUnit;
 
-  @Basic(optional = false)
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests - rel:3
   @JoinColumn(
       name = "tm_text_unit_variant_id",
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_CURRENT_VARIANT__TM_TEXT_UNIT_VARIANT__ID"))
   private TMTextUnitVariant tmTextUnitVariant;
 
-  @Basic(optional = false)
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(
       name = "locale_id",
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_CURRENT_VARIANT__LOCALE__ID"))

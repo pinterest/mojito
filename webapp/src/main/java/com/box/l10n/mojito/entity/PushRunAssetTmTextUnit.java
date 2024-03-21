@@ -36,7 +36,7 @@ public class PushRunAssetTmTextUnit extends SettableAuditableEntity {
       foreignKey = @ForeignKey(name = "FK__PUSH_RUN_ASSET_TM_TEXT_UNIT__PUSH_RUN_ASSET_ID"))
   private PushRunAsset pushRunAsset;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests
   @JsonBackReference
   @JoinColumn(
       name = "tm_text_unit_id",

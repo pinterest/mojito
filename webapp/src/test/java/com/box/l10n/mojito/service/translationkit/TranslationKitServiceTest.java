@@ -87,6 +87,8 @@ public class TranslationKitServiceTest extends ServiceTestBase {
     logger.debug("Check the translation kit entities");
     TranslationKit translationKit =
         translationKitRepository.findById(translationKitAsXLIFF.getTranslationKitId()).orElse(null);
+
+    // TODO(ja-lib) rel. 7 - changing the relationship seems to be only for testing
     List<TranslationKitTextUnit> findByTranslationKitId =
         translationKitTextUnitRepository.findByTranslationKit(translationKit);
 

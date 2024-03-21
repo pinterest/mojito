@@ -84,7 +84,7 @@ public class TranslationKit extends AuditableEntity {
   private Locale locale;
 
   @JsonBackReference
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests
   @JoinColumn(name = "drop_id", foreignKey = @ForeignKey(name = "FK__TRANSLATION_KIT__DROP__ID"))
   private Drop drop;
 

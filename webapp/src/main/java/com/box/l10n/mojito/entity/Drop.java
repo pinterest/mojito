@@ -43,7 +43,6 @@ public class Drop extends AuditableEntity {
   String dropExporterConfig;
 
   @OneToOne
-  @Basic(optional = true)
   @JoinColumn(
       name = "import_pollable_task_id",
       foreignKey = @ForeignKey(name = "FK__DROP__IMPORT_POLLABLE_TASK__ID"))
@@ -51,7 +50,6 @@ public class Drop extends AuditableEntity {
   PollableTask importPollableTask;
 
   @OneToOne
-  @Basic(optional = true)
   @JoinColumn(
       name = "export_pollable_task_id",
       foreignKey = @ForeignKey(name = "FK__DROP__EXPORT_POLLABLE_TASK__ID"))
@@ -62,7 +60,7 @@ public class Drop extends AuditableEntity {
   @JsonView(View.DropSummary.class)
   private Set<TranslationKit> translationKits;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests
   @JoinColumn(name = "repository_id", foreignKey = @ForeignKey(name = "FK__DROP__REPOSITORY__ID"))
   @JsonView(View.DropSummary.class)
   private Repository repository;

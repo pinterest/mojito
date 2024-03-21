@@ -189,6 +189,7 @@ public class AssetExtractionService {
       throws UnsupportedAssetFilterTypeException, AssetExtractionConflictException {
 
     logger.info("Start processing asset content, id: {}", assetContentId);
+    // TODO(ja-lib) or change find one to fetch the graph
     AssetContent assetContent = assetContentService.findOne(assetContentId);
     Asset asset = getUndeletedAsset(assetContent.getAsset());
 

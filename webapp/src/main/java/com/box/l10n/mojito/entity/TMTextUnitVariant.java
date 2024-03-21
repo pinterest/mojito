@@ -66,15 +66,13 @@ public class TMTextUnitVariant extends SettableAuditableEntity {
   @JsonView(View.TranslationHistorySummary.class)
   private String content;
 
-  @Basic(optional = false)
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER, optional = false) // TODO(ja-lib) needed for tests rel. 4
   @JoinColumn(
       name = "tm_text_unit_id",
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_VARIANT__TM_TEXT_UNIT__ID"))
   private TMTextUnit tmTextUnit;
 
-  @Basic(optional = false)
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(
       name = "locale_id",
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_VARIANT__LOCALE__ID"))

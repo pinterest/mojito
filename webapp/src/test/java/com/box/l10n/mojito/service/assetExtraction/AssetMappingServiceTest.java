@@ -1051,10 +1051,11 @@ public class AssetMappingServiceTest extends ServiceTestBase {
 
   private Iterator<AssetTextUnitToTMTextUnit> getAssetTextUnitToTMTextUnit(
       AssetExtraction assetExtraction) {
+    // TODO(ja-lib) instead of changing the relationship just for the test, will fetch here
     TypedQuery<AssetTextUnitToTMTextUnit> query =
         entityManager
             .createQuery(
-                "select m from AssetTextUnitToTMTextUnit m where m.assetTextUnit.assetExtraction.id = :assetExtractionId order by m.tmTextUnit.id asc",
+                "select m from AssetTextUnitToTMTextUnit m join fetch m.tmTextUnit join fetch m.assetTextUnit where m.assetTextUnit.assetExtraction.id = :assetExtractionId order by m.tmTextUnit.id asc",
                 AssetTextUnitToTMTextUnit.class)
             .setParameter("assetExtractionId", assetExtraction.getId());
     List<AssetTextUnitToTMTextUnit> assetTextUnitToTMTextUnits = query.getResultList();
