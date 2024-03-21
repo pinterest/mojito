@@ -101,7 +101,9 @@ public class IntegrityCheckStep extends BasePipelineStep {
       }
 
       if (tmTextUnit != null) {
-        asset = tmTextUnit.getAsset(); // TODO(ja-lib) this could be changed to a query to avoid EAGER relationship - rel:1
+        asset =
+            tmTextUnit.getAsset(); // TODO(ja-lib) this could be changed to a query to avoid EAGER
+        // relationship - rel:1
         TextContainer target = textUnit.getTarget(targetLocale);
 
         logger.debug("Check integrity of text unit");

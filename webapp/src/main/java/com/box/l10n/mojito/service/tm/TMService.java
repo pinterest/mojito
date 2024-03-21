@@ -603,7 +603,8 @@ public class TMService {
       tmTextUnitCurrentVariant.setTmTextUnitVariant(tmTextUnitVariant);
     } else {
       logger.debug("There is a current text unit variant, check if an update is needed");
-      TMTextUnitVariant currentTmTextUnitVariant = tmTextUnitCurrentVariant.getTmTextUnitVariant(); // TODO(ja-lib) rel. 3
+      TMTextUnitVariant currentTmTextUnitVariant =
+          tmTextUnitCurrentVariant.getTmTextUnitVariant(); // TODO(ja-lib) rel. 3
       boolean updateNeeded =
           isUpdateNeededForTmTextUnitVariant(
               currentTmTextUnitVariant.getStatus(),

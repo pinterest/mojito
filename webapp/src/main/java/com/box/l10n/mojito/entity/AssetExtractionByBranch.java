@@ -41,7 +41,7 @@ public class AssetExtractionByBranch extends AuditableEntity {
   private Branch branch;
 
   @JsonBackReference("assetExtractionByBranches")
-  @ManyToOne(fetch = FetchType.EAGER)  // TODO(ja-lib) needed for tests
+  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests
   @JoinColumn(
       name = "asset_extraction_id",
       foreignKey = @ForeignKey(name = "FK__ASSET_EXTRACTION_BY_BRANCH__ASSET_EXTRACTION__ID"))

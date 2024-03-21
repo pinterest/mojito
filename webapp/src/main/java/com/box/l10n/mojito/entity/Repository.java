@@ -46,7 +46,9 @@ public class Repository extends AuditableEntity {
   private DropExporterType dropExporterType;
 
   @JsonView({View.RepositorySummary.class, View.BranchStatistic.class})
-  @ManyToOne(fetch = FetchType.EAGER, optional = false) // TODO(ja-lib) explicit eager for ut to pass
+  @ManyToOne(
+      fetch = FetchType.EAGER,
+      optional = false) // TODO(ja-lib) explicit eager for ut to pass
   @JoinColumn(
       name = "source_locale_id",
       foreignKey = @ForeignKey(name = "FK__REPOSITORY__LOCALE__ID"))
@@ -73,7 +75,9 @@ public class Repository extends AuditableEntity {
   @NotAudited
   Set<Branch> branches = new HashSet<>();
 
-  @ManyToOne(optional = false, fetch = FetchType.EAGER) // TODO(ja-lib) i would expect that to be eager
+  @ManyToOne(
+      optional = false,
+      fetch = FetchType.EAGER) // TODO(ja-lib) i would expect that to be eager
   @JoinColumn(name = "tm_id", foreignKey = @ForeignKey(name = "FK__REPOSITORY__TM__ID"))
   @JsonView(View.Repository.class)
   TM tm;

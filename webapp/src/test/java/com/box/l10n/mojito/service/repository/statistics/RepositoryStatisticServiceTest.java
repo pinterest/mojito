@@ -69,7 +69,8 @@ public class RepositoryStatisticServiceTest extends ServiceTestBase {
         repositoryLocaleStatisticRepository.findByRepositoryStatisticId(
             repositoryStatistic.getId())) {
       repositoryLocaleStatistics.put(
-          repositoryLocaleStatistic.getLocale().getBcp47Tag(), repositoryLocaleStatistic); // TODO(ja-lib) rel. 5
+          repositoryLocaleStatistic.getLocale().getBcp47Tag(),
+          repositoryLocaleStatistic); // TODO(ja-lib) rel. 5
     }
 
     checkTextUnitCounts(repositoryStatistic);
