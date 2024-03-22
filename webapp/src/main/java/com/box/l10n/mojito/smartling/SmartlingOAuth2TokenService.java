@@ -39,18 +39,20 @@ public class SmartlingOAuth2TokenService {
   }
 
   public String getAccessToken() {
-    if (smartlingOAuthAccessToken == null || isRefreshRequired()) {
+    if (isRefreshRequired()) {
       smartlingOAuthAccessToken = requestAccessToken();
     }
     return smartlingOAuthAccessToken.getAccessToken();
   }
 
   private boolean isTokenExpired() {
-    return smartlingOAuthAccessToken.getTokenExpiryTime() <= System.currentTimeMillis() + 3000;
+    return smartlingOAuthAccessToken == null
+        || smartlingOAuthAccessToken.getTokenExpiryTime() <= System.currentTimeMillis() + 3000;
   }
 
   private boolean isRefreshTokenExpired() {
-    return smartlingOAuthAccessToken.getRefreshExpiryTime() <= System.currentTimeMillis() + 3000;
+    return smartlingOAuthAccessToken == null
+        || smartlingOAuthAccessToken.getRefreshExpiryTime() <= System.currentTimeMillis() + 3000;
   }
 
   private boolean isRefreshRequired() {
@@ -59,7 +61,7 @@ public class SmartlingOAuth2TokenService {
   }
 
   private synchronized SmartlingOAuthAccessResponse.TokenData requestAccessToken() {
-    if (smartlingOAuthAccessToken == null || isRefreshTokenExpired()) {
+    if (isRefreshTokenExpired()) {
       requestNewAccessToken();
     } else if (isTokenExpired()) {
       refreshAccessToken();
