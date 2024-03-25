@@ -103,6 +103,8 @@ public class BranchStatisticWS {
 
     // 2. Hydrate BranchStatistic entities for JSON response using eager loading to avoid N+1
     // queries
+
+    // TODO(ja-lib) while it was working for the unit test, a lot missing for the frontend to work
     List<BranchStatistic> branchStatistics =
         branchStatisticRepository.findByIdIn(branchStatisticIdsWithLessThan, pageable.getSort());
 
