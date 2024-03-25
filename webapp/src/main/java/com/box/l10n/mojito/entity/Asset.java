@@ -26,23 +26,34 @@ import org.springframework.data.annotation.CreatedBy;
           unique = true),
     })
 @BatchSize(size = 1000)
-@NamedEntityGraph(name = "Asset.legacy", attributeNodes = {
-    @NamedAttributeNode(value = "repository", subgraph = "Asset.legacy.repository"),
-    // TODO(ja-lib) i'm not sure that works
-    @NamedAttributeNode(value = "lastSuccessfulAssetExtraction", subgraph = "Asset.legacy.lastSuccessfulAssetExtraction"),
-    @NamedAttributeNode("createdByUser")
-}, subgraphs = {
-    @NamedSubgraph(name = "Asset.legacy.lastSuccessfulAssetExtraction", attributeNodes = {
-        }),
-    @NamedSubgraph(name = "Asset.legacy.repository", attributeNodes = {
-        @NamedAttributeNode(value = "repositoryLocales", subgraph = "Asset.legacy.repository.repositoryLocales"),
-    }),
-    @NamedSubgraph(name = "Asset.legacy.repository.repositoryLocales", attributeNodes = {
-        @NamedAttributeNode("locale"),
-        @NamedAttributeNode("parentLocale"),
-    }),
-
-})
+@NamedEntityGraph(
+    name = "Asset.legacy",
+    attributeNodes = {
+      @NamedAttributeNode(value = "repository", subgraph = "Asset.legacy.repository"),
+      // TODO(ja-lib) i'm not sure that works
+      @NamedAttributeNode(
+          value = "lastSuccessfulAssetExtraction",
+          subgraph = "Asset.legacy.lastSuccessfulAssetExtraction"),
+      @NamedAttributeNode("createdByUser")
+    },
+    subgraphs = {
+      @NamedSubgraph(
+          name = "Asset.legacy.lastSuccessfulAssetExtraction",
+          attributeNodes = {}),
+      @NamedSubgraph(
+          name = "Asset.legacy.repository",
+          attributeNodes = {
+            @NamedAttributeNode(
+                value = "repositoryLocales",
+                subgraph = "Asset.legacy.repository.repositoryLocales"),
+          }),
+      @NamedSubgraph(
+          name = "Asset.legacy.repository.repositoryLocales",
+          attributeNodes = {
+            @NamedAttributeNode("locale"),
+            @NamedAttributeNode("parentLocale"),
+          }),
+    })
 public class Asset extends AuditableEntity {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false) // TODO(ja-lib) needed for tests

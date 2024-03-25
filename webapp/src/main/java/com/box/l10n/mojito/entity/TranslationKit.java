@@ -56,9 +56,9 @@ import org.springframework.data.annotation.CreatedBy;
         resultSetMapping = "TranslationKit.exportedAndCurrentTuvs"))
 @Entity
 @Table(name = "translation_kit")
-@NamedEntityGraph(name = "TranslationKit.legacy", attributeNodes = {
-    @NamedAttributeNode("drop")
-})
+@NamedEntityGraph(
+    name = "TranslationKit.legacy",
+    attributeNodes = {@NamedAttributeNode("drop")})
 public class TranslationKit extends AuditableEntity {
 
   /**

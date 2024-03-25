@@ -10,7 +10,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedAttributeNode;
 import jakarta.persistence.NamedEntityGraph;
-import jakarta.persistence.NamedSubgraph;
 import jakarta.persistence.Table;
 
 /**
@@ -29,11 +28,13 @@ import jakarta.persistence.Table;
           columnList = "asset_id, branch_id",
           unique = true)
     })
-@NamedEntityGraph(name = "AssetExtractionByBranch.legacy", attributeNodes = {
-    @NamedAttributeNode(value = "assetExtraction"),
-//    @NamedAttributeNode(value = "assetExtraction"),
-//    @NamedAttributeNode(value = "assetExtraction")
-})
+@NamedEntityGraph(
+    name = "AssetExtractionByBranch.legacy",
+    attributeNodes = {
+      @NamedAttributeNode(value = "assetExtraction"),
+      //    @NamedAttributeNode(value = "assetExtraction"),
+      //    @NamedAttributeNode(value = "assetExtraction")
+    })
 public class AssetExtractionByBranch extends AuditableEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)

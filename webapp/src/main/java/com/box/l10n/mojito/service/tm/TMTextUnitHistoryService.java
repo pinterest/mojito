@@ -2,13 +2,10 @@
 package com.box.l10n.mojito.service.tm;
 
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
-import jakarta.persistence.NamedAttributeNode;
-import jakarta.persistence.NamedEntityGraph;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Service;
 
 /**
@@ -20,7 +17,6 @@ public class TMTextUnitHistoryService {
   static Logger logger = LoggerFactory.getLogger(TMTextUnitHistoryService.class);
 
   @Autowired TMTextUnitVariantRepository tmTextUnitVariantRepository;
-
 
   public List<TMTextUnitVariant> findHistory(Long tmTextUnitId, Long localeId) {
     return tmTextUnitVariantRepository.findAllByTmTextUnit_IdAndLocale_IdOrderByCreatedDateDesc(

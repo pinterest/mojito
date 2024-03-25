@@ -30,9 +30,9 @@ import org.springframework.data.annotation.CreatedBy;
           unique = true),
       @Index(name = "I__ASSET_TEXT_UNIT__BRANCH_ID", columnList = "branch_id")
     })
-@NamedEntityGraph(name = "AssetTextUnit.legacy", attributeNodes = {
-    @NamedAttributeNode("usages")
-})
+@NamedEntityGraph(
+    name = "AssetTextUnit.legacy",
+    attributeNodes = {@NamedAttributeNode("usages")})
 public class AssetTextUnit extends AuditableEntity {
 
   @Column(name = "name", length = 4000)

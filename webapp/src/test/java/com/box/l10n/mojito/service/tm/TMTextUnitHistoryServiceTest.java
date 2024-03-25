@@ -135,10 +135,10 @@ public class TMTextUnitHistoryServiceTest extends ServiceTestBase {
     logger.debug("tmtextunit: {}", tmTextUnit);
 
     addCurrentTMTextUnitVariant(
-            tmTextUnit.getId(),
-            frFRLocale.getId(),
-            "FR[this is the content]",
-            "0a30a359b20fd4095fc17fb586e8db4d");
+        tmTextUnit.getId(),
+        frFRLocale.getId(),
+        "FR[this is the content]",
+        "0a30a359b20fd4095fc17fb586e8db4d");
 
     // then get the history of it without adding any variants
     List<TMTextUnitVariant> history =

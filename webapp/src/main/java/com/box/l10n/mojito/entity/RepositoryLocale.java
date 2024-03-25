@@ -28,17 +28,23 @@ import org.hibernate.envers.RelationTargetAuditMode;
 @Table(
     name = "repository_locale",
     indexes = {
-        @Index(
-            name = "UK__REPOSITORY_LOCALE__REPOSITORY_ID__LOCALE_ID",
-            columnList = "repository_id, locale_id",
-            unique = true)
+      @Index(
+          name = "UK__REPOSITORY_LOCALE__REPOSITORY_ID__LOCALE_ID",
+          columnList = "repository_id, locale_id",
+          unique = true)
     })
-@NamedEntityGraph(name = "RepositoryLocale.legacy", attributeNodes = {
-    @NamedAttributeNode("repository"),
-    @NamedAttributeNode("locale"),
-    @NamedAttributeNode(value = "parentLocale", subgraph = "RepositoryLocale.legacy.parentLocale")},
-    subgraphs = {@NamedSubgraph(name = "RepositoryLocale.legacy.parentLocale", attributeNodes = {
-        @NamedAttributeNode("locale"), @NamedAttributeNode("parentLocale")})})
+@NamedEntityGraph(
+    name = "RepositoryLocale.legacy",
+    attributeNodes = {
+      @NamedAttributeNode("repository"),
+      @NamedAttributeNode("locale"),
+      @NamedAttributeNode(value = "parentLocale", subgraph = "RepositoryLocale.legacy.parentLocale")
+    },
+    subgraphs = {
+      @NamedSubgraph(
+          name = "RepositoryLocale.legacy.parentLocale",
+          attributeNodes = {@NamedAttributeNode("locale"), @NamedAttributeNode("parentLocale")})
+    })
 public class RepositoryLocale extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)

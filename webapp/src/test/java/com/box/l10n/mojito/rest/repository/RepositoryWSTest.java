@@ -50,8 +50,7 @@ public class RepositoryWSTest extends WSTestBase {
 
   @Autowired LocaleService localeService;
 
-  @Autowired
-  RepositoryRepository repositoryRepository;
+  @Autowired RepositoryRepository repositoryRepository;
 
   @Test
   public void testGetRepositoryByName()

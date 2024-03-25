@@ -33,13 +33,18 @@ import org.springframework.data.annotation.CreatedBy;
           columnList = "tm_text_unit_id, locale_id",
           unique = true)
     })
-@NamedEntityGraph(name = "TMTextUnitCurrentVariant.legacy", attributeNodes = {
-    @NamedAttributeNode(value = "tmTextUnitVariant", subgraph = "TMTextUnitCurrentVariant.legacy"),
-}, subgraphs = {
-    @NamedSubgraph(name = "TMTextUnitCurrentVariant.legacy", attributeNodes = {
-        @NamedAttributeNode("tmTextUnitVariantComments")
+@NamedEntityGraph(
+    name = "TMTextUnitCurrentVariant.legacy",
+    attributeNodes = {
+      @NamedAttributeNode(
+          value = "tmTextUnitVariant",
+          subgraph = "TMTextUnitCurrentVariant.legacy"),
+    },
+    subgraphs = {
+      @NamedSubgraph(
+          name = "TMTextUnitCurrentVariant.legacy",
+          attributeNodes = {@NamedAttributeNode("tmTextUnitVariantComments")})
     })
-})
 public class TMTextUnitCurrentVariant extends AuditableEntity {
 
   // This field has been added to be able to rollback a TM to a previous state.

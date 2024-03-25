@@ -2,7 +2,6 @@ package com.box.l10n.mojito.service.tm;
 
 import com.box.l10n.mojito.entity.TMTextUnitStatistic;
 import com.google.common.annotations.VisibleForTesting;
-import jakarta.persistence.NamedEntityGraph;
 import java.util.List;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.EntityGraph.EntityGraphType;

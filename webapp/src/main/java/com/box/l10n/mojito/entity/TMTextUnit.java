@@ -41,9 +41,9 @@ import org.springframework.data.annotation.CreatedBy;
       @Index(name = "I__TM_TEXT_UNIT__PLURAL_FORM_OTHER", columnList = "plural_form_other")
     })
 @BatchSize(size = 1000)
-@NamedEntityGraph(name = "TMTextUnit.legacy", attributeNodes = {
-    @NamedAttributeNode("asset")
-})
+@NamedEntityGraph(
+    name = "TMTextUnit.legacy",
+    attributeNodes = {@NamedAttributeNode("asset")})
 public class TMTextUnit extends SettableAuditableEntity {
 
   @JsonView(View.IdAndName.class)

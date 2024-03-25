@@ -25,13 +25,19 @@ import java.util.Set;
  */
 @Entity
 @Table(name = "asset_content")
-@NamedEntityGraph(name = "AssetContent.legacy", attributeNodes = {
-    @NamedAttributeNode(value = "asset", subgraph = "Asset.legacy"),
-    @NamedAttributeNode("branch"),
-//    @NamedAttributeNode("assetExtractions")
-}, subgraphs = {
-    @NamedSubgraph(name = "Asset.legacy", attributeNodes = @NamedAttributeNode(value = "repository", subgraph = "Repository.legacy")),
-})  // TODO (ja-lib) needed for tests
+@NamedEntityGraph(
+    name = "AssetContent.legacy",
+    attributeNodes = {
+      @NamedAttributeNode(value = "asset", subgraph = "Asset.legacy"),
+      @NamedAttributeNode("branch"),
+      //    @NamedAttributeNode("assetExtractions")
+    },
+    subgraphs = {
+      @NamedSubgraph(
+          name = "Asset.legacy",
+          attributeNodes =
+              @NamedAttributeNode(value = "repository", subgraph = "Repository.legacy")),
+    }) // TODO (ja-lib) needed for tests
 public class AssetContent extends AuditableEntity {
 
   @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests

@@ -1,8 +1,6 @@
 package com.box.l10n.mojito.service.asset;
 
 import com.box.l10n.mojito.entity.Asset;
-import com.box.l10n.mojito.entity.Repository;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.springframework.data.jpa.repository.EntityGraph;

@@ -7,7 +7,6 @@ import com.google.common.annotations.VisibleForTesting;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.EntityGraph.EntityGraphType;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -28,7 +27,6 @@ public interface ThirdPartyTextUnitRepository
   ThirdPartyTextUnit findByTmTextUnit(TMTextUnit tmTextUnit);
 
   List<ThirdPartyTextUnit> findByTmTextUnitIdIn(Collection<Long> TmTextUnitIdList);
-
 
   @VisibleForTesting
   @Override

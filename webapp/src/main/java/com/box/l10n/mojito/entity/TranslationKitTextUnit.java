@@ -16,9 +16,9 @@ import org.springframework.data.annotation.CreatedBy;
  */
 @Entity
 @Table(name = "translation_kit_text_unit")
-@NamedEntityGraph(name = "TranslationKitTextUnit.legacy", attributeNodes =  {
-  @NamedAttributeNode("tmTextUnit")
-})
+@NamedEntityGraph(
+    name = "TranslationKitTextUnit.legacy",
+    attributeNodes = {@NamedAttributeNode("tmTextUnit")})
 public class TranslationKitTextUnit extends AuditableEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)

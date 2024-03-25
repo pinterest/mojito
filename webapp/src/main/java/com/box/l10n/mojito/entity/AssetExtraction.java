@@ -30,14 +30,19 @@ import org.springframework.data.annotation.CreatedBy;
  */
 @Entity
 @Table(name = "asset_extraction")
-@NamedEntityGraph(name = "AssetExtraction.legacy", attributeNodes = {
-  @NamedAttributeNode(value = "asset", subgraph = "AssetExtraction.legacy.asset"),
-  @NamedAttributeNode("assetContent")
-}, subgraphs = {
-    @NamedSubgraph(name = "AssetExtraction.legacy.asset", attributeNodes = {
-        @NamedAttributeNode(value = "repository", subgraph = "Repository.legacy"),
+@NamedEntityGraph(
+    name = "AssetExtraction.legacy",
+    attributeNodes = {
+      @NamedAttributeNode(value = "asset", subgraph = "AssetExtraction.legacy.asset"),
+      @NamedAttributeNode("assetContent")
+    },
+    subgraphs = {
+      @NamedSubgraph(
+          name = "AssetExtraction.legacy.asset",
+          attributeNodes = {
+            @NamedAttributeNode(value = "repository", subgraph = "Repository.legacy"),
+          })
     })
-})
 public class AssetExtraction extends AuditableEntity {
 
   @JsonBackReference("asset")

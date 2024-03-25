@@ -39,9 +39,9 @@ import org.hibernate.annotations.BatchSize;
           columnList = "name, locale_id, screenshot_run_id",
           unique = true)
     })
-@NamedEntityGraph(name = "Screenshot.legacy", attributeNodes = {
-    @NamedAttributeNode("screenshotTextUnits")
-})
+@NamedEntityGraph(
+    name = "Screenshot.legacy",
+    attributeNodes = {@NamedAttributeNode("screenshotTextUnits")})
 public class Screenshot extends SettableAuditableEntity {
 
   public enum Status {

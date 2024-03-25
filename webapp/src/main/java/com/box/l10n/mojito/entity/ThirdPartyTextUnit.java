@@ -21,10 +21,9 @@ import jakarta.persistence.Table;
           columnList = "tm_text_unit_id",
           unique = true)
     })
-@NamedEntityGraph(name = "ThirdPartyTextUnit.legacy", attributeNodes = {
-    @NamedAttributeNode("asset"),
-    @NamedAttributeNode("tmTextUnit")
-})
+@NamedEntityGraph(
+    name = "ThirdPartyTextUnit.legacy",
+    attributeNodes = {@NamedAttributeNode("asset"), @NamedAttributeNode("tmTextUnit")})
 public class ThirdPartyTextUnit extends AuditableEntity {
 
   @Column(name = "third_party_id")

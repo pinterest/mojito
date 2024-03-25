@@ -419,7 +419,6 @@ public class DropService {
     logger.debug("Canceling Drop: {}", dropId);
     Drop drop = getDropInTX(dropId);
 
-
     if (isDropBeingProcessed(drop)) {
       throw new CancelDropException(
           "A Drop [" + dropId + "] cannot be canceled while it is not at rest");
@@ -440,12 +439,11 @@ public class DropService {
     return pollableFutureTaskResult;
   }
 
-
   @Transactional
   Drop getDropInTX(Long dropId) {
     final Drop drop = dropRepository.findById(dropId).orElse(null);
     if (drop.getExportPollableTask() != null) {
-      //TODO(ja-lib) fetch recurse ...  might want better...
+      // TODO(ja-lib) fetch recurse ...  might want better...
       pollableTaskService.getAllPollableTasksWithError(drop.getExportPollableTask());
     }
     if (drop.getImportPollableTask() != null) {

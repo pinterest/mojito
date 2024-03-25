@@ -3,7 +3,6 @@ package com.box.l10n.mojito.entity;
 import com.box.l10n.mojito.entity.security.user.User;
 import com.box.l10n.mojito.rest.View;
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.persistence.*;
@@ -16,11 +15,10 @@ import org.springframework.data.annotation.CreatedBy;
  * Entity to manage branches of an {@link Asset}.
  *
  * <p>The branch name can be {@code null}. This will be used when no branch is provided to the
- * system. Note {@code null} complicates query when searching by name and
- * {@link com.box.l10n.mojito.service.branch.BranchService#findByNameAndRepository(String,
- * Repository)} should be used instead of
- * {@link com.box.l10n.mojito.service.branch.BranchRepository#findByNameAndRepository(String,
- * Repository)}
+ * system. Note {@code null} complicates query when searching by name and {@link
+ * com.box.l10n.mojito.service.branch.BranchService#findByNameAndRepository(String, Repository)}
+ * should be used instead of {@link
+ * com.box.l10n.mojito.service.branch.BranchRepository#findByNameAndRepository(String, Repository)}
  *
  * @author jeanaurambault
  */
@@ -28,17 +26,18 @@ import org.springframework.data.annotation.CreatedBy;
 @Table(
     name = "branch",
     indexes = {
-        @Index(
-            name = "UK__BRANCH__REPOSITORY_ID__PATH",
-            columnList = "repository_id, name",
-            unique = true),
-        @Index(name = "I__BRANCH__DELETED", columnList = "deleted")
+      @Index(
+          name = "UK__BRANCH__REPOSITORY_ID__PATH",
+          columnList = "repository_id, name",
+          unique = true),
+      @Index(name = "I__BRANCH__DELETED", columnList = "deleted")
     })
-
-@NamedEntityGraph(name = "Branch.legacy", attributeNodes = {
-    @NamedAttributeNode(value = "notifiers"),
-    @NamedAttributeNode(value = "screenshots"),
-})
+@NamedEntityGraph(
+    name = "Branch.legacy",
+    attributeNodes = {
+      @NamedAttributeNode(value = "notifiers"),
+      @NamedAttributeNode(value = "screenshots"),
+    })
 public class Branch extends SettableAuditableEntity {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -66,7 +65,8 @@ public class Branch extends SettableAuditableEntity {
   @JsonView(View.BranchSummary.class)
   @OneToMany(mappedBy = "branch", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
   @JsonDeserialize(as = LinkedHashSet.class)
-  //@OrderBy("id") // TODO(ja-lib) we don't have error on that one? there was an issue on orderby for
+  // @OrderBy("id") // TODO(ja-lib) we don't have error on that one? there was an issue on orderby
+  // for
   // RepositoryStatistic
   Set<Screenshot> screenshots = new HashSet<>();
 

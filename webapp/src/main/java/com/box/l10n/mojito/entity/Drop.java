@@ -30,15 +30,18 @@ import org.springframework.data.annotation.CreatedBy;
  */
 @Entity
 @Table(name = "`drop`")
-@NamedEntityGraph(name = "Drop.legacy", attributeNodes = {
-    @NamedAttributeNode("repository"),
-    @NamedAttributeNode(value = "importPollableTask", subgraph = "Drop.legacy.subTask"),
-    @NamedAttributeNode(value = "exportPollableTask", subgraph = "Drop.legacy.subTask")
-}, subgraphs = {
-    @NamedSubgraph(name = "Drop.legacy.subTask", attributeNodes = {
-        @NamedAttributeNode("subTasks")
+@NamedEntityGraph(
+    name = "Drop.legacy",
+    attributeNodes = {
+      @NamedAttributeNode("repository"),
+      @NamedAttributeNode(value = "importPollableTask", subgraph = "Drop.legacy.subTask"),
+      @NamedAttributeNode(value = "exportPollableTask", subgraph = "Drop.legacy.subTask")
+    },
+    subgraphs = {
+      @NamedSubgraph(
+          name = "Drop.legacy.subTask",
+          attributeNodes = {@NamedAttributeNode("subTasks")})
     })
-})
 public class Drop extends AuditableEntity {
 
   @Column(name = "drop_exporter_type")

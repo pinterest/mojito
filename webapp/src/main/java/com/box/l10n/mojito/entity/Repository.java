@@ -4,7 +4,6 @@ import com.box.l10n.mojito.entity.security.user.User;
 import com.box.l10n.mojito.rest.View;
 import com.box.l10n.mojito.service.drop.exporter.DropExporterType;
 import com.box.l10n.mojito.service.repository.RepositoryService;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.*;
@@ -25,22 +24,30 @@ import org.springframework.data.annotation.CreatedBy;
 @Table(
     name = "repository",
     indexes = {@Index(name = "UK__REPOSITORY__NAME", columnList = "name", unique = true)})
-@NamedEntityGraph(name = "Repository.legacy", attributeNodes = {
-    @NamedAttributeNode("sourceLocale"),
-    @NamedAttributeNode(value = "repositoryLocales", subgraph = "Repository.legacy.repositoryLocales"),
-    @NamedAttributeNode(value = "repositoryStatistic", subgraph = "Repository.legacy.repositoryStatistic"),
-    @NamedAttributeNode("assetIntegrityCheckers"),
-    @NamedAttributeNode("branches"),
-    @NamedAttributeNode("tm"),
-    @NamedAttributeNode("createdByUser"),
-    @NamedAttributeNode("manualScreenshotRun"),
-}, subgraphs = {
-    @NamedSubgraph(name = "Repository.legacy.repositoryLocales", attributeNodes = {
-        @NamedAttributeNode("locale"),
-        @NamedAttributeNode("parentLocale")
-    }),
-    @NamedSubgraph(name = "Repository.legacy.repositoryStatistic", attributeNodes = @NamedAttributeNode("repositoryLocaleStatistics")),
-})
+@NamedEntityGraph(
+    name = "Repository.legacy",
+    attributeNodes = {
+      @NamedAttributeNode("sourceLocale"),
+      @NamedAttributeNode(
+          value = "repositoryLocales",
+          subgraph = "Repository.legacy.repositoryLocales"),
+      @NamedAttributeNode(
+          value = "repositoryStatistic",
+          subgraph = "Repository.legacy.repositoryStatistic"),
+      @NamedAttributeNode("assetIntegrityCheckers"),
+      @NamedAttributeNode("branches"),
+      @NamedAttributeNode("tm"),
+      @NamedAttributeNode("createdByUser"),
+      @NamedAttributeNode("manualScreenshotRun"),
+    },
+    subgraphs = {
+      @NamedSubgraph(
+          name = "Repository.legacy.repositoryLocales",
+          attributeNodes = {@NamedAttributeNode("locale"), @NamedAttributeNode("parentLocale")}),
+      @NamedSubgraph(
+          name = "Repository.legacy.repositoryStatistic",
+          attributeNodes = @NamedAttributeNode("repositoryLocaleStatistics")),
+    })
 public class Repository extends AuditableEntity {
 
   public static final int NAME_MAX_LENGTH = 255;
@@ -60,9 +67,7 @@ public class Repository extends AuditableEntity {
   private DropExporterType dropExporterType;
 
   @JsonView({View.RepositorySummary.class, View.BranchStatistic.class})
-  @ManyToOne(
-      fetch = FetchType.LAZY,
-      optional = false)
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(
       name = "source_locale_id",
       foreignKey = @ForeignKey(name = "FK__REPOSITORY__LOCALE__ID"))
@@ -90,9 +95,7 @@ public class Repository extends AuditableEntity {
   @JsonManagedReference
   Set<Branch> branches = new HashSet<>();
 
-  @ManyToOne(
-      optional = false,
-      fetch = FetchType.LAZY)
+  @ManyToOne(optional = false, fetch = FetchType.LAZY)
   @JoinColumn(name = "tm_id", foreignKey = @ForeignKey(name = "FK__REPOSITORY__TM__ID"))
   @JsonView(View.Repository.class)
   TM tm;

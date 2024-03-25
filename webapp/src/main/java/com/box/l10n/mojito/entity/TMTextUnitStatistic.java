@@ -27,16 +27,23 @@ import org.hibernate.annotations.BatchSize;
           unique = true),
     })
 @BatchSize(size = 1000)
-@NamedEntityGraph(name = "TMTextUnitStatistic.legacy", attributeNodes = {
-    @NamedAttributeNode(value = "tmTextUnit", subgraph = "TMTextUnitStatistic.legacy.tmTextUnit")
-}, subgraphs = {
-    @NamedSubgraph(name = "TMTextUnitStatistic.legacy.tmTextUnit", attributeNodes = {
-        @NamedAttributeNode(value = "asset", subgraph = "TMTextUnitStatistic.legacy.tmTextUnit.asset")
-    }),
-    @NamedSubgraph(name = "TMTextUnitStatistic.legacy.tmTextUnit.asset", attributeNodes = {
-        @NamedAttributeNode(value = "repository")
+@NamedEntityGraph(
+    name = "TMTextUnitStatistic.legacy",
+    attributeNodes = {
+      @NamedAttributeNode(value = "tmTextUnit", subgraph = "TMTextUnitStatistic.legacy.tmTextUnit")
+    },
+    subgraphs = {
+      @NamedSubgraph(
+          name = "TMTextUnitStatistic.legacy.tmTextUnit",
+          attributeNodes = {
+            @NamedAttributeNode(
+                value = "asset",
+                subgraph = "TMTextUnitStatistic.legacy.tmTextUnit.asset")
+          }),
+      @NamedSubgraph(
+          name = "TMTextUnitStatistic.legacy.tmTextUnit.asset",
+          attributeNodes = {@NamedAttributeNode(value = "repository")})
     })
-})
 public class TMTextUnitStatistic extends AuditableEntity {
 
   @OneToOne(fetch = FetchType.LAZY, optional = false)

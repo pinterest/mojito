@@ -20,7 +20,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedAttributeNode;
 import jakarta.persistence.NamedEntityGraph;
-import jakarta.persistence.NamedSubgraph;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
@@ -41,10 +40,12 @@ import org.springframework.data.annotation.CreatedBy;
       @Index(name = "I__POLLABLE_TASK__FINISHED_DATE", columnList = "finished_date")
     })
 @BatchSize(size = 1000)
-@NamedEntityGraph(name = "PollableTask.legacy", attributeNodes = {
-    @NamedAttributeNode(value = "subTasks"),
-    @NamedAttributeNode(value = "parentTask")
-})
+@NamedEntityGraph(
+    name = "PollableTask.legacy",
+    attributeNodes = {
+      @NamedAttributeNode(value = "subTasks"),
+      @NamedAttributeNode(value = "parentTask")
+    })
 public class PollableTask extends AuditableEntity {
 
   /**

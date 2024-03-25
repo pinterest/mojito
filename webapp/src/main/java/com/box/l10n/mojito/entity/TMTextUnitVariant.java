@@ -30,12 +30,14 @@ import org.springframework.data.annotation.CreatedBy;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Entity
 @Table(name = "tm_text_unit_variant")
-@NamedEntityGraph(name = "TMTextUnitVariant.legacy", attributeNodes = {
-    @NamedAttributeNode("tmTextUnit"),
-    @NamedAttributeNode("locale"),
-    @NamedAttributeNode("createdByUser"),
-    @NamedAttributeNode("tmTextUnitVariantComments")
-})
+@NamedEntityGraph(
+    name = "TMTextUnitVariant.legacy",
+    attributeNodes = {
+      @NamedAttributeNode("tmTextUnit"),
+      @NamedAttributeNode("locale"),
+      @NamedAttributeNode("createdByUser"),
+      @NamedAttributeNode("tmTextUnitVariantComments")
+    })
 public class TMTextUnitVariant extends SettableAuditableEntity {
 
   /**

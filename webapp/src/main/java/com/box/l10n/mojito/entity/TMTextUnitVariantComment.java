@@ -30,14 +30,21 @@ import org.springframework.data.annotation.CreatedBy;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Entity
 @Table(name = "tm_text_unit_variant_comment")
-@NamedEntityGraph(name = "TMTextUnitVariantComment.legacy", attributeNodes =  {
-    @NamedAttributeNode(value = "createdByUser", subgraph = "TMTextUnitVariantComment.legacy.createdByUser")
-}, subgraphs = {
-    @NamedSubgraph(name = "TMTextUnitVariantComment.legacy.createdByUser", attributeNodes = {
-        @NamedAttributeNode(value = "authorities"),
-//        @NamedAttributeNode(value = "createdByUser", subgraph = "")
+@NamedEntityGraph(
+    name = "TMTextUnitVariantComment.legacy",
+    attributeNodes = {
+      @NamedAttributeNode(
+          value = "createdByUser",
+          subgraph = "TMTextUnitVariantComment.legacy.createdByUser")
+    },
+    subgraphs = {
+      @NamedSubgraph(
+          name = "TMTextUnitVariantComment.legacy.createdByUser",
+          attributeNodes = {
+            @NamedAttributeNode(value = "authorities"),
+            //        @NamedAttributeNode(value = "createdByUser", subgraph = "")
+          })
     })
-})
 public class TMTextUnitVariantComment extends AuditableEntity {
 
   /** Types of comment */

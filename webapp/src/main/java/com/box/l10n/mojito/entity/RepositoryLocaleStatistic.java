@@ -28,9 +28,9 @@ import jakarta.persistence.Table;
           columnList = "repository_statistic_id, locale_id",
           unique = true)
     })
-@NamedEntityGraph(name = "RepositoryLocaleStatistic.legacy", attributeNodes = {
-    @NamedAttributeNode("locale")
-})
+@NamedEntityGraph(
+    name = "RepositoryLocaleStatistic.legacy",
+    attributeNodes = {@NamedAttributeNode("locale")})
 public class RepositoryLocaleStatistic extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
