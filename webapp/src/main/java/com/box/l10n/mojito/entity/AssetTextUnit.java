@@ -32,7 +32,10 @@ import org.springframework.data.annotation.CreatedBy;
     })
 @NamedEntityGraph(
     name = "AssetTextUnit.legacy",
-    attributeNodes = {@NamedAttributeNode("usages")})
+    attributeNodes = {
+      @NamedAttributeNode("usages"),
+      @NamedAttributeNode("branch") // TODO(ja-lib) test pass without this, but it is suspicious
+    })
 public class AssetTextUnit extends AuditableEntity {
 
   @Column(name = "name", length = 4000)

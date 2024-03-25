@@ -191,7 +191,8 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-compiler-plugin</artifactId>
                         <configuration>
-                            <debug>false</debug>
+                            <!-- TODO(ja-lib) can this be causing the warning? -->
+<!--                            <debug>false</debug>-->
                             <optimize>true</optimize>
                         </configuration>
                     </plugin>

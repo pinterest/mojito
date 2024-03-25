@@ -63,6 +63,7 @@ public interface AssetTextUnitRepository
 
   List<AssetTextUnit> findByAssetExtractionIdAndName(Long assetExtractionId, String name);
 
+  @EntityGraph(value = "AssetTextUnit.legacy", type = EntityGraphType.FETCH)
   List<AssetTextUnit> findByIdIn(List<Long> assetTextUnitIds);
 
   void deleteByIdIn(List<Long> assetTextUnitIds);
