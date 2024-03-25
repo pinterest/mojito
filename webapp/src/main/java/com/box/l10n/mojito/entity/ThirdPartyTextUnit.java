@@ -7,6 +7,8 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
@@ -19,6 +21,10 @@ import jakarta.persistence.Table;
           columnList = "tm_text_unit_id",
           unique = true)
     })
+@NamedEntityGraph(name = "ThirdPartyTextUnit.legacy", attributeNodes = {
+    @NamedAttributeNode("asset"),
+    @NamedAttributeNode("tmTextUnit")
+})
 public class ThirdPartyTextUnit extends AuditableEntity {
 
   @Column(name = "third_party_id")
@@ -30,7 +36,7 @@ public class ThirdPartyTextUnit extends AuditableEntity {
       foreignKey = @ForeignKey(name = "FK__THIRD_PARTY_TEXT_UNIT__ASSET__ID"))
   Asset asset;
 
-  @OneToOne
+  @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "tm_text_unit_id",
       foreignKey = @ForeignKey(name = "FK__THIRD_PARTY_TEXT_UNIT__TM_TEXT_UNIT__ID"))

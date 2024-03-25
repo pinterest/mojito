@@ -240,13 +240,14 @@ public class RepositoryWS {
       @RequestParam(value = "translated", required = false) Boolean translated,
       @RequestParam(value = "createdBefore", required = false) ZonedDateTime createdBefore)
       throws RepositoryWithIdNotFoundException {
-    ResponseEntity<Repository> result;
+
     Repository repository = repositoryRepository.findById(repositoryId).orElse(null);
 
     if (repository == null) {
       throw new RepositoryWithIdNotFoundException(repositoryId);
     }
 
+    // TODO(ja-lib) findAll eager fetch relationships?
     List<Branch> branches =
         branchRepository.findAll(
             where(ifParamNotNull(nameEquals(branchName)))

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -25,7 +26,7 @@ import org.hibernate.annotations.BatchSize;
     })
 @BatchSize(size = 1000)
 public class CommitToPushRun extends SettableAuditableEntity {
-  @OneToOne
+  @OneToOne(fetch = FetchType.LAZY)
   @JsonBackReference
   @JoinColumn(
       name = "commit_id",
@@ -34,7 +35,7 @@ public class CommitToPushRun extends SettableAuditableEntity {
 
   @JsonView(View.CommitDetailed.class)
   @JsonManagedReference
-  @OneToOne
+  @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "push_run_id",
       foreignKey = @ForeignKey(name = "FK__COMMIT_TO_PUSH_RUN__PUSH_RUN_ID"))

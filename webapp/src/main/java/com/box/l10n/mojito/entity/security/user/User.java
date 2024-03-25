@@ -16,6 +16,8 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.io.Serializable;
@@ -29,6 +31,9 @@ import org.springframework.data.annotation.CreatedBy;
     name = "user",
     indexes = {@Index(name = "I__USERS__USERNAME", columnList = "username", unique = true)})
 @BatchSize(size = 1000)
+@NamedEntityGraph(name = "User.legacy", attributeNodes = {
+    @NamedAttributeNode("authorities")
+})
 public class User extends AuditableEntity implements Serializable {
 
   public static final int NAME_MAX_LENGTH = 255;
@@ -67,7 +72,7 @@ public class User extends AuditableEntity implements Serializable {
   Boolean partiallyCreated = false;
 
   @JsonManagedReference
-  @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
   Set<Authority> authorities = new HashSet<>();
 
   @JsonIgnore

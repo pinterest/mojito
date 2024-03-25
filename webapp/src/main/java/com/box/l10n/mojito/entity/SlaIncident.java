@@ -21,7 +21,7 @@ public class SlaIncident extends AuditableEntity {
   @Column(name = "closed_date")
   private ZonedDateTime closedDate;
 
-  @ManyToMany(fetch = FetchType.EAGER)
+  @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(
       name = "sla_incident_repositories",
       joinColumns = {@JoinColumn(name = "sla_incident_id")},

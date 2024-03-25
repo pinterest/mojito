@@ -8,6 +8,9 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.NamedSubgraph;
 import jakarta.persistence.Table;
 
 /**
@@ -26,6 +29,11 @@ import jakarta.persistence.Table;
           columnList = "asset_id, branch_id",
           unique = true)
     })
+@NamedEntityGraph(name = "AssetExtractionByBranch.legacy", attributeNodes = {
+    @NamedAttributeNode(value = "assetExtraction"),
+//    @NamedAttributeNode(value = "assetExtraction"),
+//    @NamedAttributeNode(value = "assetExtraction")
+})
 public class AssetExtractionByBranch extends AuditableEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -41,7 +49,7 @@ public class AssetExtractionByBranch extends AuditableEntity {
   private Branch branch;
 
   @JsonBackReference("assetExtractionByBranches")
-  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests
+  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests
   @JoinColumn(
       name = "asset_extraction_id",
       foreignKey = @ForeignKey(name = "FK__ASSET_EXTRACTION_BY_BRANCH__ASSET_EXTRACTION__ID"))

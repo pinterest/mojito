@@ -12,6 +12,9 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.NamedSubgraph;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.ZonedDateTime;
@@ -28,6 +31,17 @@ import org.hibernate.annotations.BatchSize;
     name = "push_run",
     indexes = {@Index(name = "UK__PUSH_RUN__NAME", columnList = "name", unique = true)})
 @BatchSize(size = 1000)
+@NamedEntityGraph(name = "PushRun.legacy", attributeNodes = {
+    @NamedAttributeNode(value = "pushRunAssets", subgraph = "PushRun.legacy.pushRunAssets"),
+}, subgraphs = {
+    @NamedSubgraph(name = "PushRun.legacy.pushRunAssets", attributeNodes = {
+        @NamedAttributeNode(value = "pushRunAssetTmTextUnits", subgraph = "PushRun.legacy.pushRunAssetTmTextUnits")
+    }),
+    @NamedSubgraph(name = "PushRun.legacy.pushRunAssetTmTextUnits", attributeNodes = {
+        @NamedAttributeNode(value = "tmTextUnit")
+    })
+})
+
 public class PushRun extends SettableAuditableEntity {
 
   @JsonIgnore

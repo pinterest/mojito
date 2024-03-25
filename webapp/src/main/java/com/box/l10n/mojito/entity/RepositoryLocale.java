@@ -11,6 +11,9 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.NamedSubgraph;
 import jakarta.persistence.Table;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
@@ -25,11 +28,17 @@ import org.hibernate.envers.RelationTargetAuditMode;
 @Table(
     name = "repository_locale",
     indexes = {
-      @Index(
-          name = "UK__REPOSITORY_LOCALE__REPOSITORY_ID__LOCALE_ID",
-          columnList = "repository_id, locale_id",
-          unique = true)
+        @Index(
+            name = "UK__REPOSITORY_LOCALE__REPOSITORY_ID__LOCALE_ID",
+            columnList = "repository_id, locale_id",
+            unique = true)
     })
+@NamedEntityGraph(name = "RepositoryLocale.legacy", attributeNodes = {
+    @NamedAttributeNode("repository"),
+    @NamedAttributeNode("locale"),
+    @NamedAttributeNode(value = "parentLocale", subgraph = "RepositoryLocale.legacy.parentLocale")},
+    subgraphs = {@NamedSubgraph(name = "RepositoryLocale.legacy.parentLocale", attributeNodes = {
+        @NamedAttributeNode("locale"), @NamedAttributeNode("parentLocale")})})
 public class RepositoryLocale extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -41,7 +50,7 @@ public class RepositoryLocale extends BaseEntity {
   private Repository repository;
 
   @JsonView(View.LocaleSummary.class)
-  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) explicit eager for ut to pass
+  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) explicit eager for ut to pass
   @JoinColumn(
       name = "locale_id",
       foreignKey = @ForeignKey(name = "FK__REPOSITORY_LOCALE__LOCALE__ID"),
@@ -84,7 +93,7 @@ public class RepositoryLocale extends BaseEntity {
    * <code>
    */
   @JsonView(View.RepositorySummary.class)
-  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests - rel:2
+  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests - rel:2
   @JoinColumn(
       name = "parent_locale",
       foreignKey = @ForeignKey(name = "FK__REPOSITORY_LOCALE__PARENT_LOCALE__ID"))

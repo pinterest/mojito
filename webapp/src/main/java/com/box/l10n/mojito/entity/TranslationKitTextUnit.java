@@ -6,6 +6,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.Table;
 import org.springframework.data.annotation.CreatedBy;
 
@@ -14,6 +16,9 @@ import org.springframework.data.annotation.CreatedBy;
  */
 @Entity
 @Table(name = "translation_kit_text_unit")
+@NamedEntityGraph(name = "TranslationKitTextUnit.legacy", attributeNodes =  {
+  @NamedAttributeNode("tmTextUnit")
+})
 public class TranslationKitTextUnit extends AuditableEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -22,7 +27,7 @@ public class TranslationKitTextUnit extends AuditableEntity {
       foreignKey = @ForeignKey(name = "FK__TRANSLATION_KIT_TEXT_UNIT__TRANSLATION_KIT__ID"))
   private TranslationKit translationKit;
 
-  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests - rel. 7
+  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests - rel. 7
   @JoinColumn(
       name = "tm_text_unit_id",
       foreignKey = @ForeignKey(name = "FK__TRANSLATION_KIT_TEXT_UNIT__TM_TEXT_UNIT__ID"))

@@ -70,7 +70,7 @@ import java.util.Set;
 public class BranchStatistic extends AuditableEntity {
 
   @JsonView(View.BranchStatistic.class)
-  @OneToOne(optional = false)
+  @OneToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(
       name = "branch_id",
       foreignKey = @ForeignKey(name = "FK__BRANCH_STATISTIC__BRANCH__ID"))

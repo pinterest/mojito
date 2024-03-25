@@ -62,7 +62,7 @@ public class TMTextUnitVariantCommentService {
     TMTextUnitVariantComment tmTextUnitVariantComment = new TMTextUnitVariantComment();
 
     tmTextUnitVariantComment.setTmTextUnitVariant(
-        tmTextUnitVariantRepository.getOne(tmTextUnitVariantId));
+        tmTextUnitVariantRepository.getOne(tmTextUnitVariantId)); // TODO(ja-lib) review
     tmTextUnitVariantComment.setType(type);
     tmTextUnitVariantComment.setSeverity(severity);
     tmTextUnitVariantComment.setContent(content);

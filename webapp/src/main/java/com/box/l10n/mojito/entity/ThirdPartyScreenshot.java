@@ -2,6 +2,7 @@ package com.box.l10n.mojito.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -22,7 +23,7 @@ public class ThirdPartyScreenshot extends AuditableEntity {
   @Column(name = "third_party_id")
   String thirdPartyId;
 
-  @OneToOne
+  @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "screenshot_id",
       foreignKey = @ForeignKey(name = "FK__THIRD_PARTY_SCREENSHOT__SCREENSHOT__ID"))

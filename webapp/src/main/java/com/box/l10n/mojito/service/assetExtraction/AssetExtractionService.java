@@ -1012,7 +1012,6 @@ public class AssetExtractionService {
       @ParentTask PollableTask parentTask)
       throws UnsupportedAssetFilterTypeException {
 
-    Asset asset = assetContent.getAsset();
     List<AssetExtractorTextUnit> assetExtractorTextUnits =
         getExtractorTextUnitsForAssetContent(assetContent, filterOptions, filterConfigIdOverride);
     com.box.l10n.mojito.localtm.merger.Branch branch = convertBranchToLocalTmBranch(assetContent);

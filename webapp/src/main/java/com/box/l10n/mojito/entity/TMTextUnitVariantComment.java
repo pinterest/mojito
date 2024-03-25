@@ -14,6 +14,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.NamedSubgraph;
 import jakarta.persistence.Table;
 import org.springframework.data.annotation.CreatedBy;
 
@@ -27,6 +30,14 @@ import org.springframework.data.annotation.CreatedBy;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Entity
 @Table(name = "tm_text_unit_variant_comment")
+@NamedEntityGraph(name = "TMTextUnitVariantComment.legacy", attributeNodes =  {
+    @NamedAttributeNode(value = "createdByUser", subgraph = "TMTextUnitVariantComment.legacy.createdByUser")
+}, subgraphs = {
+    @NamedSubgraph(name = "TMTextUnitVariantComment.legacy.createdByUser", attributeNodes = {
+        @NamedAttributeNode(value = "authorities"),
+//        @NamedAttributeNode(value = "createdByUser", subgraph = "")
+    })
+})
 public class TMTextUnitVariantComment extends AuditableEntity {
 
   /** Types of comment */
@@ -72,7 +83,7 @@ public class TMTextUnitVariantComment extends AuditableEntity {
   private String content;
 
   @CreatedBy
-  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests - rel. 6
+  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests - rel. 6
   @JoinColumn(
       name = BaseEntity.CreatedByUserColumnName,
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_VARIANT_COMMENT__USER__ID"))

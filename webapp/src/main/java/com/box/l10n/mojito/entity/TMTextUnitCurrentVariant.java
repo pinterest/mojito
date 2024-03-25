@@ -8,6 +8,9 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.NamedSubgraph;
 import jakarta.persistence.Table;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
@@ -30,6 +33,13 @@ import org.springframework.data.annotation.CreatedBy;
           columnList = "tm_text_unit_id, locale_id",
           unique = true)
     })
+@NamedEntityGraph(name = "TMTextUnitCurrentVariant.legacy", attributeNodes = {
+    @NamedAttributeNode(value = "tmTextUnitVariant", subgraph = "TMTextUnitCurrentVariant.legacy"),
+}, subgraphs = {
+    @NamedSubgraph(name = "TMTextUnitCurrentVariant.legacy", attributeNodes = {
+        @NamedAttributeNode("tmTextUnitVariantComments")
+    })
+})
 public class TMTextUnitCurrentVariant extends AuditableEntity {
 
   // This field has been added to be able to rollback a TM to a previous state.
@@ -54,7 +64,7 @@ public class TMTextUnitCurrentVariant extends AuditableEntity {
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_CURRENT_VARIANT__TM_TEXT_UNIT__ID"))
   private TMTextUnit tmTextUnit;
 
-  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests - rel:3
+  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests - rel:3
   @JoinColumn(
       name = "tm_text_unit_variant_id",
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_CURRENT_VARIANT__TM_TEXT_UNIT_VARIANT__ID"))

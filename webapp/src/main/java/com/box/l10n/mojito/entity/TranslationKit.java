@@ -16,6 +16,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.SqlResultSetMapping;
 import jakarta.persistence.Table;
 import java.util.Set;
@@ -54,6 +56,9 @@ import org.springframework.data.annotation.CreatedBy;
         resultSetMapping = "TranslationKit.exportedAndCurrentTuvs"))
 @Entity
 @Table(name = "translation_kit")
+@NamedEntityGraph(name = "TranslationKit.legacy", attributeNodes = {
+    @NamedAttributeNode("drop")
+})
 public class TranslationKit extends AuditableEntity {
 
   /**
@@ -84,7 +89,7 @@ public class TranslationKit extends AuditableEntity {
   private Locale locale;
 
   @JsonBackReference
-  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests
+  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests
   @JoinColumn(name = "drop_id", foreignKey = @ForeignKey(name = "FK__TRANSLATION_KIT__DROP__ID"))
   private Drop drop;
 

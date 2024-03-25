@@ -26,9 +26,26 @@ import org.springframework.data.annotation.CreatedBy;
           unique = true),
     })
 @BatchSize(size = 1000)
+@NamedEntityGraph(name = "Asset.legacy", attributeNodes = {
+    @NamedAttributeNode(value = "repository", subgraph = "Asset.legacy.repository"),
+    // TODO(ja-lib) i'm not sure that works
+    @NamedAttributeNode(value = "lastSuccessfulAssetExtraction", subgraph = "Asset.legacy.lastSuccessfulAssetExtraction"),
+    @NamedAttributeNode("createdByUser")
+}, subgraphs = {
+    @NamedSubgraph(name = "Asset.legacy.lastSuccessfulAssetExtraction", attributeNodes = {
+        }),
+    @NamedSubgraph(name = "Asset.legacy.repository", attributeNodes = {
+        @NamedAttributeNode(value = "repositoryLocales", subgraph = "Asset.legacy.repository.repositoryLocales"),
+    }),
+    @NamedSubgraph(name = "Asset.legacy.repository.repositoryLocales", attributeNodes = {
+        @NamedAttributeNode("locale"),
+        @NamedAttributeNode("parentLocale"),
+    }),
+
+})
 public class Asset extends AuditableEntity {
 
-  @ManyToOne(fetch = FetchType.EAGER, optional = false) // TODO(ja-lib) needed for tests
+  @ManyToOne(fetch = FetchType.LAZY, optional = false) // TODO(ja-lib) needed for tests
   @JoinColumn(name = "repository_id", foreignKey = @ForeignKey(name = "FK__ASSET__REPOSITORY__ID"))
   @JsonView(View.AssetSummary.class)
   private Repository repository;
@@ -45,7 +62,7 @@ public class Asset extends AuditableEntity {
   // TODO(ja-lib) that seems there is a single last extraction per asset, if i have the asset i hvae
   // the last and vice versa, that column should be unique
   // remove the comment when sure
-  @OneToOne
+  @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "last_successful_asset_extraction_id",
       foreignKey = @ForeignKey(name = "FK__ASSET__ASSET_EXTRACTION__ID"))

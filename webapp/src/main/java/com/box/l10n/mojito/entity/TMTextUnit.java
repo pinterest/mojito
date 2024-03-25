@@ -10,6 +10,8 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.BatchSize;
@@ -39,6 +41,9 @@ import org.springframework.data.annotation.CreatedBy;
       @Index(name = "I__TM_TEXT_UNIT__PLURAL_FORM_OTHER", columnList = "plural_form_other")
     })
 @BatchSize(size = 1000)
+@NamedEntityGraph(name = "TMTextUnit.legacy", attributeNodes = {
+    @NamedAttributeNode("asset")
+})
 public class TMTextUnit extends SettableAuditableEntity {
 
   @JsonView(View.IdAndName.class)
@@ -67,7 +72,7 @@ public class TMTextUnit extends SettableAuditableEntity {
   @JoinColumn(name = "tm_id", foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT__TM__ID"))
   private TM tm;
 
-  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests - rel:1
+  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests - rel:1
   @JoinColumn(
       name = "asset_id",
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT__ASSET__ID"),

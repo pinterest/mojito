@@ -16,6 +16,8 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.HashSet;
@@ -37,6 +39,9 @@ import org.hibernate.annotations.BatchSize;
           columnList = "name, locale_id, screenshot_run_id",
           unique = true)
     })
+@NamedEntityGraph(name = "Screenshot.legacy", attributeNodes = {
+    @NamedAttributeNode("screenshotTextUnits")
+})
 public class Screenshot extends SettableAuditableEntity {
 
   public enum Status {
@@ -87,7 +92,7 @@ public class Screenshot extends SettableAuditableEntity {
   // TODO(ja-lib) maybe that mapping
   @JsonView({View.Screenshots.class, View.BranchStatistic.class, View.GitBlameWithUsage.class})
   @JsonManagedReference
-  @OneToMany(mappedBy = "screenshot", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+  @OneToMany(mappedBy = "screenshot", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
   @JsonProperty("textUnits")
   @JsonDeserialize(as = LinkedHashSet.class)
   @BatchSize(size = 1000)

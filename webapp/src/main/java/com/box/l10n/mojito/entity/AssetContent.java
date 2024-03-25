@@ -8,6 +8,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.NamedSubgraph;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.Set;
@@ -22,13 +25,20 @@ import java.util.Set;
  */
 @Entity
 @Table(name = "asset_content")
+@NamedEntityGraph(name = "AssetContent.legacy", attributeNodes = {
+    @NamedAttributeNode(value = "asset", subgraph = "Asset.legacy"),
+    @NamedAttributeNode("branch"),
+//    @NamedAttributeNode("assetExtractions")
+}, subgraphs = {
+    @NamedSubgraph(name = "Asset.legacy", attributeNodes = @NamedAttributeNode(value = "repository", subgraph = "Repository.legacy")),
+})  // TODO (ja-lib) needed for tests
 public class AssetContent extends AuditableEntity {
 
-  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests
+  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests
   @JoinColumn(name = "asset_id", foreignKey = @ForeignKey(name = "FK__ASSET_CONTENT__ASSET__ID"))
   private Asset asset;
 
-  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests
+  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests
   @JoinColumn(name = "branch_id", foreignKey = @ForeignKey(name = "FK__ASSET_CONTENT__BRANCH__ID"))
   private Branch branch;
 

@@ -11,6 +11,8 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.Table;
 import java.util.Set;
 import org.springframework.data.annotation.CreatedBy;
@@ -28,6 +30,9 @@ import org.springframework.data.annotation.CreatedBy;
           unique = true),
       @Index(name = "I__ASSET_TEXT_UNIT__BRANCH_ID", columnList = "branch_id")
     })
+@NamedEntityGraph(name = "AssetTextUnit.legacy", attributeNodes = {
+    @NamedAttributeNode("usages")
+})
 public class AssetTextUnit extends AuditableEntity {
 
   @Column(name = "name", length = 4000)
@@ -70,7 +75,7 @@ public class AssetTextUnit extends AuditableEntity {
   @Column(name = "plural_form_other", length = Integer.MAX_VALUE)
   private String pluralFormOther;
 
-  @ElementCollection(fetch = FetchType.EAGER)
+  @ElementCollection(fetch = FetchType.LAZY)
   @CollectionTable(
       name = "asset_text_unit_usages",
       joinColumns = @JoinColumn(name = "asset_text_unit_id"),

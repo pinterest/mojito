@@ -10,6 +10,8 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.Table;
 
 /**
@@ -26,6 +28,9 @@ import jakarta.persistence.Table;
           columnList = "repository_statistic_id, locale_id",
           unique = true)
     })
+@NamedEntityGraph(name = "RepositoryLocaleStatistic.legacy", attributeNodes = {
+    @NamedAttributeNode("locale")
+})
 public class RepositoryLocaleStatistic extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -36,7 +41,7 @@ public class RepositoryLocaleStatistic extends BaseEntity {
   private RepositoryStatistic repositoryStatistic;
 
   @JsonView(View.LocaleSummary.class)
-  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests - rel. 5
+  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests - rel. 5
   @JoinColumn(
       name = "locale_id",
       foreignKey = @ForeignKey(name = "FK__REPOSITORY_LOCALE_STATISTIC__LOCALE__ID"),

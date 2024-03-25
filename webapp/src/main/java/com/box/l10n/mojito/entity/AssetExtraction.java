@@ -9,6 +9,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.NamedSubgraph;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -27,10 +30,18 @@ import org.springframework.data.annotation.CreatedBy;
  */
 @Entity
 @Table(name = "asset_extraction")
+@NamedEntityGraph(name = "AssetExtraction.legacy", attributeNodes = {
+  @NamedAttributeNode(value = "asset", subgraph = "AssetExtraction.legacy.asset"),
+  @NamedAttributeNode("assetContent")
+}, subgraphs = {
+    @NamedSubgraph(name = "AssetExtraction.legacy.asset", attributeNodes = {
+        @NamedAttributeNode(value = "repository", subgraph = "Repository.legacy"),
+    })
+})
 public class AssetExtraction extends AuditableEntity {
 
   @JsonBackReference("asset")
-  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) needed for tests
+  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests
   @JoinColumn(name = "asset_id", foreignKey = @ForeignKey(name = "FK__ASSET_EXTRACTION__ASSET__ID"))
   private Asset asset;
 
@@ -60,7 +71,7 @@ public class AssetExtraction extends AuditableEntity {
   @OneToMany(mappedBy = "assetExtraction")
   private Set<AssetExtractionByBranch> assetExtractionByBranches = new HashSet<>();
 
-  @OneToOne
+  @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "pollable_task_id",
       foreignKey = @ForeignKey(name = "FK__ASSET_EXTRACTION__POLLABLE_TASK__ID"))

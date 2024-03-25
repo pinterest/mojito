@@ -224,7 +224,7 @@ public class DropService {
 
     logger.debug("Start importing drop");
 
-    Drop drop = dropRepository.findById(dropId).orElse(null);
+    Drop drop = getDropInTX(dropId);
     drop.setLastImportedDate(JSR310Migration.newDateTimeEmptyCtor());
     drop.setImportPollableTask(currentTask);
     drop.setImportFailed(null);
@@ -417,7 +417,8 @@ public class DropService {
       throws DropExporterException, CancelDropException {
 
     logger.debug("Canceling Drop: {}", dropId);
-    Drop drop = dropRepository.findById(dropId).orElse(null);
+    Drop drop = getDropInTX(dropId);
+
 
     if (isDropBeingProcessed(drop)) {
       throw new CancelDropException(
@@ -437,6 +438,20 @@ public class DropService {
     pollableFutureTaskResult.setResult(drop);
 
     return pollableFutureTaskResult;
+  }
+
+
+  @Transactional
+  Drop getDropInTX(Long dropId) {
+    final Drop drop = dropRepository.findById(dropId).orElse(null);
+    if (drop.getExportPollableTask() != null) {
+      //TODO(ja-lib) fetch recurse ...  might want better...
+      pollableTaskService.getAllPollableTasksWithError(drop.getExportPollableTask());
+    }
+    if (drop.getImportPollableTask() != null) {
+      pollableTaskService.getAllPollableTasksWithError(drop.getImportPollableTask());
+    }
+    return drop;
   }
 
   /**

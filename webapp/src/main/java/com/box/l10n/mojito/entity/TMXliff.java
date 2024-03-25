@@ -29,8 +29,7 @@ public class TMXliff extends AuditableEntity {
   @JoinColumn(name = "locale_id", foreignKey = @ForeignKey(name = "FK__TM_XLIFF__LOCALE__ID"))
   private Locale locale;
 
-  @OneToOne
-  @Basic(optional = true)
+  @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "export_pollable_task_id",
       foreignKey = @ForeignKey(name = "FK__TM_XLIFF__EXPORT_POLLABLE_TASK__ID"))

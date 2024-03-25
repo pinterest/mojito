@@ -17,6 +17,7 @@ import com.box.l10n.mojito.localtm.merger.MultiBranchState;
 import com.box.l10n.mojito.quartz.QuartzJobInfo;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
 import com.box.l10n.mojito.service.asset.AssetRepository;
+import com.box.l10n.mojito.service.assetExtraction.AssetExtractionRepository;
 import com.box.l10n.mojito.service.assetExtraction.AssetTextUnitToTMTextUnitRepository;
 import com.box.l10n.mojito.service.assetExtraction.MultiBranchStateService;
 import com.box.l10n.mojito.service.branch.notification.job.BranchNotificationJob;

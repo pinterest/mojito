@@ -6,7 +6,9 @@ import com.google.common.base.Throwables;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +42,10 @@ public class PollableTaskService {
 
   @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
   public PollableTask getPollableTask(long id) {
-    return pollableTaskRepository.findById(id).orElse(null);
+    final PollableTask pollableTask = pollableTaskRepository.findById(id).orElse(null);
+    // TODO(ja-lib) access the subtask to fetch all recurisions, graph don't work for that
+    getAllPollableTasksWithError(pollableTask);
+    return pollableTask;
   }
 
   public PollableTask createPollableTask(
@@ -66,7 +71,8 @@ public class PollableTaskService {
       pollableTask.setTimeout(timeout);
     }
 
-    return pollableTaskRepository.save(pollableTask);
+    final PollableTask save = pollableTaskRepository.save(pollableTask);
+    return save;
   }
 
   /**
@@ -101,7 +107,9 @@ public class PollableTaskService {
       pollableTask.setExpectedSubTaskNumber(expectedSubTaskNumberOverride);
     }
 
-    return pollableTaskRepository.save(pollableTask);
+    final PollableTask save = pollableTaskRepository.save(pollableTask);
+    save.isAllFinished();
+    return save;
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)

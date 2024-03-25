@@ -18,6 +18,9 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.NamedSubgraph;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
@@ -38,6 +41,10 @@ import org.springframework.data.annotation.CreatedBy;
       @Index(name = "I__POLLABLE_TASK__FINISHED_DATE", columnList = "finished_date")
     })
 @BatchSize(size = 1000)
+@NamedEntityGraph(name = "PollableTask.legacy", attributeNodes = {
+    @NamedAttributeNode(value = "subTasks"),
+    @NamedAttributeNode(value = "parentTask")
+})
 public class PollableTask extends AuditableEntity {
 
   /**
@@ -68,7 +75,7 @@ public class PollableTask extends AuditableEntity {
   @Column(name = "expected_sub_task_number")
   private int expectedSubTaskNumber = 0;
 
-  @OneToMany(mappedBy = "parentTask", fetch = FetchType.EAGER)
+  @OneToMany(mappedBy = "parentTask", fetch = FetchType.LAZY)
   @OrderBy("id") // TODO(ja-lib) we don't have error on that one? there was an issue on orderby for
   // RepositoryStatistic
   @BatchSize(size = 1000)
