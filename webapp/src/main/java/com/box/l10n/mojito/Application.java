@@ -5,6 +5,7 @@ import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.xml.XmlParsingConfiguration;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.hibernate6.Hibernate6Module;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -103,10 +104,14 @@ public class Application {
     jomfb.setFeaturesToDisable(
         SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS,
         DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS);
+    // TODO(ja-lib) need to add the hibernate module
+    jomfb.setModulesToInstall(Hibernate6Module.class);
     jomfb.afterPropertiesSet();
+    mjhmc.setObjectMapper(jomfb.getObject());
 
-    //    mjhmc.setObjectMapper(jomfb.getObject());
-    mjhmc.setObjectMapper(getObjectMapper());
+    // TODO(ja-lib) assiging the object mapper like following does NOT work
+    // There must be more default settings set by spring or our config somewhere.
+    // mjhmc.setObjectMapper(getObjectMapper());
     return mjhmc;
   }
 
