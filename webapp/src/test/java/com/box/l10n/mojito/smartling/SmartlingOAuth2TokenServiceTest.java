@@ -6,13 +6,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.net.URI;
 import java.net.http.HttpClient;
-import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Optional;
-import javax.net.ssl.SSLSession;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -21,6 +17,8 @@ import org.mockito.MockitoAnnotations;
 public class SmartlingOAuth2TokenServiceTest {
 
   @Mock private HttpClient httpClient;
+
+  @Mock private HttpResponse<String> mockResponse;
 
   private SmartlingOAuth2TokenService smartlingOAuth2TokenService;
 
@@ -38,11 +36,11 @@ public class SmartlingOAuth2TokenServiceTest {
 
   @Test
   public void getAccessTokenRequestsNewTokenWhenRefreshTokenExpired() throws Exception {
-    HttpResponse<String> httpResponse =
-        createMockResponse(
-            "{\"response\": {\"data\": {\"accessToken\": \"newToken\", \"expiresIn\": 3600, \"refreshToken\": \"refreshToken\", \"refreshExpiresIn\": 1}}}");
     when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-        .thenReturn(httpResponse);
+        .thenReturn(mockResponse);
+    when(mockResponse.body())
+        .thenReturn(
+            "{\"response\": {\"data\": {\"accessToken\": \"newToken\", \"expiresIn\": 3600, \"refreshToken\": \"refreshToken\", \"refreshExpiresIn\": 1}}}");
 
     smartlingOAuth2TokenService.getAccessToken(); // First call to get the token
     String accessToken =
@@ -54,11 +52,11 @@ public class SmartlingOAuth2TokenServiceTest {
 
   @Test
   public void getAccessTokenRequestsNewTokenWhenNoTokenExists() throws Exception {
-    HttpResponse<String> httpResponse =
-        createMockResponse(
-            "{\"response\": {\"data\": {\"accessToken\": \"newToken\", \"expiresIn\": 3600, \"refreshToken\": \"refreshToken\", \"refreshExpiresIn\": 7200}}}");
     when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-        .thenReturn(httpResponse);
+        .thenReturn(mockResponse);
+    when(mockResponse.body())
+        .thenReturn(
+            "{\"response\": {\"data\": {\"accessToken\": \"newToken\", \"expiresIn\": 3600, \"refreshToken\": \"refreshToken\", \"refreshExpiresIn\": 7200}}}");
 
     String accessToken = smartlingOAuth2TokenService.getAccessToken();
 
@@ -68,67 +66,22 @@ public class SmartlingOAuth2TokenServiceTest {
 
   @Test
   public void getRefreshedAccessTokenTokenWhenAccessTokenExpired() throws Exception {
-    HttpResponse<String> httpResponse =
-        createMockResponse(
-            "{\"response\": {\"data\": {\"accessToken\": \"newToken\", \"expiresIn\": 1, \"refreshToken\": \"refreshToken\", \"refreshExpiresIn\": 7200}}}");
     when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-        .thenReturn(httpResponse);
+        .thenReturn(mockResponse);
+    when(mockResponse.body())
+        .thenReturn(
+            "{\"response\": {\"data\": {\"accessToken\": \"newToken\", \"expiresIn\": 1, \"refreshToken\": \"refreshToken\", \"refreshExpiresIn\": 7200}}}");
 
     String accessToken = smartlingOAuth2TokenService.getAccessToken();
     assertEquals("newToken", accessToken);
-    httpResponse =
-        createMockResponse(
-            "{\"response\": {\"data\": {\"accessToken\": \"refreshedToken\", \"expiresIn\": 1, \"refreshToken\": \"refreshToken\", \"refreshExpiresIn\": 7200}}}");
-    when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-        .thenReturn(httpResponse);
+
+    when(mockResponse.body())
+        .thenReturn(
+            "{\"response\": {\"data\": {\"accessToken\": \"refreshedToken\", \"expiresIn\": 3600, \"refreshToken\": \"refreshToken\", \"refreshExpiresIn\": 7200}}}");
     Thread.sleep(2000);
     accessToken = smartlingOAuth2TokenService.getAccessToken();
 
     assertEquals("refreshedToken", accessToken);
     verify(httpClient, times(2)).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
-  }
-
-  private HttpResponse<String> createMockResponse(String body) {
-    return new HttpResponse<>() {
-      @Override
-      public int statusCode() {
-        return 200;
-      }
-
-      @Override
-      public HttpRequest request() {
-        return null;
-      }
-
-      @Override
-      public Optional<HttpResponse<String>> previousResponse() {
-        return Optional.empty();
-      }
-
-      @Override
-      public HttpHeaders headers() {
-        return null;
-      }
-
-      @Override
-      public String body() {
-        return body;
-      }
-
-      @Override
-      public Optional<SSLSession> sslSession() {
-        return Optional.empty();
-      }
-
-      @Override
-      public URI uri() {
-        return null;
-      }
-
-      @Override
-      public HttpClient.Version version() {
-        return null;
-      }
-    };
   }
 }

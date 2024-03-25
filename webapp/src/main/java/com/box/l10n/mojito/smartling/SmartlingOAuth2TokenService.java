@@ -9,9 +9,12 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import org.slf4j.Logger;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 public class SmartlingOAuth2TokenService {
 
+  private static final int THREE_SECONDS_MS = 3000;
   private static Logger logger =
       org.slf4j.LoggerFactory.getLogger(SmartlingOAuth2TokenService.class);
 
@@ -47,12 +50,14 @@ public class SmartlingOAuth2TokenService {
 
   private boolean isTokenExpired() {
     return smartlingOAuthAccessToken == null
-        || smartlingOAuthAccessToken.getTokenExpiryTime() <= System.currentTimeMillis() + 3000;
+        || smartlingOAuthAccessToken.getTokenExpiryTime()
+            <= System.currentTimeMillis() + THREE_SECONDS_MS;
   }
 
   private boolean isRefreshTokenExpired() {
     return smartlingOAuthAccessToken == null
-        || smartlingOAuthAccessToken.getRefreshExpiryTime() <= System.currentTimeMillis() + 3000;
+        || smartlingOAuthAccessToken.getRefreshExpiryTime()
+            <= System.currentTimeMillis() + THREE_SECONDS_MS;
   }
 
   private boolean isRefreshRequired() {
@@ -99,7 +104,7 @@ public class SmartlingOAuth2TokenService {
     HttpRequest request =
         HttpRequest.newBuilder()
             .uri(new URI(authUrl))
-            .header("Content-Type", "application/json")
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .POST(HttpRequest.BodyPublishers.ofString(json))
             .build();
 
@@ -114,54 +119,9 @@ public class SmartlingOAuth2TokenService {
         System.currentTimeMillis() + (smartlingOAuthAccessToken.getRefreshExpiresIn() * 1000));
   }
 
-  static class ClientAuthDetails {
-    @JsonProperty("userIdentifier")
-    String clientId;
+  record ClientAuthDetails(
+      @JsonProperty("userIdentifier") String clientId,
+      @JsonProperty("userSecret") String clientSecret) {}
 
-    @JsonProperty("userSecret")
-    String clientSecret;
-
-    public ClientAuthDetails() {}
-
-    public ClientAuthDetails(String clientId, String clientSecret) {
-      this.clientId = clientId;
-      this.clientSecret = clientSecret;
-    }
-
-    public String getClientId() {
-      return clientId;
-    }
-
-    public void setClientId(String clientId) {
-      this.clientId = clientId;
-    }
-
-    public String getClientSecret() {
-      return clientSecret;
-    }
-
-    public void setClientSecret(String clientSecret) {
-      this.clientSecret = clientSecret;
-    }
-  }
-
-  static class RefreshRequest {
-
-    @JsonProperty("refreshToken")
-    private String refreshToken;
-
-    public RefreshRequest() {}
-
-    public RefreshRequest(String refreshToken) {
-      this.refreshToken = refreshToken;
-    }
-
-    public String getRefreshToken() {
-      return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-      this.refreshToken = refreshToken;
-    }
-  }
+  record RefreshRequest(@JsonProperty("refreshToken") String refreshToken) {}
 }

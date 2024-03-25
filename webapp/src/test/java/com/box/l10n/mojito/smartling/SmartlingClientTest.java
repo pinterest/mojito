@@ -133,7 +133,7 @@ public class SmartlingClientTest {
     assertTrue(glossaryContent.contains("<langSet xml:lang=\"fr-FR\""));
   }
 
-  @Ignore
+  //  @Ignore
   @Test
   public void testRefreshToken() throws InterruptedException {
     Assume.assumeNotNull(smartlingTestConfig.projectId);
