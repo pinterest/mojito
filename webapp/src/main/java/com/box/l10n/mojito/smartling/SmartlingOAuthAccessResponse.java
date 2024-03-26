@@ -23,6 +23,9 @@ public class SmartlingOAuthAccessResponse {
     @JsonProperty("data")
     private TokenData data;
 
+    @JsonProperty("errors")
+    private ErrorDetails error;
+
     public String getCode() {
       return code;
     }
@@ -37,6 +40,14 @@ public class SmartlingOAuthAccessResponse {
 
     public void setData(TokenData data) {
       this.data = data;
+    }
+
+    public ErrorDetails getError() {
+      return error;
+    }
+
+    public void setError(ErrorDetails error) {
+      this.error = error;
     }
   }
 
@@ -114,6 +125,41 @@ public class SmartlingOAuthAccessResponse {
 
     public void setTokenExpiryTime(long tokenExpiryTime) {
       this.tokenExpiryTime = tokenExpiryTime;
+    }
+  }
+
+  static class ErrorDetails {
+    @JsonProperty("details")
+    private Object details;
+
+    @JsonProperty("key")
+    private String key;
+
+    @JsonProperty("message")
+    private String message;
+
+    public Object getDetails() {
+      return details;
+    }
+
+    public void setDetails(Object details) {
+      this.details = details;
+    }
+
+    public String getKey() {
+      return key;
+    }
+
+    public void setKey(String key) {
+      this.key = key;
+    }
+
+    public String getMessage() {
+      return message;
+    }
+
+    public void setMessage(String message) {
+      this.message = message;
     }
   }
 }
