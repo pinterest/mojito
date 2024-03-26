@@ -34,7 +34,7 @@ import org.springframework.data.annotation.CreatedBy;
     name = "AssetTextUnit.legacy",
     attributeNodes = {
       @NamedAttributeNode("usages"),
-      @NamedAttributeNode("branch") // TODO(ja-lib) test pass without this, but it is suspicious
+      @NamedAttributeNode("branch"), // TODO(ja-lib) test pass without this, but it is suspicious
     })
 public class AssetTextUnit extends AuditableEntity {
 

@@ -150,7 +150,7 @@ public class GitBlameService {
     for (AssetTextUnit assetTextUnit : assetTextUnits) {
       GitBlameWithUsage gitBlameWithUsage =
           assetTextUnitIdToGitBlameWithUsage.get(assetTextUnit.getId());
-      gitBlameWithUsage.setUsages(assetTextUnit.getUsages());
+      gitBlameWithUsage.setUsages(assetTextUnit.getUsages()); // TODO(ja-lib) missing info
       gitBlameWithUsage.setBranch(assetTextUnit.getBranch());
     }
 

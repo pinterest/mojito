@@ -35,7 +35,12 @@ import org.springframework.data.annotation.CreatedBy;
     name = "Branch.legacy",
     attributeNodes = {
       @NamedAttributeNode(value = "notifiers"),
-      @NamedAttributeNode(value = "screenshots"),
+      @NamedAttributeNode(value = "screenshots", subgraph = "Branch.legacy.screenshots"),
+    },
+    subgraphs = {
+      @NamedSubgraph(
+          name = "Branch.legacy.screenshots",
+          attributeNodes = {@NamedAttributeNode("screenshotTextUnits")})
     })
 public class Branch extends SettableAuditableEntity {
 

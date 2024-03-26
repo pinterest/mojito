@@ -9,6 +9,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.NamedSubgraph;
 import jakarta.persistence.Table;
 
 /**
@@ -18,6 +21,18 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(name = "screenshot_text_unit")
+@NamedEntityGraph(
+    name = "ScreenshotTextUnit.legacy",
+    attributeNodes = {
+      @NamedAttributeNode(value = "screenshot", subgraph = "ScreenshotTextUnit.legacy.screenshot"),
+      @NamedAttributeNode(value = "tmTextUnitVariant"),
+      @NamedAttributeNode(value = "tmTextUnit"),
+    },
+    subgraphs = {
+      @NamedSubgraph(
+          name = "ScreenshotTextUnit.legacy.screenshot",
+          attributeNodes = {@NamedAttributeNode("screenshotTextUnits")})
+    })
 public class ScreenshotTextUnit extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)

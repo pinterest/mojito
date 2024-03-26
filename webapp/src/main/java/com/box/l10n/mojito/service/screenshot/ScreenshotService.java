@@ -256,6 +256,10 @@ public class ScreenshotService {
     Join<Screenshot, ScreenshotTextUnit> screenshotTextUnits =
         screenshot.join(Screenshot_.screenshotTextUnits, JoinType.LEFT);
 
+    screenshot.fetch(Screenshot_.screenshotRun).fetch(ScreenshotRun_.repository);
+    screenshot.fetch(Screenshot_.locale);
+    screenshot.fetch(Screenshot_.screenshotTextUnits, JoinType.LEFT);
+
     List<Predicate> predicates = new ArrayList<>();
 
     if (ScreenshotRunType.LAST_SUCCESSFUL_RUN.equals(screenshotRunType)) {
