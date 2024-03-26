@@ -101,8 +101,6 @@ public class SmartlingOAuth2TokenServiceTest {
 
     assertEquals("newToken", accessToken);
 
-    Thread.sleep(1000);
-
     when(mockResponse.statusCode()).thenReturn(401).thenReturn(401).thenReturn(200);
     when(mockResponse.body())
         .thenReturn(

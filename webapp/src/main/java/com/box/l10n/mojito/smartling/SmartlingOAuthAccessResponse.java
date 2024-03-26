@@ -30,24 +30,12 @@ public class SmartlingOAuthAccessResponse {
       return code;
     }
 
-    public void setCode(String code) {
-      this.code = code;
-    }
-
     public TokenData getData() {
       return data;
     }
 
-    public void setData(TokenData data) {
-      this.data = data;
-    }
-
     public ErrorDetails getError() {
       return error;
-    }
-
-    public void setError(ErrorDetails error) {
-      this.error = error;
     }
   }
 
@@ -75,40 +63,16 @@ public class SmartlingOAuthAccessResponse {
       return accessToken;
     }
 
-    public void setAccessToken(String accessToken) {
-      this.accessToken = accessToken;
-    }
-
     public String getRefreshToken() {
       return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-      this.refreshToken = refreshToken;
     }
 
     public int getExpiresIn() {
       return expiresIn;
     }
 
-    public void setExpiresIn(int expiresIn) {
-      this.expiresIn = expiresIn;
-    }
-
     public int getRefreshExpiresIn() {
       return refreshExpiresIn;
-    }
-
-    public void setRefreshExpiresIn(int refreshExpiresIn) {
-      this.refreshExpiresIn = refreshExpiresIn;
-    }
-
-    public String getTokenType() {
-      return tokenType;
-    }
-
-    public void setTokenType(String tokenType) {
-      this.tokenType = tokenType;
     }
 
     public long getRefreshExpiryTime() {
@@ -137,29 +101,5 @@ public class SmartlingOAuthAccessResponse {
 
     @JsonProperty("message")
     private String message;
-
-    public Object getDetails() {
-      return details;
-    }
-
-    public void setDetails(Object details) {
-      this.details = details;
-    }
-
-    public String getKey() {
-      return key;
-    }
-
-    public void setKey(String key) {
-      this.key = key;
-    }
-
-    public String getMessage() {
-      return message;
-    }
-
-    public void setMessage(String message) {
-      this.message = message;
-    }
   }
 }
