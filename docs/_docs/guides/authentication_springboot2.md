@@ -57,7 +57,7 @@ A configuration could look similar to this:
     spring.security.oauth2.client.registration.[registrationId].scope=user
     spring.security.oauth2.client.registration.[registrationId].redirect-uri={baseUrl}/login/oauth2/code/{registrationId}
     spring.security.oauth2.client.registration.[registrationId].authorization-grant-type=authorization_code
-    spring.security.oauth2.client.registration.[registrationId].client-authentication-method=post
+    spring.security.oauth2.client.registration.[registrationId].client-authentication-method=client_secret_post
     spring.security.oauth2.client.registration.[registrationId].client-name={ACTUAL_VALUE} 
     
     spring.security.oauth2.client.provider.[providerId].token-uri=https://authhost.com/oauth/token/
