@@ -33,7 +33,7 @@ import org.springframework.data.annotation.CreatedBy;
 @BatchSize(size = 1000)
 @NamedEntityGraph(
     name = "User.legacy",
-    attributeNodes = {@NamedAttributeNode("authorities")})
+    attributeNodes = {@NamedAttributeNode("authorities"), @NamedAttributeNode("createdByUser")})
 public class User extends AuditableEntity implements Serializable {
 
   public static final int NAME_MAX_LENGTH = 255;
