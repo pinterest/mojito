@@ -36,12 +36,6 @@
         <docker.compose.detached.mode>true</docker.compose.detached.mode>
         <docker.compose.remove.volumes>true</docker.compose.remove.volumes>
         <aspectj.version>1.9.20</aspectj.version>
-        <!-- TODO(ja-lib) remove when migration is finished - context:
-        Spring Boot 3.0 uses Spring Security 6.0. The Spring Security team have
-        released Spring Security 5.8 to simplify upgrading to Spring Security 6.0.
-        Before upgrading to Spring Boot 3.0, consider upgrading your Spring Boot 2.7
-        application to Spring Security 5.8. -->
-        <spring-security.version>5.8.9</spring-security.version>
         <jackson.version>2.13.5</jackson.version>
     </properties>
 
@@ -201,7 +195,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>2.4</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -216,7 +209,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.10.1</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>

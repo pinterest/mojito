@@ -176,48 +176,48 @@ public class WebSecurityConfig {
                 requestMatchers(getHeathcheckPatterns())
                 .permitAll()
                 // allow deep link creation and retrieval
-                .antMatchers(HttpMethod.GET, "/api/clobstorage", "/api/clobstorage/**")
+                .requestMatchers(HttpMethod.GET, "/api/clobstorage", "/api/clobstorage/**")
                 .authenticated()
-                .antMatchers(HttpMethod.POST, "/api/clobstorage", "/api/clobstorage/**")
+                .requestMatchers(HttpMethod.POST, "/api/clobstorage", "/api/clobstorage/**")
                 .authenticated()
                 . // allow health entry points
                 requestMatchers("/actuator/shutdown", "/actuator/loggers/**", "/api/rotation")
                 .hasIpAddress("127.0.0.1")
                 . // Everyone can access the session endpoint
-                antMatchers("/api/users/session", "/api/users/pw")
+                requestMatchers("/api/users/session", "/api/users/pw")
                 .authenticated()
                 . // user management is only allowed for ADMINs and PMs
-                antMatchers("/api/users/**")
+                requestMatchers("/api/users/**")
                 .hasAnyRole("PM", "ADMIN")
                 . // Read-only access is OK for users
-                antMatchers(HttpMethod.GET, "/api/textunits/**")
+                requestMatchers(HttpMethod.GET, "/api/textunits/**")
                 .authenticated()
                 . // Searching is also OK for users
-                antMatchers(HttpMethod.POST, "/api/textunits/search")
+                requestMatchers(HttpMethod.POST, "/api/textunits/search")
                 .authenticated()
                 . // USERs are not allowed to change translations
-                antMatchers("/api/textunits/**")
+                requestMatchers("/api/textunits/**")
                 .hasAnyRole("TRANSLATOR", "PM", "ADMIN")
                 . // Read-only is OK for everyone
-                antMatchers(HttpMethod.GET, "/api/**")
+                requestMatchers(HttpMethod.GET, "/api/**")
                 .authenticated()
                 // Everyone can retrieve & upload images
-                .antMatchers(HttpMethod.GET, "/api/images/**")
+                .requestMatchers(HttpMethod.GET, "/api/images/**")
                 .authenticated()
-                .antMatchers(HttpMethod.PUT, "/api/images/**")
+                .requestMatchers(HttpMethod.PUT, "/api/images/**")
                 .authenticated()
                 // Everyone can retrieve, upload and delete screenshots
-                .antMatchers(HttpMethod.GET, "/api/screenshots")
+                .requestMatchers(HttpMethod.GET, "/api/screenshots")
                 .authenticated()
-                .antMatchers(HttpMethod.POST, "/api/screenshots")
+                .requestMatchers(HttpMethod.POST, "/api/screenshots")
                 .authenticated()
-                .antMatchers(HttpMethod.PUT, "/api/screenshots/**")
+                .requestMatchers(HttpMethod.PUT, "/api/screenshots/**")
                 .authenticated()
-                .antMatchers(HttpMethod.DELETE, "/api/screenshots/**")
+                .requestMatchers(HttpMethod.DELETE, "/api/screenshots/**")
                 .authenticated()
                 . // However, all other methods require is PM and ADMIN only unless overwritten
                 // above
-                antMatchers("/api/**")
+                requestMatchers("/api/**")
                 .hasAnyRole("PM", "ADMIN")
                 . // local access only for rotation management and logger config
                 requestMatchers("/**")

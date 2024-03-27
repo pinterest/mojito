@@ -3,6 +3,8 @@ package com.box.l10n.mojito.service.security.user;
 import com.box.l10n.mojito.entity.security.user.User;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -23,6 +25,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
   @Override
   @EntityGraph(value = "User.legacy", type = EntityGraphType.FETCH)
   List<User> findAll(Specification<User> spec, Sort sort);
+
+  @Override
+  @EntityGraph(value = "User.legacy", type = EntityGraphType.FETCH)
+  Page<User> findAll(Specification<User> spec, Pageable pageable);
 
   @Override
   @EntityGraph(value = "User.legacy", type = EntityGraphType.FETCH)
