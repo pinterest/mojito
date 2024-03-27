@@ -7,8 +7,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.EntityGraph.EntityGraphType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
@@ -19,18 +17,18 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 @RepositoryRestResource(exported = false)
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
-  @EntityGraph(value = "User.legacy", type = EntityGraphType.FETCH)
+  //  @EntityGraph(value = "User.legacy", type = EntityGraphType.FETCH)
   User findByUsername(String username);
 
-  @Override
-  @EntityGraph(value = "User.legacy", type = EntityGraphType.FETCH)
+  //  @Override
+  //  @EntityGraph(value = "User.legacy", type = EntityGraphType.FETCH)
   List<User> findAll(Specification<User> spec, Sort sort);
 
-  @Override
-  @EntityGraph(value = "User.legacy", type = EntityGraphType.FETCH)
+  //  @Override
+  //  @EntityGraph(value = "User.legacy", type = EntityGraphType.FETCH)
   Page<User> findAll(Specification<User> spec, Pageable pageable);
 
-  @Override
-  @EntityGraph(value = "User.legacy", type = EntityGraphType.FETCH)
+  //  @Override
+  //  @EntityGraph(value = "User.legacy", type = EntityGraphType.FETCH)
   Optional<User> findById(Long aLong);
 }
