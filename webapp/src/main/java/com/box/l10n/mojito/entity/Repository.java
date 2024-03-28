@@ -34,10 +34,10 @@ import org.springframework.data.annotation.CreatedBy;
       @NamedAttributeNode(
           value = "repositoryStatistic",
           subgraph = "Repository.legacy.repositoryStatistic"),
-      @NamedAttributeNode("assetIntegrityCheckers"),
-      @NamedAttributeNode("branches"),
+      //@NamedAttributeNode("assetIntegrityCheckers"),
+      //@NamedAttributeNode("branches"),
       @NamedAttributeNode("tm"),
-      @NamedAttributeNode("createdByUser"),
+      //@NamedAttributeNode("createdByUser"),
       @NamedAttributeNode("manualScreenshotRun"),
     },
     subgraphs = {
