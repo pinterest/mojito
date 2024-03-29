@@ -29,7 +29,7 @@ public interface RepositoryRepository
 
   @EntityGraph(value = "Repository.legacy", type = EntityGraphType.FETCH)
   @Override
-  public List<Repository> findAll(Specification<Repository> s, Sort sort);
+  List<Repository> findAll(Specification<Repository> s, Sort sort);
 
   @EntityGraph(value = "Repository.legacy", type = EntityGraphType.FETCH)
   List<Repository>
