@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.security;
 
+import static com.box.l10n.mojito.service.security.user.UserService.nullifyReferences;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.box.l10n.mojito.entity.security.user.User;
@@ -32,6 +33,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
       throw new UsernameNotFoundException("User [" + username + "] is not found in the database.");
     }
 
+    nullifyReferences(user);
     return new UserDetailsImpl(user);
   }
 }

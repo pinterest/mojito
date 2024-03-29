@@ -8,6 +8,7 @@ import com.box.l10n.mojito.security.AuditorAwareImpl;
 import com.box.l10n.mojito.security.Role;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
+import jakarta.persistence.EntityManager;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -36,6 +37,8 @@ public class UserService {
   @Autowired AuthorityRepository authorityRepository;
 
   @Autowired AuditorAwareImpl auditorAwareImpl;
+
+  @Autowired EntityManager entityManager;
 
   /**
    * Allow PMs and ADMINs to create / edit users. However, a PM user can not create / edit ADMIN
@@ -337,12 +340,13 @@ public class UserService {
    * @return
    */
   public User getOrCreatePartialBasicUser(String username) {
+
     User user = userRepository.findByUsername(username);
 
     if (user == null) {
       return createBasicUser(username, null, null, null, true);
     }
-
+    nullifyReferences(user);
     return user;
   }
 
@@ -355,6 +359,23 @@ public class UserService {
       user = createOrUpdateBasicUser(user, username, givenName, surname, commonName);
     }
 
+    nullifyReferences(user);
     return user;
+  }
+
+  /**
+   * TODO(ja-lib) Make sure there is no proxy, for when it is serialized in the spring session else
+   * auth would fail
+   *
+   * @param user
+   */
+  public static void nullifyReferences(User user) {
+    user.setCreatedByUser(null);
+    user.getAuthorities()
+        .forEach(
+            a -> {
+              a.setCreatedByUser(null);
+              a.setUser(null);
+            });
   }
 }
