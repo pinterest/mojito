@@ -82,7 +82,7 @@ public class RepositoryWS {
   @RequestMapping(value = "/api/repositories", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
   public List<Repository> getRepositories() {
-    return repositoryService.findAllGetRepositoriesWS();
+    return repositoryService.findRepositoriesIsNotDeletedOrderByName(null);
   }
 
   /**

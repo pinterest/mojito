@@ -10,8 +10,6 @@ import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.entity.RepositoryStatistic;
-import com.box.l10n.mojito.entity.RepositoryStatistic_;
-import com.box.l10n.mojito.entity.Repository_;
 import com.box.l10n.mojito.entity.ScreenshotRun;
 import com.box.l10n.mojito.entity.TM;
 import com.box.l10n.mojito.service.assetintegritychecker.AssetIntegrityCheckerRepository;
@@ -21,10 +19,6 @@ import com.box.l10n.mojito.service.repository.statistics.RepositoryLocaleStatist
 import com.box.l10n.mojito.service.repository.statistics.RepositoryStatisticRepository;
 import com.box.l10n.mojito.service.screenshot.ScreenshotRunRepository;
 import com.box.l10n.mojito.service.tm.TMRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,7 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,8 +62,6 @@ public class RepositoryService {
 
   @Autowired ScreenshotRunRepository screenshotRunRepository;
 
-  @Autowired EntityManager entityManager;
-
   /**
    * Default root locale.
    *
@@ -101,35 +92,11 @@ public class RepositoryService {
    * @return
    */
   public List<Repository> findRepositoriesIsNotDeletedOrderByName(String repositoryName) {
-    return repositoryRepository.findAll(
-        where(deletedEquals(false)).and(ifParamNotNull(nameEquals(repositoryName))),
-        Sort.by(Sort.Direction.ASC, "name"));
-  }
-
-  public List<Repository> findAllGetRepositoriesWS() {
-
-    // TODO(ja-lib) Initially wanted to use the spring repository but i can find how to have
-    // 2 findall() method with different entity graph. Just using the builder for now.
-
-    CriteriaBuilder builder = entityManager.getCriteriaBuilder();
-    CriteriaQuery<Repository> query = builder.createQuery(Repository.class);
-    Root<Repository> repository = query.from(Repository.class);
-    repository
-        .fetch(Repository_.repositoryStatistic)
-        .fetch(RepositoryStatistic_.repositoryLocaleStatistics);
-
-    query.where(builder.equal(repository.get(Repository_.deleted), Boolean.FALSE));
-    query.orderBy(builder.asc(repository.get(Repository_.name)));
-
-    List<Repository> repositories =
-        entityManager.createQuery(query.distinct(true).select(repository)).getResultList();
-
-    for (var r : repositories) {
-      r.getRepositoryLocales()
-          .forEach(repositoryLocale -> Hibernate.initialize(repositoryLocale.getLocale()));
-    }
-
-    return repositories;
+    var out =
+        repositoryRepository.findAll(
+            where(deletedEquals(false)).and(ifParamNotNull(nameEquals(repositoryName))),
+            Sort.by(Sort.Direction.ASC, "name"));
+    return out;
   }
 
   /**
