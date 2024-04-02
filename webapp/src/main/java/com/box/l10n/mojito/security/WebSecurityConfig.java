@@ -170,7 +170,8 @@ public class WebSecurityConfig {
                     "/fonts/*",
                     "/cli/**",
                     "/js/**",
-                    "/css/**")
+                    "/css/**",
+                    "/error")
                 .permitAll()
                 . // always accessible to serve the frontend
                 requestMatchers(getHeathcheckPatterns())
