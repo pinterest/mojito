@@ -35,7 +35,6 @@ import org.springframework.data.annotation.CreatedBy;
           value = "repositoryStatistic",
           subgraph = "Repository.legacy.repositoryStatistic"),
       @NamedAttributeNode("assetIntegrityCheckers"),
-      @NamedAttributeNode("branches"),
       @NamedAttributeNode("tm"),
       @NamedAttributeNode("createdByUser"),
       @NamedAttributeNode("manualScreenshotRun"),
