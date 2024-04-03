@@ -158,13 +158,6 @@ public class AssetWS {
 
     sourceAsset.setPollableTask(assetFuture.getPollableTask());
 
-    try {
-      logger.error("jackson-test-before");
-      objectMapper.writeValueAsStringUnchecked(sourceAsset);
-    } catch (Exception e) {
-      logger.error("jackson-test-exception", e);
-    }
-
     return sourceAsset;
   }
 
