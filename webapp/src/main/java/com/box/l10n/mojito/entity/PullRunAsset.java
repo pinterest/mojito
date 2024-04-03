@@ -29,7 +29,7 @@ import org.hibernate.annotations.BatchSize;
     })
 @BatchSize(size = 1000)
 public class PullRunAsset extends SettableAuditableEntity {
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER)
   @JsonBackReference
   @JoinColumn(
       name = "pull_run_id",

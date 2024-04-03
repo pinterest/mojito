@@ -26,7 +26,7 @@ import org.hibernate.annotations.BatchSize;
     indexes = {@Index(name = "UK__PULL_RUN__NAME", columnList = "name", unique = true)})
 @BatchSize(size = 1000)
 public class PullRun extends SettableAuditableEntity {
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(
       name = "repository_id",
       foreignKey = @ForeignKey(name = "FK__PULL_RUN__REPOSITORY_ID"))
