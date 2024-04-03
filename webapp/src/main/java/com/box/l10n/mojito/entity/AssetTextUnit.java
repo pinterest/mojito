@@ -35,6 +35,7 @@ import org.springframework.data.annotation.CreatedBy;
     attributeNodes = {
       @NamedAttributeNode("usages"),
       @NamedAttributeNode("branch"), // TODO(ja-lib) test pass without this, but it is suspicious
+      @NamedAttributeNode("pluralForm"),
     })
 public class AssetTextUnit extends AuditableEntity {
 
