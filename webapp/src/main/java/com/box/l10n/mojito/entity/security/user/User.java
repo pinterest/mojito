@@ -18,6 +18,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedAttributeNode;
 import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.NamedSubgraph;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.io.Serializable;
@@ -33,7 +34,15 @@ import org.springframework.data.annotation.CreatedBy;
 @BatchSize(size = 1000)
 @NamedEntityGraph(
     name = "User.legacy",
-    attributeNodes = {@NamedAttributeNode("authorities")})
+    attributeNodes = {
+      @NamedAttributeNode("createdByUser"),
+      @NamedAttributeNode(value = "authorities", subgraph = "authorities.legacy")
+    },
+    subgraphs = {
+      @NamedSubgraph(
+          name = "authorities.legacy",
+          attributeNodes = {@NamedAttributeNode("createdByUser"), @NamedAttributeNode("user")})
+    })
 public class User extends AuditableEntity implements Serializable {
 
   public static final int NAME_MAX_LENGTH = 255;

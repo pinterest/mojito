@@ -346,7 +346,6 @@ public class UserService {
     if (user == null) {
       return createBasicUser(username, null, null, null, true);
     }
-    nullifyReferences(user);
     return user;
   }
 
@@ -359,23 +358,6 @@ public class UserService {
       user = createOrUpdateBasicUser(user, username, givenName, surname, commonName);
     }
 
-    nullifyReferences(user);
     return user;
-  }
-
-  /**
-   * TODO(ja-lib) Make sure there is no proxy, for when it is serialized in the spring session else
-   * auth would fail
-   *
-   * @param user
-   */
-  public static void nullifyReferences(User user) {
-    user.setCreatedByUser(null);
-    user.getAuthorities()
-        .forEach(
-            a -> {
-              a.setCreatedByUser(null);
-              a.setUser(null);
-            });
   }
 }
