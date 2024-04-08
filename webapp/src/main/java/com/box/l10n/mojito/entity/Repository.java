@@ -27,7 +27,6 @@ import org.springframework.data.annotation.CreatedBy;
 @NamedEntityGraph(
     name = "Repository.legacy",
     attributeNodes = {
-      @NamedAttributeNode("sourceLocale"),
       @NamedAttributeNode(
           value = "repositoryLocales",
           subgraph = "Repository.legacy.repositoryLocales"),
@@ -35,9 +34,6 @@ import org.springframework.data.annotation.CreatedBy;
           value = "repositoryStatistic",
           subgraph = "Repository.legacy.repositoryStatistic"),
       @NamedAttributeNode("assetIntegrityCheckers"),
-      @NamedAttributeNode("tm"),
-      @NamedAttributeNode("createdByUser"),
-      @NamedAttributeNode("manualScreenshotRun"),
     },
     subgraphs = {
       @NamedSubgraph(
