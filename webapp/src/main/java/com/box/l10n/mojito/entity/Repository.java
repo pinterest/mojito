@@ -74,11 +74,11 @@ public class Repository extends AuditableEntity {
 
   @JsonView(View.RepositorySummary.class)
   @JsonManagedReference("repositoryLocales")
-  @OneToMany(mappedBy = "repository", fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "repository", fetch = FetchType.EAGER)
   Set<RepositoryLocale> repositoryLocales = new HashSet<>();
 
   @JsonView(View.RepositorySummary.class)
-  @OneToOne(fetch = FetchType.LAZY, optional = false)
+  @OneToOne(fetch = FetchType.EAGER, optional = false)
   @JoinColumn(
       name = "repository_statistic_id",
       foreignKey = @ForeignKey(name = "FK__REPOSITORY__REPOSITORY_STATISTIC__ID"))
@@ -86,7 +86,7 @@ public class Repository extends AuditableEntity {
 
   @JsonView(View.Repository.class)
   @JsonManagedReference
-  @OneToMany(mappedBy = "repository", fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "repository", fetch = FetchType.EAGER)
   Set<AssetIntegrityChecker> assetIntegrityCheckers = new HashSet<>();
 
   @OneToMany(mappedBy = "repository", fetch = FetchType.LAZY)

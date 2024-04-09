@@ -56,7 +56,7 @@ public class RepositoryLocale extends BaseEntity {
   private Repository repository;
 
   @JsonView(View.LocaleSummary.class)
-  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) explicit eager for ut to pass
+  @ManyToOne(fetch = FetchType.EAGER) // TODO(ja-lib) explicit eager for ut to pass
   @JoinColumn(
       name = "locale_id",
       foreignKey = @ForeignKey(name = "FK__REPOSITORY_LOCALE__LOCALE__ID"),

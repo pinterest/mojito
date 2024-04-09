@@ -92,11 +92,9 @@ public class RepositoryService {
    * @return
    */
   public List<Repository> findRepositoriesIsNotDeletedOrderByName(String repositoryName) {
-    var out =
-        repositoryRepository.findAll(
-            where(deletedEquals(false)).and(ifParamNotNull(nameEquals(repositoryName))),
-            Sort.by(Sort.Direction.ASC, "name"));
-    return out;
+    return repositoryRepository.findAll(
+        where(deletedEquals(false)).and(ifParamNotNull(nameEquals(repositoryName))),
+        Sort.by(Sort.Direction.ASC, "name"));
   }
 
   /**
