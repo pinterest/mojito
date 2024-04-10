@@ -14,43 +14,47 @@ import com.box.l10n.mojito.entity.Image;
 import com.box.l10n.mojito.service.blobstorage.s3.S3BlobStorage;
 import java.util.Optional;
 import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 // TODO(ja-lib) disable for now, review with Mark
-// @RunWith(SpringJUnit4ClassRunner.class)
-// @SpringBootTest(
-//    classes = {
-//      S3FallbackImageServiceTest.class,
-//      ImageServiceConfiguration.class,
-//      S3FallbackImageService.class
-//    },
-//    properties = {
-//      "l10n.image-service.storage.type=s3Fallback",
-//      "l10n.blob-storage.type=s3",
-//      "l10n.aws.s3.enabled=true"
-//    })
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringBootTest(
+    classes = {
+      S3FallbackImageServiceTest.class,
+      S3FallbackImageServiceTest.S3FallbackImageServiceTestConfiguration.class
+    },
+    properties = {
+      "l10n.image-service.storage.type=s3Fallback",
+      "l10n.blob-storage.type=s3",
+      "l10n.aws.s3.enabled=true"
+    })
 public class S3FallbackImageServiceTest {
 
-  //  @Configuration
+  @TestConfiguration
   static class S3FallbackImageServiceTestConfiguration {
 
-    // TODO(ja-lib) disable for now, review with Mark
-    // @MockBean
-    ImageRepository imageRepository;
+    @Bean
+    public ImageRepository imageRepository() {
+      return Mockito.mock(ImageRepository.class);
+    }
 
-    // TODO(ja-lib) disable for now, review with Mark
-    // @MockBean
-    S3BlobStorage s3BlobStorage;
+    @Bean
+    public S3BlobStorage s3BlobStorage() {
+      return Mockito.mock(S3BlobStorage.class);
+    }
 
     @Bean("databaseImageService")
-    public DatabaseImageService databaseImageService() {
+    public DatabaseImageService databaseImageService(ImageRepository imageRepository) {
       return Mockito.spy(new DatabaseImageService(imageRepository));
     }
 
@@ -77,15 +81,15 @@ public class S3FallbackImageServiceTest {
     }
   }
 
-  @MockBean S3BlobStorage s3BlobStorageMock;
+  @Autowired S3BlobStorage s3BlobStorageMock;
 
-  @MockBean ImageRepository imageRepositoryMock;
+  @Autowired ImageRepository imageRepositoryMock;
 
-  @SpyBean S3UploadImageAsyncTask s3UploadImageAsyncTaskSpy;
+  @Autowired S3UploadImageAsyncTask s3UploadImageAsyncTaskSpy;
 
-  @SpyBean S3ImageService s3ImageService;
+  @Autowired S3ImageService s3ImageService;
 
-  @Autowired S3FallbackImageService s3FallbackImageService;
+  @Autowired ImageService s3FallbackImageService;
 
   byte[] imageBytes = new byte[] {1, 2, 3, 4, 5};
 
@@ -94,10 +98,11 @@ public class S3FallbackImageServiceTest {
   @Before
   public void setup() {
     imageContent = Optional.of(imageBytes);
+    Mockito.reset(
+        s3BlobStorageMock, imageRepositoryMock, s3UploadImageAsyncTaskSpy, s3ImageService);
   }
 
-  // TODO(ja-lib) disable for now, review with Mark
-  //  @Test
+  @Test
   public void testGetImageFromS3() {
     when(s3BlobStorageMock.getBytes(anyString())).thenReturn(imageContent);
     Optional<Image> image = s3FallbackImageService.getImage("testName");
@@ -108,16 +113,14 @@ public class S3FallbackImageServiceTest {
     verifyNoInteractions(imageRepositoryMock, s3UploadImageAsyncTaskSpy);
   }
 
-  // TODO(ja-lib) disable for now, review with Mark
-  //  @Test
+  @Test
   public void testUploadImageToS3() {
     s3FallbackImageService.uploadImage("testImage", imageBytes);
     verify(s3BlobStorageMock, times(1)).put("image/testImage", imageBytes);
     verifyNoInteractions(imageRepositoryMock, s3UploadImageAsyncTaskSpy);
   }
 
-  // TODO(ja-lib) disable for now, review with Mark
-  //  @Test
+  @Test
   public void testDatabaseCheckedForImageIfNotInS3() {
     when(s3BlobStorageMock.getBytes(anyString())).thenReturn(Optional.empty());
     when(imageRepositoryMock.findByName("test")).thenReturn(Optional.empty());
@@ -129,8 +132,7 @@ public class S3FallbackImageServiceTest {
     verifyNoInteractions(s3UploadImageAsyncTaskSpy);
   }
 
-  // TODO(ja-lib) disable for now, review with Mark
-  //  @Test
+  @Test
   public void testImageUploadedToS3IfFoundInDB() {
     Image image = new Image();
     image.setName("test");
