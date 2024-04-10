@@ -41,7 +41,7 @@ public class RepositoryLocaleStatistic extends BaseEntity {
   private RepositoryStatistic repositoryStatistic;
 
   @JsonView(View.LocaleSummary.class)
-  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests - rel. 5
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "locale_id",
       foreignKey = @ForeignKey(name = "FK__REPOSITORY_LOCALE_STATISTIC__LOCALE__ID"),

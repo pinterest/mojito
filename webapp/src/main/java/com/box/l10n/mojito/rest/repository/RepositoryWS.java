@@ -63,7 +63,6 @@ public class RepositoryWS {
   @RequestMapping(value = "/api/repositories/{repositoryId}", method = RequestMethod.GET)
   public Repository getRepositoryById(@PathVariable Long repositoryId)
       throws RepositoryWithIdNotFoundException {
-    ResponseEntity<Repository> result;
     Repository repository = repositoryRepository.findById(repositoryId).orElse(null);
 
     if (repository == null) {
@@ -247,7 +246,8 @@ public class RepositoryWS {
       throw new RepositoryWithIdNotFoundException(repositoryId);
     }
 
-    // TODO(ja-lib) findAll eager fetch relationships?
+    // TODO(ja-lib) L1: old comment "findAll eager fetch relationships?" not sure what i meant
+    // here
     List<Branch> branches =
         branchRepository.findAll(
             where(ifParamNotNull(nameEquals(branchName)))

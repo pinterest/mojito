@@ -19,10 +19,7 @@ import java.util.Set;
 @NamedEntityGraph(
     name = "BranchStatisticGraph",
     attributeNodes = {
-      @NamedAttributeNode(
-          value = "branch",
-          subgraph =
-              "branchGraph"), // TODO(ja-lib) why is that specified if using EntityGraphType.LOAD?
+      @NamedAttributeNode(value = "branch", subgraph = "branchGraph"),
       @NamedAttributeNode(
           value = "branchTextUnitStatistics",
           subgraph = "branchTextUnitStatisticsGraph")
@@ -76,8 +73,7 @@ public class BranchStatistic extends AuditableEntity {
   @JsonView(View.BranchStatistic.class)
   @JsonManagedReference
   @OneToMany(mappedBy = "branchStatistic")
-  @OrderBy("tmTextUnit.id") // TODO(ja-lib) we don't have error on that one? there was an issue on
-  // orderby for RepositoryStatistic
+  @OrderBy("tmTextUnit.id")
   private Set<BranchTextUnitStatistic> branchTextUnitStatistics = new HashSet<>();
 
   @JsonView(View.BranchStatistic.class)

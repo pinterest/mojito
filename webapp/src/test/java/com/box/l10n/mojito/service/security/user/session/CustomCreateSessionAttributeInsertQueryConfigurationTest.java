@@ -44,8 +44,6 @@ public class CustomCreateSessionAttributeInsertQueryConfigurationTest {
   @Test
   public void testCustomSessionAttributeQueryIsSetOnSessionRepository()
       throws IllegalAccessException {
-    // TODO(ja-lib) review with M, this is failing to create the actual instance, yet the test
-    // passes
     assertNotNull(jdbcIndexedSessionRepository);
     Field createSessionAttributeQueryField =
         ReflectionUtils.findField(

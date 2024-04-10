@@ -69,9 +69,7 @@ public class Branch extends SettableAuditableEntity {
   @JsonView(View.BranchSummary.class)
   @OneToMany(mappedBy = "branch", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
   @JsonDeserialize(as = LinkedHashSet.class)
-  // @OrderBy("id") // TODO(ja-lib) we don't have error on that one? there was an issue on orderby
-  // for
-  // RepositoryStatistic
+  @OrderBy("id")
   Set<Screenshot> screenshots = new HashSet<>();
 
   @OneToOne(mappedBy = "branch", fetch = FetchType.LAZY)

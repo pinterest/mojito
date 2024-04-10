@@ -29,22 +29,21 @@ import java.util.Set;
     name = "AssetContent.legacy",
     attributeNodes = {
       @NamedAttributeNode(value = "asset", subgraph = "Asset.legacy"),
-      @NamedAttributeNode("branch"),
-      //    @NamedAttributeNode("assetExtractions")
+      @NamedAttributeNode("branch")
     },
     subgraphs = {
       @NamedSubgraph(
           name = "Asset.legacy",
           attributeNodes =
               @NamedAttributeNode(value = "repository", subgraph = "Repository.legacy")),
-    }) // TODO (ja-lib) needed for tests
+    })
 public class AssetContent extends AuditableEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "asset_id", foreignKey = @ForeignKey(name = "FK__ASSET_CONTENT__ASSET__ID"))
   private Asset asset;
 
-  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "branch_id", foreignKey = @ForeignKey(name = "FK__ASSET_CONTENT__BRANCH__ID"))
   private Branch branch;
 

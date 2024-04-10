@@ -90,7 +90,7 @@ public class TMTextUnitVariantComment extends AuditableEntity {
   private String content;
 
   @CreatedBy
-  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests - rel. 6
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = BaseEntity.CreatedByUserColumnName,
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_VARIANT_COMMENT__USER__ID"))

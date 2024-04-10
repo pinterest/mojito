@@ -129,7 +129,7 @@ public class TranslatorWithInheritance {
 
     while (textUnitDTOWithInheritance == null
         && repositoryLocaleForFind != null
-        && repositoryLocaleForFind.getParentLocale() != null) { // TODO(ja-lib) rel 2
+        && repositoryLocaleForFind.getParentLocale() != null) {
 
       logger.debug(
           "Looking for a TextUnitDTO in locale: {}",

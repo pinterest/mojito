@@ -443,10 +443,11 @@ public class DropService {
   Drop getDropInTX(Long dropId) {
     final Drop drop = dropRepository.findById(dropId).orElse(null);
     if (drop.getExportPollableTask() != null) {
-      // TODO(ja-lib) fetch recurse ...  might want better...
+      // TODO(ja-lib) L1: must do before merge - fetch recurse ...  might want better...
       pollableTaskService.getAllPollableTasksWithError(drop.getExportPollableTask());
     }
     if (drop.getImportPollableTask() != null) {
+      // TODO(ja-lib) L1: must do before merge - fetch recurse ...  might want better...
       pollableTaskService.getAllPollableTasksWithError(drop.getImportPollableTask());
     }
     return drop;

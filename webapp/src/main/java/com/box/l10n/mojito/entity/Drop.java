@@ -74,7 +74,7 @@ public class Drop extends AuditableEntity {
   @JsonView(View.DropSummary.class)
   private Set<TranslationKit> translationKits;
 
-  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "repository_id", foreignKey = @ForeignKey(name = "FK__DROP__REPOSITORY__ID"))
   @JsonView(View.DropSummary.class)
   private Repository repository;

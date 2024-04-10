@@ -896,7 +896,7 @@ public class DropServiceTest extends ServiceTestBase {
     PollableFuture<Drop> dropPollableFuture =
         dropService.cancelDrop(drop.getId(), PollableTask.INJECT_CURRENT_TASK);
     PollableTask cancelDropPollableTask = dropPollableFuture.getPollableTask();
-    // TODO(ja-lib) review
+    // TODO(ja-lib) L1: recursion to get pollable status, need eager for that to work
     pollableTaskService.getPollableTask(cancelDropPollableTask.getId());
 
     logger.debug("Wait for cancellation to finish");

@@ -89,7 +89,8 @@ public class Screenshot extends SettableAuditableEntity {
   @Column(name = "comment", length = Integer.MAX_VALUE)
   private String comment;
 
-  // TODO(ja-lib) maybe that mapping
+  // TODO(ja-lib) L3, had "maybe that mapping" comment, but not sure what that means,
+  // maybe initial investigation as why the screenshot page is slow
   @JsonView({View.Screenshots.class, View.BranchStatistic.class, View.GitBlameWithUsage.class})
   @JsonManagedReference
   @OneToMany(mappedBy = "screenshot", fetch = FetchType.LAZY, cascade = CascadeType.ALL)

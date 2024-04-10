@@ -160,8 +160,6 @@ public class WebSecurityConfig {
     http.authorizeRequests(
         authorizeRequests ->
             authorizeRequests
-                // TODO(ja-lib) review this deeper depending on what's happening:
-                // https://docs.spring.io/spring-security/reference/5.8/migration/servlet/config.html
                 .requestMatchers(
                     "/intl/*",
                     "/img/*",

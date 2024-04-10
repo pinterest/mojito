@@ -28,8 +28,8 @@ public class TM extends AuditableEntity {
       foreignKey = @ForeignKey(name = "FK__TM__USER__ID"))
   protected User createdByUser;
 
-  @OneToMany(mappedBy = Repository_.TM) // TODO(ja-lib) fixing relationship too
-  Set<Repository> repositories = new HashSet<>();
+  @OneToMany(mappedBy = Repository_.TM)
+  protected Set<Repository> repositories = new HashSet<>();
 
   public User getCreatedByUser() {
     return createdByUser;

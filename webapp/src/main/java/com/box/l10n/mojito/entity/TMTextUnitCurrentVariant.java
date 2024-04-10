@@ -69,7 +69,7 @@ public class TMTextUnitCurrentVariant extends AuditableEntity {
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_CURRENT_VARIANT__TM_TEXT_UNIT__ID"))
   private TMTextUnit tmTextUnit;
 
-  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests - rel:3
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "tm_text_unit_variant_id",
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT_CURRENT_VARIANT__TM_TEXT_UNIT_VARIANT__ID"))

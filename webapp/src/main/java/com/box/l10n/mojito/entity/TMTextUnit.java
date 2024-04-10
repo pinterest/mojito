@@ -72,7 +72,7 @@ public class TMTextUnit extends SettableAuditableEntity {
   @JoinColumn(name = "tm_id", foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT__TM__ID"))
   private TM tm;
 
-  @ManyToOne(fetch = FetchType.LAZY) // TODO(ja-lib) needed for tests - rel:1
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "asset_id",
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT__ASSET__ID"),
@@ -186,11 +186,11 @@ public class TMTextUnit extends SettableAuditableEntity {
     this.pluralFormOther = pluralFormOther;
   }
 
-  public TMTextUnitStatistic getStatistic() {
+  public TMTextUnitStatistic getTmTextUnitStatistic() {
     return tmTextUnitStatistic;
   }
 
-  public void setStatistic(TMTextUnitStatistic tmTextUnitStatistic) {
+  public void setTmTextUnitStatistic(TMTextUnitStatistic tmTextUnitStatistic) {
     this.tmTextUnitStatistic = tmTextUnitStatistic;
   }
 }

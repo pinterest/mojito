@@ -190,16 +190,6 @@ public class VirtualAssetService {
 
     final List<Predicate> predicates = new ArrayList<>();
 
-    // TODO(ja-lib) can't figure out why the conjunction does not work... will come back to it later
-    // sounds like by using select with varg predicate it works ...
-    //    conjunction
-    //        .getExpressions()
-    //        .add(
-    //            criteriaBuilder.equal(
-    //
-    // assetTextUnitRoot.get(AssetTextUnit_.assetExtraction).get(AssetExtraction_.id),
-    //                assetExtractionIdParameter));
-
     predicates.add(
         criteriaBuilder.equal(
             assetTextUnitRoot.get(AssetTextUnit_.assetExtraction).get(AssetExtraction_.id),
@@ -208,12 +198,6 @@ public class VirtualAssetService {
     ParameterExpression<Boolean> doNotTranslateFilterParameter = null;
     if (doNotTranslateFilter != null) {
       doNotTranslateFilterParameter = criteriaBuilder.parameter(Boolean.class);
-      //      conjunction
-      //          .getExpressions()
-      //          .add(
-      //              criteriaBuilder.equal(
-      //                  assetTextUnitRoot.get(AssetTextUnit_.doNotTranslate),
-      //                  doNotTranslateFilterParameter));
 
       predicates.add(
           criteriaBuilder.equal(

@@ -163,7 +163,7 @@ public class LeveragingServiceTest extends ServiceTestBase {
           @Override
           public boolean apply(TMTextUnitVariant tmtuv) {
             return !"zuora_error_message_verify_state_province"
-                .equals(tmtuv.getTmTextUnit().getName()); // TODO(ja-lib) rel. 4
+                .equals(tmtuv.getTmTextUnit().getName());
           }
         };
 

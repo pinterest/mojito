@@ -77,8 +77,7 @@ public class PollableTask extends AuditableEntity {
   private int expectedSubTaskNumber = 0;
 
   @OneToMany(mappedBy = "parentTask", fetch = FetchType.LAZY)
-  @OrderBy("id") // TODO(ja-lib) we don't have error on that one? there was an issue on orderby for
-  // RepositoryStatistic
+  @OrderBy("id")
   @BatchSize(size = 1000)
   private Set<PollableTask> subTasks;
 
@@ -98,7 +97,6 @@ public class PollableTask extends AuditableEntity {
   @JoinColumn(
       name = BaseEntity.CreatedByUserColumnName,
       foreignKey = @ForeignKey(name = "FK__POLLABLE_TASK__USER__ID"))
-  // TODO(ja-lib) should it be lazy?
   protected User createdByUser;
 
   public User getCreatedByUser() {

@@ -30,7 +30,6 @@ import org.springframework.data.annotation.CreatedBy;
     name = "Asset.legacy",
     attributeNodes = {
       @NamedAttributeNode(value = "repository", subgraph = "Asset.legacy.repository"),
-      // TODO(ja-lib) i'm not sure that works
       @NamedAttributeNode(
           value = "lastSuccessfulAssetExtraction",
           subgraph = "Asset.legacy.lastSuccessfulAssetExtraction"),
@@ -56,7 +55,7 @@ import org.springframework.data.annotation.CreatedBy;
     })
 public class Asset extends AuditableEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false) // TODO(ja-lib) needed for tests
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "repository_id", foreignKey = @ForeignKey(name = "FK__ASSET__REPOSITORY__ID"))
   @JsonView(View.AssetSummary.class)
   private Repository repository;
@@ -70,9 +69,6 @@ public class Asset extends AuditableEntity {
   @JsonView(View.AssetSummary.class)
   private Boolean virtual = false;
 
-  // TODO(ja-lib) that seems there is a single last extraction per asset, if i have the asset i hvae
-  // the last and vice versa, that column should be unique
-  // remove the comment when sure
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "last_successful_asset_extraction_id",

@@ -187,19 +187,14 @@
             <artifactId>mysql-connector-j</artifactId>
         </dependency>
 
-        <!-- TODO(ja-lib) review version if we can get it from spring -->
         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-envers</artifactId>
-<!--            <version>6.4.2.Final</version>-->
         </dependency>
 
-
-        <!-- TODO(ja-lib) or intro configuration to share -->
         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-ant</artifactId>
-<!--            <version>6.4.2.Final</version>-->
         </dependency>
 
         <dependency>
@@ -430,7 +425,7 @@
                     <!-- Sets the VM argument line used when unit tests are run. -->
                     <argLine>-Dspring.config.additional-location=optional:file://${user.home}/.l10n/config/webapp/
                         -Dspring.profiles.active=${user.name},test -Xmx2048m -Duser.timezone=UTC
-                        <!-- TODO(ja-lib) mapping of dates changed again? -->
+                        <!-- TODO(ja-lib) L1: mapping of dates changed again? -->
                     </argLine>
 
                     <rerunFailingTestsCount>0</rerunFailingTestsCount>

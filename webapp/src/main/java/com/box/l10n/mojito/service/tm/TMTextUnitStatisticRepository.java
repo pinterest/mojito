@@ -13,7 +13,7 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
  */
 @RepositoryRestResource(exported = false)
 public interface TMTextUnitStatisticRepository extends JpaRepository<TMTextUnitStatistic, Long> {
-  @VisibleForTesting // TODO(ja-lib) separate test repository from main code to avoid wrong usages?
+  @VisibleForTesting
   @Override
   @EntityGraph(value = "TMTextUnitStatistic.legacy", type = EntityGraphType.FETCH)
   List<TMTextUnitStatistic> findAll();

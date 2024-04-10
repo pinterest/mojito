@@ -199,17 +199,6 @@ public class RepositoryWSTest extends WSTestBase {
     }
   }
 
-  @Test
-  public void rawPayload() throws RepositoryNameAlreadyUsedException {
-    // TODO(ja-lib) just testing the outputs - remove later, but actually it might be nice to have
-    // some similar way to test for regressions
-
-    Repository expectedRepository = wsTestDataFactory.createRepository(testIdWatcher);
-    final String actualRepository =
-        repositoryClient.getRepositoryByIdAsString(expectedRepository.getId());
-    logger.warn(actualRepository);
-  }
-
   protected void assertRepositoriesAreEqual(
       Repository expectedRepository, com.box.l10n.mojito.rest.entity.Repository actualRepository) {
     logger.debug("Basic asserts");

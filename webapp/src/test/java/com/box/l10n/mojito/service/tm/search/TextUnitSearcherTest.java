@@ -526,7 +526,7 @@ public class TextUnitSearcherTest extends ServiceTestBase {
     search = textUnitSearcher.search(textUnitSearcherParameters);
     assertEquals(8, search.size());
 
-    // TODO(ja-lib) more odd behavior with dates? mysql fine, hsqldb no?
+    // TODO(ja-lib) L2: more odd behavior with dates? mysql fine, hsqldb no?
     textUnitSearcherParameters.setTmTextUnitCreatedAfter(secondsBefore);
     textUnitSearcherParameters.setTmTextUnitCreatedBefore(secondsAfter);
     search = textUnitSearcher.search(textUnitSearcherParameters);

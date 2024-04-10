@@ -67,7 +67,7 @@
         </dependency>
 
         <!-- TODO(spring2) remove -->
-        <!-- TODO(ja-lib) ^ spring2! -->
+        <!-- TODO(ja-lib) L3: spring2! -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-properties-migrator</artifactId>
@@ -185,7 +185,7 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-compiler-plugin</artifactId>
                         <configuration>
-                            <!-- TODO(ja-lib) can this be causing the warning? -->
+                            <!-- TODO(ja-lib) L1: can this be causing the warning? -->
 <!--                            <debug>false</debug>-->
                             <optimize>true</optimize>
                         </configuration>

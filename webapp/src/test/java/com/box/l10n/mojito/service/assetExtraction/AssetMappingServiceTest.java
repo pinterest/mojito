@@ -1051,7 +1051,6 @@ public class AssetMappingServiceTest extends ServiceTestBase {
 
   private Iterator<AssetTextUnitToTMTextUnit> getAssetTextUnitToTMTextUnit(
       AssetExtraction assetExtraction) {
-    // TODO(ja-lib) instead of changing the relationship just for the test, will fetch here
     TypedQuery<AssetTextUnitToTMTextUnit> query =
         entityManager
             .createQuery(
