@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,11 +43,8 @@ public class PollableTaskService {
   public PollableTask getPollableTask(long id) {
     final PollableTask pollableTask = pollableTaskRepository.findById(id).orElse(null);
     // Access all subtasks within the transaction to fetch all entities from the database since
-    // we don't use EAGER fetch on the entity anymore. Note that the error do not matter in this
-    // case, but it just re-use the function for accessing all subtasks. Also, it does not seem
-    // possible to implement similar recurison using an entity graph, but this should be revisited
-    // for an improved solution.
-    getAllPollableTasksWithError(pollableTask);
+    // we don't use EAGER fetch on the entity anymore.
+    fetchSubTasks(pollableTask);
     return pollableTask;
   }
 
@@ -222,6 +220,19 @@ public class PollableTaskService {
     }
 
     return pollableTasks;
+  }
+
+  /**
+   * Recursively fetch subtasks.
+   *
+   * <p>Needed as moved the relation to LAZY. Before Hibernate would fetch them because of the EAGER
+   * properties
+   *
+   * @param pollableTask
+   */
+  public void fetchSubTasks(PollableTask pollableTask) {
+    Hibernate.initialize(pollableTask.getSubTasks());
+    pollableTask.getSubTasks().forEach(this::fetchSubTasks);
   }
 
   /**
