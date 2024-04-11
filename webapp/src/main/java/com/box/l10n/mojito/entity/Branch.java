@@ -47,7 +47,7 @@ public class Branch extends SettableAuditableEntity {
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "repository_id", foreignKey = @ForeignKey(name = "FK__BRANCH__REPOSITORY__ID"))
   @JsonView(View.BranchSummary.class)
-  //  @JsonBackReference
+  //  @JsonBackReference TODO(ja-lib) L1: why was this commented, is it useful
   Repository repository;
 
   @JsonView(View.BranchSummary.class)
@@ -69,7 +69,7 @@ public class Branch extends SettableAuditableEntity {
   @JsonView(View.BranchSummary.class)
   @OneToMany(mappedBy = "branch", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
   @JsonDeserialize(as = LinkedHashSet.class)
-  @OrderBy("id")
+  //  @OrderBy("id")
   Set<Screenshot> screenshots = new HashSet<>();
 
   @OneToOne(mappedBy = "branch", fetch = FetchType.LAZY)

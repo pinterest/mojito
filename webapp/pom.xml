@@ -208,7 +208,6 @@
             <artifactId>flyway-mysql</artifactId>
         </dependency>
 
-        <!-- TODO(ja-lib) ^ spring2! -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-properties-migrator</artifactId>
@@ -424,8 +423,7 @@
                 <configuration>
                     <!-- Sets the VM argument line used when unit tests are run. -->
                     <argLine>-Dspring.config.additional-location=optional:file://${user.home}/.l10n/config/webapp/
-                        -Dspring.profiles.active=${user.name},test -Xmx2048m -Duser.timezone=UTC
-                        <!-- TODO(ja-lib) L1: mapping of dates changed again? -->
+                        -Dspring.profiles.active=${user.name},test -Duser.timezone=UTC
                     </argLine>
 
                     <rerunFailingTestsCount>0</rerunFailingTestsCount>

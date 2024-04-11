@@ -26,7 +26,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-// TODO(ja-lib) disable for now, review with Mark
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(
     classes = {

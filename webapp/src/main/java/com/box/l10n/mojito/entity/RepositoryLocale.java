@@ -57,9 +57,6 @@ public class RepositoryLocale extends BaseEntity {
 
   @JsonView(View.LocaleSummary.class)
   @ManyToOne(fetch = FetchType.EAGER)
-  // TODO(ja-lib) L3: the end goal was to move everything to LAZY,
-  // but this is still causing some issue and we need to move on with the migration.
-  // We keep this for now as it seems to be a good compromise. Without it, UT would fail.
   @JoinColumn(
       name = "locale_id",
       foreignKey = @ForeignKey(name = "FK__REPOSITORY_LOCALE__LOCALE__ID"),

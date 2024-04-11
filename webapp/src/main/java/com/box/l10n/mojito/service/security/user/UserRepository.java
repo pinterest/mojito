@@ -26,8 +26,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
   @EntityGraph(value = "User.legacy", type = EntityGraphType.FETCH)
   List<User> findAll(Specification<User> spec, Sort sort);
 
+  // Note it is not possible to use an entity graph here as it will give the following issue:
+  // HHH90003004: firstResult/maxResults specified with collection fetch; applying in memory
+  // @EntityGraph(value = "User.legacy", type = EntityGraphType.FETCH)
+  //
+  // See {@link com.box.l10n.mojito.service.security.user.UserService#findAll()}
   @Override
-  @EntityGraph(value = "User.legacy", type = EntityGraphType.FETCH)
   Page<User> findAll(Specification<User> spec, Pageable pageable);
 
   @Override

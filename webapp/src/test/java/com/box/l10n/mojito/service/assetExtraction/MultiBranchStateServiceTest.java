@@ -108,8 +108,6 @@ public class MultiBranchStateServiceTest extends ServiceTestBase {
       expectedMultiBranchState =
           expectedMultiBranchState.withBranchStateTextUnits(
               expectedMultiBranchState.getBranchStateTextUnits().stream()
-                  // TODO(ja-lib) L2: datetime change - same with HSQL! why would this be needed
-                  // now, 3x to 3.1x?
                   .map(
                       bstu ->
                           bstu.withCreatedDate(

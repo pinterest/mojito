@@ -41,7 +41,11 @@ public class PollableTaskService {
   @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
   public PollableTask getPollableTask(long id) {
     final PollableTask pollableTask = pollableTaskRepository.findById(id).orElse(null);
-    // TODO(ja-lib) L1: access the subtask to fetch all recurisions, graph don't work for that
+    // Access all subtasks within the transaction to fetch all entities from the database since
+    // we don't use EAGER fetch on the entity anymore. Note that the error do not matter in this
+    // case, but it just re-use the function for accessing all subtasks. Also, it does not seem
+    // possible to implement similar recurison using an entity graph, but this should be revisited
+    // for an improved solution.
     getAllPollableTasksWithError(pollableTask);
     return pollableTask;
   }

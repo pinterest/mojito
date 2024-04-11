@@ -17,6 +17,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -256,10 +257,6 @@ public class ScreenshotService {
     Join<Screenshot, ScreenshotTextUnit> screenshotTextUnits =
         screenshot.join(Screenshot_.screenshotTextUnits, JoinType.LEFT);
 
-    screenshot.fetch(Screenshot_.screenshotRun).fetch(ScreenshotRun_.repository);
-    screenshot.fetch(Screenshot_.locale);
-    screenshot.fetch(Screenshot_.screenshotTextUnits, JoinType.LEFT);
-
     List<Predicate> predicates = new ArrayList<>();
 
     if (ScreenshotRunType.LAST_SUCCESSFUL_RUN.equals(screenshotRunType)) {
@@ -329,6 +326,22 @@ public class ScreenshotService {
             .setFirstResult(offset)
             .setMaxResults(limit)
             .getResultList();
+
+    // Cannot use an EntityGraph with pagination as it triggers the following warning:
+    // HHH90003004: firstResult/maxResults specified with collection fetch; applying in memory
+    //
+    // Replacing:
+    // screenshot.fetch(Screenshot_.screenshotRun).fetch(ScreenshotRun_.repository);
+    // screenshot.fetch(Screenshot_.locale);
+    // screenshot.fetch(Screenshot_.screenshotTextUnits, JoinType.LEFT);
+    screenshots.forEach(
+        s -> {
+          Hibernate.initialize(s.getScreenshotRun());
+          Hibernate.initialize(s.getScreenshotRun().getRepository());
+          Hibernate.initialize(s.getLocale());
+          Hibernate.initialize(s.getScreenshotTextUnits());
+        });
+
     return screenshots;
   }
 

@@ -246,8 +246,6 @@ public class RepositoryWS {
       throw new RepositoryWithIdNotFoundException(repositoryId);
     }
 
-    // TODO(ja-lib) L1: old comment "findAll eager fetch relationships?" not sure what i meant
-    // here
     List<Branch> branches =
         branchRepository.findAll(
             where(ifParamNotNull(nameEquals(branchName)))

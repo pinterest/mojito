@@ -185,8 +185,7 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-compiler-plugin</artifactId>
                         <configuration>
-                            <!-- TODO(ja-lib) L1: can this be causing the warning? -->
-<!--                            <debug>false</debug>-->
+                            <debug>false</debug>
                             <optimize>true</optimize>
                         </configuration>
                     </plugin>
