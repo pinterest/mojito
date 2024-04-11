@@ -47,7 +47,6 @@ public class Branch extends SettableAuditableEntity {
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "repository_id", foreignKey = @ForeignKey(name = "FK__BRANCH__REPOSITORY__ID"))
   @JsonView(View.BranchSummary.class)
-  //  @JsonBackReference TODO(ja-lib) L1: why was this commented, is it useful
   Repository repository;
 
   @JsonView(View.BranchSummary.class)
