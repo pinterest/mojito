@@ -36,11 +36,11 @@ import org.springframework.data.annotation.CreatedBy;
     name = "User.legacy",
     attributeNodes = {
       @NamedAttributeNode("createdByUser"),
-      @NamedAttributeNode(value = "authorities", subgraph = "authorities.legacy")
+      @NamedAttributeNode(value = "authorities", subgraph = "User.legacy.authorities")
     },
     subgraphs = {
       @NamedSubgraph(
-          name = "authorities.legacy",
+          name = "User.legacy.authorities",
           attributeNodes = {@NamedAttributeNode("createdByUser"), @NamedAttributeNode("user")})
     })
 public class User extends AuditableEntity implements Serializable {

@@ -22,22 +22,22 @@ import java.util.Set;
       @NamedAttributeNode(value = "branch", subgraph = "branchGraph"),
       @NamedAttributeNode(
           value = "branchTextUnitStatistics",
-          subgraph = "branchTextUnitStatisticsGraph")
+          subgraph = "branchGraph.branchTextUnitStatistics")
     },
     subgraphs = {
       @NamedSubgraph(
           name = "branchGraph",
           attributeNodes = {
             @NamedAttributeNode(value = "screenshots", subgraph = "branchGraph.screenshots"),
-            @NamedAttributeNode(value = "repository", subgraph = "repositoryGraph"),
+            @NamedAttributeNode(value = "repository", subgraph = "branchGraph.repository"),
           }),
       @NamedSubgraph(
-          name = "branchTextUnitStatisticsGraph",
+          name = "branchGraph.branchTextUnitStatistics",
           attributeNodes = {
             @NamedAttributeNode(value = "tmTextUnit"),
           }),
       @NamedSubgraph(
-          name = "repositoryGraph",
+          name = "branchGraph.repository",
           attributeNodes = {
             @NamedAttributeNode(value = "sourceLocale"),
             @NamedAttributeNode(value = "manualScreenshotRun"),

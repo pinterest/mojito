@@ -30,11 +30,7 @@ import jakarta.persistence.Table;
     })
 @NamedEntityGraph(
     name = "AssetExtractionByBranch.legacy",
-    attributeNodes = {
-      @NamedAttributeNode(value = "assetExtraction"),
-      //    @NamedAttributeNode(value = "assetExtraction"),
-      //    @NamedAttributeNode(value = "assetExtraction")
-    })
+    attributeNodes = {@NamedAttributeNode(value = "assetExtraction")})
 public class AssetExtractionByBranch extends AuditableEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)

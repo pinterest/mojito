@@ -42,7 +42,10 @@ import org.springframework.data.annotation.CreatedBy;
     },
     subgraphs = {
       @NamedSubgraph(
-          name = "TMTextUnitCurrentVariant.legacy",
+          name =
+              "TMTextUnitCurrentVariant.legacy", // TODO(ja-lib) how can this work it has the same
+          // name! so it either global shared ie unique or it
+          // is local but then this is not needed!
           attributeNodes = {@NamedAttributeNode("tmTextUnitVariantComments")})
     })
 public class TMTextUnitCurrentVariant extends AuditableEntity {

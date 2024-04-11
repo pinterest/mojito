@@ -28,14 +28,13 @@ import java.util.Set;
 @NamedEntityGraph(
     name = "AssetContent.legacy",
     attributeNodes = {
-      @NamedAttributeNode(value = "asset", subgraph = "Asset.legacy"),
+      @NamedAttributeNode(value = "asset", subgraph = "AssetContent.legacy.asset"),
       @NamedAttributeNode("branch")
     },
     subgraphs = {
       @NamedSubgraph(
-          name = "Asset.legacy",
-          attributeNodes =
-              @NamedAttributeNode(value = "repository", subgraph = "Repository.legacy")),
+          name = "AssetContent.legacy.asset",
+          attributeNodes = @NamedAttributeNode(value = "repository")),
     })
 public class AssetContent extends AuditableEntity {
 
