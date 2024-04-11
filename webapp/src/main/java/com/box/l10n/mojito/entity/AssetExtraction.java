@@ -40,7 +40,7 @@ import org.springframework.data.annotation.CreatedBy;
       @NamedSubgraph(
           name = "AssetExtraction.legacy.asset",
           attributeNodes = {
-            @NamedAttributeNode(value = "repository", subgraph = "Repository.legacy"),
+            @NamedAttributeNode(value = "repository"),
           })
     })
 public class AssetExtraction extends AuditableEntity {

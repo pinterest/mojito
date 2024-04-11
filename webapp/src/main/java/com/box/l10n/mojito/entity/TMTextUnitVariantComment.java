@@ -40,10 +40,7 @@ import org.springframework.data.annotation.CreatedBy;
     subgraphs = {
       @NamedSubgraph(
           name = "TMTextUnitVariantComment.legacy.createdByUser",
-          attributeNodes = {
-            @NamedAttributeNode(value = "authorities"),
-            //        @NamedAttributeNode(value = "createdByUser", subgraph = "")
-          })
+          attributeNodes = {@NamedAttributeNode(value = "authorities")})
     })
 public class TMTextUnitVariantComment extends AuditableEntity {
 

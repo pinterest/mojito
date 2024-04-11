@@ -67,7 +67,6 @@
         </dependency>
 
         <!-- TODO(spring2) remove -->
-        <!-- TODO(ja-lib) L3: spring2! -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-properties-migrator</artifactId>
