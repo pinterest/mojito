@@ -2,7 +2,6 @@ package com.box.l10n.mojito.entity;
 
 import com.box.l10n.mojito.entity.security.user.User;
 import com.box.l10n.mojito.rest.View;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.persistence.*;
@@ -49,7 +48,6 @@ public class Branch extends SettableAuditableEntity {
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "repository_id", foreignKey = @ForeignKey(name = "FK__BRANCH__REPOSITORY__ID"))
   @JsonView(View.BranchSummary.class)
-  @JsonBackReference
   Repository repository;
 
   @JsonView(View.BranchSummary.class)
