@@ -73,11 +73,9 @@ public class AssetExtractionServiceTest extends ServiceTestBase {
 
   @Rule public TestIdWatcher testIdWatcher = new TestIdWatcher();
 
-  @MockBean
-  RepositoryStatisticsJobScheduler repositoryStatisticsJobScheduler;
+  @MockBean RepositoryStatisticsJobScheduler repositoryStatisticsJobScheduler;
 
-  @MockBean
-  RepositoryStatisticsUpdatedReactor repositoryStatisticsUpdatedReactor;
+  @MockBean RepositoryStatisticsUpdatedReactor repositoryStatisticsUpdatedReactor;
 
   /**
    * Set up for tests
@@ -1380,14 +1378,15 @@ public class AssetExtractionServiceTest extends ServiceTestBase {
   @Test
   public void testBranchesWithSameStrings() throws Exception {
     final Repository repository =
-            this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
+        this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
 
     final String assetPath = "path/to/file.properties";
     final String masterContent = "# string1 description\n" + "string1=content1\n";
 
     final Asset asset = this.assetService.createAsset(repository.getId(), assetPath, false);
 
-    final Branch master = this.branchService.createBranch(asset.getRepository(), "master", null, null);
+    final Branch master =
+        this.branchService.createBranch(asset.getRepository(), "master", null, null);
 
     final AssetContent assetContent =
             this.assetContentService.createAssetContent(asset, masterContent, false, master);

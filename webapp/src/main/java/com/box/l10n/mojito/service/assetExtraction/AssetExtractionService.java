@@ -167,8 +167,7 @@ public class AssetExtractionService {
 
   @Autowired LocalBranchToEntityBranchConverter localBranchToEntityBranchConverter;
 
-  @Autowired
-  private RepositoryStatisticsJobScheduler repositoryStatisticsJobScheduler;
+  @Autowired private RepositoryStatisticsJobScheduler repositoryStatisticsJobScheduler;
 
   @Value("${l10n.assetExtraction.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   String quartzSchedulerName;
@@ -450,7 +449,7 @@ public class AssetExtractionService {
               getBranchStateTextUnitsWithoutId(stateForNewContentWithIds);
 
           final Repository repository = assetContent.getBranch().getRepository();
-          if (toCreateTmTextUnits.isEmpty() && repository != null)  {
+          if (toCreateTmTextUnits.isEmpty() && repository != null) {
             this.repositoryStatisticsJobScheduler.schedule(repository.getId());
           }
 
