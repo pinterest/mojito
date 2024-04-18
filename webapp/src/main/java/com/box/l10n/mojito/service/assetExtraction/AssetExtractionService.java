@@ -15,6 +15,7 @@ import com.box.l10n.mojito.entity.Branch;
 import com.box.l10n.mojito.entity.PluralForm;
 import com.box.l10n.mojito.entity.PollableTask;
 import com.box.l10n.mojito.entity.PushRun;
+import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.entity.security.user.User;
 import com.box.l10n.mojito.json.ObjectMapper;
@@ -45,6 +46,7 @@ import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.pollableTask.PollableFutureTaskResult;
 import com.box.l10n.mojito.service.pollableTask.PollableTaskService;
 import com.box.l10n.mojito.service.pushrun.PushRunService;
+import com.box.l10n.mojito.service.repository.statistics.RepositoryStatisticsJobScheduler;
 import com.box.l10n.mojito.service.tm.TMRepository;
 import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
@@ -164,6 +166,9 @@ public class AssetExtractionService {
   @Autowired EntityManager entityManager;
 
   @Autowired LocalBranchToEntityBranchConverter localBranchToEntityBranchConverter;
+
+  @Autowired
+  private RepositoryStatisticsJobScheduler repositoryStatisticsJobScheduler;
 
   @Value("${l10n.assetExtraction.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   String quartzSchedulerName;
@@ -443,6 +448,11 @@ public class AssetExtractionService {
 
           ImmutableList<BranchStateTextUnit> toCreateTmTextUnits =
               getBranchStateTextUnitsWithoutId(stateForNewContentWithIds);
+
+          final Repository repository = assetContent.getBranch().getRepository();
+          if (toCreateTmTextUnits.isEmpty() && repository != null)  {
+            this.repositoryStatisticsJobScheduler.schedule(repository.getId());
+          }
 
           ImmutableList<BranchStateTextUnit> createdTextUnits =
               createTmTextUnitsInTx(

@@ -6,6 +6,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.box.l10n.mojito.entity.Asset;
@@ -24,6 +27,8 @@ import com.box.l10n.mojito.service.branch.BranchService;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.pollableTask.PollableTaskException;
 import com.box.l10n.mojito.service.repository.RepositoryService;
+import com.box.l10n.mojito.service.repository.statistics.RepositoryStatisticsJobScheduler;
+import com.box.l10n.mojito.service.repository.statistics.RepositoryStatisticsUpdatedReactor;
 import com.box.l10n.mojito.test.TestIdWatcher;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -39,6 +44,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -66,6 +72,12 @@ public class AssetExtractionServiceTest extends ServiceTestBase {
   @Autowired MultiBranchStateService multiBranchStateService;
 
   @Rule public TestIdWatcher testIdWatcher = new TestIdWatcher();
+
+  @MockBean
+  RepositoryStatisticsJobScheduler repositoryStatisticsJobScheduler;
+
+  @MockBean
+  RepositoryStatisticsUpdatedReactor repositoryStatisticsUpdatedReactor;
 
   /**
    * Set up for tests
@@ -1363,6 +1375,42 @@ public class AssetExtractionServiceTest extends ServiceTestBase {
     expectedUsages.add("path/to/file.js:25");
     expectedUsages.add("path/to/file.js:30");
     checkAssetTextUnits(assetTextUnits, expectedUsages);
+  }
+
+  @Test
+  public void testBranchesWithSameStrings() throws Exception {
+    final Repository repository =
+            this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
+
+    final String assetPath = "path/to/file.properties";
+    final String masterContent = "# string1 description\n" + "string1=content1\n";
+
+    final Asset asset = this.assetService.createAsset(repository.getId(), assetPath, false);
+
+    final Branch master = this.branchService.createBranch(asset.getRepository(), "master", null, null);
+
+    final AssetContent assetContent =
+            this.assetContentService.createAssetContent(asset, masterContent, false, master);
+    this.assetExtractionService.processAssetAsync(assetContent.getId(), null, null, null, null).get();
+
+    final Branch branch1 = this.branchService.createBranch(asset.getRepository(), "branch1", null, null);
+    final String branchContent = "string2=content2\n";
+
+    final AssetContent branch1AssetContent =
+            this.assetContentService.createAssetContent(asset, branchContent, false, branch1);
+    this.assetExtractionService
+            .processAssetAsync(branch1AssetContent.getId(), null, null, null, null)
+            .get();
+
+    final Branch branch2 = this.branchService.createBranch(asset.getRepository(), "branch2", null, null);
+
+    final AssetContent branch2AssetContent =
+            this.assetContentService.createAssetContent(asset, branchContent, false, branch2);
+    this.assetExtractionService
+            .processAssetAsync(branch2AssetContent.getId(), null, null, null, null)
+            .get();
+
+    verify(this.repositoryStatisticsJobScheduler, times(1)).schedule(anyLong());
   }
 
   @Test
