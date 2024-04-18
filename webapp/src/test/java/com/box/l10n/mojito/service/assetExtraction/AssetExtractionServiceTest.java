@@ -1389,25 +1389,29 @@ public class AssetExtractionServiceTest extends ServiceTestBase {
         this.branchService.createBranch(asset.getRepository(), "master", null, null);
 
     final AssetContent assetContent =
-            this.assetContentService.createAssetContent(asset, masterContent, false, master);
-    this.assetExtractionService.processAssetAsync(assetContent.getId(), null, null, null, null).get();
+        this.assetContentService.createAssetContent(asset, masterContent, false, master);
+    this.assetExtractionService
+        .processAssetAsync(assetContent.getId(), null, null, null, null)
+        .get();
 
-    final Branch branch1 = this.branchService.createBranch(asset.getRepository(), "branch1", null, null);
+    final Branch branch1 =
+        this.branchService.createBranch(asset.getRepository(), "branch1", null, null);
     final String branchContent = "string2=content2\n";
 
     final AssetContent branch1AssetContent =
-            this.assetContentService.createAssetContent(asset, branchContent, false, branch1);
+        this.assetContentService.createAssetContent(asset, branchContent, false, branch1);
     this.assetExtractionService
-            .processAssetAsync(branch1AssetContent.getId(), null, null, null, null)
-            .get();
+        .processAssetAsync(branch1AssetContent.getId(), null, null, null, null)
+        .get();
 
-    final Branch branch2 = this.branchService.createBranch(asset.getRepository(), "branch2", null, null);
+    final Branch branch2 =
+        this.branchService.createBranch(asset.getRepository(), "branch2", null, null);
 
     final AssetContent branch2AssetContent =
-            this.assetContentService.createAssetContent(asset, branchContent, false, branch2);
+        this.assetContentService.createAssetContent(asset, branchContent, false, branch2);
     this.assetExtractionService
-            .processAssetAsync(branch2AssetContent.getId(), null, null, null, null)
-            .get();
+        .processAssetAsync(branch2AssetContent.getId(), null, null, null, null)
+        .get();
 
     verify(this.repositoryStatisticsJobScheduler, times(1)).schedule(anyLong());
   }
