@@ -1,0 +1,1 @@
+UPDATE asset_text_unit_usages atuu INNER JOIN asset_text_unit atu ON atu.id = atuu.asset_text_unit_id INNER JOIN branch b ON b.id = atu.branch_id INNER JOIN repository r ON r.id = b.repository_id SET usages = SUBSTRING(atuu.usages, LENGTH("/workdir/") + 1) WHERE atuu.usages LIKE "/workdir/%" AND r.name = "webapp";
