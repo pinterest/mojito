@@ -13,7 +13,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
@@ -30,11 +32,19 @@ public class OpenAIClient {
 
   final HttpClient httpClient;
 
-  OpenAIClient(String apiKey, String host, ObjectMapper objectMapper, HttpClient httpClient) {
-    this.apiKey = Objects.requireNonNull(apiKey);
+  final Map<String, String> customHeaders;
+
+  OpenAIClient(
+      String apiKey,
+      String host,
+      ObjectMapper objectMapper,
+      HttpClient httpClient,
+      Map<String, String> customHeaders) {
+    this.apiKey = apiKey;
     this.host = Objects.requireNonNull(host);
     this.objectMapper = Objects.requireNonNull(objectMapper);
     this.httpClient = Objects.requireNonNull(httpClient);
+    this.customHeaders = customHeaders;
   }
 
   public static class Builder {
@@ -47,10 +57,12 @@ public class OpenAIClient {
 
     private HttpClient httpClient;
 
+    private Map<String, String> customHeaders;
+
     public Builder() {}
 
     public Builder apiKey(String apiKey) {
-      this.apiKey = Objects.requireNonNull(apiKey);
+      this.apiKey = apiKey;
       return this;
     }
 
@@ -69,10 +81,12 @@ public class OpenAIClient {
       return this;
     }
 
+    public Builder customHeaders(Map<String, String> customHeaders) {
+      this.customHeaders = customHeaders;
+      return this;
+    }
+
     public OpenAIClient build() {
-      if (apiKey == null) {
-        throw new IllegalStateException("API key must be provided");
-      }
 
       if (objectMapper == null) {
         objectMapper = createObjectMapper();
@@ -80,7 +94,7 @@ public class OpenAIClient {
       if (httpClient == null) {
         httpClient = createHttpClient();
       }
-      return new OpenAIClient(apiKey, host, objectMapper, httpClient);
+      return new OpenAIClient(apiKey, host, objectMapper, httpClient, customHeaders);
     }
 
     private HttpClient createHttpClient() {
@@ -118,8 +132,7 @@ public class OpenAIClient {
     HttpRequest request =
         HttpRequest.newBuilder()
             .uri(getUriForEndpoint(ChatCompletionsRequest.ENDPOINT))
-            .header("Content-Type", "application/json")
-            .header("Authorization", "Bearer " + this.apiKey)
+            .headers(getHeaders())
             .POST(HttpRequest.BodyPublishers.ofString(payload, StandardCharsets.UTF_8))
             .build();
 
@@ -162,8 +175,7 @@ public class OpenAIClient {
     HttpRequest request =
         HttpRequest.newBuilder()
             .uri(getUriForEndpoint(ChatCompletionsRequest.ENDPOINT))
-            .header("Content-Type", "application/json")
-            .header("Authorization", "Bearer " + this.apiKey)
+            .headers(getHeaders())
             .POST(HttpRequest.BodyPublishers.ofString(requestPayload, StandardCharsets.UTF_8))
             .build();
 
@@ -433,6 +445,24 @@ public class OpenAIClient {
     }
   }
 
+  private String[] getHeaders() {
+    List<String> headersList = new ArrayList<>();
+    headersList.add("Content-Type");
+    headersList.add("application/json");
+    if (apiKey != null && !apiKey.isBlank()) {
+      headersList.add("Authorization");
+      headersList.add("Bearer " + this.apiKey);
+    }
+    if (customHeaders != null && !customHeaders.isEmpty()) {
+      customHeaders.forEach(
+          (key, value) -> {
+            headersList.add(key);
+            headersList.add(value);
+          });
+    }
+    return headersList.toArray(new String[0]);
+  }
+
   public CompletableFuture<EmbeddingResponse> getEmbedding(EmbeddingRequest embeddingRequest) {
 
     String requestBody;
@@ -445,8 +475,7 @@ public class OpenAIClient {
     HttpRequest httpRequest =
         HttpRequest.newBuilder()
             .uri(getUriForEndpoint(EmbeddingRequest.ENDPOINT))
-            .header("Content-Type", "application/json")
-            .header("Authorization", "Bearer " + this.apiKey)
+            .headers(getHeaders())
             .POST(HttpRequest.BodyPublishers.ofString(requestBody))
             .build();
 
