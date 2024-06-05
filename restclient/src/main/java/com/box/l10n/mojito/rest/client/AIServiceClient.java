@@ -4,19 +4,18 @@ import com.box.l10n.mojito.rest.entity.OpenAICheckRequest;
 import com.box.l10n.mojito.rest.entity.OpenAICheckResponse;
 import com.box.l10n.mojito.rest.entity.OpenAIPrompt;
 import com.box.l10n.mojito.rest.entity.OpenAIPromptCreateRequest;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-public class OpenAIServiceClient extends BaseClient {
+public class AIServiceClient extends BaseClient {
 
-  static Logger logger = LoggerFactory.getLogger(OpenAIServiceClient.class);
+  static Logger logger = LoggerFactory.getLogger(AIServiceClient.class);
 
   @Override
   public String getEntityName() {
-    return "openai";
+    return "ai";
   }
 
   public OpenAICheckResponse executeAIChecks(OpenAICheckRequest openAICheckRequest) {
@@ -40,10 +39,5 @@ public class OpenAIServiceClient extends BaseClient {
     logger.debug("Received request to get prompt id {}", promptId);
     return authenticatedRestTemplate.getForObject(
         getBasePathForEntity() + "/prompts/" + promptId, OpenAIPrompt.class);
-  }
-
-  public List<OpenAIPrompt> getAllActivePrompts() {
-    logger.debug("Received request to get all active prompts");
-    return authenticatedRestTemplate.getForObject(getBasePathForEntity() + "/prompts", List.class);
   }
 }

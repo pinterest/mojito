@@ -6,7 +6,7 @@ import static java.util.stream.Collectors.toList;
 import com.box.l10n.mojito.cli.command.CommandException;
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
-import com.box.l10n.mojito.rest.client.OpenAIServiceClient;
+import com.box.l10n.mojito.rest.client.AIServiceClient;
 import com.box.l10n.mojito.rest.entity.OpenAICheckRequest;
 import com.box.l10n.mojito.rest.entity.OpenAICheckResponse;
 import com.box.l10n.mojito.rest.entity.OpenAICheckResult;
@@ -24,7 +24,7 @@ import reactor.util.retry.Retry;
 import reactor.util.retry.RetryBackoffSpec;
 
 @Configurable
-public class OpenAIChecker extends AbstractCliChecker {
+public class AIChecker extends AbstractCliChecker {
 
   private static final int RETRY_MAX_ATTEMPTS = 10;
 
@@ -32,18 +32,18 @@ public class OpenAIChecker extends AbstractCliChecker {
 
   private static final int RETRY_MAX_BACKOFF_DURATION_SECONDS = 60;
 
-  static Logger logger = LoggerFactory.getLogger(OpenAIChecker.class);
+  static Logger logger = LoggerFactory.getLogger(AIChecker.class);
 
   RetryBackoffSpec retryConfiguration =
       Retry.backoff(RETRY_MAX_ATTEMPTS, Duration.ofSeconds(RETRY_MIN_DURATION_SECONDS))
           .maxBackoff(Duration.ofSeconds(RETRY_MAX_BACKOFF_DURATION_SECONDS));
 
-  @Autowired OpenAIServiceClient openAIServiceClient;
+  @Autowired AIServiceClient AIServiceClient;
 
   @Override
   public CliCheckResult run(List<AssetExtractionDiff> assetExtractionDiffs) {
 
-    logger.debug("Running OpenAI checks");
+    logger.debug("Running AI checks");
 
     List<AssetExtractorTextUnit> textUnits =
         assetExtractionDiffs.stream()
@@ -61,16 +61,16 @@ public class OpenAIChecker extends AbstractCliChecker {
 
     return Mono.fromCallable(() -> executeChecks(openAICheckRequest))
         .retryWhen(retryConfiguration)
-        .doOnError(ex -> logger.error("Failed to run OpenAI checks: {}", ex.getMessage(), ex))
+        .doOnError(ex -> logger.error("Failed to run AI checks: {}", ex.getMessage(), ex))
         .onErrorReturn(getRetriesExhaustedResult())
         .block();
   }
 
   private CliCheckResult executeChecks(OpenAICheckRequest openAICheckRequest) {
-    OpenAICheckResponse response = openAIServiceClient.executeAIChecks(openAICheckRequest);
+    OpenAICheckResponse response = AIServiceClient.executeAIChecks(openAICheckRequest);
 
     if (response.isError()) {
-      throw new CommandException("Failed to run OpenAI checks: " + response.getErrorMessage());
+      throw new CommandException("Failed to run AI checks: " + response.getErrorMessage());
     }
 
     Map<String, List<OpenAICheckResult>> failureMap = new HashMap<>();
@@ -134,7 +134,7 @@ public class OpenAIChecker extends AbstractCliChecker {
     if (!Strings.isNullOrEmpty(cliCheckerOptions.getOpenAIErrorMessage())) {
       cliCheckResult.setNotificationText(cliCheckerOptions.getOpenAIErrorMessage());
     } else {
-      cliCheckResult.setNotificationText("Failed to run OpenAI checks.");
+      cliCheckResult.setNotificationText("Failed to run AI checks.");
     }
     return cliCheckResult;
   }

@@ -1,9 +1,9 @@
-package com.box.l10n.mojito.rest.openai;
+package com.box.l10n.mojito.rest.ai;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class OpenAIPromptCreateRequest {
+public class AIPromptCreateRequest {
 
   private String systemPrompt;
   private String userPrompt;

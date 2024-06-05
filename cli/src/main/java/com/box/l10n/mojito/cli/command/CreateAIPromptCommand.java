@@ -3,7 +3,7 @@ package com.box.l10n.mojito.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.OpenAIServiceClient;
+import com.box.l10n.mojito.rest.client.AIServiceClient;
 import com.box.l10n.mojito.rest.entity.OpenAIPromptCreateRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,12 +15,12 @@ import org.springframework.stereotype.Component;
 @Scope("prototype")
 @Parameters(
     commandNames = {"create-ai-prompt"},
-    commandDescription = "Execute checks against new source strings")
+    commandDescription = "Create an AI prompt for a given repository")
 public class CreateAIPromptCommand extends Command {
 
   static Logger logger = LoggerFactory.getLogger(CreateAIPromptCommand.class);
 
-  @Autowired OpenAIServiceClient openAIServiceClient;
+  @Autowired AIServiceClient AIServiceClient;
 
   @Parameter(
       names = {"--repository-name", "-r"},
@@ -74,7 +74,7 @@ public class CreateAIPromptCommand extends Command {
     openAIPromptCreateRequest.setModelName(modelName);
     openAIPromptCreateRequest.setPromptType(promptType);
     openAIPromptCreateRequest.setPromptTemperature(promptTemperature);
-    long promptId = openAIServiceClient.createPrompt(openAIPromptCreateRequest);
+    long promptId = AIServiceClient.createPrompt(openAIPromptCreateRequest);
     consoleWriter.newLine().a("Prompt created with id: " + promptId).println();
   }
 }

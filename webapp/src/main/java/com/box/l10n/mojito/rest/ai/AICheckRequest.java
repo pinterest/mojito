@@ -1,11 +1,11 @@
-package com.box.l10n.mojito.rest.openai;
+package com.box.l10n.mojito.rest.ai;
 
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class OpenAICheckRequest {
+public class AICheckRequest {
 
   private List<AssetExtractorTextUnit> textUnits;
   private String repositoryName;

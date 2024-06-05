@@ -1,9 +1,9 @@
-package com.box.l10n.mojito.rest.openai;
+package com.box.l10n.mojito.rest.ai;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class OpenAICheckResult {
+public class AICheckResult {
 
   boolean success;
   String suggestedFix;

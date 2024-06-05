@@ -1,23 +1,23 @@
-package com.box.l10n.mojito.rest.openai;
+package com.box.l10n.mojito.rest.ai;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class OpenAICheckResponse {
+public class AICheckResponse {
 
   boolean error;
 
   String errorMessage;
 
-  Map<String, List<OpenAICheckResult>> results;
+  Map<String, List<AICheckResult>> results;
 
-  public Map<String, List<OpenAICheckResult>> getResults() {
+  public Map<String, List<AICheckResult>> getResults() {
     return results;
   }
 
-  public void setResults(Map<String, List<OpenAICheckResult>> results) {
+  public void setResults(Map<String, List<AICheckResult>> results) {
     this.results = results;
   }
 

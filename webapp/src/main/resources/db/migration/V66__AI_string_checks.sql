@@ -39,6 +39,6 @@ CREATE TABLE repository_ai_prompt (
 ALTER TABLE repository_ai_prompt
 ADD CONSTRAINT UQ__REPOSITORY_AI_PROMPT__AI_PROMPT_ID_PROMPT_TYPE_ID UNIQUE (ai_prompt_id, prompt_type_id);
 
-CREATE INDEX I__REPOSITORY_AI_PROMPT__PROMPT_TYPE_ID ON repository_ai_prompt(prompt_type_id);
+CREATE INDEX I__REPOSITORY_AI_PROMPT__REPO_ID__TYPE_ID__PROMPT_ID ON repository_ai_prompt(repository_id, prompt_type_id, ai_prompt_id);
 
 INSERT INTO ai_prompt_type (name) VALUES ('SOURCE_STRING_CHECKER');

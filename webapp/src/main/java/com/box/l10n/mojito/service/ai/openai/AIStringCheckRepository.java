@@ -1,4 +1,4 @@
-package com.box.l10n.mojito.service.openai;
+package com.box.l10n.mojito.service.ai.openai;
 
 import com.box.l10n.mojito.entity.AIStringCheck;
 import org.springframework.data.jpa.repository.JpaRepository;

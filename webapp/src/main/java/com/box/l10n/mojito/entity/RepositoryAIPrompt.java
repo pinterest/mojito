@@ -9,8 +9,9 @@ import jakarta.persistence.Table;
 @Table(
     name = "repository_ai_prompt",
     indexes = {
-      @Index(name = "I__REPOSITORY_AI_PROMPT__REPOSITORY_ID", columnList = "repository_id"),
-      @Index(name = "I__REPOSITORY_AI_PROMPT__PROMPT_TYPE_ID", columnList = "prompt_type_id")
+      @Index(
+          name = "I__REPOSITORY_AI_PROMPT__REPO_ID__TYPE_ID__PROMPT_ID",
+          columnList = "repository_id, prompt_type_id, ai_prompt_id")
     })
 public class RepositoryAIPrompt extends BaseEntity {
 
