@@ -85,6 +85,7 @@ class OpenAILLMServiceTest {
     assertEquals(1, response.getResults().size());
     assertTrue(response.getResults().containsKey("A test string"));
     assertTrue(response.getResults().get("A test string").get(0).isSuccess());
+    verify(aiStringCheckRepository, times(1)).save(any());
   }
 
   @Test
@@ -128,10 +129,11 @@ class OpenAILLMServiceTest {
     assertNotNull(response);
     assertEquals(1, response.getResults().size());
     assertTrue(response.getResults().containsKey("A tst string"));
-    assertFalse(response.getResults().get("A tst string").get(0).isSuccess());
+    assertFalse(response.getResults().get("A tst string").getFirst().isSuccess());
     assertEquals(
         "The word test is spelt wrong",
-        response.getResults().get("A tst string").get(0).getSuggestedFix());
+        response.getResults().get("A tst string").getFirst().getSuggestedFix());
+    verify(aiStringCheckRepository, times(1)).save(any());
   }
 
   @Test
@@ -176,6 +178,7 @@ class OpenAILLMServiceTest {
     assertEquals(
         result.getResults().get("A test string").getFirst().getSuggestedFix(),
         "Check skipped as error parsing response from OpenAI.");
+    verify(aiStringCheckRepository, times(1)).save(any());
   }
 
   @Test
@@ -217,5 +220,6 @@ class OpenAILLMServiceTest {
     assertEquals(
         "No prompts found for repository id: 1, skipping check.",
         response.getResults().get("A test string").getFirst().getSuggestedFix());
+    verify(aiStringCheckRepository, times(0)).save(any());
   }
 }

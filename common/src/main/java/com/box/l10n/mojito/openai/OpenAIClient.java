@@ -223,6 +223,7 @@ public class OpenAIClient {
       int seed,
       boolean stream,
       float temperature,
+      @JsonProperty("response_format") String responseFormat,
       @JsonProperty("max_tokens") int maxTokens,
       @JsonProperty("top_p") float topP,
       @JsonProperty("frequency_penalty") float frequencyPenalty,
@@ -231,7 +232,9 @@ public class OpenAIClient {
     static String ENDPOINT = "/v1/chat/completions";
 
     public enum Models {
-      GPT_3_5_TURBO("gpt-3.5-turbo");
+      GPT_3_5_TURBO("gpt-3.5-turbo"),
+      GPT_4_TURBO("gtp-4-turbo"),
+      GPT_4o("gpt-4o");
 
       @JsonValue String name;
 
@@ -246,6 +249,40 @@ public class OpenAIClient {
       String content();
 
       String name();
+    }
+
+    public record AssistantMessage(String role, String content, String name) implements Message {
+
+      public static class AssistantMessageBuilder {
+        private String role = "assistant";
+        private String content;
+        private String name;
+
+        private AssistantMessageBuilder() {}
+
+        public AssistantMessageBuilder role(String role) {
+          this.role = role;
+          return this;
+        }
+
+        public AssistantMessageBuilder content(String content) {
+          this.content = content;
+          return this;
+        }
+
+        public AssistantMessageBuilder name(String name) {
+          this.name = name;
+          return this;
+        }
+
+        public SystemMessage build() {
+          return new SystemMessage(role, content, name);
+        }
+      }
+
+      public static AssistantMessageBuilder assistantMessageBuilder() {
+        return new AssistantMessageBuilder();
+      }
     }
 
     public record SystemMessage(String role, String content, String name) implements Message {
@@ -326,6 +363,7 @@ public class OpenAIClient {
       private float topP;
       private float frequencyPenalty;
       private float presencePenalty;
+      private String responseType = "{ \"type\": \"text\" }";
 
       public Builder model(Models model) {
         return model(model.name);
@@ -376,6 +414,13 @@ public class OpenAIClient {
         return this;
       }
 
+      public Builder jsonResponseType(boolean isJson) {
+        if (isJson) {
+          this.responseType = "{ \"type\": \"json_object\" }";
+        }
+        return this;
+      }
+
       public ChatCompletionsRequest build() {
         return new ChatCompletionsRequest(
             model,
@@ -383,6 +428,7 @@ public class OpenAIClient {
             seed,
             stream,
             temperature,
+            responseType,
             maxTokens,
             topP,
             frequencyPenalty,
