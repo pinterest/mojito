@@ -177,23 +177,23 @@ public class OpenAILLMService implements LLMService {
 
   private static OpenAIClient.ChatCompletionsRequest buildChatCompletionsRequest(
       AIPrompt prompt, String systemPrompt, String userPrompt, boolean isJsonResponseType) {
+
+    List<OpenAIClient.ChatCompletionsRequest.Message> messages = new ArrayList<>();
+
+    if (!Strings.isNullOrEmpty(systemPrompt)) {
+      messages.add(systemMessageBuilder().content(systemPrompt).build());
+    }
+
+    if (!Strings.isNullOrEmpty(userPrompt)) {
+      messages.add(userMessageBuilder().content(userPrompt).build());
+    }
+
     OpenAIClient.ChatCompletionsRequest.Builder chatCompletionsRequestBuilder =
         chatCompletionsRequest()
             .temperature(prompt.getPromptTemperature())
             .model(prompt.getModelName())
+            .messages(messages)
             .jsonResponseType(isJsonResponseType);
-
-    if (!Strings.isNullOrEmpty(systemPrompt)) {
-      chatCompletionsRequestBuilder =
-          chatCompletionsRequestBuilder.messages(
-              List.of(systemMessageBuilder().content(systemPrompt).build()));
-    }
-
-    if (!Strings.isNullOrEmpty(userPrompt)) {
-      chatCompletionsRequestBuilder =
-          chatCompletionsRequestBuilder.messages(
-              List.of(userMessageBuilder().content(userPrompt).build()));
-    }
 
     return chatCompletionsRequestBuilder.build();
   }
