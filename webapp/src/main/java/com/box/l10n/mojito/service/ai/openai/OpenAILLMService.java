@@ -4,9 +4,7 @@ import static com.box.l10n.mojito.entity.PromptType.SOURCE_STRING_CHECKER;
 import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.SystemMessage.systemMessageBuilder;
 import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.chatCompletionsRequest;
 
-import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.AIPrompt;
-import com.box.l10n.mojito.entity.AIStringCheck;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
@@ -27,6 +25,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -45,6 +44,9 @@ public class OpenAILLMService implements LLMService {
   @Autowired ObjectMapper objectMapper;
 
   @Autowired OpenAIPromptService openAIPromptService;
+
+  @Value("${l10n.ai.checks.persistResults:true}")
+  boolean persistResults;
 
   @Timed("OpenAILLMService.executeAIChecks")
   public AICheckResponse executeAIChecks(AICheckRequest AICheckRequest) {
@@ -107,8 +109,6 @@ public class OpenAILLMService implements LLMService {
       String[] nameSplit,
       List<AICheckResult> results) {
 
-    AICheckResult result;
-
     for (AIPrompt prompt : prompts) {
       if ((!Strings.isNullOrEmpty(prompt.getSystemPrompt())
               && !prompt.getSystemPrompt().contains(SOURCE_STRING_PLACEHOLDER))
@@ -131,11 +131,18 @@ public class OpenAILLMService implements LLMService {
       }
 
       OpenAIClient.ChatCompletionsRequest chatCompletionsRequest =
-          buildChatCompletionsRequest(prompt, systemPrompt, userPrompt);
+          buildChatCompletionsRequest(prompt, systemPrompt, userPrompt, true);
 
       OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
           openAIClient.getChatCompletions(chatCompletionsRequest).join();
-      persistCheckResult(textUnit, repositoryId, prompt, chatCompletionsResponse);
+      if (persistResults) {
+        persistCheckResult(
+            textUnit,
+            repositoryId,
+            prompt,
+            chatCompletionsResponse.choices().getFirst().message().content(),
+            aiStringCheckRepository);
+      }
       results.add(parseResponse(chatCompletionsResponse));
     }
   }
@@ -167,27 +174,13 @@ public class OpenAILLMService implements LLMService {
     return systemPrompt;
   }
 
-  protected void persistCheckResult(
-      AssetExtractorTextUnit textUnit,
-      long repositoryId,
-      AIPrompt prompt,
-      OpenAIClient.ChatCompletionsResponse chatCompletionsResponse) {
-    AIStringCheck aiStringCheck = new AIStringCheck();
-    aiStringCheck.setRepositoryId(repositoryId);
-    aiStringCheck.setAiPromptId(prompt.getId());
-    aiStringCheck.setContent(textUnit.getSource());
-    aiStringCheck.setComment(textUnit.getComments());
-    aiStringCheck.setPromptOutput(chatCompletionsResponse.choices().getFirst().message().content());
-    aiStringCheck.setCreatedDate(JSR310Migration.dateTimeNow());
-    aiStringCheckRepository.save(aiStringCheck);
-  }
-
   private static OpenAIClient.ChatCompletionsRequest buildChatCompletionsRequest(
-      AIPrompt prompt, String systemPrompt, String userPrompt) {
+      AIPrompt prompt, String systemPrompt, String userPrompt, boolean isJsonResponseType) {
     OpenAIClient.ChatCompletionsRequest.Builder chatCompletionsRequestBuilder =
         chatCompletionsRequest()
             .temperature(prompt.getPromptTemperature())
-            .model(prompt.getModelName());
+            .model(prompt.getModelName())
+            .jsonResponseType(isJsonResponseType);
 
     if (!Strings.isNullOrEmpty(systemPrompt)) {
       chatCompletionsRequestBuilder =

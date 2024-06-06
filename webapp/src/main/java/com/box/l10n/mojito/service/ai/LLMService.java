@@ -1,8 +1,13 @@
 package com.box.l10n.mojito.service.ai;
 
+import com.box.l10n.mojito.JSR310Migration;
+import com.box.l10n.mojito.entity.AIPrompt;
+import com.box.l10n.mojito.entity.AIStringCheck;
+import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.rest.ai.AICheckRequest;
 import com.box.l10n.mojito.rest.ai.AICheckResponse;
 import com.box.l10n.mojito.rest.ai.AICheckResult;
+import com.box.l10n.mojito.service.ai.openai.AIStringCheckRepository;
 
 public interface LLMService {
 
@@ -29,4 +34,20 @@ public interface LLMService {
    * looks like the word 'tpyo' is spelt incorrectly. It should be 'typo'."}'
    */
   AICheckResponse executeAIChecks(AICheckRequest AICheckRequest);
+
+  default void persistCheckResult(
+      AssetExtractorTextUnit textUnit,
+      long repositoryId,
+      AIPrompt prompt,
+      String promptOutput,
+      AIStringCheckRepository aiStringCheckRepository) {
+    AIStringCheck aiStringCheck = new AIStringCheck();
+    aiStringCheck.setRepositoryId(repositoryId);
+    aiStringCheck.setAiPromptId(prompt.getId());
+    aiStringCheck.setContent(textUnit.getSource());
+    aiStringCheck.setComment(textUnit.getComments());
+    aiStringCheck.setPromptOutput(promptOutput);
+    aiStringCheck.setCreatedDate(JSR310Migration.dateTimeNow());
+    aiStringCheckRepository.save(aiStringCheck);
+  }
 }
