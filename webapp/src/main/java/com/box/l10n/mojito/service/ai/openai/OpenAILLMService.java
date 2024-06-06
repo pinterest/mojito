@@ -2,6 +2,7 @@ package com.box.l10n.mojito.service.ai.openai;
 
 import static com.box.l10n.mojito.entity.PromptType.SOURCE_STRING_CHECKER;
 import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.SystemMessage.systemMessageBuilder;
+import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.UserMessage.userMessageBuilder;
 import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.chatCompletionsRequest;
 
 import com.box.l10n.mojito.entity.AIPrompt;
@@ -191,7 +192,7 @@ public class OpenAILLMService implements LLMService {
     if (!Strings.isNullOrEmpty(userPrompt)) {
       chatCompletionsRequestBuilder =
           chatCompletionsRequestBuilder.messages(
-              List.of(systemMessageBuilder().content(userPrompt).build()));
+              List.of(userMessageBuilder().content(userPrompt).build()));
     }
 
     return chatCompletionsRequestBuilder.build();
