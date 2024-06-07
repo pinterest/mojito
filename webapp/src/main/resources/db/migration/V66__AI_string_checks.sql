@@ -1,6 +1,7 @@
 CREATE TABLE ai_prompt (
     id bigint AUTO_INCREMENT PRIMARY KEY,
     created_date         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_modified_date   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     system_prompt longtext,
     user_prompt longtext,
     prompt_temperature float,
@@ -34,6 +35,18 @@ CREATE TABLE repository_ai_prompt (
     FOREIGN KEY (ai_prompt_id) REFERENCES ai_prompt(id),
     FOREIGN KEY (repository_id) REFERENCES repository(id),
     FOREIGN KEY (prompt_type_id) REFERENCES ai_prompt_type(id)
+);
+
+CREATE TABLE ai_prompt_context_message (
+    id bigint AUTO_INCREMENT PRIMARY KEY,
+    created_date         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_modified_date   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    message_type varchar(255) NOT NULL,
+    order_index int NOT NULL,
+    ai_prompt_id bigint NOT NULL,
+    content longtext NOT NULL,
+    deleted boolean DEFAULT FALSE,
+    FOREIGN KEY (ai_prompt_id) REFERENCES ai_prompt(id)
 );
 
 ALTER TABLE repository_ai_prompt

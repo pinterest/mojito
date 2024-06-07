@@ -3,6 +3,7 @@ package com.box.l10n.mojito.rest.client;
 import com.box.l10n.mojito.rest.entity.OpenAICheckRequest;
 import com.box.l10n.mojito.rest.entity.OpenAICheckResponse;
 import com.box.l10n.mojito.rest.entity.OpenAIPrompt;
+import com.box.l10n.mojito.rest.entity.OpenAIPromptContextMessageCreateRequest;
 import com.box.l10n.mojito.rest.entity.OpenAIPromptCreateRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,5 +40,20 @@ public class AIServiceClient extends BaseClient {
     logger.debug("Received request to get prompt id {}", promptId);
     return authenticatedRestTemplate.getForObject(
         getBasePathForEntity() + "/prompts/" + promptId, OpenAIPrompt.class);
+  }
+
+  public Long createPromptContextMessage(
+      OpenAIPromptContextMessageCreateRequest openAIPromptContextMessageCreateRequest) {
+    logger.debug("Received request to create prompt context message");
+    return authenticatedRestTemplate.postForObject(
+        getBasePathForEntity() + "/prompts/contextMessage",
+        openAIPromptContextMessageCreateRequest,
+        Long.class);
+  }
+
+  public void deletePromptContextMessage(Long contextMessageId) {
+    logger.debug("Received request to delete prompt message id {}", contextMessageId);
+    authenticatedRestTemplate.delete(
+        getBasePathForEntity() + "/prompts/contextMessage/" + contextMessageId);
   }
 }

@@ -2,9 +2,15 @@ package com.box.l10n.mojito.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import java.time.ZonedDateTime;
+import java.util.List;
+import org.hibernate.annotations.Where;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 @Entity
 @Table(name = "ai_prompt")
@@ -27,7 +33,16 @@ public class AIPrompt extends BaseEntity {
 
   @CreatedDate
   @Column(name = "created_date")
-  protected ZonedDateTime createdDate;
+  private ZonedDateTime createdDate;
+
+  @LastModifiedDate
+  @Column(name = "last_modified_date")
+  private ZonedDateTime lastModifiedDate;
+
+  @OneToMany(fetch = FetchType.EAGER, mappedBy = "aiPrompt")
+  @Where(clause = "deleted = false")
+  @OrderBy("orderIndex ASC")
+  List<AIPromptContextMessage> contextMessages;
 
   public String getModelName() {
     return modelName;
@@ -75,5 +90,21 @@ public class AIPrompt extends BaseEntity {
 
   public void setCreatedDate(ZonedDateTime createdDate) {
     this.createdDate = createdDate;
+  }
+
+  public List<AIPromptContextMessage> getContextMessages() {
+    return contextMessages;
+  }
+
+  public void setContextMessages(List<AIPromptContextMessage> contextMessages) {
+    this.contextMessages = contextMessages;
+  }
+
+  public ZonedDateTime getLastModifiedDate() {
+    return lastModifiedDate;
+  }
+
+  public void setLastModifiedDate(ZonedDateTime lastModifiedDate) {
+    this.lastModifiedDate = lastModifiedDate;
   }
 }

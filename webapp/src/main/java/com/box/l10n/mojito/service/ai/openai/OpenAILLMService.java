@@ -1,11 +1,13 @@
 package com.box.l10n.mojito.service.ai.openai;
 
 import static com.box.l10n.mojito.entity.PromptType.SOURCE_STRING_CHECKER;
+import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.AssistantMessage.assistantMessageBuilder;
 import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.SystemMessage.systemMessageBuilder;
 import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.UserMessage.userMessageBuilder;
 import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.chatCompletionsRequest;
 
 import com.box.l10n.mojito.entity.AIPrompt;
+import com.box.l10n.mojito.entity.AIPromptContextMessage;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
@@ -132,7 +134,8 @@ public class OpenAILLMService implements LLMService {
       }
 
       OpenAIClient.ChatCompletionsRequest chatCompletionsRequest =
-          buildChatCompletionsRequest(prompt, systemPrompt, userPrompt, true);
+          buildChatCompletionsRequest(
+              prompt, systemPrompt, userPrompt, prompt.getContextMessages(), true);
 
       OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
           openAIClient.getChatCompletions(chatCompletionsRequest).join();
@@ -176,9 +179,39 @@ public class OpenAILLMService implements LLMService {
   }
 
   private static OpenAIClient.ChatCompletionsRequest buildChatCompletionsRequest(
-      AIPrompt prompt, String systemPrompt, String userPrompt, boolean isJsonResponseType) {
+      AIPrompt prompt,
+      String systemPrompt,
+      String userPrompt,
+      List<AIPromptContextMessage> contextMessages,
+      boolean isJsonResponseType) {
+    return chatCompletionsRequest()
+        .temperature(prompt.getPromptTemperature())
+        .model(prompt.getModelName())
+        .messages(buildPromptMessages(systemPrompt, userPrompt, contextMessages))
+        .jsonResponseType(isJsonResponseType)
+        .build();
+  }
 
+  private static List<OpenAIClient.ChatCompletionsRequest.Message> buildPromptMessages(
+      String systemPrompt, String userPrompt, List<AIPromptContextMessage> contextMessages) {
     List<OpenAIClient.ChatCompletionsRequest.Message> messages = new ArrayList<>();
+    for (AIPromptContextMessage contextMessage : contextMessages) {
+      switch (contextMessage.getMessageType()) {
+        case "system":
+          messages.add(systemMessageBuilder().content(contextMessage.getContent()).build());
+          break;
+        case "user":
+          messages.add(userMessageBuilder().content(contextMessage.getContent()).build());
+          break;
+        case "assistant":
+          messages.add(assistantMessageBuilder().content(contextMessage.getContent()).build());
+          break;
+        default:
+          logger.error(
+              "Invalid message type: {}, skipping message", contextMessage.getMessageType());
+          break;
+      }
+    }
 
     if (!Strings.isNullOrEmpty(systemPrompt)) {
       messages.add(systemMessageBuilder().content(systemPrompt).build());
@@ -188,13 +221,6 @@ public class OpenAILLMService implements LLMService {
       messages.add(userMessageBuilder().content(userPrompt).build());
     }
 
-    OpenAIClient.ChatCompletionsRequest.Builder chatCompletionsRequestBuilder =
-        chatCompletionsRequest()
-            .temperature(prompt.getPromptTemperature())
-            .model(prompt.getModelName())
-            .messages(messages)
-            .jsonResponseType(isJsonResponseType);
-
-    return chatCompletionsRequestBuilder.build();
+    return messages;
   }
 }

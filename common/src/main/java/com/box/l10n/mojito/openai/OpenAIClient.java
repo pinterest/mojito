@@ -223,7 +223,7 @@ public class OpenAIClient {
       int seed,
       boolean stream,
       float temperature,
-      @JsonProperty("response_format") String responseFormat,
+      @JsonProperty("response_format") ResponseFormat responseFormat,
       @JsonProperty("max_tokens") int maxTokens,
       @JsonProperty("top_p") float topP,
       @JsonProperty("frequency_penalty") float frequencyPenalty,
@@ -251,6 +251,27 @@ public class OpenAIClient {
       String name();
     }
 
+    public record ResponseFormat(String type) {
+      public static class ResponseFormatBuilder {
+        private String type;
+
+        private ResponseFormatBuilder() {}
+
+        public ResponseFormatBuilder type(String type) {
+          this.type = type;
+          return this;
+        }
+
+        public ResponseFormat build() {
+          return new ResponseFormat(type);
+        }
+      }
+
+      public static ResponseFormatBuilder responseFormatBuilder() {
+        return new ResponseFormatBuilder();
+      }
+    }
+
     public record AssistantMessage(String role, String content, String name) implements Message {
 
       public static class AssistantMessageBuilder {
@@ -275,8 +296,8 @@ public class OpenAIClient {
           return this;
         }
 
-        public SystemMessage build() {
-          return new SystemMessage(role, content, name);
+        public AssistantMessage build() {
+          return new AssistantMessage(role, content, name);
         }
       }
 
@@ -363,7 +384,8 @@ public class OpenAIClient {
       private float topP;
       private float frequencyPenalty;
       private float presencePenalty;
-      private String responseType = "{ \"type\": \"text\" }";
+      private ResponseFormat responseFormat =
+          ResponseFormat.responseFormatBuilder().type("text").build();
 
       public Builder model(Models model) {
         return model(model.name);
@@ -416,7 +438,7 @@ public class OpenAIClient {
 
       public Builder jsonResponseType(boolean isJson) {
         if (isJson) {
-          this.responseType = "{ \"type\": \"json_object\" }";
+          this.responseFormat = ResponseFormat.responseFormatBuilder().type("json_object").build();
         }
         return this;
       }
@@ -428,7 +450,7 @@ public class OpenAIClient {
             seed,
             stream,
             temperature,
-            responseType,
+            responseFormat,
             maxTokens,
             topP,
             frequencyPenalty,

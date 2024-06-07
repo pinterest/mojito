@@ -62,6 +62,23 @@ public class AIPromptWS {
         .collect(Collectors.toList());
   }
 
+  @RequestMapping(value = "/api/ai/prompts/contextMessage", method = RequestMethod.POST)
+  @Timed("AIWS.createPromptMessage")
+  public Long createPromptMessage(
+      @RequestBody AIPromptContextMessageCreateRequest aiPromptContextMessageCreateRequest) {
+    logger.debug("Received request to create prompt message");
+    return promptService.createPromptContextMessage(aiPromptContextMessageCreateRequest);
+  }
+
+  @RequestMapping(
+      value = "/api/ai/prompts/contextMessage/{context_message_id}",
+      method = RequestMethod.DELETE)
+  @Timed("AIWS.deletePromptMessage")
+  public void deletePromptMessage(@PathVariable("context_message_id") Long contextMessageId) {
+    logger.debug("Received request to delete prompt message id {}", contextMessageId);
+    promptService.deletePromptContextMessage(contextMessageId);
+  }
+
   private static AIPrompt buildOpenAIPromptDTO(com.box.l10n.mojito.entity.AIPrompt prompt) {
     AIPrompt AIPrompt = new AIPrompt();
     AIPrompt.setSystemPrompt(prompt.getSystemPrompt());
