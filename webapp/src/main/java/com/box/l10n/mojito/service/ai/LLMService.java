@@ -7,7 +7,6 @@ import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.rest.ai.AICheckRequest;
 import com.box.l10n.mojito.rest.ai.AICheckResponse;
 import com.box.l10n.mojito.rest.ai.AICheckResult;
-import com.box.l10n.mojito.service.ai.openai.AIStringCheckRepository;
 
 public interface LLMService {
 

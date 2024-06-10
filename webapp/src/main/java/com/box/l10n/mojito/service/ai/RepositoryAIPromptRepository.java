@@ -1,4 +1,4 @@
-package com.box.l10n.mojito.service.ai.openai;
+package com.box.l10n.mojito.service.ai;
 
 import com.box.l10n.mojito.entity.RepositoryAIPrompt;
 import java.util.List;
