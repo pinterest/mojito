@@ -4,7 +4,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.rest.client.AIServiceClient;
-import com.box.l10n.mojito.rest.entity.OpenAIPromptCreateRequest;
+import com.box.l10n.mojito.rest.entity.AIPromptCreateRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,14 +67,14 @@ public class CreateAIPromptCommand extends Command {
 
   private void createPrompt() {
     logger.debug("Received request to create prompt");
-    OpenAIPromptCreateRequest openAIPromptCreateRequest = new OpenAIPromptCreateRequest();
-    openAIPromptCreateRequest.setRepositoryName(repository);
-    openAIPromptCreateRequest.setSystemPrompt(systemPromptText);
-    openAIPromptCreateRequest.setUserPrompt(userPromptText);
-    openAIPromptCreateRequest.setModelName(modelName);
-    openAIPromptCreateRequest.setPromptType(promptType);
-    openAIPromptCreateRequest.setPromptTemperature(promptTemperature);
-    long promptId = AIServiceClient.createPrompt(openAIPromptCreateRequest);
+    AIPromptCreateRequest AIPromptCreateRequest = new AIPromptCreateRequest();
+    AIPromptCreateRequest.setRepositoryName(repository);
+    AIPromptCreateRequest.setSystemPrompt(systemPromptText);
+    AIPromptCreateRequest.setUserPrompt(userPromptText);
+    AIPromptCreateRequest.setModelName(modelName);
+    AIPromptCreateRequest.setPromptType(promptType);
+    AIPromptCreateRequest.setPromptTemperature(promptTemperature);
+    long promptId = AIServiceClient.createPrompt(AIPromptCreateRequest);
     consoleWriter.newLine().a("Prompt created with id: " + promptId).println();
   }
 }

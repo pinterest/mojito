@@ -3,7 +3,7 @@ package com.box.l10n.mojito.rest.entity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class OpenAIPromptContextMessageCreateRequest {
+public class AIPromptContextMessageCreateRequest {
 
   String messageType;
   String content;

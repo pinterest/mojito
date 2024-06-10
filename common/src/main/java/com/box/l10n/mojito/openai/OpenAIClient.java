@@ -272,105 +272,37 @@ public class OpenAIClient {
       }
     }
 
-    public record AssistantMessage(String role, String content, String name) implements Message {
+    public record ChatMessage(String role, String content, String name) implements Message {
 
-      public static class AssistantMessageBuilder {
-        private String role = "assistant";
-        private String content;
-        private String name;
-
-        private AssistantMessageBuilder() {}
-
-        public AssistantMessageBuilder role(String role) {
-          this.role = role;
-          return this;
-        }
-
-        public AssistantMessageBuilder content(String content) {
-          this.content = content;
-          return this;
-        }
-
-        public AssistantMessageBuilder name(String name) {
-          this.name = name;
-          return this;
-        }
-
-        public AssistantMessage build() {
-          return new AssistantMessage(role, content, name);
-        }
-      }
-
-      public static AssistantMessageBuilder assistantMessageBuilder() {
-        return new AssistantMessageBuilder();
-      }
-    }
-
-    public record SystemMessage(String role, String content, String name) implements Message {
-
-      public static class SystemMessageBuilder {
-        private String role = "system";
-        private String content;
-        private String name;
-
-        private SystemMessageBuilder() {}
-
-        public SystemMessageBuilder role(String role) {
-          this.role = role;
-          return this;
-        }
-
-        public SystemMessageBuilder content(String content) {
-          this.content = content;
-          return this;
-        }
-
-        public SystemMessageBuilder name(String name) {
-          this.name = name;
-          return this;
-        }
-
-        public SystemMessage build() {
-          return new SystemMessage(role, content, name);
-        }
-      }
-
-      public static SystemMessageBuilder systemMessageBuilder() {
-        return new SystemMessageBuilder();
-      }
-    }
-
-    public record UserMessage(String role, String content, String name) implements Message {
-
-      public static class UserMessageBuilder {
+      public static class ChatMessageBuilder {
         private String role = "user";
         private String content;
         private String name;
 
-        private UserMessageBuilder() {}
+        private ChatMessageBuilder() {}
 
-        public UserMessageBuilder role(String role) {
+        public ChatMessageBuilder role(String role) {
           this.role = role;
           return this;
         }
 
-        public UserMessageBuilder content(String content) {
+        public ChatMessageBuilder content(String content) {
           this.content = content;
           return this;
         }
 
-        public UserMessageBuilder name(String name) {
+        public ChatMessageBuilder name(String name) {
           this.name = name;
           return this;
         }
 
-        public UserMessage build() {
-          return new UserMessage(role, content, name);
+        public ChatMessage build() {
+          return new ChatMessage(role, content, name);
         }
       }
 
-      public static UserMessageBuilder userMessageBuilder() {
-        return new UserMessageBuilder();
+      public static ChatMessageBuilder messageBuilder() {
+        return new ChatMessageBuilder();
       }
     }
 

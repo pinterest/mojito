@@ -1,10 +1,10 @@
 package com.box.l10n.mojito.rest.client;
 
-import com.box.l10n.mojito.rest.entity.OpenAICheckRequest;
-import com.box.l10n.mojito.rest.entity.OpenAICheckResponse;
+import com.box.l10n.mojito.rest.entity.AICheckRequest;
+import com.box.l10n.mojito.rest.entity.AICheckResponse;
+import com.box.l10n.mojito.rest.entity.AIPromptContextMessageCreateRequest;
+import com.box.l10n.mojito.rest.entity.AIPromptCreateRequest;
 import com.box.l10n.mojito.rest.entity.OpenAIPrompt;
-import com.box.l10n.mojito.rest.entity.OpenAIPromptContextMessageCreateRequest;
-import com.box.l10n.mojito.rest.entity.OpenAIPromptCreateRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -19,16 +19,16 @@ public class AIServiceClient extends BaseClient {
     return "ai";
   }
 
-  public OpenAICheckResponse executeAIChecks(OpenAICheckRequest openAICheckRequest) {
+  public AICheckResponse executeAIChecks(AICheckRequest AICheckRequest) {
     logger.debug("Received request to execute AI checks");
     return authenticatedRestTemplate.postForObject(
-        getBasePathForEntity() + "/checks", openAICheckRequest, OpenAICheckResponse.class);
+        getBasePathForEntity() + "/checks", AICheckRequest, AICheckResponse.class);
   }
 
-  public Long createPrompt(OpenAIPromptCreateRequest openAIPromptCreateRequest) {
+  public Long createPrompt(AIPromptCreateRequest AIPromptCreateRequest) {
     logger.debug("Received request to create prompt");
     return authenticatedRestTemplate.postForObject(
-        getBasePathForEntity() + "/prompts", openAIPromptCreateRequest, Long.class);
+        getBasePathForEntity() + "/prompts", AIPromptCreateRequest, Long.class);
   }
 
   public void deletePrompt(Long promptId) {
@@ -43,11 +43,11 @@ public class AIServiceClient extends BaseClient {
   }
 
   public Long createPromptContextMessage(
-      OpenAIPromptContextMessageCreateRequest openAIPromptContextMessageCreateRequest) {
+      AIPromptContextMessageCreateRequest AIPromptContextMessageCreateRequest) {
     logger.debug("Received request to create prompt context message");
     return authenticatedRestTemplate.postForObject(
         getBasePathForEntity() + "/prompts/contextMessage",
-        openAIPromptContextMessageCreateRequest,
+        AIPromptContextMessageCreateRequest,
         Long.class);
   }
 

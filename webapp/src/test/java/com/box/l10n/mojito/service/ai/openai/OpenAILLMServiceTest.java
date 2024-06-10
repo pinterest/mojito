@@ -33,7 +33,7 @@ class OpenAILLMServiceTest {
 
   @Mock AIStringCheckRepository aiStringCheckRepository;
 
-  @Mock OpenAIPromptService promptService;
+  @Mock LLMPromptService promptService;
 
   @Spy ObjectMapper objectMapper;
 

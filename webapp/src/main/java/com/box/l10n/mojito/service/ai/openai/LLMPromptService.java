@@ -24,9 +24,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 @ConditionalOnProperty(value = "l10n.ai.service.type", havingValue = "OpenAI")
-public class OpenAIPromptService implements PromptService {
+public class LLMPromptService implements PromptService {
 
-  static Logger logger = LoggerFactory.getLogger(OpenAIPromptService.class);
+  static Logger logger = LoggerFactory.getLogger(LLMPromptService.class);
 
   @Autowired RepositoryRepository repositoryRepository;
 
@@ -38,7 +38,7 @@ public class OpenAIPromptService implements PromptService {
 
   @Autowired AIPromptContextMessageRepository aiPromptContextMessageRepository;
 
-  @Timed("OpenAIPromptService.createPrompt")
+  @Timed("LLMPromptService.createPrompt")
   @Transactional
   public Long createPrompt(AIPromptCreateRequest AIPromptCreateRequest) {
 
@@ -78,14 +78,14 @@ public class OpenAIPromptService implements PromptService {
     return aiPrompt.getId();
   }
 
-  @Timed("OpenAIPromptService.getPromptsByRepositoryAndPromptType")
+  @Timed("LLMPromptService.getPromptsByRepositoryAndPromptType")
   public List<AIPrompt> getPromptsByRepositoryAndPromptType(
       Repository repository, PromptType promptType) {
     return aiPromptRepository.findByRepositoryIdAndPromptTypeName(
         repository.getId(), promptType.name());
   }
 
-  @Timed("OpenAIPromptService.deletePrompt")
+  @Timed("LLMPromptService.deletePrompt")
   public void deletePrompt(Long promptId) {
     AIPrompt aiPrompt =
         aiPromptRepository
@@ -96,21 +96,21 @@ public class OpenAIPromptService implements PromptService {
     aiPromptRepository.save(aiPrompt);
   }
 
-  @Timed("OpenAIPromptService.getPrompt")
+  @Timed("LLMPromptService.getPrompt")
   public AIPrompt getPrompt(Long promptId) {
     return aiPromptRepository
         .findById(promptId)
         .orElseThrow(() -> new AIException("Prompt not found: " + promptId));
   }
 
-  @Timed("OpenAIPromptService.getAllActivePrompts")
+  @Timed("LLMPromptService.getAllActivePrompts")
   public List<AIPrompt> getAllActivePrompts() {
     return aiPromptRepository.findByDeletedFalse();
   }
 
   @Override
   @Transactional
-  @Timed("OpenAIPromptService.createPromptContextMessage")
+  @Timed("LLMPromptService.createPromptContextMessage")
   public Long createPromptContextMessage(
       AIPromptContextMessageCreateRequest aiPromptContextMessageCreateRequest) {
     AIPromptContextMessage aiPromptContextMessage = new AIPromptContextMessage();
@@ -145,7 +145,7 @@ public class OpenAIPromptService implements PromptService {
     return aiPromptContextMessageRepository.save(aiPromptContextMessage).getId();
   }
 
-  @Timed("OpenAIPromptService.deletePromptContextMessage")
+  @Timed("LLMPromptService.deletePromptContextMessage")
   public void deletePromptContextMessage(Long promptMessageId) {
     AIPromptContextMessage aiPromptContextMessage =
         aiPromptContextMessageRepository
@@ -157,7 +157,7 @@ public class OpenAIPromptService implements PromptService {
     aiPromptContextMessageRepository.save(aiPromptContextMessage);
   }
 
-  @Timed("OpenAIService.getAllActivePromptsForRepository")
+  @Timed("LLMPromptService.getAllActivePromptsForRepository")
   public List<AIPrompt> getAllActivePromptsForRepository(String repositoryName) {
     Repository repository = repositoryRepository.findByName(repositoryName);
     if (repository == null) {

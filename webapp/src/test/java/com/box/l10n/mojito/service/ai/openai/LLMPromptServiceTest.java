@@ -23,7 +23,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-public class OpenAIPromptServiceTest {
+public class LLMPromptServiceTest {
 
   @Mock AIPromptRepository aiPromptRepository;
 
@@ -33,7 +33,7 @@ public class OpenAIPromptServiceTest {
 
   @Mock RepositoryRepository repositoryRepository;
 
-  @InjectMocks OpenAIPromptService openAIPromptService;
+  @InjectMocks LLMPromptService LLMPromptService;
 
   @BeforeEach
   void setUp() {
@@ -64,7 +64,7 @@ public class OpenAIPromptServiceTest {
     when(aiPromptTypeRepository.findByName("SOURCE_STRING_CHECKER")).thenReturn(promptType);
     when(repositoryAIPromptRepository.save(any())).thenReturn(repositoryAIPrompt);
 
-    openAIPromptService.createPrompt(AIPromptCreateRequest);
+    LLMPromptService.createPrompt(AIPromptCreateRequest);
 
     verify(aiPromptTypeRepository, times(1)).findByName("SOURCE_STRING_CHECKER");
     verify(aiPromptRepository, times(1)).save(any());
@@ -91,8 +91,7 @@ public class OpenAIPromptServiceTest {
     when(repositoryAIPromptRepository.save(any())).thenReturn(1L);
 
     AIException exception =
-        assertThrows(
-            AIException.class, () -> openAIPromptService.createPrompt(AIPromptCreateRequest));
+        assertThrows(AIException.class, () -> LLMPromptService.createPrompt(AIPromptCreateRequest));
     assertEquals("Prompt type not found: SOURCE_STRING_CHECKER", exception.getMessage());
 
     verify(aiPromptTypeRepository, times(1)).findByName("SOURCE_STRING_CHECKER");
@@ -106,7 +105,7 @@ public class OpenAIPromptServiceTest {
     aiPrompt.setId(1L);
     aiPrompt.setDeleted(false);
     when(aiPromptRepository.findById(1L)).thenReturn(Optional.of(aiPrompt));
-    openAIPromptService.deletePrompt(1L);
+    LLMPromptService.deletePrompt(1L);
     verify(aiPromptRepository, times(1)).save(aiPrompt);
     assertTrue(aiPrompt.isDeleted());
   }
@@ -115,7 +114,7 @@ public class OpenAIPromptServiceTest {
   void testPromptDeletionError() {
     when(aiPromptRepository.findById(1L)).thenReturn(Optional.empty());
     AIException exception =
-        assertThrows(AIException.class, () -> openAIPromptService.deletePrompt(1L));
+        assertThrows(AIException.class, () -> LLMPromptService.deletePrompt(1L));
     assertEquals("Prompt not found: 1", exception.getMessage());
   }
 
@@ -127,7 +126,7 @@ public class OpenAIPromptServiceTest {
     aiPrompt.setModelName("gtp-3.5-turbo");
     aiPrompt.setPromptTemperature(0.0F);
     when(aiPromptRepository.findById(1L)).thenReturn(Optional.of(aiPrompt));
-    AIPrompt openAIPrompt = openAIPromptService.getPrompt(1L);
+    AIPrompt openAIPrompt = LLMPromptService.getPrompt(1L);
     assertNotNull(openAIPrompt);
     assertEquals("Check strings for spelling", openAIPrompt.getUserPrompt());
     assertEquals("gtp-3.5-turbo", openAIPrompt.getModelName());

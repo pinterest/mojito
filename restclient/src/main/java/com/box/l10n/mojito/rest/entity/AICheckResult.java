@@ -3,7 +3,7 @@ package com.box.l10n.mojito.rest.entity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class OpenAICheckResult {
+public class AICheckResult {
 
   boolean success;
   String suggestedFix;

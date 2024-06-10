@@ -16,8 +16,8 @@ import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.rest.ai.AIException;
 import com.box.l10n.mojito.rest.client.AIServiceClient;
-import com.box.l10n.mojito.rest.entity.OpenAICheckResponse;
-import com.box.l10n.mojito.rest.entity.OpenAICheckResult;
+import com.box.l10n.mojito.rest.entity.AICheckResponse;
+import com.box.l10n.mojito.rest.entity.AICheckResult;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import java.time.Duration;
@@ -67,21 +67,21 @@ public class AICheckerTest {
 
   @Test
   public void testCheckSuccess() {
-    OpenAICheckResponse openAICheckResponse = new OpenAICheckResponse();
-    openAICheckResponse.setError(false);
-    openAICheckResponse.setErrorMessage(null);
-    Map<String, List<OpenAICheckResult>> checkResults = new HashMap<>();
-    List<OpenAICheckResult> results = new ArrayList<>();
+    AICheckResponse AICheckResponse = new AICheckResponse();
+    AICheckResponse.setError(false);
+    AICheckResponse.setErrorMessage(null);
+    Map<String, List<AICheckResult>> checkResults = new HashMap<>();
+    List<AICheckResult> results = new ArrayList<>();
 
-    OpenAICheckResult openAICheckResult = new OpenAICheckResult();
-    openAICheckResult.setSuccess(true);
-    openAICheckResult.setSuggestedFix("");
+    AICheckResult AICheckResult = new AICheckResult();
+    AICheckResult.setSuccess(true);
+    AICheckResult.setSuggestedFix("");
 
-    results.add(openAICheckResult);
+    results.add(AICheckResult);
     checkResults.put("A source string with no errors.", results);
-    openAICheckResponse.setResults(checkResults);
+    AICheckResponse.setResults(checkResults);
 
-    when(AIServiceClient.executeAIChecks(any())).thenReturn(openAICheckResponse);
+    when(AIServiceClient.executeAIChecks(any())).thenReturn(AICheckResponse);
     CliCheckResult result = AIChecker.run(assetExtractionDiffs);
 
     verify(AIServiceClient, times(1)).executeAIChecks(any());
@@ -91,21 +91,21 @@ public class AICheckerTest {
 
   @Test
   public void testCheckFailure() {
-    OpenAICheckResponse openAICheckResponse = new OpenAICheckResponse();
-    openAICheckResponse.setError(false);
-    openAICheckResponse.setErrorMessage(null);
-    Map<String, List<OpenAICheckResult>> checkResults = new HashMap<>();
-    List<OpenAICheckResult> results = new ArrayList<>();
+    AICheckResponse AICheckResponse = new AICheckResponse();
+    AICheckResponse.setError(false);
+    AICheckResponse.setErrorMessage(null);
+    Map<String, List<AICheckResult>> checkResults = new HashMap<>();
+    List<AICheckResult> results = new ArrayList<>();
 
-    OpenAICheckResult openAICheckResult = new OpenAICheckResult();
-    openAICheckResult.setSuccess(false);
-    openAICheckResult.setSuggestedFix("Spelling mistake found in the source string.");
+    AICheckResult AICheckResult = new AICheckResult();
+    AICheckResult.setSuccess(false);
+    AICheckResult.setSuggestedFix("Spelling mistake found in the source string.");
 
-    results.add(openAICheckResult);
+    results.add(AICheckResult);
     checkResults.put("A source string with no errors.", results);
-    openAICheckResponse.setResults(checkResults);
+    AICheckResponse.setResults(checkResults);
 
-    when(AIServiceClient.executeAIChecks(any())).thenReturn(openAICheckResponse);
+    when(AIServiceClient.executeAIChecks(any())).thenReturn(AICheckResponse);
     CliCheckResult result = AIChecker.run(assetExtractionDiffs);
 
     verify(AIServiceClient, times(1)).executeAIChecks(any());
@@ -149,10 +149,10 @@ public class AICheckerTest {
   public void testErrorResultReturnedFromCli() {
     AIChecker.retryConfiguration =
         Retry.backoff(1, Duration.ofMillis(1)).maxBackoff(Duration.ofMillis(1));
-    OpenAICheckResponse openAICheckResponse = new OpenAICheckResponse();
-    openAICheckResponse.setError(true);
-    openAICheckResponse.setErrorMessage("Some error message");
-    when(AIServiceClient.executeAIChecks(any())).thenReturn(openAICheckResponse);
+    AICheckResponse AICheckResponse = new AICheckResponse();
+    AICheckResponse.setError(true);
+    AICheckResponse.setErrorMessage("Some error message");
+    when(AIServiceClient.executeAIChecks(any())).thenReturn(AICheckResponse);
     CliCheckResult result = AIChecker.run(assetExtractionDiffs);
     assertFalse(result.isSuccessful());
     assertTrue(result.getNotificationText().contains("Retries exhausted for OpenAI check"));

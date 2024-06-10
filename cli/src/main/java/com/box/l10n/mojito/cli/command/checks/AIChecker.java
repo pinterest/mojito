@@ -7,9 +7,9 @@ import com.box.l10n.mojito.cli.command.CommandException;
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.rest.client.AIServiceClient;
-import com.box.l10n.mojito.rest.entity.OpenAICheckRequest;
-import com.box.l10n.mojito.rest.entity.OpenAICheckResponse;
-import com.box.l10n.mojito.rest.entity.OpenAICheckResult;
+import com.box.l10n.mojito.rest.entity.AICheckRequest;
+import com.box.l10n.mojito.rest.entity.AICheckResponse;
+import com.box.l10n.mojito.rest.entity.AICheckResult;
 import com.google.common.base.Strings;
 import java.time.Duration;
 import java.util.HashMap;
@@ -57,29 +57,29 @@ public class AIChecker extends AbstractCliChecker {
           "Repository name must be provided in checker options when using OpenAI checks.");
     }
 
-    OpenAICheckRequest openAICheckRequest = new OpenAICheckRequest(textUnits, repositoryName);
+    AICheckRequest AICheckRequest = new AICheckRequest(textUnits, repositoryName);
 
-    return Mono.fromCallable(() -> executeChecks(openAICheckRequest))
+    return Mono.fromCallable(() -> executeChecks(AICheckRequest))
         .retryWhen(retryConfiguration)
         .doOnError(ex -> logger.error("Failed to run AI checks: {}", ex.getMessage(), ex))
         .onErrorReturn(getRetriesExhaustedResult())
         .block();
   }
 
-  private CliCheckResult executeChecks(OpenAICheckRequest openAICheckRequest) {
-    OpenAICheckResponse response = AIServiceClient.executeAIChecks(openAICheckRequest);
+  private CliCheckResult executeChecks(AICheckRequest AICheckRequest) {
+    AICheckResponse response = AIServiceClient.executeAIChecks(AICheckRequest);
 
     if (response.isError()) {
       throw new CommandException("Failed to run AI checks: " + response.getErrorMessage());
     }
 
-    Map<String, List<OpenAICheckResult>> failureMap = new HashMap<>();
+    Map<String, List<AICheckResult>> failureMap = new HashMap<>();
 
     response
         .getResults()
         .forEach(
             (sourceString, openAICheckResults) -> {
-              List<OpenAICheckResult> failures =
+              List<AICheckResult> failures =
                   openAICheckResults.stream()
                       .filter(result -> !result.isSuccess())
                       .collect(toList());
@@ -98,16 +98,16 @@ public class AIChecker extends AbstractCliChecker {
     return cliCheckResult;
   }
 
-  private String buildNotificationText(Map<String, List<OpenAICheckResult>> failures) {
+  private String buildNotificationText(Map<String, List<AICheckResult>> failures) {
     StringBuilder notification = new StringBuilder();
     for (String sourceString : failures.keySet()) {
-      List<OpenAICheckResult> openAICheckResults = failures.get(sourceString);
-      notification.append(buildStringFailureText(sourceString, openAICheckResults));
+      List<AICheckResult> AICheckResults = failures.get(sourceString);
+      notification.append(buildStringFailureText(sourceString, AICheckResults));
     }
     return notification.toString();
   }
 
-  private String buildStringFailureText(String sourceString, List<OpenAICheckResult> failures) {
+  private String buildStringFailureText(String sourceString, List<AICheckResult> failures) {
     StringBuilder failureText = new StringBuilder();
 
     failureText
@@ -118,7 +118,7 @@ public class AIChecker extends AbstractCliChecker {
         .append(" has the following issues:")
         .append(System.lineSeparator());
 
-    for (OpenAICheckResult failure : failures) {
+    for (AICheckResult failure : failures) {
       failureText
           .append(BULLET_POINT)
           .append(failure.getSuggestedFix())

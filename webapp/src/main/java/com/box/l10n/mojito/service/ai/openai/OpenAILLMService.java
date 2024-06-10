@@ -1,10 +1,10 @@
 package com.box.l10n.mojito.service.ai.openai;
 
 import static com.box.l10n.mojito.entity.PromptType.SOURCE_STRING_CHECKER;
-import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.AssistantMessage.assistantMessageBuilder;
-import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.SystemMessage.systemMessageBuilder;
-import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.UserMessage.userMessageBuilder;
+import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.ChatMessage.messageBuilder;
 import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.chatCompletionsRequest;
+import static com.box.l10n.mojito.service.ai.openai.OpenAIPromptContextMessageType.SYSTEM;
+import static com.box.l10n.mojito.service.ai.openai.OpenAIPromptContextMessageType.USER;
 
 import com.box.l10n.mojito.entity.AIPrompt;
 import com.box.l10n.mojito.entity.AIPromptContextMessage;
@@ -46,7 +46,7 @@ public class OpenAILLMService implements LLMService {
 
   @Autowired ObjectMapper objectMapper;
 
-  @Autowired OpenAIPromptService openAIPromptService;
+  @Autowired LLMPromptService LLMPromptService;
 
   @Value("${l10n.ai.checks.persistResults:true}")
   boolean persistResults;
@@ -63,7 +63,7 @@ public class OpenAILLMService implements LLMService {
     }
 
     List<AIPrompt> prompts =
-        openAIPromptService.getPromptsByRepositoryAndPromptType(repository, SOURCE_STRING_CHECKER);
+        LLMPromptService.getPromptsByRepositoryAndPromptType(repository, SOURCE_STRING_CHECKER);
 
     Map<String, List<AICheckResult>> results = new HashMap<>();
     AICheckRequest.getTextUnits()
@@ -196,29 +196,19 @@ public class OpenAILLMService implements LLMService {
       String systemPrompt, String userPrompt, List<AIPromptContextMessage> contextMessages) {
     List<OpenAIClient.ChatCompletionsRequest.Message> messages = new ArrayList<>();
     for (AIPromptContextMessage contextMessage : contextMessages) {
-      switch (contextMessage.getMessageType()) {
-        case "system":
-          messages.add(systemMessageBuilder().content(contextMessage.getContent()).build());
-          break;
-        case "user":
-          messages.add(userMessageBuilder().content(contextMessage.getContent()).build());
-          break;
-        case "assistant":
-          messages.add(assistantMessageBuilder().content(contextMessage.getContent()).build());
-          break;
-        default:
-          logger.error(
-              "Invalid message type: {}, skipping message", contextMessage.getMessageType());
-          break;
-      }
+      messages.add(
+          messageBuilder()
+              .role(contextMessage.getMessageType())
+              .content(contextMessage.getContent())
+              .build());
     }
 
     if (!Strings.isNullOrEmpty(systemPrompt)) {
-      messages.add(systemMessageBuilder().content(systemPrompt).build());
+      messages.add(messageBuilder().role(SYSTEM.getType()).content(systemPrompt).build());
     }
 
     if (!Strings.isNullOrEmpty(userPrompt)) {
-      messages.add(userMessageBuilder().content(userPrompt).build());
+      messages.add(messageBuilder().role(USER.getType()).content(userPrompt).build());
     }
 
     return messages;

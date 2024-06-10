@@ -1,8 +1,7 @@
 package com.box.l10n.mojito.openai;
 
+import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.ChatMessage.messageBuilder;
 import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.Models.GPT_3_5_TURBO;
-import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.SystemMessage.systemMessageBuilder;
-import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.UserMessage.userMessageBuilder;
 import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.chatCompletionsRequest;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -61,10 +60,11 @@ class OpenAIClientTest {
             .model(GPT_3_5_TURBO)
             .messages(
                 List.of(
-                    systemMessageBuilder()
+                    messageBuilder()
+                        .role("system")
                         .content("Translate the following sentence from English to French")
                         .build(),
-                    userMessageBuilder().content("This is a unit test").build()))
+                    messageBuilder().role("user").content("This is a unit test").build()))
             .build();
 
     String jsonResponse =
@@ -123,10 +123,11 @@ class OpenAIClientTest {
             .model(GPT_3_5_TURBO)
             .messages(
                 List.of(
-                    systemMessageBuilder()
+                    messageBuilder()
+                        .role("system")
                         .content("Translate the following sentence from English to French")
                         .build(),
-                    userMessageBuilder().content("This is a unit test").build()))
+                    messageBuilder().role("user").content("This is a unit test").build()))
             .build();
 
     String jsonResponse =
@@ -184,10 +185,11 @@ class OpenAIClientTest {
             .model(GPT_3_5_TURBO)
             .messages(
                 List.of(
-                    systemMessageBuilder()
+                    messageBuilder()
+                        .role("system")
                         .content("Translate the following sentence from English to French")
                         .build(),
-                    userMessageBuilder().content("This is a unit test").build()))
+                    messageBuilder().role("user").content("This is a unit test").build()))
             .build();
 
     String jsonResponse =
@@ -248,10 +250,11 @@ class OpenAIClientTest {
             .model("invalid-model")
             .messages(
                 List.of(
-                    systemMessageBuilder()
+                    messageBuilder()
+                        .role("system")
                         .content("Translate the following sentence from English to French")
                         .build(),
-                    userMessageBuilder().content("This is a unit test").build()))
+                    messageBuilder().role("user").content("This is a unit test").build()))
             .build();
 
     HttpResponse<String> mockResponse = mock(HttpResponse.class);
@@ -300,10 +303,11 @@ class OpenAIClientTest {
             .model(GPT_3_5_TURBO)
             .messages(
                 List.of(
-                    systemMessageBuilder()
+                    messageBuilder()
+                        .role("system")
                         .content("Translate the following sentence from English to French")
                         .build(),
-                    userMessageBuilder().content("This is a unit test").build()))
+                    messageBuilder().role("user").content("This is a unit test").build()))
             .build();
     OpenAIClient.builder()
         .apiKey(API_KEY)
@@ -362,10 +366,11 @@ class OpenAIClientTest {
             .model(GPT_3_5_TURBO)
             .messages(
                 List.of(
-                    systemMessageBuilder()
+                    messageBuilder()
+                        .role("system")
                         .content("Translate the following sentence from English to French")
                         .build(),
-                    userMessageBuilder().content("This is a unit test").build()))
+                    messageBuilder().role("user").content("This is a unit test").build()))
             .build();
 
     String jsonResponse =

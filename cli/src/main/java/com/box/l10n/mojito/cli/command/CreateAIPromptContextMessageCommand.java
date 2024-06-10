@@ -4,7 +4,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.rest.client.AIServiceClient;
-import com.box.l10n.mojito.rest.entity.OpenAIPromptContextMessageCreateRequest;
+import com.box.l10n.mojito.rest.entity.AIPromptContextMessageCreateRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,14 +55,14 @@ public class CreateAIPromptContextMessageCommand extends Command {
 
   private void createPromptContextMessage() {
     logger.debug("Received request to create prompt content message");
-    OpenAIPromptContextMessageCreateRequest openAIPromptContextMessageCreateRequest =
-        new OpenAIPromptContextMessageCreateRequest();
-    openAIPromptContextMessageCreateRequest.setContent(content);
-    openAIPromptContextMessageCreateRequest.setMessageType(messageType);
-    openAIPromptContextMessageCreateRequest.setAiPromptId(promptId);
-    openAIPromptContextMessageCreateRequest.setOrderIndex(orderIndex);
+    AIPromptContextMessageCreateRequest AIPromptContextMessageCreateRequest =
+        new AIPromptContextMessageCreateRequest();
+    AIPromptContextMessageCreateRequest.setContent(content);
+    AIPromptContextMessageCreateRequest.setMessageType(messageType);
+    AIPromptContextMessageCreateRequest.setAiPromptId(promptId);
+    AIPromptContextMessageCreateRequest.setOrderIndex(orderIndex);
     long contextMessageId =
-        aiServiceClient.createPromptContextMessage(openAIPromptContextMessageCreateRequest);
+        aiServiceClient.createPromptContextMessage(AIPromptContextMessageCreateRequest);
     consoleWriter
         .newLine()
         .a("Prompt context message created with id: " + contextMessageId)

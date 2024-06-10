@@ -5,14 +5,14 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class OpenAICheckRequest {
+public class AICheckRequest {
 
   List<AssetExtractorTextUnit> textUnits;
   String repositoryName;
 
-  public OpenAICheckRequest() {}
+  public AICheckRequest() {}
 
-  public OpenAICheckRequest(List<AssetExtractorTextUnit> textUnits, String repositoryName) {
+  public AICheckRequest(List<AssetExtractorTextUnit> textUnits, String repositoryName) {
     this.textUnits = textUnits;
     this.repositoryName = repositoryName;
   }
