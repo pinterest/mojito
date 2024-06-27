@@ -25,10 +25,9 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,19 +70,21 @@ public class OpenAILLMService implements LLMService {
     List<AIPrompt> prompts =
         LLMPromptService.getPromptsByRepositoryAndPromptType(repository, SOURCE_STRING_CHECKER);
 
-    Set<String> sourceStrings = new HashSet<>();
+    Map<String, AssetExtractorTextUnit> textUnitsUniqueSource =
+        aiCheckRequest.getTextUnits().stream()
+            .collect(
+                Collectors.toMap(
+                    AssetExtractorTextUnit::getSource,
+                    textUnit -> textUnit,
+                    (existing, replacement) -> existing,
+                    HashMap::new));
     Map<String, List<AICheckResult>> results = new HashMap<>();
-    aiCheckRequest
-        .getTextUnits()
+    textUnitsUniqueSource
+        .values()
         .forEach(
             textUnit -> {
-              // Only check each source string once, this prevents duplicate checks for the same
-              // source content i.e. plurals
-              if (!sourceStrings.contains(textUnit.getSource())) {
-                List<AICheckResult> aiCheckResults = checkString(textUnit, prompts, repository);
-                results.put(textUnit.getSource(), aiCheckResults);
-                sourceStrings.add(textUnit.getSource());
-              }
+              List<AICheckResult> aiCheckResults = checkString(textUnit, prompts, repository);
+              results.put(textUnit.getSource(), aiCheckResults);
             });
 
     AICheckResponse aiCheckResponse = new AICheckResponse();
