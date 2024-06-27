@@ -134,7 +134,7 @@ public class ScreenshotServiceTest extends ServiceTestBase {
     screenshotService.thirdPartyService = thirdPartyServiceMock;
 
     Screenshot screenshot = new Screenshot();
-    screenshot.setId(1L);
+    screenshot.setId(2L);
     screenshot.setName("screenshot");
     screenshotRepository.save(screenshot);
 
@@ -150,7 +150,7 @@ public class ScreenshotServiceTest extends ServiceTestBase {
     tmTextUnitRepository.save(tmTextUnit);
 
     ScreenshotTextUnit screenshotTextUnit = new ScreenshotTextUnit();
-    screenshotTextUnit.setId(1L);
+    screenshotTextUnit.setId(2L);
     screenshotTextUnit.setScreenshot(screenshot);
     screenshotTextUnit.setTmTextUnit(tmTextUnit);
     screenshotTextUnitRepository.save(screenshotTextUnit);
