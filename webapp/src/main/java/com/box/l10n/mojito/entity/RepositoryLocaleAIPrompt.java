@@ -7,22 +7,25 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(
-    name = "repository_ai_prompt",
+    name = "repository_locale_ai_prompt",
     indexes = {
       @Index(
-          name = "I__REPOSITORY_AI_PROMPT__REPO_ID__TYPE_ID__PROMPT_ID",
-          columnList = "repository_id, prompt_type_id, ai_prompt_id")
+          name = "I__REPOSITORY_LOCALE_AI_PROMPT__REPO_ID__AI_PROMPT_ID",
+          columnList = "repository_id, ai_prompt_id")
     })
-public class RepositoryAIPrompt extends BaseEntity {
+public class RepositoryLocaleAIPrompt extends BaseEntity {
 
   @Column(name = "repository_id")
   private Long repositoryId;
 
+  @Column(name = "locale_id")
+  private Long localeId;
+
   @Column(name = "ai_prompt_id")
   private Long aiPromptId;
 
-  @Column(name = "prompt_type_id")
-  private Long promptTypeId;
+  @Column(name = "disabled")
+  private boolean disabled;
 
   public Long getAiPromptId() {
     return aiPromptId;
@@ -32,19 +35,27 @@ public class RepositoryAIPrompt extends BaseEntity {
     this.aiPromptId = aiPromptId;
   }
 
-  public long getPromptTypeId() {
-    return promptTypeId;
-  }
-
-  public void setPromptTypeId(Long promptTypeId) {
-    this.promptTypeId = promptTypeId;
-  }
-
   public long getRepositoryId() {
     return repositoryId;
   }
 
   public void setRepositoryId(long repositoryId) {
     this.repositoryId = repositoryId;
+  }
+
+  public Long getLocaleId() {
+    return localeId;
+  }
+
+  public void setLocaleId(Long localeId) {
+    this.localeId = localeId;
+  }
+
+  public boolean isDisabled() {
+    return disabled;
+  }
+
+  public void setDisabled(boolean disabled) {
+    this.disabled = disabled;
   }
 }
