@@ -31,6 +31,9 @@ public class AIPrompt extends BaseEntity {
   @Column(name = "deleted")
   private boolean deleted;
 
+  @Column(name = "prompt_type_id")
+  private Long promptTypeId;
+
   @CreatedDate
   @Column(name = "created_date")
   private ZonedDateTime createdDate;
@@ -106,5 +109,13 @@ public class AIPrompt extends BaseEntity {
 
   public void setLastModifiedDate(ZonedDateTime lastModifiedDate) {
     this.lastModifiedDate = lastModifiedDate;
+  }
+
+  public Long getPromptTypeId() {
+    return promptTypeId;
+  }
+
+  public void setPromptTypeId(Long promptTypeId) {
+    this.promptTypeId = promptTypeId;
   }
 }
