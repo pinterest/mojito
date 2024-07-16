@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.android.strings;
 
+import static com.box.l10n.mojito.android.strings.AndroidPluralQuantity.ONE;
 import static com.box.l10n.mojito.android.strings.AndroidPluralQuantity.OTHER;
 
 import com.box.l10n.mojito.service.tm.PluralNameParser;
@@ -7,9 +8,11 @@ import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Strings;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.SequencedSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
@@ -20,6 +23,8 @@ public class AndroidStringDocumentMapper {
   static Logger logger = LoggerFactory.getLogger(AndroidStringDocumentMapper.class);
 
   private static final String DEFAULT_ASSET_DELIMITER = "#@#";
+
+  private static final String ONE_PLURAL_STRING_DELIMITER = "###";
 
   private static final CharMatcher INVALID_CONTROL =
       CharMatcher.anyOf("\t\r\n").negate().and(CharMatcher.javaIsoControl());
@@ -44,48 +49,85 @@ public class AndroidStringDocumentMapper {
     this(pluralSeparator, assetDelimiter, null, null);
   }
 
+  private SequencedSet<AndroidPlural.AndroidPluralBuilder> populateBuilders(
+      SequencedSet<AndroidPlural.AndroidPluralBuilder> builders) {
+    if (builders == null) {
+      builders = new LinkedHashSet<>();
+      builders.add(new AndroidPlural.AndroidPluralBuilder());
+    }
+    return builders;
+  }
+
+  private void addMissingPlurals(
+      Map<String, SequencedSet<AndroidPlural.AndroidPluralBuilder>> pluralsByOther) {
+    pluralsByOther.forEach(
+        (pluralForm, builders) -> {
+          AndroidPlural.AndroidPluralBuilder previousBuilder = null;
+          for (AndroidPlural.AndroidPluralBuilder builder : builders) {
+            Optional<AndroidPluralItem> onePluralItem = builder.getItem(ONE);
+            if (onePluralItem.isPresent() && builder.getItemsSize() == 1) {
+              builder.setName(builder.getName() + ONE_PLURAL_STRING_DELIMITER + onePluralItem.get().getContent());
+            }
+            if (previousBuilder != null) {
+              AndroidPlural.AndroidPluralBuilder lastPreviousBuilder = previousBuilder;
+              builder
+                  .getMissingQuantities()
+                  .forEach(
+                      missingQuantity ->
+                          lastPreviousBuilder.getItem(missingQuantity).ifPresent(builder::addItem));
+            }
+            previousBuilder = builder;
+          }
+        });
+  }
+
   public AndroidStringDocument readFromTextUnits(List<TextUnitDTO> textUnits, boolean useSource) {
 
     AndroidStringDocument document = new AndroidStringDocument();
-    Map<String, AndroidPlural.AndroidPluralBuilder> pluralByOther = new HashMap<>();
+    Map<String, SequencedSet<AndroidPlural.AndroidPluralBuilder>> pluralsByOther = new HashMap<>();
 
     for (TextUnitDTO textUnit : textUnits) {
 
       if (isSingularTextUnit(textUnit)) {
         document.addSingular(textUnitToAndroidSingular(textUnit, useSource));
       } else {
-        pluralByOther.compute(
+        pluralsByOther.compute(
             getKeyToGroupByPluralOtherAndComment(textUnit),
-            (key, builder) -> {
-              if (builder == null) {
-                builder = AndroidPlural.builder();
-              }
+            (key, builders) -> {
+              AndroidPluralItem pluralItem =
+                  new AndroidPluralItem(
+                      textUnit.getPluralForm(),
+                      textUnit.getTmTextUnitId(),
+                      useSource ? textUnit.getSource() : textUnit.getTarget());
+              builders = this.populateBuilders(builders);
+              Optional<AndroidPlural.AndroidPluralBuilder> optionalBuilder =
+                  builders.stream()
+                      .filter(
+                          currentBuilder ->
+                              !currentBuilder.hasItemWithSameQuantityAndDifferentContent(
+                                  pluralItem))
+                      .findFirst();
+              AndroidPlural.AndroidPluralBuilder builder =
+                  optionalBuilder.orElseGet(AndroidPlural.AndroidPluralBuilder::new);
 
-              if (OTHER.name().equalsIgnoreCase(textUnit.getPluralForm())) {
+              if (ONE.name().equalsIgnoreCase(textUnit.getPluralForm())
+                  || OTHER.name().equalsIgnoreCase(textUnit.getPluralForm())) {
                 String name = pluralNameParser.getPrefix(textUnit.getName(), pluralSeparator);
                 builder.setName(textUnit.getAssetPath() + assetDelimiter + name);
                 builder.setComment(textUnit.getComment());
               }
 
-              // TODO builder.build() can fail if multiple text units have the same plural form and
-              // form
-              // t1=name_one,source,one,name_other t2=name_one,source2,one,name_other
-              // t3=name_other,sourcepl,other,name_other
-              // nothing prevent this to have this state in the DB and it can happen with the
-              // current mac filter
-              // and wrong data.
-              builder.addItem(
-                  new AndroidPluralItem(
-                      textUnit.getPluralForm(),
-                      textUnit.getTmTextUnitId(),
-                      useSource ? textUnit.getSource() : textUnit.getTarget()));
+              builder.addItem(pluralItem);
+              builders.add(builder);
 
-              return builder;
+              return builders;
             });
       }
     }
 
-    pluralByOther.forEach((pluralFormOther, builder) -> document.addPlural(builder.build()));
+    this.addMissingPlurals(pluralsByOther);
+    pluralsByOther.forEach(
+        (pluralForm, builders) -> builders.forEach(builder -> document.addPlural(builder.build())));
 
     return document;
   }
@@ -153,6 +195,7 @@ public class AndroidStringDocumentMapper {
   }
 
   Stream<TextUnitDTO> pluralToTextUnits(AndroidPlural plural) {
+    String pluralName = plural.getName().replaceAll(String.format("%s.*", ONE_PLURAL_STRING_DELIMITER), "");
     return plural
         .sortedStream()
         .map(
@@ -160,10 +203,10 @@ public class AndroidStringDocumentMapper {
               TextUnitDTO textUnit = new TextUnitDTO();
               String quantity = item.getQuantity().toString();
               String name =
-                  pluralNameParser.toPluralName(plural.getName(), quantity, pluralSeparator);
+                  pluralNameParser.toPluralName(pluralName, quantity, pluralSeparator);
               String pluralFormOther =
                   pluralNameParser.toPluralName(
-                      plural.getName(), OTHER.toString(), pluralSeparator);
+                      pluralName, OTHER.toString(), pluralSeparator);
 
               textUnit.setName(name);
               textUnit.setComment(plural.getComment());

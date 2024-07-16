@@ -1,9 +1,12 @@
 package com.box.l10n.mojito.android.strings;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -81,6 +84,37 @@ public class AndroidPlural extends AbstractAndroidString {
 
     public AndroidPlural build() {
       return new AndroidPlural(name, comment, items);
+    }
+
+    public boolean hasItemWithSameQuantityAndDifferentContent(AndroidPluralItem pluralItem) {
+      return this.items.stream()
+          .anyMatch(
+              item ->
+                  item.getQuantity().equals(pluralItem.getQuantity())
+                      && !item.getContent().equals(pluralItem.getContent()));
+    }
+
+    public Set<AndroidPluralQuantity> getMissingQuantities() {
+      Set<AndroidPluralQuantity> currentQuantities =
+          this.items.stream().map(AndroidPluralItem::getQuantity).collect(Collectors.toSet());
+      return Arrays.stream(AndroidPluralQuantity.values())
+          .filter(quantity -> !currentQuantities.contains(quantity))
+          .collect(Collectors.toSet());
+    }
+
+    public Optional<AndroidPluralItem> getItem(AndroidPluralQuantity quantity) {
+      return this.items.stream()
+          .filter(item -> item.getQuantity().equals(quantity))
+          .map(item -> new AndroidPluralItem(item.getId(), item.getQuantity(), item.getContent()))
+          .findFirst();
+    }
+
+    public int getItemsSize() {
+      return this.items.size();
+    }
+
+    public String getName() {
+      return this.name;
     }
   }
 }
