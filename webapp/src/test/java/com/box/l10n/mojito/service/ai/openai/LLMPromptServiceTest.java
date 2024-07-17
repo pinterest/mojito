@@ -154,7 +154,7 @@ public class LLMPromptServiceTest {
     LLMPromptService.addPromptToRepository(1L, "testRepo", "SOURCE_STRING_CHECKER");
     verify(aiPromptTypeRepository, times(1)).findByName("SOURCE_STRING_CHECKER");
     verify(repositoryLocaleAIPromptRepository, times(1)).save(repositoryAIPromptCaptor.capture());
-    assertEquals(1L, repositoryAIPromptCaptor.getValue().getAiPromptId());
-    assertEquals(2L, repositoryAIPromptCaptor.getValue().getRepositoryId());
+    assertEquals(1L, repositoryAIPromptCaptor.getValue().getAiPrompt().getId());
+    assertEquals(2L, repositoryAIPromptCaptor.getValue().getRepository().getId());
   }
 }

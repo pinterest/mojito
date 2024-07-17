@@ -66,7 +66,7 @@ public class LLMPromptService implements PromptService {
     aiPrompt.setUserPrompt(AIPromptCreateRequest.getUserPrompt());
     aiPrompt.setPromptTemperature(AIPromptCreateRequest.getPromptTemperature());
     aiPrompt.setModelName(AIPromptCreateRequest.getModelName());
-    aiPrompt.setPromptTypeId(aiPromptType.getId());
+    aiPrompt.setPromptType(aiPromptType);
     ZonedDateTime now = JSR310Migration.dateTimeNow();
     aiPrompt.setCreatedDate(now);
     aiPrompt.setLastModifiedDate(now);
@@ -74,8 +74,8 @@ public class LLMPromptService implements PromptService {
     logger.debug("Created prompt with id: {}", aiPrompt.getId());
 
     RepositoryLocaleAIPrompt repositoryLocaleAIPrompt = new RepositoryLocaleAIPrompt();
-    repositoryLocaleAIPrompt.setRepositoryId(repository.getId());
-    repositoryLocaleAIPrompt.setAiPromptId(aiPrompt.getId());
+    repositoryLocaleAIPrompt.setRepository(repository);
+    repositoryLocaleAIPrompt.setAiPrompt(aiPrompt);
     repositoryLocaleAIPromptRepository.save(repositoryLocaleAIPrompt);
     logger.debug("Created repository prompt with id: {}", repositoryLocaleAIPrompt.getId());
 
@@ -103,8 +103,8 @@ public class LLMPromptService implements PromptService {
             .orElseThrow(() -> new AIException("Prompt not found: " + promptId));
 
     RepositoryLocaleAIPrompt repositoryLocaleAIPrompt = new RepositoryLocaleAIPrompt();
-    repositoryLocaleAIPrompt.setRepositoryId(repository.getId());
-    repositoryLocaleAIPrompt.setAiPromptId(aiPrompt.getId());
+    repositoryLocaleAIPrompt.setRepository(repository);
+    repositoryLocaleAIPrompt.setAiPrompt(aiPrompt);
     repositoryLocaleAIPromptRepository.save(repositoryLocaleAIPrompt);
     logger.debug("Created repository prompt with id: {}", repositoryLocaleAIPrompt.getId());
   }

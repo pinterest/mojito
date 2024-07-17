@@ -9,6 +9,7 @@ import static com.box.l10n.mojito.service.ai.openai.OpenAIPromptContextMessageTy
 import com.box.l10n.mojito.entity.AIPrompt;
 import com.box.l10n.mojito.entity.AIPromptContextMessage;
 import com.box.l10n.mojito.entity.Repository;
+import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.openai.OpenAIClient;
@@ -23,6 +24,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Strings;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +37,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
+import reactor.util.retry.RetryBackoffSpec;
 
 @Service
 @ConditionalOnProperty(value = "l10n.ai.service.type", havingValue = "OpenAI")
@@ -55,6 +61,17 @@ public class OpenAILLMService implements LLMService {
 
   @Value("${l10n.ai.checks.persistResults:true}")
   boolean persistResults;
+
+  @Value("${l10n.ai.translate.retry.maxAttempts:10}")
+  int retryMaxAttempts;
+
+  @Value("${l10n.ai.translate.retry.minDurationSeconds:5}")
+  int retryMinDurationSeconds;
+
+  @Value("${l10n.ai.translate.retry.maxBackoffDurationSeconds:60}")
+  int retryMaxBackoffDurationSeconds;
+
+  RetryBackoffSpec llmTranslateRetryConfig;
 
   @Timed("OpenAILLMService.executeAIChecks")
   public AICheckResponse executeAIChecks(AICheckRequest aiCheckRequest) {
@@ -91,6 +108,39 @@ public class OpenAILLMService implements LLMService {
     aiCheckResponse.setResults(results);
 
     return aiCheckResponse;
+  }
+
+  @Override
+  @Timed("OpenAILLMService.translate")
+  public String translate(
+      TMTextUnit tmTextUnit, String sourceBcp47Tag, String targetBcp47Tag, AIPrompt prompt) {
+    logger.debug(
+        "Translating text unit {} from {} to {} using prompt {}",
+        tmTextUnit.getId(),
+        sourceBcp47Tag,
+        targetBcp47Tag,
+        prompt.getId());
+    String systemPrompt =
+        getTranslationFormattedPrompt(
+            prompt.getSystemPrompt(), tmTextUnit, sourceBcp47Tag, targetBcp47Tag);
+    String userPrompt =
+        getTranslationFormattedPrompt(
+            prompt.getUserPrompt(), tmTextUnit, sourceBcp47Tag, targetBcp47Tag);
+
+    OpenAIClient.ChatCompletionsRequest chatCompletionsRequest =
+        buildChatCompletionsRequest(
+            prompt, systemPrompt, userPrompt, prompt.getContextMessages(), false);
+
+    return Mono.fromCallable(
+            () -> {
+              OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
+                  openAIClient.getChatCompletions(chatCompletionsRequest).join();
+
+              return chatCompletionsResponse.choices().getFirst().message().content();
+            })
+        .retryWhen(llmTranslateRetryConfig)
+        .blockOptional()
+        .orElseThrow(() -> new AIException("Error translating text unit " + tmTextUnit.getId()));
   }
 
   @Timed("OpenAILLMService.checkString")
@@ -134,9 +184,11 @@ public class OpenAILLMService implements LLMService {
             prompt.getId());
         continue;
       }
-      String systemPrompt = getFormattedPrompt(prompt.getSystemPrompt(), sourceString, comment);
+      String systemPrompt =
+          getStringChecksFormattedPrompt(prompt.getSystemPrompt(), sourceString, comment);
 
-      String userPrompt = getFormattedPrompt(prompt.getUserPrompt(), sourceString, comment);
+      String userPrompt =
+          getStringChecksFormattedPrompt(prompt.getUserPrompt(), sourceString, comment);
 
       if (nameSplit.length > 1
           && (systemPrompt.contains(CONTEXT_STRING_PLACEHOLDER)
@@ -159,11 +211,11 @@ public class OpenAILLMService implements LLMService {
             chatCompletionsResponse.choices().getFirst().message().content(),
             aiStringCheckRepository);
       }
-      results.add(parseResponse(chatCompletionsResponse, repository));
+      results.add(parseAICheckPromptResponse(chatCompletionsResponse, repository));
     }
   }
 
-  private AICheckResult parseResponse(
+  private AICheckResult parseAICheckPromptResponse(
       OpenAIClient.ChatCompletionsResponse chatCompletionsResponse, Repository repository) {
     AICheckResult result;
     String response = chatCompletionsResponse.choices().getFirst().message().content();
@@ -190,15 +242,38 @@ public class OpenAILLMService implements LLMService {
     return result;
   }
 
-  private static String getFormattedPrompt(String prompt, String sourceString, String comment) {
-    String systemPrompt = "";
+  private static String getStringChecksFormattedPrompt(
+      String prompt, String sourceString, String comment) {
+    String formattedPrompt = "";
     if (prompt != null) {
-      systemPrompt =
-          prompt
+      formattedPrompt =
+          formattedPrompt
               .replace(SOURCE_STRING_PLACEHOLDER, sourceString)
               .replace(COMMENT_STRING_PLACEHOLDER, comment);
     }
-    return systemPrompt;
+    return formattedPrompt;
+  }
+
+  private static String getTranslationFormattedPrompt(
+      String prompt, TMTextUnit tmTextUnit, String sourceBcp47Tag, String targetBcp47Tag) {
+    String formattedPrompt = "";
+    if (prompt != null) {
+      formattedPrompt =
+          prompt
+              .replace(SOURCE_STRING_PLACEHOLDER, tmTextUnit.getContent())
+              .replace(COMMENT_STRING_PLACEHOLDER, tmTextUnit.getComment())
+              .replace(SOURCE_LOCALE_PLACEHOLDER, sourceBcp47Tag)
+              .replace(TARGET_LOCALE_PLACEHOLDER, targetBcp47Tag)
+              .replace(
+                  PLURAL_FORM_PLACEHOLDER,
+                  tmTextUnit.getPluralForm() != null ? tmTextUnit.getPluralForm().getName() : "")
+              .replace(
+                  CONTEXT_STRING_PLACEHOLDER,
+                  tmTextUnit.getName().split(" --- ").length > 1
+                      ? tmTextUnit.getName().split(" --- ")[1]
+                      : "");
+    }
+    return formattedPrompt;
   }
 
   private static OpenAIClient.ChatCompletionsRequest buildChatCompletionsRequest(
@@ -235,5 +310,12 @@ public class OpenAILLMService implements LLMService {
     }
 
     return messages;
+  }
+
+  @PostConstruct
+  public void init() {
+    llmTranslateRetryConfig =
+        Retry.backoff(retryMaxAttempts, Duration.ofSeconds(retryMinDurationSeconds))
+            .maxBackoff(Duration.ofSeconds(retryMaxBackoffDurationSeconds));
   }
 }
