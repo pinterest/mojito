@@ -115,6 +115,8 @@ public class VirtualTextUnitBatchUpdaterService {
 
     performLeveraging(savedTextUnits, nameToUsedtextUnitDTOs, contentToTextUnitDTOs);
 
+    // TODO (mallen): Schedule AI translate job asynchrously
+
     if (replace) {
       deleteOldAssetTextUnits(md5ToTextUnitDTOs, md5ToVirtualTextUnits);
     }

@@ -3,6 +3,8 @@ package com.box.l10n.mojito.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -11,44 +13,47 @@ import jakarta.persistence.Table;
     indexes = {
       @Index(
           name = "I__REPOSITORY_LOCALE_AI_PROMPT__REPO_ID__AI_PROMPT_ID",
-          columnList = "repository_id, ai_prompt_id")
+          columnList = "repository_id, locale_id, ai_prompt_id")
     })
 public class RepositoryLocaleAIPrompt extends BaseEntity {
 
-  @Column(name = "repository_id")
-  private Long repositoryId;
+  @ManyToOne
+  @JoinColumn(name = "repository_id")
+  private Repository repository;
 
-  @Column(name = "locale_id")
-  private Long localeId;
+  @ManyToOne
+  @JoinColumn(name = "locale_id")
+  private Locale locale;
 
-  @Column(name = "ai_prompt_id")
-  private Long aiPromptId;
+  @ManyToOne
+  @JoinColumn(name = "ai_prompt_id", nullable = false)
+  private AIPrompt aiPrompt;
 
   @Column(name = "disabled")
   private boolean disabled;
 
-  public Long getAiPromptId() {
-    return aiPromptId;
+  public AIPrompt getAiPrompt() {
+    return aiPrompt;
   }
 
-  public void setAiPromptId(Long aiPromptId) {
-    this.aiPromptId = aiPromptId;
+  public void setAiPrompt(AIPrompt aiPrompt) {
+    this.aiPrompt = aiPrompt;
   }
 
-  public long getRepositoryId() {
-    return repositoryId;
+  public Repository getRepository() {
+    return repository;
   }
 
-  public void setRepositoryId(long repositoryId) {
-    this.repositoryId = repositoryId;
+  public void setRepository(Repository repository) {
+    this.repository = repository;
   }
 
-  public Long getLocaleId() {
-    return localeId;
+  public Locale getLocale() {
+    return locale;
   }
 
-  public void setLocaleId(Long localeId) {
-    this.localeId = localeId;
+  public void setLocale(Locale locale) {
+    this.locale = locale;
   }
 
   public boolean isDisabled() {
