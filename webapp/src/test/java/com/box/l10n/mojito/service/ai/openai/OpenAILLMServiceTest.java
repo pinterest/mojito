@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import com.box.l10n.mojito.entity.AIPrompt;
 import com.box.l10n.mojito.entity.AIPromptContextMessage;
+import com.box.l10n.mojito.entity.AIPromptType;
 import com.box.l10n.mojito.entity.PromptType;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.json.ObjectMapper;
@@ -300,6 +301,9 @@ class OpenAILLMServiceTest {
     prompt.setUserPrompt("Check strings for spelling");
     prompt.setModelName("gtp-3.5-turbo");
     prompt.setPromptTemperature(0.0F);
+    AIPromptType promptType = new AIPromptType();
+    promptType.setName("SOURCE_STRING_CHECKER");
+    prompt.setPromptType(promptType);
 
     AIPromptContextMessage testSystemContextMessage = new AIPromptContextMessage();
     testSystemContextMessage.setContent("A test system context message");
