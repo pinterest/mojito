@@ -16,19 +16,19 @@ public class AITranslationTextUnitFilterService {
   private static final String HTML_TAG_REGEX = "<[^>]*>";
   private static final Pattern HTML_TAG_PATTERN = Pattern.compile(HTML_TAG_REGEX);
 
-  private Pattern excludePlaceholdersPattern;
+  protected Pattern excludePlaceholdersPattern;
 
   @Value("${l10n.ai.translation.filter.excludePlurals:false}")
-  private boolean excludePlurals;
+  protected boolean excludePlurals;
 
   @Value("${l10n.ai.translation.filter.excludePlaceholders:false}")
-  private boolean excludePlaceholders;
+  protected boolean excludePlaceholders;
 
   @Value("${l10n.ai.translation.filter.excludeHtmlTags:false}")
-  private boolean excludeHtmlTags;
+  protected boolean excludeHtmlTags;
 
   @Value("${l10n.ai.translation.filter.excludePlaceholders.regex:\\{[^\\}]*\\}}")
-  private String excludePlaceholdersRegex;
+  protected String excludePlaceholdersRegex;
 
   public boolean isTranslatable(TMTextUnit tmTextUnit) {
     boolean isTranslatable = true;
