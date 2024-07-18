@@ -1,4 +1,4 @@
-package com.box.l10n.mojito.service.ai.openai;
+package com.box.l10n.mojito.service.ai;
 
 import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.AIPrompt;
@@ -10,11 +10,7 @@ import com.box.l10n.mojito.entity.RepositoryLocaleAIPrompt;
 import com.box.l10n.mojito.rest.ai.AIException;
 import com.box.l10n.mojito.rest.ai.AIPromptContextMessageCreateRequest;
 import com.box.l10n.mojito.rest.ai.AIPromptCreateRequest;
-import com.box.l10n.mojito.service.ai.AIPromptContextMessageRepository;
-import com.box.l10n.mojito.service.ai.AIPromptRepository;
-import com.box.l10n.mojito.service.ai.AIPromptTypeRepository;
-import com.box.l10n.mojito.service.ai.PromptService;
-import com.box.l10n.mojito.service.ai.RepositoryLocaleAIPromptRepository;
+import com.box.l10n.mojito.service.ai.openai.OpenAIPromptContextMessageType;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import io.micrometer.core.annotation.Timed;
 import jakarta.transaction.Transactional;

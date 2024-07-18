@@ -13,6 +13,7 @@ import com.box.l10n.mojito.openai.OpenAIClient;
 import com.box.l10n.mojito.rest.ai.AICheckRequest;
 import com.box.l10n.mojito.rest.ai.AICheckResponse;
 import com.box.l10n.mojito.service.ai.AIStringCheckRepository;
+import com.box.l10n.mojito.service.ai.LLMPromptService;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.ArrayList;
