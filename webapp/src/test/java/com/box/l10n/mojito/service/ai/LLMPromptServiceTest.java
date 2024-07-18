@@ -1,4 +1,4 @@
-package com.box.l10n.mojito.service.ai.openai;
+package com.box.l10n.mojito.service.ai;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -15,9 +15,6 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocaleAIPrompt;
 import com.box.l10n.mojito.rest.ai.AIException;
 import com.box.l10n.mojito.rest.ai.AIPromptCreateRequest;
-import com.box.l10n.mojito.service.ai.AIPromptRepository;
-import com.box.l10n.mojito.service.ai.AIPromptTypeRepository;
-import com.box.l10n.mojito.service.ai.RepositoryLocaleAIPromptRepository;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;

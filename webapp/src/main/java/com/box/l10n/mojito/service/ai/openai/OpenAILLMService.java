@@ -55,7 +55,7 @@ public class OpenAILLMService implements LLMService {
 
   @Autowired ObjectMapper objectMapper;
 
-  @Autowired LLMPromptService LLMPromptService;
+  @Autowired com.box.l10n.mojito.service.ai.LLMPromptService LLMPromptService;
 
   @Autowired MeterRegistry meterRegistry;
 
