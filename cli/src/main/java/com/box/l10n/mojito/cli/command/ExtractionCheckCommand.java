@@ -36,6 +36,7 @@ import com.ibm.icu.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.fusesource.jansi.Ansi;
@@ -265,6 +266,12 @@ public class ExtractionCheckCommand extends Command {
       required = false,
       description = "Full git commit sha, used for setting a status on a commit in Github.")
   String commitSha;
+
+  @Parameter(
+      names = {"--exclude-files-regex", "-efr"},
+      arity = 1,
+      description = "Regex to exclude files from context comment check")
+  String excludedFilesRegex;
 
   @Autowired AuthenticatedRestTemplate restTemplate;
 
@@ -511,7 +518,12 @@ public class ExtractionCheckCommand extends Command {
   }
 
   private CliCheckerExecutor getCliCheckerExecutor() {
-    return new CliCheckerExecutor(generateCheckerList(generateCheckerOptions()));
+    Pattern excludedFilesPattern =
+        Strings.isNullOrEmpty(this.excludedFilesRegex)
+            ? null
+            : Pattern.compile(this.excludedFilesRegex);
+    return new CliCheckerExecutor(
+        generateCheckerList(generateCheckerOptions()), excludedFilesPattern);
   }
 
   private void outputFailuresToCommandLine(List<CliCheckResult> failedCheckNames) {
