@@ -199,6 +199,107 @@ public class ExtractionCheckCommandTest extends CLITestBase {
   }
 
   @Test
+  public void runContextCommentCheckerWithExcludedFiles() {
+    getL10nJCommander()
+        .run(
+            "extract",
+            "-s",
+            getInputResourcesTestDir("source1").getAbsolutePath(),
+            "-o",
+            getTargetTestDir("extractions").getAbsolutePath(),
+            "-n",
+            "source1");
+
+    getL10nJCommander()
+        .run(
+            "extract",
+            "-s",
+            getInputResourcesTestDir("source2").getAbsolutePath(),
+            "-o",
+            getTargetTestDir("extractions").getAbsolutePath(),
+            "-n",
+            "source2");
+
+    getL10nJCommander()
+        .run(
+            "extract-diff",
+            "-i",
+            getTargetTestDir("extractions").getAbsolutePath(),
+            "-o",
+            getTargetTestDir("extraction-diffs").getAbsolutePath(),
+            "-c",
+            "source2",
+            "-b",
+            "source1");
+
+    getL10nJCommander()
+        .run(
+            "extraction-check",
+            "-i",
+            getTargetTestDir("extractions").getAbsolutePath(),
+            "-o",
+            getTargetTestDir("extraction-diffs").getAbsolutePath(),
+            "-c",
+            "source2",
+            "-b",
+            "source1",
+            "-cl",
+            "CONTEXT_COMMENT_CHECKER",
+            "-hf",
+            "CONTEXT_COMMENT_CHECKER",
+            "-efr",
+            ".*file.js:21");
+
+    Assert.assertTrue(outputCapture.toString().contains("Running checks against new strings"));
+    Assert.assertFalse(
+        outputCapture
+            .toString()
+            .contains("The following checks had hard failures:" + System.lineSeparator()));
+    Assert.assertFalse(outputCapture.toString().contains("CONTEXT_COMMENT_CHECKER"));
+    Assert.assertFalse(
+        outputCapture.toString().contains("Context and comment check found failures:"));
+    Assert.assertFalse(
+        outputCapture
+            .toString()
+            .contains(
+                BULLET_POINT
+                    + "Source string `This is a new source string missing a context` failed check with error: Context string is empty."));
+
+    getL10nJCommander()
+        .run(
+            "extraction-check",
+            "-i",
+            getTargetTestDir("extractions").getAbsolutePath(),
+            "-o",
+            getTargetTestDir("extraction-diffs").getAbsolutePath(),
+            "-c",
+            "source2",
+            "-b",
+            "source1",
+            "-cl",
+            "CONTEXT_COMMENT_CHECKER",
+            "-hf",
+            "CONTEXT_COMMENT_CHECKER",
+            "-efr",
+            ".*.jsx:21");
+
+    Assert.assertTrue(outputCapture.toString().contains("Running checks against new strings"));
+    Assert.assertTrue(
+        outputCapture
+            .toString()
+            .contains("The following checks had hard failures:" + System.lineSeparator()));
+    Assert.assertTrue(outputCapture.toString().contains("CONTEXT_COMMENT_CHECKER"));
+    Assert.assertTrue(
+        outputCapture.toString().contains("Context and comment check found failures:"));
+    Assert.assertTrue(
+        outputCapture
+            .toString()
+            .contains(
+                BULLET_POINT
+                    + "Source string `This is a new source string missing a context` failed check with error: Context string is empty."));
+  }
+
+  @Test
   public void runCheckWithInvalidCheckName() {
     getL10nJCommander()
         .run(

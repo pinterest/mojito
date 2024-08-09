@@ -6,6 +6,7 @@ import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.google.common.base.Strings;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -20,6 +21,8 @@ import org.slf4j.LoggerFactory;
 public class ContextAndCommentCliChecker extends AbstractCliChecker {
 
   static Logger logger = LoggerFactory.getLogger(ContextAndCommentCliChecker.class);
+
+  private Pattern excludedFilesPattern;
 
   static class ContextAndCommentCliCheckerResult {
     String sourceString;
@@ -79,6 +82,14 @@ public class ContextAndCommentCliChecker extends AbstractCliChecker {
   private List<ContextAndCommentCliCheckerResult> runChecks(
       List<AssetExtractionDiff> assetExtractionDiffs) {
     return getAddedTextUnitsExcludingInconsistentComments(assetExtractionDiffs).stream()
+        .filter(
+            assetExtractionDiff -> {
+              if (this.excludedFilesPattern != null && assetExtractionDiff.getUsages() != null) {
+                return assetExtractionDiff.getUsages().stream()
+                    .noneMatch(usage -> this.excludedFilesPattern.matcher(usage).find());
+              }
+              return true;
+            })
         .map(
             assetExtractorTextUnit ->
                 getContextAndCommentCliCheckerResult(
@@ -136,5 +147,9 @@ public class ContextAndCommentCliChecker extends AbstractCliChecker {
 
   private boolean isBlank(String string) {
     return StringUtils.isBlank(string);
+  }
+
+  public void setExcludedFilesPattern(Pattern excludedFilesPattern) {
+    this.excludedFilesPattern = excludedFilesPattern;
   }
 }
