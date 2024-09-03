@@ -24,7 +24,7 @@ public class SlackMessageBuilder {
 
     List<Field> fields = new ArrayList<>();
 
-    //  This shouldn't happen but just in case
+    // This shouldn't ever be null, just in case something goes wrong send the target string only.
     if (tmTextUnit != null) {
       fields.add(createField("Repo", tmTextUnit.getAsset().getRepository().getName()));
       fields.add(createField("Text Unit Id", tmTextUnit.getId().toString()));
