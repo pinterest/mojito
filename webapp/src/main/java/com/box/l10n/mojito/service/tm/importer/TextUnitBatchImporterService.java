@@ -12,6 +12,7 @@ import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant;
 import com.box.l10n.mojito.entity.TMTextUnitVariant.Status;
 import com.box.l10n.mojito.entity.TMTextUnitVariantComment;
 import com.box.l10n.mojito.entity.TMTextUnitVariantComment.Severity;
+import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.entity.security.user.User;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
 import com.box.l10n.mojito.security.AuditorAwareImpl;
@@ -36,6 +37,8 @@ import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.box.l10n.mojito.service.tm.search.TextUnitSearcher;
 import com.box.l10n.mojito.service.tm.textunitdtocache.TextUnitDTOsCacheService;
 import com.box.l10n.mojito.service.tm.textunitdtocache.UpdateType;
+import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
+import com.box.l10n.mojito.common.notification.SlackWarningMessageSender;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -91,6 +94,10 @@ public class TextUnitBatchImporterService {
   @Autowired TMTextUnitVariantCommentService tmMTextUnitVariantCommentService;
 
   @Autowired MeterRegistry meterRegistry;
+
+  @Autowired SlackWarningMessageSender slackWarningMessageSender;
+
+  @Autowired TMTextUnitRepository tmTextUnitRepository;
 
   @Value("${l10n.textUnitBatchImporterService.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   String schedulerName;
@@ -345,6 +352,10 @@ public class TextUnitBatchImporterService {
                 ice);
             textUnitForBatchImport.setIncludedInLocalizedFile(false);
             textUnitForBatchImport.setStatus(Status.TRANSLATION_NEEDED);
+
+            // Handle Integrity Exceptions for Slack messages
+            TMTextUnit tmTextUnit = tmTextUnitRepository.findById(currentTextUnit.getTmTextUnitId()).orElse(null);
+            slackWarningMessageSender.handleIntegrityException(ice, tmTextUnit, textUnitForBatchImport.getContent());
 
             TMTextUnitVariantComment tmTextUnitVariantComment = new TMTextUnitVariantComment();
             tmTextUnitVariantComment.setSeverity(Severity.ERROR);
