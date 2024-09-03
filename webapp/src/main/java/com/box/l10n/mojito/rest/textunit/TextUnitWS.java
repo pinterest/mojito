@@ -1,13 +1,14 @@
 package com.box.l10n.mojito.rest.textunit;
 
+import com.box.l10n.mojito.common.notification.SlackWarningMessageSender;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.AssetTextUnit;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.PollableTask;
 import com.box.l10n.mojito.entity.Repository;
+import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
-import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.rest.View;
 import com.box.l10n.mojito.service.NormalizationUtils;
@@ -25,6 +26,7 @@ import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.service.tm.TMTextUnitCurrentVariantService;
 import com.box.l10n.mojito.service.tm.TMTextUnitHistoryService;
 import com.box.l10n.mojito.service.tm.TMTextUnitIntegrityCheckService;
+import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitStatisticService;
 import com.box.l10n.mojito.service.tm.importer.TextUnitBatchImporterService;
 import com.box.l10n.mojito.service.tm.search.SearchType;
@@ -34,8 +36,6 @@ import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.box.l10n.mojito.service.tm.search.TextUnitSearcher;
 import com.box.l10n.mojito.service.tm.search.TextUnitSearcherParameters;
 import com.box.l10n.mojito.service.tm.search.UsedFilter;
-import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
-import com.box.l10n.mojito.common.notification.SlackWarningMessageSender;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.ArrayList;
@@ -344,8 +344,10 @@ public class TextUnitWS {
       result.setFailureDetail(e.getMessage());
 
       // Handle Integrity Exceptions for Slack messages
-      TMTextUnit tmTextUnit = tmTextUnitRepository.findById(textUnitCheckBody.getTmTextUnitId()).orElse(null);
-      slackWarningMessageSender.handleIntegrityException(e, tmTextUnit, textUnitCheckBody.getContent());
+      TMTextUnit tmTextUnit =
+          tmTextUnitRepository.findById(textUnitCheckBody.getTmTextUnitId()).orElse(null);
+      slackWarningMessageSender.handleIntegrityException(
+          e, tmTextUnit, textUnitCheckBody.getContent());
     }
 
     return result;

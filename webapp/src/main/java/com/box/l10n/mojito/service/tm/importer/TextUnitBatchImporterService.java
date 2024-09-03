@@ -5,14 +5,15 @@ import static com.box.l10n.mojito.quartz.QuartzSchedulerManager.DEFAULT_SCHEDULE
 import static com.box.l10n.mojito.utils.Predicates.logIfFalse;
 
 import com.box.l10n.mojito.JSR310Migration;
+import com.box.l10n.mojito.common.notification.SlackWarningMessageSender;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
+import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant;
 import com.box.l10n.mojito.entity.TMTextUnitVariant.Status;
 import com.box.l10n.mojito.entity.TMTextUnitVariantComment;
 import com.box.l10n.mojito.entity.TMTextUnitVariantComment.Severity;
-import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.entity.security.user.User;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
 import com.box.l10n.mojito.security.AuditorAwareImpl;
@@ -30,6 +31,7 @@ import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.tm.AddTMTextUnitCurrentVariantResult;
 import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.service.tm.TMTextUnitCurrentVariantRepository;
+import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitVariantCommentService;
 import com.box.l10n.mojito.service.tm.TextUnitBatchMatcher;
 import com.box.l10n.mojito.service.tm.TextUnitForBatchMatcher;
@@ -37,8 +39,6 @@ import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.box.l10n.mojito.service.tm.search.TextUnitSearcher;
 import com.box.l10n.mojito.service.tm.textunitdtocache.TextUnitDTOsCacheService;
 import com.box.l10n.mojito.service.tm.textunitdtocache.UpdateType;
-import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
-import com.box.l10n.mojito.common.notification.SlackWarningMessageSender;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -354,8 +354,10 @@ public class TextUnitBatchImporterService {
             textUnitForBatchImport.setStatus(Status.TRANSLATION_NEEDED);
 
             // Handle Integrity Exceptions for Slack messages
-            TMTextUnit tmTextUnit = tmTextUnitRepository.findById(currentTextUnit.getTmTextUnitId()).orElse(null);
-            slackWarningMessageSender.handleIntegrityException(ice, tmTextUnit, textUnitForBatchImport.getContent());
+            TMTextUnit tmTextUnit =
+                tmTextUnitRepository.findById(currentTextUnit.getTmTextUnitId()).orElse(null);
+            slackWarningMessageSender.handleIntegrityException(
+                ice, tmTextUnit, textUnitForBatchImport.getContent());
 
             TMTextUnitVariantComment tmTextUnitVariantComment = new TMTextUnitVariantComment();
             tmTextUnitVariantComment.setSeverity(Severity.ERROR);
