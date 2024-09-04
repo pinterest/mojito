@@ -47,7 +47,7 @@ public class IntegrityCheckNotifier {
   }
 
   @PostConstruct
-  public void init() throws Exception {
+  public void init() throws IntegrityCheckNotifierException {
     // This method will only be called if slack-warnings are enabled in app properties.
     String slackClientId = integrityCheckNotifierConfiguration.getSlackClientId();
 
