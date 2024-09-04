@@ -5,11 +5,10 @@ import static com.box.l10n.mojito.quartz.QuartzSchedulerManager.DEFAULT_SCHEDULE
 import static com.box.l10n.mojito.utils.Predicates.logIfFalse;
 
 import com.box.l10n.mojito.JSR310Migration;
-import com.box.l10n.mojito.common.notification.SlackWarningMessageSender;
+import com.box.l10n.mojito.common.notification.IntegrityCheckNotifier;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
-import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant;
 import com.box.l10n.mojito.entity.TMTextUnitVariant.Status;
 import com.box.l10n.mojito.entity.TMTextUnitVariantComment;
@@ -31,7 +30,6 @@ import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.tm.AddTMTextUnitCurrentVariantResult;
 import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.service.tm.TMTextUnitCurrentVariantRepository;
-import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitVariantCommentService;
 import com.box.l10n.mojito.service.tm.TextUnitBatchMatcher;
 import com.box.l10n.mojito.service.tm.TextUnitForBatchMatcher;
@@ -95,9 +93,8 @@ public class TextUnitBatchImporterService {
 
   @Autowired MeterRegistry meterRegistry;
 
-  @Autowired SlackWarningMessageSender slackWarningMessageSender;
-
-  @Autowired TMTextUnitRepository tmTextUnitRepository;
+  @Autowired(required = false)
+  IntegrityCheckNotifier integrityCheckNotifier;
 
   @Value("${l10n.textUnitBatchImporterService.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   String schedulerName;
@@ -353,11 +350,11 @@ public class TextUnitBatchImporterService {
             textUnitForBatchImport.setIncludedInLocalizedFile(false);
             textUnitForBatchImport.setStatus(Status.TRANSLATION_NEEDED);
 
-            // Handle Integrity Exceptions for Slack messages
-            TMTextUnit tmTextUnit =
-                tmTextUnitRepository.findById(currentTextUnit.getTmTextUnitId()).orElse(null);
-            slackWarningMessageSender.handleIntegrityException(
-                ice, tmTextUnit, textUnitForBatchImport.getContent());
+            // Handle Integrity Exceptions for Slack warnings if enabled
+            if (integrityCheckNotifier != null) {
+              integrityCheckNotifier.handleIntegrityException(
+                  ice, currentTextUnit.getTmTextUnitId(), textUnitForBatchImport.getContent());
+            }
 
             TMTextUnitVariantComment tmTextUnitVariantComment = new TMTextUnitVariantComment();
             tmTextUnitVariantComment.setSeverity(Severity.ERROR);

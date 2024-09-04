@@ -1,12 +1,11 @@
 package com.box.l10n.mojito.rest.textunit;
 
-import com.box.l10n.mojito.common.notification.SlackWarningMessageSender;
+import com.box.l10n.mojito.common.notification.IntegrityCheckNotifier;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.AssetTextUnit;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.PollableTask;
 import com.box.l10n.mojito.entity.Repository;
-import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
 import com.box.l10n.mojito.json.ObjectMapper;
@@ -26,7 +25,6 @@ import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.service.tm.TMTextUnitCurrentVariantService;
 import com.box.l10n.mojito.service.tm.TMTextUnitHistoryService;
 import com.box.l10n.mojito.service.tm.TMTextUnitIntegrityCheckService;
-import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitStatisticService;
 import com.box.l10n.mojito.service.tm.importer.TextUnitBatchImporterService;
 import com.box.l10n.mojito.service.tm.search.SearchType;
@@ -90,9 +88,8 @@ public class TextUnitWS {
 
   @Autowired AssetRepository assetRepository;
 
-  @Autowired SlackWarningMessageSender slackWarningMessageSender;
-
-  @Autowired TMTextUnitRepository tmTextUnitRepository;
+  @Autowired(required = false)
+  IntegrityCheckNotifier integrityCheckNotifier;
 
   /**
    * Gets the TextUnits that matches the search parameters.
@@ -343,11 +340,11 @@ public class TextUnitWS {
       result.setCheckResult(false);
       result.setFailureDetail(e.getMessage());
 
-      // Handle Integrity Exceptions for Slack messages
-      TMTextUnit tmTextUnit =
-          tmTextUnitRepository.findById(textUnitCheckBody.getTmTextUnitId()).orElse(null);
-      slackWarningMessageSender.handleIntegrityException(
-          e, tmTextUnit, textUnitCheckBody.getContent());
+      // Handle Integrity Exceptions for Slack warnings if enabled
+      if (integrityCheckNotifier != null) {
+        integrityCheckNotifier.handleIntegrityException(
+            e, textUnitCheckBody.getTmTextUnitId(), textUnitCheckBody.getContent());
+      }
     }
 
     return result;
