@@ -37,8 +37,4 @@ public class SlackClients {
                 })
             .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
   }
-
-  public Map<String, SlackClient> getMapIdToClient() {
-    return mapIdToClient;
-  }
 }
