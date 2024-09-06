@@ -1,6 +1,5 @@
 package com.box.l10n.mojito.rest.textunit;
 
-import com.box.l10n.mojito.common.notification.IntegrityCheckNotifier;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.AssetTextUnit;
 import com.box.l10n.mojito.entity.Locale;
@@ -87,9 +86,6 @@ public class TextUnitWS {
   @Autowired LocaleService localeService;
 
   @Autowired AssetRepository assetRepository;
-
-  @Autowired(required = false)
-  IntegrityCheckNotifier integrityCheckNotifier;
 
   /**
    * Gets the TextUnits that matches the search parameters.
@@ -339,12 +335,6 @@ public class TextUnitWS {
           e);
       result.setCheckResult(false);
       result.setFailureDetail(e.getMessage());
-
-      // Handle Integrity Exceptions for Slack warnings if enabled
-      if (integrityCheckNotifier != null) {
-        integrityCheckNotifier.handleIntegrityException(
-            e, textUnitCheckBody.getTmTextUnitId(), textUnitCheckBody.getContent());
-      }
     }
 
     return result;

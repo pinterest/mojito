@@ -2,14 +2,13 @@ package com.box.l10n.mojito.common.notification;
 
 import static com.box.l10n.mojito.slack.SlackClient.COLOR_WARNING;
 
-import com.box.l10n.mojito.entity.TMTextUnit;
+import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.service.assetintegritychecker.integritychecker.IntegrityCheckException;
 import com.box.l10n.mojito.slack.request.Attachment;
 import com.box.l10n.mojito.slack.request.Field;
 import com.box.l10n.mojito.slack.request.Message;
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -18,10 +17,19 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(value = "l10n.integrity-check-notifier.enabled", havingValue = "true")
 public class SlackMessageBuilder {
 
-  @Autowired IntegrityCheckNotifierConfiguration integrityCheckNotifierConfiguration;
+  private final IntegrityCheckNotifierConfiguration integrityCheckNotifierConfiguration;
+
+  public SlackMessageBuilder(
+      IntegrityCheckNotifierConfiguration integrityCheckNotifierConfiguration) {
+    this.integrityCheckNotifierConfiguration = integrityCheckNotifierConfiguration;
+  }
 
   public Message warnTagIntegrity(
-      IntegrityCheckException exception, TMTextUnit tmTextUnit, String targetString) {
+      IntegrityCheckException exception,
+      String sourceString,
+      String targetString,
+      Repository repository,
+      Long textUnitId) {
     Message message = new Message();
     message.setText(""); // Needed to avoid missing text error
 
@@ -46,13 +54,11 @@ public class SlackMessageBuilder {
 
     List<Field> fields = new ArrayList<>();
 
-    // This shouldn't ever be null, just in case something goes wrong send the target string only.
-    if (tmTextUnit != null) {
-      fields.add(createField("Repo", tmTextUnit.getAsset().getRepository().getName()));
-      fields.add(createField("Text Unit Id", tmTextUnit.getId().toString()));
-      fields.add(createField("Source", tmTextUnit.getContent()));
+    if (repository != null && textUnitId != null) {
+      fields.add(createField("Repository", repository.getName()));
+      fields.add(createField("Text Unit Id", textUnitId.toString()));
     }
-
+    fields.add(createField("Source", sourceString));
     fields.add(createField("Target", targetString));
 
     attachment.setFields(fields);

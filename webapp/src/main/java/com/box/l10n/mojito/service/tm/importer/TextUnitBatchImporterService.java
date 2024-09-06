@@ -331,6 +331,9 @@ public class TextUnitBatchImporterService {
 
       for (TextUnitIntegrityChecker textUnitChecker : textUnitCheckers) {
         try {
+          textUnitChecker.setRepository(asset.getRepository());
+          textUnitChecker.setTextUnitId(currentTextUnit.getTmTextUnitId());
+
           textUnitChecker.check(currentTextUnit.getSource(), textUnitForBatchImport.getContent());
         } catch (IntegrityCheckException ice) {
 
@@ -349,12 +352,6 @@ public class TextUnitBatchImporterService {
                 ice);
             textUnitForBatchImport.setIncludedInLocalizedFile(false);
             textUnitForBatchImport.setStatus(Status.TRANSLATION_NEEDED);
-
-            // Handle Integrity Exceptions for Slack warnings if enabled
-            if (integrityCheckNotifier != null) {
-              integrityCheckNotifier.handleIntegrityException(
-                  ice, currentTextUnit.getTmTextUnitId(), textUnitForBatchImport.getContent());
-            }
 
             TMTextUnitVariantComment tmTextUnitVariantComment = new TMTextUnitVariantComment();
             tmTextUnitVariantComment.setSeverity(Severity.ERROR);

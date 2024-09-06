@@ -1,8 +1,5 @@
 package com.box.l10n.mojito.common.notification;
 
-import com.box.l10n.mojito.entity.TMTextUnit;
-import com.box.l10n.mojito.service.assetintegritychecker.integritychecker.HtmlTagIntegrityCheckerException;
-import com.box.l10n.mojito.service.assetintegritychecker.integritychecker.IntegrityCheckException;
 import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.slack.SlackClient;
 import com.box.l10n.mojito.slack.SlackClientException;
@@ -67,22 +64,6 @@ public class IntegrityCheckNotifier {
     }
   }
 
-  public void handleIntegrityException(
-      IntegrityCheckException exception, Long tmTextUnitId, String targetString) {
-    if (slackMessageBuilder == null) return;
-
-    // Lookup text unit for repository and source text.
-    TMTextUnit tmTextUnit = tmTextUnitRepository.findById(tmTextUnitId).orElse(null);
-    try {
-      // Branch off this if statement to send custom warning messages.
-      if (exception instanceof HtmlTagIntegrityCheckerException) {
-        sendWarning(slackMessageBuilder.warnTagIntegrity(exception, tmTextUnit, targetString));
-      }
-    } catch (SlackClientException ex) {
-      logger.error("Error sending message from slack client", ex);
-    }
-  }
-
   public void sendWarning(Message warning) throws SlackClientException {
     if (slackClient == null) {
       logger.warn("Attempted to send Slack warning but there was no slack client.");
@@ -95,5 +76,9 @@ public class IntegrityCheckNotifier {
 
     warning.setChannel(integrityCheckNotifierConfiguration.getSlackChannel());
     slackClient.sendInstantMessage(warning);
+  }
+
+  public IntegrityCheckNotifierConfiguration getConfiguration() {
+    return integrityCheckNotifierConfiguration;
   }
 }
