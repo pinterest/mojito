@@ -73,7 +73,6 @@ public class IntegrityCheckerFactory {
 
     for (AssetIntegrityChecker assetIntegrityChecker : assetIntegrityCheckers) {
       String className = assetIntegrityChecker.getIntegrityCheckerType().getClassName();
-      System.out.println("Classname: " + className);
       textUnitIntegrityCheckers.add(createInstanceForClassName(className));
     }
 
