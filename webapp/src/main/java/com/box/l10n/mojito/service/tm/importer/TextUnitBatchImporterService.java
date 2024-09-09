@@ -5,7 +5,6 @@ import static com.box.l10n.mojito.quartz.QuartzSchedulerManager.DEFAULT_SCHEDULE
 import static com.box.l10n.mojito.utils.Predicates.logIfFalse;
 
 import com.box.l10n.mojito.JSR310Migration;
-import com.box.l10n.mojito.common.notification.IntegrityCheckNotifier;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
@@ -92,9 +91,6 @@ public class TextUnitBatchImporterService {
   @Autowired TMTextUnitVariantCommentService tmMTextUnitVariantCommentService;
 
   @Autowired MeterRegistry meterRegistry;
-
-  @Autowired(required = false)
-  IntegrityCheckNotifier integrityCheckNotifier;
 
   @Value("${l10n.textUnitBatchImporterService.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   String schedulerName;
