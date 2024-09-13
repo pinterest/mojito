@@ -4,8 +4,6 @@ import com.box.l10n.mojito.ActuatorHealthLegacyConfig;
 import com.box.l10n.mojito.service.security.user.UserService;
 import com.google.common.base.Preconditions;
 import jakarta.servlet.Filter;
-import java.util.ArrayList;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +30,10 @@ import org.springframework.security.web.authentication.preauth.PreAuthenticatedA
 import org.springframework.security.web.authentication.preauth.RequestHeaderAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.cors.CorsConfigurationSource;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author wyau
@@ -146,7 +148,7 @@ public class WebSecurityConfig {
   }
 
   @Bean
-  public SecurityFilterChain configure(HttpSecurity http) throws Exception {
+  public SecurityFilterChain configure(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
     logger.debug("Configuring web security");
 
     // TODO should we just enable caching of static assets, this disabling cache control for
@@ -162,8 +164,10 @@ public class WebSecurityConfig {
             csrfConfigurer.ignoringRequestMatchers(
                 "/actuator/shutdown", "/actuator/loggers/**", "/api/rotation"));
 
-    // matcher order matters - "everything else" mapping must be last
+    // configure CORS
+    http.cors(cors -> cors.configurationSource(corsConfigurationSource));
 
+    // matcher order matters - "everything else" mapping must be last
     http.authorizeRequests(
         authorizeRequests ->
             authorizeRequests
