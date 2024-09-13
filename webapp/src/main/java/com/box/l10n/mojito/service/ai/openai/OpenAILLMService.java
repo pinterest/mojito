@@ -247,7 +247,7 @@ public class OpenAILLMService implements LLMService {
     String formattedPrompt = "";
     if (prompt != null) {
       formattedPrompt =
-          formattedPrompt
+          prompt
               .replace(SOURCE_STRING_PLACEHOLDER, sourceString)
               .replace(COMMENT_STRING_PLACEHOLDER, comment);
     }
