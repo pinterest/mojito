@@ -2,27 +2,36 @@ package com.box.l10n.mojito.service.ai.translation;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
+import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.PluralForm;
+import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnit;
+import java.util.Map;
 import java.util.regex.Pattern;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class AITranslationTextUnitFilterServiceTest {
 
   AITranslationTextUnitFilterService textUnitFilterService;
 
+  Asset testAsset;
+
   @Before
   public void setUp() {
+    testAsset = Mockito.mock(Asset.class);
+    Repository testRepository = Mockito.mock(Repository.class);
+    when(testAsset.getRepository()).thenReturn(testRepository);
+    when(testRepository.getName()).thenReturn("test");
     textUnitFilterService = new AITranslationTextUnitFilterService();
-
-    textUnitFilterService.excludePlurals = true;
-    textUnitFilterService.excludePlaceholders = true;
-    textUnitFilterService.excludeHtmlTags = true;
-    textUnitFilterService.excludePlaceholdersRegex = "\\{[^\\}]*\\}";
-    textUnitFilterService.excludePlaceholdersPattern =
-        Pattern.compile(textUnitFilterService.excludePlaceholdersRegex);
+    AITranslationFilterConfiguration translationFilterConfiguration =
+        new AITranslationFilterConfiguration();
+    setTestParameters(true, true, true);
+    textUnitFilterService.excludePlaceholdersPatternMap =
+        Map.of("test", Pattern.compile("\\{[^\\}]*\\}"));
   }
 
   @Test
@@ -30,16 +39,17 @@ public class AITranslationTextUnitFilterServiceTest {
     TMTextUnit tmTextUnit = new TMTextUnit();
     tmTextUnit.setName("test");
     tmTextUnit.setContent("test content");
+    tmTextUnit.setAsset(testAsset);
     assertTrue(textUnitFilterService.isTranslatable(tmTextUnit));
   }
 
   @Test
   public void testIsTranslatableWithPlural() {
-    textUnitFilterService.excludePlaceholders = false;
-    textUnitFilterService.excludeHtmlTags = false;
+    setTestParameters(true, false, false);
     TMTextUnit tmTextUnit = new TMTextUnit();
     tmTextUnit.setName("test");
     tmTextUnit.setContent("test content");
+    tmTextUnit.setAsset(testAsset);
 
     PluralForm otherPluralForm = new PluralForm();
     otherPluralForm.setName("other");
@@ -49,41 +59,41 @@ public class AITranslationTextUnitFilterServiceTest {
 
   @Test
   public void testIsTranslatableWithPlaceholder() {
-    textUnitFilterService.excludePlurals = false;
-    textUnitFilterService.excludeHtmlTags = false;
+    setTestParameters(false, true, false);
     TMTextUnit tmTextUnit = new TMTextUnit();
     tmTextUnit.setName("test");
     tmTextUnit.setContent("test {content}");
+    tmTextUnit.setAsset(testAsset);
     assertFalse(textUnitFilterService.isTranslatable(tmTextUnit));
   }
 
   @Test
   public void testIsTranslatableWithHtmlTags() {
-    textUnitFilterService.excludePlurals = false;
-    textUnitFilterService.excludePlaceholders = false;
+    setTestParameters(false, false, true);
     TMTextUnit tmTextUnit = new TMTextUnit();
     tmTextUnit.setName("test");
     tmTextUnit.setContent("test <b>content</b>");
+    tmTextUnit.setAsset(testAsset);
     assertFalse(textUnitFilterService.isTranslatable(tmTextUnit));
   }
 
   @Test
   public void testIsTranslatableWithHtmlTagsAndPlaceholders() {
-    textUnitFilterService.excludePlurals = false;
+    setTestParameters(false, true, true);
     TMTextUnit tmTextUnit = new TMTextUnit();
     tmTextUnit.setName("test");
     tmTextUnit.setContent("test <b>{content}</b>");
+    tmTextUnit.setAsset(testAsset);
     assertFalse(textUnitFilterService.isTranslatable(tmTextUnit));
   }
 
   @Test
   public void isTranslatableShouldReturnTrueWhenAllExclusionsAreFalse() {
-    textUnitFilterService.excludePlurals = false;
-    textUnitFilterService.excludePlaceholders = false;
-    textUnitFilterService.excludeHtmlTags = false;
+    setTestParameters(false, false, false);
 
     TMTextUnit tmTextUnit = new TMTextUnit();
     tmTextUnit.setContent("Text with <b>html</b> and {placeholder}, including plurals.");
+    tmTextUnit.setAsset(testAsset);
     assertTrue(textUnitFilterService.isTranslatable(tmTextUnit));
   }
 
@@ -91,19 +101,45 @@ public class AITranslationTextUnitFilterServiceTest {
   public void isTranslatableShouldReturnFalseForTextWithMultipleExclusions() {
     TMTextUnit tmTextUnit = new TMTextUnit();
     tmTextUnit.setContent("This text has <b>html</b>, {placeholder}, and could be a plural form.");
+    tmTextUnit.setAsset(testAsset);
     tmTextUnit.setPluralForm(new PluralForm());
     assertFalse(textUnitFilterService.isTranslatable(tmTextUnit));
   }
 
   @Test
   public void isTranslatableShouldReturnTrueWhenNoExclusionEnabled() {
-    textUnitFilterService.excludePlurals = false;
-    textUnitFilterService.excludePlaceholders = false;
-    textUnitFilterService.excludeHtmlTags = false;
+    setTestParameters(false, false, false);
 
     TMTextUnit tmTextUnit = new TMTextUnit();
     tmTextUnit.setPluralForm(new PluralForm());
     tmTextUnit.setContent("Text with <b>html</b> and {placeholder}");
+    tmTextUnit.setAsset(testAsset);
     assertTrue(textUnitFilterService.isTranslatable(tmTextUnit));
+  }
+
+  @Test
+  public void isTranslatableTrueWhenNoRepositoryConfig() {
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setContent("Text with <b>html</b> and {placeholder}");
+    when(testAsset.getRepository()).thenReturn(null);
+    tmTextUnit.setAsset(testAsset);
+    assertTrue(textUnitFilterService.isTranslatable(tmTextUnit));
+  }
+
+  private void setTestParameters(
+      boolean excludePlurals, boolean excludePlaceholders, boolean excludeHtmlTags) {
+    AITranslationFilterConfiguration translationFilterConfiguration =
+        new AITranslationFilterConfiguration();
+    AITranslationFilterConfiguration.RepositoryConfig repositoryConfig =
+        new AITranslationFilterConfiguration.RepositoryConfig();
+    repositoryConfig.setExcludePlurals(excludePlurals);
+    repositoryConfig.setExcludePlaceholders(excludePlaceholders);
+    repositoryConfig.setExcludeHtmlTags(excludeHtmlTags);
+    repositoryConfig.setExcludePlaceholdersRegex("\\{[^\\}]*\\}");
+    translationFilterConfiguration.setRepositoryConfig(Map.of("test", repositoryConfig));
+
+    textUnitFilterService.aiTranslationFilterConfiguration = translationFilterConfiguration;
+    textUnitFilterService.excludePlaceholdersPatternMap =
+        Map.of("test", Pattern.compile("\\{[^\\}]*\\}"));
   }
 }

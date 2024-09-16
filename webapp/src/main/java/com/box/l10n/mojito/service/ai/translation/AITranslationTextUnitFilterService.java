@@ -1,47 +1,59 @@
 package com.box.l10n.mojito.service.ai.translation;
 
+import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnit;
 import jakarta.annotation.PostConstruct;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class AITranslationTextUnitFilterService {
 
-  private static Logger logger = LoggerFactory.getLogger(AITranslationTextUnitFilterService.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(AITranslationTextUnitFilterService.class);
   private static final String HTML_TAG_REGEX = "<[^>]*>";
   private static final Pattern HTML_TAG_PATTERN = Pattern.compile(HTML_TAG_REGEX);
 
-  protected Pattern excludePlaceholdersPattern;
+  protected Map<String, Pattern> excludePlaceholdersPatternMap;
 
-  @Value("${l10n.ai.translation.filter.excludePlurals:false}")
-  protected boolean excludePlurals;
-
-  @Value("${l10n.ai.translation.filter.excludePlaceholders:false}")
-  protected boolean excludePlaceholders;
-
-  @Value("${l10n.ai.translation.filter.excludeHtmlTags:false}")
-  protected boolean excludeHtmlTags;
-
-  @Value("${l10n.ai.translation.filter.excludePlaceholders.regex:\\{[^\\}]*\\}}")
-  protected String excludePlaceholdersRegex;
+  @Autowired AITranslationFilterConfiguration aiTranslationFilterConfiguration;
 
   public boolean isTranslatable(TMTextUnit tmTextUnit) {
     boolean isTranslatable = true;
 
-    if (excludePlurals) {
+    Repository repository = tmTextUnit.getAsset().getRepository();
+
+    if (repository == null) {
+      logger.warn(
+          "Repository is null for text unit with id: {}, filtering will be skipped",
+          tmTextUnit.getId());
+      return isTranslatable;
+    }
+
+    AITranslationFilterConfiguration.RepositoryConfig repositoryConfig =
+        aiTranslationFilterConfiguration.getRepositoryConfig().get(repository.getName());
+
+    if (repositoryConfig == null) {
+      logger.debug(
+          "No configuration found for repository: {}, filtering will be skipped",
+          repository.getName());
+      return isTranslatable;
+    }
+
+    if (repositoryConfig.isExcludePlurals()) {
       isTranslatable = !isPlural(tmTextUnit);
     }
 
-    if (excludePlaceholders) {
-      isTranslatable = isTranslatable && !containsPlaceholder(tmTextUnit);
+    if (repositoryConfig.isExcludePlaceholders()) {
+      isTranslatable = isTranslatable && !containsPlaceholder(repository.getName(), tmTextUnit);
     }
 
-    if (excludeHtmlTags) {
+    if (repositoryConfig.isExcludeHtmlTags()) {
       isTranslatable = isTranslatable && !containsHtmlTag(tmTextUnit);
     }
 
@@ -50,9 +62,16 @@ public class AITranslationTextUnitFilterService {
     return isTranslatable;
   }
 
-  private boolean containsPlaceholder(TMTextUnit tmTextUnit) {
-    Matcher matcher = excludePlaceholdersPattern.matcher(tmTextUnit.getContent());
-    return matcher.find();
+  private boolean containsPlaceholder(String repositoryName, TMTextUnit tmTextUnit) {
+    Pattern pattern = excludePlaceholdersPatternMap.get(repositoryName);
+    if (pattern != null) {
+      Matcher matcher =
+          excludePlaceholdersPatternMap.get(repositoryName).matcher(tmTextUnit.getContent());
+      return matcher.find();
+    } else {
+      logger.debug("No exclude placeholders pattern found for repository: {}", repositoryName);
+      return false;
+    }
   }
 
   private boolean isPlural(TMTextUnit tmTextUnit) {
@@ -66,6 +85,16 @@ public class AITranslationTextUnitFilterService {
 
   @PostConstruct
   public void init() {
-    excludePlaceholdersPattern = Pattern.compile(excludePlaceholdersRegex);
+    excludePlaceholdersPatternMap = Map.of();
+    if (aiTranslationFilterConfiguration.getRepositoryConfig() != null) {
+      for (Map.Entry<String, AITranslationFilterConfiguration.RepositoryConfig> entry :
+          aiTranslationFilterConfiguration.getRepositoryConfig().entrySet()) {
+        AITranslationFilterConfiguration.RepositoryConfig repositoryConfig = entry.getValue();
+        if (repositoryConfig.isExcludePlaceholders()) {
+          excludePlaceholdersPatternMap.put(
+              entry.getKey(), Pattern.compile(repositoryConfig.getExcludePlaceholdersRegex()));
+        }
+      }
+    }
   }
 }
