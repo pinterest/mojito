@@ -261,7 +261,9 @@ public class OpenAILLMService implements LLMService {
       formattedPrompt =
           prompt
               .replace(SOURCE_STRING_PLACEHOLDER, tmTextUnit.getContent())
-              .replace(COMMENT_STRING_PLACEHOLDER, tmTextUnit.getComment())
+              .replace(
+                  COMMENT_STRING_PLACEHOLDER,
+                  tmTextUnit.getComment() != null ? tmTextUnit.getComment() : "")
               .replace(SOURCE_LOCALE_PLACEHOLDER, sourceBcp47Tag)
               .replace(TARGET_LOCALE_PLACEHOLDER, targetBcp47Tag)
               .replace(

@@ -170,7 +170,8 @@ public class AssetExtractionService {
 
   @Autowired LocalBranchToEntityBranchConverter localBranchToEntityBranchConverter;
 
-  @Autowired AITranslationJobScheduler aiTranslationJobScheduler;
+  @Autowired(required = false)
+  AITranslationJobScheduler aiTranslationJobScheduler;
 
   private RepositoryStatisticsJobScheduler repositoryStatisticsJobScheduler;
 
@@ -219,7 +220,9 @@ public class AssetExtractionService {
         asset, createdTextUnitsResult.getUpdatedState(), currentTask);
     updatePushRun(asset, createdTextUnitsResult.getUpdatedState(), pushRunId, currentTask);
     performLeveraging(createdTextUnitsResult.getLeveragingMatches(), currentTask);
-    scheduleAITranslation(asset.getRepository().getId(), createdTextUnitsResult);
+    if (aiTranslationJobScheduler != null) {
+      scheduleAITranslation(asset.getRepository().getId(), createdTextUnitsResult);
+    }
     logger.info("Done processing asset content id: {}", assetContentId);
     return new PollableFutureTaskResult<>(asset);
   }
