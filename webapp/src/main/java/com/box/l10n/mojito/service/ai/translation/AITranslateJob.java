@@ -75,7 +75,7 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
               .findById(input.getTmTextUnitId())
               .ifPresent(
                   tmTextUnit -> {
-                    if (aiTranslationTextUnitFilterService.isTranslatable(tmTextUnit)) {
+                    if (aiTranslationTextUnitFilterService.isTranslatable(tmTextUnit, repository)) {
                       translateLocales(input, tmTextUnit, repository);
                     } else {
                       logger.debug(

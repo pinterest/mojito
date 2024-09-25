@@ -23,10 +23,8 @@ public class AITranslationTextUnitFilterService {
 
   @Autowired AITranslationFilterConfiguration aiTranslationFilterConfiguration;
 
-  public boolean isTranslatable(TMTextUnit tmTextUnit) {
+  public boolean isTranslatable(TMTextUnit tmTextUnit, Repository repository) {
     boolean isTranslatable = true;
-
-    Repository repository = tmTextUnit.getAsset().getRepository();
 
     if (repository == null) {
       logger.warn(
@@ -35,15 +33,17 @@ public class AITranslationTextUnitFilterService {
       return isTranslatable;
     }
 
-    AITranslationFilterConfiguration.RepositoryConfig repositoryConfig =
-        aiTranslationFilterConfiguration.getRepositoryConfig().get(repository.getName());
-
-    if (repositoryConfig == null) {
+    if (aiTranslationFilterConfiguration.getRepositoryConfig() == null
+        || aiTranslationFilterConfiguration.getRepositoryConfig().get(repository.getName())
+            == null) {
       logger.debug(
           "No configuration found for repository: {}, filtering will be skipped",
           repository.getName());
       return isTranslatable;
     }
+
+    AITranslationFilterConfiguration.RepositoryConfig repositoryConfig =
+        aiTranslationFilterConfiguration.getRepositoryConfig().get(repository.getName());
 
     if (repositoryConfig.isExcludePlurals()) {
       isTranslatable = !isPlural(tmTextUnit);

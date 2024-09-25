@@ -20,12 +20,14 @@ public class AITranslationTextUnitFilterServiceTest {
 
   Asset testAsset;
 
+  Repository repository;
+
   @Before
   public void setUp() {
     testAsset = Mockito.mock(Asset.class);
-    Repository testRepository = Mockito.mock(Repository.class);
-    when(testAsset.getRepository()).thenReturn(testRepository);
-    when(testRepository.getName()).thenReturn("test");
+    repository = Mockito.mock(Repository.class);
+    when(testAsset.getRepository()).thenReturn(repository);
+    when(repository.getName()).thenReturn("test");
     textUnitFilterService = new AITranslationTextUnitFilterService();
     AITranslationFilterConfiguration translationFilterConfiguration =
         new AITranslationFilterConfiguration();
@@ -40,7 +42,7 @@ public class AITranslationTextUnitFilterServiceTest {
     tmTextUnit.setName("test");
     tmTextUnit.setContent("test content");
     tmTextUnit.setAsset(testAsset);
-    assertTrue(textUnitFilterService.isTranslatable(tmTextUnit));
+    assertTrue(textUnitFilterService.isTranslatable(tmTextUnit, repository));
   }
 
   @Test
@@ -54,7 +56,7 @@ public class AITranslationTextUnitFilterServiceTest {
     PluralForm otherPluralForm = new PluralForm();
     otherPluralForm.setName("other");
     tmTextUnit.setPluralForm(otherPluralForm);
-    assertFalse(textUnitFilterService.isTranslatable(tmTextUnit));
+    assertFalse(textUnitFilterService.isTranslatable(tmTextUnit, repository));
   }
 
   @Test
@@ -64,7 +66,7 @@ public class AITranslationTextUnitFilterServiceTest {
     tmTextUnit.setName("test");
     tmTextUnit.setContent("test {content}");
     tmTextUnit.setAsset(testAsset);
-    assertFalse(textUnitFilterService.isTranslatable(tmTextUnit));
+    assertFalse(textUnitFilterService.isTranslatable(tmTextUnit, repository));
   }
 
   @Test
@@ -74,7 +76,7 @@ public class AITranslationTextUnitFilterServiceTest {
     tmTextUnit.setName("test");
     tmTextUnit.setContent("test <b>content</b>");
     tmTextUnit.setAsset(testAsset);
-    assertFalse(textUnitFilterService.isTranslatable(tmTextUnit));
+    assertFalse(textUnitFilterService.isTranslatable(tmTextUnit, repository));
   }
 
   @Test
@@ -84,7 +86,7 @@ public class AITranslationTextUnitFilterServiceTest {
     tmTextUnit.setName("test");
     tmTextUnit.setContent("test <b>{content}</b>");
     tmTextUnit.setAsset(testAsset);
-    assertFalse(textUnitFilterService.isTranslatable(tmTextUnit));
+    assertFalse(textUnitFilterService.isTranslatable(tmTextUnit, repository));
   }
 
   @Test
@@ -94,7 +96,7 @@ public class AITranslationTextUnitFilterServiceTest {
     TMTextUnit tmTextUnit = new TMTextUnit();
     tmTextUnit.setContent("Text with <b>html</b> and {placeholder}, including plurals.");
     tmTextUnit.setAsset(testAsset);
-    assertTrue(textUnitFilterService.isTranslatable(tmTextUnit));
+    assertTrue(textUnitFilterService.isTranslatable(tmTextUnit, repository));
   }
 
   @Test
@@ -103,7 +105,7 @@ public class AITranslationTextUnitFilterServiceTest {
     tmTextUnit.setContent("This text has <b>html</b>, {placeholder}, and could be a plural form.");
     tmTextUnit.setAsset(testAsset);
     tmTextUnit.setPluralForm(new PluralForm());
-    assertFalse(textUnitFilterService.isTranslatable(tmTextUnit));
+    assertFalse(textUnitFilterService.isTranslatable(tmTextUnit, repository));
   }
 
   @Test
@@ -114,16 +116,16 @@ public class AITranslationTextUnitFilterServiceTest {
     tmTextUnit.setPluralForm(new PluralForm());
     tmTextUnit.setContent("Text with <b>html</b> and {placeholder}");
     tmTextUnit.setAsset(testAsset);
-    assertTrue(textUnitFilterService.isTranslatable(tmTextUnit));
+    assertTrue(textUnitFilterService.isTranslatable(tmTextUnit, repository));
   }
 
   @Test
   public void isTranslatableTrueWhenNoRepositoryConfig() {
     TMTextUnit tmTextUnit = new TMTextUnit();
     tmTextUnit.setContent("Text with <b>html</b> and {placeholder}");
-    when(testAsset.getRepository()).thenReturn(null);
     tmTextUnit.setAsset(testAsset);
-    assertTrue(textUnitFilterService.isTranslatable(tmTextUnit));
+    textUnitFilterService.aiTranslationFilterConfiguration = new AITranslationFilterConfiguration();
+    assertTrue(textUnitFilterService.isTranslatable(tmTextUnit, repository));
   }
 
   private void setTestParameters(

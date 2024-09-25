@@ -21,7 +21,7 @@ public interface RepositoryLocaleAIPromptRepository
   Long findCountOfActiveRepositoryTranslationPrompts(@Param("repositoryId") Long repositoryId);
 
   @Query(
-      "SELECT l, rlap FROM RepositoryLocaleAIPrompt rlap "
+      "SELECT rlap FROM RepositoryLocaleAIPrompt rlap "
           + "LEFT JOIN rlap.locale l "
           + "JOIN rlap.aiPrompt aip "
           + "JOIN aip.promptType aipt "
