@@ -18,6 +18,7 @@ import com.box.l10n.mojito.rest.ai.AICheckResponse;
 import com.box.l10n.mojito.rest.ai.AICheckResult;
 import com.box.l10n.mojito.rest.ai.AIException;
 import com.box.l10n.mojito.service.ai.AIStringCheckRepository;
+import com.box.l10n.mojito.service.ai.LLMPromptService;
 import com.box.l10n.mojito.service.ai.LLMService;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -55,7 +56,7 @@ public class OpenAILLMService implements LLMService {
 
   @Autowired ObjectMapper objectMapper;
 
-  @Autowired com.box.l10n.mojito.service.ai.LLMPromptService LLMPromptService;
+  @Autowired LLMPromptService LLMPromptService;
 
   @Autowired MeterRegistry meterRegistry;
 
@@ -148,9 +149,14 @@ public class OpenAILLMService implements LLMService {
                   targetBcp47Tag,
                   response);
               if (isTranslateResponseJson) {
-                logger.debug("Parsing JSON response for key: {}", translationJsonKey);
-                response = objectMapper.readTree(response).get(translationJsonKey).asText();
-                logger.debug("Parsed translation: {}", response);
+                try {
+                  logger.debug("Parsing JSON response for key: {}", translationJsonKey);
+                  response = objectMapper.readTree(response).get(translationJsonKey).asText();
+                  logger.debug("Parsed translation: {}", response);
+                } catch (JsonProcessingException e) {
+                  logger.error("Error parsing JSON response: {}", response, e);
+                  throw new AIException("Error parsing JSON response: " + response);
+                }
               }
               return response;
             })
@@ -287,7 +293,7 @@ public class OpenAILLMService implements LLMService {
                   tmTextUnit.getPluralForm() != null ? tmTextUnit.getPluralForm().getName() : "")
               .replace(
                   CONTEXT_STRING_PLACEHOLDER,
-                  tmTextUnit.getName().split(" --- ").length > 1
+                  tmTextUnit.getName() != null && tmTextUnit.getName().split(" --- ").length > 1
                       ? tmTextUnit.getName().split(" --- ")[1]
                       : "");
     }

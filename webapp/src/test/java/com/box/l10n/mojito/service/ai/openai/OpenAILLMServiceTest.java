@@ -8,6 +8,7 @@ import com.box.l10n.mojito.entity.AIPromptContextMessage;
 import com.box.l10n.mojito.entity.AIPromptType;
 import com.box.l10n.mojito.entity.PromptType;
 import com.box.l10n.mojito.entity.Repository;
+import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.openai.OpenAIClient;
@@ -51,6 +52,11 @@ class OpenAILLMServiceTest {
   void setUp() {
     MockitoAnnotations.openMocks(this);
     openAILLMService.persistResults = true;
+    openAILLMService.isTranslateResponseJson = false;
+    openAILLMService.retryMaxAttempts = 1;
+    openAILLMService.retryMinDurationSeconds = 0;
+    openAILLMService.retryMaxBackoffDurationSeconds = 0;
+    openAILLMService.init();
     when(meterRegistry.counter(anyString(), any(String[].class)))
         .thenReturn(mock(io.micrometer.core.instrument.Counter.class));
   }
@@ -419,5 +425,127 @@ class OpenAILLMServiceTest {
     verify(aiStringCheckRepository, times(1)).save(any());
     verify(meterRegistry, times(1))
         .counter("OpenAILLMService.checks.result", "success", "true", "repository", "testRepo");
+  }
+
+  @Test
+  void testTranslateSuccess() {
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setId(1L);
+    tmTextUnit.setContent("Hello");
+    tmTextUnit.setComment("Greeting");
+
+    AIPrompt prompt = new AIPrompt();
+    prompt.setId(1L);
+    prompt.setSystemPrompt("Translate the following text:");
+    prompt.setUserPrompt("Translate this text to French:");
+    prompt.setModelName("gtp-3.5-turbo");
+    prompt.setPromptTemperature(0.0F);
+    prompt.setContextMessages(new ArrayList<>());
+
+    OpenAIClient.ChatCompletionsResponse.Choice choice =
+        new OpenAIClient.ChatCompletionsResponse.Choice(
+            0, new OpenAIClient.ChatCompletionsResponse.Choice.Message("test", "Bonjour"), null);
+    OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
+        new OpenAIClient.ChatCompletionsResponse(
+            null, null, null, null, List.of(choice), null, null);
+    CompletableFuture<OpenAIClient.ChatCompletionsResponse> futureResponse =
+        CompletableFuture.completedFuture(chatCompletionsResponse);
+    when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
+        .thenReturn(futureResponse);
+
+    String translation = openAILLMService.translate(tmTextUnit, "en", "fr", prompt);
+    assertEquals("Bonjour", translation);
+  }
+
+  @Test
+  void testTranslateStripTranslationFromJsonKey() {
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setId(1L);
+    tmTextUnit.setContent("Hello");
+    tmTextUnit.setComment("Greeting");
+
+    AIPrompt prompt = new AIPrompt();
+    prompt.setId(1L);
+    prompt.setSystemPrompt("Translate the following text:");
+    prompt.setUserPrompt("Translate this text to French:");
+    prompt.setModelName("gtp-3.5-turbo");
+    prompt.setPromptTemperature(0.0F);
+    prompt.setContextMessages(new ArrayList<>());
+
+    OpenAIClient.ChatCompletionsResponse.Choice choice =
+        new OpenAIClient.ChatCompletionsResponse.Choice(
+            0,
+            new OpenAIClient.ChatCompletionsResponse.Choice.Message(
+                "test", "{\"translation\": \"Bonjour\"}"),
+            null);
+    OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
+        new OpenAIClient.ChatCompletionsResponse(
+            null, null, null, null, List.of(choice), null, null);
+    CompletableFuture<OpenAIClient.ChatCompletionsResponse> futureResponse =
+        CompletableFuture.completedFuture(chatCompletionsResponse);
+    when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
+        .thenReturn(futureResponse);
+
+    openAILLMService.isTranslateResponseJson = true;
+    openAILLMService.translationJsonKey = "translation";
+
+    String translation = openAILLMService.translate(tmTextUnit, "en", "fr", prompt);
+    assertEquals("Bonjour", translation);
+  }
+
+  @Test
+  void testTranslateStripTranslationFromInvalidJson() {
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setId(1L);
+    tmTextUnit.setContent("Hello");
+    tmTextUnit.setComment("Greeting");
+
+    AIPrompt prompt = new AIPrompt();
+    prompt.setId(1L);
+    prompt.setSystemPrompt("Translate the following text:");
+    prompt.setUserPrompt("Translate this text to French:");
+    prompt.setModelName("gtp-3.5-turbo");
+    prompt.setPromptTemperature(0.0F);
+    prompt.setContextMessages(new ArrayList<>());
+
+    OpenAIClient.ChatCompletionsResponse.Choice choice =
+        new OpenAIClient.ChatCompletionsResponse.Choice(
+            0,
+            new OpenAIClient.ChatCompletionsResponse.Choice.Message(
+                "test", "invalid: {\"translation\": \"Bonjour\"}"),
+            null);
+    OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
+        new OpenAIClient.ChatCompletionsResponse(
+            null, null, null, null, List.of(choice), null, null);
+    CompletableFuture<OpenAIClient.ChatCompletionsResponse> futureResponse =
+        CompletableFuture.completedFuture(chatCompletionsResponse);
+    when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
+        .thenReturn(futureResponse);
+
+    openAILLMService.isTranslateResponseJson = true;
+    openAILLMService.translationJsonKey = "translation";
+
+    assertThrows(Exception.class, () -> openAILLMService.translate(tmTextUnit, "en", "fr", prompt));
+  }
+
+  @Test
+  void testTranslateError() {
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setId(1L);
+    tmTextUnit.setContent("Hello");
+    tmTextUnit.setComment("Greeting");
+
+    AIPrompt prompt = new AIPrompt();
+    prompt.setId(1L);
+    prompt.setSystemPrompt("Translate the following text:");
+    prompt.setUserPrompt("Translate this text to French:");
+    prompt.setModelName("gtp-3.5-turbo");
+    prompt.setPromptTemperature(0.0F);
+    prompt.setContextMessages(new ArrayList<>());
+
+    when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
+        .thenThrow(new RuntimeException("OpenAI service error"));
+
+    assertThrows(Exception.class, () -> openAILLMService.translate(tmTextUnit, "en", "fr", prompt));
   }
 }
