@@ -71,6 +71,12 @@ public class OpenAILLMService implements LLMService {
   @Value("${l10n.ai.translate.retry.maxBackoffDurationSeconds:60}")
   int retryMaxBackoffDurationSeconds;
 
+  @Value("${l10n.ai.translate.response.isJson:false}")
+  boolean isTranslateResponseJson;
+
+  @Value("${l10n.ai.translate.response.json.key:translation}")
+  String translationJsonKey;
+
   RetryBackoffSpec llmTranslateRetryConfig;
 
   @Timed("OpenAILLMService.executeAIChecks")
@@ -135,8 +141,18 @@ public class OpenAILLMService implements LLMService {
             () -> {
               OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
                   openAIClient.getChatCompletions(chatCompletionsRequest).join();
-
-              return chatCompletionsResponse.choices().getFirst().message().content();
+              String response = chatCompletionsResponse.choices().getFirst().message().content();
+              logger.debug(
+                  "TmTextUnit id: {}, {} translation response: {}",
+                  tmTextUnit.getId(),
+                  targetBcp47Tag,
+                  response);
+              if (isTranslateResponseJson) {
+                logger.debug("Parsing JSON response for key: {}", translationJsonKey);
+                response = objectMapper.readTree(response).get(translationJsonKey).asText();
+                logger.debug("Parsed translation: {}", response);
+              }
+              return response;
             })
         .retryWhen(llmTranslateRetryConfig)
         .blockOptional()
