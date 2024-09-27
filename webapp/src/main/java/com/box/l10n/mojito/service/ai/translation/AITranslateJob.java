@@ -139,7 +139,7 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
         .forEach(
             targetLocale -> {
               try {
-                String sourceLang = repository.getSourceLocale().getBcp47Tag().substring(0, 2);
+                String sourceLang = repository.getSourceLocale().getBcp47Tag().split("-")[0];
                 if (isReuseSourceOnLanguageMatch
                     && targetLocale.getBcp47Tag().startsWith(sourceLang)) {
                   reuseSourceStringAsTranslation(tmTextUnit, repository, targetLocale, sourceLang);
