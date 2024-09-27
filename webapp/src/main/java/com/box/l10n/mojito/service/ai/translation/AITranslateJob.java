@@ -91,6 +91,9 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
                           Tags.of("repository", repository.getName()));
                     }
                   });
+          meterRegistry
+              .timer("AITranslateJob.timeToMT", Tags.of("repository", repository.getName()))
+              .record(Duration.between(JSR310Migration.dateTimeNow(), pendingMT.getCreatedDate()));
         } else {
           // If the pending MT is expired, log an error and delete it
           logger.error("Pending MT for tmTextUnitId: {} is expired", input.getTmTextUnitId());
