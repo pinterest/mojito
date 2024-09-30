@@ -3,6 +3,7 @@ package com.box.l10n.mojito.service.ai.translation;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,12 +15,14 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.entity.RepositoryLocaleAIPrompt;
 import com.box.l10n.mojito.entity.TMTextUnit;
+import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
 import com.box.l10n.mojito.entity.TmTextUnitPendingMT;
 import com.box.l10n.mojito.service.ai.LLMService;
 import com.box.l10n.mojito.service.ai.RepositoryLocaleAIPromptRepository;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.tm.TMService;
+import com.box.l10n.mojito.service.tm.TMTextUnitCurrentVariantRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.google.common.collect.Sets;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -53,6 +56,8 @@ public class AITranslateJobTest {
 
   @Mock AIPrompt aiPrompt;
 
+  @Mock TMTextUnitCurrentVariantRepository tmTextUnitCurrentVariantRepository;
+
   AITranslateJob aiTranslateJob;
 
   AITranslateJobInput aiTranslateJobInput;
@@ -69,6 +74,7 @@ public class AITranslateJobTest {
     aiTranslateJob.repositoryRepository = repositoryRepository;
     aiTranslateJob.repositoryLocaleAIPromptRepository = repositoryLocaleAIPromptRepository;
     aiTranslateJob.aiTranslationTextUnitFilterService = aiTranslationTextUnitFilterService;
+    aiTranslateJob.tmTextUnitCurrentVariantRepository = tmTextUnitCurrentVariantRepository;
     aiTranslateJob.expiryDuration = Duration.ofHours(3);
     aiTranslateJob.isReuseSourceOnLanguageMatch = false;
 
@@ -144,6 +150,8 @@ public class AITranslateJobTest {
     when(llmService.translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class)))
         .thenReturn("translated");
+    when(tmTextUnitCurrentVariantRepository.findByLocale_IdAndTmTextUnit_Id(any(), any()))
+        .thenReturn(null);
   }
 
   @Test
@@ -239,10 +247,10 @@ public class AITranslateJobTest {
     expiredPendingMT.setCreatedDate(ZonedDateTime.now().minusHours(4));
     when(tmTextUnitPendingMTRepository.findByTmTextUnitId(1L)).thenReturn(expiredPendingMT);
     aiTranslateJob.call(aiTranslateJobInput);
-    verify(llmService, times(0))
+    verify(llmService, never())
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
-    verify(tmService, times(0))
+    verify(tmService, never())
         .addTMTextUnitVariant(
             eq(1L),
             eq(2L),
@@ -251,7 +259,7 @@ public class AITranslateJobTest {
             eq(TMTextUnitVariant.Status.MT_TRANSLATED),
             eq(false),
             isA(ZonedDateTime.class));
-    verify(tmService, times(0))
+    verify(tmService, never())
         .addTMTextUnitVariant(
             eq(1L),
             eq(3L),
@@ -260,7 +268,7 @@ public class AITranslateJobTest {
             eq(TMTextUnitVariant.Status.MT_TRANSLATED),
             eq(false),
             isA(ZonedDateTime.class));
-    verify(tmService, times(0))
+    verify(tmService, never())
         .addTMTextUnitVariant(
             eq(1L),
             eq(4L),
@@ -279,10 +287,10 @@ public class AITranslateJobTest {
             isA(TMTextUnit.class), isA(Repository.class)))
         .thenReturn(false);
     aiTranslateJob.call(aiTranslateJobInput);
-    verify(llmService, times(0))
+    verify(llmService, never())
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
-    verify(tmService, times(0))
+    verify(tmService, never())
         .addTMTextUnitVariant(
             eq(1L),
             eq(2L),
@@ -291,7 +299,7 @@ public class AITranslateJobTest {
             eq(TMTextUnitVariant.Status.MT_TRANSLATED),
             eq(false),
             isA(ZonedDateTime.class));
-    verify(tmService, times(0))
+    verify(tmService, never())
         .addTMTextUnitVariant(
             eq(1L),
             eq(3L),
@@ -300,11 +308,50 @@ public class AITranslateJobTest {
             eq(TMTextUnitVariant.Status.MT_TRANSLATED),
             eq(false),
             isA(ZonedDateTime.class));
-    verify(tmService, times(0))
+    verify(tmService, never())
         .addTMTextUnitVariant(
             eq(1L),
             eq(4L),
             eq("content"),
+            eq("comment"),
+            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
+            eq(false),
+            isA(ZonedDateTime.class));
+    verify(tmTextUnitPendingMTRepository, times(1)).delete(isA(TmTextUnitPendingMT.class));
+  }
+
+  @Test
+  public void testTranslationAlreadyLeveraged() throws Exception {
+    TMTextUnitCurrentVariant existingVariant = new TMTextUnitCurrentVariant();
+    when(tmTextUnitCurrentVariantRepository.findByLocale_IdAndTmTextUnit_Id(2L, 1L))
+        .thenReturn(existingVariant);
+    aiTranslateJob.call(aiTranslateJobInput);
+    verify(llmService, times(2))
+        .translate(
+            isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
+    verify(tmService, never())
+        .addTMTextUnitVariant(
+            eq(1L),
+            eq(2L),
+            eq("translated"),
+            eq("comment"),
+            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
+            eq(false),
+            isA(ZonedDateTime.class));
+    verify(tmService, times(1))
+        .addTMTextUnitVariant(
+            eq(1L),
+            eq(3L),
+            eq("translated"),
+            eq("comment"),
+            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
+            eq(false),
+            isA(ZonedDateTime.class));
+    verify(tmService, times(1))
+        .addTMTextUnitVariant(
+            eq(1L),
+            eq(4L),
+            eq("translated"),
             eq("comment"),
             eq(TMTextUnitVariant.Status.MT_TRANSLATED),
             eq(false),

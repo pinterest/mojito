@@ -13,6 +13,7 @@ import com.box.l10n.mojito.service.ai.LLMService;
 import com.box.l10n.mojito.service.ai.RepositoryLocaleAIPromptRepository;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.tm.TMService;
+import com.box.l10n.mojito.service.tm.TMTextUnitCurrentVariantRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -39,6 +40,8 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
   @Autowired TmTextUnitPendingMTRepository tmTextUnitPendingMTRepository;
 
   @Autowired TMTextUnitRepository tmTextUnitRepository;
+
+  @Autowired TMTextUnitCurrentVariantRepository tmTextUnitCurrentVariantRepository;
 
   @Autowired TMService tmService;
 
@@ -122,6 +125,7 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
 
   private void translateLocales(
       AITranslateJobInput input, TMTextUnit tmTextUnit, Repository repository) {
+
     Map<String, RepositoryLocaleAIPrompt> repositoryLocaleAIPrompts =
         repositoryLocaleAIPromptRepository
             .getActiveTranslationPromptsByRepository(input.getRepositoryId())
@@ -139,6 +143,9 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
         .forEach(
             targetLocale -> {
               try {
+                if (isExistingVariant(tmTextUnit, targetLocale)) {
+                  return;
+                }
                 String sourceLang = repository.getSourceLocale().getBcp47Tag().split("-")[0];
                 if (isReuseSourceOnLanguageMatch
                     && targetLocale.getBcp47Tag().startsWith(sourceLang)) {
@@ -178,6 +185,20 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
                         "repository", repository.getName(), "locale", targetLocale.getBcp47Tag()));
               }
             });
+  }
+
+  private boolean isExistingVariant(TMTextUnit tmTextUnit, Locale targetLocale) {
+    boolean isExistingVariant =
+        tmTextUnitCurrentVariantRepository.findByLocale_IdAndTmTextUnit_Id(
+                targetLocale.getId(), tmTextUnit.getId())
+            != null;
+    if (isExistingVariant) {
+      logger.debug(
+          "Translation already provided via leveraging for text unit id {} and locale: {}, skipping AI translation.",
+          tmTextUnit.getId(),
+          targetLocale.getBcp47Tag());
+    }
+    return isExistingVariant;
   }
 
   private void reuseSourceStringAsTranslation(
