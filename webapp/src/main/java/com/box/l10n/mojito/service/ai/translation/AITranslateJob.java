@@ -143,7 +143,7 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
         .forEach(
             targetLocale -> {
               try {
-                if (isExistingVariant(tmTextUnit, targetLocale)) {
+                if (isExistingVariant(tmTextUnit, targetLocale, repository)) {
                   return;
                 }
                 String sourceLang = repository.getSourceLocale().getBcp47Tag().split("-")[0];
@@ -187,16 +187,21 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
             });
   }
 
-  private boolean isExistingVariant(TMTextUnit tmTextUnit, Locale targetLocale) {
+  private boolean isExistingVariant(
+      TMTextUnit tmTextUnit, Locale targetLocale, Repository repository) {
     boolean isExistingVariant =
         tmTextUnitCurrentVariantRepository.findByLocale_IdAndTmTextUnit_Id(
                 targetLocale.getId(), tmTextUnit.getId())
             != null;
     if (isExistingVariant) {
+      // Translation already exists, no need to translate (likely provided via leveraging)
       logger.debug(
-          "Translation already provided via leveraging for text unit id {} and locale: {}, skipping AI translation.",
+          "Translation already available for text unit id {} and locale: {}, skipping AI translation.",
           tmTextUnit.getId(),
           targetLocale.getBcp47Tag());
+      meterRegistry.counter(
+          "AITranslateJob.translate.alreadyExists",
+          Tags.of("repository", repository.getName(), "locale", targetLocale.getBcp47Tag()));
     }
     return isExistingVariant;
   }
