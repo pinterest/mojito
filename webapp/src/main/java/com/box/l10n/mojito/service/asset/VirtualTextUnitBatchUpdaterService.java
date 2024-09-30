@@ -6,8 +6,11 @@ import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.AssetTextUnit;
 import com.box.l10n.mojito.entity.AssetTextUnitToTMTextUnit;
 import com.box.l10n.mojito.entity.PluralForm;
+import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.okapi.TextUnitUtils;
+import com.box.l10n.mojito.service.ai.translation.AITranslateJobInput;
+import com.box.l10n.mojito.service.ai.translation.AITranslationJobScheduler;
 import com.box.l10n.mojito.service.assetExtraction.AssetExtractionRepository;
 import com.box.l10n.mojito.service.assetExtraction.AssetExtractionService;
 import com.box.l10n.mojito.service.assetExtraction.AssetTextUnitToTMTextUnitRepository;
@@ -31,7 +34,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,6 +73,9 @@ public class VirtualTextUnitBatchUpdaterService {
   @Autowired TextUnitDTOsCacheService textUnitDTOsCacheService;
 
   @Autowired LocaleService localeService;
+
+  @Autowired(required = false)
+  AITranslationJobScheduler aiTranslationJobScheduler;
 
   @Transactional
   public void updateTextUnits(
@@ -115,7 +123,9 @@ public class VirtualTextUnitBatchUpdaterService {
 
     performLeveraging(savedTextUnits, nameToUsedtextUnitDTOs, contentToTextUnitDTOs);
 
-    // TODO (mallen): Schedule AI translate job asynchrously
+    if (aiTranslationJobScheduler != null) {
+      scheduleAITranslation(savedTextUnits.keySet(), asset.getRepository());
+    }
 
     if (replace) {
       deleteOldAssetTextUnits(md5ToTextUnitDTOs, md5ToVirtualTextUnits);
@@ -314,5 +324,17 @@ public class VirtualTextUnitBatchUpdaterService {
     assetTextUnitToTMTextUnit.setAssetTextUnit(assetTextUnit);
     assetTextUnitToTMTextUnit.setTmTextUnit(tmTextUnitRepository.getOne(tmTextUnitId));
     assetTextUnitToTMTextUnitRepository.save(assetTextUnitToTMTextUnit);
+  }
+
+  @Async
+  void scheduleAITranslation(Set<TMTextUnit> textUnits, Repository repository) {
+    for (TMTextUnit textUnit : textUnits) {
+      logger.debug(
+          "Sending tmTextUnitId: {} information to AI Translation scheduler", textUnit.getId());
+      AITranslateJobInput aiTranslateJobInput = new AITranslateJobInput();
+      aiTranslateJobInput.setTmTextUnitId(textUnit.getId());
+      aiTranslateJobInput.setRepositoryId(repository.getId());
+      aiTranslationJobScheduler.scheduleAITranslationJob(aiTranslateJobInput);
+    }
   }
 }
