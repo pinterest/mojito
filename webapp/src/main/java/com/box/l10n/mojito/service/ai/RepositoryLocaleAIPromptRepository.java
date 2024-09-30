@@ -10,10 +10,6 @@ public interface RepositoryLocaleAIPromptRepository
     extends JpaRepository<RepositoryLocaleAIPrompt, Long> {
 
   @Query(
-      "SELECT rlap.repository.id FROM RepositoryLocaleAIPrompt rlap WHERE rlap.aiPrompt.id = :aiPromptId")
-  List<Long> findRepositoryIdsByAiPromptId(@Param("aiPromptId") Long aiPromptId);
-
-  @Query(
       "SELECT count(rlap.id) FROM RepositoryLocaleAIPrompt rlap "
           + "JOIN AIPrompt aip ON rlap.aiPrompt.id = aip.id "
           + "JOIN AIPromptType aipt ON aip.promptType.id = aipt.id "

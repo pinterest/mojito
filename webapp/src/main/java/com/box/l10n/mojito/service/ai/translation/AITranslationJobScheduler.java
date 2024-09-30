@@ -7,6 +7,8 @@ import com.box.l10n.mojito.entity.TmTextUnitPendingMT;
 import com.box.l10n.mojito.quartz.QuartzJobInfo;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
 import com.box.l10n.mojito.service.ai.RepositoryLocaleAIPromptRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -15,6 +17,8 @@ import org.springframework.stereotype.Component;
 @Component
 @ConditionalOnProperty(value = "l10n.ai.translation.enabled", havingValue = "true")
 public class AITranslationJobScheduler {
+
+  private static Logger logger = LoggerFactory.getLogger(AITranslationJobScheduler.class);
 
   @Autowired RepositoryLocaleAIPromptRepository repositoryLocaleAIPromptRepository;
 
@@ -29,6 +33,7 @@ public class AITranslationJobScheduler {
     if (repositoryLocaleAIPromptRepository.findCountOfActiveRepositoryTranslationPrompts(
             input.getRepositoryId())
         > 0) {
+      logger.debug("Scheduling AI translation for tmTextUnitId: {}", input.getTmTextUnitId());
       persistToPendingMTTable(input);
       scheduleQuartzJob(input);
     }

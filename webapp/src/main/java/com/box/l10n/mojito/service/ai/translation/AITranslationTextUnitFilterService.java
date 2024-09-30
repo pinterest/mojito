@@ -58,7 +58,7 @@ public class AITranslationTextUnitFilterService {
     }
 
     logger.debug(
-        "Text unit with name: {} should be translated: {}", tmTextUnit.getName(), isTranslatable);
+        "Text unit with name: {}, should be translated: {}", tmTextUnit.getName(), isTranslatable);
     return isTranslatable;
   }
 
