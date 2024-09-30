@@ -22,7 +22,6 @@ public interface RepositoryLocaleAIPromptRepository
 
   @Query(
       "SELECT rlap FROM RepositoryLocaleAIPrompt rlap "
-          + "LEFT JOIN rlap.locale l "
           + "JOIN rlap.aiPrompt aip "
           + "JOIN aip.promptType aipt "
           + "WHERE rlap.repository.id = :repositoryId AND aip.deleted = false AND aipt.name = 'TRANSLATION'")
