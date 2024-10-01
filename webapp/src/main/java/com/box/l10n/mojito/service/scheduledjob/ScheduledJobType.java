@@ -1,11 +1,13 @@
 package com.box.l10n.mojito.service.scheduledjob;
 
-public enum ScheduledJobTypes {
+import com.box.l10n.mojito.service.scheduledjob.jobs.ScheduledThirdPartySync;
+
+public enum ScheduledJobType {
   THIRD_PARTY_SYNC(ScheduledThirdPartySync.class.getName());
 
   final String className;
 
-  ScheduledJobTypes(String className) {
+  ScheduledJobType(String className) {
     this.className = className;
   }
 
