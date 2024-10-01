@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 @Configuration
@@ -107,7 +108,12 @@ public class ScheduledJobManager {
 
     scheduledJob.setAllowExecutionOverlap(false);
 
-    scheduledJobRepository.save(scheduledJob);
+    try {
+      scheduledJobRepository.save(scheduledJob);
+    } catch (DataIntegrityViolationException e) {
+      // Attempted to insert another scheduled job into the table with the same repo and job type,
+      // this can happen in a clustered quartz environment, just ignore
+    }
   }
 
   public void scheduleJobs() throws ClassNotFoundException, SchedulerException {
