@@ -1,18 +1,11 @@
 package com.box.l10n.mojito.service.scheduledjob;
 
-import java.util.Date;
 import org.quartz.Job;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
 
 public interface IScheduledJob extends Job {
-  void setStatus(ScheduledJobStatus status);
+  void onSuccess(JobExecutionContext context);
 
-  ScheduledJobStatus getStatus();
-
-  void setStartDate(Date startDate);
-
-  Date getStartDate();
-
-  void setEndDate(Date endDate);
-
-  Date getEndDate();
+  void onFailure(JobExecutionContext context, JobExecutionException jobException);
 }
