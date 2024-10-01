@@ -1,8 +1,10 @@
 package com.box.l10n.mojito.rest.scheduledjob;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
+import com.box.l10n.mojito.service.scheduledjob.ScheduledJobDTO;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobRepository;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +23,8 @@ public class ScheduledJobWS {
 
   @RequestMapping(method = RequestMethod.GET, value = "/api/jobs")
   @ResponseStatus(HttpStatus.OK)
-  public List<ScheduledJob> getJobs() {
-    return scheduledJobRepository.findAll();
+  public List<ScheduledJobDTO> getJobs() {
+    List<ScheduledJob> scheduledJobs = scheduledJobRepository.findAll();
+    return scheduledJobs.stream().map(ScheduledJobDTO::new).collect(Collectors.toList());
   }
 }
