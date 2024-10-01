@@ -11,6 +11,8 @@ package com.box.l10n.mojito.cli.command;
  */
 public class CommandException extends RuntimeException {
 
+  private boolean expected;
+
   public CommandException(Throwable cause) {
     super(cause);
   }
@@ -21,5 +23,14 @@ public class CommandException extends RuntimeException {
 
   public CommandException(String message, Throwable cause) {
     super(message, cause);
+  }
+
+  public CommandException(String message, boolean expected) {
+    super(message);
+    this.expected = expected;
+  }
+
+  public boolean isExpected() {
+    return this.expected;
   }
 }

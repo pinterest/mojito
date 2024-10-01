@@ -1,8 +1,10 @@
 package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.JCommander;
+import com.box.l10n.mojito.cli.command.utils.SlackNotificationSender;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
+import com.box.l10n.mojito.slack.SlackClient;
 import com.google.common.base.Strings;
 import jakarta.annotation.PostConstruct;
 import java.util.Arrays;
@@ -42,6 +44,9 @@ public class L10nJCommander {
   @Autowired MainCommand mainCommand;
 
   @Autowired AuthenticatedRestTemplate authenticatedRestTemplate;
+
+  @Autowired(required = false)
+  SlackClient slackClient;
 
   static final String PROGRAM_NAME = "mojito";
 
@@ -92,6 +97,24 @@ public class L10nJCommander {
     createJCommanderForRun();
   }
 
+  private void notifyFailure(Command command, String[] args, String message) {
+    if (!Strings.isNullOrEmpty(command.getFailureSlackNotificationChannel())) {
+      new SlackNotificationSender(this.slackClient)
+          .sendMessage(
+              command.getFailureSlackNotificationChannel(),
+              String.format(
+                  "Command name: %s, parameters: %s\n%s",
+                  command.getName(), String.join(", ", args), message));
+    }
+  }
+
+  private void notifyFailure(Command command, String[] args, Throwable throwable) {
+    this.notifyFailure(
+        command,
+        args,
+        String.format("%s\n%s", throwable.getMessage(), ExceptionUtils.getStackTrace(throwable)));
+  }
+
   public void run(String... args) {
 
     Exception parsingException = null;
@@ -124,21 +147,30 @@ public class L10nJCommander {
       try {
         command.run();
       } catch (SessionAuthenticationException ae) {
+        String message = "Invalid username or password";
         logger.debug("Exit with Invalid username or password", ae);
-        printErrorMessage("Invalid username or password");
+        printErrorMessage(message);
+        this.notifyFailure(command, args, message);
         exitWithError();
       } catch (CommandWithExitStatusException cwese) {
-        logger.error("Exit with error for command: " + command.getName(), cwese);
+        String message = "Exit with error for command: " + command.getName();
+        logger.error(message, cwese);
+        this.notifyFailure(command, args, cwese);
         exitWithError(cwese.getExitCode());
       } catch (CommandException ce) {
+        String message = "Exit with error for command: " + command.getName();
         printErrorMessage(ce.getMessage());
-        logger.error("Exit with error for command: " + command.getName(), ce);
+        logger.error(message, ce);
+        if (!ce.isExpected()) {
+          this.notifyFailure(command, args, ce);
+        }
         exitWithError();
       } catch (ResourceAccessException rae) {
         String msg =
             "Is a server running on: " + authenticatedRestTemplate.getURIForResource("") + "?";
         printErrorMessage(msg);
         logger.error(msg, rae);
+        this.notifyFailure(command, args, msg);
         exitWithError();
       } catch (HttpClientErrorException | HttpServerErrorException e) {
         String msg =
@@ -151,11 +183,13 @@ public class L10nJCommander {
         printErrorMessage(msg);
         logger.error("Unexpected error", e);
         logger.error(e.getResponseBodyAsString());
+        this.notifyFailure(command, args, msg);
         exitWithError();
       } catch (Throwable t) {
         String msg = "Unexpected error: " + t.getMessage() + "\n" + ExceptionUtils.getStackTrace(t);
         printErrorMessage(msg);
         logger.error("Unexpected error", t);
+        this.notifyFailure(command, args, msg);
         exitWithError();
       }
     }
