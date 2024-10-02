@@ -9,7 +9,6 @@ import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobsConfig;
 import jakarta.annotation.PostConstruct;
 import java.util.List;
 import org.quartz.CronScheduleBuilder;
-import org.quartz.Job;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
@@ -74,7 +73,7 @@ public class ScheduledJobManager {
     for (JobKey jobKey : getScheduler().getJobKeys(GroupMatcher.anyGroup())) {
       if (scheduledJobRepository.findByJobKey(jobKey) == null) {
         logger.info(
-            "Removing {} job for repo ID: {} as it is no longer the scheduled_job table.",
+            "Removing {} job for repo ID: {} as it's no longer the 'scheduled_job' table.",
             jobKey.getGroup(),
             jobKey.getName());
         getScheduler().deleteJob(jobKey);
@@ -112,19 +111,20 @@ public class ScheduledJobManager {
       scheduledJobRepository.save(scheduledJob);
     } catch (DataIntegrityViolationException e) {
       // Attempted to insert another scheduled job into the table with the same repo and job type,
-      // this can happen in a clustered quartz environment, just ignore
+      // this can happen in a clustered quartz environment, don't need to display the error.
     }
   }
 
   public void scheduleJobs() throws ClassNotFoundException, SchedulerException {
-    List<ScheduledJob> scheduledJobES = scheduledJobRepository.findAll();
+    List<ScheduledJob> scheduledJobs = scheduledJobRepository.findAll();
 
-    for (ScheduledJob scheduledJob : scheduledJobES) {
+    for (ScheduledJob scheduledJob : scheduledJobs) {
       JobKey jobKey = getJobKey(scheduledJob);
       TriggerKey triggerKey = getTriggerKey(scheduledJob);
 
       // Retrieve job class from enum value e.g. THIRD_PARTY_SYNC -> ScheduledThirdPartySync
-      Class<? extends Job> jobType = loadJobClass(scheduledJob.getJobType().getClassName());
+      Class<? extends IScheduledJob> jobType =
+          loadJobClass(scheduledJob.getJobType().getJobClassName());
 
       JobDetail job = JobBuilder.newJob(jobType).withIdentity(jobKey).build();
 
@@ -175,12 +175,13 @@ public class ScheduledJobManager {
     }
   }
 
-  public Class<? extends Job> loadJobClass(String className) throws ClassNotFoundException {
+  public Class<? extends IScheduledJob> loadJobClass(String className)
+      throws ClassNotFoundException {
     Class<?> clazz = Class.forName(className);
-    // Check if the class implements the Job interface
+    // Reflection to check if the class implements the IScheduledJob interface
     if (!IScheduledJob.class.isAssignableFrom(clazz)) {
       throw new IllegalArgumentException(
-          "Class " + className + " does not implement Job interface.");
+          "Class " + className + " does not implement IScheduledJob interface.");
     }
     return clazz.asSubclass(IScheduledJob.class);
   }
