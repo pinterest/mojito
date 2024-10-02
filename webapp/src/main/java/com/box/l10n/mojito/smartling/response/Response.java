@@ -7,7 +7,7 @@ public class Response<T> {
 
   String code;
   T data;
-  Errors errors;
+  Errors[] errors;
 
   public String getCode() {
     return code;
@@ -25,11 +25,11 @@ public class Response<T> {
     this.data = data;
   }
 
-  public Errors getErrors() {
+  public Errors[] getErrors() {
     return errors;
   }
 
-  public void setErrors(Errors errors) {
+  public void setErrors(Errors[] errors) {
     this.errors = errors;
   }
 }
