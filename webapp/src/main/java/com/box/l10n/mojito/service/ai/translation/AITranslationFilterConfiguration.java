@@ -24,7 +24,7 @@ public class AITranslationFilterConfiguration {
     private boolean excludeHtmlTags;
     private String excludePlaceholdersRegex = "\\{[^\\}]*\\}";
 
-    public boolean isExcludePlurals() {
+    public boolean shouldExcludePlurals() {
       return excludePlurals;
     }
 
@@ -32,7 +32,7 @@ public class AITranslationFilterConfiguration {
       this.excludePlurals = excludePlurals;
     }
 
-    public boolean isExcludePlaceholders() {
+    public boolean shouldExcludePlaceholders() {
       return excludePlaceholders;
     }
 
@@ -40,7 +40,7 @@ public class AITranslationFilterConfiguration {
       this.excludePlaceholders = excludePlaceholders;
     }
 
-    public boolean isExcludeHtmlTags() {
+    public boolean shouldExcludeHtmlTags() {
       return excludeHtmlTags;
     }
 

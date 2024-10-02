@@ -57,6 +57,14 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
 
   @Autowired AITranslationTextUnitFilterService aiTranslationTextUnitFilterService;
 
+  /**
+   * Duration after which a pending MT is considered expired and will not be processed in AI
+   * translation (as it will be eligible for third party syncs once the entity is older than the
+   * expiry period).
+   *
+   * <p>If the pending MT is expired, it will be deleted which will remove it from AI translation
+   * flow.
+   */
   @Value("${l10n.ai.translation.pendingMT.expiryDuration:PT3H}")
   Duration expiryDuration;
 
@@ -159,6 +167,11 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
                         ? repositoryLocaleAIPrompts.get(targetLocale.getBcp47Tag())
                         : repositoryLocaleAIPrompts.get(REPOSITORY_DEFAULT_PROMPT);
                 if (repositoryLocaleAIPrompt != null && !repositoryLocaleAIPrompt.isDisabled()) {
+                  logger.info(
+                      "Translating text unit id {} for locale: {} using prompt: {}",
+                      tmTextUnit.getId(),
+                      targetLocale.getBcp47Tag(),
+                      repositoryLocaleAIPrompt.getAiPrompt().getId());
                   executeTranslationPrompt(
                       tmTextUnit, repository, targetLocale, repositoryLocaleAIPrompt);
                 } else {
@@ -196,6 +209,7 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
     meterRegistry.counter(
         "AITranslateJob.translate.reuseSourceAsTranslation",
         Tags.of("repository", repository.getName(), "locale", targetLocale.getBcp47Tag()));
+
     tmService.addTMTextUnitVariant(
         tmTextUnit.getId(),
         targetLocale.getId(),

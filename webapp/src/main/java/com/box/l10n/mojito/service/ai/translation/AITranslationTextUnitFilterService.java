@@ -45,15 +45,15 @@ public class AITranslationTextUnitFilterService {
     AITranslationFilterConfiguration.RepositoryConfig repositoryConfig =
         aiTranslationFilterConfiguration.getRepositoryConfig().get(repository.getName());
 
-    if (repositoryConfig.isExcludePlurals()) {
+    if (repositoryConfig.shouldExcludePlurals()) {
       isTranslatable = !isPlural(tmTextUnit);
     }
 
-    if (repositoryConfig.isExcludePlaceholders()) {
+    if (repositoryConfig.shouldExcludePlaceholders()) {
       isTranslatable = isTranslatable && !containsPlaceholder(repository.getName(), tmTextUnit);
     }
 
-    if (repositoryConfig.isExcludeHtmlTags()) {
+    if (repositoryConfig.shouldExcludeHtmlTags()) {
       isTranslatable = isTranslatable && !containsHtmlTag(tmTextUnit);
     }
 
@@ -90,7 +90,7 @@ public class AITranslationTextUnitFilterService {
       for (Map.Entry<String, AITranslationFilterConfiguration.RepositoryConfig> entry :
           aiTranslationFilterConfiguration.getRepositoryConfig().entrySet()) {
         AITranslationFilterConfiguration.RepositoryConfig repositoryConfig = entry.getValue();
-        if (repositoryConfig.isExcludePlaceholders()) {
+        if (repositoryConfig.shouldExcludePlaceholders()) {
           excludePlaceholdersPatternMap.put(
               entry.getKey(), Pattern.compile(repositoryConfig.getExcludePlaceholdersRegex()));
         }
