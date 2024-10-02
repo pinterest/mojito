@@ -78,6 +78,9 @@ public class OpenAILLMService implements LLMService {
   @Value("${l10n.ai.translate.response.json.key:translation}")
   String translationJsonKey;
 
+  @Value("${l10n.ai.translate.placeholder.emptyString:}")
+  String emptyPlaceholderString;
+
   RetryBackoffSpec llmTranslateRetryConfig;
 
   @Timed("OpenAILLMService.executeAIChecks")
@@ -142,23 +145,40 @@ public class OpenAILLMService implements LLMService {
             () -> {
               OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
                   openAIClient.getChatCompletions(chatCompletionsRequest).join();
-              String response = chatCompletionsResponse.choices().getFirst().message().content();
-              logger.debug(
-                  "TmTextUnit id: {}, {} translation response: {}",
-                  tmTextUnit.getId(),
-                  targetBcp47Tag,
-                  response);
-              if (isTranslateResponseJson) {
-                try {
-                  logger.debug("Parsing JSON response for key: {}", translationJsonKey);
-                  response = objectMapper.readTree(response).get(translationJsonKey).asText();
-                  logger.debug("Parsed translation: {}", response);
-                } catch (JsonProcessingException e) {
-                  logger.error("Error parsing JSON response: {}", response, e);
-                  throw new AIException("Error parsing JSON response: " + response);
+              if (chatCompletionsResponse
+                  .choices()
+                  .getFirst()
+                  .finishReason()
+                  .equals(
+                      OpenAIClient.ChatCompletionsStreamResponse.Choice.FinishReasons.STOP
+                          .getValue())) {
+                String response = chatCompletionsResponse.choices().getFirst().message().content();
+                logger.debug(
+                    "TmTextUnit id: {}, {} translation response: {}",
+                    tmTextUnit.getId(),
+                    targetBcp47Tag,
+                    response);
+                if (isTranslateResponseJson) {
+                  try {
+                    logger.debug("Parsing JSON response for key: {}", translationJsonKey);
+                    response = objectMapper.readTree(response).get(translationJsonKey).asText();
+                    logger.debug("Parsed translation: {}", response);
+                  } catch (JsonProcessingException e) {
+                    logger.error("Error parsing JSON response: {}", response, e);
+                    throw new AIException("Error parsing JSON response: " + response);
+                  }
                 }
+                return response;
               }
-              return response;
+              String message =
+                  String.format(
+                      "Error translating text unit %d from %s to %s, response finish_reason: %s",
+                      tmTextUnit.getId(),
+                      sourceBcp47Tag,
+                      targetBcp47Tag,
+                      chatCompletionsResponse.choices().getFirst().finishReason());
+              logger.error(message);
+              throw new AIException(message);
             })
         .retryWhen(llmTranslateRetryConfig)
         .blockOptional()
@@ -276,7 +296,7 @@ public class OpenAILLMService implements LLMService {
     return formattedPrompt;
   }
 
-  private static String getTranslationFormattedPrompt(
+  private String getTranslationFormattedPrompt(
       String prompt, TMTextUnit tmTextUnit, String sourceBcp47Tag, String targetBcp47Tag) {
     String formattedPrompt = "";
     if (prompt != null) {
@@ -285,17 +305,17 @@ public class OpenAILLMService implements LLMService {
               .replace(SOURCE_STRING_PLACEHOLDER, tmTextUnit.getContent())
               .replace(
                   COMMENT_STRING_PLACEHOLDER,
-                  tmTextUnit.getComment() != null ? tmTextUnit.getComment() : "")
+                  tmTextUnit.getComment() != null ? tmTextUnit.getComment() : emptyPlaceholderString)
               .replace(SOURCE_LOCALE_PLACEHOLDER, sourceBcp47Tag)
               .replace(TARGET_LOCALE_PLACEHOLDER, targetBcp47Tag)
               .replace(
                   PLURAL_FORM_PLACEHOLDER,
-                  tmTextUnit.getPluralForm() != null ? tmTextUnit.getPluralForm().getName() : "")
+                  tmTextUnit.getPluralForm() != null ? tmTextUnit.getPluralForm().getName() : emptyPlaceholderString)
               .replace(
                   CONTEXT_STRING_PLACEHOLDER,
                   tmTextUnit.getName() != null && tmTextUnit.getName().split(" --- ").length > 1
                       ? tmTextUnit.getName().split(" --- ")[1]
-                      : "");
+                      : emptyPlaceholderString);
     }
     return formattedPrompt;
   }
@@ -340,6 +360,18 @@ public class OpenAILLMService implements LLMService {
   public void init() {
     llmTranslateRetryConfig =
         Retry.backoff(retryMaxAttempts, Duration.ofSeconds(retryMinDurationSeconds))
-            .maxBackoff(Duration.ofSeconds(retryMaxBackoffDurationSeconds));
+            .maxBackoff(Duration.ofSeconds(retryMaxBackoffDurationSeconds))
+            .onRetryExhaustedThrow(
+                (retryBackoffSpec, retrySignal) -> {
+                  Throwable error = retrySignal.failure();
+                  logger.error(
+                      "Retry exhausted after {} attempts: {}",
+                      retryMaxAttempts,
+                      error.getMessage(),
+                      error);
+                  return new AIException(
+                      "Retry exhausted after " + retryMaxAttempts + " attempts: " + error.getMessage(),
+                      error);
+                });
   }
 }

@@ -279,9 +279,6 @@ public class AssetExtractionService {
   @Async
   void scheduleAITranslation(Long repositoryId, CreateTextUnitsResult createTextUnitsResult) {
     for (BranchStateTextUnit branchStateTextUnit : createTextUnitsResult.getCreatedTextUnits()) {
-      logger.debug(
-          "Sending tmTextUnitId: {} information to AI Translation scheduler",
-          branchStateTextUnit.getTmTextUnitId());
       AITranslateJobInput aiTranslateJobInput = new AITranslateJobInput();
       aiTranslateJobInput.setRepositoryId(repositoryId);
       aiTranslateJobInput.setTmTextUnitId(branchStateTextUnit.getTmTextUnitId());

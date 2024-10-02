@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.ai;
 
+import com.box.l10n.mojito.entity.PromptType;
 import com.box.l10n.mojito.entity.RepositoryLocaleAIPrompt;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,14 +14,15 @@ public interface RepositoryLocaleAIPromptRepository
       "SELECT count(rlap.id) FROM RepositoryLocaleAIPrompt rlap "
           + "JOIN AIPrompt aip ON rlap.aiPrompt.id = aip.id "
           + "JOIN AIPromptType aipt ON aip.promptType.id = aipt.id "
-          + "WHERE rlap.repository.id = :repositoryId AND rlap.disabled = false AND aip.deleted = false AND aipt.name = 'TRANSLATION'")
-  Long findCountOfActiveRepositoryTranslationPrompts(@Param("repositoryId") Long repositoryId);
+          + "WHERE rlap.repository.id = :repositoryId AND rlap.disabled = false AND aip.deleted = false AND aipt.name = :promptType")
+  Long findCountOfActiveRepositoryPromptsByType(
+      @Param("repositoryId") Long repositoryId, @Param("promptType") String promptType);
 
   @Query(
       "SELECT rlap FROM RepositoryLocaleAIPrompt rlap "
           + "JOIN rlap.aiPrompt aip "
           + "JOIN aip.promptType aipt "
-          + "WHERE rlap.repository.id = :repositoryId AND aip.deleted = false AND aipt.name = 'TRANSLATION'")
-  List<RepositoryLocaleAIPrompt> getActiveTranslationPromptsByRepository(
-      @Param("repositoryId") Long repositoryId);
+          + "WHERE rlap.repository.id = :repositoryId AND aip.deleted = false AND aipt.name = :promptType")
+  List<RepositoryLocaleAIPrompt> getActivePromptsByRepositoryAndPromptType(
+      @Param("repositoryId") Long repositoryId, @Param("promptType") String promptType);
 }

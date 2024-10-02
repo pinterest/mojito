@@ -2,6 +2,7 @@ package com.box.l10n.mojito.service.ai.translation;
 
 import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.Locale;
+import com.box.l10n.mojito.entity.PromptType;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.entity.RepositoryLocaleAIPrompt;
@@ -19,6 +20,7 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -84,7 +86,7 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
               .ifPresent(
                   tmTextUnit -> {
                     if (aiTranslationTextUnitFilterService.isTranslatable(tmTextUnit, repository)) {
-                      translateLocales(input, tmTextUnit, repository);
+                      translateLocales(tmTextUnit, repository, input.getLocales());
                     } else {
                       logger.debug(
                           "Text unit with name: {} should not be translated, skipping AI translation.",
@@ -123,12 +125,11 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
     return null;
   }
 
-  private void translateLocales(
-      AITranslateJobInput input, TMTextUnit tmTextUnit, Repository repository) {
+  private void translateLocales(TMTextUnit tmTextUnit, Repository repository, List<String> bcp47Tags) {
 
     Map<String, RepositoryLocaleAIPrompt> repositoryLocaleAIPrompts =
         repositoryLocaleAIPromptRepository
-            .getActiveTranslationPromptsByRepository(input.getRepositoryId())
+            .getActivePromptsByRepositoryAndPromptType(repository.getId(), PromptType.TRANSLATION.toString())
             .stream()
             .collect(
                 Collectors.toMap(
@@ -138,27 +139,11 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
                             : REPOSITORY_DEFAULT_PROMPT,
                     Function.identity()));
     repository.getRepositoryLocales().stream()
-        .filter(rl -> rl.getParentLocale() != null)
         .map(RepositoryLocale::getLocale)
+        .filter(locale -> bcp47Tags.contains(locale.getBcp47Tag()))
         .forEach(
             targetLocale -> {
               try {
-                if (isExistingVariant(tmTextUnit, targetLocale)) {
-                  // If a translation already exists, skip the AI translation (likely exists due to
-                  // leveraging)
-                  logger.debug(
-                      "Translation already available for text unit id {} and locale: {}, skipping AI translation.",
-                      tmTextUnit.getId(),
-                      targetLocale.getBcp47Tag());
-                  meterRegistry.counter(
-                      "AITranslateJob.translate.alreadyExists",
-                      Tags.of(
-                          "repository",
-                          repository.getName(),
-                          "locale",
-                          targetLocale.getBcp47Tag()));
-                  return;
-                }
                 String sourceLang = repository.getSourceLocale().getBcp47Tag().split("-")[0];
                 if (isReuseSourceOnLanguageMatch
                     && targetLocale.getBcp47Tag().startsWith(sourceLang)) {
@@ -198,12 +183,6 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
                         "repository", repository.getName(), "locale", targetLocale.getBcp47Tag()));
               }
             });
-  }
-
-  private boolean isExistingVariant(TMTextUnit tmTextUnit, Locale targetLocale) {
-    return tmTextUnitCurrentVariantRepository.findByLocale_IdAndTmTextUnit_Id(
-            targetLocale.getId(), tmTextUnit.getId())
-        != null;
   }
 
   private void reuseSourceStringAsTranslation(

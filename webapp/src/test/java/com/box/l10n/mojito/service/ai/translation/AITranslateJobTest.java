@@ -11,11 +11,11 @@ import static org.mockito.Mockito.when;
 import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.AIPrompt;
 import com.box.l10n.mojito.entity.Locale;
+import com.box.l10n.mojito.entity.PromptType;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.entity.RepositoryLocaleAIPrompt;
 import com.box.l10n.mojito.entity.TMTextUnit;
-import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
 import com.box.l10n.mojito.entity.TmTextUnitPendingMT;
 import com.box.l10n.mojito.service.ai.LLMService;
@@ -29,6 +29,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import org.assertj.core.util.Lists;
 import org.junit.Before;
@@ -62,6 +63,8 @@ public class AITranslateJobTest {
 
   AITranslateJobInput aiTranslateJobInput;
 
+  List<String> bcp47Tags = Lists.list("fr-FR", "de-DE", "en-IE");
+
   @Before
   public void setup() {
     MockitoAnnotations.openMocks(this);
@@ -81,6 +84,7 @@ public class AITranslateJobTest {
     aiTranslateJobInput = new AITranslateJobInput();
     aiTranslateJobInput.setRepositoryId(1L);
     aiTranslateJobInput.setTmTextUnitId(1L);
+    aiTranslateJobInput.setLocales(bcp47Tags);
     Repository testRepo = new Repository();
     testRepo.setId(1L);
     testRepo.setName("testRepo");
@@ -144,8 +148,8 @@ public class AITranslateJobTest {
     tmTextUnit.setComment("comment");
     tmTextUnit.setName("name");
     when(tmTextUnitRepository.findById(1L)).thenReturn(Optional.of(tmTextUnit));
-    when(repositoryLocaleAIPromptRepository.getActiveTranslationPromptsByRepository(
-            testRepo.getId()))
+    when(repositoryLocaleAIPromptRepository.getActivePromptsByRepositoryAndPromptType(
+            testRepo.getId(), PromptType.TRANSLATION.toString()))
         .thenReturn(Lists.list(testPrompt1, testPrompt2, testPrompt3));
     when(llmService.translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class)))
@@ -313,45 +317,6 @@ public class AITranslateJobTest {
             eq(1L),
             eq(4L),
             eq("content"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
-    verify(tmTextUnitPendingMTRepository, times(1)).delete(isA(TmTextUnitPendingMT.class));
-  }
-
-  @Test
-  public void testTranslationAlreadyLeveraged() throws Exception {
-    TMTextUnitCurrentVariant existingVariant = new TMTextUnitCurrentVariant();
-    when(tmTextUnitCurrentVariantRepository.findByLocale_IdAndTmTextUnit_Id(2L, 1L))
-        .thenReturn(existingVariant);
-    aiTranslateJob.call(aiTranslateJobInput);
-    verify(llmService, times(2))
-        .translate(
-            isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
-    verify(tmService, never())
-        .addTMTextUnitVariant(
-            eq(1L),
-            eq(2L),
-            eq("translated"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
-    verify(tmService, times(1))
-        .addTMTextUnitVariant(
-            eq(1L),
-            eq(3L),
-            eq("translated"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
-    verify(tmService, times(1))
-        .addTMTextUnitVariant(
-            eq(1L),
-            eq(4L),
-            eq("translated"),
             eq("comment"),
             eq(TMTextUnitVariant.Status.MT_TRANSLATED),
             eq(false),

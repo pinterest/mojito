@@ -14,6 +14,7 @@ import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.openai.OpenAIClient;
 import com.box.l10n.mojito.rest.ai.AICheckRequest;
 import com.box.l10n.mojito.rest.ai.AICheckResponse;
+import com.box.l10n.mojito.rest.ai.AIException;
 import com.box.l10n.mojito.service.ai.AIStringCheckRepository;
 import com.box.l10n.mojito.service.ai.LLMPromptService;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
@@ -56,6 +57,7 @@ class OpenAILLMServiceTest {
     openAILLMService.retryMaxAttempts = 1;
     openAILLMService.retryMinDurationSeconds = 0;
     openAILLMService.retryMaxBackoffDurationSeconds = 0;
+    openAILLMService.emptyPlaceholderString = "";
     openAILLMService.init();
     when(meterRegistry.counter(anyString(), any(String[].class)))
         .thenReturn(mock(io.micrometer.core.instrument.Counter.class));
@@ -444,7 +446,7 @@ class OpenAILLMServiceTest {
 
     OpenAIClient.ChatCompletionsResponse.Choice choice =
         new OpenAIClient.ChatCompletionsResponse.Choice(
-            0, new OpenAIClient.ChatCompletionsResponse.Choice.Message("test", "Bonjour"), null);
+            0, new OpenAIClient.ChatCompletionsResponse.Choice.Message("test", "Bonjour"), "stop");
     OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
         new OpenAIClient.ChatCompletionsResponse(
             null, null, null, null, List.of(choice), null, null);
@@ -455,6 +457,38 @@ class OpenAILLMServiceTest {
 
     String translation = openAILLMService.translate(tmTextUnit, "en", "fr", prompt);
     assertEquals("Bonjour", translation);
+  }
+
+  @Test
+  void testTranslateResponseNonStopFinishReason() {
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setId(1L);
+    tmTextUnit.setContent("Hello");
+    tmTextUnit.setComment("Greeting");
+
+    AIPrompt prompt = new AIPrompt();
+    prompt.setId(1L);
+    prompt.setSystemPrompt("Translate the following text:");
+    prompt.setUserPrompt("Translate this text to French:");
+    prompt.setModelName("gtp-3.5-turbo");
+    prompt.setPromptTemperature(0.0F);
+    prompt.setContextMessages(new ArrayList<>());
+
+    OpenAIClient.ChatCompletionsResponse.Choice choice =
+        new OpenAIClient.ChatCompletionsResponse.Choice(
+            0,
+            new OpenAIClient.ChatCompletionsResponse.Choice.Message("test", "Bonjour"),
+            "length");
+    OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
+        new OpenAIClient.ChatCompletionsResponse(
+            null, null, null, null, List.of(choice), null, null);
+    CompletableFuture<OpenAIClient.ChatCompletionsResponse> futureResponse =
+        CompletableFuture.completedFuture(chatCompletionsResponse);
+    when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
+        .thenReturn(futureResponse);
+
+    assertThrows(
+        AIException.class, () -> openAILLMService.translate(tmTextUnit, "en", "fr", prompt));
   }
 
   @Test
@@ -477,7 +511,7 @@ class OpenAILLMServiceTest {
             0,
             new OpenAIClient.ChatCompletionsResponse.Choice.Message(
                 "test", "{\"translation\": \"Bonjour\"}"),
-            null);
+            "stop");
     OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
         new OpenAIClient.ChatCompletionsResponse(
             null, null, null, null, List.of(choice), null, null);
