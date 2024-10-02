@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 
 @Configuration
 @Component
-@ConditionalOnProperty(value = "l10n.scheduledJobs.enabled", havingValue = "true")
+@ConditionalOnProperty(value = "l10n.org.quartz.scheduler.enabled", havingValue = "true")
 public class ScheduledJobManager {
   static Logger logger = LoggerFactory.getLogger(ScheduledJobManager.class);
 
