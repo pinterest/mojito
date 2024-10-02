@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import com.box.l10n.mojito.entity.AIPrompt;
 import com.box.l10n.mojito.entity.AIPromptContextMessage;
 import com.box.l10n.mojito.entity.AIPromptType;
+import com.box.l10n.mojito.entity.PluralForm;
 import com.box.l10n.mojito.entity.PromptType;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnit;
@@ -57,7 +58,6 @@ class OpenAILLMServiceTest {
     openAILLMService.retryMaxAttempts = 1;
     openAILLMService.retryMinDurationSeconds = 0;
     openAILLMService.retryMaxBackoffDurationSeconds = 0;
-    openAILLMService.emptyPlaceholderString = "";
     openAILLMService.init();
     when(meterRegistry.counter(anyString(), any(String[].class)))
         .thenReturn(mock(io.micrometer.core.instrument.Counter.class));
@@ -581,5 +581,254 @@ class OpenAILLMServiceTest {
         .thenThrow(new RuntimeException("OpenAI service error"));
 
     assertThrows(Exception.class, () -> openAILLMService.translate(tmTextUnit, "en", "fr", prompt));
+  }
+
+  @Test
+  void testPromptTemplatingAllValuesInjected() {
+    String promptText =
+        """
+         Translate the following source string from [mojito_source_locale] to [mojito_target_locale]:
+         Source string: [mojito_source_string]
+         {{optional: Comment: [mojito_comment_string]}}
+         {{optional: Context: [mojito_context_string]}}
+         {{optional: Plural form: [mojito_plural_form]}}
+         """;
+
+    PluralForm one = new PluralForm();
+    one.setName("one");
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setId(1L);
+    tmTextUnit.setContent("Hello");
+    tmTextUnit.setComment("A friendly greeting");
+    tmTextUnit.setName("Hello --- some.id");
+    tmTextUnit.setPluralForm(one);
+    String prompt =
+        openAILLMService.getTranslationFormattedPrompt(promptText, tmTextUnit, "en", "fr");
+    assertEquals(
+        """
+         Translate the following source string from en to fr:
+         Source string: Hello
+         Comment: A friendly greeting
+         Context: some.id
+         Plural form: one""",
+        prompt);
+  }
+
+  @Test
+  void testPromptTemplatingNoContextValue() {
+    String promptText =
+        """
+             Translate the following source string from [mojito_source_locale] to [mojito_target_locale]:
+             Source string: [mojito_source_string]
+             {{optional: Comment: [mojito_comment_string]}}
+             {{optional: Context: [mojito_context_string]}}
+             {{optional: Plural form: [mojito_plural_form]}}
+             """;
+
+    PluralForm one = new PluralForm();
+    one.setName("one");
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setId(1L);
+    tmTextUnit.setContent("Hello");
+    tmTextUnit.setComment("A friendly greeting");
+    tmTextUnit.setName("Hello");
+    tmTextUnit.setPluralForm(one);
+    String prompt =
+        openAILLMService.getTranslationFormattedPrompt(promptText, tmTextUnit, "en", "fr");
+    assertEquals(
+        """
+             Translate the following source string from en to fr:
+             Source string: Hello
+             Comment: A friendly greeting
+             Plural form: one""",
+        prompt);
+  }
+
+  @Test
+  void testPromptTemplatingNoPluralValue() {
+    String promptText =
+        """
+                 Translate the following source string from [mojito_source_locale] to [mojito_target_locale]:
+                 Source string: [mojito_source_string]
+                 {{optional: Comment: [mojito_comment_string]}}
+                 {{optional: Context: [mojito_context_string]}}
+                 {{optional: Plural form: [mojito_plural_form]}}
+                 """;
+
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setId(1L);
+    tmTextUnit.setContent("Hello");
+    tmTextUnit.setComment("A friendly greeting");
+    tmTextUnit.setName("Hello --- some.id");
+    String prompt =
+        openAILLMService.getTranslationFormattedPrompt(promptText, tmTextUnit, "en", "fr");
+    assertEquals(
+        """
+                 Translate the following source string from en to fr:
+                 Source string: Hello
+                 Comment: A friendly greeting
+                 Context: some.id""",
+        prompt);
+  }
+
+  @Test
+  void testPromptTemplatingNoCommentValue() {
+    String promptText =
+        """
+                 Translate the following source string from [mojito_source_locale] to [mojito_target_locale]:
+                 Source string: [mojito_source_string]
+                 {{optional: Comment: [mojito_comment_string]}}
+                 {{optional: Context: [mojito_context_string]}}
+                 {{optional: Plural form: [mojito_plural_form]}}
+                 """;
+
+    PluralForm one = new PluralForm();
+    one.setName("one");
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setId(1L);
+    tmTextUnit.setContent("Hello");
+    tmTextUnit.setName("Hello --- some.id");
+    tmTextUnit.setPluralForm(one);
+    String prompt =
+        openAILLMService.getTranslationFormattedPrompt(promptText, tmTextUnit, "en", "fr");
+    assertEquals(
+        """
+             Translate the following source string from en to fr:
+             Source string: Hello
+             Context: some.id
+             Plural form: one""",
+        prompt);
+  }
+
+  @Test
+  void testPromptTemplatingInlineNoCommentValue() {
+    String promptText =
+        """
+                 Translate the following source string from [mojito_source_locale] to [mojito_target_locale]:
+                 Source string: [mojito_source_string]
+                 {{optional: Comment: [mojito_comment_string]}} {{optional: Context: [mojito_context_string]}} {{optional: Plural form: [mojito_plural_form]}}
+                 """;
+
+    PluralForm one = new PluralForm();
+    one.setName("one");
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setId(1L);
+    tmTextUnit.setContent("Hello");
+    tmTextUnit.setName("Hello --- some.id");
+    tmTextUnit.setPluralForm(one);
+    String prompt =
+        openAILLMService.getTranslationFormattedPrompt(promptText, tmTextUnit, "en", "fr");
+    assertEquals(
+        """
+             Translate the following source string from en to fr:
+             Source string: Hello
+             Context: some.id Plural form: one""",
+        prompt);
+  }
+
+  @Test
+  void testPromptTemplatingInlineNoContextValue() {
+    String promptText =
+        """
+                 Translate the following source string from [mojito_source_locale] to [mojito_target_locale]:
+                 Source string: [mojito_source_string]
+                 {{optional: Comment: [mojito_comment_string]}} {{optional: Context: [mojito_context_string]}} {{optional: Plural form: [mojito_plural_form]}}
+                 """;
+
+    PluralForm one = new PluralForm();
+    one.setName("one");
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setId(1L);
+    tmTextUnit.setContent("Hello");
+    tmTextUnit.setComment("A friendly greeting");
+    tmTextUnit.setPluralForm(one);
+    String prompt =
+        openAILLMService.getTranslationFormattedPrompt(promptText, tmTextUnit, "en", "fr");
+    assertEquals(
+        """
+             Translate the following source string from en to fr:
+             Source string: Hello
+             Comment: A friendly greeting Plural form: one""",
+        prompt);
+  }
+
+  @Test
+  void testPromptTemplatingJsonInPrompt() {
+    String promptText =
+        """
+                 Translate the following source string from [mojito_source_locale] to [mojito_target_locale]:
+                 Source string: [mojito_source_string]
+                 { {{optional: "comment": "[mojito_comment_string]",}} {{optional: "context": "[mojito_context_string]",}} {{optional: "plural_form": "[mojito_plural_form]"}} }
+                 """;
+
+    PluralForm one = new PluralForm();
+    one.setName("one");
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setId(1L);
+    tmTextUnit.setContent("Hello");
+    tmTextUnit.setComment("A friendly greeting");
+    tmTextUnit.setName("Hello --- some.id");
+    tmTextUnit.setPluralForm(one);
+    String prompt =
+        openAILLMService.getTranslationFormattedPrompt(promptText, tmTextUnit, "en", "fr");
+    assertEquals(
+        """
+             Translate the following source string from en to fr:
+             Source string: Hello
+             { "comment": "A friendly greeting", "context": "some.id", "plural_form": "one" }""",
+        prompt);
+  }
+
+  @Test
+  void testPromptTemplatingJsonInPromptContextMissing() {
+    String promptText =
+        """
+                     Translate the following source string from [mojito_source_locale] to [mojito_target_locale]:
+                     Source string: [mojito_source_string]
+                     {{{optional: "comment": "[mojito_comment_string]",}} {{optional: "context": "[mojito_context_string]",}} {{optional: "plural_form": "[mojito_plural_form]"}}}
+                     """;
+
+    PluralForm one = new PluralForm();
+    one.setName("one");
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setId(1L);
+    tmTextUnit.setContent("Hello");
+    tmTextUnit.setComment("A friendly greeting");
+    tmTextUnit.setPluralForm(one);
+    String prompt =
+        openAILLMService.getTranslationFormattedPrompt(promptText, tmTextUnit, "en", "fr");
+    assertEquals(
+        """
+                 Translate the following source string from en to fr:
+                 Source string: Hello
+                 {"comment": "A friendly greeting", "plural_form": "one"}""",
+        prompt);
+  }
+
+  @Test
+  void testPromptTemplatingInlineSentence() {
+    String promptText =
+        """
+                 Translate the following source string from [mojito_source_locale] to [mojito_target_locale]:
+                 Source string: [mojito_source_string]
+                 {{optional: The comment is: [mojito_comment_string]. }}{{optional: The context is: [mojito_context_string]. }}{{optional: The plural form is: [mojito_plural_form]. }}
+                 """;
+
+    PluralForm one = new PluralForm();
+    one.setName("one");
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setId(1L);
+    tmTextUnit.setContent("Hello");
+    tmTextUnit.setComment("A friendly greeting");
+    tmTextUnit.setName("Hello");
+    tmTextUnit.setPluralForm(one);
+    String prompt =
+        openAILLMService.getTranslationFormattedPrompt(promptText, tmTextUnit, "en", "fr");
+    assertEquals(
+        """
+                 Translate the following source string from en to fr:
+                 Source string: Hello
+                 The comment is: A friendly greeting. The plural form is: one.""",
+        prompt);
   }
 }

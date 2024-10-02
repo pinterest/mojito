@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,10 +80,9 @@ public class OpenAILLMService implements LLMService {
   @Value("${l10n.ai.translate.response.json.key:translation}")
   String translationJsonKey;
 
-  @Value("${l10n.ai.translate.placeholder.emptyString:}")
-  String emptyPlaceholderString;
-
   RetryBackoffSpec llmTranslateRetryConfig;
+
+  Map<String, Pattern> patternCache = new HashMap<>();
 
   @Timed("OpenAILLMService.executeAIChecks")
   public AICheckResponse executeAIChecks(AICheckRequest aiCheckRequest) {
@@ -145,6 +146,18 @@ public class OpenAILLMService implements LLMService {
             () -> {
               OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
                   openAIClient.getChatCompletions(chatCompletionsRequest).join();
+              if (chatCompletionsResponse.choices().size() > 1) {
+                logger.error(
+                    "Multiple choices returned for text unit {}, expected only one",
+                    tmTextUnit.getId());
+                meterRegistry
+                    .counter("OpenAILLMService.translate.error.multiChoiceResponse")
+                    .increment();
+                throw new AIException(
+                    "Multiple response choices returned for text unit "
+                        + tmTextUnit.getId()
+                        + ", expected only one");
+              }
               if (chatCompletionsResponse
                   .choices()
                   .getFirst()
@@ -296,28 +309,56 @@ public class OpenAILLMService implements LLMService {
     return formattedPrompt;
   }
 
-  private String getTranslationFormattedPrompt(
+  protected String getTranslationFormattedPrompt(
       String prompt, TMTextUnit tmTextUnit, String sourceBcp47Tag, String targetBcp47Tag) {
     String formattedPrompt = "";
     if (prompt != null) {
       formattedPrompt =
           prompt
               .replace(SOURCE_STRING_PLACEHOLDER, tmTextUnit.getContent())
-              .replace(
-                  COMMENT_STRING_PLACEHOLDER,
-                  tmTextUnit.getComment() != null ? tmTextUnit.getComment() : emptyPlaceholderString)
               .replace(SOURCE_LOCALE_PLACEHOLDER, sourceBcp47Tag)
-              .replace(TARGET_LOCALE_PLACEHOLDER, targetBcp47Tag)
-              .replace(
-                  PLURAL_FORM_PLACEHOLDER,
-                  tmTextUnit.getPluralForm() != null ? tmTextUnit.getPluralForm().getName() : emptyPlaceholderString)
-              .replace(
-                  CONTEXT_STRING_PLACEHOLDER,
-                  tmTextUnit.getName() != null && tmTextUnit.getName().split(" --- ").length > 1
-                      ? tmTextUnit.getName().split(" --- ")[1]
-                      : emptyPlaceholderString);
+              .replace(TARGET_LOCALE_PLACEHOLDER, targetBcp47Tag);
+      formattedPrompt =
+          processOptionalPlaceholderText(
+              formattedPrompt, COMMENT_STRING_PLACEHOLDER, tmTextUnit.getComment());
+      formattedPrompt =
+          processOptionalPlaceholderText(
+              formattedPrompt,
+              PLURAL_FORM_PLACEHOLDER,
+              tmTextUnit.getPluralForm() != null ? tmTextUnit.getPluralForm().getName() : null);
+      formattedPrompt =
+          processOptionalPlaceholderText(
+              formattedPrompt,
+              CONTEXT_STRING_PLACEHOLDER,
+              tmTextUnit.getName() != null && tmTextUnit.getName().split(" --- ").length > 1
+                  ? tmTextUnit.getName().split(" --- ")[1]
+                  : null);
     }
-    return formattedPrompt;
+    return formattedPrompt.trim();
+  }
+
+  private String processOptionalPlaceholderText(
+      String promptText, String placeholder, String placeholderValue) {
+    if (placeholderValue != null && !placeholderValue.isEmpty()) {
+      Pattern pattern = patternCache.get(placeholder);
+      Matcher matcher = pattern.matcher(promptText);
+      if (matcher.find()) {
+        String optionalContent = matcher.group(1) + placeholderValue + matcher.group(2);
+        if (matcher.groupCount() > 2) {
+          optionalContent += matcher.group(3);
+        }
+        promptText = matcher.replaceFirst(optionalContent);
+      }
+    } else {
+      // Remove the entire template block from the prompt if we have no value for the placeholder,
+      // removing new line characters if they exist immediately after the template
+      String regex =
+          "\\{\\{optional: [^\\{\\}]*"
+              + Pattern.quote(placeholder)
+              + "[^\\{\\}]*\\}\\}\\s*(?:\\r?\\n)?";
+      promptText = promptText.replaceAll(regex, "");
+    }
+    return promptText;
   }
 
   private static OpenAIClient.ChatCompletionsRequest buildChatCompletionsRequest(
@@ -358,6 +399,21 @@ public class OpenAILLMService implements LLMService {
 
   @PostConstruct
   public void init() {
+    String commentPattern =
+        "\\{\\{optional: ([^\\{\\}]*)"
+            + Pattern.quote(COMMENT_STRING_PLACEHOLDER)
+            + "([^\\{\\}]*)\\}\\}(\\s*(?:\\r?\\n)?)";
+    String pluralFormPattern =
+        "\\{\\{optional: ([^\\{\\}]*)"
+            + Pattern.quote(PLURAL_FORM_PLACEHOLDER)
+            + "([^\\{\\}]*)\\}\\}(\\s*(?:\\r?\\n)?)";
+    String contextPattern =
+        "\\{\\{optional: ([^\\{\\}]*)"
+            + Pattern.quote(CONTEXT_STRING_PLACEHOLDER)
+            + "([^\\{\\}]*)\\}\\}(\\s*(?:\\r?\\n)?)";
+    patternCache.put(COMMENT_STRING_PLACEHOLDER, Pattern.compile(commentPattern));
+    patternCache.put(PLURAL_FORM_PLACEHOLDER, Pattern.compile(pluralFormPattern));
+    patternCache.put(CONTEXT_STRING_PLACEHOLDER, Pattern.compile(contextPattern));
     llmTranslateRetryConfig =
         Retry.backoff(retryMaxAttempts, Duration.ofSeconds(retryMinDurationSeconds))
             .maxBackoff(Duration.ofSeconds(retryMaxBackoffDurationSeconds))
@@ -370,7 +426,10 @@ public class OpenAILLMService implements LLMService {
                       error.getMessage(),
                       error);
                   return new AIException(
-                      "Retry exhausted after " + retryMaxAttempts + " attempts: " + error.getMessage(),
+                      "Retry exhausted after "
+                          + retryMaxAttempts
+                          + " attempts: "
+                          + error.getMessage(),
                       error);
                 });
   }

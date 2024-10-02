@@ -125,11 +125,13 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
     return null;
   }
 
-  private void translateLocales(TMTextUnit tmTextUnit, Repository repository, List<String> bcp47Tags) {
+  private void translateLocales(
+      TMTextUnit tmTextUnit, Repository repository, List<String> bcp47Tags) {
 
     Map<String, RepositoryLocaleAIPrompt> repositoryLocaleAIPrompts =
         repositoryLocaleAIPromptRepository
-            .getActivePromptsByRepositoryAndPromptType(repository.getId(), PromptType.TRANSLATION.toString())
+            .getActivePromptsByRepositoryAndPromptType(
+                repository.getId(), PromptType.TRANSLATION.toString())
             .stream()
             .collect(
                 Collectors.toMap(

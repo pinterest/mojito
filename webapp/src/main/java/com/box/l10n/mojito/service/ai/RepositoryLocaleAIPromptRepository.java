@@ -1,6 +1,5 @@
 package com.box.l10n.mojito.service.ai;
 
-import com.box.l10n.mojito.entity.PromptType;
 import com.box.l10n.mojito.entity.RepositoryLocaleAIPrompt;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
