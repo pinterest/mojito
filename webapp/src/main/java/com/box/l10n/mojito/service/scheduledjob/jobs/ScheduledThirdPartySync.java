@@ -84,7 +84,7 @@ public class ScheduledThirdPartySync implements IScheduledJob {
     thirdPartySync.setOptions(options);
 
     try {
-      throw new JobExecutionException("THIS IS ON PURPOSE!");
+      //      throw new JobExecutionException("THIS IS ON PURPOSE!");
       //      quartzPollableTaskScheduler
       //          .scheduleJobWithCustomTimeout(
       //              ThirdPartySyncJob.class, thirdPartySync, "thirdPartySync", 3600L)
