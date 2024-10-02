@@ -51,7 +51,7 @@ public class ScheduledJobManager {
         .getListenerManager()
         .addTriggerListener(new ScheduledJobTriggerListener(scheduledJobRepository));
 
-    logger.info("Scheduled Job Manager started.");
+    logger.info("Scheduled Job Manager started");
 
     // Loop through app properties jobs and push them to DB
     for (ThirdPartySyncJobConfig syncJobConfig :
