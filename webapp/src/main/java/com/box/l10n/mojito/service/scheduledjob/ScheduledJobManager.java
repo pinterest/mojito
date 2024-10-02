@@ -108,8 +108,6 @@ public class ScheduledJobManager {
 
     scheduledJob.setProperties(thirdPartySyncProperties);
 
-    scheduledJob.setAllowExecutionOverlap(false);
-
     try {
       scheduledJobRepository.save(scheduledJob);
     } catch (DataIntegrityViolationException e) {
