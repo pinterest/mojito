@@ -4,6 +4,7 @@ import com.box.l10n.mojito.entity.ScheduledJob;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
 import com.box.l10n.mojito.service.scheduledjob.IScheduledJob;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobRepository;
+import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJob;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobInput;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,9 +25,17 @@ public class ScheduledThirdPartySync implements IScheduledJob {
   @Autowired QuartzPollableTaskScheduler quartzPollableTaskScheduler;
   @Autowired private ScheduledJobRepository scheduledJobRepository;
 
+  public static int runAmount = 0;
+
   @SuppressWarnings("unchecked")
   @Override
   public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
+    if (runAmount == 1) {
+      return;
+    }
+
+    runAmount++;
+
     ScheduledJob job =
         scheduledJobRepository.findByJobKey(jobExecutionContext.getJobDetail().getKey());
     ScheduledThirdPartySyncProperties properties =
@@ -58,11 +67,10 @@ public class ScheduledThirdPartySync implements IScheduledJob {
     thirdPartySync.setOptions(options);
 
     try {
-      Thread.sleep(10000);
-      //      quartzPollableTaskScheduler
-      //          .scheduleJobWithCustomTimeout(
-      //              ThirdPartySyncJob.class, thirdPartySync, "thirdPartySync", 3600L)
-      //          .get();
+      quartzPollableTaskScheduler
+          .scheduleJobWithCustomTimeout(
+              ThirdPartySyncJob.class, thirdPartySync, "thirdPartySync", 3600L)
+          .get();
     } catch (Exception e) {
       throw new JobExecutionException(e);
     }

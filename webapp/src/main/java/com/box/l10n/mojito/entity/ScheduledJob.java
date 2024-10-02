@@ -5,7 +5,6 @@ import com.box.l10n.mojito.rest.View;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobProperties;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobStatus;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobType;
-import com.box.l10n.mojito.service.scheduledjob.jobs.ScheduledThirdPartySyncProperties;
 import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
@@ -58,14 +57,15 @@ public class ScheduledJob extends BaseEntity {
   @PostLoad
   public void deserializeProperties() {
     ObjectMapper objectMapper = new ObjectMapper();
-
     try {
-      if (jobType == ScheduledJobType.THIRD_PARTY_SYNC) {
-        this.properties =
-            objectMapper.readValue(propertiesString, ScheduledThirdPartySyncProperties.class);
-      }
+      this.properties = objectMapper.readValue(propertiesString, jobType.getPropertiesClass());
     } catch (Exception e) {
-      throw new RuntimeException("Failed to deserialize properties", e);
+      throw new RuntimeException(
+          "Failed to deserialize properties '"
+              + propertiesString
+              + "' for class: "
+              + jobType.getPropertiesClass().getName(),
+          e);
     }
   }
 
@@ -113,7 +113,6 @@ public class ScheduledJob extends BaseEntity {
     ObjectMapper objectMapper = new ObjectMapper();
     try {
       this.propertiesString = objectMapper.writeValueAsString(this.properties);
-      System.out.println(propertiesString);
     } catch (Exception e) {
       throw new RuntimeException("Failed to serialize properties", e);
     }
