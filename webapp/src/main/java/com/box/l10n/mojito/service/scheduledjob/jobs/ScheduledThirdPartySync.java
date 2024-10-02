@@ -1,11 +1,18 @@
 package com.box.l10n.mojito.service.scheduledjob.jobs;
 
+import static com.box.l10n.mojito.slack.SlackClient.COLOR_DANGER;
+
 import com.box.l10n.mojito.entity.ScheduledJob;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
 import com.box.l10n.mojito.service.scheduledjob.IScheduledJob;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobRepository;
-import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJob;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobInput;
+import com.box.l10n.mojito.slack.SlackClient;
+import com.box.l10n.mojito.slack.SlackClientException;
+import com.box.l10n.mojito.slack.SlackClients;
+import com.box.l10n.mojito.slack.request.Attachment;
+import com.box.l10n.mojito.slack.request.Field;
+import com.box.l10n.mojito.slack.request.Message;
 import java.util.ArrayList;
 import java.util.List;
 import org.quartz.DisallowConcurrentExecution;
@@ -14,6 +21,8 @@ import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.ssl.SslAutoConfiguration;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -24,8 +33,16 @@ public class ScheduledThirdPartySync implements IScheduledJob {
 
   @Autowired QuartzPollableTaskScheduler quartzPollableTaskScheduler;
   @Autowired private ScheduledJobRepository scheduledJobRepository;
+  @Autowired SlackClients slackClients;
+
+  @Value("${l10n.scheduledJobs.slack.clientId}")
+  private String slackClientId;
+
+  @Value("${l10n.scheduledJobs.slack.channel}")
+  private String slackChannel;
 
   public static int runAmount = 0;
+  @Autowired private SslAutoConfiguration sslAutoConfiguration;
 
   @SuppressWarnings("unchecked")
   @Override
@@ -67,10 +84,11 @@ public class ScheduledThirdPartySync implements IScheduledJob {
     thirdPartySync.setOptions(options);
 
     try {
-      quartzPollableTaskScheduler
-          .scheduleJobWithCustomTimeout(
-              ThirdPartySyncJob.class, thirdPartySync, "thirdPartySync", 3600L)
-          .get();
+      throw new JobExecutionException("THIS IS ON PURPOSE!");
+      //      quartzPollableTaskScheduler
+      //          .scheduleJobWithCustomTimeout(
+      //              ThirdPartySyncJob.class, thirdPartySync, "thirdPartySync", 3600L)
+      //          .get();
     } catch (Exception e) {
       throw new JobExecutionException(e);
     }
@@ -87,10 +105,58 @@ public class ScheduledThirdPartySync implements IScheduledJob {
   @Override
   public void onFailure(JobExecutionContext context, JobExecutionException jobException) {
     ScheduledJob job = scheduledJobRepository.findByJobKey(context.getJobDetail().getKey());
+    ScheduledThirdPartySyncProperties properties =
+        (ScheduledThirdPartySyncProperties) job.getProperties();
+
     logger.error(
         "Third-Party Sync for repository {} has failed:",
         job.getRepository().getName(),
         jobException);
+
     // TODO: Notifications
+    if (slackClientId == null || slackChannel == null) return;
+    Message warning = buildSlackMessage(job, properties, jobException);
+
+    SlackClient slackClient = slackClients.getById(slackClientId);
+    try {
+      slackClient.sendInstantMessage(warning);
+    } catch (SlackClientException e) {
+      logger.error(
+          "Slack client failed to send warning message with id '{}' and channel '{}'",
+          slackClientId,
+          slackChannel,
+          e);
+    }
+  }
+
+  private Message buildSlackMessage(
+      ScheduledJob job,
+      ScheduledThirdPartySyncProperties properties,
+      JobExecutionException jobException) {
+    Message warning = new Message();
+    warning.setText("");
+    warning.setChannel(slackChannel);
+
+    Attachment attachment = new Attachment();
+    attachment.setTitle(job.getRepository().getName() + " | Third Party Sync failed.");
+    attachment.setText("This scheduled job has failed.");
+
+    List<Field> fields = new ArrayList<>();
+    fields.add(createField("Repository", job.getRepository().getName()));
+    fields.add(createField("Third Party ID", properties.getThirdPartyProjectId()));
+
+    fields.add(createField("Error", jobException.getMessage()));
+
+    attachment.setFields(fields);
+    attachment.setColor(COLOR_DANGER);
+    warning.getAttachments().add(attachment);
+    return warning;
+  }
+
+  private Field createField(String title, String value) {
+    Field field = new Field();
+    field.setTitle(title);
+    field.setValue(value);
+    return field;
   }
 }
