@@ -35,10 +35,10 @@ public class ScheduledThirdPartySync implements IScheduledJob {
   @Autowired private ScheduledJobRepository scheduledJobRepository;
   @Autowired SlackClients slackClients;
 
-  @Value("${l10n.scheduledJobs.slack.clientId}")
+  @Value("${l10n.scheduledJobs.slack.clientId:}")
   private String slackClientId;
 
-  @Value("${l10n.scheduledJobs.slack.channel}")
+  @Value("${l10n.scheduledJobs.slack.channel:}")
   private String slackChannel;
 
   public static int runAmount = 0;
@@ -114,7 +114,7 @@ public class ScheduledThirdPartySync implements IScheduledJob {
         jobException);
 
     // TODO: Notifications
-    if (slackClientId == null || slackChannel == null) return;
+    if (!slackClientId.isEmpty() || !slackChannel.isEmpty()) return;
     Message warning = buildSlackMessage(job, properties, jobException);
 
     SlackClient slackClient = slackClients.getById(slackClientId);
