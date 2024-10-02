@@ -4,10 +4,10 @@ import com.box.l10n.mojito.entity.ScheduledJob;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
 import com.box.l10n.mojito.service.scheduledjob.IScheduledJob;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobRepository;
-import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJob;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobInput;
 import java.util.ArrayList;
 import java.util.List;
+import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
+@DisallowConcurrentExecution
 public class ScheduledThirdPartySync implements IScheduledJob {
 
   static Logger logger = LoggerFactory.getLogger(ScheduledThirdPartySync.class);
@@ -57,10 +58,11 @@ public class ScheduledThirdPartySync implements IScheduledJob {
     thirdPartySync.setOptions(options);
 
     try {
-      quartzPollableTaskScheduler
-          .scheduleJobWithCustomTimeout(
-              ThirdPartySyncJob.class, thirdPartySync, "thirdPartySync", 3600L)
-          .get();
+      Thread.sleep(10000);
+      //      quartzPollableTaskScheduler
+      //          .scheduleJobWithCustomTimeout(
+      //              ThirdPartySyncJob.class, thirdPartySync, "thirdPartySync", 3600L)
+      //          .get();
     } catch (Exception e) {
       throw new JobExecutionException(e);
     }

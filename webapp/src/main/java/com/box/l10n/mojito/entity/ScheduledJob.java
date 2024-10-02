@@ -55,9 +55,6 @@ public class ScheduledJob extends BaseEntity {
   @Column(name = "end_date")
   private Date endDate;
 
-  @Column(name = "allow_execution_overlap")
-  private boolean allowExecutionOverlap;
-
   @PostLoad
   public void deserializeProperties() {
     ObjectMapper objectMapper = new ObjectMapper();
@@ -152,13 +149,5 @@ public class ScheduledJob extends BaseEntity {
 
   public void setEndDate(Date endDate) {
     this.endDate = endDate;
-  }
-
-  public boolean isAllowExecutionOverlap() {
-    return allowExecutionOverlap;
-  }
-
-  public void setAllowExecutionOverlap(boolean allowExecutionOverlap) {
-    this.allowExecutionOverlap = allowExecutionOverlap;
   }
 }
