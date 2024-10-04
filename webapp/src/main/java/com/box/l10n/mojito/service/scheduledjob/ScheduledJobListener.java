@@ -4,7 +4,6 @@ import com.box.l10n.mojito.entity.ScheduledJob;
 import java.util.Date;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-import org.quartz.JobKey;
 import org.quartz.listeners.JobListenerSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +14,7 @@ public class ScheduledJobListener extends JobListenerSupport {
 
   private final ScheduledJobRepository scheduledJobRepository;
 
-  ScheduledJobListener(ScheduledJobRepository scheduledJobRepository) {
+  public ScheduledJobListener(ScheduledJobRepository scheduledJobRepository) {
     this.scheduledJobRepository = scheduledJobRepository;
   }
 
@@ -26,8 +25,8 @@ public class ScheduledJobListener extends JobListenerSupport {
 
   @Override
   public void jobToBeExecuted(JobExecutionContext context) {
-    JobKey jobKey = context.getJobDetail().getKey();
-    ScheduledJob scheduledJob = scheduledJobRepository.findByJobKey(jobKey);
+    ScheduledJob scheduledJob =
+        scheduledJobRepository.findByJobKey(context.getJobDetail().getKey());
 
     scheduledJob.setJobStatus(ScheduledJobStatus.IN_PROGRESS);
     scheduledJob.setStartDate(new Date());
@@ -41,14 +40,14 @@ public class ScheduledJobListener extends JobListenerSupport {
         scheduledJobRepository.findByJobKey(context.getJobDetail().getKey());
     scheduledJob.setEndDate(new Date());
 
-    IScheduledJob sJobInstance = (IScheduledJob) context.getJobInstance();
+    IScheduledJob jobInstance = (IScheduledJob) context.getJobInstance();
 
     if (jobException == null) {
       scheduledJob.setJobStatus(ScheduledJobStatus.SUCCEEDED);
-      sJobInstance.onSuccess(context);
+      jobInstance.onSuccess(context);
     } else {
       scheduledJob.setJobStatus(ScheduledJobStatus.FAILED);
-      sJobInstance.onFailure(context, jobException);
+      jobInstance.onFailure(context, jobException);
     }
 
     scheduledJobRepository.save(scheduledJob);
