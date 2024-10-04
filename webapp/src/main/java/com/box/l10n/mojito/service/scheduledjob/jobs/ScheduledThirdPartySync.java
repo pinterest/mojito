@@ -4,8 +4,11 @@ import static com.box.l10n.mojito.slack.SlackClient.COLOR_DANGER;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
+import com.box.l10n.mojito.service.pollableTask.PollableFuture;
+import com.box.l10n.mojito.service.pollableTask.PollableTaskBlobStorage;
 import com.box.l10n.mojito.service.scheduledjob.IScheduledJob;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobRepository;
+import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJob;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobInput;
 import com.box.l10n.mojito.slack.SlackClient;
 import com.box.l10n.mojito.slack.SlackClientException;
@@ -22,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.ssl.SslAutoConfiguration;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -42,9 +44,9 @@ public class ScheduledThirdPartySync implements IScheduledJob {
   private String slackChannel;
 
   public static int runAmount = 0;
-  @Autowired private SslAutoConfiguration sslAutoConfiguration;
 
-  @SuppressWarnings("unchecked")
+  @Autowired PollableTaskBlobStorage pollableTaskBlobStorage;
+
   @Override
   public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
     if (runAmount == 1) {
@@ -84,38 +86,37 @@ public class ScheduledThirdPartySync implements IScheduledJob {
     thirdPartySync.setOptions(options);
 
     try {
-      //      throw new JobExecutionException("THIS IS ON PURPOSE!");
-      //      quartzPollableTaskScheduler
-      //          .scheduleJobWithCustomTimeout(
-      //              ThirdPartySyncJob.class, thirdPartySync, "thirdPartySync", 3600L)
-      //          .get();
+      PollableFuture<Void> task =
+          quartzPollableTaskScheduler.scheduleJobWithCustomTimeout(
+              ThirdPartySyncJob.class, thirdPartySync, "thirdPartySync", 3600L);
+      jobExecutionContext.put("PollableTaskId", task.getPollableTask().getId());
+      task.get();
     } catch (Exception e) {
       throw new JobExecutionException(e);
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public void onSuccess(JobExecutionContext context) {
     ScheduledJob job = scheduledJobRepository.findByJobKey(context.getJobDetail().getKey());
     logger.info("Third-Party Sync succeeded for repository {}.", job.getRepository().getName());
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public void onFailure(JobExecutionContext context, JobExecutionException jobException) {
+    Long polladbleTaskId = (Long) context.get("PollableTaskId");
     ScheduledJob job = scheduledJobRepository.findByJobKey(context.getJobDetail().getKey());
     ScheduledThirdPartySyncProperties properties =
         (ScheduledThirdPartySyncProperties) job.getProperties();
 
     logger.error(
-        "Third-Party Sync for repository {} has failed:",
+        "Third-Party Sync for repository {} has failed. Pollable Task ID: {}",
         job.getRepository().getName(),
-        jobException);
+        polladbleTaskId);
 
     // TODO: Notifications
-    if (!slackClientId.isEmpty() || !slackChannel.isEmpty()) return;
-    Message warning = buildSlackMessage(job, properties, jobException);
+    if (slackClientId.isEmpty() || slackChannel.isEmpty()) return;
+    Message warning = buildSlackMessage(job, properties, jobException, polladbleTaskId);
 
     SlackClient slackClient = slackClients.getById(slackClientId);
     try {
@@ -132,14 +133,15 @@ public class ScheduledThirdPartySync implements IScheduledJob {
   private Message buildSlackMessage(
       ScheduledJob job,
       ScheduledThirdPartySyncProperties properties,
-      JobExecutionException jobException) {
+      JobExecutionException jobException,
+      Long pollableId) {
     Message warning = new Message();
     warning.setText("");
     warning.setChannel(slackChannel);
 
     Attachment attachment = new Attachment();
-    attachment.setTitle(job.getRepository().getName() + " | Third Party Sync failed.");
-    attachment.setText("This scheduled job has failed.");
+    attachment.setTitle("Mojito | Third Party Sync failed for " + job.getRepository().getName());
+    attachment.setText("This scheduled job has failed, visit /api/pollableTasks/" + pollableId);
 
     List<Field> fields = new ArrayList<>();
     fields.add(createField("Repository", job.getRepository().getName()));
