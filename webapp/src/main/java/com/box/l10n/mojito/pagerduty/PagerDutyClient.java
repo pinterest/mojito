@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.text.MessageFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +19,10 @@ public class PagerDutyClient {
 
   private HttpClient httpClient = HttpClient.newHttpClient();
 
-  private static final int MAX_RETRIES = 3;
+  public static final int MAX_RETRIES = 3;
+  public static String exceptionTemplate =
+      "PagerDuty request failed: Status Code: '{0}', Response Body: '{1}'";
+
   private final String integrationKey;
 
   public PagerDutyClient(String integrationKey) {
@@ -61,25 +65,19 @@ public class PagerDutyClient {
 
         if (statusCode == 200 || statusCode == 202) return;
 
-        if (response.statusCode() == 400) {
-          throw new PagerDutyException(
-              "PagerDuty BAD REQUEST: status code '"
-                  + statusCode
-                  + "', response body: "
-                  + response.body());
-        }
-
-        if (attempt == MAX_RETRIES) {
-          throw new PagerDutyException(
-              "PagerDuty request failed: Status code '"
-                  + statusCode
-                  + "', response body: "
-                  + response.body());
+        // Either the max retries was hit or bad request (not recovering from 400)
+        if (attempt == MAX_RETRIES || statusCode == 400) {
+          throwFormattedException(statusCode, response.body());
         }
       } catch (IOException | InterruptedException e) {
-        logger.error("Failed to send PagerDuty request: ", e);
+        if (attempt == MAX_RETRIES)
+          throw new PagerDutyException("Failed to send PagerDuty request: ", e);
       }
     }
+  }
+
+  private void throwFormattedException(int statusCode, String response) throws PagerDutyException {
+    throw new PagerDutyException(MessageFormat.format(exceptionTemplate, statusCode, response));
   }
 
   public HttpRequest buildRequest(String postBody) {
