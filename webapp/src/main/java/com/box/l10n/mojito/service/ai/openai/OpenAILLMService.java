@@ -25,6 +25,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Strings;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -140,7 +141,7 @@ public class OpenAILLMService implements LLMService {
 
     OpenAIClient.ChatCompletionsRequest chatCompletionsRequest =
         buildChatCompletionsRequest(
-            prompt, systemPrompt, userPrompt, prompt.getContextMessages(), false);
+            prompt, systemPrompt, userPrompt, prompt.getContextMessages(), prompt.isJsonResponse());
 
     return Mono.fromCallable(
             () -> {
@@ -181,6 +182,9 @@ public class OpenAILLMService implements LLMService {
                     throw new AIException("Error parsing JSON response: " + response);
                   }
                 }
+                meterRegistry
+                    .counter("OpenAILLMService.translate.result", "success", "true")
+                    .increment();
                 return response;
               }
               String message =
@@ -193,7 +197,21 @@ public class OpenAILLMService implements LLMService {
               logger.error(message);
               throw new AIException(message);
             })
+        .doOnError(
+            e ->
+                meterRegistry
+                    .counter(
+                        "OpenAILLMService.translate.result",
+                        Tags.of("success", "false", "retryable", "true"))
+                    .increment())
         .retryWhen(llmTranslateRetryConfig)
+        .doOnError(
+            e ->
+                meterRegistry
+                    .counter(
+                        "OpenAILLMService.translate.result",
+                        Tags.of("success", "false", "retryable", "false"))
+                    .increment())
         .blockOptional()
         .orElseThrow(() -> new AIException("Error translating text unit " + tmTextUnit.getId()));
   }
@@ -351,7 +369,7 @@ public class OpenAILLMService implements LLMService {
       }
     } else {
       // Remove the entire template block from the prompt if we have no value for the placeholder,
-      // removing new line characters if they exist immediately after the template
+      // also removing new line characters if they exist immediately after the template ends
       String regex =
           "\\{\\{optional: [^\\{\\}]*"
               + Pattern.quote(placeholder)

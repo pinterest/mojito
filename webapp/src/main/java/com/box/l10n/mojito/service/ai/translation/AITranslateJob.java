@@ -7,9 +7,10 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.entity.RepositoryLocaleAIPrompt;
 import com.box.l10n.mojito.entity.TMTextUnit;
+import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
 import com.box.l10n.mojito.entity.TmTextUnitPendingMT;
-import com.box.l10n.mojito.quartz.QuartzPollableJob;
+import com.box.l10n.mojito.rest.ai.AIException;
 import com.box.l10n.mojito.service.ai.LLMService;
 import com.box.l10n.mojito.service.ai.RepositoryLocaleAIPromptRepository;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
@@ -22,8 +23,13 @@ import io.micrometer.core.instrument.Tags;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.quartz.DisallowConcurrentExecution;
+import org.quartz.Job;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +39,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 @ConditionalOnProperty(value = "l10n.ai.translation.enabled", havingValue = "true")
-public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void> {
+@DisallowConcurrentExecution
+/**
+ * Quartz job that translates text units in batches via AI.
+ *
+ * @author maallen
+ */
+public class AITranslateJob implements Job {
 
   static Logger logger = LoggerFactory.getLogger(AITranslateJob.class);
 
@@ -57,6 +69,9 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
 
   @Autowired AITranslationTextUnitFilterService aiTranslationTextUnitFilterService;
 
+  @Value("${l10n.ai.translation.pendingMT.batchSize:1000}")
+  int batchSize;
+
   /**
    * Duration after which a pending MT is considered expired and will not be processed in AI
    * translation (as it will be eligible for third party syncs once the entity is older than the
@@ -71,70 +86,63 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
   @Value("${l10n.ai.translation.reuseSourceOnLanguageMatch:false}")
   boolean isReuseSourceOnLanguageMatch;
 
-  @Override
-  @Timed("AITranslateJob.call")
-  public Void call(AITranslateJobInput input) throws Exception {
+  @Value("${l10n.ai.translation.cron:0 0/10 * * * ?}")
+  String incidentCheckCron;
+
+  @Timed("AITranslateJob.translate")
+  public void translate(Repository repository, TMTextUnit tmTextUnit, TmTextUnitPendingMT pendingMT)
+      throws AIException {
 
     try {
-      Repository repository =
-          repositoryRepository
-              .findById(input.getRepositoryId())
-              .orElseThrow(
-                  () ->
-                      new AITranslateJobException(
-                          "Repository with id " + input.getRepositoryId() + " not found."));
-
-      TmTextUnitPendingMT pendingMT =
-          tmTextUnitPendingMTRepository.findByTmTextUnitId(input.getTmTextUnitId());
-
       if (pendingMT != null) {
         if (!isExpired(pendingMT)) {
-          tmTextUnitRepository
-              .findById(input.getTmTextUnitId())
-              .ifPresent(
-                  tmTextUnit -> {
-                    if (aiTranslationTextUnitFilterService.isTranslatable(tmTextUnit, repository)) {
-                      translateLocales(tmTextUnit, repository, input.getLocales());
-                    } else {
-                      logger.debug(
-                          "Text unit with name: {} should not be translated, skipping AI translation.",
-                          tmTextUnit.getName());
-                      meterRegistry.counter(
-                          "AITranslateJob.translate.notTranslatable",
-                          Tags.of("repository", repository.getName()));
-                    }
-                  });
-          meterRegistry
-              .timer("AITranslateJob.timeToMT", Tags.of("repository", repository.getName()))
-              .record(Duration.between(JSR310Migration.dateTimeNow(), pendingMT.getCreatedDate()));
+
+          Set<Locale> localesWithVariants =
+              tmTextUnitCurrentVariantRepository.findByTmTextUnit_Id(tmTextUnit.getId()).stream()
+                  .map(TMTextUnitCurrentVariant::getLocale)
+                  .collect(Collectors.toSet());
+          List<Locale> localesForMT =
+              repository.getRepositoryLocales().stream()
+                  .map(RepositoryLocale::getLocale)
+                  .filter(
+                      locale ->
+                          !localesWithVariants.contains(locale)
+                              && !repository.getSourceLocale().equals(locale))
+                  .collect(Collectors.toUnmodifiableList());
+          if (aiTranslationTextUnitFilterService.isTranslatable(tmTextUnit, repository)) {
+            translateLocales(tmTextUnit, repository, localesForMT);
+            meterRegistry
+                .timer("AITranslateJob.timeToMT", Tags.of("repository", repository.getName()))
+                .record(
+                    Duration.between(JSR310Migration.dateTimeNow(), pendingMT.getCreatedDate()));
+          } else {
+            logger.debug(
+                "Text unit with name: {} should not be translated, skipping AI translation.",
+                tmTextUnit.getName());
+            meterRegistry.counter(
+                "AITranslateJob.translate.notTranslatable",
+                Tags.of("repository", repository.getName()));
+          }
         } else {
           // If the pending MT is expired, log an error and delete it
-          logger.error("Pending MT for tmTextUnitId: {} is expired", input.getTmTextUnitId());
+          logger.error("Pending MT for tmTextUnitId: {} is expired", tmTextUnit.getId());
           meterRegistry.counter(
               "AITranslateJob.expired", Tags.of("repository", repository.getName()));
         }
-      } else {
-        logger.warn("No pending MT found for tmTextUnitId: {}", input.getTmTextUnitId());
-        meterRegistry.counter(
-            "AITranslateJob.noPendingMTFound", Tags.of("repository", repository.getName()));
       }
     } catch (Exception e) {
-      logger.error("Error running job for text unit id {}", input.getTmTextUnitId(), e);
-      meterRegistry.counter(
-          "AITranslateJob.error", Tags.of("repository", input.getRepositoryId().toString()));
+      logger.error("Error running job for text unit id {}", tmTextUnit.getId(), e);
+      meterRegistry.counter("AITranslateJob.error", Tags.of("repository", repository.getName()));
     } finally {
-      TmTextUnitPendingMT pendingMT =
-          tmTextUnitPendingMTRepository.findByTmTextUnitId(input.getTmTextUnitId());
       if (pendingMT != null) {
-        logger.debug("Deleting pending MT for tmTextUnitId: {}", input.getTmTextUnitId());
+        logger.debug("Deleting pending MT for tmTextUnitId: {}", tmTextUnit.getId());
         tmTextUnitPendingMTRepository.delete(pendingMT);
       }
     }
-    return null;
   }
 
   private void translateLocales(
-      TMTextUnit tmTextUnit, Repository repository, List<String> bcp47Tags) {
+      TMTextUnit tmTextUnit, Repository repository, List<Locale> localesForMT) {
 
     Map<String, RepositoryLocaleAIPrompt> repositoryLocaleAIPrompts =
         repositoryLocaleAIPromptRepository
@@ -148,56 +156,48 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
                             ? rlap.getLocale().getBcp47Tag()
                             : REPOSITORY_DEFAULT_PROMPT,
                     Function.identity()));
-    repository.getRepositoryLocales().stream()
-        .map(RepositoryLocale::getLocale)
-        .filter(locale -> bcp47Tags.contains(locale.getBcp47Tag()))
-        .forEach(
-            targetLocale -> {
-              try {
-                String sourceLang = repository.getSourceLocale().getBcp47Tag().split("-")[0];
-                if (isReuseSourceOnLanguageMatch
-                    && targetLocale.getBcp47Tag().startsWith(sourceLang)) {
-                  reuseSourceStringAsTranslation(tmTextUnit, repository, targetLocale, sourceLang);
-                  return;
-                }
-                // Get the prompt override for this locale if it exists, otherwise use the
-                // repository default
-                RepositoryLocaleAIPrompt repositoryLocaleAIPrompt =
-                    repositoryLocaleAIPrompts.get(targetLocale.getBcp47Tag()) != null
-                        ? repositoryLocaleAIPrompts.get(targetLocale.getBcp47Tag())
-                        : repositoryLocaleAIPrompts.get(REPOSITORY_DEFAULT_PROMPT);
-                if (repositoryLocaleAIPrompt != null && !repositoryLocaleAIPrompt.isDisabled()) {
-                  logger.info(
-                      "Translating text unit id {} for locale: {} using prompt: {}",
-                      tmTextUnit.getId(),
-                      targetLocale.getBcp47Tag(),
-                      repositoryLocaleAIPrompt.getAiPrompt().getId());
-                  executeTranslationPrompt(
-                      tmTextUnit, repository, targetLocale, repositoryLocaleAIPrompt);
-                } else {
-                  logger.debug(
-                      "No active translation prompt found for locale: {}, skipping AI translation.",
-                      targetLocale.getBcp47Tag());
-                  meterRegistry.counter(
-                      "AITranslateJob.translate.noActivePrompt",
-                      Tags.of(
-                          "repository",
-                          repository.getName(),
-                          "locale",
-                          targetLocale.getBcp47Tag()));
-                }
-              } catch (Exception e) {
-                logger.error(
-                    "Error translating text unit id {} for locale: {}",
-                    tmTextUnit.getId(),
-                    targetLocale.getBcp47Tag(),
-                    e);
-                meterRegistry.counter(
-                    "AITranslateJob.translate.error",
-                    Tags.of(
-                        "repository", repository.getName(), "locale", targetLocale.getBcp47Tag()));
-              }
-            });
+    localesForMT.forEach(
+        targetLocale -> {
+          try {
+            String sourceLang = repository.getSourceLocale().getBcp47Tag().split("-")[0];
+            if (isReuseSourceOnLanguageMatch && targetLocale.getBcp47Tag().startsWith(sourceLang)) {
+              reuseSourceStringAsTranslation(tmTextUnit, repository, targetLocale, sourceLang);
+              return;
+            }
+            // Get the prompt override for this locale if it exists, otherwise use the
+            // repository default
+            RepositoryLocaleAIPrompt repositoryLocaleAIPrompt =
+                repositoryLocaleAIPrompts.get(targetLocale.getBcp47Tag()) != null
+                    ? repositoryLocaleAIPrompts.get(targetLocale.getBcp47Tag())
+                    : repositoryLocaleAIPrompts.get(REPOSITORY_DEFAULT_PROMPT);
+            if (repositoryLocaleAIPrompt != null && !repositoryLocaleAIPrompt.isDisabled()) {
+              logger.info(
+                  "Translating text unit id {} for locale: {} using prompt: {}",
+                  tmTextUnit.getId(),
+                  targetLocale.getBcp47Tag(),
+                  repositoryLocaleAIPrompt.getAiPrompt().getId());
+              executeTranslationPrompt(
+                  tmTextUnit, repository, targetLocale, repositoryLocaleAIPrompt);
+            } else {
+              logger.debug(
+                  "No active translation prompt found for locale: {}, skipping AI translation.",
+                  targetLocale.getBcp47Tag());
+              meterRegistry.counter(
+                  "AITranslateJob.translate.noActivePrompt",
+                  Tags.of(
+                      "repository", repository.getName(), "locale", targetLocale.getBcp47Tag()));
+            }
+          } catch (Exception e) {
+            logger.error(
+                "Error translating text unit id {} for locale: {}",
+                tmTextUnit.getId(),
+                targetLocale.getBcp47Tag(),
+                e);
+            meterRegistry.counter(
+                "AITranslateJob.translate.error",
+                Tags.of("repository", repository.getName(), "locale", targetLocale.getBcp47Tag()));
+          }
+        });
   }
 
   private void reuseSourceStringAsTranslation(
@@ -248,5 +248,39 @@ public class AITranslateJob extends QuartzPollableJob<AITranslateJobInput, Void>
     return pendingMT
         .getCreatedDate()
         .isBefore(JSR310Migration.newDateTimeEmptyCtor().minus(expiryDuration));
+  }
+
+  /**
+   * Iterates over all pending MTs and translates them.
+   *
+   * <p>As each individual {@link TMTextUnit} is translated into all locales, the associated {@link
+   * TmTextUnitPendingMT} is deleted.
+   *
+   * @param jobExecutionContext
+   * @throws JobExecutionException
+   */
+  @Override
+  @Timed("AITranslateJob.execute")
+  public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
+    logger.info("Executing AITranslateJob");
+    List<TmTextUnitPendingMT> pendingMTs;
+    do {
+      pendingMTs = tmTextUnitPendingMTRepository.findBatch(batchSize);
+      logger.info("Processing {} pending MTs", pendingMTs.size());
+      pendingMTs.forEach(
+          pendingMT -> {
+            TMTextUnit tmTextUnit = getTmTextUnit(pendingMT);
+            Repository repository = tmTextUnit.getAsset().getRepository();
+            translate(repository, tmTextUnit, pendingMT);
+          });
+    } while (!pendingMTs.isEmpty());
+    logger.info("Finished executing AITranslateJob");
+  }
+
+  private TMTextUnit getTmTextUnit(TmTextUnitPendingMT pendingMT) {
+    return tmTextUnitRepository
+        .findByIdWithAssetAndRepositoryFetched(pendingMT.getTmTextUnitId())
+        .orElseThrow(
+            () -> new AIException("TMTextUnit not found for id: " + pendingMT.getTmTextUnitId()));
   }
 }

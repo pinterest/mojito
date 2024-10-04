@@ -1,8 +1,10 @@
 package com.box.l10n.mojito.service.ai.translation;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -10,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.AIPrompt;
+import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.PromptType;
 import com.box.l10n.mojito.entity.Repository;
@@ -29,6 +32,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.assertj.core.util.Lists;
@@ -36,6 +40,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
 
 public class AITranslateJobTest {
 
@@ -59,11 +65,13 @@ public class AITranslateJobTest {
 
   @Mock TMTextUnitCurrentVariantRepository tmTextUnitCurrentVariantRepository;
 
+  @Mock Repository repository;
+
   AITranslateJob aiTranslateJob;
 
-  AITranslateJobInput aiTranslateJobInput;
+  TMTextUnit tmTextUnit;
 
-  List<String> bcp47Tags = Lists.list("fr-FR", "de-DE", "en-IE");
+  TmTextUnitPendingMT tmTextUnitPendingMT;
 
   @Before
   public void setup() {
@@ -79,12 +87,9 @@ public class AITranslateJobTest {
     aiTranslateJob.aiTranslationTextUnitFilterService = aiTranslationTextUnitFilterService;
     aiTranslateJob.tmTextUnitCurrentVariantRepository = tmTextUnitCurrentVariantRepository;
     aiTranslateJob.expiryDuration = Duration.ofHours(3);
+    aiTranslateJob.batchSize = 5;
     aiTranslateJob.isReuseSourceOnLanguageMatch = false;
 
-    aiTranslateJobInput = new AITranslateJobInput();
-    aiTranslateJobInput.setRepositoryId(1L);
-    aiTranslateJobInput.setTmTextUnitId(1L);
-    aiTranslateJobInput.setLocales(bcp47Tags);
     Repository testRepo = new Repository();
     testRepo.setId(1L);
     testRepo.setName("testRepo");
@@ -115,11 +120,11 @@ public class AITranslateJobTest {
     testRepo.setSourceLocale(english);
 
     when(repositoryRepository.findById(1L)).thenReturn(Optional.of(testRepo));
-    TmTextUnitPendingMT testPendingMT = new TmTextUnitPendingMT();
-    testPendingMT.setTmTextUnitId(1L);
-    testPendingMT.setId(1L);
-    testPendingMT.setCreatedDate(JSR310Migration.dateTimeNow());
-    when(tmTextUnitPendingMTRepository.findByTmTextUnitId(1L)).thenReturn(testPendingMT);
+    tmTextUnitPendingMT = new TmTextUnitPendingMT();
+    tmTextUnitPendingMT.setTmTextUnitId(1L);
+    tmTextUnitPendingMT.setId(1L);
+    tmTextUnitPendingMT.setCreatedDate(JSR310Migration.dateTimeNow());
+    when(tmTextUnitPendingMTRepository.findByTmTextUnitId(1L)).thenReturn(tmTextUnitPendingMT);
     when(aiTranslationTextUnitFilterService.isTranslatable(
             isA(TMTextUnit.class), isA(Repository.class)))
         .thenReturn(true);
@@ -142,11 +147,14 @@ public class AITranslateJobTest {
     testPrompt3.setLocale(null);
     testPrompt3.setAiPrompt(aiPrompt);
 
-    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit = new TMTextUnit();
     tmTextUnit.setId(1L);
     tmTextUnit.setContent("content");
     tmTextUnit.setComment("comment");
     tmTextUnit.setName("name");
+    Asset asset = new Asset();
+    asset.setRepository(repository);
+    tmTextUnit.setAsset(asset);
     when(tmTextUnitRepository.findById(1L)).thenReturn(Optional.of(tmTextUnit));
     when(repositoryLocaleAIPromptRepository.getActivePromptsByRepositoryAndPromptType(
             testRepo.getId(), PromptType.TRANSLATION.toString()))
@@ -156,11 +164,22 @@ public class AITranslateJobTest {
         .thenReturn("translated");
     when(tmTextUnitCurrentVariantRepository.findByLocale_IdAndTmTextUnit_Id(any(), any()))
         .thenReturn(null);
+    when(repository.getId()).thenReturn(1L);
+    when(repository.getName()).thenReturn("testRepo");
+    when(repository.getRepositoryLocales())
+        .thenReturn(
+            Sets.newHashSet(
+                englishRepoLocale, frenchRepoLocale, germanRepoLocale, hibernoEnglishRepoLocale));
+    when(repository.getSourceLocale()).thenReturn(english);
+    when(meterRegistry.timer(anyString(), isA((Iterable.class))))
+        .thenReturn(mock(io.micrometer.core.instrument.Timer.class));
+    when(tmTextUnitRepository.findByIdWithAssetAndRepositoryFetched(1L))
+        .thenReturn(Optional.of(tmTextUnit));
   }
 
   @Test
   public void testTranslateSuccess() throws Exception {
-    aiTranslateJob.call(aiTranslateJobInput);
+    aiTranslateJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
     verify(llmService, times(3))
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
@@ -196,7 +215,7 @@ public class AITranslateJobTest {
 
   @Test
   public void testTranslateFailure() throws Exception {
-    aiTranslateJob.call(aiTranslateJobInput);
+    aiTranslateJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
     when(llmService.translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class)))
         .thenThrow(new RuntimeException("test"));
@@ -209,7 +228,7 @@ public class AITranslateJobTest {
   @Test
   public void testTranslateReuseSource() throws Exception {
     aiTranslateJob.isReuseSourceOnLanguageMatch = true;
-    aiTranslateJob.call(aiTranslateJobInput);
+    aiTranslateJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
     verify(llmService, times(2))
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
@@ -250,7 +269,7 @@ public class AITranslateJobTest {
     TmTextUnitPendingMT expiredPendingMT = new TmTextUnitPendingMT();
     expiredPendingMT.setCreatedDate(ZonedDateTime.now().minusHours(4));
     when(tmTextUnitPendingMTRepository.findByTmTextUnitId(1L)).thenReturn(expiredPendingMT);
-    aiTranslateJob.call(aiTranslateJobInput);
+    aiTranslateJob.translate(repository, tmTextUnit, expiredPendingMT);
     verify(llmService, never())
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
@@ -290,7 +309,7 @@ public class AITranslateJobTest {
     when(aiTranslationTextUnitFilterService.isTranslatable(
             isA(TMTextUnit.class), isA(Repository.class)))
         .thenReturn(false);
-    aiTranslateJob.call(aiTranslateJobInput);
+    aiTranslateJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
     verify(llmService, never())
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
@@ -322,5 +341,52 @@ public class AITranslateJobTest {
             eq(false),
             isA(ZonedDateTime.class));
     verify(tmTextUnitPendingMTRepository, times(1)).delete(isA(TmTextUnitPendingMT.class));
+  }
+
+  @Test
+  public void testBatchLogic() throws JobExecutionException {
+    List<TmTextUnitPendingMT> pendingMTList =
+        Lists.list(
+            tmTextUnitPendingMT,
+            tmTextUnitPendingMT,
+            tmTextUnitPendingMT,
+            tmTextUnitPendingMT,
+            tmTextUnitPendingMT);
+    when(tmTextUnitPendingMTRepository.findBatch(5))
+        .thenReturn(pendingMTList)
+        .thenReturn(pendingMTList)
+        .thenReturn(Collections.emptyList());
+    aiTranslateJob.execute(mock(JobExecutionContext.class));
+    verify(llmService, times(30))
+        .translate(
+            isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
+    verify(tmService, times(10))
+        .addTMTextUnitVariant(
+            eq(1L),
+            eq(2L),
+            eq("translated"),
+            eq("comment"),
+            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
+            eq(false),
+            isA(ZonedDateTime.class));
+    verify(tmService, times(10))
+        .addTMTextUnitVariant(
+            eq(1L),
+            eq(3L),
+            eq("translated"),
+            eq("comment"),
+            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
+            eq(false),
+            isA(ZonedDateTime.class));
+    verify(tmService, times(10))
+        .addTMTextUnitVariant(
+            eq(1L),
+            eq(4L),
+            eq("translated"),
+            eq("comment"),
+            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
+            eq(false),
+            isA(ZonedDateTime.class));
+    verify(tmTextUnitPendingMTRepository, times(10)).delete(isA(TmTextUnitPendingMT.class));
   }
 }

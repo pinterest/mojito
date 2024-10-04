@@ -61,6 +61,8 @@ class OpenAILLMServiceTest {
     openAILLMService.init();
     when(meterRegistry.counter(anyString(), any(String[].class)))
         .thenReturn(mock(io.micrometer.core.instrument.Counter.class));
+    when(meterRegistry.counter(anyString(), any(Iterable.class)))
+        .thenReturn(mock(io.micrometer.core.instrument.Counter.class));
   }
 
   @Test

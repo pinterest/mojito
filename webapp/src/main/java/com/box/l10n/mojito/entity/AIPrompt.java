@@ -50,6 +50,9 @@ public class AIPrompt extends BaseEntity {
   @OrderBy("orderIndex ASC")
   List<AIPromptContextMessage> contextMessages;
 
+  @Column(name = "json_response")
+  private boolean jsonResponse;
+
   public String getModelName() {
     return modelName;
   }
@@ -120,5 +123,13 @@ public class AIPrompt extends BaseEntity {
 
   public void setPromptType(AIPromptType promptType) {
     this.promptType = promptType;
+  }
+
+  public boolean isJsonResponse() {
+    return jsonResponse;
+  }
+
+  public void setJsonResponse(boolean jsonResponse) {
+    this.jsonResponse = jsonResponse;
   }
 }
