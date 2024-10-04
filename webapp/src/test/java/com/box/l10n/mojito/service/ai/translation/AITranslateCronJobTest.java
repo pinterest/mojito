@@ -43,7 +43,7 @@ import org.mockito.MockitoAnnotations;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
-public class AITranslateJobTest {
+public class AITranslateCronJobTest {
 
   @Mock TMService tmService;
 
@@ -67,7 +67,7 @@ public class AITranslateJobTest {
 
   @Mock Repository repository;
 
-  AITranslateJob aiTranslateJob;
+  AITranslateCronJob aiTranslateCronJob;
 
   TMTextUnit tmTextUnit;
 
@@ -76,19 +76,19 @@ public class AITranslateJobTest {
   @Before
   public void setup() {
     MockitoAnnotations.openMocks(this);
-    aiTranslateJob = new AITranslateJob();
-    aiTranslateJob.tmService = tmService;
-    aiTranslateJob.meterRegistry = meterRegistry;
-    aiTranslateJob.llmService = llmService;
-    aiTranslateJob.tmTextUnitRepository = tmTextUnitRepository;
-    aiTranslateJob.tmTextUnitPendingMTRepository = tmTextUnitPendingMTRepository;
-    aiTranslateJob.repositoryRepository = repositoryRepository;
-    aiTranslateJob.repositoryLocaleAIPromptRepository = repositoryLocaleAIPromptRepository;
-    aiTranslateJob.aiTranslationTextUnitFilterService = aiTranslationTextUnitFilterService;
-    aiTranslateJob.tmTextUnitCurrentVariantRepository = tmTextUnitCurrentVariantRepository;
-    aiTranslateJob.expiryDuration = Duration.ofHours(3);
-    aiTranslateJob.batchSize = 5;
-    aiTranslateJob.isReuseSourceOnLanguageMatch = false;
+    aiTranslateCronJob = new AITranslateCronJob();
+    aiTranslateCronJob.tmService = tmService;
+    aiTranslateCronJob.meterRegistry = meterRegistry;
+    aiTranslateCronJob.llmService = llmService;
+    aiTranslateCronJob.tmTextUnitRepository = tmTextUnitRepository;
+    aiTranslateCronJob.tmTextUnitPendingMTRepository = tmTextUnitPendingMTRepository;
+    aiTranslateCronJob.repositoryRepository = repositoryRepository;
+    aiTranslateCronJob.repositoryLocaleAIPromptRepository = repositoryLocaleAIPromptRepository;
+    aiTranslateCronJob.aiTranslationTextUnitFilterService = aiTranslationTextUnitFilterService;
+    aiTranslateCronJob.tmTextUnitCurrentVariantRepository = tmTextUnitCurrentVariantRepository;
+    aiTranslateCronJob.expiryDuration = Duration.ofHours(3);
+    aiTranslateCronJob.batchSize = 5;
+    aiTranslateCronJob.isReuseSourceOnLanguageMatch = false;
 
     Repository testRepo = new Repository();
     testRepo.setId(1L);
@@ -179,7 +179,7 @@ public class AITranslateJobTest {
 
   @Test
   public void testTranslateSuccess() throws Exception {
-    aiTranslateJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
+    aiTranslateCronJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
     verify(llmService, times(3))
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
@@ -215,7 +215,7 @@ public class AITranslateJobTest {
 
   @Test
   public void testTranslateFailure() throws Exception {
-    aiTranslateJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
+    aiTranslateCronJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
     when(llmService.translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class)))
         .thenThrow(new RuntimeException("test"));
@@ -227,8 +227,8 @@ public class AITranslateJobTest {
 
   @Test
   public void testTranslateReuseSource() throws Exception {
-    aiTranslateJob.isReuseSourceOnLanguageMatch = true;
-    aiTranslateJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
+    aiTranslateCronJob.isReuseSourceOnLanguageMatch = true;
+    aiTranslateCronJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
     verify(llmService, times(2))
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
@@ -269,7 +269,7 @@ public class AITranslateJobTest {
     TmTextUnitPendingMT expiredPendingMT = new TmTextUnitPendingMT();
     expiredPendingMT.setCreatedDate(ZonedDateTime.now().minusHours(4));
     when(tmTextUnitPendingMTRepository.findByTmTextUnitId(1L)).thenReturn(expiredPendingMT);
-    aiTranslateJob.translate(repository, tmTextUnit, expiredPendingMT);
+    aiTranslateCronJob.translate(repository, tmTextUnit, expiredPendingMT);
     verify(llmService, never())
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
@@ -309,7 +309,7 @@ public class AITranslateJobTest {
     when(aiTranslationTextUnitFilterService.isTranslatable(
             isA(TMTextUnit.class), isA(Repository.class)))
         .thenReturn(false);
-    aiTranslateJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
+    aiTranslateCronJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
     verify(llmService, never())
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
@@ -356,7 +356,7 @@ public class AITranslateJobTest {
         .thenReturn(pendingMTList)
         .thenReturn(pendingMTList)
         .thenReturn(Collections.emptyList());
-    aiTranslateJob.execute(mock(JobExecutionContext.class));
+    aiTranslateCronJob.execute(mock(JobExecutionContext.class));
     verify(llmService, times(30))
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));

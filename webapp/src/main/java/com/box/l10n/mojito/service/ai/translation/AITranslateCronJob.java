@@ -28,26 +28,34 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
+import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.quartz.CronTriggerFactoryBean;
+import org.springframework.scheduling.quartz.JobDetailFactoryBean;
 import org.springframework.stereotype.Component;
 
-@Component
-@ConditionalOnProperty(value = "l10n.ai.translation.enabled", havingValue = "true")
-@DisallowConcurrentExecution
 /**
  * Quartz job that translates text units in batches via AI.
  *
  * @author maallen
  */
-public class AITranslateJob implements Job {
+@Component
+@Configuration
+@ConditionalOnProperty(value = "l10n.ai.translation.enabled", havingValue = "true")
+@DisallowConcurrentExecution
+public class AITranslateCronJob implements Job {
 
-  static Logger logger = LoggerFactory.getLogger(AITranslateJob.class);
+  static Logger logger = LoggerFactory.getLogger(AITranslateCronJob.class);
 
   private static final String REPOSITORY_DEFAULT_PROMPT = "repository_default_prompt";
 
@@ -57,7 +65,7 @@ public class AITranslateJob implements Job {
 
   @Autowired TMTextUnitCurrentVariantRepository tmTextUnitCurrentVariantRepository;
 
-  @Autowired TMService tmService;
+  @Lazy @Autowired TMService tmService;
 
   @Autowired LLMService llmService;
 
@@ -282,5 +290,23 @@ public class AITranslateJob implements Job {
         .findByIdWithAssetAndRepositoryFetched(pendingMT.getTmTextUnitId())
         .orElseThrow(
             () -> new AIException("TMTextUnit not found for id: " + pendingMT.getTmTextUnitId()));
+  }
+
+  @Bean(name = "aiTranslateCron")
+  public JobDetailFactoryBean jobDetailAiTranslateCronJob() {
+    JobDetailFactoryBean jobDetailFactory = new JobDetailFactoryBean();
+    jobDetailFactory.setJobClass(AITranslateCronJob.class);
+    jobDetailFactory.setDescription("Translate text units in batches via AI");
+    jobDetailFactory.setDurability(true);
+    return jobDetailFactory;
+  }
+
+  @Bean
+  public CronTriggerFactoryBean triggerSlaCheckerCronJob(
+      @Qualifier("aiTranslateCron") JobDetail job) {
+    CronTriggerFactoryBean trigger = new CronTriggerFactoryBean();
+    trigger.setJobDetail(job);
+    trigger.setCronExpression(incidentCheckCron);
+    return trigger;
   }
 }
