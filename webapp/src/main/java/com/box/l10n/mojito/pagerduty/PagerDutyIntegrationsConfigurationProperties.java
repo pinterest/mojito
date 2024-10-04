@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.pagerduty;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +12,11 @@ public class PagerDutyIntegrationsConfigurationProperties {
   private Map<String, String> pagerDutyIntegrations;
 
   public Map<String, String> getPagerDutyIntegrations() {
+    // If there is no defined integrations in app properties just set to an empty hash map to avoid
+    // errors
+    if (pagerDutyIntegrations == null) {
+      pagerDutyIntegrations = new HashMap<>();
+    }
     return pagerDutyIntegrations;
   }
 
