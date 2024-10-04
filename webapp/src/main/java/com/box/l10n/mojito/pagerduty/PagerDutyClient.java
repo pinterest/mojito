@@ -47,6 +47,13 @@ public class PagerDutyClient {
   private void sendPayload(
       String dedupKey, PagerDutyPayload payload, PagerDutyPostRequest.EventAction eventAction)
       throws JsonProcessingException, PagerDutyException {
+
+    if (integrationKey == null || integrationKey.isEmpty())
+      throw new PagerDutyException("Integration key should not be null or empty.");
+
+    if (dedupKey == null || dedupKey.isEmpty())
+      throw new PagerDutyException("Deduplication key should not be null or empty.");
+
     PagerDutyPostRequest postBody = new PagerDutyPostRequest(integrationKey, dedupKey);
     postBody.setPayload(payload);
     postBody.setEventAction(eventAction);
