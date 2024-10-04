@@ -389,4 +389,39 @@ public class AITranslateCronJobTest {
             isA(ZonedDateTime.class));
     verify(tmTextUnitPendingMTRepository, times(10)).delete(isA(TmTextUnitPendingMT.class));
   }
+
+  @Test
+  public void testBatchRequestFailLogic() throws JobExecutionException {
+    // Test verifies that if a single locale fails to translate, the rest of the batch is still
+    // processed
+    List<TmTextUnitPendingMT> pendingMTList =
+        Lists.list(
+            tmTextUnitPendingMT,
+            tmTextUnitPendingMT,
+            tmTextUnitPendingMT,
+            tmTextUnitPendingMT,
+            tmTextUnitPendingMT);
+    when(tmTextUnitPendingMTRepository.findBatch(5))
+        .thenReturn(pendingMTList)
+        .thenReturn(pendingMTList)
+        .thenReturn(Collections.emptyList());
+    when(llmService.translate(
+            isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class)))
+        .thenThrow(new RuntimeException("test"))
+        .thenReturn("translated");
+    aiTranslateCronJob.execute(mock(JobExecutionContext.class));
+    verify(llmService, times(30))
+        .translate(
+            isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
+    verify(tmService, times(29))
+        .addTMTextUnitVariant(
+            any(),
+            any(),
+            eq("translated"),
+            eq("comment"),
+            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
+            eq(false),
+            isA(ZonedDateTime.class));
+    verify(tmTextUnitPendingMTRepository, times(10)).delete(isA(TmTextUnitPendingMT.class));
+  }
 }
