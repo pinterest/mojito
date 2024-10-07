@@ -27,16 +27,22 @@ public class PagerDutyClient {
       "PagerDuty request failed: Status Code: '{0}', Response Body: '{1}'";
 
   private HttpClient httpClient = HttpClient.newHttpClient();
-  private final String integrationKey;
+  private String integrationKey;
 
   public PagerDutyClient(String integrationKey) {
-    this.integrationKey = integrationKey;
+    setIntegrationKey(integrationKey);
   }
 
   public PagerDutyClient(String integrationKey, HttpClient httpClient) {
     // Constructor for unit tests
-    this.integrationKey = integrationKey;
+    setIntegrationKey(integrationKey);
     this.httpClient = httpClient;
+  }
+
+  private void setIntegrationKey(String integrationKey) {
+    if (integrationKey == null || integrationKey.isEmpty())
+      throw new IllegalArgumentException("Pager Duty integration key is null or empty.");
+    this.integrationKey = integrationKey;
   }
 
   /**
@@ -62,9 +68,6 @@ public class PagerDutyClient {
   private void sendPayload(
       String dedupKey, PagerDutyPayload payload, PagerDutyPostData.EventAction eventAction)
       throws PagerDutyException {
-
-    if (integrationKey == null || integrationKey.isEmpty())
-      throw new PagerDutyException("Integration key should not be null or empty.");
 
     if (dedupKey == null || dedupKey.isEmpty())
       throw new PagerDutyException("Deduplication key should not be null or empty.");

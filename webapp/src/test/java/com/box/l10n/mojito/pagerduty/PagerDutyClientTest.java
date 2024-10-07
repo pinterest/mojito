@@ -197,23 +197,18 @@ public class PagerDutyClientTest {
             Mockito.any(HttpRequest.class), Mockito.any(HttpResponse.BodyHandler.class)))
         .thenReturn(httpResponse);
 
-    pagerDutyClient = new PagerDutyClient(null, httpClient);
-
     try {
-      pagerDutyClient.triggerIncident("dedupKey", samplePayload);
+      pagerDutyClient = new PagerDutyClient(null, httpClient);
       fail("PagerDutyClient should throw exception for null integration key.");
-    } catch (PagerDutyException e) {
+    } catch (IllegalArgumentException e) {
 
     }
 
-    pagerDutyClient = new PagerDutyClient("", httpClient);
     try {
-      pagerDutyClient.resolveIncident(null);
-      fail("PagerDutyClient should throw exception for empty integration key.");
-    } catch (PagerDutyException e) {
-    }
+      pagerDutyClient = new PagerDutyClient("", httpClient);
+      fail("PagerDutyClient should throw exception for null integration key.");
+    } catch (IllegalArgumentException e) {
 
-    verify(httpClient, never())
-        .send(Mockito.any(HttpRequest.class), Mockito.any(HttpResponse.BodyHandler.class));
+    }
   }
 }
