@@ -32,7 +32,6 @@ public class PagerDutyClientTest {
 
   @BeforeEach
   public void setup() {
-    // Setup Slack clients
     httpClient = mock(HttpClient.class);
     httpResponse = mock(HttpResponse.class);
 

@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @ConfigurationProperties("l10n")
-public class PagerDutyIntegrationsConfigurationProperties {
+public class PagerDutyIntegrationsConfiguration {
 
   private Map<String, String> pagerDutyIntegrations;
 

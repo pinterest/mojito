@@ -8,17 +8,16 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
 @Component
-@DependsOn("pagerDutyIntegrationsConfigurationProperties")
+@DependsOn("pagerDutyIntegrationsConfiguration")
 public class PagerDutyIntegrations {
 
-  private final PagerDutyIntegrationsConfigurationProperties
-      pagerDutyIntegrationsConfigurationProperties;
+  private final PagerDutyIntegrationsConfiguration pagerDutyIntegrationsConfigurationProperties;
 
   private Map<String, PagerDutyClient> pagerDutyClients;
 
   @Autowired
   public PagerDutyIntegrations(
-      PagerDutyIntegrationsConfigurationProperties pagerDutyIntegrationsConfigurationProperties) {
+      PagerDutyIntegrationsConfiguration pagerDutyIntegrationsConfigurationProperties) {
     this.pagerDutyIntegrationsConfigurationProperties =
         pagerDutyIntegrationsConfigurationProperties;
 
