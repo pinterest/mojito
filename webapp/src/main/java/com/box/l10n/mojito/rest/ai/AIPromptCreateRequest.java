@@ -12,6 +12,7 @@ public class AIPromptCreateRequest {
   private boolean deleted;
   private String repositoryName;
   private String promptType;
+  private boolean isJsonResponse;
 
   public boolean isDeleted() {
     return deleted;
@@ -67,5 +68,13 @@ public class AIPromptCreateRequest {
 
   public void setRepositoryName(String repositoryName) {
     this.repositoryName = repositoryName;
+  }
+
+  public boolean isJsonResponse() {
+    return isJsonResponse;
+  }
+
+  public void setJsonResponse(boolean jsonResponse) {
+    isJsonResponse = jsonResponse;
   }
 }

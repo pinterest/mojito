@@ -66,6 +66,7 @@ public class LLMPromptService implements PromptService {
     ZonedDateTime now = JSR310Migration.dateTimeNow();
     aiPrompt.setCreatedDate(now);
     aiPrompt.setLastModifiedDate(now);
+    aiPrompt.setJsonResponse(AIPromptCreateRequest.isJsonResponse());
     aiPromptRepository.save(aiPrompt);
     logger.debug("Created prompt with id: {}", aiPrompt.getId());
 
