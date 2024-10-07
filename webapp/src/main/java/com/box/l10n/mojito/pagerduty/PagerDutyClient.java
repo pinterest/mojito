@@ -10,6 +10,11 @@ import java.text.MessageFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * PagerDuty client for creating (triggering) and resolving incidents.
+ *
+ * @author mattwilshire
+ */
 public class PagerDutyClient {
 
   static Logger logger = LoggerFactory.getLogger(PagerDutyClient.class);
@@ -17,12 +22,11 @@ public class PagerDutyClient {
   static final String BASE_URL = "https://events.pagerduty.com";
   static final String ENQUEUE_PATH = "/v2/enqueue";
 
-  private HttpClient httpClient = HttpClient.newHttpClient();
-
   public static final int MAX_RETRIES = 3;
   public static String exceptionTemplate =
       "PagerDuty request failed: Status Code: '{0}', Response Body: '{1}'";
 
+  private HttpClient httpClient = HttpClient.newHttpClient();
   private final String integrationKey;
 
   public PagerDutyClient(String integrationKey) {
@@ -35,18 +39,29 @@ public class PagerDutyClient {
     this.httpClient = httpClient;
   }
 
-  public void triggerIncident(String dedupKey, PagerDutyPayload payload)
-      throws JsonProcessingException, PagerDutyException {
-    sendPayload(dedupKey, payload, PagerDutyPostRequest.EventAction.TRIGGER);
+  /**
+   * Trigger incident using a deduplication key and send PagerDutyPayload with it. The client will
+   * attempt to send the event request MAX_RETRIES times if an internal error is received from the
+   * server. If the max number of retries is reached, a bad request is received or the payload
+   * cannot be serialized a PagerDutyException is thrown.
+   */
+  public void triggerIncident(String dedupKey, PagerDutyPayload payload) throws PagerDutyException {
+    sendPayload(dedupKey, payload, PagerDutyPostData.EventAction.TRIGGER);
   }
 
-  public void resolveIncident(String dedupKey) throws JsonProcessingException, PagerDutyException {
-    sendPayload(dedupKey, null, PagerDutyPostRequest.EventAction.RESOLVE);
+  /**
+   * Resolve incident using a deduplication key. The client will attempt to send the event request
+   * MAX_RETRIES times if an internal error is received from the server. If the max number of
+   * retries is reached, a bad request is received or the payload cannot be serialized a
+   * PagerDutyException is thrown.
+   */
+  public void resolveIncident(String dedupKey) throws PagerDutyException {
+    sendPayload(dedupKey, null, PagerDutyPostData.EventAction.RESOLVE);
   }
 
   private void sendPayload(
-      String dedupKey, PagerDutyPayload payload, PagerDutyPostRequest.EventAction eventAction)
-      throws JsonProcessingException, PagerDutyException {
+      String dedupKey, PagerDutyPayload payload, PagerDutyPostData.EventAction eventAction)
+      throws PagerDutyException {
 
     if (integrationKey == null || integrationKey.isEmpty())
       throw new PagerDutyException("Integration key should not be null or empty.");
@@ -54,12 +69,16 @@ public class PagerDutyClient {
     if (dedupKey == null || dedupKey.isEmpty())
       throw new PagerDutyException("Deduplication key should not be null or empty.");
 
-    PagerDutyPostRequest postBody = new PagerDutyPostRequest(integrationKey, dedupKey);
+    PagerDutyPostData postBody = new PagerDutyPostData(integrationKey, dedupKey);
     postBody.setPayload(payload);
     postBody.setEventAction(eventAction);
 
-    HttpRequest request = buildRequest(postBody.serialize());
-    sendRequest(request);
+    try {
+      HttpRequest request = buildRequest(postBody.serialize());
+      sendRequest(request);
+    } catch (JsonProcessingException e) {
+      throw new PagerDutyException("Failed to serialize PagerDutyPostRequest to a JSON string.", e);
+    }
   }
 
   private void sendRequest(HttpRequest request) throws PagerDutyException {
@@ -68,12 +87,14 @@ public class PagerDutyClient {
       try {
         HttpResponse<String> response =
             httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        int statusCode = response.statusCode();
 
+        int statusCode = response.statusCode();
         if (statusCode == 200 || statusCode == 202) return;
 
-        // Either the max retries was hit or bad request (not recovering from 400)
+        // Either the max retries was hit or a bad request, there is no recovering from a 400 status
+        // code, exit without retries
         if (attempt == MAX_RETRIES || statusCode == 400) {
+          logger.error(MessageFormat.format(exceptionTemplate, statusCode, response.body()));
           throwFormattedException(statusCode, response.body());
         }
       } catch (IOException | InterruptedException e) {

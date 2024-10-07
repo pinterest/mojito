@@ -12,8 +12,6 @@ public class PagerDutyIntegrationsConfigurationProperties {
   private Map<String, String> pagerDutyIntegrations;
 
   public Map<String, String> getPagerDutyIntegrations() {
-    // If there is no defined integrations in app properties just set to an empty hash map to avoid
-    // errors
     if (pagerDutyIntegrations == null) {
       pagerDutyIntegrations = new HashMap<>();
     }

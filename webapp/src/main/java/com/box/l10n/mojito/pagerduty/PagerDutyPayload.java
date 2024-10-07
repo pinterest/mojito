@@ -1,18 +1,26 @@
 package com.box.l10n.mojito.pagerduty;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Map;
 
 public class PagerDutyPayload {
   private String summary;
   private String source;
-  private PagerDutySeverity severity;
+  private Severity severity;
   private Map<String, String> customDetails;
 
-  public PagerDutyPayload(Builder builder) {
-    this.summary = builder.summary;
-    this.source = builder.source;
-    this.severity = builder.severity;
-    this.customDetails = builder.customDetails;
+  public PagerDutyPayload(String summary, String source, Severity severity) {
+    this.summary = summary;
+    this.source = source;
+    this.severity = severity;
+  }
+
+  public PagerDutyPayload(
+      String summary, String source, Severity severity, Map<String, String> customDetails) {
+    this.summary = summary;
+    this.source = source;
+    this.severity = severity;
+    this.customDetails = customDetails;
   }
 
   public String getSummary() {
@@ -31,11 +39,11 @@ public class PagerDutyPayload {
     this.source = source;
   }
 
-  public PagerDutySeverity getSeverity() {
+  public Severity getSeverity() {
     return severity;
   }
 
-  public void setSeverity(PagerDutySeverity severity) {
+  public void setSeverity(Severity severity) {
     this.severity = severity;
   }
 
@@ -47,38 +55,18 @@ public class PagerDutyPayload {
     this.customDetails = customDetails;
   }
 
-  public static class Builder {
-    private String summary;
-    private String source;
-    private PagerDutySeverity severity;
-    private Map<String, String> customDetails;
+  public enum Severity {
+    CRITICAL,
+    ERROR,
+    WARNING,
+    INFO,
+    UNKNOWN;
 
-    public static Builder newBuilder() {
-      return new Builder();
-    }
-
-    public Builder summary(String summary) {
-      this.summary = summary;
-      return this;
-    }
-
-    public Builder source(String source) {
-      this.source = source;
-      return this;
-    }
-
-    public Builder severity(PagerDutySeverity severity) {
-      this.severity = severity;
-      return this;
-    }
-
-    public Builder customDetails(Map<String, String> customDetails) {
-      this.customDetails = customDetails;
-      return this;
-    }
-
-    public PagerDutyPayload build() {
-      return new PagerDutyPayload(this);
+    // The severity must be lowercase, the object mapper will call this method because it's
+    // annotated with @JsonValue and will use the return value
+    @JsonValue
+    public String toLowerCase() {
+      return this.name().toLowerCase();
     }
   }
 }

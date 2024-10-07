@@ -6,13 +6,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import java.io.Serializable;
 
-public class PagerDutyPostRequest implements Serializable {
+public class PagerDutyPostData implements Serializable {
   private PagerDutyPayload payload;
   private String routingKey;
   private String dedupKey;
   private EventAction eventAction;
 
-  public PagerDutyPostRequest(String integrationKey, String dedupKey) {
+  public PagerDutyPostData(String integrationKey, String dedupKey) {
     this.routingKey = integrationKey;
     this.dedupKey = dedupKey;
   }
@@ -20,7 +20,6 @@ public class PagerDutyPostRequest implements Serializable {
   public String serialize() throws JsonProcessingException {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-
     return objectMapper.writeValueAsString(this);
   }
 
