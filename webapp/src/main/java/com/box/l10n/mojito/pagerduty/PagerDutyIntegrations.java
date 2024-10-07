@@ -11,15 +11,14 @@ import org.springframework.stereotype.Component;
 @DependsOn("pagerDutyIntegrationsConfiguration")
 public class PagerDutyIntegrations {
 
-  private final PagerDutyIntegrationsConfiguration pagerDutyIntegrationsConfigurationProperties;
+  private final PagerDutyIntegrationsConfiguration pagerDutyIntegrationsConfiguration;
 
   private Map<String, PagerDutyClient> pagerDutyClients;
 
   @Autowired
   public PagerDutyIntegrations(
-      PagerDutyIntegrationsConfiguration pagerDutyIntegrationsConfigurationProperties) {
-    this.pagerDutyIntegrationsConfigurationProperties =
-        pagerDutyIntegrationsConfigurationProperties;
+      PagerDutyIntegrationsConfiguration pagerDutyIntegrationsConfiguration) {
+    this.pagerDutyIntegrationsConfiguration = pagerDutyIntegrationsConfiguration;
 
     setPagerDutyClients();
   }
@@ -36,7 +35,7 @@ public class PagerDutyIntegrations {
 
   public void setPagerDutyClients() {
     pagerDutyClients =
-        pagerDutyIntegrationsConfigurationProperties.getPagerDutyIntegrations().entrySet().stream()
+        pagerDutyIntegrationsConfiguration.getPagerDutyIntegrations().entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getKey, e -> new PagerDutyClient(e.getValue())));
   }
 }
