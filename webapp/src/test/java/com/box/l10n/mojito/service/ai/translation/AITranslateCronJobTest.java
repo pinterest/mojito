@@ -19,6 +19,7 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.entity.RepositoryLocaleAIPrompt;
 import com.box.l10n.mojito.entity.TMTextUnit;
+import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
 import com.box.l10n.mojito.entity.TmTextUnitPendingMT;
 import com.box.l10n.mojito.service.ai.LLMService;
@@ -34,6 +35,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.assertj.core.util.Lists;
 import org.junit.Before;
@@ -73,6 +75,10 @@ public class AITranslateCronJobTest {
 
   TmTextUnitPendingMT tmTextUnitPendingMT;
 
+  Locale german;
+
+  AITranslationConfiguration aITranslationConfiguration;
+
   @Before
   public void setup() {
     MockitoAnnotations.openMocks(this);
@@ -86,10 +92,18 @@ public class AITranslateCronJobTest {
     aiTranslateCronJob.repositoryLocaleAIPromptRepository = repositoryLocaleAIPromptRepository;
     aiTranslateCronJob.aiTranslationTextUnitFilterService = aiTranslationTextUnitFilterService;
     aiTranslateCronJob.tmTextUnitCurrentVariantRepository = tmTextUnitCurrentVariantRepository;
-    aiTranslateCronJob.expiryDuration = Duration.ofHours(3);
-    aiTranslateCronJob.batchSize = 5;
-    aiTranslateCronJob.isReuseSourceOnLanguageMatch = false;
-
+    aITranslationConfiguration = new AITranslationConfiguration();
+    aITranslationConfiguration.setEnabled(true);
+    aITranslationConfiguration.setCron("0 0/10 * * * ?");
+    aITranslationConfiguration.setBatchSize(5);
+    aITranslationConfiguration.setExpiryDuration(Duration.ofHours(3));
+    AITranslationConfiguration.RepositorySettings repositorySettings =
+        new AITranslationConfiguration.RepositorySettings();
+    repositorySettings.setReuseSourceOnLanguageMatch(false);
+    Map<String, AITranslationConfiguration.RepositorySettings> repositorySettingsMap =
+        Collections.singletonMap("testRepo", repositorySettings);
+    aITranslationConfiguration.setRepositorySettings(repositorySettingsMap);
+    aiTranslateCronJob.aiTranslationConfiguration = aITranslationConfiguration;
     Repository testRepo = new Repository();
     testRepo.setId(1L);
     testRepo.setName("testRepo");
@@ -100,7 +114,7 @@ public class AITranslateCronJobTest {
     Locale french = new Locale();
     french.setBcp47Tag("fr-FR");
     french.setId(2L);
-    Locale german = new Locale();
+    german = new Locale();
     german.setBcp47Tag("de-DE");
     german.setId(3L);
     Locale hibernoEnglish = new Locale();
@@ -162,8 +176,7 @@ public class AITranslateCronJobTest {
     when(llmService.translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class)))
         .thenReturn("translated");
-    when(tmTextUnitCurrentVariantRepository.findByLocale_IdAndTmTextUnit_Id(any(), any()))
-        .thenReturn(null);
+    when(tmTextUnitCurrentVariantRepository.findByTmTextUnit_Id(any())).thenReturn(Lists.list());
     when(repository.getId()).thenReturn(1L);
     when(repository.getName()).thenReturn("testRepo");
     when(repository.getRepositoryLocales())
@@ -227,7 +240,11 @@ public class AITranslateCronJobTest {
 
   @Test
   public void testTranslateReuseSource() throws Exception {
-    aiTranslateCronJob.isReuseSourceOnLanguageMatch = true;
+    AITranslationConfiguration.RepositorySettings repositorySettings =
+        new AITranslationConfiguration.RepositorySettings();
+    repositorySettings.setReuseSourceOnLanguageMatch(true);
+    aITranslationConfiguration.setRepositorySettings(
+        Collections.singletonMap("testRepo", repositorySettings));
     aiTranslateCronJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
     verify(llmService, times(2))
         .translate(
@@ -262,6 +279,46 @@ public class AITranslateCronJobTest {
     verify(tmTextUnitPendingMTRepository, times(1)).delete(isA(TmTextUnitPendingMT.class));
     verify(meterRegistry, times(1))
         .counter(eq("AITranslateJob.translate.reuseSourceAsTranslation"), any(Tags.class));
+  }
+
+  @Test
+  public void testNoTranslationIfLeveragedVariantExistsForLocale() {
+    TMTextUnitCurrentVariant tmTextUnitCurrentVariant = new TMTextUnitCurrentVariant();
+    tmTextUnitCurrentVariant.setLocale(german);
+    when(tmTextUnitCurrentVariantRepository.findByTmTextUnit_Id(1L))
+        .thenReturn(Lists.list(tmTextUnitCurrentVariant));
+    aiTranslateCronJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
+    verify(llmService, times(2))
+        .translate(
+            isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
+    verify(tmService, times(1))
+        .addTMTextUnitVariant(
+            eq(1L),
+            eq(2L),
+            eq("translated"),
+            eq("comment"),
+            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
+            eq(false),
+            isA(ZonedDateTime.class));
+    verify(tmService, never())
+        .addTMTextUnitVariant(
+            eq(1L),
+            eq(3L),
+            eq("translated"),
+            eq("comment"),
+            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
+            eq(false),
+            isA(ZonedDateTime.class));
+    verify(tmService, times(1))
+        .addTMTextUnitVariant(
+            eq(1L),
+            eq(4L),
+            eq("translated"),
+            eq("comment"),
+            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
+            eq(false),
+            isA(ZonedDateTime.class));
+    verify(tmTextUnitPendingMTRepository, times(1)).delete(isA(TmTextUnitPendingMT.class));
   }
 
   @Test

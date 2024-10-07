@@ -35,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -77,25 +76,7 @@ public class AITranslateCronJob implements Job {
 
   @Autowired AITranslationTextUnitFilterService aiTranslationTextUnitFilterService;
 
-  @Value("${l10n.ai.translation.pendingMT.batchSize:1000}")
-  int batchSize;
-
-  /**
-   * Duration after which a pending MT is considered expired and will not be processed in AI
-   * translation (as it will be eligible for third party syncs once the entity is older than the
-   * expiry period).
-   *
-   * <p>If the pending MT is expired, it will be deleted which will remove it from AI translation
-   * flow.
-   */
-  @Value("${l10n.ai.translation.pendingMT.expiryDuration:PT3H}")
-  Duration expiryDuration;
-
-  @Value("${l10n.ai.translation.reuseSourceOnLanguageMatch:false}")
-  boolean isReuseSourceOnLanguageMatch;
-
-  @Value("${l10n.ai.translation.cron:0 0/10 * * * ?}")
-  String incidentCheckCron;
+  @Autowired AITranslationConfiguration aiTranslationConfiguration;
 
   @Timed("AITranslateJob.translate")
   public void translate(Repository repository, TMTextUnit tmTextUnit, TmTextUnitPendingMT pendingMT)
@@ -104,21 +85,8 @@ public class AITranslateCronJob implements Job {
     try {
       if (pendingMT != null) {
         if (!isExpired(pendingMT)) {
-
-          Set<Locale> localesWithVariants =
-              tmTextUnitCurrentVariantRepository.findByTmTextUnit_Id(tmTextUnit.getId()).stream()
-                  .map(TMTextUnitCurrentVariant::getLocale)
-                  .collect(Collectors.toSet());
-          List<Locale> localesForMT =
-              repository.getRepositoryLocales().stream()
-                  .map(RepositoryLocale::getLocale)
-                  .filter(
-                      locale ->
-                          !localesWithVariants.contains(locale)
-                              && !repository.getSourceLocale().equals(locale))
-                  .collect(Collectors.toUnmodifiableList());
           if (aiTranslationTextUnitFilterService.isTranslatable(tmTextUnit, repository)) {
-            translateLocales(tmTextUnit, repository, localesForMT);
+            translateLocales(tmTextUnit, repository, getLocalesForMT(repository, tmTextUnit));
             meterRegistry
                 .timer("AITranslateJob.timeToMT", Tags.of("repository", repository.getName()))
                 .record(
@@ -149,8 +117,22 @@ public class AITranslateCronJob implements Job {
     }
   }
 
+  private Set<Locale> getLocalesForMT(Repository repository, TMTextUnit tmTextUnit) {
+    Set<Locale> localesWithVariants =
+        tmTextUnitCurrentVariantRepository.findByTmTextUnit_Id(tmTextUnit.getId()).stream()
+            .map(TMTextUnitCurrentVariant::getLocale)
+            .collect(Collectors.toSet());
+    return repository.getRepositoryLocales().stream()
+        .map(RepositoryLocale::getLocale)
+        .filter(
+            locale ->
+                !localesWithVariants.contains(locale)
+                    && !repository.getSourceLocale().equals(locale))
+        .collect(Collectors.toSet());
+  }
+
   private void translateLocales(
-      TMTextUnit tmTextUnit, Repository repository, List<Locale> localesForMT) {
+      TMTextUnit tmTextUnit, Repository repository, Set<Locale> localesForMT) {
 
     Map<String, RepositoryLocaleAIPrompt> repositoryLocaleAIPrompts =
         repositoryLocaleAIPromptRepository
@@ -168,7 +150,10 @@ public class AITranslateCronJob implements Job {
         targetLocale -> {
           try {
             String sourceLang = repository.getSourceLocale().getBcp47Tag().split("-")[0];
-            if (isReuseSourceOnLanguageMatch && targetLocale.getBcp47Tag().startsWith(sourceLang)) {
+            if (aiTranslationConfiguration
+                    .getRepositorySettings(repository.getName())
+                    .isReuseSourceOnLanguageMatch()
+                && targetLocale.getBcp47Tag().startsWith(sourceLang)) {
               reuseSourceStringAsTranslation(tmTextUnit, repository, targetLocale, sourceLang);
               return;
             }
@@ -255,7 +240,9 @@ public class AITranslateCronJob implements Job {
   private boolean isExpired(TmTextUnitPendingMT pendingMT) {
     return pendingMT
         .getCreatedDate()
-        .isBefore(JSR310Migration.newDateTimeEmptyCtor().minus(expiryDuration));
+        .isBefore(
+            JSR310Migration.newDateTimeEmptyCtor()
+                .minus(aiTranslationConfiguration.getExpiryDuration()));
   }
 
   /**
@@ -273,7 +260,8 @@ public class AITranslateCronJob implements Job {
     logger.info("Executing AITranslateJob");
     List<TmTextUnitPendingMT> pendingMTs;
     do {
-      pendingMTs = tmTextUnitPendingMTRepository.findBatch(batchSize);
+      pendingMTs =
+          tmTextUnitPendingMTRepository.findBatch(aiTranslationConfiguration.getBatchSize());
       logger.info("Processing {} pending MTs", pendingMTs.size());
       pendingMTs.forEach(
           pendingMT -> {
@@ -303,10 +291,11 @@ public class AITranslateCronJob implements Job {
 
   @Bean
   public CronTriggerFactoryBean triggerSlaCheckerCronJob(
-      @Qualifier("aiTranslateCron") JobDetail job) {
+      @Qualifier("aiTranslateCron") JobDetail job,
+      AITranslationConfiguration aiTranslationConfiguration) {
     CronTriggerFactoryBean trigger = new CronTriggerFactoryBean();
     trigger.setJobDetail(job);
-    trigger.setCronExpression(incidentCheckCron);
+    trigger.setCronExpression(aiTranslationConfiguration.getCron());
     return trigger;
   }
 }

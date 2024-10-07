@@ -2,6 +2,7 @@ package com.box.l10n.mojito.service.ai.translation;
 
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnit;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -22,6 +23,8 @@ public class AITranslationTextUnitFilterService {
   protected Map<String, Pattern> excludePlaceholdersPatternMap;
 
   @Autowired AITranslationFilterConfiguration aiTranslationFilterConfiguration;
+
+  @Autowired MeterRegistry meterRegistry;
 
   public boolean isTranslatable(TMTextUnit tmTextUnit, Repository repository) {
     boolean isTranslatable = true;
