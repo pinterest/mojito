@@ -122,7 +122,10 @@ public class AITranslateCronJob implements Job {
             tmTextUnit.getId());
     return repository.getRepositoryLocales().stream()
         .map(RepositoryLocale::getLocale)
-        .filter(locale -> !localesWithVariants.contains(locale))
+        .filter(
+            locale ->
+                !localesWithVariants.contains(locale)
+                    && !locale.equals(repository.getSourceLocale()))
         .collect(Collectors.toSet());
   }
 

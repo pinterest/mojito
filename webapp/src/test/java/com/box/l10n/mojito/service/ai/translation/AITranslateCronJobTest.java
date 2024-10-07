@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
@@ -133,6 +134,7 @@ public class AITranslateCronJobTest {
         Sets.newHashSet(frenchRepoLocale, germanRepoLocale, hibernoEnglishRepoLocale));
     testRepo.setSourceLocale(english);
 
+    when(repository.getSourceLocale()).thenReturn(english);
     when(repositoryRepository.findById(1L)).thenReturn(Optional.of(testRepo));
     tmTextUnitPendingMT = new TmTextUnitPendingMT();
     tmTextUnitPendingMT.setTmTextUnitId(1L);
@@ -176,7 +178,10 @@ public class AITranslateCronJobTest {
     when(llmService.translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class)))
         .thenReturn("translated");
-    when(tmTextUnitCurrentVariantRepository.findByTmTextUnit_Id(any())).thenReturn(Lists.list());
+    TMTextUnitCurrentVariant tmTextUnitCurrentVariant = new TMTextUnitCurrentVariant();
+    tmTextUnitCurrentVariant.setLocale(english);
+    when(tmTextUnitCurrentVariantRepository.findByTmTextUnit_Id(any()))
+        .thenReturn(Lists.list(tmTextUnitCurrentVariant));
     when(repository.getId()).thenReturn(1L);
     when(repository.getName()).thenReturn("testRepo");
     when(repository.getRepositoryLocales())
@@ -285,8 +290,9 @@ public class AITranslateCronJobTest {
   public void testNoTranslationIfLeveragedVariantExistsForLocale() {
     TMTextUnitCurrentVariant tmTextUnitCurrentVariant = new TMTextUnitCurrentVariant();
     tmTextUnitCurrentVariant.setLocale(german);
-    when(tmTextUnitCurrentVariantRepository.findByTmTextUnit_Id(1L))
-        .thenReturn(Lists.list(tmTextUnitCurrentVariant));
+    Set<Locale> variants = Sets.newHashSet(tmTextUnitCurrentVariant.getLocale());
+    when(tmTextUnitCurrentVariantRepository.findLocalesWithVariantByTmTextUnit_Id(1L))
+        .thenReturn(variants);
     aiTranslateCronJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
     verify(llmService, times(2))
         .translate(
