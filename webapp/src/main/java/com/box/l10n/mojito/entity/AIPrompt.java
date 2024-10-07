@@ -53,6 +53,9 @@ public class AIPrompt extends BaseEntity {
   @Column(name = "json_response")
   private boolean jsonResponse;
 
+  @Column(name = "json_response_key")
+  private String jsonResponseKey;
+
   public String getModelName() {
     return modelName;
   }
@@ -131,5 +134,13 @@ public class AIPrompt extends BaseEntity {
 
   public void setJsonResponse(boolean jsonResponse) {
     this.jsonResponse = jsonResponse;
+  }
+
+  public String getJsonResponseKey() {
+    return jsonResponseKey;
+  }
+
+  public void setJsonResponseKey(String jsonResponseKey) {
+    this.jsonResponseKey = jsonResponseKey;
   }
 }

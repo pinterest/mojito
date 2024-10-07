@@ -67,6 +67,7 @@ public class LLMPromptService implements PromptService {
     aiPrompt.setCreatedDate(now);
     aiPrompt.setLastModifiedDate(now);
     aiPrompt.setJsonResponse(AIPromptCreateRequest.isJsonResponse());
+    aiPrompt.setJsonResponseKey(AIPromptCreateRequest.getJsonResponseKey());
     aiPromptRepository.save(aiPrompt);
     logger.debug("Created prompt with id: {}", aiPrompt.getId());
 

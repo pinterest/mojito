@@ -64,6 +64,12 @@ public class CreateAIPromptCommand extends Command {
       description = "The prompt response is expected to be in JSON format from the LLM")
   boolean isJsonResponse = false;
 
+  @Parameter(
+      names = {"--json-response-key", "-jrk"},
+      required = false,
+      description = "The key to use to extract the translation from the JSON response")
+  String jsonResponseKey;
+
   @Autowired private ConsoleWriter consoleWriter;
 
   @Override
@@ -81,6 +87,10 @@ public class CreateAIPromptCommand extends Command {
     aiPromptCreateRequest.setPromptType(promptType);
     aiPromptCreateRequest.setPromptTemperature(promptTemperature);
     aiPromptCreateRequest.setJsonResponse(isJsonResponse);
+    if (isJsonResponse && jsonResponseKey == null) {
+      throw new CommandException("jsonResponseKey is required when isJsonResponse is true");
+    }
+    aiPromptCreateRequest.setJsonResponseKey(jsonResponseKey);
     long promptId = aiServiceClient.createPrompt(aiPromptCreateRequest);
     consoleWriter.newLine().a("Prompt created with id: " + promptId).println();
   }

@@ -7,7 +7,6 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.entity.RepositoryLocaleAIPrompt;
 import com.box.l10n.mojito.entity.TMTextUnit;
-import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
 import com.box.l10n.mojito.entity.TmTextUnitPendingMT;
 import com.box.l10n.mojito.rest.ai.AIException;
@@ -119,15 +118,11 @@ public class AITranslateCronJob implements Job {
 
   private Set<Locale> getLocalesForMT(Repository repository, TMTextUnit tmTextUnit) {
     Set<Locale> localesWithVariants =
-        tmTextUnitCurrentVariantRepository.findByTmTextUnit_Id(tmTextUnit.getId()).stream()
-            .map(TMTextUnitCurrentVariant::getLocale)
-            .collect(Collectors.toSet());
+        tmTextUnitCurrentVariantRepository.findLocalesWithVariantByTmTextUnit_Id(
+            tmTextUnit.getId());
     return repository.getRepositoryLocales().stream()
         .map(RepositoryLocale::getLocale)
-        .filter(
-            locale ->
-                !localesWithVariants.contains(locale)
-                    && !repository.getSourceLocale().equals(locale))
+        .filter(locale -> !localesWithVariants.contains(locale))
         .collect(Collectors.toSet());
   }
 

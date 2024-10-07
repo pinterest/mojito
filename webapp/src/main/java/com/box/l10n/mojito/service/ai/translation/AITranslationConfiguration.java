@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.ai.translation;
 
+import com.google.common.collect.Maps;
 import java.time.Duration;
 import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -24,7 +25,7 @@ public class AITranslationConfiguration {
 
   private String cron = "0 0/10 * * * ?";
 
-  private Map<String, RepositorySettings> repositorySettings;
+  private Map<String, RepositorySettings> repositorySettings = Maps.newHashMap();
 
   public static class RepositorySettings {
     private boolean reuseSourceOnLanguageMatch = false;
