@@ -4,23 +4,21 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
 @Component
-@DependsOn("pagerDutyIntegrationsConfiguration")
-public class PagerDutyIntegrations {
+public class PagerDutyIntegrationService {
 
-  private final PagerDutyIntegrationsConfiguration pagerDutyIntegrationsConfiguration;
+  private final PagerDutyIntegrationConfiguration pagerDutyIntegrationConfiguration;
 
   private Map<String, PagerDutyClient> pagerDutyClients;
 
   @Autowired
-  public PagerDutyIntegrations(
-      PagerDutyIntegrationsConfiguration pagerDutyIntegrationsConfiguration) {
-    this.pagerDutyIntegrationsConfiguration = pagerDutyIntegrationsConfiguration;
+  public PagerDutyIntegrationService(
+      PagerDutyIntegrationConfiguration pagerDutyIntegrationsConfiguration) {
+    this.pagerDutyIntegrationConfiguration = pagerDutyIntegrationsConfiguration;
 
-    setPagerDutyClients();
+    createClientsFromConfiguration();
   }
 
   public Optional<PagerDutyClient> getPagerDutyClient(String integration) {
@@ -33,9 +31,9 @@ public class PagerDutyIntegrations {
     return getPagerDutyClient("default");
   }
 
-  public void setPagerDutyClients() {
+  private void createClientsFromConfiguration() {
     pagerDutyClients =
-        pagerDutyIntegrationsConfiguration.getPagerDutyIntegrations().entrySet().stream()
+        pagerDutyIntegrationConfiguration.getPagerDutyIntegrations().entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getKey, e -> new PagerDutyClient(e.getValue())));
   }
 }
