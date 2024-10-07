@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.pagerduty;
 
+import java.net.http.HttpClient;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -34,6 +35,9 @@ public class PagerDutyIntegrationService {
   private void createClientsFromConfiguration() {
     pagerDutyClients =
         pagerDutyIntegrationConfiguration.getPagerDutyIntegrations().entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, e -> new PagerDutyClient(e.getValue())));
+            .collect(
+                Collectors.toMap(
+                    Map.Entry::getKey,
+                    e -> new PagerDutyClient(e.getValue(), HttpClient.newHttpClient())));
   }
 }

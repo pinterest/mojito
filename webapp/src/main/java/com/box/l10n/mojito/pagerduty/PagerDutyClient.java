@@ -26,23 +26,14 @@ public class PagerDutyClient {
   public static String exceptionTemplate =
       "PagerDuty request failed: Status Code: '{0}', Response Body: '{1}'";
 
-  private HttpClient httpClient = HttpClient.newHttpClient();
-  private String integrationKey;
-
-  public PagerDutyClient(String integrationKey) {
-    setIntegrationKey(integrationKey);
-  }
+  private final HttpClient httpClient;
+  private final String integrationKey;
 
   public PagerDutyClient(String integrationKey, HttpClient httpClient) {
-    // Constructor for unit tests
-    setIntegrationKey(integrationKey);
-    this.httpClient = httpClient;
-  }
-
-  private void setIntegrationKey(String integrationKey) {
     if (integrationKey == null || integrationKey.isEmpty())
       throw new IllegalArgumentException("Pager Duty integration key is null or empty.");
     this.integrationKey = integrationKey;
+    this.httpClient = httpClient;
   }
 
   /**
