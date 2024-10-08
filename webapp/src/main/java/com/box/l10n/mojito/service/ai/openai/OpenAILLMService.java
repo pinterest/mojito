@@ -193,20 +193,24 @@ public class OpenAILLMService implements LLMService {
               throw new AIException(message);
             })
         .doOnError(
-            e ->
-                meterRegistry
-                    .counter(
-                        "OpenAILLMService.translate.result",
-                        Tags.of("success", "false", "retryable", "true"))
-                    .increment())
+            e -> {
+              logger.error("Error translating text unit {}", tmTextUnit.getId(), e);
+              meterRegistry
+                  .counter(
+                      "OpenAILLMService.translate.result",
+                      Tags.of("success", "false", "retryable", "true"))
+                  .increment();
+            })
         .retryWhen(llmTranslateRetryConfig)
         .doOnError(
-            e ->
-                meterRegistry
-                    .counter(
-                        "OpenAILLMService.translate.result",
-                        Tags.of("success", "false", "retryable", "false"))
-                    .increment())
+            e -> {
+              logger.error("Error translating text unit {}", tmTextUnit.getId(), e);
+              meterRegistry
+                  .counter(
+                      "OpenAILLMService.translate.result",
+                      Tags.of("success", "false", "retryable", "false"))
+                  .increment();
+            })
         .blockOptional()
         .orElseThrow(() -> new AIException("Error translating text unit " + tmTextUnit.getId()));
   }
