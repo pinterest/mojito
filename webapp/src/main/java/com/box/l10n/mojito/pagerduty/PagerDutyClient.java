@@ -6,9 +6,11 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.text.MessageFormat;
+import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
 /**
  * PagerDuty client for creating (triggering) and resolving incidents.
@@ -23,8 +25,6 @@ public class PagerDutyClient {
   static final String ENQUEUE_PATH = "/v2/enqueue";
 
   public static final int MAX_RETRIES = 3;
-  public static String exceptionTemplate =
-      "PagerDuty request failed: Status Code: '{0}', Response Body: '{1}'";
 
   private final HttpClient httpClient;
   private final String integrationKey;
@@ -69,37 +69,52 @@ public class PagerDutyClient {
 
     try {
       HttpRequest request = buildRequest(postBody.serialize());
-      sendRequest(request);
+      sendRequestWithRetries(request).block();
     } catch (JsonProcessingException e) {
-      throw new PagerDutyException("Failed to serialize PagerDutyPostRequest to a JSON string.", e);
-    }
-  }
-
-  private void sendRequest(HttpRequest request) throws PagerDutyException {
-    // Retry sending PD notifications if they fail
-    for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      try {
-        HttpResponse<String> response =
-            httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        int statusCode = response.statusCode();
-        if (statusCode == 200 || statusCode == 202) return;
-
-        // Either the max retries was hit or a bad request, there is no recovering from a 400 status
-        // code, exit without retries
-        if (attempt == MAX_RETRIES || statusCode == 400) {
-          logger.error(MessageFormat.format(exceptionTemplate, statusCode, response.body()));
-          throwFormattedException(statusCode, response.body());
-        }
-      } catch (IOException | InterruptedException e) {
-        if (attempt == MAX_RETRIES)
-          throw new PagerDutyException("Failed to send PagerDuty request: ", e);
+      throw new PagerDutyException("Failed to serialize PagerDutyPostRequest to a JSON string.");
+    } catch (Exception e) {
+      // Reactor core library can throw wrapped error, unwrap it and rethrow
+      if (e.getCause() != null && e.getCause() instanceof PagerDutyException) {
+        throw (PagerDutyException) e.getCause();
       }
+      throw e;
     }
   }
 
-  private void throwFormattedException(int statusCode, String response) throws PagerDutyException {
-    throw new PagerDutyException(MessageFormat.format(exceptionTemplate, statusCode, response));
+  private Mono<Void> sendRequestWithRetries(HttpRequest request) throws PagerDutyException {
+    return Mono.fromCallable(() -> this.sendRequest(request))
+        .retryWhen(
+            Retry.backoff(MAX_RETRIES, Duration.ofMillis(500))
+                .jitter(0.5)
+                .maxBackoff(Duration.ofMillis(5000))
+                .filter(
+                    throwable ->
+                        !(throwable instanceof PagerDutyException
+                            && ((PagerDutyException) throwable).getStatusCode() == 400))
+                .onRetryExhaustedThrow(
+                    (retryBackoffSpec, retrySignal) -> {
+                      Throwable throwable = retrySignal.failure();
+                      if (throwable instanceof PagerDutyException) {
+                        return throwable;
+                      }
+                      return new PagerDutyException(
+                          "PagerDuty failed to send event payload: ", throwable);
+                    }))
+        .then();
+  }
+
+  private HttpResponse<String> sendRequest(HttpRequest request) throws PagerDutyException {
+    try {
+      HttpResponse<String> response =
+          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+      int statusCode = response.statusCode();
+      if (statusCode == 200 || statusCode == 202) return response;
+
+      throw new PagerDutyException(statusCode, response.body());
+    } catch (IOException | InterruptedException e) {
+      throw new PagerDutyException("Failed to send PagerDuty request: " + e.getMessage());
+    }
   }
 
   public HttpRequest buildRequest(String postBody) {
