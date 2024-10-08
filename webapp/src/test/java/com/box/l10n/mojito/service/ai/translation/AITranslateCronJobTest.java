@@ -228,7 +228,6 @@ public class AITranslateCronJobTest {
             eq(TMTextUnitVariant.Status.MT_TRANSLATED),
             eq(false),
             isA(ZonedDateTime.class));
-    verify(tmTextUnitPendingMTRepository, times(1)).delete(isA(TmTextUnitPendingMT.class));
   }
 
   @Test
@@ -240,7 +239,6 @@ public class AITranslateCronJobTest {
     verify(llmService, times(3))
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
-    verify(tmTextUnitPendingMTRepository, times(1)).delete(isA(TmTextUnitPendingMT.class));
   }
 
   @Test
@@ -281,9 +279,8 @@ public class AITranslateCronJobTest {
             eq(TMTextUnitVariant.Status.MT_TRANSLATED),
             eq(false),
             isA(ZonedDateTime.class));
-    verify(tmTextUnitPendingMTRepository, times(1)).delete(isA(TmTextUnitPendingMT.class));
     verify(meterRegistry, times(1))
-        .counter(eq("AITranslateJob.translate.reuseSourceAsTranslation"), any(Tags.class));
+        .counter(eq("AITranslateCronJob.translate.reuseSourceAsTranslation"), any(Tags.class));
   }
 
   @Test
@@ -324,7 +321,6 @@ public class AITranslateCronJobTest {
             eq(TMTextUnitVariant.Status.MT_TRANSLATED),
             eq(false),
             isA(ZonedDateTime.class));
-    verify(tmTextUnitPendingMTRepository, times(1)).delete(isA(TmTextUnitPendingMT.class));
   }
 
   @Test
@@ -363,8 +359,7 @@ public class AITranslateCronJobTest {
             eq(TMTextUnitVariant.Status.MT_TRANSLATED),
             eq(false),
             isA(ZonedDateTime.class));
-    verify(tmTextUnitPendingMTRepository, times(1)).delete(isA(TmTextUnitPendingMT.class));
-    verify(meterRegistry, times(1)).counter(eq("AITranslateJob.expired"), any(Tags.class));
+    verify(meterRegistry, times(1)).counter(eq("AITranslateCronJob.expired"), any(Tags.class));
   }
 
   @Test
@@ -403,7 +398,6 @@ public class AITranslateCronJobTest {
             eq(TMTextUnitVariant.Status.MT_TRANSLATED),
             eq(false),
             isA(ZonedDateTime.class));
-    verify(tmTextUnitPendingMTRepository, times(1)).delete(isA(TmTextUnitPendingMT.class));
   }
 
   @Test
@@ -486,5 +480,57 @@ public class AITranslateCronJobTest {
             eq(false),
             isA(ZonedDateTime.class));
     verify(tmTextUnitPendingMTRepository, times(10)).delete(isA(TmTextUnitPendingMT.class));
+  }
+
+  @Test
+  public void testBatchLogicFailureToRetrieveTextUnit() throws JobExecutionException {
+    // Test verifies that if an exception is thrown for a single text unit, the rest of the batch is
+    // still processed
+    TmTextUnitPendingMT tmTextUnitPendingMT2 = new TmTextUnitPendingMT();
+    tmTextUnitPendingMT2.setTmTextUnitId(2L);
+    List<TmTextUnitPendingMT> pendingMTList =
+        Lists.list(
+            tmTextUnitPendingMT2,
+            tmTextUnitPendingMT,
+            tmTextUnitPendingMT,
+            tmTextUnitPendingMT,
+            tmTextUnitPendingMT);
+    when(tmTextUnitPendingMTRepository.findBatch(5))
+        .thenReturn(pendingMTList)
+        .thenReturn(Collections.emptyList());
+    when(tmTextUnitRepository.findByIdWithAssetAndRepositoryFetched(2L))
+        .thenReturn(Optional.empty());
+    aiTranslateCronJob.execute(mock(JobExecutionContext.class));
+    verify(llmService, times(12))
+        .translate(
+            isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
+    verify(tmService, times(4))
+        .addTMTextUnitVariant(
+            eq(1L),
+            eq(2L),
+            eq("translated"),
+            eq("comment"),
+            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
+            eq(false),
+            isA(ZonedDateTime.class));
+    verify(tmService, times(4))
+        .addTMTextUnitVariant(
+            eq(1L),
+            eq(3L),
+            eq("translated"),
+            eq("comment"),
+            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
+            eq(false),
+            isA(ZonedDateTime.class));
+    verify(tmService, times(4))
+        .addTMTextUnitVariant(
+            eq(1L),
+            eq(4L),
+            eq("translated"),
+            eq("comment"),
+            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
+            eq(false),
+            isA(ZonedDateTime.class));
+    verify(tmTextUnitPendingMTRepository, times(5)).delete(isA(TmTextUnitPendingMT.class));
   }
 }

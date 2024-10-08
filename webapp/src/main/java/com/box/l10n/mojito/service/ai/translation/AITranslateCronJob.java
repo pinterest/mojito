@@ -77,7 +77,7 @@ public class AITranslateCronJob implements Job {
 
   @Autowired AITranslationConfiguration aiTranslationConfiguration;
 
-  @Timed("AITranslateJob.translate")
+  @Timed("AITranslateCronJob.translate")
   public void translate(Repository repository, TMTextUnit tmTextUnit, TmTextUnitPendingMT pendingMT)
       throws AIException {
 
@@ -87,7 +87,7 @@ public class AITranslateCronJob implements Job {
           if (aiTranslationTextUnitFilterService.isTranslatable(tmTextUnit, repository)) {
             translateLocales(tmTextUnit, repository, getLocalesForMT(repository, tmTextUnit));
             meterRegistry
-                .timer("AITranslateJob.timeToMT", Tags.of("repository", repository.getName()))
+                .timer("AITranslateCronJob.timeToMT", Tags.of("repository", repository.getName()))
                 .record(
                     Duration.between(JSR310Migration.dateTimeNow(), pendingMT.getCreatedDate()));
           } else {
@@ -95,24 +95,20 @@ public class AITranslateCronJob implements Job {
                 "Text unit with name: {} should not be translated, skipping AI translation.",
                 tmTextUnit.getName());
             meterRegistry.counter(
-                "AITranslateJob.translate.notTranslatable",
+                "AITranslateCronJob.translate.notTranslatable",
                 Tags.of("repository", repository.getName()));
           }
         } else {
           // If the pending MT is expired, log an error and delete it
           logger.error("Pending MT for tmTextUnitId: {} is expired", tmTextUnit.getId());
           meterRegistry.counter(
-              "AITranslateJob.expired", Tags.of("repository", repository.getName()));
+              "AITranslateCronJob.expired", Tags.of("repository", repository.getName()));
         }
       }
     } catch (Exception e) {
       logger.error("Error running job for text unit id {}", tmTextUnit.getId(), e);
-      meterRegistry.counter("AITranslateJob.error", Tags.of("repository", repository.getName()));
-    } finally {
-      if (pendingMT != null) {
-        logger.debug("Deleting pending MT for tmTextUnitId: {}", tmTextUnit.getId());
-        tmTextUnitPendingMTRepository.delete(pendingMT);
-      }
+      meterRegistry.counter(
+          "AITranslateCronJob.error", Tags.of("repository", repository.getName()));
     }
   }
 
@@ -174,7 +170,7 @@ public class AITranslateCronJob implements Job {
                   "No active translation prompt found for locale: {}, skipping AI translation.",
                   targetLocale.getBcp47Tag());
               meterRegistry.counter(
-                  "AITranslateJob.translate.noActivePrompt",
+                  "AITranslateCronJob.translate.noActivePrompt",
                   Tags.of(
                       "repository", repository.getName(), "locale", targetLocale.getBcp47Tag()));
             }
@@ -185,7 +181,7 @@ public class AITranslateCronJob implements Job {
                 targetLocale.getBcp47Tag(),
                 e);
             meterRegistry.counter(
-                "AITranslateJob.translate.error",
+                "AITranslateCronJob.translate.error",
                 Tags.of("repository", repository.getName(), "locale", targetLocale.getBcp47Tag()));
           }
         });
@@ -198,7 +194,7 @@ public class AITranslateCronJob implements Job {
         targetLocale.getBcp47Tag(),
         sourceLang);
     meterRegistry.counter(
-        "AITranslateJob.translate.reuseSourceAsTranslation",
+        "AITranslateCronJob.translate.reuseSourceAsTranslation",
         Tags.of("repository", repository.getName(), "locale", targetLocale.getBcp47Tag()));
 
     tmService.addTMTextUnitVariant(
@@ -231,7 +227,7 @@ public class AITranslateCronJob implements Job {
         false,
         JSR310Migration.dateTimeNow());
     meterRegistry.counter(
-        "AITranslateJob.translate.success",
+        "AITranslateCronJob.translate.success",
         Tags.of("repository", repository.getName(), "locale", targetLocale.getBcp47Tag()));
   }
 
@@ -253,9 +249,9 @@ public class AITranslateCronJob implements Job {
    * @throws JobExecutionException
    */
   @Override
-  @Timed("AITranslateJob.execute")
+  @Timed("AITranslateCronJob.execute")
   public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-    logger.info("Executing AITranslateJob");
+    logger.info("Executing AITranslateCronJob");
     List<TmTextUnitPendingMT> pendingMTs;
     do {
       pendingMTs =
@@ -263,12 +259,26 @@ public class AITranslateCronJob implements Job {
       logger.info("Processing {} pending MTs", pendingMTs.size());
       pendingMTs.forEach(
           pendingMT -> {
-            TMTextUnit tmTextUnit = getTmTextUnit(pendingMT);
-            Repository repository = tmTextUnit.getAsset().getRepository();
-            translate(repository, tmTextUnit, pendingMT);
+            try {
+              TMTextUnit tmTextUnit = getTmTextUnit(pendingMT);
+              Repository repository = tmTextUnit.getAsset().getRepository();
+              translate(repository, tmTextUnit, pendingMT);
+            } catch (Exception e) {
+              logger.error(
+                  "Error processing pending MT for text unit id: {}",
+                  pendingMT.getTmTextUnitId(),
+                  e);
+              meterRegistry.counter("AITranslateCronJob.pendingMT.error");
+            } finally {
+              if (pendingMT != null) {
+                logger.debug(
+                    "Deleting pending MT for tmTextUnitId: {}", pendingMT.getTmTextUnitId());
+                tmTextUnitPendingMTRepository.delete(pendingMT);
+              }
+            }
           });
     } while (!pendingMTs.isEmpty());
-    logger.info("Finished executing AITranslateJob");
+    logger.info("Finished executing AITranslateCronJob");
   }
 
   private TMTextUnit getTmTextUnit(TmTextUnitPendingMT pendingMT) {
