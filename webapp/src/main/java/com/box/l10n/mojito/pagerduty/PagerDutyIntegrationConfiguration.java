@@ -3,22 +3,18 @@ package com.box.l10n.mojito.pagerduty;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
-@Configuration
-@ConfigurationProperties("l10n")
+@Component
+@ConfigurationProperties("l10n.pagerduty")
 public class PagerDutyIntegrationConfiguration {
+  private Map<String, String> integrations = new HashMap<>();
 
-  private Map<String, String> pagerDutyIntegrations;
-
-  public Map<String, String> getPagerDutyIntegrations() {
-    if (pagerDutyIntegrations == null) {
-      pagerDutyIntegrations = new HashMap<>();
-    }
-    return pagerDutyIntegrations;
+  public Map<String, String> getIntegrations() {
+    return integrations;
   }
 
-  public void setPagerDutyIntegrations(Map<String, String> pagerDutyIntegrations) {
-    this.pagerDutyIntegrations = pagerDutyIntegrations;
+  public void setIntegrations(Map<String, String> integrations) {
+    this.integrations = integrations;
   }
 }

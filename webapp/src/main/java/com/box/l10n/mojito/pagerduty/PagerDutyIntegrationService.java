@@ -11,13 +11,16 @@ import org.springframework.stereotype.Component;
 public class PagerDutyIntegrationService {
 
   private final PagerDutyIntegrationConfiguration pagerDutyIntegrationConfiguration;
+  private final PagerDutyRetryConfiguration pagerDutyRetryConfiguration;
 
   private Map<String, PagerDutyClient> pagerDutyClients;
 
   @Autowired
   public PagerDutyIntegrationService(
-      PagerDutyIntegrationConfiguration pagerDutyIntegrationsConfiguration) {
+      PagerDutyIntegrationConfiguration pagerDutyIntegrationsConfiguration,
+      PagerDutyRetryConfiguration pagerDutyRetryConfiguration) {
     this.pagerDutyIntegrationConfiguration = pagerDutyIntegrationsConfiguration;
+    this.pagerDutyRetryConfiguration = pagerDutyRetryConfiguration;
 
     createClientsFromConfiguration();
   }
@@ -34,10 +37,14 @@ public class PagerDutyIntegrationService {
 
   private void createClientsFromConfiguration() {
     pagerDutyClients =
-        pagerDutyIntegrationConfiguration.getPagerDutyIntegrations().entrySet().stream()
+        pagerDutyIntegrationConfiguration.getIntegrations().entrySet().stream()
             .collect(
                 Collectors.toMap(
                     Map.Entry::getKey,
-                    e -> new PagerDutyClient(e.getValue(), HttpClient.newHttpClient())));
+                    e ->
+                        new PagerDutyClient(
+                            e.getValue(),
+                            HttpClient.newHttpClient(),
+                            pagerDutyRetryConfiguration)));
   }
 }

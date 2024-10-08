@@ -28,13 +28,14 @@ public class PagerDutyClientTest {
   private HttpResponse httpResponse;
 
   private PagerDutyPayload samplePayload;
+  private PagerDutyRetryConfiguration retryConfiguration = new PagerDutyRetryConfiguration();
 
   @BeforeEach
   public void setup() {
     httpClient = mock(HttpClient.class);
     httpResponse = mock(HttpResponse.class);
 
-    pagerDutyClient = new PagerDutyClient("xxxyyyzzz", httpClient);
+    pagerDutyClient = new PagerDutyClient("xxxyyyzzz", httpClient, retryConfiguration);
 
     Map<String, String> customDetails = new HashMap<>();
     customDetails.put("Example Custom Details", "Example Value");
@@ -75,7 +76,7 @@ public class PagerDutyClientTest {
     assertThrows(
         PagerDutyException.class, () -> pagerDutyClient.triggerIncident("dedpuKey", samplePayload));
 
-    verify(httpClient, times(PagerDutyClient.MAX_RETRIES + 1))
+    verify(httpClient, times(retryConfiguration.getMaxRetries() + 1))
         .send(Mockito.any(HttpRequest.class), Mockito.any(HttpResponse.BodyHandler.class));
   }
 
@@ -102,7 +103,7 @@ public class PagerDutyClientTest {
         .thenAnswer(
             (Answer<Integer>)
                 i -> {
-                  if (callCount.getAndIncrement() < PagerDutyClient.MAX_RETRIES - 1) {
+                  if (callCount.getAndIncrement() < retryConfiguration.getMaxRetries() - 1) {
                     return 500;
                   } else {
                     return 202;
@@ -115,7 +116,7 @@ public class PagerDutyClientTest {
 
     try {
       pagerDutyClient.triggerIncident("dedpuKey", samplePayload);
-      verify(httpClient, times(PagerDutyClient.MAX_RETRIES))
+      verify(httpClient, times(retryConfiguration.getMaxRetries()))
           .send(Mockito.any(HttpRequest.class), Mockito.any(HttpResponse.BodyHandler.class));
     } catch (PagerDutyException e) {
       fail("PagerDutyClient should have recovered from failing attempts.");
@@ -131,7 +132,7 @@ public class PagerDutyClientTest {
     assertThrows(
         PagerDutyException.class, () -> pagerDutyClient.triggerIncident("dedpuKey", samplePayload));
 
-    verify(httpClient, times(PagerDutyClient.MAX_RETRIES + 1))
+    verify(httpClient, times(retryConfiguration.getMaxRetries() + 1))
         .send(Mockito.any(HttpRequest.class), Mockito.any(HttpResponse.BodyHandler.class));
   }
 
@@ -174,7 +175,11 @@ public class PagerDutyClientTest {
             Mockito.any(HttpRequest.class), Mockito.any(HttpResponse.BodyHandler.class)))
         .thenReturn(httpResponse);
 
-    assertThrows(IllegalArgumentException.class, () -> new PagerDutyClient(null, httpClient));
-    assertThrows(IllegalArgumentException.class, () -> new PagerDutyClient("", httpClient));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> new PagerDutyClient(null, httpClient, retryConfiguration));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> new PagerDutyClient("", httpClient, retryConfiguration));
   }
 }

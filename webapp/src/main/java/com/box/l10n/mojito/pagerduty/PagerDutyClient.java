@@ -28,12 +28,17 @@ public class PagerDutyClient {
 
   private final HttpClient httpClient;
   private final String integrationKey;
+  private final PagerDutyRetryConfiguration retryConfiguration;
 
-  public PagerDutyClient(String integrationKey, HttpClient httpClient) {
+  public PagerDutyClient(
+      String integrationKey,
+      HttpClient httpClient,
+      PagerDutyRetryConfiguration retryConfiguration) {
     if (integrationKey == null || integrationKey.isEmpty())
       throw new IllegalArgumentException("Pager Duty integration key is null or empty.");
     this.integrationKey = integrationKey;
     this.httpClient = httpClient;
+    this.retryConfiguration = retryConfiguration;
   }
 
   /**
@@ -81,12 +86,13 @@ public class PagerDutyClient {
     }
   }
 
-  private Mono<Void> sendRequestWithRetries(HttpRequest request) throws PagerDutyException {
+  private Mono<Void> sendRequestWithRetries(HttpRequest request) {
     return Mono.fromCallable(() -> this.sendRequest(request))
         .retryWhen(
-            Retry.backoff(MAX_RETRIES, Duration.ofMillis(500))
-                .jitter(0.5)
-                .maxBackoff(Duration.ofMillis(5000))
+            Retry.backoff(
+                    retryConfiguration.getMaxRetries(),
+                    Duration.ofMillis(retryConfiguration.getMinBackOffDelay()))
+                .maxBackoff(Duration.ofMillis(retryConfiguration.getMaxBackOffDelay()))
                 .filter(
                     throwable ->
                         !(throwable instanceof PagerDutyException
