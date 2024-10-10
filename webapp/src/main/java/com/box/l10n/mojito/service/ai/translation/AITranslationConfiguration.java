@@ -36,7 +36,7 @@ public class AITranslationConfiguration {
      * example, en-US and en-GB would match.
      *
      * <p>If a match is found, the source text will be used as the translation for the target locale
-     * and no AI translation will be requested for en-GB.
+     * and no AI translation will be requested for the target locale.
      */
     private boolean reuseSourceOnLanguageMatch = false;
 
