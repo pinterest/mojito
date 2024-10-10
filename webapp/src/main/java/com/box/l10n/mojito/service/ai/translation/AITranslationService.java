@@ -67,8 +67,9 @@ public class AITranslationService {
             repositoryId, PromptType.TRANSLATION.toString())
         > 0) {
       createPendingMTEntitiesInBatches(tmTextUnitIds);
+    } else {
+      logger.debug("No active prompts for repository: {}, no job scheduled", repositoryId);
     }
-    logger.debug("No active prompts for repository: {}, no job scheduled", repositoryId);
   }
 
   protected void sendForDeletion(TmTextUnitPendingMT pendingMT) {
