@@ -12,10 +12,9 @@ import com.box.l10n.mojito.entity.TmTextUnitPendingMT;
 import com.box.l10n.mojito.rest.ai.AIException;
 import com.box.l10n.mojito.service.ai.LLMService;
 import com.box.l10n.mojito.service.ai.RepositoryLocaleAIPromptRepository;
-import com.box.l10n.mojito.service.repository.RepositoryRepository;
-import com.box.l10n.mojito.service.tm.TMService;
-import com.box.l10n.mojito.service.tm.TMTextUnitCurrentVariantRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
+import com.box.l10n.mojito.service.tm.TMTextUnitVariantRepository;
+import com.google.common.collect.Lists;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
@@ -23,8 +22,13 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
 import org.quartz.JobDetail;
@@ -34,10 +38,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.quartz.CronTriggerFactoryBean;
 import org.springframework.scheduling.quartz.JobDetailFactoryBean;
 import org.springframework.stereotype.Component;
@@ -57,25 +62,28 @@ public class AITranslateCronJob implements Job {
 
   private static final String REPOSITORY_DEFAULT_PROMPT = "repository_default_prompt";
 
-  @Autowired TmTextUnitPendingMTRepository tmTextUnitPendingMTRepository;
-
   @Autowired TMTextUnitRepository tmTextUnitRepository;
 
-  @Autowired TMTextUnitCurrentVariantRepository tmTextUnitCurrentVariantRepository;
-
-  @Lazy @Autowired TMService tmService;
+  @Autowired TMTextUnitVariantRepository tmTextUnitVariantRepository;
 
   @Autowired LLMService llmService;
 
   @Autowired MeterRegistry meterRegistry;
-
-  @Autowired RepositoryRepository repositoryRepository;
 
   @Autowired RepositoryLocaleAIPromptRepository repositoryLocaleAIPromptRepository;
 
   @Autowired AITranslationTextUnitFilterService aiTranslationTextUnitFilterService;
 
   @Autowired AITranslationConfiguration aiTranslationConfiguration;
+
+  @Autowired AITranslationService aiTranslationService;
+
+  @Autowired TmTextUnitPendingMTRepository tmTextUnitPendingMTRepository;
+
+  @Autowired JdbcTemplate jdbcTemplate;
+
+  @Value("${l10n.ai.translation.job.threads:1}")
+  int threads;
 
   @Timed("AITranslateCronJob.translate")
   public void translate(Repository repository, TMTextUnit tmTextUnit, TmTextUnitPendingMT pendingMT)
@@ -114,8 +122,7 @@ public class AITranslateCronJob implements Job {
 
   private Set<Locale> getLocalesForMT(Repository repository, TMTextUnit tmTextUnit) {
     Set<Locale> localesWithVariants =
-        tmTextUnitCurrentVariantRepository.findLocalesWithVariantByTmTextUnit_Id(
-            tmTextUnit.getId());
+        tmTextUnitVariantRepository.findLocalesWithVariantByTmTextUnit_Id(tmTextUnit.getId());
     return repository.getRepositoryLocales().stream()
         .map(RepositoryLocale::getLocale)
         .filter(
@@ -140,6 +147,7 @@ public class AITranslateCronJob implements Job {
                             ? rlap.getLocale().getBcp47Tag()
                             : REPOSITORY_DEFAULT_PROMPT,
                     Function.identity()));
+    List<AITranslation> aiTranslations = Lists.newArrayList();
     localesForMT.forEach(
         targetLocale -> {
           try {
@@ -148,7 +156,8 @@ public class AITranslateCronJob implements Job {
                     .getRepositorySettings(repository.getName())
                     .isReuseSourceOnLanguageMatch()
                 && targetLocale.getBcp47Tag().startsWith(sourceLang)) {
-              reuseSourceStringAsTranslation(tmTextUnit, repository, targetLocale, sourceLang);
+              aiTranslations.add(
+                  reuseSourceStringAsTranslation(tmTextUnit, repository, targetLocale, sourceLang));
               return;
             }
             // Get the prompt override for this locale if it exists, otherwise use the
@@ -163,8 +172,9 @@ public class AITranslateCronJob implements Job {
                   tmTextUnit.getId(),
                   targetLocale.getBcp47Tag(),
                   repositoryLocaleAIPrompt.getAiPrompt().getId());
-              executeTranslationPrompt(
-                  tmTextUnit, repository, targetLocale, repositoryLocaleAIPrompt);
+              aiTranslations.add(
+                  executeTranslationPrompt(
+                      tmTextUnit, repository, targetLocale, repositoryLocaleAIPrompt));
             } else {
               logger.debug(
                   "No active translation prompt found for locale: {}, skipping AI translation.",
@@ -185,9 +195,10 @@ public class AITranslateCronJob implements Job {
                 Tags.of("repository", repository.getName(), "locale", targetLocale.getBcp47Tag()));
           }
         });
+    aiTranslationService.insertMultiRowAITranslationVariant(tmTextUnit.getId(), aiTranslations);
   }
 
-  private void reuseSourceStringAsTranslation(
+  private AITranslation reuseSourceStringAsTranslation(
       TMTextUnit tmTextUnit, Repository repository, Locale targetLocale, String sourceLang) {
     logger.debug(
         "Target language {} matches source language {}, re-using source string as translation.",
@@ -197,17 +208,10 @@ public class AITranslateCronJob implements Job {
         "AITranslateCronJob.translate.reuseSourceAsTranslation",
         Tags.of("repository", repository.getName(), "locale", targetLocale.getBcp47Tag()));
 
-    tmService.addTMTextUnitVariant(
-        tmTextUnit.getId(),
-        targetLocale.getId(),
-        tmTextUnit.getContent(),
-        tmTextUnit.getComment(),
-        TMTextUnitVariant.Status.MT_TRANSLATED,
-        false,
-        JSR310Migration.dateTimeNow());
+    return createAITranslationDTO(tmTextUnit, targetLocale, tmTextUnit.getContent());
   }
 
-  private void executeTranslationPrompt(
+  private AITranslation executeTranslationPrompt(
       TMTextUnit tmTextUnit,
       Repository repository,
       Locale targetLocale,
@@ -218,17 +222,23 @@ public class AITranslateCronJob implements Job {
             repository.getSourceLocale().getBcp47Tag(),
             targetLocale.getBcp47Tag(),
             repositoryLocaleAIPrompt.getAiPrompt());
-    tmService.addTMTextUnitVariant(
-        tmTextUnit.getId(),
-        targetLocale.getId(),
-        translation,
-        tmTextUnit.getComment(),
-        TMTextUnitVariant.Status.MT_TRANSLATED,
-        false,
-        JSR310Migration.dateTimeNow());
     meterRegistry.counter(
         "AITranslateCronJob.translate.success",
         Tags.of("repository", repository.getName(), "locale", targetLocale.getBcp47Tag()));
+    return createAITranslationDTO(tmTextUnit, targetLocale, translation);
+  }
+
+  private AITranslation createAITranslationDTO(
+      TMTextUnit tmTextUnit, Locale locale, String translation) {
+    AITranslation aiTranslation = new AITranslation();
+    aiTranslation.setTmTextUnit(tmTextUnit);
+    aiTranslation.setContentMd5(DigestUtils.md5Hex(translation));
+    aiTranslation.setLocaleId(locale.getId());
+    aiTranslation.setTranslation(translation);
+    aiTranslation.setIncludedInLocalizedFile(false);
+    aiTranslation.setStatus(TMTextUnitVariant.Status.MT_TRANSLATED);
+    aiTranslation.setCreatedDate(JSR310Migration.dateTimeNow());
+    return aiTranslation;
   }
 
   private boolean isExpired(TmTextUnitPendingMT pendingMT) {
@@ -252,38 +262,71 @@ public class AITranslateCronJob implements Job {
   @Timed("AITranslateCronJob.execute")
   public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
     logger.info("Executing AITranslateCronJob");
+
+    ExecutorService executorService = Executors.newFixedThreadPool(threads);
+
     List<TmTextUnitPendingMT> pendingMTs;
-    do {
-      pendingMTs =
-          tmTextUnitPendingMTRepository.findBatch(aiTranslationConfiguration.getBatchSize());
-      logger.info("Processing {} pending MTs", pendingMTs.size());
-      pendingMTs.forEach(
-          pendingMT -> {
-            try {
-              TMTextUnit tmTextUnit = getTmTextUnit(pendingMT);
-              Repository repository = tmTextUnit.getAsset().getRepository();
-              translate(repository, tmTextUnit, pendingMT);
-            } catch (Exception e) {
-              logger.error(
-                  "Error processing pending MT for text unit id: {}",
-                  pendingMT.getTmTextUnitId(),
-                  e);
-              meterRegistry.counter("AITranslateCronJob.pendingMT.error");
-            } finally {
-              if (pendingMT != null) {
-                logger.debug(
-                    "Deleting pending MT for tmTextUnitId: {}", pendingMT.getTmTextUnitId());
-                tmTextUnitPendingMTRepository.delete(pendingMT);
-              }
-            }
-          });
-    } while (!pendingMTs.isEmpty());
+    try {
+      do {
+        pendingMTs =
+            tmTextUnitPendingMTRepository.findBatch(aiTranslationConfiguration.getBatchSize());
+        logger.info("Processing {} pending MTs", pendingMTs.size());
+
+        List<CompletableFuture<Void>> futures =
+            pendingMTs.stream()
+                .map(
+                    pendingMT ->
+                        CompletableFuture.runAsync(
+                            () -> {
+                              try {
+                                TMTextUnit tmTextUnit = getTmTextUnit(pendingMT);
+                                Repository repository = tmTextUnit.getAsset().getRepository();
+                                translate(repository, tmTextUnit, pendingMT);
+                              } catch (Exception e) {
+                                logger.error(
+                                    "Error processing pending MT for text unit id: {}",
+                                    pendingMT.getTmTextUnitId(),
+                                    e);
+                                meterRegistry
+                                    .counter("AITranslateCronJob.pendingMT.error")
+                                    .increment();
+                              } finally {
+                                if (pendingMT != null) {
+                                  logger.debug(
+                                      "Sending pending MT for tmTextUnitId: {} for deletion",
+                                      pendingMT.getTmTextUnitId());
+                                  aiTranslationService.sendForDeletion(pendingMT);
+                                }
+                              }
+                            },
+                            executorService))
+                .toList();
+
+        // Wait for all tasks in this batch to complete
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+      } while (!pendingMTs.isEmpty());
+    } finally {
+      shutdownExecutor(executorService);
+    }
+
     logger.info("Finished executing AITranslateCronJob");
+  }
+
+  private static void shutdownExecutor(ExecutorService executorService) {
+    try {
+      executorService.shutdown();
+      if (!executorService.awaitTermination(1, TimeUnit.MINUTES)) {
+        logger.error("Thread pool tasks didn't finish in the expected time.");
+        executorService.shutdownNow();
+      }
+    } catch (InterruptedException e) {
+      executorService.shutdownNow();
+    }
   }
 
   private TMTextUnit getTmTextUnit(TmTextUnitPendingMT pendingMT) {
     return tmTextUnitRepository
-        .findByIdWithAssetAndRepositoryFetched(pendingMT.getTmTextUnitId())
+        .findByIdWithAssetAndRepositoryAndTMFetched(pendingMT.getTmTextUnitId())
         .orElseThrow(
             () -> new AIException("TMTextUnit not found for id: " + pendingMT.getTmTextUnitId()));
   }
@@ -294,6 +337,7 @@ public class AITranslateCronJob implements Job {
     jobDetailFactory.setJobClass(AITranslateCronJob.class);
     jobDetailFactory.setDescription("Translate text units in batches via AI");
     jobDetailFactory.setDurability(true);
+    jobDetailFactory.setName("aiTranslateCron");
     return jobDetailFactory;
   }
 

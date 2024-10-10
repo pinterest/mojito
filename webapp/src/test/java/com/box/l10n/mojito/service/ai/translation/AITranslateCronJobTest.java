@@ -1,6 +1,9 @@
 package com.box.l10n.mojito.service.ai.translation;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
@@ -26,8 +29,8 @@ import com.box.l10n.mojito.service.ai.LLMService;
 import com.box.l10n.mojito.service.ai.RepositoryLocaleAIPromptRepository;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.tm.TMService;
-import com.box.l10n.mojito.service.tm.TMTextUnitCurrentVariantRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
+import com.box.l10n.mojito.service.tm.TMTextUnitVariantRepository;
 import com.google.common.collect.Sets;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
@@ -41,6 +44,7 @@ import java.util.Set;
 import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.quartz.JobExecutionContext;
@@ -66,9 +70,11 @@ public class AITranslateCronJobTest {
 
   @Mock AIPrompt aiPrompt;
 
-  @Mock TMTextUnitCurrentVariantRepository tmTextUnitCurrentVariantRepository;
+  @Mock TMTextUnitVariantRepository tmTextUnitVariantRepository;
 
   @Mock Repository repository;
+
+  @Mock AITranslationService aiTranslationService;
 
   AITranslateCronJob aiTranslateCronJob;
 
@@ -80,24 +86,26 @@ public class AITranslateCronJobTest {
 
   AITranslationConfiguration aITranslationConfiguration;
 
+  ArgumentCaptor<List<AITranslation>> aiTranslationCaptor = ArgumentCaptor.forClass(List.class);
+
   @Before
   public void setup() {
     MockitoAnnotations.openMocks(this);
     aiTranslateCronJob = new AITranslateCronJob();
-    aiTranslateCronJob.tmService = tmService;
     aiTranslateCronJob.meterRegistry = meterRegistry;
     aiTranslateCronJob.llmService = llmService;
     aiTranslateCronJob.tmTextUnitRepository = tmTextUnitRepository;
     aiTranslateCronJob.tmTextUnitPendingMTRepository = tmTextUnitPendingMTRepository;
-    aiTranslateCronJob.repositoryRepository = repositoryRepository;
     aiTranslateCronJob.repositoryLocaleAIPromptRepository = repositoryLocaleAIPromptRepository;
     aiTranslateCronJob.aiTranslationTextUnitFilterService = aiTranslationTextUnitFilterService;
-    aiTranslateCronJob.tmTextUnitCurrentVariantRepository = tmTextUnitCurrentVariantRepository;
+    aiTranslateCronJob.tmTextUnitVariantRepository = tmTextUnitVariantRepository;
+    aiTranslateCronJob.aiTranslationService = aiTranslationService;
     aITranslationConfiguration = new AITranslationConfiguration();
     aITranslationConfiguration.setEnabled(true);
     aITranslationConfiguration.setCron("0 0/10 * * * ?");
     aITranslationConfiguration.setBatchSize(5);
     aITranslationConfiguration.setExpiryDuration(Duration.ofHours(3));
+    aiTranslateCronJob.threads = 1;
     AITranslationConfiguration.RepositorySettings repositorySettings =
         new AITranslationConfiguration.RepositorySettings();
     repositorySettings.setReuseSourceOnLanguageMatch(false);
@@ -180,8 +188,6 @@ public class AITranslateCronJobTest {
         .thenReturn("translated");
     TMTextUnitCurrentVariant tmTextUnitCurrentVariant = new TMTextUnitCurrentVariant();
     tmTextUnitCurrentVariant.setLocale(english);
-    when(tmTextUnitCurrentVariantRepository.findByTmTextUnit_Id(any()))
-        .thenReturn(Lists.list(tmTextUnitCurrentVariant));
     when(repository.getId()).thenReturn(1L);
     when(repository.getName()).thenReturn("testRepo");
     when(repository.getRepositoryLocales())
@@ -191,8 +197,10 @@ public class AITranslateCronJobTest {
     when(repository.getSourceLocale()).thenReturn(english);
     when(meterRegistry.timer(anyString(), isA((Iterable.class))))
         .thenReturn(mock(io.micrometer.core.instrument.Timer.class));
-    when(tmTextUnitRepository.findByIdWithAssetAndRepositoryFetched(1L))
+    when(tmTextUnitRepository.findByIdWithAssetAndRepositoryAndTMFetched(1L))
         .thenReturn(Optional.of(tmTextUnit));
+    when(meterRegistry.counter(anyString()))
+        .thenReturn(mock(io.micrometer.core.instrument.Counter.class));
   }
 
   @Test
@@ -201,33 +209,11 @@ public class AITranslateCronJobTest {
     verify(llmService, times(3))
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
-    verify(tmService, times(1))
-        .addTMTextUnitVariant(
-            eq(1L),
-            eq(2L),
-            eq("translated"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
-    verify(tmService, times(1))
-        .addTMTextUnitVariant(
-            eq(1L),
-            eq(3L),
-            eq("translated"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
-    verify(tmService, times(1))
-        .addTMTextUnitVariant(
-            eq(1L),
-            eq(4L),
-            eq("translated"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
+    verify(aiTranslationService, times(1))
+        .insertMultiRowAITranslationVariant(anyLong(), aiTranslationCaptor.capture());
+    List<AITranslation> aiTranslations = aiTranslationCaptor.getValue();
+    assertEquals(3, aiTranslations.size());
+    assertThat(aiTranslations).extracting("localeId").containsExactlyInAnyOrder(2L, 3L, 4L);
   }
 
   @Test
@@ -252,35 +238,14 @@ public class AITranslateCronJobTest {
     verify(llmService, times(2))
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
-    verify(tmService, times(1))
-        .addTMTextUnitVariant(
-            eq(1L),
-            eq(2L),
-            eq("translated"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
-    verify(tmService, times(1))
-        .addTMTextUnitVariant(
-            eq(1L),
-            eq(3L),
-            eq("translated"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
-    verify(tmService, times(1))
-        .addTMTextUnitVariant(
-            eq(1L),
-            eq(4L),
-            eq("content"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
-    verify(meterRegistry, times(1))
-        .counter(eq("AITranslateCronJob.translate.reuseSourceAsTranslation"), any(Tags.class));
+    verify(aiTranslationService, times(1))
+        .insertMultiRowAITranslationVariant(anyLong(), aiTranslationCaptor.capture());
+    List<AITranslation> aiTranslations = aiTranslationCaptor.getValue();
+    assertEquals(3, aiTranslations.size());
+    assertThat(aiTranslations).extracting("localeId").containsExactlyInAnyOrder(2L, 3L, 4L);
+    assertThat(aiTranslations)
+        .extracting("translation")
+        .containsExactlyInAnyOrder("content", "translated", "translated");
   }
 
   @Test
@@ -288,39 +253,17 @@ public class AITranslateCronJobTest {
     TMTextUnitCurrentVariant tmTextUnitCurrentVariant = new TMTextUnitCurrentVariant();
     tmTextUnitCurrentVariant.setLocale(german);
     Set<Locale> variants = Sets.newHashSet(tmTextUnitCurrentVariant.getLocale());
-    when(tmTextUnitCurrentVariantRepository.findLocalesWithVariantByTmTextUnit_Id(1L))
+    when(tmTextUnitVariantRepository.findLocalesWithVariantByTmTextUnit_Id(1L))
         .thenReturn(variants);
     aiTranslateCronJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
     verify(llmService, times(2))
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
-    verify(tmService, times(1))
-        .addTMTextUnitVariant(
-            eq(1L),
-            eq(2L),
-            eq("translated"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
-    verify(tmService, never())
-        .addTMTextUnitVariant(
-            eq(1L),
-            eq(3L),
-            eq("translated"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
-    verify(tmService, times(1))
-        .addTMTextUnitVariant(
-            eq(1L),
-            eq(4L),
-            eq("translated"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
+    verify(aiTranslationService, times(1))
+        .insertMultiRowAITranslationVariant(anyLong(), aiTranslationCaptor.capture());
+    List<AITranslation> aiTranslations = aiTranslationCaptor.getValue();
+    assertEquals(2, aiTranslations.size());
+    assertThat(aiTranslations).extracting("localeId").containsExactlyInAnyOrder(2L, 4L);
   }
 
   @Test
@@ -417,34 +360,15 @@ public class AITranslateCronJobTest {
     verify(llmService, times(30))
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
-    verify(tmService, times(10))
-        .addTMTextUnitVariant(
-            eq(1L),
-            eq(2L),
-            eq("translated"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
-    verify(tmService, times(10))
-        .addTMTextUnitVariant(
-            eq(1L),
-            eq(3L),
-            eq("translated"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
-    verify(tmService, times(10))
-        .addTMTextUnitVariant(
-            eq(1L),
-            eq(4L),
-            eq("translated"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
-    verify(tmTextUnitPendingMTRepository, times(10)).delete(isA(TmTextUnitPendingMT.class));
+    verify(aiTranslationService, times(10))
+        .insertMultiRowAITranslationVariant(anyLong(), aiTranslationCaptor.capture());
+    List<AITranslation> aiTranslations = aiTranslationCaptor.getValue();
+    for (int i = 0; i < aiTranslationCaptor.getAllValues().size(); i++) {
+      aiTranslations = aiTranslationCaptor.getAllValues().get(i);
+      assertEquals(3, aiTranslations.size());
+      assertThat(aiTranslations).extracting("localeId").containsExactlyInAnyOrder(2L, 3L, 4L);
+    }
+    verify(aiTranslationService, times(10)).sendForDeletion(isA(TmTextUnitPendingMT.class));
   }
 
   @Test
@@ -470,16 +394,16 @@ public class AITranslateCronJobTest {
     verify(llmService, times(30))
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
-    verify(tmService, times(29))
-        .addTMTextUnitVariant(
-            any(),
-            any(),
-            eq("translated"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
-    verify(tmTextUnitPendingMTRepository, times(10)).delete(isA(TmTextUnitPendingMT.class));
+    verify(aiTranslationService, times(10))
+        .insertMultiRowAITranslationVariant(anyLong(), aiTranslationCaptor.capture());
+    List<AITranslation> aiTranslations = aiTranslationCaptor.getAllValues().getFirst();
+    assertEquals(2, aiTranslations.size());
+    for (int i = 1; i < aiTranslationCaptor.getAllValues().size(); i++) {
+      aiTranslations = aiTranslationCaptor.getAllValues().get(i);
+      assertEquals(3, aiTranslations.size());
+      assertThat(aiTranslations).extracting("localeId").containsExactlyInAnyOrder(2L, 3L, 4L);
+    }
+    verify(aiTranslationService, times(10)).sendForDeletion(isA(TmTextUnitPendingMT.class));
   }
 
   @Test
@@ -498,39 +422,21 @@ public class AITranslateCronJobTest {
     when(tmTextUnitPendingMTRepository.findBatch(5))
         .thenReturn(pendingMTList)
         .thenReturn(Collections.emptyList());
-    when(tmTextUnitRepository.findByIdWithAssetAndRepositoryFetched(2L))
+    when(tmTextUnitRepository.findByIdWithAssetAndRepositoryAndTMFetched(2L))
         .thenReturn(Optional.empty());
     aiTranslateCronJob.execute(mock(JobExecutionContext.class));
     verify(llmService, times(12))
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
-    verify(tmService, times(4))
-        .addTMTextUnitVariant(
-            eq(1L),
-            eq(2L),
-            eq("translated"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
-    verify(tmService, times(4))
-        .addTMTextUnitVariant(
-            eq(1L),
-            eq(3L),
-            eq("translated"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
-    verify(tmService, times(4))
-        .addTMTextUnitVariant(
-            eq(1L),
-            eq(4L),
-            eq("translated"),
-            eq("comment"),
-            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
-            eq(false),
-            isA(ZonedDateTime.class));
-    verify(tmTextUnitPendingMTRepository, times(5)).delete(isA(TmTextUnitPendingMT.class));
+    verify(aiTranslationService, times(4))
+        .insertMultiRowAITranslationVariant(anyLong(), aiTranslationCaptor.capture());
+    List<AITranslation> aiTranslations = aiTranslationCaptor.getAllValues().getFirst();
+    assertEquals(3, aiTranslations.size());
+    for (int i = 0; i < aiTranslationCaptor.getAllValues().size(); i++) {
+      aiTranslations = aiTranslationCaptor.getAllValues().get(i);
+      assertEquals(3, aiTranslations.size());
+      assertThat(aiTranslations).extracting("localeId").containsExactlyInAnyOrder(2L, 3L, 4L);
+    }
+    verify(aiTranslationService, times(5)).sendForDeletion(isA(TmTextUnitPendingMT.class));
   }
 }
