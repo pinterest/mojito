@@ -16,10 +16,10 @@ public class ScheduledJobDTO {
   public ScheduledJobDTO(ScheduledJob scheduledJob) {
     this.id = scheduledJob.getId();
     this.repository = scheduledJob.getRepository().getName();
-    this.jobType = scheduledJob.getJobType();
+    //    this.jobType = scheduledJob.getJobType();
     this.cron = scheduledJob.getCron();
     this.properties = scheduledJob.getProperties();
-    this.jobStatus = scheduledJob.getJobStatus();
+    //    this.jobStatus = scheduledJob.getJobStatus();
     this.startDate = scheduledJob.getStartDate();
     this.endDate = scheduledJob.getEndDate();
   }

@@ -35,6 +35,8 @@ public class ScheduledJobManager {
   @Autowired ThirdPartySyncJobsConfig thirdPartySyncJobsConfig;
   @Autowired QuartzSchedulerManager schedulerManager;
   @Autowired ScheduledJobRepository scheduledJobRepository;
+  @Autowired ScheduledJobStatusRepository scheduledJobStatusRepository;
+  @Autowired ScheduledJobTypeRepository scheduledJobTypeRepository;
   @Autowired RepositoryRepository repositoryRepository;
 
   /* Quartz scheduler dedicated to scheduled jobs using in memory data source */
@@ -45,7 +47,8 @@ public class ScheduledJobManager {
     // Attach Job and Trigger listeners on the 'scheduledJobs' scheduler
     getScheduler()
         .getListenerManager()
-        .addJobListener(new ScheduledJobListener(scheduledJobRepository));
+        .addJobListener(
+            new ScheduledJobListener(scheduledJobRepository, scheduledJobStatusRepository));
     getScheduler()
         .getListenerManager()
         .addTriggerListener(new ScheduledJobTriggerListener(scheduledJobRepository));
@@ -65,7 +68,7 @@ public class ScheduledJobManager {
     }
 
     // Clean up quartz jobs for this scheduler that are not in the DB.
-    cleanupDB();
+    //    cleanupDB();
     scheduleJobs();
   }
 
@@ -73,7 +76,7 @@ public class ScheduledJobManager {
     for (JobKey jobKey : getScheduler().getJobKeys(GroupMatcher.anyGroup())) {
       if (scheduledJobRepository.findByJobKey(jobKey) == null) {
         logger.info(
-            "Removing {} job for repo ID: {} as it's no longer the 'scheduled_job' table.",
+            "Removing {} job for repo ID: {} as it's no longer in the 'scheduled_job' table.",
             jobKey.getGroup(),
             jobKey.getName());
         getScheduler().deleteJob(jobKey);
@@ -90,8 +93,11 @@ public class ScheduledJobManager {
     ScheduledJob scheduledJob = new ScheduledJob();
     scheduledJob.setCron(jobConfig.getCron());
     scheduledJob.setRepository(repositoryRepository.findByName(jobConfig.getRepository()));
-    scheduledJob.setJobStatus(ScheduledJobStatus.SCHEDULED);
-    scheduledJob.setJobType(ScheduledJobType.THIRD_PARTY_SYNC);
+    scheduledJob.setJobStatus(
+        scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.IN_PROGRESS));
+
+    scheduledJob.setJobType(
+        scheduledJobTypeRepository.findByEnum(ScheduledJobType.THIRD_PARTY_SYNC));
 
     ScheduledThirdPartySyncProperties thirdPartySyncProperties =
         new ScheduledThirdPartySyncProperties();
@@ -124,11 +130,19 @@ public class ScheduledJobManager {
 
       // Retrieve job class from enum value e.g. THIRD_PARTY_SYNC -> ScheduledThirdPartySync
       Class<? extends IScheduledJob> jobType =
-          loadJobClass(scheduledJob.getJobType().getJobClassName());
+          loadJobClass(scheduledJob.getJobType().getEnum().getJobClassName());
 
       JobDetail job = JobBuilder.newJob(jobType).withIdentity(jobKey).build();
 
       Trigger trigger = buildTrigger(jobKey, scheduledJob.getCron(), triggerKey);
+
+      if (!scheduledJob.getEnabled()) {
+        // The job is disabled and exists in Quartz, pause it
+        if (getScheduler().checkExists(jobKey)) {
+          getScheduler().pauseJob(jobKey);
+        }
+        return;
+      }
 
       if (getScheduler().checkExists(jobKey)) {
         getScheduler().rescheduleJob(triggerKey, trigger);
@@ -136,7 +150,8 @@ public class ScheduledJobManager {
         getScheduler().scheduleJob(job, trigger);
       }
 
-      scheduledJob.setJobStatus(ScheduledJobStatus.SCHEDULED);
+      scheduledJob.setJobStatus(
+          scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SCHEDULED));
       scheduledJobRepository.save(scheduledJob);
     }
   }
@@ -151,13 +166,14 @@ public class ScheduledJobManager {
 
   private JobKey getJobKey(ScheduledJob scheduledJob) {
     return new JobKey(
-        scheduledJob.getRepository().getId().toString(), scheduledJob.getJobType().toString());
+        scheduledJob.getRepository().getId().toString(),
+        scheduledJob.getJobType().getEnum().toString());
   }
 
   private TriggerKey getTriggerKey(ScheduledJob scheduledJob) {
     return new TriggerKey(
         "trigger_" + scheduledJob.getRepository().getId().toString(),
-        scheduledJob.getJobType().toString());
+        scheduledJob.getJobType().getEnum().toString());
   }
 
   public Scheduler getScheduler() {
