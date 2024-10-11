@@ -13,9 +13,13 @@ public class ScheduledJobListener extends JobListenerSupport {
   static Logger logger = LoggerFactory.getLogger(ScheduledJobListener.class);
 
   private final ScheduledJobRepository scheduledJobRepository;
+  private final ScheduledJobStatusRepository scheduledJobStatusRepository;
 
-  public ScheduledJobListener(ScheduledJobRepository scheduledJobRepository) {
+  public ScheduledJobListener(
+      ScheduledJobRepository scheduledJobRepository,
+      ScheduledJobStatusRepository scheduledJobStatusRepository) {
     this.scheduledJobRepository = scheduledJobRepository;
+    this.scheduledJobStatusRepository = scheduledJobStatusRepository;
   }
 
   @Override
@@ -28,7 +32,8 @@ public class ScheduledJobListener extends JobListenerSupport {
     ScheduledJob scheduledJob =
         scheduledJobRepository.findByJobKey(context.getJobDetail().getKey());
 
-    scheduledJob.setJobStatus(ScheduledJobStatus.IN_PROGRESS);
+    scheduledJob.setJobStatus(
+        scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.IN_PROGRESS));
     scheduledJob.setStartDate(new Date());
 
     scheduledJobRepository.save(scheduledJob);
@@ -43,10 +48,11 @@ public class ScheduledJobListener extends JobListenerSupport {
     IScheduledJob jobInstance = (IScheduledJob) context.getJobInstance();
 
     if (jobException == null) {
-      scheduledJob.setJobStatus(ScheduledJobStatus.SUCCEEDED);
+      scheduledJob.setJobStatus(
+          scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SUCCEEDED));
       jobInstance.onSuccess(context);
     } else {
-      scheduledJob.setJobStatus(ScheduledJobStatus.FAILED);
+      scheduledJob.setJobStatus(scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.FAILED));
       jobInstance.onFailure(context, jobException);
     }
 
