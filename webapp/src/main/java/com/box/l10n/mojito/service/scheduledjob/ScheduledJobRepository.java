@@ -9,7 +9,7 @@ public interface ScheduledJobRepository extends JpaRepository<ScheduledJob, Long
 
   @Query(
       "SELECT sj FROM ScheduledJob sj "
-          + "WHERE sj.repository.id = :repositoryId AND sj.jobType = :jobType")
+          + "WHERE sj.repository.id = :repositoryId AND sj.jobType.jobType = :jobType")
   ScheduledJob findByRepositoryIdAndJobType(Long repositoryId, ScheduledJobType jobType);
 
   default ScheduledJob findByJobKey(JobKey jobKey) {

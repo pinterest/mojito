@@ -1,16 +1,9 @@
 package com.box.l10n.mojito.entity;
 
 import com.box.l10n.mojito.json.ObjectMapper;
-import com.box.l10n.mojito.rest.View;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobProperties;
-import com.box.l10n.mojito.service.scheduledjob.ScheduledJobStatus;
-import com.box.l10n.mojito.service.scheduledjob.ScheduledJobType;
-import com.fasterxml.jackson.annotation.JsonView;
-import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -18,9 +11,11 @@ import jakarta.persistence.PostLoad;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import java.util.Date;
+import org.hibernate.envers.Audited;
 
 @Entity
 @Table(name = "scheduled_job")
+@Audited
 public class ScheduledJob extends BaseEntity {
   @Id private Long id;
 
@@ -28,11 +23,9 @@ public class ScheduledJob extends BaseEntity {
   @JoinColumn(name = "repository_id")
   private Repository repository;
 
-  @Basic(optional = false)
-  @Column(name = "job_type")
-  @Enumerated(EnumType.STRING)
-  @JsonView(View.Repository.class)
-  private ScheduledJobType jobType;
+  @ManyToOne
+  @JoinColumn(name = "job_type")
+  private ScheduledJobTypeEntity jobType;
 
   @Column(name = "cron")
   private String cron;
@@ -42,11 +35,9 @@ public class ScheduledJob extends BaseEntity {
   @Column(name = "properties")
   private String propertiesString;
 
-  @Basic(optional = false)
-  @Column(name = "job_status")
-  @Enumerated(EnumType.STRING)
-  @JsonView(View.Repository.class)
-  private ScheduledJobStatus jobStatus;
+  @ManyToOne
+  @JoinColumn(name = "job_status")
+  private ScheduledJobStatusEntity jobStatus;
 
   @Column(name = "start_date")
   private Date startDate;
@@ -54,17 +45,21 @@ public class ScheduledJob extends BaseEntity {
   @Column(name = "end_date")
   private Date endDate;
 
+  @Column(name = "enabled", nullable = false, columnDefinition = "TINYINT DEFAULT 1")
+  private Boolean enabled = true;
+
   @PostLoad
   public void deserializeProperties() {
     ObjectMapper objectMapper = new ObjectMapper();
     try {
-      this.properties = objectMapper.readValue(propertiesString, jobType.getPropertiesClass());
+      this.properties =
+          objectMapper.readValue(propertiesString, jobType.getEnum().getPropertiesClass());
     } catch (Exception e) {
       throw new RuntimeException(
           "Failed to deserialize properties '"
               + propertiesString
               + "' for class: "
-              + jobType.getPropertiesClass().getName(),
+              + jobType.getEnum().getPropertiesClass().getName(),
           e);
     }
   }
@@ -87,11 +82,11 @@ public class ScheduledJob extends BaseEntity {
     this.repository = repository;
   }
 
-  public ScheduledJobType getJobType() {
+  public ScheduledJobTypeEntity getJobType() {
     return jobType;
   }
 
-  public void setJobType(ScheduledJobType jobType) {
+  public void setJobType(ScheduledJobTypeEntity jobType) {
     this.jobType = jobType;
   }
 
@@ -126,11 +121,11 @@ public class ScheduledJob extends BaseEntity {
     this.propertiesString = properties;
   }
 
-  public ScheduledJobStatus getJobStatus() {
+  public ScheduledJobStatusEntity getJobStatus() {
     return jobStatus;
   }
 
-  public void setJobStatus(ScheduledJobStatus jobStatus) {
+  public void setJobStatus(ScheduledJobStatusEntity jobStatus) {
     this.jobStatus = jobStatus;
   }
 
@@ -148,5 +143,13 @@ public class ScheduledJob extends BaseEntity {
 
   public void setEndDate(Date endDate) {
     this.endDate = endDate;
+  }
+
+  public Boolean getEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(Boolean enabled) {
+    this.enabled = enabled;
   }
 }

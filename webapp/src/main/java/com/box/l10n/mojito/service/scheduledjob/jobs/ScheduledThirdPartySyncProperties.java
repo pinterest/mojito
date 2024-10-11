@@ -4,7 +4,7 @@ import com.box.l10n.mojito.rest.thirdparty.ThirdPartySyncAction;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobProperties;
 import java.util.List;
 
-public class ScheduledThirdPartySyncProperties implements ScheduledJobProperties {
+public class ScheduledThirdPartySyncProperties extends ScheduledJobProperties {
   private String thirdPartyProjectId;
   private List<ThirdPartySyncAction> actions;
   private String pluralSeparator;
