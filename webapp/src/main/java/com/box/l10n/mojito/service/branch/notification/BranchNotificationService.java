@@ -16,10 +16,12 @@ import com.box.l10n.mojito.service.branch.BranchStatisticService;
 import com.box.l10n.mojito.service.branch.BranchTextUnitStatisticRepository;
 import com.box.l10n.mojito.service.branch.notification.job.BranchNotificationMissingScreenshotsJob;
 import com.box.l10n.mojito.service.branch.notification.job.BranchNotificationMissingScreenshotsJobInput;
+import com.box.l10n.mojito.service.branch.notification.slack.BranchNotificationMessageSenderSlack;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.box.l10n.mojito.utils.DateTimeUtils;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -153,6 +155,15 @@ public class BranchNotificationService {
         branch.getName(),
         notifierId);
     BranchNotification branchNotification = getOrCreateBranchNotification(branch, notifierId);
+
+    if (branchNotificationMessageSender
+        instanceof BranchNotificationMessageSenderSlack branchNotificationMessageSenderSlack) {
+      String userName = getUsername(branch);
+      if (Strings.isNullOrEmpty(userName)
+          || branchNotificationMessageSenderSlack.isUsernameBlocked(userName)) {
+        return;
+      }
+    }
 
     if (shouldSendNewMessage(branchNotification, branchNotificationInfo)) {
       sendNewMessage(

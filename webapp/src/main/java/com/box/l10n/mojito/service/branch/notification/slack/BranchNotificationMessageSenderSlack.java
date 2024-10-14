@@ -11,6 +11,7 @@ import com.box.l10n.mojito.slack.response.ChatPostMessageResponse;
 import com.box.l10n.mojito.thirdpartynotification.slack.SlackChannels;
 import com.google.common.base.Preconditions;
 import java.util.List;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 
 public class BranchNotificationMessageSenderSlack implements BranchNotificationMessageSender {
@@ -29,6 +30,8 @@ public class BranchNotificationMessageSenderSlack implements BranchNotificationM
   boolean useDirectMessage;
   boolean githubPR;
 
+  List<String> blockedUsernames;
+
   public BranchNotificationMessageSenderSlack(
       String id,
       SlackClient slackClient,
@@ -36,7 +39,8 @@ public class BranchNotificationMessageSenderSlack implements BranchNotificationM
       BranchNotificationMessageBuilderSlack branchNotificationMessageBuilderSlack,
       String userEmailPattern,
       boolean useDirectMessage,
-      boolean isGithubPR) {
+      boolean isGithubPR,
+      List<String> blockedUsernames) {
     this.id = id;
     this.slackClient = Preconditions.checkNotNull(slackClient);
     this.slackChannels = Preconditions.checkNotNull(slackChannels);
@@ -45,6 +49,7 @@ public class BranchNotificationMessageSenderSlack implements BranchNotificationM
     this.userEmailPattern = Preconditions.checkNotNull(userEmailPattern);
     this.useDirectMessage = useDirectMessage;
     this.githubPR = isGithubPR;
+    this.blockedUsernames = blockedUsernames;
   }
 
   @Override
@@ -124,6 +129,17 @@ public class BranchNotificationMessageSenderSlack implements BranchNotificationM
     } catch (SlackClientException sce) {
       throw new BranchNotificationMessageSenderException(sce);
     }
+  }
+
+  public boolean isUsernameBlocked(String username) {
+    for (String blockedUsernameRegex : blockedUsernames) {
+      if (Pattern.compile(blockedUsernameRegex, Pattern.CASE_INSENSITIVE)
+          .matcher(username)
+          .matches()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

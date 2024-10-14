@@ -160,7 +160,8 @@ public class BranchNotificationMessageSenders {
                           branchNotificationMessageBuilderSlack,
                           slackConfigurationProperties.getUserEmailPattern(),
                           slackConfigurationProperties.isUseDirectMessage(),
-                          slackConfigurationProperties.isGithubPR());
+                          slackConfigurationProperties.isGithubPR(),
+                          slackConfigurationProperties.getBlockedUsernames());
 
                   return new SimpleEntry<String, BranchNotificationMessageSenderSlack>(
                       id, branchNotificationMessageSenderSlack);
