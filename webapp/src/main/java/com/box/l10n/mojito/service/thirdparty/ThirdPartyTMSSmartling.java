@@ -12,6 +12,7 @@ import com.box.l10n.mojito.entity.PollableTask;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.quartz.QuartzJobInfo;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
+import com.box.l10n.mojito.service.ai.translation.AITranslationConfiguration;
 import com.box.l10n.mojito.service.assetExtraction.AssetTextUnitToTMTextUnitRepository;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingFile;
@@ -42,6 +43,7 @@ import com.google.common.io.Files;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -100,6 +102,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
 
   private final QuartzPollableTaskScheduler quartzPollableTaskScheduler;
 
+  private final AITranslationConfiguration aiTranslationConfiguration;
+
   private final Set<String> supportedImageExtensions =
       Sets.newHashSet("png", "jpg", "jpeg", "gif", "tiff");
 
@@ -118,7 +122,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       ThirdPartyTMSSmartlingGlossary thirdPartyTMSSmartlingGlossary,
       AssetTextUnitToTMTextUnitRepository assetTextUnitToTMTextUnitRepository,
       MeterRegistry meterRegistry,
-      QuartzPollableTaskScheduler quartzPollableTaskScheduler) {
+      QuartzPollableTaskScheduler quartzPollableTaskScheduler,
+      AITranslationConfiguration aiTranslationConfiguration) {
     this(
         smartlingClient,
         textUnitSearcher,
@@ -130,7 +135,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
         assetTextUnitToTMTextUnitRepository,
         DEFAULT_BATCH_SIZE,
         meterRegistry,
-        quartzPollableTaskScheduler);
+        quartzPollableTaskScheduler,
+        aiTranslationConfiguration);
   }
 
   public ThirdPartyTMSSmartling(
@@ -144,7 +150,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       AssetTextUnitToTMTextUnitRepository assetTextUnitToTMTextUnitRepository,
       int batchSize,
       MeterRegistry meterRegistry,
-      QuartzPollableTaskScheduler quartzPollableTaskScheduler) {
+      QuartzPollableTaskScheduler quartzPollableTaskScheduler,
+      AITranslationConfiguration aiTranslationConfiguration) {
     this.smartlingClient = smartlingClient;
     this.assetPathAndTextUnitNameKeys = assetPathAndTextUnitNameKeys;
     this.textUnitBatchImporterService = textUnitBatchImporterService;
@@ -156,6 +163,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
     this.assetTextUnitToTMTextUnitRepository = assetTextUnitToTMTextUnitRepository;
     this.meterRegistry = meterRegistry;
     this.quartzPollableTaskScheduler = quartzPollableTaskScheduler;
+    this.aiTranslationConfiguration = aiTranslationConfiguration;
   }
 
   @Override
@@ -337,6 +345,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
                         thirdPartyTextUnit.setAssetPath(key.getAssetPath());
                         thirdPartyTextUnit.setName(key.getTextUnitName());
                         thirdPartyTextUnit.setNamePluralPrefix(isPluralFile(file.getFileUri()));
+                        thirdPartyTextUnit.setUploadedFileUri(file.getFileUri());
 
                         return thirdPartyTextUnit;
                       });
@@ -968,6 +977,12 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
     result.setPluralFormsExcluded(pluralFormsExcluded);
     result.setSkipTextUnitWithPattern(skipTextUnitsWithPattern);
     result.setSkipAssetPathWithPattern(skipAssetsWithPathPattern);
+    result.setExcludeUnexpiredPendingMT(
+        aiTranslationConfiguration != null && aiTranslationConfiguration.isEnabled());
+    result.setAiTranslationExpiryDuration(
+        aiTranslationConfiguration != null
+            ? aiTranslationConfiguration.getExpiryDuration()
+            : Duration.ofHours(3));
     if (!Strings.isNullOrEmpty(pluralFormOther)) {
       result.setPluralFormOther(pluralFormOther);
     }
