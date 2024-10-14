@@ -147,15 +147,6 @@ public class BranchNotificationService {
       BranchNotificationMessageSender branchNotificationMessageSender,
       Branch branch,
       BranchNotificationInfo branchNotificationInfo) {
-    String notifierId = branchNotificationMessageSender.getId();
-
-    logger.debug(
-        "sendNotificationsForBranch: {} ({} with sender: {})",
-        branch.getId(),
-        branch.getName(),
-        notifierId);
-    BranchNotification branchNotification = getOrCreateBranchNotification(branch, notifierId);
-
     // Check if the username for the Slack notification is in the block list
     if (branchNotificationMessageSender
         instanceof BranchNotificationMessageSenderSlack branchNotificationMessageSenderSlack) {
@@ -165,6 +156,15 @@ public class BranchNotificationService {
         return;
       }
     }
+
+    String notifierId = branchNotificationMessageSender.getId();
+
+    logger.debug(
+        "sendNotificationsForBranch: {} ({} with sender: {})",
+        branch.getId(),
+        branch.getName(),
+        notifierId);
+    BranchNotification branchNotification = getOrCreateBranchNotification(branch, notifierId);
 
     if (shouldSendNewMessage(branchNotification, branchNotificationInfo)) {
       sendNewMessage(
