@@ -156,6 +156,7 @@ public class BranchNotificationService {
         notifierId);
     BranchNotification branchNotification = getOrCreateBranchNotification(branch, notifierId);
 
+    // Check if the username for the Slack notification is in the block list
     if (branchNotificationMessageSender
         instanceof BranchNotificationMessageSenderSlack branchNotificationMessageSenderSlack) {
       String userName = getUsername(branch);
