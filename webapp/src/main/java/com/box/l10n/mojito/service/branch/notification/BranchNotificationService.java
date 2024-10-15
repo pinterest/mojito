@@ -16,7 +16,6 @@ import com.box.l10n.mojito.service.branch.BranchStatisticService;
 import com.box.l10n.mojito.service.branch.BranchTextUnitStatisticRepository;
 import com.box.l10n.mojito.service.branch.notification.job.BranchNotificationMissingScreenshotsJob;
 import com.box.l10n.mojito.service.branch.notification.job.BranchNotificationMissingScreenshotsJobInput;
-import com.box.l10n.mojito.service.branch.notification.slack.BranchNotificationMessageSenderSlack;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.box.l10n.mojito.utils.DateTimeUtils;
 import com.google.common.base.Joiner;
@@ -148,13 +147,11 @@ public class BranchNotificationService {
       Branch branch,
       BranchNotificationInfo branchNotificationInfo) {
     // Check if the username for the Slack notification is in the block list
-    if (branchNotificationMessageSender
-        instanceof BranchNotificationMessageSenderSlack branchNotificationMessageSenderSlack) {
-      String userName = getUsername(branch);
-      if (Strings.isNullOrEmpty(userName)
-          || branchNotificationMessageSenderSlack.isUsernameBlocked(userName)) {
-        return;
-      }
+
+    String username = getUsername(branch);
+    if (Strings.isNullOrEmpty(username)
+        || !branchNotificationMessageSender.isUserAllowed(username)) {
+      return;
     }
 
     String notifierId = branchNotificationMessageSender.getId();

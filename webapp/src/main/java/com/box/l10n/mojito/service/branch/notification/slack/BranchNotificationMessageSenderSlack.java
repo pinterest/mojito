@@ -30,7 +30,7 @@ public class BranchNotificationMessageSenderSlack implements BranchNotificationM
   boolean useDirectMessage;
   boolean githubPR;
 
-  List<String> blockedUsernames;
+  List<Pattern> blockedUserPatterns;
 
   public BranchNotificationMessageSenderSlack(
       String id,
@@ -40,7 +40,7 @@ public class BranchNotificationMessageSenderSlack implements BranchNotificationM
       String userEmailPattern,
       boolean useDirectMessage,
       boolean isGithubPR,
-      List<String> blockedUsernames) {
+      List<Pattern> blockedUserPatterns) {
     this.id = id;
     this.slackClient = Preconditions.checkNotNull(slackClient);
     this.slackChannels = Preconditions.checkNotNull(slackChannels);
@@ -49,7 +49,7 @@ public class BranchNotificationMessageSenderSlack implements BranchNotificationM
     this.userEmailPattern = Preconditions.checkNotNull(userEmailPattern);
     this.useDirectMessage = useDirectMessage;
     this.githubPR = isGithubPR;
-    this.blockedUsernames = blockedUsernames;
+    this.blockedUserPatterns = blockedUserPatterns;
   }
 
   @Override
@@ -131,19 +131,18 @@ public class BranchNotificationMessageSenderSlack implements BranchNotificationM
     }
   }
 
-  public boolean isUsernameBlocked(String username) {
-    for (String blockedUsernameRegex : blockedUsernames) {
-      if (Pattern.compile(blockedUsernameRegex, Pattern.CASE_INSENSITIVE)
-          .matcher(username)
-          .matches()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @Override
   public String getId() {
     return id;
+  }
+
+  @Override
+  public boolean isUserAllowed(String username) {
+    for (Pattern blockedUserPattern : blockedUserPatterns) {
+      if (blockedUserPattern.matcher(username).matches()) {
+        return false;
+      }
+    }
+    return true;
   }
 }
