@@ -271,6 +271,7 @@ public class AITranslateCronJob implements Job {
         pendingMTs =
             tmTextUnitPendingMTRepository.findBatch(aiTranslationConfiguration.getBatchSize());
         logger.info("Processing {} pending MTs", pendingMTs.size());
+        List<TmTextUnitPendingMT> processedMTs = Lists.newArrayList();
 
         List<CompletableFuture<Void>> futures =
             pendingMTs.stream()
@@ -295,7 +296,7 @@ public class AITranslateCronJob implements Job {
                                   logger.debug(
                                       "Sending pending MT for tmTextUnitId: {} for deletion",
                                       pendingMT.getTmTextUnitId());
-                                  aiTranslationService.sendForDeletion(pendingMT);
+                                  processedMTs.add(pendingMT);
                                 }
                               }
                             },
@@ -304,6 +305,7 @@ public class AITranslateCronJob implements Job {
 
         // Wait for all tasks in this batch to complete
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        aiTranslationService.deleteBatch(processedMTs);
       } while (!pendingMTs.isEmpty());
     } finally {
       shutdownExecutor(executorService);
@@ -349,5 +351,23 @@ public class AITranslateCronJob implements Job {
     trigger.setJobDetail(job);
     trigger.setCronExpression(aiTranslationConfiguration.getCron());
     return trigger;
+  }
+
+  private void deleteBatch(List<TmTextUnitPendingMT> batch) {
+    if (batch.isEmpty()) {
+      logger.debug("No pending MTs to delete");
+      return;
+    }
+
+    String sql =
+        "DELETE FROM tm_text_unit_pending_mt WHERE id IN ("
+            + batch.stream()
+                .map(tmTextUnitPendingMT -> tmTextUnitPendingMT.getId().toString())
+                .collect(Collectors.joining(","))
+            + ")";
+    logger.debug(
+        "Executing batch delete for IDs: {}",
+        batch.stream().map(TmTextUnitPendingMT::getId).collect(Collectors.toList()));
+    jdbcTemplate.update(sql);
   }
 }
