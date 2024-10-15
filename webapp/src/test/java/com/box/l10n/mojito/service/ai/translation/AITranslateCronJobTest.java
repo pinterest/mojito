@@ -368,7 +368,7 @@ public class AITranslateCronJobTest {
       assertEquals(3, aiTranslations.size());
       assertThat(aiTranslations).extracting("localeId").containsExactlyInAnyOrder(2L, 3L, 4L);
     }
-    verify(aiTranslationService, times(10)).sendForDeletion(isA(TmTextUnitPendingMT.class));
+    verify(aiTranslationService, times(3)).deleteBatch(isA(List.class));
   }
 
   @Test
@@ -403,7 +403,7 @@ public class AITranslateCronJobTest {
       assertEquals(3, aiTranslations.size());
       assertThat(aiTranslations).extracting("localeId").containsExactlyInAnyOrder(2L, 3L, 4L);
     }
-    verify(aiTranslationService, times(10)).sendForDeletion(isA(TmTextUnitPendingMT.class));
+    verify(aiTranslationService, times(3)).deleteBatch(isA(List.class));
   }
 
   @Test
@@ -437,6 +437,6 @@ public class AITranslateCronJobTest {
       assertEquals(3, aiTranslations.size());
       assertThat(aiTranslations).extracting("localeId").containsExactlyInAnyOrder(2L, 3L, 4L);
     }
-    verify(aiTranslationService, times(5)).sendForDeletion(isA(TmTextUnitPendingMT.class));
+    verify(aiTranslationService, times(2)).deleteBatch(isA(List.class));
   }
 }

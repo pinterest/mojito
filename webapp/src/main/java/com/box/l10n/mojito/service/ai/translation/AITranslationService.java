@@ -7,8 +7,6 @@ import com.box.l10n.mojito.service.ai.RepositoryLocaleAIPromptRepository;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitVariantRepository;
 import com.google.common.collect.Lists;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import jakarta.transaction.Transactional;
 import java.sql.Timestamp;
 import java.time.Duration;
@@ -23,8 +21,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Sinks;
 
 @Component
 @ConditionalOnProperty(value = "l10n.ai.translation.enabled", havingValue = "true")
@@ -51,9 +47,6 @@ public class AITranslationService {
   @Value("${l10n.ai.translation.maxTextUnitsAIRequest:1000}")
   int maxTextUnitsAIRequest;
 
-  private final Sinks.Many<TmTextUnitPendingMT> pendingMTDeletionSink =
-      Sinks.many().multicast().onBackpressureBuffer();
-
   @Transactional
   public void createPendingMTEntitiesInBatches(Long repositoryId, Set<Long> tmTextUnitIds) {
     if (tmTextUnitIds.size() > maxTextUnitsAIRequest) {
@@ -70,11 +63,6 @@ public class AITranslationService {
     } else {
       logger.debug("No active prompts for repository: {}, no job scheduled", repositoryId);
     }
-  }
-
-  protected void sendForDeletion(TmTextUnitPendingMT pendingMT) {
-    logger.debug("Sending pending MT for deletion: {}", pendingMT);
-    pendingMTDeletionSink.tryEmitNext(pendingMT);
   }
 
   private void createPendingMTEntitiesInBatches(Set<Long> tmTextUnitIds) {
@@ -177,7 +165,7 @@ public class AITranslationService {
   }
 
   @Transactional
-  private void deleteBatch(List<TmTextUnitPendingMT> batch) {
+  protected void deleteBatch(List<TmTextUnitPendingMT> batch) {
     if (batch.isEmpty()) {
       logger.debug("No pending MTs to delete");
       return;
@@ -200,19 +188,5 @@ public class AITranslationService {
     tmTextUnitPendingMT.setTmTextUnitId(tmTextUnitId);
     tmTextUnitPendingMT.setCreatedDate(JSR310Migration.newDateTimeEmptyCtor());
     return tmTextUnitPendingMT;
-  }
-
-  @PostConstruct
-  public void init() {
-    Flux<TmTextUnitPendingMT> flux = pendingMTDeletionSink.asFlux();
-
-    flux.bufferTimeout(batchSize, timeout)
-        .filter(batch -> !batch.isEmpty())
-        .subscribe(this::deleteBatch);
-  }
-
-  @PreDestroy
-  public void destroy() {
-    pendingMTDeletionSink.tryEmitComplete();
   }
 }
