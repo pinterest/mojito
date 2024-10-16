@@ -1,5 +1,7 @@
 package com.box.l10n.mojito.service.scheduledjob;
 
+import static com.box.l10n.mojito.quartz.QuartzSchedulerManager.DEFAULT_SCHEDULER_NAME;
+
 import com.box.l10n.mojito.entity.ScheduledJob;
 import com.box.l10n.mojito.quartz.QuartzSchedulerManager;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
@@ -21,6 +23,7 @@ import org.quartz.impl.matchers.GroupMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -40,10 +43,13 @@ public class ScheduledJobManager {
   @Autowired RepositoryRepository repositoryRepository;
 
   /* Quartz scheduler dedicated to scheduled jobs using in memory data source */
-  public static final String QUARTZ_SCHEDULER_NAME = "scheduledJobs";
+  @Value("${l10n.scheduledJobs.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
+  private String schedulerName;
 
   @PostConstruct
   public void init() throws ClassNotFoundException, SchedulerException {
+    logger.info("Scheduled Job Manager started.");
+
     // Attach Job and Trigger listeners on the 'scheduledJobs' scheduler
     getScheduler()
         .getListenerManager()
@@ -52,8 +58,6 @@ public class ScheduledJobManager {
     getScheduler()
         .getListenerManager()
         .addTriggerListener(new ScheduledJobTriggerListener(scheduledJobRepository));
-
-    logger.info("Scheduled Job Manager started.");
 
     // Loop through app properties jobs and push them to DB
     for (ThirdPartySyncJobConfig syncJobConfig :
@@ -68,7 +72,7 @@ public class ScheduledJobManager {
     }
 
     // Clean up quartz jobs for this scheduler that are not in the DB.
-    //    cleanupDB();
+    cleanupDB();
     scheduleJobs();
   }
 
@@ -152,6 +156,8 @@ public class ScheduledJobManager {
 
       scheduledJob.setJobStatus(
           scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SCHEDULED));
+      scheduledJob.setStartDate(null);
+      scheduledJob.setEndDate(null);
       scheduledJobRepository.save(scheduledJob);
     }
   }
@@ -177,7 +183,7 @@ public class ScheduledJobManager {
   }
 
   public Scheduler getScheduler() {
-    return schedulerManager.getScheduler(QUARTZ_SCHEDULER_NAME);
+    return schedulerManager.getScheduler(schedulerName);
   }
 
   public boolean triggerJob(String jobName, String jobGroup) throws SchedulerException {
