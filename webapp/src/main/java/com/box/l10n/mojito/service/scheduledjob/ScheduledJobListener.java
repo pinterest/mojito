@@ -35,6 +35,7 @@ public class ScheduledJobListener extends JobListenerSupport {
     scheduledJob.setJobStatus(
         scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.IN_PROGRESS));
     scheduledJob.setStartDate(new Date());
+    scheduledJob.setEndDate(null);
 
     scheduledJobRepository.save(scheduledJob);
   }
