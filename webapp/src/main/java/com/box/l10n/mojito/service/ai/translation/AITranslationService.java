@@ -8,6 +8,8 @@ import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitVariantRepository;
 import com.google.common.collect.Lists;
 import jakarta.transaction.Transactional;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.util.List;
@@ -19,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -63,6 +66,32 @@ public class AITranslationService {
     } else {
       logger.debug("No active prompts for repository: {}, no job scheduled", repositoryId);
     }
+  }
+
+  @Transactional
+  public void updateVariantStatusToMTReview(List<Long> currentVariantIds) {
+    String sql =
+        "UPDATE tm_text_unit_variant "
+            + "SET status = ? "
+            + "WHERE id IN ("
+            + "SELECT tucv.tm_text_unit_variant_id "
+            + "FROM tm_text_unit_current_variant tucv "
+            + "WHERE tucv.id = ?)";
+
+    jdbcTemplate.batchUpdate(
+        sql,
+        new BatchPreparedStatementSetter() {
+          @Override
+          public void setValues(PreparedStatement ps, int i) throws SQLException {
+            ps.setString(1, "MT_REVIEW");
+            ps.setLong(2, currentVariantIds.get(i));
+          }
+
+          @Override
+          public int getBatchSize() {
+            return currentVariantIds.size();
+          }
+        });
   }
 
   private void createPendingMTEntitiesInBatches(Set<Long> tmTextUnitIds) {

@@ -13,6 +13,7 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.quartz.QuartzJobInfo;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
 import com.box.l10n.mojito.service.ai.translation.AITranslationConfiguration;
+import com.box.l10n.mojito.service.ai.translation.AITranslationService;
 import com.box.l10n.mojito.service.assetExtraction.AssetTextUnitToTMTextUnitRepository;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingFile;
@@ -95,6 +96,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
   private final ThirdPartyTMSSmartlingWithJson thirdPartyTMSSmartlingWithJson;
   private final ThirdPartyTMSSmartlingGlossary thirdPartyTMSSmartlingGlossary;
   private final AssetTextUnitToTMTextUnitRepository assetTextUnitToTMTextUnitRepository;
+  private final AITranslationService aiTranslationService;
 
   private final MeterRegistry meterRegistry;
 
@@ -109,6 +111,9 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
     return localeMapping.getOrDefault(localeTag, localeTag);
   }
 
+  private final String PUBLISHED = "PUBLISHED";
+  private final String POST_TRANSLATION = "POST_TRANSLATION";
+
   @Autowired
   public ThirdPartyTMSSmartling(
       SmartlingClient smartlingClient,
@@ -121,7 +126,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       AssetTextUnitToTMTextUnitRepository assetTextUnitToTMTextUnitRepository,
       MeterRegistry meterRegistry,
       QuartzPollableTaskScheduler quartzPollableTaskScheduler,
-      AITranslationConfiguration aiTranslationConfiguration) {
+      AITranslationConfiguration aiTranslationConfiguration,
+      AITranslationService aiTranslationService) {
     this(
         smartlingClient,
         textUnitSearcher,
@@ -134,7 +140,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
         DEFAULT_BATCH_SIZE,
         meterRegistry,
         quartzPollableTaskScheduler,
-        aiTranslationConfiguration);
+        aiTranslationConfiguration,
+        aiTranslationService);
   }
 
   public ThirdPartyTMSSmartling(
@@ -149,7 +156,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       int batchSize,
       MeterRegistry meterRegistry,
       QuartzPollableTaskScheduler quartzPollableTaskScheduler,
-      AITranslationConfiguration aiTranslationConfiguration) {
+      AITranslationConfiguration aiTranslationConfiguration,
+      AITranslationService aiTranslationService) {
     this.smartlingClient = smartlingClient;
     this.assetPathAndTextUnitNameKeys = assetPathAndTextUnitNameKeys;
     this.textUnitBatchImporterService = textUnitBatchImporterService;
@@ -162,6 +170,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
     this.meterRegistry = meterRegistry;
     this.quartzPollableTaskScheduler = quartzPollableTaskScheduler;
     this.aiTranslationConfiguration = aiTranslationConfiguration;
+    this.aiTranslationService = aiTranslationService;
   }
 
   @Override
@@ -410,6 +419,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       SmartlingOptions options = SmartlingOptions.parseList(optionList);
 
       if (options.isJsonSync()) {
+        // TODO(mallen) Need to update json sync push to handle AI translations
         thirdPartyTMSSmartlingWithJson.push(
             repository,
             projectId,
@@ -673,7 +683,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
                                       options,
                                       localeMapping,
                                       Prefix.SINGULAR,
-                                      filterTmTextUnitIds)),
+                                      filterTmTextUnitIds,
+                                      PUBLISHED)),
                           mapWithIndex(
                               partitionPlurals(
                                   repository.getId(),
@@ -693,7 +704,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
                                       options,
                                       localeMapping,
                                       Prefix.PLURAL,
-                                      filterTmTextUnitIds))))
+                                      filterTmTextUnitIds,
+                                      PUBLISHED))))
               .collect(Collectors.toList());
 
       resultProcessor.processPushTranslations(result, options);
@@ -733,7 +745,88 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
     }
   }
 
-  private SmartlingFile processTranslationBatch(
+  @Override
+  public void pushAITranslations(
+      Repository repository,
+      String projectId,
+      String pluralSeparator,
+      Map<String, String> localeMapping,
+      String skipTextUnitsWithPattern,
+      String skipAssetsWithPathPattern,
+      String includeTextUnitsWithPattern,
+      List<String> optionList) {
+    try (var timer =
+        Timer.resource(meterRegistry, "SmartlingSync.pushAITranslations")
+            .tag("repository", repository.getName())) {
+      SmartlingOptions options = SmartlingOptions.parseList(optionList);
+      if (options.isJsonSync()) {
+        // TODO(mallen) Need to add json sync implementation
+        throw new RuntimeException("Not yet implemented");
+      }
+
+      List<SmartlingFile> result;
+
+      AndroidStringDocumentMapper mapper = new AndroidStringDocumentMapper(pluralSeparator, null);
+
+      Set<Long> filterTmTextUnitIds = getFilterTmTextUnitIdsForPushTranslation(options);
+
+      result =
+          repository.getRepositoryLocales().stream()
+              .map(l -> l.getLocale().getBcp47Tag())
+              .filter(
+                  localeTag ->
+                      !localeTag.equalsIgnoreCase(repository.getSourceLocale().getBcp47Tag()))
+              .flatMap(
+                  localeTag ->
+                      Stream.concat(
+                          mapWithIndex(
+                              partitionSingulars(
+                                  repository.getId(),
+                                  localeTag,
+                                  skipTextUnitsWithPattern,
+                                  skipAssetsWithPathPattern,
+                                  includeTextUnitsWithPattern,
+                                  StatusFilter.MT_TRANSLATED),
+                              (list, batch) ->
+                                  processAiTranslationBatch(
+                                      list,
+                                      batch,
+                                      localeTag,
+                                      mapper,
+                                      repository,
+                                      projectId,
+                                      options,
+                                      localeMapping,
+                                      Prefix.SINGULAR,
+                                      filterTmTextUnitIds)),
+                          mapWithIndex(
+                              partitionPlurals(
+                                  repository.getId(),
+                                  localeTag,
+                                  skipTextUnitsWithPattern,
+                                  skipAssetsWithPathPattern,
+                                  options.getPluralFixForLocales(),
+                                  includeTextUnitsWithPattern,
+                                  StatusFilter.MT_TRANSLATED),
+                              (list, batch) ->
+                                  processAiTranslationBatch(
+                                      list,
+                                      batch,
+                                      localeTag,
+                                      mapper,
+                                      repository,
+                                      projectId,
+                                      options,
+                                      localeMapping,
+                                      Prefix.PLURAL,
+                                      filterTmTextUnitIds))))
+              .collect(Collectors.toList());
+
+      resultProcessor.processPushAiTranslations(result, options);
+    }
+  }
+
+  private SmartlingFile processAiTranslationBatch(
       List<TextUnitDTO> batch,
       Long batchNumber,
       String localeTag,
@@ -744,6 +837,39 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       Map<String, String> localeMapping,
       Prefix filePrefix,
       Set<Long> filterTmTextUnitIds) {
+    SmartlingFile file =
+        processTranslationBatch(
+            batch,
+            batchNumber,
+            localeTag,
+            mapper,
+            repository,
+            projectId,
+            options,
+            localeMapping,
+            filePrefix,
+            filterTmTextUnitIds,
+            POST_TRANSLATION);
+    // Update the status of the variants to MT review to ensure that we don't repeatedly upload the
+    // same translations on each sync until they're marked as APPROVED
+    aiTranslationService.updateVariantStatusToMTReview(
+        batch.stream().map(TextUnitDTO::getTmTextUnitCurrentVariantId).toList());
+
+    return file;
+  }
+
+  private SmartlingFile processTranslationBatch(
+      List<TextUnitDTO> batch,
+      Long batchNumber,
+      String localeTag,
+      AndroidStringDocumentMapper mapper,
+      Repository repository,
+      String projectId,
+      SmartlingOptions options,
+      Map<String, String> localeMapping,
+      Prefix filePrefix,
+      Set<Long> filterTmTextUnitIds,
+      String translationState) {
 
     try (var timer =
         Timer.resource(meterRegistry, "SmartlingSync.processTranslationBatch")
@@ -793,7 +919,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
                         getSmartlingLocale(localeMapping, localeTag),
                         file.getFileContent(),
                         options.getPlaceholderFormat(),
-                        options.getCustomPlaceholderFormat()))
+                        options.getCustomPlaceholderFormat(),
+                        translationState))
             .retryWhen(
                 smartlingClient
                     .getRetryConfiguration()
@@ -858,6 +985,29 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
     return partitionedStream(parameters, textUnitSearcher::search);
   }
 
+  private Stream<List<TextUnitDTO>> partitionSingulars(
+      Long repositoryId,
+      String localeTag,
+      String skipTextUnitsWithPattern,
+      String skipAssetsWithPathPattern,
+      String includeTextUnitWithPattern,
+      StatusFilter statusFilter) {
+    TextUnitSearcherParameters parameters =
+        this.baseParams()
+            .repositoryId(repositoryId)
+            .localeTags(ImmutableList.of(localeTag))
+            .skipTextUnitWithPattern(skipTextUnitsWithPattern)
+            .skipAssetPathWithPattern(skipAssetsWithPathPattern)
+            .pluralFormsFiltered(true)
+            .pluralFormsExcluded(true)
+            .includeTextUnitsWithPattern(includeTextUnitWithPattern)
+            .statusFilter(statusFilter)
+            .isOrderedByTextUnitID(true)
+            .build();
+
+    return partitionedStream(parameters, textUnitSearcher::search);
+  }
+
   private Stream<List<TextUnitDTO>> partitionPlurals(
       Long repositoryId,
       String localeTag,
@@ -907,6 +1057,44 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
             .pluralFormsExcluded(false)
             .pluralFormOther("%")
             .includeTextUnitsWithPattern(includeTextUnitsWithPattern)
+            .isOrderedByTextUnitID(true)
+            .build();
+
+    return partitionedStream(parameters, searchFunction);
+  }
+
+  private Stream<List<TextUnitDTO>> partitionPlurals(
+      Long repositoryId,
+      String localeTag,
+      String skipTextUnitsWithPattern,
+      String skipAssetsWithPathPattern,
+      Set<String> pluralFixForLocales,
+      String includeTextUnitsWithPattern,
+      StatusFilter statusFilter) {
+
+    Function<TextUnitSearcherParameters, List<TextUnitDTO>> searchFunction =
+        textUnitSearcher::search;
+
+    if (pluralFixForLocales.contains(localeTag)) {
+      searchFunction =
+          searchFunction.andThen(
+              textUnits ->
+                  textUnits.stream()
+                      .filter(tu -> !MANY.toString().equalsIgnoreCase(tu.getPluralForm()))
+                      .collect(Collectors.toList()));
+    }
+
+    TextUnitSearcherParameters parameters =
+        this.baseParams()
+            .repositoryId(repositoryId)
+            .localeTags(ImmutableList.of(localeTag))
+            .skipTextUnitWithPattern(skipTextUnitsWithPattern)
+            .skipAssetPathWithPattern(skipAssetsWithPathPattern)
+            .pluralFormsFiltered(false)
+            .pluralFormsExcluded(false)
+            .pluralFormOther("%")
+            .includeTextUnitsWithPattern(includeTextUnitsWithPattern)
+            .statusFilter(statusFilter)
             .isOrderedByTextUnitID(true)
             .build();
 

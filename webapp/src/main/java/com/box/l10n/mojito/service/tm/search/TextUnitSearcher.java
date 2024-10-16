@@ -408,6 +408,10 @@ public class TextUnitSearcher {
               new NativeEqExpFix(
                   "tuv.status", TMTextUnitVariant.Status.TRANSLATION_NEEDED.toString()));
           break;
+        case MT_TRANSLATED:
+          conjunction.add(
+              new NativeEqExpFix("tuv.status", TMTextUnitVariant.Status.MT_TRANSLATED.toString()));
+          break;
         case TRANSLATED:
           conjunction.add(NativeExps.isNotNull("tuv.id"));
           break;
