@@ -43,7 +43,6 @@ import com.google.common.io.Files;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -977,12 +976,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
     result.setPluralFormsExcluded(pluralFormsExcluded);
     result.setSkipTextUnitWithPattern(skipTextUnitsWithPattern);
     result.setSkipAssetPathWithPattern(skipAssetsWithPathPattern);
-    result.setExcludeUnexpiredPendingMT(
-        aiTranslationConfiguration != null && aiTranslationConfiguration.isEnabled());
-    result.setAiTranslationExpiryDuration(
-        aiTranslationConfiguration != null
-            ? aiTranslationConfiguration.getExpiryDuration()
-            : Duration.ofHours(3));
+    result.setExcludeUnexpiredPendingMT(aiTranslationConfiguration.isEnabled());
+    result.setAiTranslationExpiryDuration(aiTranslationConfiguration.getExpiryDuration());
     if (!Strings.isNullOrEmpty(pluralFormOther)) {
       result.setPluralFormOther(pluralFormOther);
     }
