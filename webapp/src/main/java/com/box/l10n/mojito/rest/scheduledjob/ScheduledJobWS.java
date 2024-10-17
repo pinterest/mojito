@@ -4,6 +4,7 @@ import com.box.l10n.mojito.entity.ScheduledJob;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobDTO;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobManager;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobRepository;
+import com.box.l10n.mojito.service.scheduledjob.ScheduledJobResponse;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -12,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -47,12 +49,14 @@ public class ScheduledJobWS {
 
   @RequestMapping(method = RequestMethod.GET, value = "/api/jobs/{id}/trigger")
   @ResponseStatus(HttpStatus.OK)
-  public String triggerJob(@PathVariable Long id) {
+  public ResponseEntity<ScheduledJobResponse> triggerJob(@PathVariable Long id) {
 
     Optional<ScheduledJob> optionalScheduledJob = scheduledJobRepository.findById(id);
-    if (optionalScheduledJob.isEmpty()) return "Job not found with id: " + id;
-    ScheduledJob scheduledJob = optionalScheduledJob.get();
+    if (optionalScheduledJob.isEmpty())
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, "Job not found"));
 
+    ScheduledJob scheduledJob = optionalScheduledJob.get();
     try {
       return scheduledJobManager.triggerJob(scheduledJob);
     } catch (SchedulerException e) {
@@ -63,11 +67,13 @@ public class ScheduledJobWS {
 
   @RequestMapping(method = RequestMethod.GET, value = "/api/jobs/{id}/toggle")
   @ResponseStatus(HttpStatus.OK)
-  public String toggleJob(@PathVariable Long id) {
+  public ResponseEntity<ScheduledJobResponse> toggleJob(@PathVariable Long id) {
     Optional<ScheduledJob> optionalScheduledJob = scheduledJobRepository.findById(id);
-    if (optionalScheduledJob.isEmpty()) return "Job not found with id: " + id;
-    ScheduledJob scheduledJob = optionalScheduledJob.get();
+    if (optionalScheduledJob.isEmpty())
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, "Job not found"));
 
+    ScheduledJob scheduledJob = optionalScheduledJob.get();
     try {
       return scheduledJobManager.toggleJob(scheduledJob);
     } catch (SchedulerException e) {
