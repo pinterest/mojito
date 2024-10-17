@@ -13,6 +13,7 @@ import java.util.List;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
+import org.quartz.JobExecutionContext;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
@@ -77,6 +78,7 @@ public class ScheduledJobManager {
   }
 
   public void cleanupDB() throws SchedulerException {
+    // If a scheduled job is removed from the DB, the quartz job will be cleaned up too
     for (JobKey jobKey : getScheduler().getJobKeys(GroupMatcher.anyGroup())) {
       if (scheduledJobRepository.findByJobKey(jobKey) == null) {
         logger.info(
@@ -88,7 +90,9 @@ public class ScheduledJobManager {
     }
   }
 
+  // TODO: Remove this and replace with POST request to crete jobs
   public void pushJobToDB(ThirdPartySyncJobConfig jobConfig) {
+    // v1 pull jobs from application.properties and push to the DB
     Long id = repositoryRepository.findByName(jobConfig.getRepository()).getId();
     ScheduledJob result =
         scheduledJobRepository.findByRepositoryIdAndJobType(id, ScheduledJobType.THIRD_PARTY_SYNC);
@@ -149,6 +153,7 @@ public class ScheduledJobManager {
       }
 
       if (getScheduler().checkExists(jobKey)) {
+        // The cron could have changed, reschedule the job
         getScheduler().rescheduleJob(triggerKey, trigger);
       } else {
         getScheduler().scheduleJob(job, trigger);
@@ -186,15 +191,41 @@ public class ScheduledJobManager {
     return schedulerManager.getScheduler(schedulerName);
   }
 
-  public boolean triggerJob(String jobName, String jobGroup) throws SchedulerException {
-    JobKey jobKey = JobKey.jobKey(jobName, jobGroup);
-    try {
-      if (!getScheduler().checkExists(jobKey)) return false;
-      getScheduler().triggerJob(jobKey);
-      return true;
-    } catch (SchedulerException e) {
-      return false;
+  public String triggerJob(ScheduledJob scheduledJob) throws SchedulerException {
+    JobKey jobKey =
+        JobKey.jobKey(
+            scheduledJob.getRepository().getId().toString(),
+            scheduledJob.getJobType().getEnum().toString());
+
+    // Is the job currently running ? Ignore the trigger request and tell the user its running
+    // already
+    for (JobExecutionContext jobExecutionContext : getScheduler().getCurrentlyExecutingJobs()) {
+      if (jobExecutionContext.getJobDetail().getKey().equals(jobKey)) {
+        return "Trigger ignored, job is currently running";
+      }
     }
+
+    try {
+      if (!getScheduler().checkExists(jobKey)) return "Job doesn't exist";
+      getScheduler().triggerJob(jobKey);
+      return "Job triggered";
+    } catch (SchedulerException e) {
+      return "Exception occured";
+    }
+  }
+
+  public String toggleJob(ScheduledJob scheduledJob) throws SchedulerException {
+    JobKey jobKey =
+        JobKey.jobKey(
+            scheduledJob.getRepository().getId().toString(),
+            scheduledJob.getJobType().getEnum().toString());
+
+    if (!getScheduler().checkExists(jobKey)) return "Job doesn't exist";
+
+    scheduledJob.setEnabled(!scheduledJob.getEnabled());
+    scheduledJobRepository.save(scheduledJob);
+
+    return "Job " + (scheduledJob.getEnabled() ? "enabled" : "disabled");
   }
 
   public Class<? extends IScheduledJob> loadJobClass(String className)
