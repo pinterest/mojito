@@ -37,6 +37,7 @@ public class ScheduledJobListener extends JobListenerSupport {
     scheduledJob.setStartDate(new Date());
     scheduledJob.setEndDate(null);
 
+    // TODO: Try catch, PD NOTIFICATION
     scheduledJobRepository.save(scheduledJob);
   }
 
@@ -59,6 +60,7 @@ public class ScheduledJobListener extends JobListenerSupport {
       jobInstance.onFailure(context, jobException);
     }
 
+    // TODO: Try catch, PD NOTIFICATION
     scheduledJobRepository.save(scheduledJob);
   }
 }

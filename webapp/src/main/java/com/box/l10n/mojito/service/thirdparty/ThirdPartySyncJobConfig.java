@@ -8,6 +8,7 @@ import java.util.List;
  */
 public class ThirdPartySyncJobConfig {
 
+  String uuid;
   String cron;
   String repository;
   String thirdPartyProjectId;
@@ -18,6 +19,14 @@ public class ThirdPartySyncJobConfig {
   String skipAssetsWithPathPattern;
   String includeTextUnitsWithPattern;
   List<String> options;
+
+  public String getUuid() {
+    return uuid;
+  }
+
+  public void setUuid(String uuid) {
+    this.uuid = uuid;
+  }
 
   public String getCron() {
     return cron;
