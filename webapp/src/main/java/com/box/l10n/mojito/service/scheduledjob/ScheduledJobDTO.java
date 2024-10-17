@@ -12,16 +12,18 @@ public class ScheduledJobDTO {
   private ScheduledJobStatus jobStatus;
   private Date startDate;
   private Date endDate;
+  private Boolean enabled;
 
   public ScheduledJobDTO(ScheduledJob scheduledJob) {
     this.id = scheduledJob.getId();
     this.repository = scheduledJob.getRepository().getName();
-    //    this.jobType = scheduledJob.getJobType();
+    this.jobType = scheduledJob.getJobType().getEnum();
     this.cron = scheduledJob.getCron();
     this.properties = scheduledJob.getProperties();
-    //    this.jobStatus = scheduledJob.getJobStatus();
+    this.jobStatus = scheduledJob.getJobStatus().getEnum();
     this.startDate = scheduledJob.getStartDate();
     this.endDate = scheduledJob.getEndDate();
+    this.enabled = scheduledJob.getEnabled();
   }
 
   public Long getId() {
@@ -36,7 +38,7 @@ public class ScheduledJobDTO {
     return repository;
   }
 
-  public void setRepositoryId(String repository) {
+  public void setRepository(String repository) {
     this.repository = repository;
   }
 
@@ -86,5 +88,13 @@ public class ScheduledJobDTO {
 
   public void setEndDate(Date endDate) {
     this.endDate = endDate;
+  }
+
+  public Boolean getEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(Boolean enabled) {
+    this.enabled = enabled;
   }
 }

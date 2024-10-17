@@ -25,4 +25,12 @@ public class ScheduledJobStatusEntity extends BaseEntity {
   @Enumerated(EnumType.STRING)
   @JsonView(View.Repository.class)
   private ScheduledJobStatus jobStatus;
+
+  public ScheduledJobStatus getEnum() {
+    return jobStatus;
+  }
+
+  public void setJobStatus(ScheduledJobStatus jobStatus) {
+    this.jobStatus = jobStatus;
+  }
 }
