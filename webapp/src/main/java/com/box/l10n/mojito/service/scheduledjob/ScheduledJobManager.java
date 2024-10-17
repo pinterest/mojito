@@ -9,6 +9,7 @@ import com.box.l10n.mojito.service.scheduledjob.jobs.ScheduledThirdPartySyncProp
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobConfig;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobsConfig;
 import jakarta.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.List;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
@@ -45,6 +46,8 @@ public class ScheduledJobManager {
   @Autowired ScheduledJobTypeRepository scheduledJobTypeRepository;
   @Autowired RepositoryRepository repositoryRepository;
 
+  private List<String> uuidPool = new ArrayList<>();
+
   /* Quartz scheduler dedicated to scheduled jobs using in memory data source */
   @Value("${l10n.scheduledJobs.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   private String schedulerName;
@@ -53,7 +56,7 @@ public class ScheduledJobManager {
   public void init() throws ClassNotFoundException, SchedulerException {
     logger.info("Scheduled Job Manager started.");
 
-    // Attach Job and Trigger listeners on the 'scheduledJobs' scheduler
+    // Attach Job and Trigger listeners on the scheduler
     getScheduler()
         .getListenerManager()
         .addJobListener(
@@ -65,46 +68,47 @@ public class ScheduledJobManager {
     // Loop through app properties jobs and push them to DB
     for (ThirdPartySyncJobConfig syncJobConfig :
         thirdPartySyncJobsConfig.getThirdPartySyncJobs().values()) {
-      if (syncJobConfig.getCron().isEmpty()) {
+      if (syncJobConfig.getUuid().isEmpty() || syncJobConfig.getCron().isEmpty()) {
         logger.debug(
-            "Cron expression not defined for repository {}, skipping this third party sync job.",
+            "UUID or cron expression not defined for repository {}, skipping this third party sync job.",
             syncJobConfig.getRepository());
         continue;
       }
+      uuidPool.add(syncJobConfig.getUuid());
       pushJobToDB(syncJobConfig);
     }
 
-    // Clean up quartz jobs for this scheduler that are not in the DB.
-    //    cleanupDB();
-    //    scheduleJobs();
-  }
-
-  public void cleanupDB() throws SchedulerException {
-    // If a scheduled job is removed from the DB, the quartz job will be cleaned up too
+    // Clean Quartz jobs that don't exist in UUID pool
+    logger.info("Performing Quartz scheduled jobs clean up");
     for (JobKey jobKey : getScheduler().getJobKeys(GroupMatcher.anyGroup())) {
-      if (scheduledJobRepository.findByJobKey(jobKey) == null) {
+      if (!uuidPool.contains(jobKey.getName())) {
+        if (getScheduler().checkExists(jobKey)) {
+          getScheduler().deleteJob(jobKey);
+        }
+
+        scheduledJobRepository
+            .findById(jobKey.getName())
+            .ifPresent(
+                job -> {
+                  scheduledJobRepository.delete(job);
+                });
+
         logger.info(
-            "Removing {} job for repo ID: {} as it's no longer in the 'scheduled_job' table.",
-            jobKey.getGroup(),
-            jobKey.getName());
-        getScheduler().deleteJob(jobKey);
+            "Removed job with id: '{}' as it is no longer in the data source.", jobKey.getName());
       }
     }
+
+    scheduleAllJobs();
   }
 
-  // TODO: Remove this and replace with POST request to crete jobs
   public void pushJobToDB(ThirdPartySyncJobConfig jobConfig) {
     // v1 pull jobs from application.properties and push to the DB
-    Long id = repositoryRepository.findByName(jobConfig.getRepository()).getId();
-    ScheduledJob result =
-        scheduledJobRepository.findByRepositoryIdAndJobType(id, ScheduledJobType.THIRD_PARTY_SYNC);
-    if (result != null) return;
-
     ScheduledJob scheduledJob = new ScheduledJob();
+    scheduledJob.setId(jobConfig.getUuid());
     scheduledJob.setCron(jobConfig.getCron());
     scheduledJob.setRepository(repositoryRepository.findByName(jobConfig.getRepository()));
     scheduledJob.setJobStatus(
-        scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.IN_PROGRESS));
+        scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SCHEDULED));
 
     scheduledJob.setJobType(
         scheduledJobTypeRepository.findByEnum(ScheduledJobType.THIRD_PARTY_SYNC));
@@ -131,7 +135,7 @@ public class ScheduledJobManager {
     }
   }
 
-  public void scheduleJobs() throws ClassNotFoundException, SchedulerException {
+  public void scheduleAllJobs() throws ClassNotFoundException, SchedulerException {
     List<ScheduledJob> scheduledJobs = scheduledJobRepository.findAll();
 
     for (ScheduledJob scheduledJob : scheduledJobs) {
@@ -145,14 +149,6 @@ public class ScheduledJobManager {
       JobDetail job = JobBuilder.newJob(jobType).withIdentity(jobKey).build();
 
       Trigger trigger = buildTrigger(jobKey, scheduledJob.getCron(), triggerKey);
-
-      if (!scheduledJob.getEnabled()) {
-        // The job is disabled and exists in Quartz, pause it
-        if (getScheduler().checkExists(jobKey)) {
-          getScheduler().pauseJob(jobKey);
-        }
-        return;
-      }
 
       if (getScheduler().checkExists(jobKey)) {
         // The cron could have changed, reschedule the job
@@ -171,8 +167,8 @@ public class ScheduledJobManager {
 
   public Trigger buildTrigger(JobKey jobKey, String cronExpression, TriggerKey triggerKey) {
     // Misfires will only happen if the job was triggered manually and the cron schedule was missed
-    // The misfire policy is default of 60 seconds, meaning it is only classified as a misfire if it
-    // misses its schedule by 60 seconds, we shouldn't have this happen normally
+    // The misfire policy is defaulted to 60s, meaning it is only a misfire if it
+    // misses its schedule by 60s, we shouldn't have this happen normally
     return TriggerBuilder.newTrigger()
         .withSchedule(
             CronScheduleBuilder.cronSchedule(cronExpression)
@@ -183,15 +179,16 @@ public class ScheduledJobManager {
   }
 
   private JobKey getJobKey(ScheduledJob scheduledJob) {
-    return new JobKey(
-        scheduledJob.getRepository().getId().toString(),
-        scheduledJob.getJobType().getEnum().toString());
+    // name = UUID
+    // group = THIRD_PARTY_SYNC
+    return new JobKey(scheduledJob.getId(), scheduledJob.getJobType().getEnum().toString());
   }
 
   private TriggerKey getTriggerKey(ScheduledJob scheduledJob) {
+    // name = trigger_UUID
+    // group = THIRD_PARTY_SYNC
     return new TriggerKey(
-        "trigger_" + scheduledJob.getRepository().getId().toString(),
-        scheduledJob.getJobType().getEnum().toString());
+        "trigger_" + scheduledJob.getId(), scheduledJob.getJobType().getEnum().toString());
   }
 
   public Scheduler getScheduler() {
@@ -200,10 +197,7 @@ public class ScheduledJobManager {
 
   public ResponseEntity<ScheduledJobResponse> triggerJob(ScheduledJob scheduledJob)
       throws SchedulerException {
-    JobKey jobKey =
-        JobKey.jobKey(
-            scheduledJob.getRepository().getId().toString(),
-            scheduledJob.getJobType().getEnum().toString());
+    JobKey jobKey = getJobKey(scheduledJob);
 
     // Is the job currently running ?
     // Ignore the trigger request and tell the user it is currently running
@@ -234,10 +228,7 @@ public class ScheduledJobManager {
 
   public ResponseEntity<ScheduledJobResponse> toggleJob(ScheduledJob scheduledJob)
       throws SchedulerException {
-    JobKey jobKey =
-        JobKey.jobKey(
-            scheduledJob.getRepository().getId().toString(),
-            scheduledJob.getJobType().getEnum().toString());
+    JobKey jobKey = getJobKey(scheduledJob);
 
     if (!getScheduler().checkExists(jobKey))
       return ResponseEntity.status(HttpStatus.NOT_FOUND)

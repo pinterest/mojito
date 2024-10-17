@@ -24,7 +24,7 @@ public class ScheduledThirdPartySync implements IScheduledJob {
   @Autowired private QuartzPollableTaskScheduler quartzPollableTaskScheduler;
   @Autowired private ScheduledJobRepository scheduledJobRepository;
 
-  public static int runAmount = 0;
+  public static int runAmount = 1;
 
   private ScheduledJob scheduledJob;
   private ScheduledThirdPartySyncProperties scheduledJobProperties;

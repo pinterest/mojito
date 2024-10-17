@@ -38,7 +38,7 @@ public class ScheduledJobWS {
 
   @RequestMapping(method = RequestMethod.GET, value = "/api/jobs/{id}")
   @ResponseStatus(HttpStatus.OK)
-  public ScheduledJobDTO getJob(@PathVariable Long id) {
+  public ScheduledJobDTO getJob(@PathVariable String id) {
     return scheduledJobRepository
         .findById(id)
         .map(ScheduledJobDTO::new)
@@ -49,7 +49,7 @@ public class ScheduledJobWS {
 
   @RequestMapping(method = RequestMethod.GET, value = "/api/jobs/{id}/trigger")
   @ResponseStatus(HttpStatus.OK)
-  public ResponseEntity<ScheduledJobResponse> triggerJob(@PathVariable Long id) {
+  public ResponseEntity<ScheduledJobResponse> triggerJob(@PathVariable String id) {
 
     Optional<ScheduledJob> optionalScheduledJob = scheduledJobRepository.findById(id);
     if (optionalScheduledJob.isEmpty())
@@ -67,7 +67,7 @@ public class ScheduledJobWS {
 
   @RequestMapping(method = RequestMethod.GET, value = "/api/jobs/{id}/toggle")
   @ResponseStatus(HttpStatus.OK)
-  public ResponseEntity<ScheduledJobResponse> toggleJob(@PathVariable Long id) {
+  public ResponseEntity<ScheduledJobResponse> toggleJob(@PathVariable String id) {
     Optional<ScheduledJob> optionalScheduledJob = scheduledJobRepository.findById(id);
     if (optionalScheduledJob.isEmpty())
       return ResponseEntity.status(HttpStatus.NOT_FOUND)
