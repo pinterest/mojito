@@ -48,12 +48,14 @@ public class ScheduledJobListener extends JobListenerSupport {
 
     IScheduledJob jobInstance = (IScheduledJob) context.getJobInstance();
 
+    scheduledJob.setJobStatus(
+        scheduledJobStatusRepository.findByEnum(
+            jobException == null ? ScheduledJobStatus.SUCCEEDED : ScheduledJobStatus.FAILED));
+
+    // Notify the job instance of the status
     if (jobException == null) {
-      scheduledJob.setJobStatus(
-          scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SUCCEEDED));
       jobInstance.onSuccess(context);
     } else {
-      scheduledJob.setJobStatus(scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.FAILED));
       jobInstance.onFailure(context, jobException);
     }
 

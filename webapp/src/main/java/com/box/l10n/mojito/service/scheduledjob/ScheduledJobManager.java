@@ -28,6 +28,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 @Configuration
@@ -73,8 +75,8 @@ public class ScheduledJobManager {
     }
 
     // Clean up quartz jobs for this scheduler that are not in the DB.
-    cleanupDB();
-    scheduleJobs();
+    //    cleanupDB();
+    //    scheduleJobs();
   }
 
   public void cleanupDB() throws SchedulerException {
@@ -168,8 +170,13 @@ public class ScheduledJobManager {
   }
 
   public Trigger buildTrigger(JobKey jobKey, String cronExpression, TriggerKey triggerKey) {
+    // Misfires will only happen if the job was triggered manually and the cron schedule was missed
+    // The misfire policy is default of 60 seconds, meaning it is only classified as a misfire if it
+    // misses its schedule by 60 seconds, we shouldn't have this happen normally
     return TriggerBuilder.newTrigger()
-        .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
+        .withSchedule(
+            CronScheduleBuilder.cronSchedule(cronExpression)
+                .withMisfireHandlingInstructionDoNothing())
         .withIdentity(triggerKey)
         .forJob(jobKey)
         .build();
@@ -191,41 +198,59 @@ public class ScheduledJobManager {
     return schedulerManager.getScheduler(schedulerName);
   }
 
-  public String triggerJob(ScheduledJob scheduledJob) throws SchedulerException {
+  public ResponseEntity<ScheduledJobResponse> triggerJob(ScheduledJob scheduledJob)
+      throws SchedulerException {
     JobKey jobKey =
         JobKey.jobKey(
             scheduledJob.getRepository().getId().toString(),
             scheduledJob.getJobType().getEnum().toString());
 
-    // Is the job currently running ? Ignore the trigger request and tell the user its running
-    // already
+    // Is the job currently running ?
+    // Ignore the trigger request and tell the user it is currently running
     for (JobExecutionContext jobExecutionContext : getScheduler().getCurrentlyExecutingJobs()) {
       if (jobExecutionContext.getJobDetail().getKey().equals(jobKey)) {
-        return "Trigger ignored, job is currently running";
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(
+                new ScheduledJobResponse(
+                    ScheduledJobResponse.Status.ERROR,
+                    "Trigger ignored, job is currently running"));
       }
     }
 
     try {
-      if (!getScheduler().checkExists(jobKey)) return "Job doesn't exist";
+      if (!getScheduler().checkExists(jobKey))
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, "Job doesn't exist"));
       getScheduler().triggerJob(jobKey);
-      return "Job triggered";
+      return ResponseEntity.status(HttpStatus.OK)
+          .body(new ScheduledJobResponse(ScheduledJobResponse.Status.SUCCESS, "Job triggered"));
     } catch (SchedulerException e) {
-      return "Exception occured";
+      logger.error(
+          "Error triggering job manually, job: {}", jobKey.getName() + ":" + jobKey.getGroup(), e);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, e.getMessage()));
     }
   }
 
-  public String toggleJob(ScheduledJob scheduledJob) throws SchedulerException {
+  public ResponseEntity<ScheduledJobResponse> toggleJob(ScheduledJob scheduledJob)
+      throws SchedulerException {
     JobKey jobKey =
         JobKey.jobKey(
             scheduledJob.getRepository().getId().toString(),
             scheduledJob.getJobType().getEnum().toString());
 
-    if (!getScheduler().checkExists(jobKey)) return "Job doesn't exist";
+    if (!getScheduler().checkExists(jobKey))
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, "Job doesn't exist"));
 
     scheduledJob.setEnabled(!scheduledJob.getEnabled());
     scheduledJobRepository.save(scheduledJob);
 
-    return "Job " + (scheduledJob.getEnabled() ? "enabled" : "disabled");
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(
+            new ScheduledJobResponse(
+                ScheduledJobResponse.Status.SUCCESS,
+                "Job " + (scheduledJob.getEnabled() ? "enabled" : "disabled")));
   }
 
   public Class<? extends IScheduledJob> loadJobClass(String className)
