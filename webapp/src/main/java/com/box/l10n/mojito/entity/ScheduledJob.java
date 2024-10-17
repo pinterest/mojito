@@ -16,8 +16,8 @@ import org.hibernate.envers.Audited;
 @Entity
 @Table(name = "scheduled_job")
 @Audited
-public class ScheduledJob extends BaseEntity {
-  @Id private Long id;
+public class ScheduledJob {
+  @Id private String id;
 
   @ManyToOne
   @JoinColumn(name = "repository_id")
@@ -64,13 +64,11 @@ public class ScheduledJob extends BaseEntity {
     }
   }
 
-  @Override
-  public Long getId() {
+  public String getId() {
     return id;
   }
 
-  @Override
-  public void setId(Long id) {
+  public void setId(String id) {
     this.id = id;
   }
 

@@ -5,15 +5,12 @@ import org.quartz.JobKey;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-public interface ScheduledJobRepository extends JpaRepository<ScheduledJob, Long> {
+public interface ScheduledJobRepository extends JpaRepository<ScheduledJob, String> {
 
-  @Query(
-      "SELECT sj FROM ScheduledJob sj "
-          + "WHERE sj.repository.id = :repositoryId AND sj.jobType.jobType = :jobType")
-  ScheduledJob findByRepositoryIdAndJobType(Long repositoryId, ScheduledJobType jobType);
+  @Query("SELECT sj FROM ScheduledJob sj " + "WHERE sj.id = :id AND sj.jobType.jobType = :jobType")
+  ScheduledJob findByIdAndJobType(String id, ScheduledJobType jobType);
 
   default ScheduledJob findByJobKey(JobKey jobKey) {
-    return findByRepositoryIdAndJobType(
-        Long.parseLong(jobKey.getName()), ScheduledJobType.valueOf(jobKey.getGroup()));
+    return findByIdAndJobType(jobKey.getName(), ScheduledJobType.valueOf(jobKey.getGroup()));
   }
 }

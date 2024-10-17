@@ -4,7 +4,7 @@ import com.box.l10n.mojito.entity.ScheduledJob;
 import java.util.Date;
 
 public class ScheduledJobDTO {
-  private Long id;
+  private String id;
   private String repository;
   private ScheduledJobType jobType;
   private String cron;
@@ -26,11 +26,11 @@ public class ScheduledJobDTO {
     this.enabled = scheduledJob.getEnabled();
   }
 
-  public Long getId() {
+  public String getId() {
     return id;
   }
 
-  public void setId(Long id) {
+  public void setId(String id) {
     this.id = id;
   }
 
