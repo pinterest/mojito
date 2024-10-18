@@ -2,7 +2,6 @@ var path = require('path');
 var webpack = require("webpack");
 
 module.exports = function (env) {
-
     env = env || {};
 
     var config = {
@@ -14,6 +13,7 @@ module.exports = function (env) {
             path: path.resolve(__dirname, '../chromeextension'),
             filename: '[name]-bundle.js',
         },
+        mode: env.production ? 'production' : 'development',
         module: {
             rules: [
                 {
@@ -109,7 +109,7 @@ module.exports = function (env) {
                     }
                 }));
 
-        config.plugins.push(new webpack.optimize.UglifyJsPlugin());
+        config.optimization.minimize = true;
     }
 
     if (env.inlineSourceMap) {

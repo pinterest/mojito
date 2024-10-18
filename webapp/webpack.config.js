@@ -2,7 +2,6 @@ var path = require('path');
 var webpack = require("webpack");
 
 module.exports = function (env) {
-
     env = env || {};
 
     var config = {
@@ -16,6 +15,7 @@ module.exports = function (env) {
             filename: 'js/[name]-[hash].js',
             chunkFilename: 'js/[name]-[chunkhash].js'
         },
+        mode: env.production ? 'production' : 'development',
         module: {
             rules: [
                 {
