@@ -20,7 +20,8 @@ class TextUnitsreviewModal extends React.Component {
         this.REVIEW = "review";
         this.REJECT = "reject";
         this.ACCEPT = "accept";
-        this.TRANSLATE = "translate";
+        this.TRANSLATE = "translate"
+        this.TRANSLATED_IN_MOJITO = "translated_in_mojito";
 
         this.state = {
             "currentReviewState": this.getInitialReviewStateOfTextUnits(),
@@ -99,6 +100,15 @@ class TextUnitsreviewModal extends React.Component {
         );
     };
 
+    getTranslatedInMojitoButton = () => {
+        return (
+            <Button active={this.state.currentReviewState === this.TRANSLATED_IN_MOJITO}
+                    onClick={this.optionClicked.bind(this, this.TRANSLATED_IN_MOJITO)}>
+                <FormattedMessage id="textUnit.reviewModal.translatedInMojito"/>
+            </Button>
+        );
+    };
+
     /**
      * @returns {JSX} The JSX for the translate button with class active set according to the current component state
      */
@@ -166,6 +176,8 @@ class TextUnitsreviewModal extends React.Component {
                 currentReviewState = this.REVIEW;
             } else if (textUnit.getStatus() === TextUnit.STATUS.TRANSLATION_NEEDED) {
                 currentReviewState = this.TRANSLATE;
+            } else if (textUnit.getStatus() === TextUnit.STATUS.TRANSLATED_IN_MOJITO) {
+                currentReviewState = this.TRANSLATED_IN_MOJITO;
             }
 
         }
@@ -195,7 +207,7 @@ class TextUnitsreviewModal extends React.Component {
         return (
             <Modal show={this.props.isShowModal} onHide={this.closeModal} onKeyUp={(e) => {
                 e.stopPropagation()
-            }}>
+            }} bsSize="large">
                 <Modal.Header closeButton>
                     <Modal.Title><FormattedMessage id="textUnit.reviewModal.title"/></Modal.Title>
                 </Modal.Header>
@@ -216,6 +228,7 @@ class TextUnitsreviewModal extends React.Component {
                             {this.getTranslateButton()}
                             {this.getReviewButton()}
                             {this.getAcceptButton()}
+                            {this.getTranslatedInMojitoButton()}
                         </ButtonGroup>
                     </ButtonToolbar>
                 </Modal.Body>

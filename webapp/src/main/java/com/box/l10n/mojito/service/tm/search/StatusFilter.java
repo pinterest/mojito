@@ -52,4 +52,6 @@ public enum StatusFilter {
    * TextUnits that are not rejected, ie {@link TMTextUnitVariant#includedInLocalizedFile} is true.
    */
   NOT_REJECTED,
+  /** TextUnits with status ({@link TMTextUnitVariant.Status#TRANSLATED_IN_MOJITO}). */
+  TRANSLATED_IN_MOJITO,
 }

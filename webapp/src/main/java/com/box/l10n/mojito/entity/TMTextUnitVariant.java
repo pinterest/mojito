@@ -73,7 +73,10 @@ public class TMTextUnitVariant extends SettableAuditableEntity {
 
     MT_REVIEW,
     /** A string that doesn't need any work to be performed on it. */
-    APPROVED;
+    APPROVED,
+
+    /** It was translated in Mojito, so it won't be updated during third-party sync */
+    TRANSLATED_IN_MOJITO;
   };
 
   @Column(name = "content", length = Integer.MAX_VALUE)

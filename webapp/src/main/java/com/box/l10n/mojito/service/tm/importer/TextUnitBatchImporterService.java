@@ -250,36 +250,41 @@ public class TextUnitBatchImporterService {
                         currentTextUnit.getLocaleId(), currentTextUnit.getTmTextUnitId());
               }
 
-              User importedBy = auditorAwareImpl.getCurrentAuditor().orElse(null);
-              AddTMTextUnitCurrentVariantResult addTMTextUnitCurrentVariantResult =
-                  tmService.addTMTextUnitCurrentVariantWithResult(
-                      tmTextUnitCurrentVariant,
-                      asset.getRepository().getTm().getId(),
-                      asset.getId(),
-                      currentTextUnit.getTmTextUnitId(),
-                      locale.getId(),
-                      textUnitForBatchImport.getContent(),
-                      textUnitForBatchImport.getComment(),
-                      textUnitForBatchImport.getStatus(),
-                      textUnitForBatchImport.isIncludedInLocalizedFile(),
-                      importTime,
-                      importedBy);
+              if (tmTextUnitCurrentVariant == null
+                  || tmTextUnitCurrentVariant.getTmTextUnitVariant() == null
+                  || tmTextUnitCurrentVariant.getTmTextUnitVariant().getStatus()
+                      != Status.TRANSLATED_IN_MOJITO) {
+                User importedBy = auditorAwareImpl.getCurrentAuditor().orElse(null);
+                AddTMTextUnitCurrentVariantResult addTMTextUnitCurrentVariantResult =
+                    tmService.addTMTextUnitCurrentVariantWithResult(
+                        tmTextUnitCurrentVariant,
+                        asset.getRepository().getTm().getId(),
+                        asset.getId(),
+                        currentTextUnit.getTmTextUnitId(),
+                        locale.getId(),
+                        textUnitForBatchImport.getContent(),
+                        textUnitForBatchImport.getComment(),
+                        textUnitForBatchImport.getStatus(),
+                        textUnitForBatchImport.isIncludedInLocalizedFile(),
+                        importTime,
+                        importedBy);
 
-              if (addTMTextUnitCurrentVariantResult.isTmTextUnitCurrentVariantUpdated()) {
+                if (addTMTextUnitCurrentVariantResult.isTmTextUnitCurrentVariantUpdated()) {
 
-                Long tmTextUnitVariantId =
-                    addTMTextUnitCurrentVariantResult
-                        .getTmTextUnitCurrentVariant()
-                        .getTmTextUnitVariant()
-                        .getId();
+                  Long tmTextUnitVariantId =
+                      addTMTextUnitCurrentVariantResult
+                          .getTmTextUnitCurrentVariant()
+                          .getTmTextUnitVariant()
+                          .getId();
 
-                for (TMTextUnitVariantComment tmTextUnitVariantComment :
-                    textUnitForBatchImport.getTmTextUnitVariantComments()) {
-                  tmMTextUnitVariantCommentService.addComment(
-                      tmTextUnitVariantId,
-                      tmTextUnitVariantComment.getType(),
-                      tmTextUnitVariantComment.getSeverity(),
-                      tmTextUnitVariantComment.getContent());
+                  for (TMTextUnitVariantComment tmTextUnitVariantComment :
+                      textUnitForBatchImport.getTmTextUnitVariantComments()) {
+                    tmMTextUnitVariantCommentService.addComment(
+                        tmTextUnitVariantId,
+                        tmTextUnitVariantComment.getType(),
+                        tmTextUnitVariantComment.getSeverity(),
+                        tmTextUnitVariantComment.getContent());
+                  }
                 }
               }
             });

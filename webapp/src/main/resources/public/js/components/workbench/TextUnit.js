@@ -363,6 +363,10 @@ let TextUnit = createReactClass({
                 textUnit.setIncludedInLocalizedFile(true);
                 textUnit.setStatus(TextUnitSDK.STATUS.TRANSLATION_NEEDED);
                 break;
+            case "translated_in_mojito":
+                textUnit.setIncludedInLocalizedFile(true);
+                textUnit.setStatus(TextUnitSDK.STATUS.TRANSLATED_IN_MOJITO);
+                break;
         }
 
         WorkbenchActions.saveTextUnit(textUnit);

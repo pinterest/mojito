@@ -436,6 +436,11 @@ public class TextUnitSearcher {
                           "tuv.status", TMTextUnitVariant.Status.TRANSLATION_NEEDED.toString()),
                       new NativeEqExpFix("tuv.included_in_localized_file", Boolean.FALSE))));
           break;
+        case TRANSLATED_IN_MOJITO:
+          conjunction.add(
+              new NativeEqExpFix(
+                  "tuv.status", TMTextUnitVariant.Status.TRANSLATED_IN_MOJITO.toString()));
+          break;
         default:
           throw new RuntimeException("Filter type not implemented");
       }
