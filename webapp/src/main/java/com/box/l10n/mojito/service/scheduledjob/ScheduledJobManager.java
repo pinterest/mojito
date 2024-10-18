@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component;
 
 @Configuration
 @Component
-@ConditionalOnProperty(value = "l10n.org.quartz.scheduler.enabled", havingValue = "true")
+@ConditionalOnProperty(value = "l10n.scheduledJobs.enabled", havingValue = "true")
 public class ScheduledJobManager {
   static Logger logger = LoggerFactory.getLogger(ScheduledJobManager.class);
 
@@ -46,7 +46,7 @@ public class ScheduledJobManager {
   @Autowired ScheduledJobTypeRepository scheduledJobTypeRepository;
   @Autowired RepositoryRepository repositoryRepository;
 
-  private List<String> uuidPool = new ArrayList<>();
+  private final List<String> uuidPool = new ArrayList<>();
 
   /* Quartz scheduler dedicated to scheduled jobs using in memory data source */
   @Value("${l10n.scheduledJobs.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
@@ -78,7 +78,7 @@ public class ScheduledJobManager {
       pushJobToDB(syncJobConfig);
     }
 
-    // Clean Quartz jobs that don't exist in UUID pool
+    // Clean Quartz jobs that don't exist in the UUID pool
     logger.info("Performing Quartz scheduled jobs clean up");
     for (JobKey jobKey : getScheduler().getJobKeys(GroupMatcher.anyGroup())) {
       if (!uuidPool.contains(jobKey.getName())) {
