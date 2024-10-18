@@ -165,6 +165,14 @@ public class TextUnitSearcher {
               "tm_text_unit_pending_mt", "tmtupmt", "tmtupmt.tm_text_unit_id", "tu.id"));
     }
 
+    if (searchParameters.getStatusFilter() != null
+        && searchParameters.getStatusFilter().equals(StatusFilter.MT_TRANSLATED)) {
+      // Pushing AI translations, need to retrieve the uploadedFileUri from the ThirdPartyTextUnit
+      // table
+      c.addJoin(
+          NativeExps.innerJoin("third_party_text_unit", "tptu", "tptu.tm_text_unit_id", "tu.id"));
+    }
+
     NativeJunctionExp onClauseRepositoryLocale = NativeExps.conjunction();
     onClauseRepositoryLocale.add(new NativeColumnEqExp("rl.locale_id", "l.id"));
     onClauseRepositoryLocale.add(new NativeColumnEqExp("rl.repository_id", "r.id"));
@@ -212,15 +220,11 @@ public class TextUnitSearcher {
             "plural_form_for_locale", "pffl", NativeJoin.JoinType.LEFT_OUTER, onClausePluralForm));
 
     logger.debug("Set projections");
-
-    // TODO(P1) Might want to some of those projection as optional for perf reason
-    c.setProjection(
+    NativeProjection projection =
         NativeExps.projection()
             .addProjection("tu.id", "tmTextUnitId")
             .addProjection("tuv.id", "tmTextUnitVariantId")
-            .
-            // TODO(PO) THIS NOT CONSISTANT !! chooose
-            addProjection("l.id", "localeId")
+            .addProjection("l.id", "localeId")
             .addProjection("l.bcp47_tag", "targetLocale")
             .addProjection("tu.name", "name")
             .addProjection("tu.content", "source")
@@ -242,7 +246,13 @@ public class TextUnitSearcher {
             .addProjection("a.path", "assetPath")
             .addProjection("atu.id", "assetTextUnitId")
             .addProjection("tu.created_date", "tmTextUnitCreatedDate")
-            .addProjection("atu.do_not_translate", "doNotTranslate"));
+            .addProjection("atu.do_not_translate", "doNotTranslate");
+
+    if (searchParameters.getStatusFilter() != null
+        && searchParameters.getStatusFilter().equals(StatusFilter.MT_TRANSLATED)) {
+      projection.addProjection("tptu.uploaded_file_uri", "uploadedFileUri");
+    }
+    c.setProjection(projection);
 
     logger.debug("Add search filters");
     NativeJunctionExp conjunction = NativeExps.conjunction();

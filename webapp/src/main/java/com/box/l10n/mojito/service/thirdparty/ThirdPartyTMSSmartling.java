@@ -760,101 +760,107 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
             .tag("repository", repository.getName())) {
       SmartlingOptions options = SmartlingOptions.parseList(optionList);
       if (options.isJsonSync()) {
-        // TODO(mallen) Need to add json sync implementation
+        // TODO: Add json sync implementation
         throw new RuntimeException("Not yet implemented");
       }
-
-      List<SmartlingFile> result;
 
       AndroidStringDocumentMapper mapper = new AndroidStringDocumentMapper(pluralSeparator, null);
 
       Set<Long> filterTmTextUnitIds = getFilterTmTextUnitIdsForPushTranslation(options);
 
-      result =
+      List<SmartlingFile> result =
           repository.getRepositoryLocales().stream()
               .map(l -> l.getLocale().getBcp47Tag())
               .filter(
                   localeTag ->
                       !localeTag.equalsIgnoreCase(repository.getSourceLocale().getBcp47Tag()))
               .flatMap(
-                  localeTag ->
-                      Stream.concat(
-                          mapWithIndex(
-                              partitionSingulars(
-                                  repository.getId(),
-                                  localeTag,
-                                  skipTextUnitsWithPattern,
-                                  skipAssetsWithPathPattern,
-                                  includeTextUnitsWithPattern,
-                                  StatusFilter.MT_TRANSLATED),
-                              (list, batch) ->
-                                  processAiTranslationBatch(
-                                      list,
-                                      batch,
-                                      localeTag,
-                                      mapper,
-                                      repository,
-                                      projectId,
-                                      options,
-                                      localeMapping,
-                                      Prefix.SINGULAR,
-                                      filterTmTextUnitIds)),
-                          mapWithIndex(
-                              partitionPlurals(
-                                  repository.getId(),
-                                  localeTag,
-                                  skipTextUnitsWithPattern,
-                                  skipAssetsWithPathPattern,
-                                  options.getPluralFixForLocales(),
-                                  includeTextUnitsWithPattern,
-                                  StatusFilter.MT_TRANSLATED),
-                              (list, batch) ->
-                                  processAiTranslationBatch(
-                                      list,
-                                      batch,
-                                      localeTag,
-                                      mapper,
-                                      repository,
-                                      projectId,
-                                      options,
-                                      localeMapping,
-                                      Prefix.PLURAL,
-                                      filterTmTextUnitIds))))
+                  localeTag -> {
+                    Map<String, List<TextUnitDTO>> singularsByUploadedFileUri =
+                        partitionSingulars(
+                                repository.getId(),
+                                localeTag,
+                                skipTextUnitsWithPattern,
+                                skipAssetsWithPathPattern,
+                                includeTextUnitsWithPattern,
+                                StatusFilter.MT_TRANSLATED)
+                            .flatMap(List::stream)
+                            .collect(Collectors.groupingBy(TextUnitDTO::getUploadedFileUri));
+
+                    Map<String, List<TextUnitDTO>> pluralsByUploadedFileUri =
+                        partitionPlurals(
+                                repository.getId(),
+                                localeTag,
+                                skipTextUnitsWithPattern,
+                                skipAssetsWithPathPattern,
+                                options.getPluralFixForLocales(),
+                                includeTextUnitsWithPattern,
+                                StatusFilter.MT_TRANSLATED)
+                            .flatMap(List::stream)
+                            .collect(Collectors.groupingBy(TextUnitDTO::getUploadedFileUri));
+
+                    Stream<SmartlingFile> singularFiles =
+                        singularsByUploadedFileUri.entrySet().stream()
+                            .map(
+                                entry ->
+                                    uploadAiTranslationBatch(
+                                        entry.getValue(),
+                                        entry.getKey(),
+                                        localeTag,
+                                        mapper,
+                                        repository,
+                                        projectId,
+                                        options,
+                                        localeMapping,
+                                        filterTmTextUnitIds));
+
+                    Stream<SmartlingFile> pluralFiles =
+                        pluralsByUploadedFileUri.entrySet().stream()
+                            .map(
+                                entry ->
+                                    uploadAiTranslationBatch(
+                                        entry.getValue(),
+                                        entry.getKey(),
+                                        localeTag,
+                                        mapper,
+                                        repository,
+                                        projectId,
+                                        options,
+                                        localeMapping,
+                                        filterTmTextUnitIds));
+
+                    return Stream.concat(singularFiles, pluralFiles);
+                  })
               .collect(Collectors.toList());
 
       resultProcessor.processPushAiTranslations(result, options);
     }
   }
 
-  private SmartlingFile processAiTranslationBatch(
+  private SmartlingFile uploadAiTranslationBatch(
       List<TextUnitDTO> batch,
-      Long batchNumber,
+      String uploadedFileUri,
       String localeTag,
       AndroidStringDocumentMapper mapper,
       Repository repository,
       String projectId,
       SmartlingOptions options,
       Map<String, String> localeMapping,
-      Prefix filePrefix,
       Set<Long> filterTmTextUnitIds) {
+
     SmartlingFile file =
-        processTranslationBatch(
+        uploadAiTranslationFile(
             batch,
-            batchNumber,
             localeTag,
+            uploadedFileUri,
             mapper,
             repository,
             projectId,
             options,
             localeMapping,
-            filePrefix,
-            filterTmTextUnitIds,
-            POST_TRANSLATION);
-    // Update the status of the variants to MT review to ensure that we don't repeatedly upload the
-    // same translations on each sync until they're marked as APPROVED
+            filterTmTextUnitIds);
     aiTranslationService.updateVariantStatusToMTReview(
         batch.stream().map(TextUnitDTO::getTmTextUnitCurrentVariantId).toList());
-
     return file;
   }
 
@@ -937,6 +943,87 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
                       String.format(
                           "Error uploading localized file to Smartling for file %s in project %s",
                           sourceFilename, projectId);
+                  logger.error(msg, e);
+                  throw new SmartlingClientException(msg, e);
+                })
+            .block();
+      }
+
+      return file;
+    }
+  }
+
+  private SmartlingFile uploadAiTranslationFile(
+      List<TextUnitDTO> batch,
+      String localeTag,
+      String fileName,
+      AndroidStringDocumentMapper mapper,
+      Repository repository,
+      String projectId,
+      SmartlingOptions options,
+      Map<String, String> localeMapping,
+      Set<Long> filterTmTextUnitIds) {
+
+    try (var timer =
+        Timer.resource(meterRegistry, "SmartlingSync.processTranslationBatch")
+            .tag("repository", repository.getName())
+            .tag("locale", localeTag)) {
+
+      logger.debug("Process translation batch for file: {}", fileName);
+      List<TextUnitDTO> fileBatch = batch;
+      SmartlingFile file = new SmartlingFile();
+      file.setFileName(fileName);
+
+      try {
+        logger.debug("Save target file to: {}", file.getFileName());
+
+        if (filterTmTextUnitIds != null) {
+          fileBatch =
+              fileBatch.stream()
+                  .filter(
+                      textUnitDTO -> filterTmTextUnitIds.contains(textUnitDTO.getTmTextUnitId()))
+                  .collect(Collectors.toList());
+        }
+
+        AndroidStringDocumentWriter writer =
+            new AndroidStringDocumentWriter(mapper.readFromTargetTextUnits(fileBatch));
+        file.setFileContent(writer.toText());
+
+      } catch (ParserConfigurationException | TransformerException e) {
+        logger.error("An error occurred when processing a translation batch", e);
+        throw new RuntimeException(e);
+      }
+
+      if (!options.isDryRun()) {
+        logger.debug(
+            "Pushing Android file to Smartling project: {} and locale: {}", projectId, localeTag);
+        Mono.fromCallable(
+                () ->
+                    smartlingClient.uploadLocalizedFile(
+                        projectId,
+                        fileName,
+                        "android",
+                        getSmartlingLocale(localeMapping, localeTag),
+                        file.getFileContent(),
+                        options.getPlaceholderFormat(),
+                        options.getCustomPlaceholderFormat(),
+                        POST_TRANSLATION))
+            .retryWhen(
+                smartlingClient
+                    .getRetryConfiguration()
+                    .doBeforeRetry(
+                        e ->
+                            logger.info(
+                                String.format(
+                                    "Retrying after failure to upload localized file: %s, project id: %s",
+                                    fileName, projectId),
+                                e.failure())))
+            .doOnError(
+                e -> {
+                  String msg =
+                      String.format(
+                          "Error uploading localized file to Smartling for file %s in project %s",
+                          fileName, projectId);
                   logger.error(msg, e);
                   throw new SmartlingClientException(msg, e);
                 })
