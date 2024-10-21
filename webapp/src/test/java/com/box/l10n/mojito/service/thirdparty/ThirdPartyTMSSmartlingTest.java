@@ -995,7 +995,8 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
                       eq(locale.getBcp47Tag()),
                       startsWith("<?xml version="),
                       eq(null),
-                      eq(null));
+                      eq(null),
+                      eq("PUBLISHED"));
             });
   }
 
@@ -1005,7 +1006,14 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
     doThrow(new SmartlingClientException(new HttpServerErrorException(HttpStatus.GATEWAY_TIMEOUT)))
         .when(smartlingClient)
         .uploadLocalizedFile(
-            anyString(), anyString(), anyString(), anyString(), anyString(), any(), any());
+            anyString(),
+            anyString(),
+            anyString(),
+            anyString(),
+            anyString(),
+            any(),
+            any(),
+            anyString());
     List<SmartlingFile> result;
     Repository repository =
         repositoryService.createRepository(testIdWatcher.getEntityName("batchRepo"));
@@ -1055,7 +1063,14 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
 
     verify(smartlingClient, times(11))
         .uploadLocalizedFile(
-            anyString(), anyString(), anyString(), anyString(), anyString(), any(), any());
+            anyString(),
+            anyString(),
+            anyString(),
+            anyString(),
+            anyString(),
+            any(),
+            any(),
+            eq("PUBLISHED"));
   }
 
   @Test
@@ -1063,7 +1078,14 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
       throws RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException {
     // First request results in timeout, retry then successful
     when(smartlingClient.uploadLocalizedFile(
-            anyString(), anyString(), anyString(), anyString(), anyString(), any(), any()))
+            anyString(),
+            anyString(),
+            anyString(),
+            anyString(),
+            anyString(),
+            any(),
+            any(),
+            anyString()))
         .thenThrow(
             new SmartlingClientException(new HttpServerErrorException(HttpStatus.GATEWAY_TIMEOUT)))
         .thenReturn(null);
@@ -1136,7 +1158,14 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
     // Verify upload localized file called three times due to retry on first request
     verify(smartlingClient, times(3))
         .uploadLocalizedFile(
-            anyString(), anyString(), anyString(), anyString(), anyString(), eq(null), eq(null));
+            anyString(),
+            anyString(),
+            anyString(),
+            anyString(),
+            anyString(),
+            eq(null),
+            eq(null),
+            eq("PUBLISHED"));
   }
 
   @Test
@@ -1339,7 +1368,8 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
                       eq(locale.getBcp47Tag()),
                       startsWith("<?xml version="),
                       eq(null),
-                      eq(null));
+                      eq(null),
+                      eq("PUBLISHED"));
 
               verify(smartlingClient, times(1))
                   .uploadLocalizedFile(
@@ -1349,7 +1379,8 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
                       eq(locale.getBcp47Tag()),
                       startsWith("<?xml version="),
                       eq(null),
-                      eq(null));
+                      eq(null),
+                      eq("PUBLISHED"));
             });
   }
 
@@ -1468,7 +1499,8 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
                     eq(locale.getBcp47Tag()),
                     startsWith("<?xml version="),
                     eq(null),
-                    eq(null)));
+                    eq(null),
+                    eq("PUBLISHED")));
   }
 
   @Test
@@ -1614,7 +1646,8 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
                               eq(locale.getBcp47Tag()),
                               startsWith("<?xml version="),
                               eq(null),
-                              eq(null)));
+                              eq(null),
+                              eq("PUBLISHED")));
 
           IntStream.range(0, pluralBatches)
               .forEachOrdered(
@@ -1627,7 +1660,8 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
                               eq(locale.getBcp47Tag()),
                               startsWith("<?xml version="),
                               eq(null),
-                              eq(null)));
+                              eq(null),
+                              eq("PUBLISHED")));
         });
   }
 

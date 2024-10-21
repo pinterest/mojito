@@ -419,7 +419,6 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       SmartlingOptions options = SmartlingOptions.parseList(optionList);
 
       if (options.isJsonSync()) {
-        // TODO(mallen) Need to update json sync push to handle AI translations
         thirdPartyTMSSmartlingWithJson.push(
             repository,
             projectId,
@@ -760,8 +759,13 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
             .tag("repository", repository.getName())) {
       SmartlingOptions options = SmartlingOptions.parseList(optionList);
       if (options.isJsonSync()) {
-        // TODO: Add json sync implementation
-        throw new RuntimeException("Not yet implemented");
+        thirdPartyTMSSmartlingWithJson.pushAiTranslations(
+            repository,
+            projectId,
+            localeMapping,
+            skipTextUnitsWithPattern,
+            skipAssetsWithPathPattern,
+            includeTextUnitsWithPattern);
       }
 
       AndroidStringDocumentMapper mapper = new AndroidStringDocumentMapper(pluralSeparator, null);
@@ -861,6 +865,14 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
             filterTmTextUnitIds);
     aiTranslationService.updateVariantStatusToMTReview(
         batch.stream().map(TextUnitDTO::getTmTextUnitCurrentVariantId).toList());
+    meterRegistry
+        .counter(
+            "SmartlingSync.uploadAiTranslationsBatch",
+            "repository",
+            repository.getName(),
+            "jsonSync",
+            "false")
+        .increment(batch.size());
     return file;
   }
 
