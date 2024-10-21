@@ -4,6 +4,7 @@ import static com.box.l10n.mojito.quartz.QuartzSchedulerManager.DEFAULT_SCHEDULE
 
 import com.box.l10n.mojito.entity.ScheduledJob;
 import com.box.l10n.mojito.quartz.QuartzSchedulerManager;
+import com.box.l10n.mojito.retry.DeadLockLoserExceptionRetryTemplate;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.scheduledjob.jobs.ScheduledThirdPartySyncProperties;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobConfig;
@@ -45,6 +46,7 @@ public class ScheduledJobManager {
   @Autowired ScheduledJobStatusRepository scheduledJobStatusRepository;
   @Autowired ScheduledJobTypeRepository scheduledJobTypeRepository;
   @Autowired RepositoryRepository repositoryRepository;
+  @Autowired DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate;
 
   private final List<String> uuidPool = new ArrayList<>();
 
@@ -60,7 +62,8 @@ public class ScheduledJobManager {
     getScheduler()
         .getListenerManager()
         .addJobListener(
-            new ScheduledJobListener(scheduledJobRepository, scheduledJobStatusRepository));
+            new ScheduledJobListener(
+                scheduledJobRepository, scheduledJobStatusRepository, deadlockRetryTemplate));
     getScheduler()
         .getListenerManager()
         .addTriggerListener(new ScheduledJobTriggerListener(scheduledJobRepository));
