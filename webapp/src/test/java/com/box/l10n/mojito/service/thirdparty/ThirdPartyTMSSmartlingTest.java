@@ -30,6 +30,8 @@ import com.box.l10n.mojito.entity.PollableTask;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TM;
 import com.box.l10n.mojito.entity.TMTextUnit;
+import com.box.l10n.mojito.entity.TMTextUnitVariant;
+import com.box.l10n.mojito.entity.ThirdPartyTextUnit;
 import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.quartz.QuartzJobInfo;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
@@ -162,6 +164,8 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
 
   @Autowired QuartzSchedulerManager schedulerManager;
 
+  @Autowired ThirdPartyTextUnitRepository thirdPartyTextUnitRepository;
+
   StubSmartlingResultProcessor resultProcessor;
 
   @Mock TextUnitBatchImporterService mockTextUnitBatchImporterService;
@@ -171,6 +175,8 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
   @Mock AITranslationService aiTranslationService;
 
   @Captor ArgumentCaptor<List<TextUnitDTO>> textUnitListCaptor;
+
+  @Captor ArgumentCaptor<List<Long>> variantIdsCaptor;
 
   @Captor
   ArgumentCaptor<QuartzJobInfo<SmartlingPullTranslationsJobInput, Void>> quartzJobInfoCaptor;
@@ -204,6 +210,7 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
     doReturn(null)
         .when(smartlingClient)
         .uploadLocalizedFile(
+            anyString(),
             anyString(),
             anyString(),
             anyString(),
@@ -1737,6 +1744,338 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
     assertThat(tmsSmartling.batchesFor(2)).isEqualTo(1);
     assertThat(tmsSmartling.batchesFor(2900)).isEqualTo(1);
     assertThat(tmsSmartling.batchesFor(21156)).isEqualTo(6);
+  }
+
+  @Test
+  public void testPushAiTranslationsSingleFile() throws Exception {
+    List<SmartlingFile> result;
+    Repository repository =
+        repositoryService.createRepository(testIdWatcher.getEntityName("pushAiTranslationsRepo"));
+    Locale frCA = localeService.findByBcp47Tag("fr-CA");
+    Locale jaJP = localeService.findByBcp47Tag("ja-JP");
+    repositoryService.addRepositoryLocale(repository, frCA.getBcp47Tag());
+    repositoryService.addRepositoryLocale(repository, jaJP.getBcp47Tag());
+
+    PluralForm one = pluralFormService.findByPluralFormString("one");
+
+    TM tm = repository.getTm();
+    Asset asset =
+        assetService.createAssetWithContent(repository.getId(), "fake_for_test", "fake for test");
+    AssetExtraction assetExtraction = new AssetExtraction();
+    assetExtraction.setAsset(asset);
+    assetExtraction = assetExtractionRepository.save(assetExtraction);
+
+    int textUnits = 5;
+
+    for (int i = 0; i < textUnits; i++) {
+      String name = "singular_message" + i;
+      String content = "Singular Message Test #" + i;
+      String comment = "Singular Comment" + i;
+      TMTextUnit textUnit =
+          tmService.addTMTextUnit(tm.getId(), asset.getId(), name, content, comment);
+      tmService.addTMTextUnitCurrentVariant(
+          textUnit.getId(),
+          frCA.getId(),
+          String.format("%s in %s", content, frCA.getBcp47Tag()),
+          "test comment",
+          TMTextUnitVariant.Status.MT_TRANSLATED);
+      tmService.addTMTextUnitCurrentVariant(
+          textUnit.getId(),
+          jaJP.getId(),
+          String.format("%s in %s", content, jaJP.getBcp47Tag()),
+          "test comment",
+          TMTextUnitVariant.Status.MT_TRANSLATED);
+      assetExtractionService.createAssetTextUnit(assetExtraction, name, content, comment);
+
+      ThirdPartyTextUnit thirdPartyTextUnit = new ThirdPartyTextUnit();
+      thirdPartyTextUnit.setTmTextUnit(textUnit);
+      thirdPartyTextUnit.setAsset(asset);
+      thirdPartyTextUnit.setUploadedFileUri("testSingularUploadedFileUri");
+      thirdPartyTextUnitRepository.save(thirdPartyTextUnit);
+    }
+
+    for (int i = 0; i < textUnits; i++) {
+      ZonedDateTime now = ZonedDateTime.now();
+      String name = "plural_message" + i;
+      String content = "Plural Message Test #" + i;
+      String comment = "Plural Comment" + i;
+      String pluralFormOther = "plural_form_other" + i;
+
+      TMTextUnit tu =
+          tmService.addTMTextUnit(tm, asset, name, content, comment, now, one, pluralFormOther);
+      assetExtractionService.createAssetTextUnit(assetExtraction, name, content, comment);
+
+      tmService.addTMTextUnitCurrentVariant(
+          tu.getId(),
+          frCA.getId(),
+          String.format("%s in %s", content, frCA.getBcp47Tag()),
+          "test comment",
+          TMTextUnitVariant.Status.MT_TRANSLATED);
+      tmService.addTMTextUnitCurrentVariant(
+          tu.getId(),
+          jaJP.getId(),
+          String.format("%s in %s", content, jaJP.getBcp47Tag()),
+          "test comment",
+          TMTextUnitVariant.Status.MT_TRANSLATED);
+
+      ThirdPartyTextUnit thirdPartyTextUnit = new ThirdPartyTextUnit();
+      thirdPartyTextUnit.setTmTextUnit(tu);
+      thirdPartyTextUnit.setAsset(asset);
+      thirdPartyTextUnit.setUploadedFileUri("testPluralUploadedFileUri");
+      thirdPartyTextUnitRepository.save(thirdPartyTextUnit);
+    }
+
+    prepareAssetAndTextUnits(assetExtraction, asset, tm);
+
+    tmsSmartling.pushAITranslations(
+        repository,
+        "projectId",
+        pluralSep,
+        ImmutableMap.of(),
+        null,
+        null,
+        null,
+        ImmutableList.of());
+    result = resultProcessor.pushAITranslationFiles;
+
+    assertThat(result).hasSize(4);
+    Stream.of(jaJP, frCA)
+        .forEach(
+            locale -> {
+              SmartlingFile singularFile =
+                  result.stream()
+                      .filter(
+                          f ->
+                              f.getFileName()
+                                  .matches("testSingularUploadedFileUri_" + locale.getBcp47Tag()))
+                      .findFirst()
+                      .get();
+
+              SmartlingFile pluralFile =
+                  result.stream()
+                      .filter(
+                          f ->
+                              f.getFileName()
+                                  .matches("testPluralUploadedFileUri_" + locale.getBcp47Tag()))
+                      .findFirst()
+                      .get();
+
+              assertThat(singularFile.getFileName())
+                  .isEqualTo("testSingularUploadedFileUri_" + locale.getBcp47Tag());
+              List<TextUnitDTO> singulars = readTextUnits(singularFile, pluralSep);
+              assertThat(singulars)
+                  .allSatisfy(
+                      tu -> {
+                        assertThat(tu.getComment()).startsWith("Singular Comment");
+                        assertThat(tu.getName()).startsWith("singular_message");
+                        assertThat(tu.getAssetPath()).isEqualTo("fake_for_test");
+                        assertThat(tu.getTarget())
+                            .matches("Singular Message Test #\\d in " + locale.getBcp47Tag());
+                      });
+
+              assertThat(pluralFile.getFileName())
+                  .isEqualTo("testPluralUploadedFileUri_" + locale.getBcp47Tag());
+              List<TextUnitDTO> plurals = readTextUnits(pluralFile, pluralSep);
+              assertThat(plurals).hasSize(textUnits);
+              assertThat(plurals)
+                  .allSatisfy(
+                      tu -> {
+                        assertThat(tu.getName()).endsWith("_one");
+                        assertThat(tu.getPluralForm()).isEqualTo("one");
+                        assertThat(tu.getTarget())
+                            .matches("Plural Message Test #\\d in " + locale.getBcp47Tag());
+                      });
+
+              verify(smartlingClient, times(1))
+                  .uploadLocalizedFile(
+                      eq("projectId"),
+                      eq("testSingularUploadedFileUri"),
+                      eq("android"),
+                      eq(locale.getBcp47Tag()),
+                      startsWith("<?xml version="),
+                      eq(null),
+                      eq(null),
+                      eq("POST_TRANSLATION"));
+
+              verify(smartlingClient, times(1))
+                  .uploadLocalizedFile(
+                      eq("projectId"),
+                      eq("testPluralUploadedFileUri"),
+                      eq("android"),
+                      eq(locale.getBcp47Tag()),
+                      startsWith("<?xml version="),
+                      eq(null),
+                      eq(null),
+                      eq("POST_TRANSLATION"));
+            });
+
+    verify(aiTranslationService, times(4)).updateVariantStatusToMTReview(any());
+  }
+
+  @Test
+  public void testPushAiTranslationsMultiFile() throws Exception {
+    List<SmartlingFile> result;
+    Repository repository =
+        repositoryService.createRepository(testIdWatcher.getEntityName("pushAiTranslationsRepo"));
+    Locale frCA = localeService.findByBcp47Tag("fr-CA");
+    Locale jaJP = localeService.findByBcp47Tag("ja-JP");
+    repositoryService.addRepositoryLocale(repository, frCA.getBcp47Tag());
+    repositoryService.addRepositoryLocale(repository, jaJP.getBcp47Tag());
+
+    PluralForm one = pluralFormService.findByPluralFormString("one");
+
+    TM tm = repository.getTm();
+    Asset asset =
+        assetService.createAssetWithContent(repository.getId(), "fake_for_test", "fake for test");
+    AssetExtraction assetExtraction = new AssetExtraction();
+    assetExtraction.setAsset(asset);
+    assetExtraction = assetExtractionRepository.save(assetExtraction);
+
+    int textUnits = 5;
+
+    for (int i = 0; i < textUnits; i++) {
+      String name = "singular_message" + i;
+      String content = "Singular Message Test #" + i;
+      String comment = "Singular Comment" + i;
+      TMTextUnit textUnit =
+          tmService.addTMTextUnit(tm.getId(), asset.getId(), name, content, comment);
+      tmService.addTMTextUnitCurrentVariant(
+          textUnit.getId(),
+          frCA.getId(),
+          String.format("%s in %s", content, frCA.getBcp47Tag()),
+          "test comment",
+          TMTextUnitVariant.Status.MT_TRANSLATED);
+      tmService.addTMTextUnitCurrentVariant(
+          textUnit.getId(),
+          jaJP.getId(),
+          String.format("%s in %s", content, jaJP.getBcp47Tag()),
+          "test comment",
+          TMTextUnitVariant.Status.MT_TRANSLATED);
+      assetExtractionService.createAssetTextUnit(assetExtraction, name, content, comment);
+
+      ThirdPartyTextUnit thirdPartyTextUnit = new ThirdPartyTextUnit();
+      thirdPartyTextUnit.setTmTextUnit(textUnit);
+      thirdPartyTextUnit.setAsset(asset);
+      thirdPartyTextUnit.setUploadedFileUri("testSingularUploadedFileUri_" + i);
+      thirdPartyTextUnitRepository.save(thirdPartyTextUnit);
+    }
+
+    for (int i = 0; i < textUnits; i++) {
+      ZonedDateTime now = ZonedDateTime.now();
+      String name = "plural_message" + i;
+      String content = "Plural Message Test #" + i;
+      String comment = "Plural Comment" + i;
+      String pluralFormOther = "plural_form_other" + i;
+
+      TMTextUnit tu =
+          tmService.addTMTextUnit(tm, asset, name, content, comment, now, one, pluralFormOther);
+      assetExtractionService.createAssetTextUnit(assetExtraction, name, content, comment);
+
+      tmService.addTMTextUnitCurrentVariant(
+          tu.getId(),
+          frCA.getId(),
+          String.format("%s in %s", content, frCA.getBcp47Tag()),
+          "test comment",
+          TMTextUnitVariant.Status.MT_TRANSLATED);
+      tmService.addTMTextUnitCurrentVariant(
+          tu.getId(),
+          jaJP.getId(),
+          String.format("%s in %s", content, jaJP.getBcp47Tag()),
+          "test comment",
+          TMTextUnitVariant.Status.MT_TRANSLATED);
+
+      ThirdPartyTextUnit thirdPartyTextUnit = new ThirdPartyTextUnit();
+      thirdPartyTextUnit.setTmTextUnit(tu);
+      thirdPartyTextUnit.setAsset(asset);
+      thirdPartyTextUnit.setUploadedFileUri("testPluralUploadedFileUri_" + i);
+      thirdPartyTextUnitRepository.save(thirdPartyTextUnit);
+    }
+
+    prepareAssetAndTextUnits(assetExtraction, asset, tm);
+
+    tmsSmartling.pushAITranslations(
+        repository,
+        "projectId",
+        pluralSep,
+        ImmutableMap.of(),
+        null,
+        null,
+        null,
+        ImmutableList.of());
+    result = resultProcessor.pushAITranslationFiles;
+
+    assertThat(result).hasSize(20);
+    Stream.of(jaJP, frCA)
+        .forEach(
+            locale -> {
+              SmartlingFile singularFile =
+                  result.stream()
+                      .filter(
+                          f ->
+                              f.getFileName().startsWith("testSingularUploadedFileUri_")
+                                  && f.getFileName().endsWith(locale.getBcp47Tag()))
+                      .findFirst()
+                      .get();
+
+              SmartlingFile pluralFile =
+                  result.stream()
+                      .filter(
+                          f ->
+                              f.getFileName().startsWith("testPluralUploadedFileUri_")
+                                  && f.getFileName().endsWith(locale.getBcp47Tag()))
+                      .findFirst()
+                      .get();
+
+              assertThat(singularFile.getFileName())
+                  .containsPattern("testSingularUploadedFileUri_[0-4]_" + locale.getBcp47Tag());
+              assertThat(readTextUnits(singularFile, pluralSep))
+                  .allSatisfy(
+                      tu -> {
+                        assertThat(tu.getComment()).startsWith("Singular Comment");
+                        assertThat(tu.getName()).startsWith("singular_message");
+                        assertThat(tu.getAssetPath()).isEqualTo("fake_for_test");
+                        assertThat(tu.getTarget())
+                            .matches("Singular Message Test #\\d in " + locale.getBcp47Tag());
+                      });
+
+              assertThat(pluralFile.getFileName())
+                  .containsPattern("testPluralUploadedFileUri_[0-4]_" + locale.getBcp47Tag());
+              List<TextUnitDTO> plurals = readTextUnits(pluralFile, pluralSep);
+              assertThat(plurals).hasSize(1);
+              assertThat(plurals)
+                  .allSatisfy(
+                      tu -> {
+                        assertThat(tu.getName()).endsWith("_one");
+                        assertThat(tu.getPluralForm()).isEqualTo("one");
+                        assertThat(tu.getTarget())
+                            .matches("Plural Message Test #\\d in " + locale.getBcp47Tag());
+                      });
+              for (int i = 0; i < textUnits; i++) {
+                verify(smartlingClient, times(1))
+                    .uploadLocalizedFile(
+                        eq("projectId"),
+                        eq("testSingularUploadedFileUri_" + i),
+                        eq("android"),
+                        eq(locale.getBcp47Tag()),
+                        startsWith("<?xml version="),
+                        eq(null),
+                        eq(null),
+                        eq("POST_TRANSLATION"));
+
+                verify(smartlingClient, times(1))
+                    .uploadLocalizedFile(
+                        eq("projectId"),
+                        eq("testPluralUploadedFileUri_" + i),
+                        eq("android"),
+                        eq(locale.getBcp47Tag()),
+                        startsWith("<?xml version="),
+                        eq(null),
+                        eq(null),
+                        eq("POST_TRANSLATION"));
+              }
+            });
+
+    verify(aiTranslationService, times(20)).updateVariantStatusToMTReview(any());
   }
 
   private List<TextUnitDTO> searchTextUnits(List<Long> ids) {

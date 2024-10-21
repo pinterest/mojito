@@ -984,7 +984,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       logger.debug("Process translation batch for file: {}", fileName);
       List<TextUnitDTO> fileBatch = batch;
       SmartlingFile file = new SmartlingFile();
-      file.setFileName(fileName);
+      file.setFileName(fileName + "_" + localeTag);
 
       try {
         logger.debug("Save target file to: {}", file.getFileName());
