@@ -352,22 +352,4 @@ public class AITranslateCronJob implements Job {
     trigger.setCronExpression(aiTranslationConfiguration.getCron());
     return trigger;
   }
-
-  private void deleteBatch(List<TmTextUnitPendingMT> batch) {
-    if (batch.isEmpty()) {
-      logger.debug("No pending MTs to delete");
-      return;
-    }
-
-    String sql =
-        "DELETE FROM tm_text_unit_pending_mt WHERE id IN ("
-            + batch.stream()
-                .map(tmTextUnitPendingMT -> tmTextUnitPendingMT.getId().toString())
-                .collect(Collectors.joining(","))
-            + ")";
-    logger.debug(
-        "Executing batch delete for IDs: {}",
-        batch.stream().map(TmTextUnitPendingMT::getId).collect(Collectors.toList()));
-    jdbcTemplate.update(sql);
-  }
 }
