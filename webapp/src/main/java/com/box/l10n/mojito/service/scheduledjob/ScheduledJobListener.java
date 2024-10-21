@@ -1,6 +1,8 @@
 package com.box.l10n.mojito.service.scheduledjob;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
+import com.box.l10n.mojito.retry.DeadLockLoserExceptionRetryTemplate;
+import jakarta.transaction.Transactional;
 import java.util.Date;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -14,12 +16,15 @@ public class ScheduledJobListener extends JobListenerSupport {
 
   private final ScheduledJobRepository scheduledJobRepository;
   private final ScheduledJobStatusRepository scheduledJobStatusRepository;
+  private final DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate;
 
   public ScheduledJobListener(
       ScheduledJobRepository scheduledJobRepository,
-      ScheduledJobStatusRepository scheduledJobStatusRepository) {
+      ScheduledJobStatusRepository scheduledJobStatusRepository,
+      DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate) {
     this.scheduledJobRepository = scheduledJobRepository;
     this.scheduledJobStatusRepository = scheduledJobStatusRepository;
+    this.deadlockRetryTemplate = deadlockRetryTemplate;
   }
 
   @Override
@@ -28,6 +33,7 @@ public class ScheduledJobListener extends JobListenerSupport {
   }
 
   @Override
+  @Transactional
   public void jobToBeExecuted(JobExecutionContext context) {
     ScheduledJob scheduledJob =
         scheduledJobRepository.findByJobKey(context.getJobDetail().getKey());
@@ -38,10 +44,15 @@ public class ScheduledJobListener extends JobListenerSupport {
     scheduledJob.setEndDate(null);
 
     // TODO: Try catch, PD NOTIFICATION
-    scheduledJobRepository.save(scheduledJob);
+    deadlockRetryTemplate.execute(
+        c -> {
+          scheduledJobRepository.save(scheduledJob);
+          return null;
+        });
   }
 
   @Override
+  @Transactional
   public void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
     ScheduledJob scheduledJob =
         scheduledJobRepository.findByJobKey(context.getJobDetail().getKey());
@@ -61,6 +72,10 @@ public class ScheduledJobListener extends JobListenerSupport {
     }
 
     // TODO: Try catch, PD NOTIFICATION
-    scheduledJobRepository.save(scheduledJob);
+    deadlockRetryTemplate.execute(
+        c -> {
+          scheduledJobRepository.save(scheduledJob);
+          return null;
+        });
   }
 }

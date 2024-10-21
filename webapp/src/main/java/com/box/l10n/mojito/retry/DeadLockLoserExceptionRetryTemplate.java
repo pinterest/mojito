@@ -1,6 +1,8 @@
 package com.box.l10n.mojito.retry;
 
-import com.google.common.collect.ImmutableMap;
+import java.util.HashMap;
+import java.util.Map;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.DeadlockLoserDataAccessException;
 import org.springframework.retry.RetryCallback;
 import org.springframework.retry.backoff.ExponentialRandomBackOffPolicy;
@@ -14,8 +16,12 @@ public class DeadLockLoserExceptionRetryTemplate {
   RetryTemplate retryTemplate;
 
   public DeadLockLoserExceptionRetryTemplate() {
-    SimpleRetryPolicy retryPolicy =
-        new SimpleRetryPolicy(5, ImmutableMap.of(DeadlockLoserDataAccessException.class, true));
+
+    Map<Class<? extends Throwable>, Boolean> retryableExceptions = new HashMap<>();
+    retryableExceptions.put(DeadlockLoserDataAccessException.class, true);
+    retryableExceptions.put(CannotAcquireLockException.class, true);
+
+    SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy(5, retryableExceptions);
 
     ExponentialRandomBackOffPolicy exponentialRandomBackOffPolicy =
         new ExponentialRandomBackOffPolicy();
