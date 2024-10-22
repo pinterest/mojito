@@ -12,12 +12,14 @@ import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJob;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobInput;
 import com.box.l10n.mojito.utils.ServerConfig;
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang.text.StrSubstitutor;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -38,6 +40,10 @@ public class ScheduledThirdPartySync implements IScheduledJob {
 
   @Autowired ServerConfig serverConfig;
 
+  @Value(
+      "${l10n.scheduledJobs.thirdPartySync.notifications.title:MOJITO | Third party sync failed for {repository}}")
+  String notificationTitle;
+
   private ScheduledJob scheduledJob;
   private ScheduledThirdPartySyncProperties scheduledJobProperties;
   private Long pollableTaskId;
@@ -47,8 +53,6 @@ public class ScheduledThirdPartySync implements IScheduledJob {
     // Fetch the scheduled job and cast the properties
     scheduledJob = scheduledJobRepository.findByJobKey(jobExecutionContext.getJobDetail().getKey());
     scheduledJobProperties = (ScheduledThirdPartySyncProperties) scheduledJob.getProperties();
-    pollableTaskId = 1080L;
-    //    if (1 == 1) throw new JobExecutionException("ON PURPOSE");
 
     logger.info(
         "Third party sync for repository {} has started.", scheduledJob.getRepository().getName());
@@ -82,7 +86,10 @@ public class ScheduledThirdPartySync implements IScheduledJob {
               try {
                 pd.resolveIncident(scheduledJob.getId());
               } catch (PagerDutyException e) {
-                // TODO:
+                logger.error(
+                    "Couldn't send resolve PagerDuty notification for successful third party sync of repository: '{}' -",
+                    scheduledJob.getRepository().getName(),
+                    e);
               }
             });
   }
@@ -105,19 +112,29 @@ public class ScheduledThirdPartySync implements IScheduledJob {
                       .build()
                       .toUriString();
 
+              String title =
+                  StrSubstitutor.replace(
+                      notificationTitle,
+                      ImmutableMap.of("repository", scheduledJob.getRepository().getName()),
+                      "{",
+                      "}");
+
+              System.out.println(title);
+
               PagerDutyPayload payload =
                   new PagerDutyPayload(
-                      "Mojito | Third Party Sync failed for '"
-                          + scheduledJob.getRepository().getName()
-                          + "'",
-                      "Mojito",
+                      title,
+                      serverConfig.getUrl(),
                       PagerDutyPayload.Severity.CRITICAL,
-                      ImmutableMap.of("Pollable Task URL", pollableTaskUrl));
+                      ImmutableMap.of("Pollable Task", pollableTaskUrl));
 
               try {
                 pd.triggerIncident(scheduledJob.getId(), payload);
               } catch (PagerDutyException e) {
-                // TODO:
+                logger.error(
+                    "Couldn't send PagerDuty notification for failed third party sync of repository: '{}' -",
+                    scheduledJob.getRepository().getName(),
+                    e);
               }
             });
   }

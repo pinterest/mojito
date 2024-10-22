@@ -15,7 +15,7 @@ import jakarta.persistence.Table;
 import org.hibernate.envers.Audited;
 
 @Entity
-@Table(name = "scheduled_job_status")
+@Table(name = "scheduled_job_status_type")
 @Audited(targetAuditMode = NOT_AUDITED)
 public class ScheduledJobStatusEntity extends BaseEntity {
   @Id private Long id;
