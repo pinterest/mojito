@@ -56,7 +56,7 @@ public class ScheduledJobWS {
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found with id: " + id));
   }
 
-  @RequestMapping(method = RequestMethod.GET, value = "/api/jobs/{id}/trigger")
+  @RequestMapping(method = RequestMethod.POST, value = "/api/jobs/{id}")
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<ScheduledJobResponse> triggerJob(@PathVariable String id) {
 
@@ -96,7 +96,7 @@ public class ScheduledJobWS {
     }
   }
 
-  @RequestMapping(method = RequestMethod.GET, value = "/api/jobs/{id}/toggle")
+  @RequestMapping(method = RequestMethod.POST, value = "/api/jobs/{id}/toggle")
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<ScheduledJobResponse> toggleJob(@PathVariable String id) {
     Optional<ScheduledJob> optionalScheduledJob = scheduledJobRepository.findById(id);

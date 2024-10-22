@@ -113,7 +113,7 @@ public class ScheduledJobManager {
         thirdPartySyncJobsConfig.getThirdPartySyncJobs().values()) {
       if (Strings.isNullOrEmpty(syncJobConfig.getUuid())
           || Strings.isNullOrEmpty(syncJobConfig.getCron())) {
-        logger.debug(
+        logger.info(
             "UUID or cron expression not defined for repository {}, skipping this third party sync job.",
             syncJobConfig.getRepository());
         continue;
