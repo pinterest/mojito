@@ -8,6 +8,8 @@ import com.box.l10n.mojito.service.scheduledjob.ScheduledJobResponse;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobKey;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +24,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * Webservice for enabling/disabling and triggering scheduled jobs.
+ *
+ * @author mattwilshire
+ */
 @RestController
 @ConditionalOnProperty(value = "l10n.scheduledJobs.enabled", havingValue = "true")
 public class ScheduledJobWS {
@@ -59,11 +66,33 @@ public class ScheduledJobWS {
           .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, "Job not found"));
 
     ScheduledJob scheduledJob = optionalScheduledJob.get();
+    JobKey jobKey = scheduledJobManager.getJobKey(scheduledJob);
+
     try {
-      return scheduledJobManager.triggerJob(scheduledJob);
+      // Is the job currently running ?
+      // Ignore the trigger request and tell the user it is currently running
+      for (JobExecutionContext jobExecutionContext :
+          scheduledJobManager.getScheduler().getCurrentlyExecutingJobs()) {
+        if (jobExecutionContext.getJobDetail().getKey().equals(jobKey)) {
+          return ResponseEntity.status(HttpStatus.CONFLICT)
+              .body(
+                  new ScheduledJobResponse(
+                      ScheduledJobResponse.Status.ERROR,
+                      "Trigger ignored, job is currently running"));
+        }
+      }
+
+      if (!scheduledJobManager.getScheduler().checkExists(jobKey))
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, "Job doesn't exist"));
+      scheduledJobManager.getScheduler().triggerJob(jobKey);
+      return ResponseEntity.status(HttpStatus.OK)
+          .body(new ScheduledJobResponse(ScheduledJobResponse.Status.SUCCESS, "Job triggered"));
     } catch (SchedulerException e) {
-      throw new ResponseStatusException(
-          HttpStatus.INTERNAL_SERVER_ERROR, "Job with id: " + id + " could not be triggered");
+      logger.error(
+          "Error triggering job manually, job: {}", jobKey.getName() + ":" + jobKey.getGroup(), e);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, e.getMessage()));
     }
   }
 
@@ -76,8 +105,21 @@ public class ScheduledJobWS {
           .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, "Job not found"));
 
     ScheduledJob scheduledJob = optionalScheduledJob.get();
+    JobKey jobKey = scheduledJobManager.getJobKey(scheduledJob);
+
     try {
-      return scheduledJobManager.toggleJob(scheduledJob);
+      if (!scheduledJobManager.getScheduler().checkExists(jobKey))
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, "Job doesn't exist"));
+
+      scheduledJob.setEnabled(!scheduledJob.getEnabled());
+      scheduledJobRepository.save(scheduledJob);
+
+      return ResponseEntity.status(HttpStatus.OK)
+          .body(
+              new ScheduledJobResponse(
+                  ScheduledJobResponse.Status.SUCCESS,
+                  "Job " + (scheduledJob.getEnabled() ? "enabled" : "disabled")));
     } catch (SchedulerException e) {
       throw new ResponseStatusException(
           HttpStatus.INTERNAL_SERVER_ERROR, "Job with id: " + id + " could not be disabled");
