@@ -32,7 +32,7 @@ module.exports = function (env) {
                 },
                 {
                     test: /\.(gif|png|jpe?g|svg)$/i,
-                    loaders: [
+                    use: [
                         {
                             loader: 'file-loader',
                             options: {
