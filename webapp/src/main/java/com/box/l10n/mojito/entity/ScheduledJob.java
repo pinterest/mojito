@@ -13,9 +13,9 @@ import jakarta.persistence.Transient;
 import java.util.Date;
 import org.hibernate.envers.Audited;
 
+@Audited
 @Entity
 @Table(name = "scheduled_job")
-@Audited
 public class ScheduledJob {
   @Id private String id;
 
