@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * Scheduled job that performs the third party sync for a repository off a cron scheduled.
+ * Scheduled job that performs the third party sync for a repository off a cron schedule.
  *
  * @author mattwilshire
  */
@@ -45,17 +45,19 @@ public class ScheduledThirdPartySync implements IScheduledJob {
   String notificationTitle;
 
   private ScheduledJob scheduledJob;
-  private ScheduledThirdPartySyncProperties scheduledJobProperties;
   private Long pollableTaskId;
 
   @Override
   public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
     // Fetch the scheduled job and cast the properties
     scheduledJob = scheduledJobRepository.findByJobKey(jobExecutionContext.getJobDetail().getKey());
-    scheduledJobProperties = (ScheduledThirdPartySyncProperties) scheduledJob.getProperties();
+    ScheduledThirdPartySyncProperties scheduledJobProperties =
+        (ScheduledThirdPartySyncProperties) scheduledJob.getProperties();
 
     logger.info(
         "Third party sync for repository {} has started.", scheduledJob.getRepository().getName());
+
+    if (true) return;
 
     // Create ThirdPartySyncInput from scheduled job and properties
     ThirdPartySyncJobInput thirdPartySyncJobInput =
@@ -112,6 +114,12 @@ public class ScheduledThirdPartySync implements IScheduledJob {
                       .build()
                       .toUriString();
 
+              String scheduledJobUrl =
+                  UriComponentsBuilder.fromHttpUrl(serverConfig.getUrl())
+                      .path("api/jobs/" + scheduledJob.getId())
+                      .build()
+                      .toUriString();
+
               String title =
                   StrSubstitutor.replace(
                       notificationTitle,
@@ -119,14 +127,13 @@ public class ScheduledThirdPartySync implements IScheduledJob {
                       "{",
                       "}");
 
-              System.out.println(title);
-
               PagerDutyPayload payload =
                   new PagerDutyPayload(
                       title,
                       serverConfig.getUrl(),
                       PagerDutyPayload.Severity.CRITICAL,
-                      ImmutableMap.of("Pollable Task", pollableTaskUrl));
+                      ImmutableMap.of(
+                          "Pollable Task", pollableTaskUrl, "Scheduled Job", scheduledJobUrl));
 
               try {
                 pd.triggerIncident(scheduledJob.getId(), payload);

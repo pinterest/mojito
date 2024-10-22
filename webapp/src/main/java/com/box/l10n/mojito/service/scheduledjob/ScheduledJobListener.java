@@ -2,7 +2,6 @@ package com.box.l10n.mojito.service.scheduledjob;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
 import com.box.l10n.mojito.retry.DeadLockLoserExceptionRetryTemplate;
-import jakarta.transaction.Transactional;
 import java.util.Date;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -40,9 +39,11 @@ public class ScheduledJobListener extends JobListenerSupport {
     return "ScheduledJobListener";
   }
 
-  /** The job is about to be executed, set the status and start date */
+  /**
+   * The job is about to be executed, set the status and start date. Do not mark as @Transactional
+   * otherwise a deadlock will occur at the method level not at the save().
+   */
   @Override
-  @Transactional
   public void jobToBeExecuted(JobExecutionContext context) {
     ScheduledJob scheduledJob =
         scheduledJobRepository.findByJobKey(context.getJobDetail().getKey());
@@ -74,7 +75,6 @@ public class ScheduledJobListener extends JobListenerSupport {
 
   /** The job finished execution, if an error occurred jobException will not be null */
   @Override
-  @Transactional
   public void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
     ScheduledJob scheduledJob =
         scheduledJobRepository.findByJobKey(context.getJobDetail().getKey());
