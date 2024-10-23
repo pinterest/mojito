@@ -11,6 +11,7 @@ module.exports = function (env) {
         },
         output: {
             path: path.resolve(__dirname, '../chromeextension'),
+            publicPath: '',
             filename: '[name]-bundle.js',
         },
         performance: {
@@ -36,13 +37,13 @@ module.exports = function (env) {
                         {
                             loader: 'file-loader',
                             options: {
-                                name: 'img/[name]-[hash].[ext]',
+                                name: 'img/[name]-[contenthash].[ext]',
                             }
                         },
                         {
                             loader: 'image-webpack-loader',
                             options: {
-                                name: 'img/[name]-[hash].[ext]',
+                                name: 'img/[name]-[contenthash].[ext]',
                                 query: {
                                     mozjpeg: {
                                         progressive: true
@@ -77,12 +78,12 @@ module.exports = function (env) {
                     // to the font are invalid if mojito is deployed with a 
                     // specific deploy path. 
                     // hardcoded for deploy path for test -->
-                    //    name: '{deployPath}/fonts/[name]-[hash].[ext]'
+                    //    name: '{deployPath}/fonts/[name]-[contenthash].[ext]'
                     
                     test: /\.(eot|ttf|woff|woff2)$/,
                     loader: 'url-loader',
                     options: {
-                        name: 'fonts/[name]-[hash].[ext]'
+                        name: 'fonts/[name]-[contenthash].[ext]'
                     }
                 },
 
