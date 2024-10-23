@@ -1,5 +1,7 @@
 package com.box.l10n.mojito.service.ai.translation;
 
+import static com.box.l10n.mojito.entity.TMTextUnitVariant.Status.MT_REVIEW_NEEDED;
+
 import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.PromptType;
 import com.box.l10n.mojito.entity.TmTextUnitPendingMT;
@@ -94,7 +96,7 @@ public class AITranslationService {
         new BatchPreparedStatementSetter() {
           @Override
           public void setValues(PreparedStatement ps, int i) throws SQLException {
-            ps.setString(1, "MT_REVIEW");
+            ps.setString(1, MT_REVIEW_NEEDED.name());
             ps.setLong(2, updateBatch.get(i));
           }
 

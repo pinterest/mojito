@@ -71,7 +71,7 @@ public class TMTextUnitVariant extends SettableAuditableEntity {
 
     MT_TRANSLATED,
 
-    MT_REVIEW,
+    MT_REVIEW_NEEDED,
     /** A string that doesn't need any work to be performed on it. */
     APPROVED,
     /** It was overridden in Mojito, so it won't be updated during third-party sync */
