@@ -1,9 +1,11 @@
-var path = require('path');
-var webpack = require("webpack");
+const path = require('path');
+const webpack = require("webpack");
+const TerserPlugin = require("terser-webpack-plugin");
 
-module.exports = function (env) {
+module.exports = (env) => {
     env = env || {};
 
+    const isProdEnv = Boolean(env.production)
     const config = {
         entry: {
             'app': path.resolve(__dirname, './src/main/resources/public/js/app.js'),
@@ -15,7 +17,7 @@ module.exports = function (env) {
             filename: 'js/[name]-[contenthash].js',
             chunkFilename: 'js/[name]-[chunkhash].js'
         },
-        mode: env.production ? 'production' : 'development',
+        mode: isProdEnv ? 'production' : 'development',
         module: {
             rules: [
                 {
@@ -102,9 +104,17 @@ module.exports = function (env) {
                 },
             ]
         },
+        optimization: {
+            minimizer: [new TerserPlugin()],
+            minimize: isProdEnv,
+        },
+        performance: {
+            hints: 'error',
+            maxEntrypointSize: 1_800_000, // 1.8MB
+            maxAssetSize: 1_800_000 // 1.8MB
+        },
         plugins: []
     };
-
 
     const HtmlWebpackPlugin = require('html-webpack-plugin');
     config.plugins.push(new HtmlWebpackPlugin({
@@ -113,7 +123,7 @@ module.exports = function (env) {
         inject: false
     }));
 
-    if (env.production) {
+    if (isProdEnv) {
         config.plugins.push(
                 new webpack.DefinePlugin({
                     'process.env': {

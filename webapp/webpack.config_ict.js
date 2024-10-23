@@ -1,10 +1,13 @@
-var path = require('path');
-var webpack = require("webpack");
+const path = require('path');
+const webpack = require("webpack");
+const TerserPlugin = require("terser-webpack-plugin");
+
 
 module.exports = function (env) {
     env = env || {};
-
-    var config = {
+    
+    const isProdEnv = Boolean(env.production)
+    const config = {
         entry: {
             'ict-popup': path.resolve(__dirname, './src/main/resources/public/js/ict/chrome-ict-popup.js'),
             'ict': path.resolve(__dirname, './src/main/resources/public/js/ict/chrome-ict.js')
@@ -14,11 +17,7 @@ module.exports = function (env) {
             publicPath: '',
             filename: '[name]-bundle.js',
         },
-        performance: {
-            maxEntrypointSize: 900000, // 90KB
-            maxAssetSize: 900000 // 90KB
-        },
-        mode: env.production ? 'production' : 'development',
+        mode: isProdEnv ? 'production' : 'development',
         module: {
             rules: [
                 {
@@ -104,6 +103,15 @@ module.exports = function (env) {
                         }]
                 },
             ]
+        },
+        optimization: {
+            minimizer: [new TerserPlugin()],
+            minimize: isProdEnv,
+        },
+        
+        performance: {
+            maxEntrypointSize: 900_000, // 90KB
+            maxAssetSize: 900_000 // 90KB
         },
         plugins: []
     };
