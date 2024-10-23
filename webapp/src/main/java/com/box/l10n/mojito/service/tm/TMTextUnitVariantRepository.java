@@ -162,13 +162,4 @@ public interface TMTextUnitVariantRepository extends JpaRepository<TMTextUnitVar
               """)
   List<LocaleVariantDTO> findLocaleVariantDTOsByTmTextUnitId(
       @Param("tmTextUnitId") Long tmTextUnitId);
-
-  @Query(
-      """
-        select tuv from TMTextUnitVariant tuv
-        join TMTextUnitCurrentVariant tucv ON tuv.id = tucv.tmTextUnitVariant.id
-        where tucv.id = :tmTextUnitCurrentVariantId
-    """)
-  TMTextUnitVariant findByCurrentVariantId(
-      @Param("tmTextUnitCurrentVariantId") Long tmTextUnitCurrentVariantId);
 }

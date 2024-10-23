@@ -14,6 +14,7 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -70,6 +71,16 @@ public class AITranslationService {
 
   @Transactional
   public void updateVariantStatusToMTReview(List<Long> currentVariantIds) {
+
+    for (int i = 0; i < currentVariantIds.size(); i += batchSize) {
+      logger.debug("Updating variant statuses to MT_REVIEW in batches of {}", batchSize);
+      int end = Math.min(i + batchSize, currentVariantIds.size());
+      List<Long> updateBatch = currentVariantIds.subList(i, end);
+      executeVariantStatusUpdatesToMTReview(updateBatch);
+    }
+  }
+
+  private void executeVariantStatusUpdatesToMTReview(List<Long> updateBatch) {
     String sql =
         "UPDATE tm_text_unit_variant "
             + "SET status = ? "
@@ -84,12 +95,12 @@ public class AITranslationService {
           @Override
           public void setValues(PreparedStatement ps, int i) throws SQLException {
             ps.setString(1, "MT_REVIEW");
-            ps.setLong(2, currentVariantIds.get(i));
+            ps.setLong(2, updateBatch.get(i));
           }
 
           @Override
           public int getBatchSize() {
-            return currentVariantIds.size();
+            return updateBatch.size();
           }
         });
   }
@@ -194,7 +205,7 @@ public class AITranslationService {
   }
 
   @Transactional
-  protected void deleteBatch(List<TmTextUnitPendingMT> batch) {
+  protected void deleteBatch(Queue<TmTextUnitPendingMT> batch) {
     if (batch.isEmpty()) {
       logger.debug("No pending MTs to delete");
       return;
