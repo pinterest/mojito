@@ -57,8 +57,6 @@ public class ScheduledThirdPartySync implements IScheduledJob {
     logger.info(
         "Third party sync for repository {} has started.", scheduledJob.getRepository().getName());
 
-    if (true) return;
-
     // Create ThirdPartySyncInput from scheduled job and properties
     ThirdPartySyncJobInput thirdPartySyncJobInput =
         new ThirdPartySyncJobInput(scheduledJob, scheduledJobProperties);

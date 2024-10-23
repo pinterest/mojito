@@ -52,11 +52,11 @@ public class ScheduledJobManager {
   @Autowired RepositoryRepository repositoryRepository;
   @Autowired DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate;
 
-  private final List<String> uuidPool = new ArrayList<>();
-
   /* Quartz scheduler dedicated to scheduled jobs using in memory data source */
   @Value("${l10n.scheduledJobs.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   private String schedulerName;
+
+  public List<String> uuidPool = new ArrayList<>();
 
   @PostConstruct
   public void init() throws ClassNotFoundException, SchedulerException {
@@ -190,9 +190,9 @@ public class ScheduledJobManager {
   }
 
   public Trigger buildTrigger(JobKey jobKey, String cronExpression, TriggerKey triggerKey) {
-    // Misfires will only happen if the job was triggered manually and the cron schedule was missed
-    // The misfire policy is defaulted to 60s, meaning it is only a misfire if it
-    // misses its schedule by 60s, we shouldn't have this happen normally
+    // Misfires should only occur when the job was triggerred manually and missed its schedule,
+    // the default misfire policy requires the job to miss its trigger time to miss by 60s to
+    // classify as a misfire
     return TriggerBuilder.newTrigger()
         .withSchedule(
             CronScheduleBuilder.cronSchedule(cronExpression)
@@ -203,14 +203,12 @@ public class ScheduledJobManager {
   }
 
   public JobKey getJobKey(ScheduledJob scheduledJob) {
-    // name = UUID
-    // group = THIRD_PARTY_SYNC
+    // name = UUID, group = THIRD_PARTY_SYNC
     return new JobKey(scheduledJob.getId(), scheduledJob.getJobType().getEnum().toString());
   }
 
   private TriggerKey getTriggerKey(ScheduledJob scheduledJob) {
-    // name = trigger_UUID
-    // group = THIRD_PARTY_SYNC
+    // name = trigger_UUID, group = THIRD_PARTY_SYNC
     return new TriggerKey(
         "trigger_" + scheduledJob.getId(), scheduledJob.getJobType().getEnum().toString());
   }

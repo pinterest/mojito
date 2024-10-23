@@ -3,6 +3,7 @@ package com.box.l10n.mojito.service.scheduledjob;
 import com.box.l10n.mojito.entity.ScheduledJob;
 import java.util.Date;
 
+/** Trimmed down version of the ScheduledJob entity for API responses. */
 public class ScheduledJobDTO {
   private String id;
   private String repository;
