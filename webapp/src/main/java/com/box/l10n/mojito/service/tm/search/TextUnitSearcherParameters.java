@@ -53,6 +53,7 @@ public class TextUnitSearcherParameters {
   String skipAssetPathWithPattern;
   boolean isExcludeUnexpiredPendingMT = false;
   Duration aiTranslationExpiryDuration;
+  boolean isRetrieveUploadedFileUri = false;
 
   public String getName() {
     return name;
@@ -345,5 +346,13 @@ public class TextUnitSearcherParameters {
 
   public void setAiTranslationExpiryDuration(Duration aiTranslationExpiryDuration) {
     this.aiTranslationExpiryDuration = aiTranslationExpiryDuration;
+  }
+
+  public boolean isRetrieveUploadedFileUri() {
+    return isRetrieveUploadedFileUri;
+  }
+
+  public void setIsRetrieveUploadedFileUri(boolean retrieveUploadedFileUri) {
+    this.isRetrieveUploadedFileUri = retrieveUploadedFileUri;
   }
 }

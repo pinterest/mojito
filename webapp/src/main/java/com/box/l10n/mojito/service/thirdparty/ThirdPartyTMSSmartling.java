@@ -13,6 +13,7 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.quartz.QuartzJobInfo;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
 import com.box.l10n.mojito.service.ai.translation.AITranslationConfiguration;
+import com.box.l10n.mojito.service.ai.translation.AITranslationService;
 import com.box.l10n.mojito.service.assetExtraction.AssetTextUnitToTMTextUnitRepository;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingFile;
@@ -96,6 +97,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
   private final ThirdPartyTMSSmartlingWithJson thirdPartyTMSSmartlingWithJson;
   private final ThirdPartyTMSSmartlingGlossary thirdPartyTMSSmartlingGlossary;
   private final AssetTextUnitToTMTextUnitRepository assetTextUnitToTMTextUnitRepository;
+  private final AITranslationService aiTranslationService;
 
   private final MeterRegistry meterRegistry;
 
@@ -110,6 +112,9 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
     return localeMapping.getOrDefault(localeTag, localeTag);
   }
 
+  private final String PUBLISHED = "PUBLISHED";
+  private final String POST_TRANSLATION = "POST_TRANSLATION";
+
   @Autowired
   public ThirdPartyTMSSmartling(
       SmartlingClient smartlingClient,
@@ -122,7 +127,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       AssetTextUnitToTMTextUnitRepository assetTextUnitToTMTextUnitRepository,
       MeterRegistry meterRegistry,
       QuartzPollableTaskScheduler quartzPollableTaskScheduler,
-      AITranslationConfiguration aiTranslationConfiguration) {
+      AITranslationConfiguration aiTranslationConfiguration,
+      AITranslationService aiTranslationService) {
     this(
         smartlingClient,
         textUnitSearcher,
@@ -135,7 +141,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
         DEFAULT_BATCH_SIZE,
         meterRegistry,
         quartzPollableTaskScheduler,
-        aiTranslationConfiguration);
+        aiTranslationConfiguration,
+        aiTranslationService);
   }
 
   public ThirdPartyTMSSmartling(
@@ -150,7 +157,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       int batchSize,
       MeterRegistry meterRegistry,
       QuartzPollableTaskScheduler quartzPollableTaskScheduler,
-      AITranslationConfiguration aiTranslationConfiguration) {
+      AITranslationConfiguration aiTranslationConfiguration,
+      AITranslationService aiTranslationService) {
     this.smartlingClient = smartlingClient;
     this.assetPathAndTextUnitNameKeys = assetPathAndTextUnitNameKeys;
     this.textUnitBatchImporterService = textUnitBatchImporterService;
@@ -163,6 +171,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
     this.meterRegistry = meterRegistry;
     this.quartzPollableTaskScheduler = quartzPollableTaskScheduler;
     this.aiTranslationConfiguration = aiTranslationConfiguration;
+    this.aiTranslationService = aiTranslationService;
   }
 
   @Override
@@ -674,7 +683,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
                                       options,
                                       localeMapping,
                                       Prefix.SINGULAR,
-                                      filterTmTextUnitIds)),
+                                      filterTmTextUnitIds,
+                                      PUBLISHED)),
                           mapWithIndex(
                               partitionPlurals(
                                   repository.getId(),
@@ -694,7 +704,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
                                       options,
                                       localeMapping,
                                       Prefix.PLURAL,
-                                      filterTmTextUnitIds))))
+                                      filterTmTextUnitIds,
+                                      PUBLISHED))))
               .collect(Collectors.toList());
 
       resultProcessor.processPushTranslations(result, options);
@@ -734,6 +745,140 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
     }
   }
 
+  @Override
+  public void pushAITranslations(
+      Repository repository,
+      String projectId,
+      String pluralSeparator,
+      Map<String, String> localeMapping,
+      String skipTextUnitsWithPattern,
+      String skipAssetsWithPathPattern,
+      String includeTextUnitsWithPattern,
+      List<String> optionList) {
+    try (var timer =
+        Timer.resource(meterRegistry, "SmartlingSync.pushAITranslations")
+            .tag("repository", repository.getName())) {
+      SmartlingOptions options = SmartlingOptions.parseList(optionList);
+      if (options.isJsonSync()) {
+        thirdPartyTMSSmartlingWithJson.pushAiTranslations(
+            repository,
+            projectId,
+            localeMapping,
+            skipTextUnitsWithPattern,
+            skipAssetsWithPathPattern,
+            includeTextUnitsWithPattern);
+      }
+
+      AndroidStringDocumentMapper mapper = new AndroidStringDocumentMapper(pluralSeparator, null);
+
+      Set<Long> filterTmTextUnitIds = getFilterTmTextUnitIdsForPushTranslation(options);
+
+      List<SmartlingFile> result =
+          repository.getRepositoryLocales().stream()
+              .map(l -> l.getLocale().getBcp47Tag())
+              .filter(
+                  localeTag ->
+                      !localeTag.equalsIgnoreCase(repository.getSourceLocale().getBcp47Tag()))
+              .flatMap(
+                  localeTag -> {
+                    Map<String, List<TextUnitDTO>> singularsByUploadedFileUri =
+                        partitionSingulars(
+                                repository.getId(),
+                                localeTag,
+                                skipTextUnitsWithPattern,
+                                skipAssetsWithPathPattern,
+                                includeTextUnitsWithPattern,
+                                StatusFilter.MT_TRANSLATED,
+                                true)
+                            .flatMap(List::stream)
+                            .collect(Collectors.groupingBy(TextUnitDTO::getUploadedFileUri));
+
+                    Map<String, List<TextUnitDTO>> pluralsByUploadedFileUri =
+                        partitionPlurals(
+                                repository.getId(),
+                                localeTag,
+                                skipTextUnitsWithPattern,
+                                skipAssetsWithPathPattern,
+                                options.getPluralFixForLocales(),
+                                includeTextUnitsWithPattern,
+                                StatusFilter.MT_TRANSLATED,
+                                true)
+                            .flatMap(List::stream)
+                            .collect(Collectors.groupingBy(TextUnitDTO::getUploadedFileUri));
+
+                    Stream<SmartlingFile> singularFiles =
+                        singularsByUploadedFileUri.entrySet().stream()
+                            .map(
+                                entry ->
+                                    uploadAiTranslationBatch(
+                                        entry.getValue(),
+                                        entry.getKey(),
+                                        localeTag,
+                                        mapper,
+                                        repository,
+                                        projectId,
+                                        options,
+                                        localeMapping,
+                                        filterTmTextUnitIds));
+
+                    Stream<SmartlingFile> pluralFiles =
+                        pluralsByUploadedFileUri.entrySet().stream()
+                            .map(
+                                entry ->
+                                    uploadAiTranslationBatch(
+                                        entry.getValue(),
+                                        entry.getKey(),
+                                        localeTag,
+                                        mapper,
+                                        repository,
+                                        projectId,
+                                        options,
+                                        localeMapping,
+                                        filterTmTextUnitIds));
+
+                    return Stream.concat(singularFiles, pluralFiles);
+                  })
+              .collect(Collectors.toList());
+
+      resultProcessor.processPushAiTranslations(result, options);
+    }
+  }
+
+  private SmartlingFile uploadAiTranslationBatch(
+      List<TextUnitDTO> batch,
+      String uploadedFileUri,
+      String localeTag,
+      AndroidStringDocumentMapper mapper,
+      Repository repository,
+      String projectId,
+      SmartlingOptions options,
+      Map<String, String> localeMapping,
+      Set<Long> filterTmTextUnitIds) {
+
+    SmartlingFile file =
+        uploadAiTranslationFile(
+            batch,
+            localeTag,
+            uploadedFileUri,
+            mapper,
+            repository,
+            projectId,
+            options,
+            localeMapping,
+            filterTmTextUnitIds);
+    aiTranslationService.updateVariantStatusToMTReview(
+        batch.stream().map(TextUnitDTO::getTmTextUnitCurrentVariantId).toList());
+    meterRegistry
+        .counter(
+            "SmartlingSync.uploadAiTranslationsBatch",
+            "repository",
+            repository.getName(),
+            "jsonSync",
+            "false")
+        .increment(batch.size());
+    return file;
+  }
+
   private SmartlingFile processTranslationBatch(
       List<TextUnitDTO> batch,
       Long batchNumber,
@@ -744,7 +889,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       SmartlingOptions options,
       Map<String, String> localeMapping,
       Prefix filePrefix,
-      Set<Long> filterTmTextUnitIds) {
+      Set<Long> filterTmTextUnitIds,
+      String translationState) {
 
     try (var timer =
         Timer.resource(meterRegistry, "SmartlingSync.processTranslationBatch")
@@ -794,7 +940,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
                         getSmartlingLocale(localeMapping, localeTag),
                         file.getFileContent(),
                         options.getPlaceholderFormat(),
-                        options.getCustomPlaceholderFormat()))
+                        options.getCustomPlaceholderFormat(),
+                        translationState))
             .retryWhen(
                 smartlingClient
                     .getRetryConfiguration()
@@ -821,22 +968,100 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
     }
   }
 
+  private SmartlingFile uploadAiTranslationFile(
+      List<TextUnitDTO> batch,
+      String localeTag,
+      String fileName,
+      AndroidStringDocumentMapper mapper,
+      Repository repository,
+      String projectId,
+      SmartlingOptions options,
+      Map<String, String> localeMapping,
+      Set<Long> filterTmTextUnitIds) {
+
+    try (var timer =
+        Timer.resource(meterRegistry, "SmartlingSync.processTranslationBatch")
+            .tag("repository", repository.getName())
+            .tag("locale", localeTag)) {
+
+      logger.debug("Process translation batch for file: {}", fileName);
+      List<TextUnitDTO> fileBatch = batch;
+      SmartlingFile file = new SmartlingFile();
+      file.setFileName(fileName + "_" + localeTag);
+
+      try {
+        logger.debug("Save target file to: {}", file.getFileName());
+
+        if (filterTmTextUnitIds != null) {
+          fileBatch =
+              fileBatch.stream()
+                  .filter(
+                      textUnitDTO -> filterTmTextUnitIds.contains(textUnitDTO.getTmTextUnitId()))
+                  .collect(Collectors.toList());
+        }
+
+        AndroidStringDocumentWriter writer =
+            new AndroidStringDocumentWriter(mapper.readFromTargetTextUnits(fileBatch));
+        file.setFileContent(writer.toText());
+
+      } catch (ParserConfigurationException | TransformerException e) {
+        logger.error("An error occurred when processing a translation batch", e);
+        throw new RuntimeException(e);
+      }
+
+      if (!options.isDryRun()) {
+        logger.debug(
+            "Pushing Android file to Smartling project: {} and locale: {}", projectId, localeTag);
+        Mono.fromCallable(
+                () ->
+                    smartlingClient.uploadLocalizedFile(
+                        projectId,
+                        fileName,
+                        "android",
+                        getSmartlingLocale(localeMapping, localeTag),
+                        file.getFileContent(),
+                        options.getPlaceholderFormat(),
+                        options.getCustomPlaceholderFormat(),
+                        POST_TRANSLATION))
+            .retryWhen(
+                smartlingClient
+                    .getRetryConfiguration()
+                    .doBeforeRetry(
+                        e ->
+                            logger.info(
+                                String.format(
+                                    "Retrying after failure to upload localized file: %s, project id: %s",
+                                    fileName, projectId),
+                                e.failure())))
+            .doOnError(
+                e -> {
+                  String msg =
+                      String.format(
+                          "Error uploading localized file to Smartling for file %s in project %s",
+                          fileName, projectId);
+                  logger.error(msg, e);
+                  throw new SmartlingClientException(msg, e);
+                })
+            .block();
+      }
+
+      return file;
+    }
+  }
+
   private Stream<List<TextUnitDTO>> partitionSingulars(
       Long repositoryId,
       String localeTag,
       String skipTextUnitsWithPattern,
       String skipAssetsWithPathPattern) {
-    TextUnitSearcherParameters parameters =
-        baseParams(
-            repositoryId,
-            localeTag,
-            skipTextUnitsWithPattern,
-            skipAssetsWithPathPattern,
-            true,
-            true,
-            null);
-    parameters.setOrderByTextUnitID(true);
-    return partitionedStream(parameters, textUnitSearcher::search);
+    return partitionSingulars(
+        repositoryId,
+        localeTag,
+        skipTextUnitsWithPattern,
+        skipAssetsWithPathPattern,
+        null,
+        null,
+        false);
   }
 
   private Stream<List<TextUnitDTO>> partitionSingulars(
@@ -845,6 +1070,24 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       String skipTextUnitsWithPattern,
       String skipAssetsWithPathPattern,
       String includeTextUnitWithPattern) {
+    return partitionSingulars(
+        repositoryId,
+        localeTag,
+        skipTextUnitsWithPattern,
+        skipAssetsWithPathPattern,
+        includeTextUnitWithPattern,
+        null,
+        false);
+  }
+
+  private Stream<List<TextUnitDTO>> partitionSingulars(
+      Long repositoryId,
+      String localeTag,
+      String skipTextUnitsWithPattern,
+      String skipAssetsWithPathPattern,
+      String includeTextUnitWithPattern,
+      StatusFilter statusFilter,
+      boolean isRetrieveFileUploadUri) {
     TextUnitSearcherParameters parameters =
         baseParams(
             repositoryId,
@@ -856,6 +1099,13 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
             null,
             includeTextUnitWithPattern);
     parameters.setOrderByTextUnitID(true);
+
+    if (statusFilter != null) {
+      parameters.setStatusFilter(statusFilter);
+    }
+
+    parameters.setIsRetrieveUploadedFileUri(isRetrieveFileUploadUri);
+
     return partitionedStream(parameters, textUnitSearcher::search);
   }
 
@@ -864,17 +1114,15 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       String localeTag,
       String skipTextUnitsWithPattern,
       String skipAssetsWithPathPattern) {
-    TextUnitSearcherParameters parameters =
-        baseParams(
-            repositoryId,
-            localeTag,
-            skipTextUnitsWithPattern,
-            skipAssetsWithPathPattern,
-            false,
-            false,
-            "%");
-    parameters.setOrderByTextUnitID(true);
-    return partitionedStream(parameters, textUnitSearcher::search);
+    return partitionPlurals(
+        repositoryId,
+        localeTag,
+        skipTextUnitsWithPattern,
+        skipAssetsWithPathPattern,
+        null,
+        null,
+        null,
+        false);
   }
 
   private Stream<List<TextUnitDTO>> partitionPlurals(
@@ -884,11 +1132,30 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       String skipAssetsWithPathPattern,
       Set<String> pluralFixForLocales,
       String includeTextUnitsWithPattern) {
+    return partitionPlurals(
+        repositoryId,
+        localeTag,
+        skipTextUnitsWithPattern,
+        skipAssetsWithPathPattern,
+        pluralFixForLocales,
+        includeTextUnitsWithPattern,
+        null,
+        false);
+  }
 
+  private Stream<List<TextUnitDTO>> partitionPlurals(
+      Long repositoryId,
+      String localeTag,
+      String skipTextUnitsWithPattern,
+      String skipAssetsWithPathPattern,
+      Set<String> pluralFixForLocales,
+      String includeTextUnitsWithPattern,
+      StatusFilter statusFilter,
+      boolean isRetrieveFileUploadUri) {
     Function<TextUnitSearcherParameters, List<TextUnitDTO>> searchFunction =
         textUnitSearcher::search;
 
-    if (pluralFixForLocales.contains(localeTag)) {
+    if (pluralFixForLocales != null && pluralFixForLocales.contains(localeTag)) {
       searchFunction =
           searchFunction.andThen(
               textUnits ->
@@ -909,6 +1176,12 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
             includeTextUnitsWithPattern);
 
     parameters.setOrderByTextUnitID(true);
+
+    if (statusFilter != null) {
+      parameters.setStatusFilter(statusFilter);
+    }
+
+    parameters.setIsRetrieveUploadedFileUri(isRetrieveFileUploadUri);
 
     return partitionedStream(parameters, searchFunction);
   }
@@ -993,6 +1266,28 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       boolean pluralFormsFiltered,
       boolean pluralFormsExcluded,
       String pluralFormOther,
+      StatusFilter statusFilter) {
+    TextUnitSearcherParameters parameters =
+        baseParams(
+            repositoryId,
+            localeTag,
+            skipTextUnitsWithPattern,
+            skipAssetsWithPathPattern,
+            pluralFormsFiltered,
+            pluralFormsExcluded,
+            pluralFormOther);
+    parameters.setStatusFilter(statusFilter);
+    return parameters;
+  }
+
+  private TextUnitSearcherParameters baseParams(
+      Long repositoryId,
+      String localeTag,
+      String skipTextUnitsWithPattern,
+      String skipAssetsWithPathPattern,
+      boolean pluralFormsFiltered,
+      boolean pluralFormsExcluded,
+      String pluralFormOther,
       String includeTextUnitsWithPattern) {
     TextUnitSearcherParameters result =
         baseParams(
@@ -1003,6 +1298,30 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
             pluralFormsFiltered,
             pluralFormsExcluded,
             pluralFormOther);
+    result.setIncludeTextUnitsWithPattern(includeTextUnitsWithPattern);
+    return result;
+  }
+
+  private TextUnitSearcherParameters baseParams(
+      Long repositoryId,
+      String localeTag,
+      String skipTextUnitsWithPattern,
+      String skipAssetsWithPathPattern,
+      boolean pluralFormsFiltered,
+      boolean pluralFormsExcluded,
+      String pluralFormOther,
+      String includeTextUnitsWithPattern,
+      StatusFilter statusFilter) {
+    TextUnitSearcherParameters result =
+        baseParams(
+            repositoryId,
+            localeTag,
+            skipTextUnitsWithPattern,
+            skipAssetsWithPathPattern,
+            pluralFormsFiltered,
+            pluralFormsExcluded,
+            pluralFormOther,
+            statusFilter);
     result.setIncludeTextUnitsWithPattern(includeTextUnitsWithPattern);
     return result;
   }
