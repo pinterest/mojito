@@ -787,7 +787,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
                                 skipTextUnitsWithPattern,
                                 skipAssetsWithPathPattern,
                                 includeTextUnitsWithPattern,
-                                StatusFilter.MT_TRANSLATED)
+                                StatusFilter.MT_TRANSLATED,
+                                true)
                             .flatMap(List::stream)
                             .collect(Collectors.groupingBy(TextUnitDTO::getUploadedFileUri));
 
@@ -799,7 +800,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
                                 skipAssetsWithPathPattern,
                                 options.getPluralFixForLocales(),
                                 includeTextUnitsWithPattern,
-                                StatusFilter.MT_TRANSLATED)
+                                StatusFilter.MT_TRANSLATED,
+                                true)
                             .flatMap(List::stream)
                             .collect(Collectors.groupingBy(TextUnitDTO::getUploadedFileUri));
 
@@ -1090,7 +1092,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       String skipTextUnitsWithPattern,
       String skipAssetsWithPathPattern,
       String includeTextUnitWithPattern,
-      StatusFilter statusFilter) {
+      StatusFilter statusFilter,
+      boolean isRetrieveFileUploadUri) {
     TextUnitSearcherParameters parameters =
         this.baseParams()
             .repositoryId(repositoryId)
@@ -1102,6 +1105,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
             .includeTextUnitsWithPattern(includeTextUnitWithPattern)
             .statusFilter(statusFilter)
             .isOrderedByTextUnitID(true)
+            .shouldRetrieveUploadedFileUri(isRetrieveFileUploadUri)
             .build();
 
     return partitionedStream(parameters, textUnitSearcher::search);
@@ -1133,33 +1137,15 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       String skipAssetsWithPathPattern,
       Set<String> pluralFixForLocales,
       String includeTextUnitsWithPattern) {
-
-    Function<TextUnitSearcherParameters, List<TextUnitDTO>> searchFunction =
-        textUnitSearcher::search;
-
-    if (pluralFixForLocales.contains(localeTag)) {
-      searchFunction =
-          searchFunction.andThen(
-              textUnits ->
-                  textUnits.stream()
-                      .filter(tu -> !MANY.toString().equalsIgnoreCase(tu.getPluralForm()))
-                      .collect(Collectors.toList()));
-    }
-
-    TextUnitSearcherParameters parameters =
-        this.baseParams()
-            .repositoryId(repositoryId)
-            .localeTags(ImmutableList.of(localeTag))
-            .skipTextUnitWithPattern(skipTextUnitsWithPattern)
-            .skipAssetPathWithPattern(skipAssetsWithPathPattern)
-            .pluralFormsFiltered(false)
-            .pluralFormsExcluded(false)
-            .pluralFormOther("%")
-            .includeTextUnitsWithPattern(includeTextUnitsWithPattern)
-            .isOrderedByTextUnitID(true)
-            .build();
-
-    return partitionedStream(parameters, searchFunction);
+    return partitionPlurals(
+        repositoryId,
+        localeTag,
+        skipTextUnitsWithPattern,
+        skipAssetsWithPathPattern,
+        pluralFixForLocales,
+        includeTextUnitsWithPattern,
+        null,
+        false);
   }
 
   private Stream<List<TextUnitDTO>> partitionPlurals(
@@ -1169,12 +1155,12 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
       String skipAssetsWithPathPattern,
       Set<String> pluralFixForLocales,
       String includeTextUnitsWithPattern,
-      StatusFilter statusFilter) {
-
+      StatusFilter statusFilter,
+      boolean isRetrieveFileUploadUri) {
     Function<TextUnitSearcherParameters, List<TextUnitDTO>> searchFunction =
         textUnitSearcher::search;
 
-    if (pluralFixForLocales.contains(localeTag)) {
+    if (pluralFixForLocales != null && pluralFixForLocales.contains(localeTag)) {
       searchFunction =
           searchFunction.andThen(
               textUnits ->
@@ -1193,9 +1179,13 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
             .pluralFormsExcluded(false)
             .pluralFormOther("%")
             .includeTextUnitsWithPattern(includeTextUnitsWithPattern)
-            .statusFilter(statusFilter)
             .isOrderedByTextUnitID(true)
+            .shouldRetrieveUploadedFileUri(isRetrieveFileUploadUri)
             .build();
+
+    if (statusFilter != null) {
+      parameters.setStatusFilter(statusFilter);
+    }
 
     return partitionedStream(parameters, searchFunction);
   }

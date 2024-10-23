@@ -165,10 +165,9 @@ public class TextUnitSearcher {
               "tm_text_unit_pending_mt", "tmtupmt", "tmtupmt.tm_text_unit_id", "tu.id"));
     }
 
-    if (searchParameters.getStatusFilter() != null
-        && searchParameters.getStatusFilter().equals(StatusFilter.MT_TRANSLATED)) {
-      // Pushing AI translations, need to retrieve the uploadedFileUri from the ThirdPartyTextUnit
-      // table
+    if (searchParameters.isRetrieveUploadedFileUri()) {
+      // Retrieve the uploadedFileUri from the ThirdPartyTextUnit table (used when pushing AI
+      // translations to third party)
       c.addJoin(
           NativeExps.innerJoin("third_party_text_unit", "tptu", "tptu.tm_text_unit_id", "tu.id"));
     }
@@ -248,8 +247,7 @@ public class TextUnitSearcher {
             .addProjection("tu.created_date", "tmTextUnitCreatedDate")
             .addProjection("atu.do_not_translate", "doNotTranslate");
 
-    if (searchParameters.getStatusFilter() != null
-        && searchParameters.getStatusFilter().equals(StatusFilter.MT_TRANSLATED)) {
+    if (searchParameters.isRetrieveUploadedFileUri()) {
       projection.addProjection("tptu.uploaded_file_uri", "uploadedFileUri");
     }
     c.setProjection(projection);
