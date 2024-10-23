@@ -108,7 +108,6 @@ module.exports = function (env) {
             minimizer: [new TerserPlugin()],
             minimize: isProdEnv,
         },
-        
         performance: {
             maxEntrypointSize: 900_000, // 90KB
             maxAssetSize: 900_000 // 90KB
