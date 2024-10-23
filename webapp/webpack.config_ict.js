@@ -32,7 +32,7 @@ module.exports = function (env) {
                 },
                 {
                     test: /\.(gif|png|jpe?g|svg)$/i,
-                    loaders: [
+                    use: [
                         {
                             loader: 'file-loader',
                             options: {
@@ -41,7 +41,7 @@ module.exports = function (env) {
                         },
                         {
                             loader: 'image-webpack-loader',
-                            query: {
+                            options: {
                                 name: 'img/[name]-[hash].[ext]',
                                 query: {
                                     mozjpeg: {
