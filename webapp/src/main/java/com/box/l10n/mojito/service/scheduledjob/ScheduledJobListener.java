@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
  * Listener that listens for Quartz job events, this listener is attached to the 'scheduledJobs'
  * scheduler and handles setting the job status, start date and end date for pre- and post-execution
  * of the job. Scheduled jobs implement the IScheduledJob interface which allows the job to receive
- * failure and success notifications from the listener.
+ * failure and success events from the listener.
  *
  * @author mattwilshire
  */

@@ -69,8 +69,12 @@ public class ScheduledJobWS {
     JobKey jobKey = scheduledJobManager.getJobKey(scheduledJob);
 
     try {
+      if (!scheduledJobManager.getScheduler().checkExists(jobKey))
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, "Job doesn't exist"));
+
       // Is the job currently running ?
-      // Ignore the trigger request and tell the user it is currently running
+      // Ignore the trigger request
       for (JobExecutionContext jobExecutionContext :
           scheduledJobManager.getScheduler().getCurrentlyExecutingJobs()) {
         if (jobExecutionContext.getJobDetail().getKey().equals(jobKey)) {
@@ -78,13 +82,10 @@ public class ScheduledJobWS {
               .body(
                   new ScheduledJobResponse(
                       ScheduledJobResponse.Status.ERROR,
-                      "Trigger ignored, job is currently running"));
+                      "Job is currently running, trigger request ignored"));
         }
       }
 
-      if (!scheduledJobManager.getScheduler().checkExists(jobKey))
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-            .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, "Job doesn't exist"));
       scheduledJobManager.getScheduler().triggerJob(jobKey);
       return ResponseEntity.status(HttpStatus.OK)
           .body(new ScheduledJobResponse(ScheduledJobResponse.Status.SUCCESS, "Job triggered"));
