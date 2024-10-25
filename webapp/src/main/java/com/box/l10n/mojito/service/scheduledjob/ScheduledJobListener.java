@@ -3,6 +3,7 @@ package com.box.l10n.mojito.service.scheduledjob;
 import com.box.l10n.mojito.entity.ScheduledJob;
 import com.box.l10n.mojito.retry.DeadLockLoserExceptionRetryTemplate;
 import java.util.Date;
+import java.util.Optional;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.listeners.JobListenerSupport;
@@ -45,8 +46,13 @@ public class ScheduledJobListener extends JobListenerSupport {
    */
   @Override
   public void jobToBeExecuted(JobExecutionContext context) {
-    ScheduledJob scheduledJob =
-        scheduledJobRepository.findByJobKey(context.getJobDetail().getKey());
+    /* If multi quartz scheduler is not being used, the listener will
+    be attached to default jobs, ignore if it's not a scheduled job */
+    Optional<ScheduledJob> optScheduledJob =
+        scheduledJobRepository.findById(context.getJobDetail().getKey().getName());
+
+    if (optScheduledJob.isEmpty()) return;
+    ScheduledJob scheduledJob = optScheduledJob.get();
 
     logger.debug(
         "Preparing to execute job {} for repository {}",
@@ -76,8 +82,13 @@ public class ScheduledJobListener extends JobListenerSupport {
   /** The job finished execution, if an error occurred jobException will not be null */
   @Override
   public void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
-    ScheduledJob scheduledJob =
-        scheduledJobRepository.findByJobKey(context.getJobDetail().getKey());
+
+    Optional<ScheduledJob> optScheduledJob =
+        scheduledJobRepository.findById(context.getJobDetail().getKey().getName());
+
+    if (optScheduledJob.isEmpty()) return;
+    ScheduledJob scheduledJob = optScheduledJob.get();
+
     logger.debug(
         "Handling post execution for job {} for repository {}",
         scheduledJob.getJobType().getEnum(),

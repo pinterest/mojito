@@ -44,19 +44,38 @@ import org.springframework.stereotype.Component;
 public class ScheduledJobManager {
   static Logger logger = LoggerFactory.getLogger(ScheduledJobManager.class);
 
-  @Autowired ThirdPartySyncJobsConfig thirdPartySyncJobsConfig;
-  @Autowired QuartzSchedulerManager schedulerManager;
-  @Autowired ScheduledJobRepository scheduledJobRepository;
-  @Autowired ScheduledJobStatusRepository scheduledJobStatusRepository;
-  @Autowired ScheduledJobTypeRepository scheduledJobTypeRepository;
-  @Autowired RepositoryRepository repositoryRepository;
-  @Autowired DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate;
+  private final ThirdPartySyncJobsConfig thirdPartySyncJobsConfig;
+  private final QuartzSchedulerManager schedulerManager;
+  private final ScheduledJobRepository scheduledJobRepository;
+  private final ScheduledJobStatusRepository scheduledJobStatusRepository;
+  private final ScheduledJobTypeRepository scheduledJobTypeRepository;
+  private final RepositoryRepository repositoryRepository;
+  private final DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate;
 
-  /* Quartz scheduler dedicated to scheduled jobs using in memory data source */
+  /* Quartz scheduler dedicated to scheduled jobs using in memory data source.
+   * The value is also set using equals as this is not managed by Spring Boot in the tests. */
   @Value("${l10n.scheduledJobs.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
-  private String schedulerName;
+  private String schedulerName = DEFAULT_SCHEDULER_NAME;
 
   public List<String> uuidPool = new ArrayList<>();
+
+  @Autowired
+  public ScheduledJobManager(
+      ThirdPartySyncJobsConfig thirdPartySyncJobConfig,
+      QuartzSchedulerManager schedulerManager,
+      ScheduledJobRepository scheduledJobRepository,
+      ScheduledJobStatusRepository scheduledJobStatusRepository,
+      ScheduledJobTypeRepository scheduledJobTypeRepository,
+      RepositoryRepository repositoryRepository,
+      DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate) {
+    this.thirdPartySyncJobsConfig = thirdPartySyncJobConfig;
+    this.schedulerManager = schedulerManager;
+    this.scheduledJobRepository = scheduledJobRepository;
+    this.scheduledJobStatusRepository = scheduledJobStatusRepository;
+    this.scheduledJobTypeRepository = scheduledJobTypeRepository;
+    this.repositoryRepository = repositoryRepository;
+    this.deadlockRetryTemplate = deadlockRetryTemplate;
+  }
 
   @PostConstruct
   public void init() throws ClassNotFoundException, SchedulerException {

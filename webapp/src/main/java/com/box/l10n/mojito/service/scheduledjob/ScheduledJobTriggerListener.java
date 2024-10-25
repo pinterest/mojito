@@ -1,6 +1,7 @@
 package com.box.l10n.mojito.service.scheduledjob;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
+import java.util.Optional;
 import org.quartz.JobExecutionContext;
 import org.quartz.Trigger;
 import org.quartz.listeners.TriggerListenerSupport;
@@ -33,14 +34,16 @@ public class ScheduledJobTriggerListener extends TriggerListenerSupport {
   @Override
   public void triggerMisfired(Trigger trigger) {
     super.triggerMisfired(trigger);
-    ScheduledJob job = scheduledJobRepository.findByJobKey(trigger.getJobKey());
-    logger.warn("TRIGGER MISFIRE FOR {} | {}", job.getRepository().getName(), job.getJobType());
+    Optional<ScheduledJob> job = scheduledJobRepository.findById(trigger.getJobKey().getName());
+    if (job.isEmpty()) return;
+    logger.warn(
+        "TRIGGER MISFIRE FOR {} | {}", job.get().getRepository().getName(), job.get().getJobType());
   }
 
   @Override
   public boolean vetoJobExecution(Trigger trigger, JobExecutionContext context) {
     // If the job is disabled, don't execute
-    ScheduledJob job = scheduledJobRepository.findByJobKey(trigger.getJobKey());
-    return !job.getEnabled();
+    Optional<ScheduledJob> job = scheduledJobRepository.findById(trigger.getJobKey().getName());
+    return job.filter(scheduledJob -> !scheduledJob.getEnabled()).isPresent();
   }
 }
