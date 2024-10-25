@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
+import com.box.l10n.mojito.entity.ScheduledJobStatusEntity;
+import com.box.l10n.mojito.entity.ScheduledJobTypeEntity;
 import com.box.l10n.mojito.quartz.QuartzSchedulerManager;
 import com.box.l10n.mojito.retry.DeadLockLoserExceptionRetryTemplate;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
@@ -14,6 +16,7 @@ import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobConfig;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobsConfig;
 import com.google.common.collect.ImmutableMap;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -22,6 +25,8 @@ import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class ScheduledJobManagerTest extends ServiceTestBase {
+
+  private static boolean initializedDB = false;
   private ScheduledJobManager scheduledJobManager;
   @Autowired RepositoryService repositoryService;
   @Autowired QuartzSchedulerManager schedulerManager;
@@ -32,18 +37,39 @@ public class ScheduledJobManagerTest extends ServiceTestBase {
   @Autowired DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate;
 
   @Before
-  public void before()
+  public void initialize()
       throws RepositoryNameAlreadyUsedException,
           RepositoryLocaleCreationException,
           ClassNotFoundException,
           SchedulerException {
-    for (int i = 1; i <= 4; i++) {
-      if (repositoryService
-          .findRepositoriesIsNotDeletedOrderByName("scheduled-job-" + i)
-          .isEmpty()) {
-        repositoryService.addRepositoryLocale(
-            repositoryService.createRepository("scheduled-job-" + i), "fr-FR");
+
+    if (!initializedDB) {
+      // Flyway not used in HSQL, do the manually insertions flyway would do
+      for (int i = 1; i <= 4; i++) {
+        if (repositoryService
+            .findRepositoriesIsNotDeletedOrderByName("scheduled-job-" + i)
+            .isEmpty()) {
+          repositoryService.addRepositoryLocale(
+              repositoryService.createRepository("scheduled-job-" + i), "fr-FR");
+        }
       }
+
+      ScheduledJobTypeEntity scheduledJobTypeEntity = new ScheduledJobTypeEntity();
+      scheduledJobTypeEntity.setEnum(ScheduledJobType.THIRD_PARTY_SYNC);
+      scheduledJobTypeRepository.save(scheduledJobTypeEntity);
+
+      List.of(
+              ScheduledJobStatus.SCHEDULED,
+              ScheduledJobStatus.IN_PROGRESS,
+              ScheduledJobStatus.FAILED,
+              ScheduledJobStatus.SUCCEEDED)
+          .forEach(
+              status -> {
+                ScheduledJobStatusEntity scheduledJobStatusEntity = new ScheduledJobStatusEntity();
+                scheduledJobStatusEntity.setJobStatus(status);
+                scheduledJobStatusRepository.save(scheduledJobStatusEntity);
+              });
+      initializedDB = true;
     }
 
     ThirdPartySyncJobConfig scheduledJobOne = new ThirdPartySyncJobConfig();
@@ -51,12 +77,26 @@ public class ScheduledJobManagerTest extends ServiceTestBase {
     scheduledJobOne.setCron("0/5 * * * * ?");
     scheduledJobOne.setRepository("scheduled-job-1");
     scheduledJobOne.setThirdPartyProjectId("123456");
+    scheduledJobOne.setActions(List.of());
+    scheduledJobOne.setPluralSeparator("_");
+    scheduledJobOne.setLocaleMapping("");
+    scheduledJobOne.setSkipTextUnitsWithPattern("");
+    scheduledJobOne.setSkipAssetsWithPathPattern("");
+    scheduledJobOne.setIncludeTextUnitsWithPattern("");
+    scheduledJobOne.setOptions(List.of());
 
     ThirdPartySyncJobConfig scheduledJobTwo = new ThirdPartySyncJobConfig();
     scheduledJobTwo.setUuid("e4c72563-d8f0-4465-9eec-aaa96087665e");
     scheduledJobTwo.setCron("0/5 * * * * ?");
     scheduledJobTwo.setRepository("scheduled-job-2");
     scheduledJobTwo.setThirdPartyProjectId("123456");
+    scheduledJobTwo.setActions(List.of());
+    scheduledJobTwo.setPluralSeparator("_");
+    scheduledJobTwo.setLocaleMapping("");
+    scheduledJobTwo.setSkipTextUnitsWithPattern("");
+    scheduledJobTwo.setSkipAssetsWithPathPattern("");
+    scheduledJobTwo.setIncludeTextUnitsWithPattern("");
+    scheduledJobTwo.setOptions(List.of());
 
     ThirdPartySyncJobsConfig thirdPartySyncJobsConfig = new ThirdPartySyncJobsConfig();
     thirdPartySyncJobsConfig.setThirdPartySyncJobs(
