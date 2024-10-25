@@ -7,6 +7,7 @@ import com.box.l10n.mojito.service.scheduledjob.ScheduledJobRepository;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobResponse;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobKey;
@@ -47,9 +48,9 @@ public class ScheduledJobWS {
 
   @RequestMapping(method = RequestMethod.GET, value = "/api/jobs/{id}")
   @ResponseStatus(HttpStatus.OK)
-  public ScheduledJobDTO getJob(@PathVariable String id) {
+  public ScheduledJobDTO getJob(@PathVariable UUID id) {
     return scheduledJobRepository
-        .findById(id)
+        .findById(id.toString())
         .map(ScheduledJobDTO::new)
         .orElseThrow(
             () ->
@@ -58,14 +59,14 @@ public class ScheduledJobWS {
 
   @RequestMapping(method = RequestMethod.POST, value = "/api/jobs/{id}")
   @ResponseStatus(HttpStatus.OK)
-  public ResponseEntity<ScheduledJobResponse> triggerJob(@PathVariable String id) {
+  public ResponseEntity<ScheduledJobResponse> triggerJob(@PathVariable UUID id) {
 
-    Optional<ScheduledJob> optionalScheduledJob = scheduledJobRepository.findById(id);
-    if (optionalScheduledJob.isEmpty())
+    Optional<ScheduledJob> optScheduledJob = scheduledJobRepository.findById(id.toString());
+    if (optScheduledJob.isEmpty())
       return ResponseEntity.status(HttpStatus.NOT_FOUND)
           .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, "Job not found"));
 
-    ScheduledJob scheduledJob = optionalScheduledJob.get();
+    ScheduledJob scheduledJob = optScheduledJob.get();
     JobKey jobKey = scheduledJobManager.getJobKey(scheduledJob);
 
     try {
@@ -99,13 +100,13 @@ public class ScheduledJobWS {
 
   @RequestMapping(method = RequestMethod.POST, value = "/api/jobs/{id}/toggle")
   @ResponseStatus(HttpStatus.OK)
-  public ResponseEntity<ScheduledJobResponse> toggleJob(@PathVariable String id) {
-    Optional<ScheduledJob> optionalScheduledJob = scheduledJobRepository.findById(id);
-    if (optionalScheduledJob.isEmpty())
+  public ResponseEntity<ScheduledJobResponse> toggleJob(@PathVariable UUID id) {
+    Optional<ScheduledJob> optScheduledJob = scheduledJobRepository.findById(id.toString());
+    if (optScheduledJob.isEmpty())
       return ResponseEntity.status(HttpStatus.NOT_FOUND)
           .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, "Job not found"));
 
-    ScheduledJob scheduledJob = optionalScheduledJob.get();
+    ScheduledJob scheduledJob = optScheduledJob.get();
     JobKey jobKey = scheduledJobManager.getJobKey(scheduledJob);
 
     try {
@@ -123,7 +124,8 @@ public class ScheduledJobWS {
                   "Job " + (scheduledJob.getEnabled() ? "enabled" : "disabled")));
     } catch (SchedulerException e) {
       throw new ResponseStatusException(
-          HttpStatus.INTERNAL_SERVER_ERROR, "Job with id: " + id + " could not be disabled");
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          "Job with id: " + id.toString() + " could not be disabled");
     }
   }
 }
