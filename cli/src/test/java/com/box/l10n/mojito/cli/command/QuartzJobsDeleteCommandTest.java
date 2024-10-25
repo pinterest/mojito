@@ -39,7 +39,9 @@ public class QuartzJobsDeleteCommandTest extends CLITestBase {
         });
 
     getL10nJCommander().run("quartz-jobs-view");
-    assertTrue("Should show no jobs", outputCapture.toString().contains("None"));
+    String output = outputCapture.toString();
+    System.out.println("LOG : testDeleteAllDynamicJobs : quartz-jobs-view response : " + output);
+    assertTrue("Should show no jobs", output.contains("None"));
     assertTrue(quartzService.getDynamicJobs().isEmpty());
 
     String testJobName1 = testIdWatcher.getEntityName("1");
@@ -59,6 +61,11 @@ public class QuartzJobsDeleteCommandTest extends CLITestBase {
     getL10nJCommander().run("quartz-jobs-view");
     assertTrue("Should show 1 job", outputCapture.toString().contains("AJob_" + testJobName1));
     assertTrue("Should show 1 job", outputCapture.toString().contains("AJob_" + testJobName2));
+
+    for (String dyanmicJob : quartzService.getDynamicJobs()) {
+      System.out.println("LOG : testDeleteAllDynamicJobs : " + dyanmicJob);
+    }
+
     assertEquals(2L, quartzService.getDynamicJobs().size());
 
     getL10nJCommander().run("quartz-jobs-delete");
