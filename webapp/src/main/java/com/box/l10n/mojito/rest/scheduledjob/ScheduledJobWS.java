@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Webservice for enabling/disabling and triggering scheduled jobs.
+ * Webservice for viewing, enabling/disabling and triggering scheduled jobs.
  *
  * @author mattwilshire
  */
@@ -37,11 +37,15 @@ public class ScheduledJobWS {
   static Logger logger = LoggerFactory.getLogger(ScheduledJobWS.class);
 
   @Autowired ScheduledJobRepository scheduledJobRepository;
+
   @Autowired ScheduledJobManager scheduledJobManager;
+
+  private final ResponseEntity<ScheduledJobResponse> notFoundResponse =
+      createResponse(HttpStatus.NOT_FOUND, ScheduledJobResponse.Status.ERROR, "Job doesn't exist");
 
   @RequestMapping(method = RequestMethod.GET, value = "/api/jobs")
   @ResponseStatus(HttpStatus.OK)
-  public List<ScheduledJobDTO> getJobs() {
+  public List<ScheduledJobDTO> getAllJobs() {
     List<ScheduledJob> scheduledJobs = scheduledJobRepository.findAll();
     return scheduledJobs.stream().map(ScheduledJobDTO::new).collect(Collectors.toList());
   }
@@ -57,33 +61,28 @@ public class ScheduledJobWS {
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found with id: " + id));
   }
 
-  @RequestMapping(method = RequestMethod.POST, value = "/api/jobs/{id}")
+  @RequestMapping(method = RequestMethod.GET, value = "/api/jobs/{id}/trigger")
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<ScheduledJobResponse> triggerJob(@PathVariable UUID id) {
 
     Optional<ScheduledJob> optScheduledJob = scheduledJobRepository.findById(id.toString());
-    if (optScheduledJob.isEmpty())
-      return ResponseEntity.status(HttpStatus.NOT_FOUND)
-          .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, "Job not found"));
+
+    if (optScheduledJob.isEmpty()) return notFoundResponse;
 
     ScheduledJob scheduledJob = optScheduledJob.get();
     JobKey jobKey = scheduledJobManager.getJobKey(scheduledJob);
 
     try {
-      if (!scheduledJobManager.getScheduler().checkExists(jobKey))
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-            .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, "Job doesn't exist"));
+      if (!scheduledJobManager.getScheduler().checkExists(jobKey)) return notFoundResponse;
 
-      // Is the job currently running ?
-      // Ignore the trigger request
+      // Ignore the trigger request if job is currently running
       for (JobExecutionContext jobExecutionContext :
           scheduledJobManager.getScheduler().getCurrentlyExecutingJobs()) {
         if (jobExecutionContext.getJobDetail().getKey().equals(jobKey)) {
-          return ResponseEntity.status(HttpStatus.CONFLICT)
-              .body(
-                  new ScheduledJobResponse(
-                      ScheduledJobResponse.Status.ERROR,
-                      "Job is currently running, trigger request ignored"));
+          return createResponse(
+              HttpStatus.CONFLICT,
+              ScheduledJobResponse.Status.ERROR,
+              "Job is currently running, trigger request ignored");
         }
       }
 
@@ -93,39 +92,56 @@ public class ScheduledJobWS {
     } catch (SchedulerException e) {
       logger.error(
           "Error triggering job manually, job: {}", jobKey.getName() + ":" + jobKey.getGroup(), e);
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, e.getMessage()));
+      return createResponse(
+          HttpStatus.INTERNAL_SERVER_ERROR, ScheduledJobResponse.Status.ERROR, e.getMessage());
     }
   }
 
-  @RequestMapping(method = RequestMethod.POST, value = "/api/jobs/{id}/toggle")
+  @RequestMapping(method = RequestMethod.GET, value = "/api/jobs/{id}/enable")
   @ResponseStatus(HttpStatus.OK)
-  public ResponseEntity<ScheduledJobResponse> toggleJob(@PathVariable UUID id) {
+  public ResponseEntity<ScheduledJobResponse> enableJob(@PathVariable UUID id) {
+    return setJobActive(id, true);
+  }
+
+  @RequestMapping(method = RequestMethod.GET, value = "/api/jobs/{id}/disable")
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<ScheduledJobResponse> disableJob(@PathVariable UUID id) {
+    return setJobActive(id, false);
+  }
+
+  private ResponseEntity<ScheduledJobResponse> setJobActive(UUID id, boolean active) {
     Optional<ScheduledJob> optScheduledJob = scheduledJobRepository.findById(id.toString());
-    if (optScheduledJob.isEmpty())
-      return ResponseEntity.status(HttpStatus.NOT_FOUND)
-          .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, "Job not found"));
+
+    if (optScheduledJob.isEmpty()) return notFoundResponse;
 
     ScheduledJob scheduledJob = optScheduledJob.get();
     JobKey jobKey = scheduledJobManager.getJobKey(scheduledJob);
 
     try {
-      if (!scheduledJobManager.getScheduler().checkExists(jobKey))
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-            .body(new ScheduledJobResponse(ScheduledJobResponse.Status.ERROR, "Job doesn't exist"));
+      if (!scheduledJobManager.getScheduler().checkExists(jobKey)) return notFoundResponse;
 
-      scheduledJob.setEnabled(!scheduledJob.getEnabled());
+      if (scheduledJob.getEnabled() == active)
+        return createResponse(
+            HttpStatus.ALREADY_REPORTED,
+            ScheduledJobResponse.Status.SUCCESS,
+            "The job is already " + (active ? "enabled" : "disabled"));
+
+      scheduledJob.setEnabled(active);
       scheduledJobRepository.save(scheduledJob);
 
-      return ResponseEntity.status(HttpStatus.OK)
-          .body(
-              new ScheduledJobResponse(
-                  ScheduledJobResponse.Status.SUCCESS,
-                  "Job " + (scheduledJob.getEnabled() ? "enabled" : "disabled")));
+      return createResponse(
+          HttpStatus.OK,
+          ScheduledJobResponse.Status.SUCCESS,
+          "Job is now " + (active ? "enabled" : "disabled"));
     } catch (SchedulerException e) {
       throw new ResponseStatusException(
           HttpStatus.INTERNAL_SERVER_ERROR,
           "Job with id: " + id.toString() + " could not be disabled");
     }
+  }
+
+  private ResponseEntity<ScheduledJobResponse> createResponse(
+      HttpStatus status, ScheduledJobResponse.Status jobResponseStatus, String message) {
+    return ResponseEntity.status(status).body(new ScheduledJobResponse(jobResponseStatus, message));
   }
 }

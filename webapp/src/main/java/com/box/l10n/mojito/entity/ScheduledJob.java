@@ -48,7 +48,7 @@ public class ScheduledJob {
   @Column(name = "end_date")
   private ZonedDateTime endDate;
 
-  @Column(name = "enabled", nullable = false, columnDefinition = "TINYINT DEFAULT 1")
+  @Column(name = "enabled")
   private Boolean enabled = true;
 
   @PostLoad

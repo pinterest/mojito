@@ -45,12 +45,12 @@ public class ScheduledJobManager {
   static Logger logger = LoggerFactory.getLogger(ScheduledJobManager.class);
 
   private final ThirdPartySyncJobsConfig thirdPartySyncJobsConfig;
-  private final QuartzSchedulerManager schedulerManager;
   private final ScheduledJobRepository scheduledJobRepository;
   private final ScheduledJobStatusRepository scheduledJobStatusRepository;
   private final ScheduledJobTypeRepository scheduledJobTypeRepository;
   private final RepositoryRepository repositoryRepository;
   private final DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate;
+  private final Scheduler scheduler;
 
   /* Quartz scheduler dedicated to scheduled jobs using in memory data source.
    * The value is also set using equals as this is not managed by Spring Boot in the tests. */
@@ -69,12 +69,12 @@ public class ScheduledJobManager {
       RepositoryRepository repositoryRepository,
       DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate) {
     this.thirdPartySyncJobsConfig = thirdPartySyncJobConfig;
-    this.schedulerManager = schedulerManager;
     this.scheduledJobRepository = scheduledJobRepository;
     this.scheduledJobStatusRepository = scheduledJobStatusRepository;
     this.scheduledJobTypeRepository = scheduledJobTypeRepository;
     this.repositoryRepository = repositoryRepository;
     this.deadlockRetryTemplate = deadlockRetryTemplate;
+    this.scheduler = schedulerManager.getScheduler(schedulerName);
   }
 
   @PostConstruct
@@ -233,7 +233,7 @@ public class ScheduledJobManager {
   }
 
   public Scheduler getScheduler() {
-    return schedulerManager.getScheduler(schedulerName);
+    return this.scheduler;
   }
 
   public Class<? extends IScheduledJob> loadJobClass(String className)
