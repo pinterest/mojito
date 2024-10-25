@@ -1,7 +1,7 @@
 package com.box.l10n.mojito.service.scheduledjob;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
-import java.util.Date;
+import java.time.ZonedDateTime;
 
 /** Trimmed down version of the ScheduledJob entity for API responses. */
 public class ScheduledJobDTO {
@@ -11,8 +11,8 @@ public class ScheduledJobDTO {
   private String cron;
   private ScheduledJobProperties properties;
   private ScheduledJobStatus jobStatus;
-  private Date startDate;
-  private Date endDate;
+  private ZonedDateTime startDate;
+  private ZonedDateTime endDate;
   private Boolean enabled;
 
   public ScheduledJobDTO(ScheduledJob scheduledJob) {
@@ -75,19 +75,19 @@ public class ScheduledJobDTO {
     this.jobStatus = jobStatus;
   }
 
-  public Date getStartDate() {
+  public ZonedDateTime getStartDate() {
     return startDate;
   }
 
-  public void setStartDate(Date startDate) {
+  public void setStartDate(ZonedDateTime startDate) {
     this.startDate = startDate;
   }
 
-  public Date getEndDate() {
+  public ZonedDateTime getEndDate() {
     return endDate;
   }
 
-  public void setEndDate(Date endDate) {
+  public void setEndDate(ZonedDateTime endDate) {
     this.endDate = endDate;
   }
 

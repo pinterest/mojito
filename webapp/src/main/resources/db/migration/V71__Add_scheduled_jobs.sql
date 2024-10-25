@@ -5,9 +5,9 @@ CREATE TABLE scheduled_job (
     cron VARCHAR(50) DEFAULT NULL,
     properties LONGTEXT NOT NULL,
     job_status SMALLINT NOT NULL,
-    start_date TIMESTAMP NULL DEFAULT NULL,
-    end_date TIMESTAMP NULL DEFAULT NULL,
-    enabled TINYINT DEFAULT 1
+    start_date DATETIME NULL DEFAULT NULL,
+    end_date DATETIME NULL DEFAULT NULL,
+    enabled BIT DEFAULT 1
 );
 
 CREATE TABLE scheduled_job_type (
@@ -34,8 +34,8 @@ ALTER TABLE scheduled_job
     ADD CONSTRAINT FK__JOB_STATUS__JOB_STATUS_ID FOREIGN KEY (job_status) REFERENCES scheduled_job_status_type(id);
 
 
-INSERT INTO scheduled_job_type(name) VALUES('THIRD_PARTY_SYNC');
-INSERT INTO scheduled_job_status_type(name) VALUES('SCHEDULED'), ('IN_PROGRESS'), ('FAILED'), ('SUCCEEDED');
+INSERT INTO scheduled_job_type(id, name) VALUES(1, 'THIRD_PARTY_SYNC');
+INSERT INTO scheduled_job_status_type(id, name) VALUES(1, 'SCHEDULED'), (2, 'IN_PROGRESS'), (3,'FAILED'), (4,'SUCCEEDED');
 
 CREATE TABLE scheduled_job_aud (
     id CHAR(36) NOT NULL,
@@ -47,7 +47,7 @@ CREATE TABLE scheduled_job_aud (
     cron VARCHAR(50) DEFAULT NULL,
     properties LONGTEXT,
     job_status SMALLINT,
-    start_date TIMESTAMP NULL DEFAULT NULL,
-    end_date TIMESTAMP NULL DEFAULT NULL,
-    enabled TINYINT DEFAULT 1
+    start_date DATETIME NULL DEFAULT NULL,
+    end_date DATETIME NULL DEFAULT NULL,
+    enabled BIT DEFAULT 1
 );

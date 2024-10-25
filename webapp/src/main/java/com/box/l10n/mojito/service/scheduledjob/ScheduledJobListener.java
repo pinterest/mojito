@@ -2,7 +2,7 @@ package com.box.l10n.mojito.service.scheduledjob;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
 import com.box.l10n.mojito.retry.DeadLockLoserExceptionRetryTemplate;
-import java.util.Date;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -61,7 +61,7 @@ public class ScheduledJobListener extends JobListenerSupport {
 
     scheduledJob.setJobStatus(
         scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.IN_PROGRESS));
-    scheduledJob.setStartDate(new Date());
+    scheduledJob.setStartDate(ZonedDateTime.now());
     scheduledJob.setEndDate(null);
 
     // This had a deadlock due to the audited table being updated by other jobs are the same time,
@@ -94,7 +94,7 @@ public class ScheduledJobListener extends JobListenerSupport {
         scheduledJob.getJobType().getEnum(),
         scheduledJob.getRepository().getName());
 
-    scheduledJob.setEndDate(new Date());
+    scheduledJob.setEndDate(ZonedDateTime.now());
     IScheduledJob jobInstance = (IScheduledJob) context.getJobInstance();
 
     scheduledJob.setJobStatus(

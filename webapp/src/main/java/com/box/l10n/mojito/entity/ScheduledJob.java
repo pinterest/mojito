@@ -4,13 +4,14 @@ import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobProperties;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PostLoad;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
-import java.util.Date;
+import java.time.ZonedDateTime;
 import org.hibernate.envers.Audited;
 
 @Audited
@@ -20,11 +21,13 @@ public class ScheduledJob {
   @Id private String id;
 
   @ManyToOne
-  @JoinColumn(name = "repository_id")
+  @JoinColumn(
+      name = "repository_id",
+      foreignKey = @ForeignKey(name = "FK__SCHEDULED_JOB__IMPORT_REPOSITORY__ID"))
   private Repository repository;
 
   @ManyToOne
-  @JoinColumn(name = "job_type")
+  @JoinColumn(name = "job_type", foreignKey = @ForeignKey(name = "FK__JOB_TYPE__JOB_TYPE_ID"))
   private ScheduledJobTypeEntity jobType;
 
   @Column(name = "cron")
@@ -36,14 +39,14 @@ public class ScheduledJob {
   private String propertiesString;
 
   @ManyToOne
-  @JoinColumn(name = "job_status")
+  @JoinColumn(name = "job_status", foreignKey = @ForeignKey(name = "FK__JOB_STATUS__JOB_STATUS_ID"))
   private ScheduledJobStatusEntity jobStatus;
 
   @Column(name = "start_date")
-  private Date startDate;
+  private ZonedDateTime startDate;
 
   @Column(name = "end_date")
-  private Date endDate;
+  private ZonedDateTime endDate;
 
   @Column(name = "enabled", nullable = false, columnDefinition = "TINYINT DEFAULT 1")
   private Boolean enabled = true;
@@ -127,19 +130,19 @@ public class ScheduledJob {
     this.jobStatus = jobStatus;
   }
 
-  public Date getStartDate() {
+  public ZonedDateTime getStartDate() {
     return startDate;
   }
 
-  public void setStartDate(Date startDate) {
+  public void setStartDate(ZonedDateTime startDate) {
     this.startDate = startDate;
   }
 
-  public Date getEndDate() {
+  public ZonedDateTime getEndDate() {
     return endDate;
   }
 
-  public void setEndDate(Date endDate) {
+  public void setEndDate(ZonedDateTime endDate) {
     this.endDate = endDate;
   }
 
