@@ -53,7 +53,7 @@ public class TextUnitSearcherParameters {
   String skipAssetPathWithPattern;
   boolean isExcludeUnexpiredPendingMT = false;
   Duration aiTranslationExpiryDuration;
-  boolean isRetrieveUploadedFileUri = false;
+  boolean shouldRetrieveUploadedFileUri = false;
 
   public String getName() {
     return name;
@@ -348,12 +348,12 @@ public class TextUnitSearcherParameters {
     this.aiTranslationExpiryDuration = aiTranslationExpiryDuration;
   }
 
-  public boolean isRetrieveUploadedFileUri() {
-    return isRetrieveUploadedFileUri;
+  public boolean shouldRetrieveUploadedFileUri() {
+    return shouldRetrieveUploadedFileUri;
   }
 
   public void setIsRetrieveUploadedFileUri(boolean retrieveUploadedFileUri) {
-    this.isRetrieveUploadedFileUri = retrieveUploadedFileUri;
+    this.shouldRetrieveUploadedFileUri = retrieveUploadedFileUri;
   }
 
   public static class Builder {
@@ -392,7 +392,7 @@ public class TextUnitSearcherParameters {
     private String skipAssetPathWithPattern;
     private boolean isExcludeUnexpiredPendingMT;
     private Duration aiTranslationExpiryDuration;
-    private boolean isRetrieveUploadedFileUri;
+    private boolean shouldRetrieveUploadedFileUri;
 
     public TextUnitSearcherParameters build() {
       TextUnitSearcherParameters textUnitSearcherParameters = new TextUnitSearcherParameters();
@@ -431,7 +431,7 @@ public class TextUnitSearcherParameters {
       textUnitSearcherParameters.skipAssetPathWithPattern = this.skipAssetPathWithPattern;
       textUnitSearcherParameters.isExcludeUnexpiredPendingMT = this.isExcludeUnexpiredPendingMT;
       textUnitSearcherParameters.aiTranslationExpiryDuration = this.aiTranslationExpiryDuration;
-      textUnitSearcherParameters.isRetrieveUploadedFileUri = this.isRetrieveUploadedFileUri;
+      textUnitSearcherParameters.shouldRetrieveUploadedFileUri = this.shouldRetrieveUploadedFileUri;
       return textUnitSearcherParameters;
     }
 
@@ -626,7 +626,7 @@ public class TextUnitSearcherParameters {
     }
 
     public Builder shouldRetrieveUploadedFileUri(boolean shouldRetrieveUploadedFileUri) {
-      this.isRetrieveUploadedFileUri = shouldRetrieveUploadedFileUri;
+      this.shouldRetrieveUploadedFileUri = shouldRetrieveUploadedFileUri;
       return this;
     }
   }

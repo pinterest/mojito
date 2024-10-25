@@ -69,8 +69,13 @@ public class TMTextUnitVariant extends SettableAuditableEntity {
      */
     REVIEW_NEEDED,
 
+    /** Indicates that the text unit has been machine translated in Mojito automatically. */
     MT_TRANSLATED,
 
+    /**
+     * Indicates that the text unit has been machine translated in Mojito automatically and has been
+     * sent for third party review.
+     */
     MT_REVIEW_NEEDED,
     /** A string that doesn't need any work to be performed on it. */
     APPROVED,

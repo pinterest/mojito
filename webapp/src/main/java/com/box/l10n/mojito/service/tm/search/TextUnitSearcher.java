@@ -165,7 +165,7 @@ public class TextUnitSearcher {
               "tm_text_unit_pending_mt", "tmtupmt", "tmtupmt.tm_text_unit_id", "tu.id"));
     }
 
-    if (searchParameters.isRetrieveUploadedFileUri()) {
+    if (searchParameters.shouldRetrieveUploadedFileUri()) {
       // Retrieve the uploadedFileUri from the ThirdPartyTextUnit table (used when pushing AI
       // translations to third party)
       c.addJoin(
@@ -247,7 +247,7 @@ public class TextUnitSearcher {
             .addProjection("tu.created_date", "tmTextUnitCreatedDate")
             .addProjection("atu.do_not_translate", "doNotTranslate");
 
-    if (searchParameters.isRetrieveUploadedFileUri()) {
+    if (searchParameters.shouldRetrieveUploadedFileUri()) {
       projection.addProjection("tptu.uploaded_file_uri", "uploadedFileUri");
     }
     c.setProjection(projection);
