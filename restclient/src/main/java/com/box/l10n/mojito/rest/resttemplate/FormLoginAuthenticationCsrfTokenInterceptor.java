@@ -253,7 +253,7 @@ public class FormLoginAuthenticationCsrfTokenInterceptor implements ClientHttpRe
   }
 
   /**
-   * Starts the traditioanl form login authentication flow handshake. Consequencially, the cookie
+   * Starts the traditional form login authentication flow handshake. Consequentially, the cookie
    * store (which contains the session id) and the CSRF token will be updated.
    *
    * @throws AuthenticationException

@@ -21,7 +21,7 @@ public class FormLoginConfig {
   String csrfTokenPath = "api/csrf-token";
 
   public String getLoginFormPath() {
-    return loginFormPath;
+    return loginFormPath + "?logout";
   }
 
   public void setLoginFormPath(String loginFormPath) {
