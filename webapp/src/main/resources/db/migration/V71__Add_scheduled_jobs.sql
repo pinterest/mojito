@@ -1,5 +1,6 @@
 CREATE TABLE scheduled_job (
-    id CHAR(36) PRIMARY KEY NOT NULL,
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    uuid CHAR(36) NOT NULL,
     repository_id BIGINT NOT NULL,
     job_type SMALLINT DEFAULT NULL,
     cron VARCHAR(50) DEFAULT NULL,
@@ -16,8 +17,8 @@ CREATE TABLE scheduled_job_type (
 );
 
 CREATE TABLE scheduled_job_status_type (
-    id SMALLINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
+   id SMALLINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+   name VARCHAR(255) NOT NULL
 );
 
 ALTER TABLE scheduled_job
@@ -38,7 +39,8 @@ INSERT INTO scheduled_job_type(id, name) VALUES(1, 'THIRD_PARTY_SYNC');
 INSERT INTO scheduled_job_status_type(id, name) VALUES(1, 'SCHEDULED'), (2, 'IN_PROGRESS'), (3,'FAILED'), (4,'SUCCEEDED');
 
 CREATE TABLE scheduled_job_aud (
-    id CHAR(36) NOT NULL,
+    id BIGINT,
+    uuid CHAR(36),
     rev INTEGER NOT NULL,
     revtype TINYINT,
     revend INTEGER,

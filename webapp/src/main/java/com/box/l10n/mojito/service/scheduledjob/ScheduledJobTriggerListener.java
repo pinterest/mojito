@@ -34,7 +34,7 @@ public class ScheduledJobTriggerListener extends TriggerListenerSupport {
   @Override
   public void triggerMisfired(Trigger trigger) {
     super.triggerMisfired(trigger);
-    Optional<ScheduledJob> job = scheduledJobRepository.findById(trigger.getJobKey().getName());
+    Optional<ScheduledJob> job = scheduledJobRepository.findByUuid(trigger.getJobKey().getName());
     if (job.isEmpty()) return;
     logger.warn(
         "TRIGGER MISFIRE FOR {} | {}", job.get().getRepository().getName(), job.get().getJobType());
@@ -43,7 +43,7 @@ public class ScheduledJobTriggerListener extends TriggerListenerSupport {
   @Override
   public boolean vetoJobExecution(Trigger trigger, JobExecutionContext context) {
     // If the job is disabled, don't execute
-    Optional<ScheduledJob> job = scheduledJobRepository.findById(trigger.getJobKey().getName());
+    Optional<ScheduledJob> job = scheduledJobRepository.findByUuid(trigger.getJobKey().getName());
     return job.filter(scheduledJob -> !scheduledJob.getEnabled()).isPresent();
   }
 }

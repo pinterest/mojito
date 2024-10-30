@@ -73,7 +73,6 @@ public class ScheduledThirdPartySync implements IScheduledJob {
         new ThirdPartySyncJobInput(scheduledJob, scheduledJobProperties);
 
     try {
-      System.out.println(timeout);
       PollableFuture<Void> task =
           quartzPollableTaskScheduler.scheduleJobWithCustomTimeout(
               ThirdPartySyncJob.class, thirdPartySyncJobInput, "thirdPartySync", timeout);
@@ -96,7 +95,7 @@ public class ScheduledThirdPartySync implements IScheduledJob {
         .ifPresent(
             pd -> {
               try {
-                pd.resolveIncident(scheduledJob.getId());
+                pd.resolveIncident(scheduledJob.getUuid());
               } catch (PagerDutyException e) {
                 logger.error(
                     "Couldn't send resolve PagerDuty notification for successful third party sync of repository: '{}' -",
@@ -151,7 +150,7 @@ public class ScheduledThirdPartySync implements IScheduledJob {
                           "Pollable Task", pollableTaskUrl, "Scheduled Job", scheduledJobUrl));
 
               try {
-                pd.triggerIncident(scheduledJob.getId(), payload);
+                pd.triggerIncident(scheduledJob.getUuid(), payload);
               } catch (PagerDutyException e) {
                 logger.error(
                     "Couldn't send PagerDuty notification for failed third party sync of repository: '{}' -",

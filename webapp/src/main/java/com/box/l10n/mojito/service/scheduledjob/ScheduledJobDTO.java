@@ -16,7 +16,7 @@ public class ScheduledJobDTO {
   private Boolean enabled;
 
   public ScheduledJobDTO(ScheduledJob scheduledJob) {
-    this.id = scheduledJob.getId();
+    this.id = scheduledJob.getUuid();
     this.repository = scheduledJob.getRepository().getName();
     this.jobType = scheduledJob.getJobType().getEnum();
     this.cron = scheduledJob.getCron();

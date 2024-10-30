@@ -14,6 +14,7 @@ import jakarta.annotation.PostConstruct;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
@@ -148,15 +149,11 @@ public class ScheduledJobManager {
 
       uuidPool.add(syncJobConfig.getUuid());
 
-      ScheduledJob scheduledJob =
-          scheduledJobRepository.findByIdAndJobType(
-              syncJobConfig.getUuid(), ScheduledJobType.THIRD_PARTY_SYNC);
+      Optional<ScheduledJob> optScheduledJob =
+          scheduledJobRepository.findByUuid(syncJobConfig.getUuid());
+      ScheduledJob scheduledJob = optScheduledJob.orElseGet(ScheduledJob::new);
 
-      if (scheduledJob == null) {
-        scheduledJob = new ScheduledJob();
-      }
-
-      scheduledJob.setId(syncJobConfig.getUuid());
+      scheduledJob.setUuid(syncJobConfig.getUuid());
       scheduledJob.setCron(syncJobConfig.getCron());
       scheduledJob.setRepository(repositoryRepository.findByName(syncJobConfig.getRepository()));
       scheduledJob.setJobStatus(
@@ -194,7 +191,7 @@ public class ScheduledJobManager {
         }
 
         scheduledJobRepository
-            .findById(jobKey.getName())
+            .findByUuid(jobKey.getName())
             .ifPresent(
                 job -> {
                   scheduledJobRepository.delete(job);
@@ -238,13 +235,13 @@ public class ScheduledJobManager {
 
   public JobKey getJobKey(ScheduledJob scheduledJob) {
     // name = UUID, group = THIRD_PARTY_SYNC
-    return new JobKey(scheduledJob.getId(), scheduledJob.getJobType().getEnum().toString());
+    return new JobKey(scheduledJob.getUuid(), scheduledJob.getJobType().getEnum().toString());
   }
 
   private TriggerKey getTriggerKey(ScheduledJob scheduledJob) {
     // name = trigger_UUID, group = THIRD_PARTY_SYNC
     return new TriggerKey(
-        "trigger_" + scheduledJob.getId(), scheduledJob.getJobType().getEnum().toString());
+        "trigger_" + scheduledJob.getUuid(), scheduledJob.getJobType().getEnum().toString());
   }
 
   public Scheduler getScheduler() {

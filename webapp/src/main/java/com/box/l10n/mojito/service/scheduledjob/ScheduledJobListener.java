@@ -49,7 +49,7 @@ public class ScheduledJobListener extends JobListenerSupport {
     /* If multi quartz scheduler is not being used, the listener will
     be attached to default jobs, ignore if it's not a scheduled job */
     Optional<ScheduledJob> optScheduledJob =
-        scheduledJobRepository.findById(context.getJobDetail().getKey().getName());
+        scheduledJobRepository.findByUuid(context.getJobDetail().getKey().getName());
 
     if (optScheduledJob.isEmpty()) return;
     ScheduledJob scheduledJob = optScheduledJob.get();
@@ -84,7 +84,7 @@ public class ScheduledJobListener extends JobListenerSupport {
   public void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
 
     Optional<ScheduledJob> optScheduledJob =
-        scheduledJobRepository.findById(context.getJobDetail().getKey().getName());
+        scheduledJobRepository.findByUuid(context.getJobDetail().getKey().getName());
 
     if (optScheduledJob.isEmpty()) return;
     ScheduledJob scheduledJob = optScheduledJob.get();

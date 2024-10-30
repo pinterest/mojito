@@ -55,7 +55,7 @@ public class ScheduledJobWS {
   @ResponseStatus(HttpStatus.OK)
   public ScheduledJobDTO getJob(@PathVariable UUID id) {
     return scheduledJobRepository
-        .findById(id.toString())
+        .findByUuid(id.toString())
         .map(ScheduledJobDTO::new)
         .orElseThrow(
             () ->
@@ -66,7 +66,7 @@ public class ScheduledJobWS {
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<ScheduledJobResponse> triggerJob(@PathVariable UUID id) {
 
-    Optional<ScheduledJob> optScheduledJob = scheduledJobRepository.findById(id.toString());
+    Optional<ScheduledJob> optScheduledJob = scheduledJobRepository.findByUuid(id.toString());
 
     if (optScheduledJob.isEmpty()) return notFoundResponse;
 
@@ -121,7 +121,7 @@ public class ScheduledJobWS {
   }
 
   private ResponseEntity<ScheduledJobResponse> setJobActive(UUID id, boolean active) {
-    Optional<ScheduledJob> optScheduledJob = scheduledJobRepository.findById(id.toString());
+    Optional<ScheduledJob> optScheduledJob = scheduledJobRepository.findByUuid(id.toString());
 
     if (optScheduledJob.isEmpty()) return notFoundResponse;
 
