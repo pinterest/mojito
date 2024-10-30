@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
-import com.box.l10n.mojito.entity.ScheduledJobStatusEntity;
-import com.box.l10n.mojito.entity.ScheduledJobTypeEntity;
 import com.box.l10n.mojito.quartz.QuartzSchedulerManager;
 import com.box.l10n.mojito.retry.DeadLockLoserExceptionRetryTemplate;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
@@ -54,7 +52,8 @@ public class ScheduledJobManagerTest extends ServiceTestBase {
         }
       }
 
-      ScheduledJobTypeEntity scheduledJobTypeEntity = new ScheduledJobTypeEntity();
+      com.box.l10n.mojito.entity.ScheduledJobType scheduledJobTypeEntity =
+          new com.box.l10n.mojito.entity.ScheduledJobType();
       scheduledJobTypeEntity.setEnum(ScheduledJobType.THIRD_PARTY_SYNC);
       scheduledJobTypeRepository.save(scheduledJobTypeEntity);
 
@@ -65,7 +64,8 @@ public class ScheduledJobManagerTest extends ServiceTestBase {
               ScheduledJobStatus.SUCCEEDED)
           .forEach(
               status -> {
-                ScheduledJobStatusEntity scheduledJobStatusEntity = new ScheduledJobStatusEntity();
+                com.box.l10n.mojito.entity.ScheduledJobStatus scheduledJobStatusEntity =
+                    new com.box.l10n.mojito.entity.ScheduledJobStatus();
                 scheduledJobStatusEntity.setJobStatus(status);
                 scheduledJobStatusRepository.save(scheduledJobStatusEntity);
               });

@@ -3,7 +3,6 @@ package com.box.l10n.mojito.entity;
 import static org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED;
 
 import com.box.l10n.mojito.rest.View;
-import com.box.l10n.mojito.service.scheduledjob.ScheduledJobStatus;
 import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
@@ -15,22 +14,32 @@ import jakarta.persistence.Table;
 import org.hibernate.envers.Audited;
 
 @Entity
-@Table(name = "scheduled_job_status_type")
+@Table(name = "scheduled_job_type")
 @Audited(targetAuditMode = NOT_AUDITED)
-public class ScheduledJobStatusEntity extends BaseEntity {
+public class ScheduledJobType extends BaseEntity {
   @Id private Long id;
 
   @Basic(optional = false)
   @Column(name = "name")
   @Enumerated(EnumType.STRING)
   @JsonView(View.Repository.class)
-  private ScheduledJobStatus jobStatus;
+  private com.box.l10n.mojito.service.scheduledjob.ScheduledJobType jobType;
 
-  public ScheduledJobStatus getEnum() {
-    return jobStatus;
+  @Override
+  public Long getId() {
+    return id;
   }
 
-  public void setJobStatus(ScheduledJobStatus jobStatus) {
-    this.jobStatus = jobStatus;
+  @Override
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public com.box.l10n.mojito.service.scheduledjob.ScheduledJobType getEnum() {
+    return jobType;
+  }
+
+  public void setEnum(com.box.l10n.mojito.service.scheduledjob.ScheduledJobType jobType) {
+    this.jobType = jobType;
   }
 }

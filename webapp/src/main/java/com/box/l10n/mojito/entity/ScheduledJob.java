@@ -28,7 +28,7 @@ public class ScheduledJob {
 
   @ManyToOne
   @JoinColumn(name = "job_type", foreignKey = @ForeignKey(name = "FK__JOB_TYPE__JOB_TYPE_ID"))
-  private ScheduledJobTypeEntity jobType;
+  private ScheduledJobType jobType;
 
   @Column(name = "cron")
   private String cron;
@@ -40,7 +40,7 @@ public class ScheduledJob {
 
   @ManyToOne
   @JoinColumn(name = "job_status", foreignKey = @ForeignKey(name = "FK__JOB_STATUS__JOB_STATUS_ID"))
-  private ScheduledJobStatusEntity jobStatus;
+  private ScheduledJobStatus jobStatus;
 
   @Column(name = "start_date")
   private ZonedDateTime startDate;
@@ -83,11 +83,11 @@ public class ScheduledJob {
     this.repository = repository;
   }
 
-  public ScheduledJobTypeEntity getJobType() {
+  public ScheduledJobType getJobType() {
     return jobType;
   }
 
-  public void setJobType(ScheduledJobTypeEntity jobType) {
+  public void setJobType(ScheduledJobType jobType) {
     this.jobType = jobType;
   }
 
@@ -122,11 +122,11 @@ public class ScheduledJob {
     this.propertiesString = properties;
   }
 
-  public ScheduledJobStatusEntity getJobStatus() {
+  public ScheduledJobStatus getJobStatus() {
     return jobStatus;
   }
 
-  public void setJobStatus(ScheduledJobStatusEntity jobStatus) {
+  public void setJobStatus(ScheduledJobStatus jobStatus) {
     this.jobStatus = jobStatus;
   }
 

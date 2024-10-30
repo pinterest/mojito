@@ -87,6 +87,10 @@ public class ScheduledJobWS {
       }
 
       scheduledJobManager.getScheduler().triggerJob(jobKey);
+      logger.info(
+          "Job '{}' for repository '{}' was manually triggered.",
+          scheduledJob.getJobType().getEnum(),
+          scheduledJob.getRepository().getName());
       return ResponseEntity.status(HttpStatus.OK)
           .body(new ScheduledJobResponse(ScheduledJobResponse.Status.SUCCESS, "Job triggered"));
     } catch (SchedulerException e) {
@@ -134,6 +138,13 @@ public class ScheduledJobWS {
           ScheduledJobResponse.Status.SUCCESS,
           "Job is now " + (active ? "enabled" : "disabled"));
     } catch (SchedulerException e) {
+
+      logger.error(
+          "SchedulerException thrown from trying to change job '{}' : '{}' to active: {}",
+          scheduledJob.getJobType().getEnum(),
+          scheduledJob.getRepository().getName(),
+          active,
+          e);
       throw new ResponseStatusException(
           HttpStatus.INTERNAL_SERVER_ERROR,
           "Job with id: " + id.toString() + " could not be disabled");
