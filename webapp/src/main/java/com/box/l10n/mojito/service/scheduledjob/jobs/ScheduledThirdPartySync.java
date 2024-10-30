@@ -44,6 +44,9 @@ public class ScheduledThirdPartySync implements IScheduledJob {
       "${l10n.scheduledJobs.thirdPartySync.notifications.title:MOJITO | Third party sync failed for {repository}}")
   String notificationTitle;
 
+  @Value("${l10n.scheduledJobs.thirdPartySync.timeout:3600}")
+  Long timeout = 3600L;
+
   private ScheduledJob scheduledJob;
   private Long pollableTaskId;
 
@@ -62,9 +65,10 @@ public class ScheduledThirdPartySync implements IScheduledJob {
         new ThirdPartySyncJobInput(scheduledJob, scheduledJobProperties);
 
     try {
+      System.out.println(timeout);
       PollableFuture<Void> task =
           quartzPollableTaskScheduler.scheduleJobWithCustomTimeout(
-              ThirdPartySyncJob.class, thirdPartySyncJobInput, "thirdPartySync", 3600L);
+              ThirdPartySyncJob.class, thirdPartySyncJobInput, "thirdPartySync", timeout);
       pollableTaskId = task.getPollableTask().getId();
       // Wait for sync to complete
       task.get();
