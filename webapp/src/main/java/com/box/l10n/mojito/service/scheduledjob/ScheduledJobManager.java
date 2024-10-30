@@ -11,7 +11,8 @@ import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobConfig;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobsConfig;
 import com.google.common.base.Strings;
 import jakarta.annotation.PostConstruct;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
@@ -57,7 +58,7 @@ public class ScheduledJobManager {
   @Value("${l10n.scheduledJobs.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   private String schedulerName = DEFAULT_SCHEDULER_NAME;
 
-  public List<String> uuidPool = new ArrayList<>();
+  public HashSet<String> uuidPool = new HashSet<>();
 
   @Autowired
   public ScheduledJobManager(
@@ -137,6 +138,14 @@ public class ScheduledJobManager {
             syncJobConfig.getRepository());
         continue;
       }
+
+      if (uuidPool.contains(syncJobConfig.getUuid())) {
+        throw new RuntimeException(
+            "Duplicate UUID found for scheduled job: "
+                + syncJobConfig.getUuid()
+                + " please change this UUID to be unique.");
+      }
+
       uuidPool.add(syncJobConfig.getUuid());
 
       ScheduledJob scheduledJob =
@@ -172,7 +181,13 @@ public class ScheduledJobManager {
   public void cleanQuartzJobs() throws SchedulerException {
     // Clean Quartz jobs that don't exist in the UUID pool
     logger.info("Performing Quartz scheduled jobs clean up");
+    List<String> jobTypes = Arrays.stream(ScheduledJobType.values()).map(Enum::toString).toList();
     for (JobKey jobKey : getScheduler().getJobKeys(GroupMatcher.anyGroup())) {
+
+      // The job type may not be a Scheduled job (this is only the case if the configuration is set
+      // to use the default scheduler) so continue without deleting.
+      if (!jobTypes.contains(jobKey.getGroup())) continue;
+
       if (!uuidPool.contains(jobKey.getName())) {
         if (getScheduler().checkExists(jobKey)) {
           getScheduler().deleteJob(jobKey);
