@@ -12,6 +12,8 @@ import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJob;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobInput;
 import com.box.l10n.mojito.utils.ServerConfig;
 import com.google.common.collect.ImmutableMap;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import org.apache.commons.lang.text.StrSubstitutor;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobExecutionContext;
@@ -39,6 +41,7 @@ public class ScheduledThirdPartySync implements IScheduledJob {
   @Autowired private PagerDutyIntegrationService pagerDutyIntegrationService;
 
   @Autowired ServerConfig serverConfig;
+  @Autowired MeterRegistry meterRegistry;
 
   @Value(
       "${l10n.scheduledJobs.thirdPartySync.notifications.title:MOJITO | Third party sync failed for {repository}}")
@@ -59,6 +62,11 @@ public class ScheduledThirdPartySync implements IScheduledJob {
 
     logger.info(
         "Third party sync for repository {} has started.", scheduledJob.getRepository().getName());
+    meterRegistry
+        .counter(
+            "ScheduledThirdPartySync.sync",
+            Tags.of("Repository", scheduledJob.getRepository().getName()))
+        .increment();
 
     // Create ThirdPartySyncInput from scheduled job and properties
     ThirdPartySyncJobInput thirdPartySyncJobInput =
@@ -94,6 +102,11 @@ public class ScheduledThirdPartySync implements IScheduledJob {
                     "Couldn't send resolve PagerDuty notification for successful third party sync of repository: '{}' -",
                     scheduledJob.getRepository().getName(),
                     e);
+                meterRegistry
+                    .counter(
+                        "ScheduledThirdPartySync.pagerDutyResolve.fail",
+                        Tags.of("Repository", scheduledJob.getRepository().getName()))
+                    .increment();
               }
             });
   }
@@ -144,6 +157,11 @@ public class ScheduledThirdPartySync implements IScheduledJob {
                     "Couldn't send PagerDuty notification for failed third party sync of repository: '{}' -",
                     scheduledJob.getRepository().getName(),
                     e);
+                meterRegistry
+                    .counter(
+                        "ScheduledThirdPartySync.pagerDutyIncident.fail",
+                        Tags.of("Repository", scheduledJob.getRepository().getName()))
+                    .increment();
               }
             });
   }
