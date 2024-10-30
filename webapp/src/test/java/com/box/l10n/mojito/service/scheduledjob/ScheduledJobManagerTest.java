@@ -141,7 +141,8 @@ public class ScheduledJobManagerTest extends ServiceTestBase {
 
     Thread.sleep(10000);
 
-    ScheduledJob sj = scheduledJobRepository.findById("e4c72563-d8f0-4465-9eec-9ed96087665e").get();
+    ScheduledJob sj =
+        scheduledJobRepository.findByUuid("e4c72563-d8f0-4465-9eec-9ed96087665e").get();
     assertEquals(sj.getJobStatus().getEnum(), ScheduledJobStatus.SUCCEEDED);
     assertNotNull(sj.getEndDate());
   }
