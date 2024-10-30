@@ -12,7 +12,7 @@ public class ScheduledJobResponse {
   }
 
   public enum Status {
-    ERROR,
+    FAILURE,
     SUCCESS;
 
     @JsonValue

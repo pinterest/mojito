@@ -41,7 +41,8 @@ public class ScheduledJobWS {
   @Autowired ScheduledJobManager scheduledJobManager;
 
   private final ResponseEntity<ScheduledJobResponse> notFoundResponse =
-      createResponse(HttpStatus.NOT_FOUND, ScheduledJobResponse.Status.ERROR, "Job doesn't exist");
+      createResponse(
+          HttpStatus.NOT_FOUND, ScheduledJobResponse.Status.FAILURE, "Job doesn't exist");
 
   @RequestMapping(method = RequestMethod.GET, value = "/api/jobs")
   @ResponseStatus(HttpStatus.OK)
@@ -61,7 +62,7 @@ public class ScheduledJobWS {
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found with id: " + id));
   }
 
-  @RequestMapping(method = RequestMethod.POST, value = "/api/jobs/{id}/trigger")
+  @RequestMapping(method = RequestMethod.POST, value = "/api/jobs/{id}")
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<ScheduledJobResponse> triggerJob(@PathVariable UUID id) {
 
@@ -72,6 +73,12 @@ public class ScheduledJobWS {
     ScheduledJob scheduledJob = optScheduledJob.get();
     JobKey jobKey = scheduledJobManager.getJobKey(scheduledJob);
 
+    if (!scheduledJob.getEnabled())
+      return createResponse(
+          HttpStatus.CONFLICT,
+          ScheduledJobResponse.Status.FAILURE,
+          "Job is disabled, trigger request ignored");
+
     try {
       if (!scheduledJobManager.getScheduler().checkExists(jobKey)) return notFoundResponse;
 
@@ -81,7 +88,7 @@ public class ScheduledJobWS {
         if (jobExecutionContext.getJobDetail().getKey().equals(jobKey)) {
           return createResponse(
               HttpStatus.CONFLICT,
-              ScheduledJobResponse.Status.ERROR,
+              ScheduledJobResponse.Status.FAILURE,
               "Job is currently running, trigger request ignored");
         }
       }
@@ -97,7 +104,7 @@ public class ScheduledJobWS {
       logger.error(
           "Error triggering job manually, job: {}", jobKey.getName() + ":" + jobKey.getGroup(), e);
       return createResponse(
-          HttpStatus.INTERNAL_SERVER_ERROR, ScheduledJobResponse.Status.ERROR, e.getMessage());
+          HttpStatus.INTERNAL_SERVER_ERROR, ScheduledJobResponse.Status.FAILURE, e.getMessage());
     }
   }
 
