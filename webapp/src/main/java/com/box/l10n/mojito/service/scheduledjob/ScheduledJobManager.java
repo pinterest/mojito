@@ -192,10 +192,7 @@ public class ScheduledJobManager {
 
         scheduledJobRepository
             .findByUuid(jobKey.getName())
-            .ifPresent(
-                job -> {
-                  scheduledJobRepository.delete(job);
-                });
+            .ifPresent(scheduledJobRepository::delete);
 
         logger.info(
             "Removed job with id: '{}' as it is no longer in the data source.", jobKey.getName());
