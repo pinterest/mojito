@@ -51,24 +51,6 @@ public class ScheduledJobManagerTest extends ServiceTestBase {
               repositoryService.createRepository("scheduled-job-" + i), "fr-FR");
         }
       }
-
-      com.box.l10n.mojito.entity.ScheduledJobType scheduledJobTypeEntity =
-          new com.box.l10n.mojito.entity.ScheduledJobType();
-      scheduledJobTypeEntity.setEnum(ScheduledJobType.THIRD_PARTY_SYNC);
-      scheduledJobTypeRepository.save(scheduledJobTypeEntity);
-
-      List.of(
-              ScheduledJobStatus.SCHEDULED,
-              ScheduledJobStatus.IN_PROGRESS,
-              ScheduledJobStatus.FAILED,
-              ScheduledJobStatus.SUCCEEDED)
-          .forEach(
-              status -> {
-                com.box.l10n.mojito.entity.ScheduledJobStatus scheduledJobStatusEntity =
-                    new com.box.l10n.mojito.entity.ScheduledJobStatus();
-                scheduledJobStatusEntity.setJobStatus(status);
-                scheduledJobStatusRepository.save(scheduledJobStatusEntity);
-              });
       initializedDB = true;
     }
 

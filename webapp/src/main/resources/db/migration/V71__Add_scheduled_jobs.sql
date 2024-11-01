@@ -22,9 +22,6 @@ CREATE TABLE scheduled_job_status_type (
 );
 
 ALTER TABLE scheduled_job
-    ADD UNIQUE KEY UK__REPOSITORY_ID__JOB_TYPE(repository_id, job_type);
-
-ALTER TABLE scheduled_job
     ADD CONSTRAINT FK__SCHEDULED_JOB__IMPORT_REPOSITORY__ID
         FOREIGN KEY (repository_id) REFERENCES repository (id);
 
@@ -33,7 +30,6 @@ ALTER TABLE scheduled_job
 
 ALTER TABLE scheduled_job
     ADD CONSTRAINT FK__JOB_STATUS__JOB_STATUS_ID FOREIGN KEY (job_status) REFERENCES scheduled_job_status_type(id);
-
 
 INSERT INTO scheduled_job_type(id, name) VALUES(1, 'THIRD_PARTY_SYNC');
 INSERT INTO scheduled_job_status_type(id, name) VALUES(1, 'SCHEDULED'), (2, 'IN_PROGRESS'), (3,'FAILED'), (4,'SUCCEEDED');
