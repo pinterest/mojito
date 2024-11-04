@@ -153,8 +153,10 @@ public class ScheduledThirdPartySync implements IScheduledJob {
                 pd.triggerIncident(scheduledJob.getUuid(), payload);
               } catch (PagerDutyException e) {
                 logger.error(
-                    "Couldn't send PagerDuty notification for failed third party sync of repository: '{}' -",
+                    "Couldn't send PagerDuty notification for failed third party sync of repository: '{}', Pollable Task URL: '{}', Scheduled Job: '{}'",
                     scheduledJob.getRepository().getName(),
+                    pollableTaskUrl,
+                    scheduledJobUrl,
                     e);
                 meterRegistry
                     .counter(
