@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
@@ -124,7 +125,11 @@ public class ScheduledJobManager {
           scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SCHEDULED));
       scheduledJob.setStartDate(null);
       scheduledJob.setEndDate(null);
-      scheduledJobRepository.save(scheduledJob);
+      deadlockRetryTemplate.execute(
+          c -> {
+            scheduledJobRepository.save(scheduledJob);
+            return null;
+          });
     }
   }
 
@@ -178,21 +183,19 @@ public class ScheduledJobManager {
   public void cleanQuartzJobs() throws SchedulerException {
     // Clean Quartz jobs that don't exist in the UUID pool
     logger.info("Performing Quartz scheduled jobs clean up");
-    List<String> jobTypes = Arrays.stream(ScheduledJobType.values()).map(Enum::toString).toList();
-    for (JobKey jobKey : getScheduler().getJobKeys(GroupMatcher.anyGroup())) {
-
-      // The job type may not be a Scheduled job (this is only the case if the configuration is set
-      // to use the default scheduler) so continue without deleting.
-      if (!jobTypes.contains(jobKey.getGroup())) continue;
-
+    for (JobKey jobKey : getAllJobKeys()) {
       if (!uuidPool.contains(jobKey.getName())) {
         if (getScheduler().checkExists(jobKey)) {
           getScheduler().deleteJob(jobKey);
         }
 
-        scheduledJobRepository
-            .findByUuid(jobKey.getName())
-            .ifPresent(scheduledJobRepository::delete);
+        deadlockRetryTemplate.execute(
+            c -> {
+              scheduledJobRepository
+                  .findByUuid(jobKey.getName())
+                  .ifPresent(scheduledJobRepository::delete);
+              return null;
+            });
 
         logger.info(
             "Removed job with id: '{}' as it is no longer in the data source.", jobKey.getName());
@@ -243,6 +246,21 @@ public class ScheduledJobManager {
 
   public Scheduler getScheduler() {
     return schedulerManager.getScheduler(schedulerName);
+  }
+
+  /**
+   * Retrieve all jobs where the group is in the ScheduledJobType enums. Cannot assume all jobs
+   * under the scheduler is a scheduled job as the scheduler could be the default scheduler.
+   */
+  public List<JobKey> getAllJobKeys() throws SchedulerException {
+    List<String> jobTypes = Arrays.stream(ScheduledJobType.values()).map(Enum::toString).toList();
+    return getScheduler().getJobKeys(GroupMatcher.anyGroup()).stream()
+        .filter(jobKey -> jobTypes.contains(jobKey.getGroup()))
+        .collect(Collectors.toList());
+  }
+
+  public List<String> getAllJobNames() throws SchedulerException {
+    return getAllJobKeys().stream().map(JobKey::getName).collect(Collectors.toList());
   }
 
   public Class<? extends IScheduledJob> loadJobClass(String className)

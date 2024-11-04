@@ -2,6 +2,7 @@ package com.box.l10n.mojito.entity;
 
 import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobProperties;
+import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ForeignKey;
@@ -24,6 +25,7 @@ public class ScheduledJob {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Basic(optional = false)
   @Column(name = "uuid")
   private String uuid;
 
@@ -42,6 +44,7 @@ public class ScheduledJob {
 
   @Transient private ScheduledJobProperties properties;
 
+  @Basic(optional = false)
   @Column(name = "properties")
   private String propertiesString;
 
@@ -55,6 +58,7 @@ public class ScheduledJob {
   @Column(name = "end_date")
   private ZonedDateTime endDate;
 
+  @Basic(optional = false)
   @Column(name = "enabled")
   private Boolean enabled = true;
 

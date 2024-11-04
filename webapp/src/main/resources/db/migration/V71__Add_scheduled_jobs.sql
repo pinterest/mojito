@@ -22,6 +22,9 @@ CREATE TABLE scheduled_job_status_type (
 );
 
 ALTER TABLE scheduled_job
+    ADD UNIQUE KEY UK__JOB_UUID(uuid);
+
+ALTER TABLE scheduled_job
     ADD CONSTRAINT FK__SCHEDULED_JOB__IMPORT_REPOSITORY__ID
         FOREIGN KEY (repository_id) REFERENCES repository (id);
 
