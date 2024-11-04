@@ -33,12 +33,16 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @ConditionalOnProperty(value = "l10n.scheduledJobs.enabled", havingValue = "true")
 public class ScheduledJobWS {
-
   static Logger logger = LoggerFactory.getLogger(ScheduledJobWS.class);
+  private final ScheduledJobRepository scheduledJobRepository;
+  private final ScheduledJobManager scheduledJobManager;
 
-  @Autowired ScheduledJobRepository scheduledJobRepository;
-
-  @Autowired ScheduledJobManager scheduledJobManager;
+  @Autowired
+  public ScheduledJobWS(
+      ScheduledJobRepository scheduledJobRepository, ScheduledJobManager scheduledJobManager) {
+    this.scheduledJobRepository = scheduledJobRepository;
+    this.scheduledJobManager = scheduledJobManager;
+  }
 
   private final ResponseEntity<ScheduledJobResponse> notFoundResponse =
       createResponse(
