@@ -121,10 +121,6 @@ public class ScheduledJobManager {
         getScheduler().scheduleJob(job, trigger);
       }
 
-      scheduledJob.setJobStatus(
-          scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SCHEDULED));
-      scheduledJob.setStartDate(null);
-      scheduledJob.setEndDate(null);
       deadlockRetryTemplate.execute(
           c -> {
             scheduledJobRepository.save(scheduledJob);
@@ -161,11 +157,14 @@ public class ScheduledJobManager {
       scheduledJob.setUuid(syncJobConfig.getUuid());
       scheduledJob.setCron(syncJobConfig.getCron());
       scheduledJob.setRepository(repositoryRepository.findByName(syncJobConfig.getRepository()));
-      scheduledJob.setJobStatus(
-          scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SCHEDULED));
       scheduledJob.setJobType(
           scheduledJobTypeRepository.findByEnum(ScheduledJobType.THIRD_PARTY_SYNC));
       scheduledJob.setProperties(getScheduledThirdPartySyncProperties(syncJobConfig));
+
+      if (scheduledJob.getJobStatus() == null) {
+        scheduledJob.setJobStatus(
+            scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SCHEDULED));
+      }
 
       try {
         scheduledJobRepository.save(scheduledJob);
