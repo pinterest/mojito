@@ -111,8 +111,8 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
     return localeMapping.getOrDefault(localeTag, localeTag);
   }
 
-  private final String PUBLISHED = "PUBLISHED";
-  private final String POST_TRANSLATION = "POST_TRANSLATION";
+  public static final String PUBLISHED = "PUBLISHED";
+  public static final String POST_TRANSLATION = "POST_TRANSLATION";
 
   @Autowired
   public ThirdPartyTMSSmartling(

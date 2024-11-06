@@ -1,5 +1,7 @@
 package com.box.l10n.mojito.service.thirdparty;
 
+import static com.box.l10n.mojito.service.thirdparty.ThirdPartyTMSSmartling.POST_TRANSLATION;
+import static com.box.l10n.mojito.service.thirdparty.ThirdPartyTMSSmartling.PUBLISHED;
 import static com.box.l10n.mojito.service.thirdparty.ThirdPartyTMSUtils.isFileEqualToPreviousRun;
 import static com.box.l10n.mojito.service.thirdparty.smartling.SmartlingFileUtils.isPluralFile;
 
@@ -8,6 +10,7 @@ import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.iterators.PageFetcherOffsetAndLimitSplitIterator;
 import com.box.l10n.mojito.iterators.Spliterators;
 import com.box.l10n.mojito.service.ai.translation.AITranslationConfiguration;
+import com.box.l10n.mojito.service.ai.translation.AITranslationService;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingJsonConverter;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingOptions;
 import com.box.l10n.mojito.service.tm.importer.TextUnitBatchImporterService;
@@ -65,6 +68,8 @@ public class ThirdPartyTMSSmartlingWithJson {
 
   AITranslationConfiguration aiTranslationConfiguration;
 
+  AITranslationService aiTranslationService;
+
   int batchSize = 5000;
 
   public ThirdPartyTMSSmartlingWithJson(
@@ -75,7 +80,8 @@ public class ThirdPartyTMSSmartlingWithJson {
       SmartlingJsonKeys smartlingJsonKeys,
       MeterRegistry meterRegistry,
       ThirdPartyFileChecksumRepository thirdPartyFileChecksumRepository,
-      AITranslationConfiguration aiTranslationConfiguration) {
+      AITranslationConfiguration aiTranslationConfiguration,
+      AITranslationService aiTranslationService) {
     this.smartlingClient = smartlingClient;
     this.smartlingJsonConverter = smartlingJsonConverter;
     this.textUnitSearcher = textUnitSearcher;
@@ -84,6 +90,7 @@ public class ThirdPartyTMSSmartlingWithJson {
     this.meterRegistry = meterRegistry;
     this.thirdPartyFileChecksumRepository = thirdPartyFileChecksumRepository;
     this.aiTranslationConfiguration = aiTranslationConfiguration;
+    this.aiTranslationService = aiTranslationService;
   }
 
   void push(
@@ -269,6 +276,11 @@ public class ThirdPartyTMSSmartlingWithJson {
       String skipAssetsWithPathPattern,
       String includeTextUnitsWithPattern) {
 
+    if (aiTranslationService == null) {
+      throw new UnsupportedOperationException(
+          "AI translation service is not supported as no AITranslationService bean is configured.");
+    }
+
     logger.info(
         "Push AI translations from repository: {} into project: {}",
         repository.getName(),
@@ -288,7 +300,8 @@ public class ThirdPartyTMSSmartlingWithJson {
                                 skipTextUnitsWithPattern,
                                 skipAssetsWithPathPattern,
                                 includeTextUnitsWithPattern,
-                                StatusFilter.MT_TRANSLATED),
+                                StatusFilter.MT_TRANSLATED,
+                                true),
                             false)
                         .collect(Collectors.groupingBy(TextUnitDTO::getUploadedFileUri));
 
@@ -305,7 +318,12 @@ public class ThirdPartyTMSSmartlingWithJson {
                             localeMapping,
                             repositoryLocale,
                             uploadedFileUri,
-                            textUnitDTOS);
+                            textUnitDTOS,
+                            POST_TRANSLATION);
+                        aiTranslationService.updateVariantStatusToMTReview(
+                            textUnitDTOS.stream()
+                                .map(TextUnitDTO::getTmTextUnitCurrentVariantId)
+                                .collect(Collectors.toList()));
                         meterRegistry
                             .counter(
                                 "SmartlingSync.uploadAiTranslationsBatch",
@@ -326,6 +344,17 @@ public class ThirdPartyTMSSmartlingWithJson {
       RepositoryLocale repositoryLocale,
       String uploadedFileUri,
       List<TextUnitDTO> textUnitDTOS) {
+    uploadLocalizedFile(
+        projectId, localeMapping, repositoryLocale, uploadedFileUri, textUnitDTOS, PUBLISHED);
+  }
+
+  private void uploadLocalizedFile(
+      String projectId,
+      Map<String, String> localeMapping,
+      RepositoryLocale repositoryLocale,
+      String uploadedFileUri,
+      List<TextUnitDTO> textUnitDTOS,
+      String translationState) {
     String fileContent =
         smartlingJsonConverter.textUnitDTOsToJsonString(textUnitDTOS, TextUnitDTO::getTarget);
     String smartlingLocale = getSmartlingLocale(localeMapping, repositoryLocale);
@@ -333,7 +362,14 @@ public class ThirdPartyTMSSmartlingWithJson {
     Mono.fromCallable(
             () ->
                 smartlingClient.uploadLocalizedFile(
-                    projectId, uploadedFileUri, "json", smartlingLocale, fileContent, null, null))
+                    projectId,
+                    uploadedFileUri,
+                    "json",
+                    smartlingLocale,
+                    fileContent,
+                    null,
+                    null,
+                    translationState))
         .retryWhen(
             smartlingClient
                 .getRetryConfiguration()
@@ -442,7 +478,8 @@ public class ThirdPartyTMSSmartlingWithJson {
       String skipTextUnitsWithPattern,
       String skipAssetsWithPathPattern,
       String includeTextUnitsWithPattern,
-      StatusFilter statusFilter) {
+      StatusFilter statusFilter,
+      boolean shouldRetrieveUploadedFileUri) {
 
     PageFetcherOffsetAndLimitSplitIterator<TextUnitDTO>
         textUnitDTOPageFetcherOffsetAndLimitSplitIterator =
@@ -460,6 +497,7 @@ public class ThirdPartyTMSSmartlingWithJson {
                   parameters.setOffset(offset);
                   parameters.setLimit(limit);
                   parameters.setPluralFormsFiltered(true);
+                  parameters.setIsRetrieveUploadedFileUri(shouldRetrieveUploadedFileUri);
                   List<TextUnitDTO> search = textUnitSearcher.search(parameters);
                   return search;
                 },
