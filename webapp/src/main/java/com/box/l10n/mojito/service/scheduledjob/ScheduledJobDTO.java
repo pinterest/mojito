@@ -24,7 +24,7 @@ public class ScheduledJobDTO {
     this.jobStatus = scheduledJob.getJobStatus().getEnum();
     this.startDate = scheduledJob.getStartDate();
     this.endDate = scheduledJob.getEndDate();
-    this.enabled = scheduledJob.getEnabled();
+    this.enabled = scheduledJob.isEnabled();
   }
 
   public String getId() {
@@ -91,7 +91,7 @@ public class ScheduledJobDTO {
     this.endDate = endDate;
   }
 
-  public Boolean getEnabled() {
+  public Boolean isEnabled() {
     return enabled;
   }
 

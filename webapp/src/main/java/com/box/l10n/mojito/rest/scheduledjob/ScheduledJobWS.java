@@ -78,7 +78,7 @@ public class ScheduledJobWS {
     ScheduledJob scheduledJob = optScheduledJob.get();
     JobKey jobKey = scheduledJobManager.getJobKey(scheduledJob);
 
-    if (!scheduledJob.getEnabled())
+    if (!scheduledJob.isEnabled())
       return createResponse(
           HttpStatus.CONFLICT,
           ScheduledJobResponse.Status.FAILURE,
@@ -142,7 +142,7 @@ public class ScheduledJobWS {
     try {
       if (!scheduledJobManager.getScheduler().checkExists(jobKey)) return notFoundResponse;
 
-      if (scheduledJob.getEnabled() == active)
+      if (scheduledJob.isEnabled() == active)
         return createResponse(
             HttpStatus.ALREADY_REPORTED,
             ScheduledJobResponse.Status.SUCCESS,

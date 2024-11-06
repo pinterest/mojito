@@ -44,6 +44,6 @@ public class ScheduledJobTriggerListener extends TriggerListenerSupport {
   public boolean vetoJobExecution(Trigger trigger, JobExecutionContext context) {
     // If the job is disabled, don't execute
     Optional<ScheduledJob> job = scheduledJobRepository.findByUuid(trigger.getJobKey().getName());
-    return job.filter(scheduledJob -> !scheduledJob.getEnabled()).isPresent();
+    return job.filter(scheduledJob -> !scheduledJob.isEnabled()).isPresent();
   }
 }
