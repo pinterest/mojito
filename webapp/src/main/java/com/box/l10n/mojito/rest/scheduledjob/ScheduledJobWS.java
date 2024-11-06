@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobKey;
 import org.quartz.SchedulerException;
+import org.quartz.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +67,7 @@ public class ScheduledJobWS {
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found with id: " + id));
   }
 
-  @RequestMapping(method = RequestMethod.POST, value = "/api/jobs/{id}")
+  @RequestMapping(method = RequestMethod.POST, value = "/api/jobs/{id}/trigger")
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<ScheduledJobResponse> triggerJob(@PathVariable UUID id) {
 
@@ -90,10 +91,16 @@ public class ScheduledJobWS {
       for (JobExecutionContext jobExecutionContext :
           scheduledJobManager.getScheduler().getCurrentlyExecutingJobs()) {
         if (jobExecutionContext.getJobDetail().getKey().equals(jobKey)) {
+
+          // If there are no pending manual triggers, queue one up otherwise do nothing.
+          if (!isPendingTrigger(jobKey)) {
+            scheduledJobManager.getScheduler().triggerJob(jobKey);
+          }
+
           return createResponse(
               HttpStatus.CONFLICT,
               ScheduledJobResponse.Status.FAILURE,
-              "Job is currently running, trigger request ignored");
+              "Job is currently running, trigger request has been queued and will fire when the current job is finished running.");
         }
       }
 
@@ -165,5 +172,19 @@ public class ScheduledJobWS {
   private ResponseEntity<ScheduledJobResponse> createResponse(
       HttpStatus status, ScheduledJobResponse.Status jobResponseStatus, String message) {
     return ResponseEntity.status(status).body(new ScheduledJobResponse(jobResponseStatus, message));
+  }
+
+  private boolean isPendingTrigger(JobKey jobKey) throws SchedulerException {
+    return scheduledJobManager.getScheduler().getTriggersOfJob(jobKey).stream()
+        .anyMatch(
+            trigger -> {
+              try {
+                return trigger.getKey().getName().startsWith("MT_")
+                    && scheduledJobManager.getScheduler().getTriggerState(trigger.getKey())
+                        != Trigger.TriggerState.COMPLETE;
+              } catch (SchedulerException e) {
+                return false;
+              }
+            });
   }
 }

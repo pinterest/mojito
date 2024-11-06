@@ -227,7 +227,7 @@ public class ScheduledJobManager {
     return TriggerBuilder.newTrigger()
         .withSchedule(
             CronScheduleBuilder.cronSchedule(cronExpression)
-                .withMisfireHandlingInstructionDoNothing())
+                .withMisfireHandlingInstructionFireAndProceed())
         .withIdentity(triggerKey)
         .forJob(jobKey)
         .build();
