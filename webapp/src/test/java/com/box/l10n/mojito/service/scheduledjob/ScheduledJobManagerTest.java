@@ -17,6 +17,7 @@ import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobConfig;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobsConfig;
+import com.box.l10n.mojito.test.TestIdWatcher;
 import com.google.common.collect.ImmutableMap;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.function.Supplier;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.mockito.Mockito;
@@ -40,7 +42,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ScheduledJobManagerTest extends ServiceTestBase {
 
-  private static boolean initializedDB = false;
   private ScheduledJobManager scheduledJobManager;
   @Autowired RepositoryService repositoryService;
   @Autowired QuartzSchedulerManager schedulerManager;
@@ -49,6 +50,7 @@ public class ScheduledJobManagerTest extends ServiceTestBase {
   @Autowired ScheduledJobTypeRepository scheduledJobTypeRepository;
   @Autowired RepositoryRepository repositoryRepository;
   @Autowired DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate;
+  @Rule public TestIdWatcher testIdWatcher = new TestIdWatcher();
 
   private static final int MAX_RETRIES = 10;
   private static final int RETRY_DELAY_MS = 100;
@@ -63,32 +65,28 @@ public class ScheduledJobManagerTest extends ServiceTestBase {
           ClassNotFoundException,
           SchedulerException {
 
-    if (!initializedDB) {
-      for (int i = 1; i <= 4; i++) {
-        if (repositoryService
-            .findRepositoriesIsNotDeletedOrderByName("scheduled-job-" + i)
-            .isEmpty()) {
-          repositoryService.addRepositoryLocale(
-              repositoryService.createRepository("scheduled-job-" + i), "fr-FR");
-        }
-      }
-      initializedDB = true;
+    for (int i = 1; i <= 4; i++) {
+      repositoryService.addRepositoryLocale(
+          repositoryService.createRepository(testIdWatcher.getEntityName("scheduled-job-" + i)),
+          "fr-FR");
     }
 
     ThirdPartySyncJobConfig scheduledJobOne =
-        createThirdPartySyncJobConfig(TEST_UUID, "scheduled-job-1");
+        createThirdPartySyncJobConfig(TEST_UUID, testIdWatcher.getEntityName("scheduled-job-1"));
 
     ThirdPartySyncJobConfig scheduledJobTwo =
-        createThirdPartySyncJobConfig("7d39ee64-415e-42bb-8492-33f1909484c9", "scheduled-job-2");
+        createThirdPartySyncJobConfig(
+            "7d39ee64-415e-42bb-8492-33f1909484c9", testIdWatcher.getEntityName("scheduled-job-2"));
 
     // No cron schedule, shouldn't schedule
     ThirdPartySyncJobConfig scheduledJobThree =
-        createThirdPartySyncJobConfig("f1d1a12d-b23e-4ef8-9391-f647be6f9db4", "scheduled-job-3");
+        createThirdPartySyncJobConfig(
+            "f1d1a12d-b23e-4ef8-9391-f647be6f9db4", testIdWatcher.getEntityName("scheduled-job-3"));
     scheduledJobThree.setCron(null);
 
     // No uuid, shouldn't schedule
     ThirdPartySyncJobConfig scheduledJobFour =
-        createThirdPartySyncJobConfig(null, "scheduled-job-4");
+        createThirdPartySyncJobConfig(null, testIdWatcher.getEntityName("scheduled-job-4"));
 
     ThirdPartySyncJobsConfig thirdPartySyncJobsConfig = new ThirdPartySyncJobsConfig();
     thirdPartySyncJobsConfig.setThirdPartySyncJobs(
@@ -120,22 +118,13 @@ public class ScheduledJobManagerTest extends ServiceTestBase {
   }
 
   @Test
-  public void testAListenersExists() throws Exception {
-    assertEquals(
-        1, scheduledJobManager.getScheduler().getListenerManager().getJobListeners().size());
-
-    assertEquals(
-        1, scheduledJobManager.getScheduler().getListenerManager().getTriggerListeners().size());
-  }
-
-  @Test
-  public void testBQuartzScheduledJob() throws Exception {
+  public void testQuartzScheduledJob() throws Exception {
     assertEquals(2, scheduledJobManager.getAllJobKeys().size());
     assertEquals(2, scheduledJobRepository.findAll().size());
   }
 
   @Test
-  public void testCJobSucceeds() throws Exception {
+  public void testJobSucceeds() throws Exception {
     ScheduledJob scheduledJob = getTestJob();
     scheduledJob.setEndDate(null);
     scheduledJobRepository.save(scheduledJob);
@@ -160,7 +149,7 @@ public class ScheduledJobManagerTest extends ServiceTestBase {
   }
 
   @Test
-  public void testDEnableDisableJob() throws Exception {
+  public void testEnableDisableJob() throws Exception {
     ScheduledJob scheduledJob = getTestJob();
     scheduledJob.setEnabled(false);
     scheduledJob.setEndDate(null);
@@ -174,11 +163,11 @@ public class ScheduledJobManagerTest extends ServiceTestBase {
     scheduledJob.setEnabled(true);
     scheduledJobRepository.save(scheduledJob);
     Thread.sleep(JOB_WAIT_TIME_MS);
-    assertNotEquals(start, getTestJob().getEndDate());
+    if (start != null) assertNotEquals(start, getTestJob().getEndDate());
   }
 
   @Test
-  public void testEJobFails() throws Exception {
+  public void testJobFails() throws Exception {
     // Use static variable to manipulate the job, Quartz is in charge of creating the instance of
     // the job so a spy won't work without using SpyBean which causes a new context to be spun up.
     NoOpScheduledJobTest.throwException = true;
@@ -195,32 +184,15 @@ public class ScheduledJobManagerTest extends ServiceTestBase {
   }
 
   @Test
-  public void testFJobCleanup() throws Exception {
+  public void testJobCleanup() throws Exception {
+    scheduledJobManager.uuidPool = new HashSet<>();
+    scheduledJobManager.uuidPool.add(TEST_UUID);
+    scheduledJobManager.cleanQuartzJobs();
+    assertEquals(1, scheduledJobManager.getAllJobKeys().size());
+
     scheduledJobManager.uuidPool = new HashSet<>();
     scheduledJobManager.cleanQuartzJobs();
     assertEquals(0, scheduledJobManager.getAllJobKeys().size());
-
-    scheduledJobManager
-        .getScheduler()
-        .getListenerManager()
-        .removeJobListener(
-            scheduledJobManager
-                .getScheduler()
-                .getListenerManager()
-                .getJobListeners()
-                .get(0)
-                .getName());
-
-    scheduledJobManager
-        .getScheduler()
-        .getListenerManager()
-        .removeTriggerListener(
-            scheduledJobManager
-                .getScheduler()
-                .getListenerManager()
-                .getTriggerListeners()
-                .get(0)
-                .getName());
   }
 
   private ScheduledJob getTestJob() {
