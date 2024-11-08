@@ -1,12 +1,14 @@
 package com.box.l10n.mojito.service.gitblame;
 
 import com.box.l10n.mojito.entity.AssetTextUnit;
+import com.box.l10n.mojito.entity.Branch;
 import com.box.l10n.mojito.entity.GitBlame;
 import com.box.l10n.mojito.entity.Screenshot;
 import com.box.l10n.mojito.entity.ThirdPartyTextUnit;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
 import com.box.l10n.mojito.service.asset.AssetRepository;
 import com.box.l10n.mojito.service.assetTextUnit.AssetTextUnitRepository;
+import com.box.l10n.mojito.service.branch.BranchRepository;
 import com.box.l10n.mojito.service.pollableTask.Pollable;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.pollableTask.PollableFutureTaskResult;
@@ -54,6 +56,8 @@ public class GitBlameService {
   @Autowired QuartzPollableTaskScheduler quartzPollableTaskScheduler;
 
   @Autowired ThirdPartyTextUnitRepository thirdPartyTextUnitRepository;
+
+  @Autowired BranchRepository branchRepository;
 
   /**
    * Gets the {@link GitBlameWithUsage} information that matches the search parameters.
@@ -111,6 +115,11 @@ public class GitBlameService {
       gitBlameWithUsage.setPluralForm(textUnitDTO.getPluralForm());
       gitBlameWithUsage.setContent(textUnitDTO.getSource());
       gitBlameWithUsage.setComment(textUnitDTO.getComment());
+
+      Branch branch = branchRepository.findByTextUnitId(textUnitDTO.getTmTextUnitId());
+      if (branch != null) {
+        gitBlameWithUsage.setIntroducedIn(branch.getName());
+      }
       gitBlameWithUsages.add(gitBlameWithUsage);
     }
     return gitBlameWithUsages;

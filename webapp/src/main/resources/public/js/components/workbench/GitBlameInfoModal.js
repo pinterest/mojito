@@ -101,6 +101,7 @@ class GitBlameInfoModal extends React.Component {
                     {this.displayInfoWithId("textUnit.gitBlameModal.location", this.getLocationLinks())}
                     {this.shouldShowThirdPartyTMS() && this.displayInfoWithId("textUnit.gitBlameModal.thirdPartyTMS", this.getThirdPartyLink())}
                     {this.shouldShowCustomMd5() && this.displayInfoWithId("textUnit.gitBlameModal.customMd5", this.getCustomMd5Link())}
+                    {this.displayInfoWithId("textUnit.gitBlameModal.introducedIn", this.getIntroducedInLink())}
                 </div>
             );
     };
@@ -221,6 +222,14 @@ class GitBlameInfoModal extends React.Component {
         }
     };
 
+    getIntroducedIn = () => {
+        try {
+            return this.props.gitBlameWithUsage.introducedIn.toString();
+        } catch (e) {
+            return " - ";
+        }
+    }
+
     /**
      * Base params are just a subset of text unit properties that can be used inside templates.
      *
@@ -234,6 +243,7 @@ class GitBlameInfoModal extends React.Component {
             assetPath: this.props.textUnit.getAssetPath(),
             thirdPartyTextUnitId: this.getThirdPartyTextUnitId(),
             targetLocale: this.props.textUnit.getTargetLocale(),
+            introducedIn: this.getIntroducedIn(),
         };
     };
 
@@ -279,6 +289,13 @@ class GitBlameInfoModal extends React.Component {
         return LinkHelper.renderLinkOrLabel(
             this.getCustomMd5UrlTemplate(),
             this.getCustomMd5LabelTemplate(),
+            this.getParamsForLinks());
+    };
+
+    getIntroducedInLink = () => {
+        return LinkHelper.renderLinkOrLabel(
+            "https://github.com/${introducedIn}",
+            this.getIntroducedIn(),
             this.getParamsForLinks());
     };
 
@@ -609,15 +626,17 @@ class GitBlameInfoModal extends React.Component {
                     </div>
                     {this.renderTextUnitInfo()}
                     <hr/>
-                    <div className={"row"}>
+                    { this.getCommitLink() != null && <div className={"row"}>
                         <div className={"col-sm-4"}><h4><FormattedMessage id={"textUnit.gitBlameModal.gitBlame"}/></h4>
                         </div>
                         <div className={"col-sm-8"}>
                             {this.props.loading ? (<span className="glyphicon glyphicon-refresh spinning"/>) : ""}
                         </div>
                     </div>
-                    {this.renderGitBlameInfo()}
+                        && this.renderGitBlameInfo()
+                        &&
                     <hr/>
+                    }
                     <div className={"row"}>
                         <div className={"col-sm-4"}><h4><FormattedMessage id={"textUnit.gitBlameModal.more"}/></h4>
                         </div>
