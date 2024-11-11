@@ -55,23 +55,29 @@ public class TMTextUnit extends SettableAuditableEntity {
   private String content;
 
   /** should be built from the name, content and the comment field */
+  @JsonView(View.Default.class)
   @Column(name = "md5", length = 32)
   String md5;
 
   /** should be built from the content only */
+  @JsonView(View.Default.class)
   @Column(name = "content_md5", length = 32)
   private String contentMd5;
 
+  @JsonView(View.Default.class)
   @Column(name = "comment", length = Integer.MAX_VALUE)
   private String comment;
 
+  @JsonView(View.Default.class)
   @Column(name = "word_count")
   private Integer wordCount;
 
+  @JsonView(View.Default.class)
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "tm_id", foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT__TM__ID"))
   private TM tm;
 
+  @JsonView(View.Default.class)
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "asset_id",
@@ -79,6 +85,7 @@ public class TMTextUnit extends SettableAuditableEntity {
       nullable = false)
   private Asset asset;
 
+  @JsonView(View.Default.class)
   @CreatedBy
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
@@ -86,15 +93,18 @@ public class TMTextUnit extends SettableAuditableEntity {
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT__USER__ID"))
   protected User createdByUser;
 
+  @JsonView(View.Default.class)
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
       name = "plural_form_id",
       foreignKey = @ForeignKey(name = "FK__TM_TEXT_UNIT__PLURAL_FORM__ID"))
   protected PluralForm pluralForm;
 
+  @JsonView(View.Default.class)
   @Column(name = "plural_form_other", length = Integer.MAX_VALUE)
   protected String pluralFormOther;
 
+  @JsonView(View.Default.class)
   @OneToOne(mappedBy = "tmTextUnit", fetch = FetchType.LAZY)
   protected TMTextUnitStatistic tmTextUnitStatistic;
 

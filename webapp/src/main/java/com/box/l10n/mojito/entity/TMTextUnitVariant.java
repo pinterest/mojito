@@ -87,6 +87,7 @@ public class TMTextUnitVariant extends SettableAuditableEntity {
   @JsonView(View.TranslationHistorySummary.class)
   private String content;
 
+  @JsonView(View.Default.class)
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(
       name = "tm_text_unit_id",
@@ -101,6 +102,7 @@ public class TMTextUnitVariant extends SettableAuditableEntity {
   private Locale locale;
 
   /** should be built from the content field */
+  @JsonView(View.Default.class)
   @Column(name = "content_md5", length = 32)
   String contentMD5;
 

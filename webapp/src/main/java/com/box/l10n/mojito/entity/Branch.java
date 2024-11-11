@@ -79,9 +79,11 @@ public class Branch extends SettableAuditableEntity {
   @OrderBy("id")
   Set<Screenshot> screenshots = new HashSet<>();
 
+  @JsonView(View.Default.class)
   @OneToOne(mappedBy = "branch", fetch = FetchType.LAZY)
   BranchStatistic branchStatistic;
 
+  @JsonView(View.Default.class)
   @ElementCollection(fetch = FetchType.LAZY)
   @CollectionTable(
       name = "branch_notifiers",

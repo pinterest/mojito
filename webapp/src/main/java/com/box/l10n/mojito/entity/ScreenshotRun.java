@@ -1,7 +1,10 @@
 package com.box.l10n.mojito.entity;
 
+import com.box.l10n.mojito.rest.View;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -38,15 +41,19 @@ public class ScreenshotRun extends SettableAuditableEntity {
       foreignKey = @ForeignKey(name = "FK__SCREENSHOT_RUN__REPOSITORY__ID"),
       nullable = false)
   @JsonBackReference
+  @Schema(hidden = true)
   private Repository repository;
 
+  @JsonView(View.Default.class)
   @Column(name = "name")
   private String name;
 
   @JsonDeserialize(as = LinkedHashSet.class)
+  @JsonView(View.Default.class)
   @OneToMany(mappedBy = "screenshotRun", fetch = FetchType.LAZY)
   Set<Screenshot> screenshots = new LinkedHashSet<>();
 
+  @JsonView(View.Default.class)
   @Column(name = "lastSuccessfulRun")
   Boolean lastSuccessfulRun = false;
 

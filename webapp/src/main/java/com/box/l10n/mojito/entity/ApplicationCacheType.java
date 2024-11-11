@@ -27,6 +27,7 @@ public class ApplicationCacheType {
   @JsonView(View.IdAndName.class)
   protected short id;
 
+  @JsonView(View.Default.class)
   @Column(name = "name")
   private String name;
 

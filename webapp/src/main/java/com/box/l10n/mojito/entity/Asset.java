@@ -90,6 +90,7 @@ public class Asset extends AuditableEntity {
   @JsonView(View.AssetSummary.class)
   private Boolean deleted = false;
 
+  @JsonView(View.Default.class)
   @OneToMany(mappedBy = "asset")
   private Set<AssetExtractionByBranch> assetExtractionByBranches;
 

@@ -5,6 +5,7 @@ import com.box.l10n.mojito.rest.View;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonView;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
@@ -37,9 +38,11 @@ public class RepositoryStatistic extends AuditableEntity {
   private Long usedTextUnitWordCount = 0L;
 
   /** The number of unused text units in the repository */
+  @JsonView(View.Default.class)
   private Long unusedTextUnitCount = 0L;
 
   /** The word count of used text units */
+  @JsonView(View.Default.class)
   private Long unusedTextUnitWordCount = 0L;
 
   /** The number of text unit for plural forms */
@@ -58,10 +61,12 @@ public class RepositoryStatistic extends AuditableEntity {
   @JsonView(View.RepositorySummary.class)
   private Long ooslaTextUnitWordCount = 0L;
 
+  @Schema(type = "integer", format = "int64", example = "1715699917000")
   @JsonView(View.RepositorySummary.class)
   private ZonedDateTime ooslaCreatedBefore;
 
   /** The number of text unit without comments */
+  @JsonView(View.Default.class)
   private Long uncommentedTextUnitCount = 0L;
 
   @JsonView(View.RepositorySummary.class)
@@ -74,6 +79,7 @@ public class RepositoryStatistic extends AuditableEntity {
   // @OrderBy(value = "locale")
   private Set<RepositoryLocaleStatistic> repositoryLocaleStatistics = new HashSet<>();
 
+  @JsonView(View.Default.class)
   @CreatedBy
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(

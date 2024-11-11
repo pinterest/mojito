@@ -53,15 +53,19 @@ public class User extends AuditableEntity implements Serializable {
   String username;
 
   @JsonProperty(access = Access.WRITE_ONLY)
+  @JsonView(View.Default.class)
   @Column(name = "password")
   String password;
 
+  @JsonView(View.Default.class)
   @Column(name = "enabled")
   Boolean enabled;
 
+  @JsonView(View.Default.class)
   @Column(name = "surname")
   String surname;
 
+  @JsonView(View.Default.class)
   @Column(name = "given_name")
   String givenName;
 
@@ -77,9 +81,11 @@ public class User extends AuditableEntity implements Serializable {
    * <p>Usually user are created the first time the user connect to the system via LDAP or OAuth and
    * have more information Partially created user can be updated later when the first login happens.
    */
+  @JsonView(View.Default.class)
   @Column(name = "partially_created")
   Boolean partiallyCreated = false;
 
+  @JsonView(View.Default.class)
   @JsonManagedReference
   @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
   Set<Authority> authorities = new HashSet<>();

@@ -50,6 +50,7 @@ public class Screenshot extends SettableAuditableEntity {
     ACCEPTED;
   };
 
+  @JsonView(View.Default.class)
   @Column(name = "name")
   private String name;
 
@@ -97,6 +98,7 @@ public class Screenshot extends SettableAuditableEntity {
   @BatchSize(size = 1000)
   private Set<ScreenshotTextUnit> screenshotTextUnits = new LinkedHashSet<>();
 
+  @JsonView(View.Default.class)
   @OneToMany(mappedBy = "screenshot")
   private Set<ThirdPartyScreenshot> thirdPartyScreenshots = new HashSet<>();
 

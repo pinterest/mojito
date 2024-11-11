@@ -6,6 +6,7 @@ import com.box.l10n.mojito.service.tm.search.StatusFilter;
 import com.box.l10n.mojito.service.translationkit.TranslationKitExportedImportedAndCurrentTUV;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonView;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ColumnResult;
@@ -89,6 +90,7 @@ public class TranslationKit extends AuditableEntity {
   private Locale locale;
 
   @JsonBackReference
+  @Schema(hidden = true)
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "drop_id", foreignKey = @ForeignKey(name = "FK__TRANSLATION_KIT__DROP__ID"))
   private Drop drop;
@@ -96,15 +98,19 @@ public class TranslationKit extends AuditableEntity {
   @JsonView(View.DropSummary.class)
   private Type type = Type.TRANSLATION;
 
+  @JsonView(View.Default.class)
   @Column(name = "num_translation_kit_units")
   private int numTranslationKitUnits;
 
+  @JsonView(View.Default.class)
   @Column(name = "num_translated_translation_kit_units")
   private int numTranslatedTranslationKitUnits;
 
+  @JsonView(View.Default.class)
   @Column(name = "num_source_equals_target")
   private int numSourceEqualsTarget;
 
+  @JsonView(View.Default.class)
   @Column(name = "num_bad_language_detections")
   private int numBadLanguageDetections;
 
@@ -116,6 +122,7 @@ public class TranslationKit extends AuditableEntity {
   @Column(name = "imported")
   private Boolean imported = false;
 
+  @JsonView(View.Default.class)
   @ElementCollection
   @CollectionTable(
       name = "translation_kit_not_found_text_unit_ids",
@@ -124,6 +131,7 @@ public class TranslationKit extends AuditableEntity {
           @ForeignKey(name = "FK__TRANSLATION_KIT_NOT_FOUND_TEXT_UNIT_IDS__TRANSLATION_KIT__ID"))
   private Set<String> notFoundTextUnitIds;
 
+  @JsonView(View.Default.class)
   @CreatedBy
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(

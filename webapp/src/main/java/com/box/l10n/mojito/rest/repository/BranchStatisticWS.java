@@ -22,6 +22,9 @@ import com.box.l10n.mojito.service.branch.BranchStatisticRepository;
 import com.box.l10n.mojito.service.branch.BranchTextUnitStatisticRepository;
 import com.box.l10n.mojito.service.branch.SparseBranchStatisticRepository;
 import com.fasterxml.jackson.annotation.JsonView;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,6 +35,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -55,8 +59,18 @@ public class BranchStatisticWS {
 
   @Autowired BranchTextUnitStatisticRepository branchTextUnitStatisticRepository;
 
+  @Operation(summary = "Get paginated Branch Statistics for a given set of parameters")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Successfully retrieved paginated Branch Statistics")
+      })
   @JsonView(View.BranchStatistic.class)
-  @RequestMapping(value = "/api/branchStatistics", method = RequestMethod.GET)
+  @RequestMapping(
+      value = "/api/branchStatistics",
+      method = RequestMethod.GET,
+      produces = MediaType.APPLICATION_JSON_VALUE)
   @StopWatch
   public Page<BranchStatistic> getBranchesOfRepository(
       @RequestParam(value = "createdByUserName", required = false) String createdByUserName,
@@ -121,10 +135,18 @@ public class BranchStatisticWS {
     return new PageView<>(page);
   }
 
+  @Operation(summary = "Get Branch Text Unit Statistics paginated for a specific Branch Statistic")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Successfully retrieved paginated Branch Text Unit Statistics")
+      })
   @JsonView(View.BranchTextUnitStatistic.class)
   @RequestMapping(
       value = "/api/branchStatistics/{id}/branchTextUnitStatistics",
-      method = RequestMethod.GET)
+      method = RequestMethod.GET,
+      produces = MediaType.APPLICATION_JSON_VALUE)
   @StopWatch
   public Page<BranchTextUnitStatistic> getBranchTextUnitStatisticsOfBranch(
       @PathVariable("id") long id,

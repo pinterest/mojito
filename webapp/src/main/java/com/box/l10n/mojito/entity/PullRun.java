@@ -26,6 +26,7 @@ import org.hibernate.annotations.BatchSize;
     indexes = {@Index(name = "UK__PULL_RUN__NAME", columnList = "name", unique = true)})
 @BatchSize(size = 1000)
 public class PullRun extends SettableAuditableEntity {
+  @JsonView(View.Default.class)
   @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(
       name = "repository_id",
@@ -39,6 +40,7 @@ public class PullRun extends SettableAuditableEntity {
 
   @OneToMany(mappedBy = "pullRun")
   @JsonManagedReference
+  @JsonView(View.Default.class)
   private Set<PullRunAsset> pullRunAssets;
 
   public Repository getRepository() {
