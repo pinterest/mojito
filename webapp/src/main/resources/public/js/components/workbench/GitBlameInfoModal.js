@@ -226,7 +226,7 @@ class GitBlameInfoModal extends React.Component {
         try {
             return this.props.gitBlameWithUsage.introducedIn.toString();
         } catch (e) {
-            return " - ";
+            return "-";
         }
     }
 
@@ -293,10 +293,15 @@ class GitBlameInfoModal extends React.Component {
     };
 
     getIntroducedInLink = () => {
-        return LinkHelper.renderLinkOrLabel(
-            "https://github.com/${introducedIn}",
-            this.getIntroducedIn(),
-            this.getParamsForLinks());
+        if (this.props.gitBlameWithUsage && this.props.gitBlameWithUsage.introducedIn !== null && this.shouldShowIntroducedInLink()) {
+            return LinkHelper.renderLinkOrLabel(
+                this.getIntroducedInUrlTemplate(),
+                this.getIntroducedInLabelTemplate(),
+                this.getParamsForLinks()
+            );
+        } else {
+            return this.getIntroducedIn();
+        }
     };
 
     getCustomMd5 = (baseParams) => {
@@ -455,6 +460,14 @@ class GitBlameInfoModal extends React.Component {
         }
     };
 
+    shouldShowIntroducedInLink = () => {
+        try {
+            return this.props.appConfig.link[this.props.textUnit.getRepositoryName()].introducedIn !== null;
+        } catch (e) {
+            return false;
+        }
+    };
+
     getCustomMd5Template = () => {
         try {
             return this.props.appConfig.link[this.props.textUnit.getRepositoryName()].customMd5.template;
@@ -506,6 +519,25 @@ class GitBlameInfoModal extends React.Component {
     getThirdPartyLabelTemplate = () => {
         try {
             return this.props.appConfig.link[this.props.textUnit.getRepositoryName()].thirdParty.label;
+        } catch (e) {
+            return null;
+        }
+    };
+
+    getIntroducedInUrlTemplate = () => {
+        try {
+            return this.props.appConfig.link[this.props.textUnit.getRepositoryName()].introducedIn.url;
+        } catch (e) {
+            return "";
+        }
+    };
+
+    /**
+     * @returns {*} Template for thirdParty label, if in configuration, or the string set in getThirdPartyDefaultLabel otherwise
+     */
+    getIntroducedInLabelTemplate = () => {
+        try {
+            return this.props.appConfig.link[this.props.textUnit.getRepositoryName()].introducedIn.label;
         } catch (e) {
             return null;
         }
@@ -626,17 +658,15 @@ class GitBlameInfoModal extends React.Component {
                     </div>
                     {this.renderTextUnitInfo()}
                     <hr/>
-                    { this.getCommitLink() != null && <div className={"row"}>
+                    <div className={"row"}>
                         <div className={"col-sm-4"}><h4><FormattedMessage id={"textUnit.gitBlameModal.gitBlame"}/></h4>
                         </div>
                         <div className={"col-sm-8"}>
                             {this.props.loading ? (<span className="glyphicon glyphicon-refresh spinning"/>) : ""}
                         </div>
                     </div>
-                        && this.renderGitBlameInfo()
-                        &&
+                    {this.renderGitBlameInfo()}
                     <hr/>
-                    }
                     <div className={"row"}>
                         <div className={"col-sm-4"}><h4><FormattedMessage id={"textUnit.gitBlameModal.more"}/></h4>
                         </div>

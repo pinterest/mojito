@@ -8,6 +8,7 @@ public class RepositoryConfig {
   PullRequest pullRequest;
   TextUnitNameToTextUnitNameInSource textUnitNameToTextUnitNameInSource;
   CustomMd5 customMd5;
+  IntroducedIn introducedIn;
 
   public Location getLocation() {
     return location;
@@ -56,5 +57,13 @@ public class RepositoryConfig {
 
   public void setCustomMd5(CustomMd5 customMd5) {
     this.customMd5 = customMd5;
+  }
+
+  public IntroducedIn getIntroducedIn() {
+    return introducedIn;
+  }
+
+  public void setIntroducedIn(IntroducedIn introducedIn) {
+    this.introducedIn = introducedIn;
   }
 }
