@@ -35,8 +35,8 @@ public interface BranchRepository
               + " FROM asset_text_unit_to_tm_text_unit atutu"
               + " JOIN asset_text_unit a ON a.id = atutu.asset_text_unit_id"
               + " JOIN branch b ON b.id = a.branch_id"
-              + " WHERE atutu.tm_text_unit_id = :textUnitId"
+              + " WHERE atutu.tm_text_unit_id = :textUnitId AND b.name REGEXP :regex"
               + " ORDER BY b.created_date ASC LIMIT 1",
       nativeQuery = true)
-  Branch findByTextUnitId(Long textUnitId);
+  Branch findIntroducedInByTextUnitId(Long textUnitId, String regex);
 }

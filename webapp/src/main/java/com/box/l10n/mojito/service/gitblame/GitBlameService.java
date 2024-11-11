@@ -6,6 +6,8 @@ import com.box.l10n.mojito.entity.GitBlame;
 import com.box.l10n.mojito.entity.Screenshot;
 import com.box.l10n.mojito.entity.ThirdPartyTextUnit;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
+import com.box.l10n.mojito.react.LinkConfig;
+import com.box.l10n.mojito.react.RepositoryConfig;
 import com.box.l10n.mojito.service.asset.AssetRepository;
 import com.box.l10n.mojito.service.assetTextUnit.AssetTextUnitRepository;
 import com.box.l10n.mojito.service.branch.BranchRepository;
@@ -58,6 +60,8 @@ public class GitBlameService {
   @Autowired ThirdPartyTextUnitRepository thirdPartyTextUnitRepository;
 
   @Autowired BranchRepository branchRepository;
+
+  @Autowired LinkConfig linkConfig;
 
   /**
    * Gets the {@link GitBlameWithUsage} information that matches the search parameters.
@@ -116,10 +120,21 @@ public class GitBlameService {
       gitBlameWithUsage.setContent(textUnitDTO.getSource());
       gitBlameWithUsage.setComment(textUnitDTO.getComment());
 
-      Branch branch = branchRepository.findByTextUnitId(textUnitDTO.getTmTextUnitId());
-      if (branch != null) {
-        gitBlameWithUsage.setIntroducedIn(branch.getName());
+      RepositoryConfig repositoryConfig = linkConfig.getLink().get(textUnitDTO.getRepositoryName());
+      String branchMatchRegex = ".*";
+
+      // Use custom branch matching for repository in app properties
+      if (repositoryConfig != null && repositoryConfig.getIntroducedIn().getBranchMatch() != null) {
+        branchMatchRegex = repositoryConfig.getIntroducedIn().getBranchMatch();
       }
+
+      Branch introducedInBranch =
+          branchRepository.findIntroducedInByTextUnitId(
+              textUnitDTO.getTmTextUnitId(), branchMatchRegex);
+      if (introducedInBranch != null) {
+        gitBlameWithUsage.setIntroducedIn(introducedInBranch.getName());
+      }
+
       gitBlameWithUsages.add(gitBlameWithUsage);
     }
     return gitBlameWithUsages;

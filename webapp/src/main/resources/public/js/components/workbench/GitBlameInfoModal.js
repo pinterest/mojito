@@ -524,6 +524,9 @@ class GitBlameInfoModal extends React.Component {
         }
     };
 
+    /**
+     * @returns {*} Template for introducedIn url, if in configuration, an empty string otherwise.
+     */
     getIntroducedInUrlTemplate = () => {
         try {
             return this.props.appConfig.link[this.props.textUnit.getRepositoryName()].introducedIn.url;
@@ -533,7 +536,7 @@ class GitBlameInfoModal extends React.Component {
     };
 
     /**
-     * @returns {*} Template for thirdParty label, if in configuration, or the string set in getThirdPartyDefaultLabel otherwise
+     * @returns {*} Template for introducedIn label, if in configuration
      */
     getIntroducedInLabelTemplate = () => {
         try {
