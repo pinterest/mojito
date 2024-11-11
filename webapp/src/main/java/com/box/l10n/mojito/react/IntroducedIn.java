@@ -4,8 +4,7 @@ public class IntroducedIn {
 
   String url;
   String label;
-
-  // Regex for only capturing specific branches that match regex, leave blank for all
+  // Regex to filter branch names in the introduced in query
   String branchMatch;
 
   public String getUrl() {
