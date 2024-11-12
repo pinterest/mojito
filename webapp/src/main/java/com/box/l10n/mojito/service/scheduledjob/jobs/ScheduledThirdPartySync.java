@@ -6,6 +6,7 @@ import com.box.l10n.mojito.pagerduty.PagerDutyIntegrationService;
 import com.box.l10n.mojito.pagerduty.PagerDutyPayload;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
+import com.box.l10n.mojito.service.pollableTask.PollableTaskService;
 import com.box.l10n.mojito.service.scheduledjob.IScheduledJob;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobRepository;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJob;
@@ -35,6 +36,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class ScheduledThirdPartySync implements IScheduledJob {
 
   static Logger logger = LoggerFactory.getLogger(ScheduledThirdPartySync.class);
+
+  @Autowired private PollableTaskService pollableTaskService;
 
   @Autowired private QuartzPollableTaskScheduler quartzPollableTaskScheduler;
   @Autowired private ScheduledJobRepository scheduledJobRepository;
@@ -78,7 +81,7 @@ public class ScheduledThirdPartySync implements IScheduledJob {
               ThirdPartySyncJob.class, thirdPartySyncJobInput, "thirdPartySync", timeout);
       pollableTaskId = task.getPollableTask().getId();
       // Wait for sync to complete
-      task.get();
+      pollableTaskService.waitForPollableTask(pollableTaskId, timeout * 1000, 10000);
     } catch (Exception e) {
       throw new JobExecutionException(e);
     }
