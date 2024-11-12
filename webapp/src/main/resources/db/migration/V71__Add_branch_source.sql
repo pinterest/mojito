@@ -10,6 +10,7 @@ ADD CONSTRAINT FK__TM_TEXT_UNIT_ID__INTRODUCED_IN FOREIGN KEY (tm_text_unit_id) 
 ALTER TABLE tm_text_unit_to_branch
 ADD CONSTRAINT FK__BRANCH_ID__INTRODUCED_IN FOREIGN KEY (branch_id) REFERENCES branch(id);
 
+create index I__TEXT_UNIT_TO_BRANCH__TEXT_UNIT_ID on tm_text_unit_to_branch (tm_text_unit_id);
 
 CREATE TABLE branch_source(
    id bigint AUTO_INCREMENT PRIMARY KEY,
@@ -19,4 +20,6 @@ CREATE TABLE branch_source(
 
 ALTER TABLE branch_source
 ADD CONSTRAINT FK__BRANCH_ID__BRANCH_SOURCE_URL FOREIGN KEY (branch_id) REFERENCES branch(id);
+
+create index I__BRANCH_SOURCE__BRANCH_ID on branch_source (branch_id);
 

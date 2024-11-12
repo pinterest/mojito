@@ -111,7 +111,12 @@ public class BranchService {
       BranchSource bSource = new BranchSource();
       bSource.setBranch(branch);
       bSource.setUrl(url);
-      branchSourceRepository.save(bSource);
+      try {
+        branchSourceRepository.save(bSource);
+      } catch (Exception e) {
+        logger.error(
+            "Failed to save branch source for branch '{}' with url '{}'", branch.getName(), url, e);
+      }
     }
   }
 }

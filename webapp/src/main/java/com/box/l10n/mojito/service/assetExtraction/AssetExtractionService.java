@@ -1306,7 +1306,15 @@ public class AssetExtractionService {
           textUnitToBranch.setBranch(branch);
           textUnitToBranch.setTmTextUnit(
               tmTextUnitRepository.findById(textUnit.getTmTextUnitId()).get());
-          tmTextUnitToBranchRepository.save(textUnitToBranch);
+          try {
+            tmTextUnitToBranchRepository.save(textUnitToBranch);
+          } catch (Exception e) {
+            logger.error(
+                "Failed to save text unit with id '{}' to text unit to branch table with branch id '{}'",
+                textUnit.getTmTextUnitId(),
+                branch.getId(),
+                e);
+          }
         });
   }
 }
