@@ -1,13 +1,12 @@
 package com.box.l10n.mojito.service.gitblame;
 
 import com.box.l10n.mojito.entity.AssetTextUnit;
-import com.box.l10n.mojito.entity.Branch;
+import com.box.l10n.mojito.entity.BranchSource;
 import com.box.l10n.mojito.entity.GitBlame;
 import com.box.l10n.mojito.entity.Screenshot;
 import com.box.l10n.mojito.entity.ThirdPartyTextUnit;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
 import com.box.l10n.mojito.react.LinkConfig;
-import com.box.l10n.mojito.react.RepositoryConfig;
 import com.box.l10n.mojito.service.asset.AssetRepository;
 import com.box.l10n.mojito.service.assetTextUnit.AssetTextUnitRepository;
 import com.box.l10n.mojito.service.branch.BranchRepository;
@@ -16,6 +15,7 @@ import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.pollableTask.PollableFutureTaskResult;
 import com.box.l10n.mojito.service.screenshot.ScreenshotService;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartyTextUnitRepository;
+import com.box.l10n.mojito.service.tm.BranchSourceRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.box.l10n.mojito.service.tm.search.TextUnitSearcher;
@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,6 +63,10 @@ public class GitBlameService {
   @Autowired BranchRepository branchRepository;
 
   @Autowired LinkConfig linkConfig;
+  @Autowired private BranchSourceRepository branchSourceRepository;
+
+  @Value("${l10n.branchSource.notFound:-}")
+  private String branchSourceNotFound;
 
   /**
    * Gets the {@link GitBlameWithUsage} information that matches the search parameters.
@@ -120,19 +125,12 @@ public class GitBlameService {
       gitBlameWithUsage.setContent(textUnitDTO.getSource());
       gitBlameWithUsage.setComment(textUnitDTO.getComment());
 
-      RepositoryConfig repositoryConfig = linkConfig.getLink().get(textUnitDTO.getRepositoryName());
-      String branchMatchRegex = ".*";
-
-      // Use custom branch matching for repository in app properties
-      if (repositoryConfig != null && repositoryConfig.getIntroducedIn().getBranchMatch() != null) {
-        branchMatchRegex = repositoryConfig.getIntroducedIn().getBranchMatch();
-      }
-
-      Branch introducedInBranch =
-          branchRepository.findIntroducedInByTextUnitId(
-              textUnitDTO.getTmTextUnitId(), branchMatchRegex);
-      if (introducedInBranch != null) {
-        gitBlameWithUsage.setIntroducedIn(introducedInBranch.getName());
+      BranchSource branchSource =
+          branchSourceRepository.findByTextUnitId(textUnitDTO.getTmTextUnitId());
+      if (branchSource != null) {
+        gitBlameWithUsage.setIntroducedBy(branchSource.getUrl());
+      } else {
+        gitBlameWithUsage.setIntroducedBy(branchSourceNotFound);
       }
 
       gitBlameWithUsages.add(gitBlameWithUsage);

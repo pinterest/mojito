@@ -101,7 +101,7 @@ class GitBlameInfoModal extends React.Component {
                     {this.displayInfoWithId("textUnit.gitBlameModal.location", this.getLocationLinks())}
                     {this.shouldShowThirdPartyTMS() && this.displayInfoWithId("textUnit.gitBlameModal.thirdPartyTMS", this.getThirdPartyLink())}
                     {this.shouldShowCustomMd5() && this.displayInfoWithId("textUnit.gitBlameModal.customMd5", this.getCustomMd5Link())}
-                    {this.displayInfoWithId("textUnit.gitBlameModal.introducedIn", this.getIntroducedInLink())}
+                    {this.displayInfoWithId("textUnit.gitBlameModal.introducedBy", this.getIntroducedByLink())}
                 </div>
             );
     };
@@ -222,9 +222,9 @@ class GitBlameInfoModal extends React.Component {
         }
     };
 
-    getIntroducedIn = () => {
+    getIntroducedBy = () => {
         try {
-            return this.props.gitBlameWithUsage.introducedIn.toString();
+            return this.props.gitBlameWithUsage.introducedBy.toString();
         } catch (e) {
             return "-";
         }
@@ -242,8 +242,7 @@ class GitBlameInfoModal extends React.Component {
             textUnitNameInSource: this.getTextUnitNameInSource(),
             assetPath: this.props.textUnit.getAssetPath(),
             thirdPartyTextUnitId: this.getThirdPartyTextUnitId(),
-            targetLocale: this.props.textUnit.getTargetLocale(),
-            introducedIn: this.getIntroducedIn(),
+            targetLocale: this.props.textUnit.getTargetLocale()
         };
     };
 
@@ -292,15 +291,13 @@ class GitBlameInfoModal extends React.Component {
             this.getParamsForLinks());
     };
 
-    getIntroducedInLink = () => {
-        if (this.props.gitBlameWithUsage && this.props.gitBlameWithUsage.introducedIn !== null && this.shouldShowIntroducedInLink()) {
-            return LinkHelper.renderLinkOrLabel(
-                this.getIntroducedInUrlTemplate(),
-                this.getIntroducedInLabelTemplate(),
-                this.getParamsForLinks()
-            );
-        } else {
-            return this.getIntroducedIn();
+    getIntroducedByLink = () => {
+        try {
+            const parsedUrl = new URL(this.getIntroducedBy());
+            const path = parsedUrl.pathname.slice(1);
+            return <a href={parsedUrl.toString()}>{parsedUrl.toString()}</a>;
+        } catch (error) {
+            return this.getIntroducedBy();
         }
     };
 
@@ -460,14 +457,6 @@ class GitBlameInfoModal extends React.Component {
         }
     };
 
-    shouldShowIntroducedInLink = () => {
-        try {
-            return this.props.appConfig.link[this.props.textUnit.getRepositoryName()].introducedIn !== null;
-        } catch (e) {
-            return false;
-        }
-    };
-
     getCustomMd5Template = () => {
         try {
             return this.props.appConfig.link[this.props.textUnit.getRepositoryName()].customMd5.template;
@@ -519,28 +508,6 @@ class GitBlameInfoModal extends React.Component {
     getThirdPartyLabelTemplate = () => {
         try {
             return this.props.appConfig.link[this.props.textUnit.getRepositoryName()].thirdParty.label;
-        } catch (e) {
-            return null;
-        }
-    };
-
-    /**
-     * @returns {*} Template for introducedIn url, if in configuration, an empty string otherwise.
-     */
-    getIntroducedInUrlTemplate = () => {
-        try {
-            return this.props.appConfig.link[this.props.textUnit.getRepositoryName()].introducedIn.url;
-        } catch (e) {
-            return "";
-        }
-    };
-
-    /**
-     * @returns {*} Template for introducedIn label, if in configuration
-     */
-    getIntroducedInLabelTemplate = () => {
-        try {
-            return this.props.appConfig.link[this.props.textUnit.getRepositoryName()].introducedIn.label;
         } catch (e) {
             return null;
         }

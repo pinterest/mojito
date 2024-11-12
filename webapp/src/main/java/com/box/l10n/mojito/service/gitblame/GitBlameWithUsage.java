@@ -47,7 +47,7 @@ public class GitBlameWithUsage {
   Set<Screenshot> screenshots = new HashSet<>();
 
   @JsonView(View.GitBlameWithUsage.class)
-  String introducedIn;
+  String introducedBy;
 
   @JsonView(View.GitBlameWithUsage.class)
   boolean isVirtual;
@@ -156,12 +156,12 @@ public class GitBlameWithUsage {
     this.isVirtual = isVirtual;
   }
 
-  public String getIntroducedIn() {
-    return introducedIn;
+  public String getIntroducedBy() {
+    return introducedBy;
   }
 
-  public void setIntroducedIn(String introducedIn) {
-    this.introducedIn = introducedIn;
+  public void setIntroducedBy(String introducedBy) {
+    this.introducedBy = introducedBy;
   }
 
   public boolean isVirtual() {
