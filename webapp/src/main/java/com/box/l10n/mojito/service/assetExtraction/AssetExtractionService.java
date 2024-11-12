@@ -220,8 +220,7 @@ public class AssetExtractionService {
     updateBranchAssetExtraction(
         assetContent, createdTextUnitsResult.getUpdatedState(), filterOptions, currentTask);
 
-    updateTextUnitsIntroducedLink(
-        createdTextUnitsResult.getCreatedTextUnits(), assetContent.getBranch());
+    updateTextUnitsToBranch(createdTextUnitsResult.getCreatedTextUnits(), assetContent.getBranch());
 
     updateLastSuccessfulAssetExtraction(
         asset, createdTextUnitsResult.getUpdatedState(), currentTask);
@@ -1299,9 +1298,8 @@ public class AssetExtractionService {
     return assetTextUnit;
   }
 
-  public void updateTextUnitsIntroducedLink(
-      ImmutableList<BranchStateTextUnit> textUnits, Branch branch) {
-
+  public void updateTextUnitsToBranch(ImmutableList<BranchStateTextUnit> textUnits, Branch branch) {
+    // Map the text units to their branch
     textUnits.forEach(
         textUnit -> {
           TMTextUnitToBranch textUnitToBranch = new TMTextUnitToBranch();

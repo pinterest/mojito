@@ -99,16 +99,19 @@ public class BranchService {
   }
 
   public void addBranchSource(Branch branch) {
-    if (branchSourceConfig.getBranchSources().get(branch.getRepository().getName()) != null) {
+
+    com.box.l10n.mojito.service.branch.BranchSource branchSource =
+        branchSourceConfig.getBranchSources().get(branch.getRepository().getName());
+
+    if (branchSource != null) {
       String url =
-          branchSourceConfig.getBranchSources().get(branch.getRepository().getName()).getUrl();
+          StrSubstitutor.replace(
+              branchSource.getUrl(), ImmutableMap.of("branchName", branch.getName()), "{", "}");
 
-      url = StrSubstitutor.replace(url, ImmutableMap.of("branchName", branch.getName()), "{", "}");
-
-      BranchSource branchSource = new BranchSource();
-      branchSource.setBranch(branch);
-      branchSource.setUrl(url);
-      branchSourceRepository.save(branchSource);
+      BranchSource bSource = new BranchSource();
+      bSource.setBranch(branch);
+      bSource.setUrl(url);
+      branchSourceRepository.save(bSource);
     }
   }
 }
