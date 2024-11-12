@@ -99,6 +99,8 @@ public class BranchService {
   }
 
   public void addBranchSource(Branch branch) {
+    // Mojito push links text unit extractions to empty branch, don't attempt to update the source
+    if (branch.getName() == null) return;
 
     com.box.l10n.mojito.service.branch.BranchSource branchSource =
         branchSourceConfig.getBranchSources().get(branch.getRepository().getName());
