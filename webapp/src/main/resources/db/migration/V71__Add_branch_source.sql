@@ -1,7 +1,7 @@
 CREATE TABLE tm_text_unit_to_branch(
-   id bigint AUTO_INCREMENT PRIMARY KEY,
-   tm_text_unit_id bigint NOT NULL,
-   branch_id bigint NOT NULL
+   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+   tm_text_unit_id BIGINT NOT NULL,
+   branch_id BIGINT NOT NULL
 );
 
 ALTER TABLE tm_text_unit_to_branch
@@ -13,9 +13,9 @@ ADD CONSTRAINT FK__TM_TEXT_UNIT_TO_BRANCH__BRANCH_ID FOREIGN KEY (branch_id) REF
 create index I__TEXT_UNIT_TO_BRANCH__TEXT_UNIT_ID on tm_text_unit_to_branch (tm_text_unit_id);
 
 CREATE TABLE branch_source(
-   id bigint AUTO_INCREMENT PRIMARY KEY,
-   branch_id bigint NOT NULL,
-   url VARCHAR(300) NOT NULL
+   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+   branch_id BIGINT NOT NULL,
+   url VARCHAR(255) NOT NULL
 );
 
 ALTER TABLE branch_source
