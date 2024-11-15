@@ -23,8 +23,6 @@ import com.box.l10n.mojito.service.branch.BranchTextUnitStatisticRepository;
 import com.box.l10n.mojito.service.branch.SparseBranchStatisticRepository;
 import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -60,12 +58,6 @@ public class BranchStatisticWS {
   @Autowired BranchTextUnitStatisticRepository branchTextUnitStatisticRepository;
 
   @Operation(summary = "Get paginated Branch Statistics for a given set of parameters")
-  @ApiResponses(
-      value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Successfully retrieved paginated Branch Statistics")
-      })
   @JsonView(View.BranchStatistic.class)
   @RequestMapping(
       value = "/api/branchStatistics",
@@ -136,12 +128,6 @@ public class BranchStatisticWS {
   }
 
   @Operation(summary = "Get Branch Text Unit Statistics paginated for a specific Branch Statistic")
-  @ApiResponses(
-      value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Successfully retrieved paginated Branch Text Unit Statistics")
-      })
   @JsonView(View.BranchTextUnitStatistic.class)
   @RequestMapping(
       value = "/api/branchStatistics/{id}/branchTextUnitStatistics",

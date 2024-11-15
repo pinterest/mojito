@@ -10,8 +10,6 @@ import com.box.l10n.mojito.service.asset.VirtualAssetTextUnit;
 import com.box.l10n.mojito.service.asset.VirutalAssetMissingTextUnitException;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,10 +45,6 @@ public class VirtualAssetWS {
   }
 
   @Operation(summary = "Create Text Units for a specific Virtual Asset asynchronously")
-  @ApiResponses(
-      value = {
-        @ApiResponse(responseCode = "200", description = "Successfully created a Pollable Task")
-      })
   @RequestMapping(
       value = "/api/virtualAssets/{assetId}/textUnits",
       method = RequestMethod.POST,
@@ -67,10 +61,6 @@ public class VirtualAssetWS {
   }
 
   @Operation(summary = "Update Text Units for a specific Virtual Asset asynchronously")
-  @ApiResponses(
-      value = {
-        @ApiResponse(responseCode = "200", description = "Successfully created a Pollable Task")
-      })
   @RequestMapping(
       value = "/api/virtualAssets/{assetId}/textUnits",
       method = RequestMethod.PUT,
@@ -97,10 +87,6 @@ public class VirtualAssetWS {
   }
 
   @Operation(summary = "Create Text Units for a specific Virtual Asset asynchronously")
-  @ApiResponses(
-      value = {
-        @ApiResponse(responseCode = "200", description = "Successfully created a Pollable Task")
-      })
   @RequestMapping(
       value = "/api/virtualAssets/{assetId}/locale/{localeId}/textUnits",
       method = RequestMethod.POST,

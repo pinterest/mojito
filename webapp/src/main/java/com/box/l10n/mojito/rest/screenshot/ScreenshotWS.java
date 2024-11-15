@@ -10,8 +10,6 @@ import com.box.l10n.mojito.service.screenshot.ScreenshotService;
 import com.box.l10n.mojito.service.tm.search.SearchType;
 import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
