@@ -621,7 +621,6 @@ public class TMService {
               && currentTmTextUnitVariant.getStatus() == TMTextUnitVariant.Status.OVERRIDDEN;
       if (currentTmTextUnitVariant.getStatus() == TMTextUnitVariant.Status.MT_REVIEW_NEEDED
           && status == TMTextUnitVariant.Status.APPROVED) {
-
         logAiReviewMetrics(content, currentTmTextUnitVariant);
       }
       boolean updateNeeded =
