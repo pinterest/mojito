@@ -80,6 +80,12 @@
             <version>${icu4j.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.12.0</version>
+        </dependency>
+
     </dependencies>
 
     <!-- SCM setup to push changes to the Github repo on release -->
