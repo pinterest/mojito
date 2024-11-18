@@ -152,7 +152,7 @@ public class TMService {
   @Value("${l10n.tmService.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   String schedulerName;
 
-  @Value("${l10n.ai.translation.similarity.review.editDistanceMax:100}")
+  @Value("${l10n.ai.translation.similarity.review.editDistanceMax:50}")
   int editDistanceMax;
 
   @Value("${l10n.ai.translation.review.similarity.highPercentage:90}")
