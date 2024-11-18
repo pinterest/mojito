@@ -296,7 +296,8 @@ public class ThirdPartyTMSSmartlingWithJson {
                                 skipTextUnitsWithPattern,
                                 skipAssetsWithPathPattern,
                                 includeTextUnitsWithPattern,
-                                StatusFilter.MT_TRANSLATED),
+                                StatusFilter.MT_TRANSLATED,
+                                true),
                             false)
                         .collect(Collectors.groupingBy(TextUnitDTO::getUploadedFileUri));
 
@@ -473,7 +474,8 @@ public class ThirdPartyTMSSmartlingWithJson {
       String skipTextUnitsWithPattern,
       String skipAssetsWithPathPattern,
       String includeTextUnitsWithPattern,
-      StatusFilter statusFilter) {
+      StatusFilter statusFilter,
+      boolean isRetrieveFileUploadUri) {
 
     PageFetcherOffsetAndLimitSplitIterator<TextUnitDTO>
         textUnitDTOPageFetcherOffsetAndLimitSplitIterator =
@@ -491,6 +493,7 @@ public class ThirdPartyTMSSmartlingWithJson {
                   parameters.setOffset(offset);
                   parameters.setLimit(limit);
                   parameters.setPluralFormsFiltered(true);
+                  parameters.setIsRetrieveUploadedFileUri(isRetrieveFileUploadUri);
                   List<TextUnitDTO> search = textUnitSearcher.search(parameters);
                   return search;
                 },
