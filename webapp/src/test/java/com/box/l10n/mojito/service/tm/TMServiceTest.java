@@ -51,7 +51,6 @@ import com.google.common.collect.Lists;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -4815,7 +4814,6 @@ public class TMServiceTest extends ServiceTestBase {
   }
 
   @Test
-  @Transactional
   public void testMTReviewMetricsLoggingTranslationUpdatedMediumSimilarity()
       throws RepositoryNameAlreadyUsedException {
     MeterRegistry meterRegistry = Mockito.spy(new SimpleMeterRegistry());
@@ -4862,7 +4860,6 @@ public class TMServiceTest extends ServiceTestBase {
   }
 
   @Test
-  @Transactional
   public void testMTReviewMetricsLoggingTranslationUpdatedHighSimilarity()
       throws RepositoryNameAlreadyUsedException {
     MeterRegistry meterRegistry = Mockito.spy(new SimpleMeterRegistry());
@@ -4909,7 +4906,6 @@ public class TMServiceTest extends ServiceTestBase {
   }
 
   @Test
-  @Transactional
   public void testMTReviewMetricsLoggingTranslationUpdatedLowSimilarity()
       throws RepositoryNameAlreadyUsedException {
     MeterRegistry meterRegistry = Mockito.spy(new SimpleMeterRegistry());
@@ -4956,7 +4952,6 @@ public class TMServiceTest extends ServiceTestBase {
   }
 
   @Test
-  @Transactional
   public void testMTReviewMetricsLoggingTranslationMatch()
       throws RepositoryNameAlreadyUsedException {
     MeterRegistry meterRegistry = Mockito.spy(new SimpleMeterRegistry());
@@ -5003,7 +4998,6 @@ public class TMServiceTest extends ServiceTestBase {
   }
 
   @Test
-  @Transactional
   public void testMTReviewMetricsLoggingTranslationNotApproved()
       throws RepositoryNameAlreadyUsedException {
     MeterRegistry meterRegistry = Mockito.spy(new SimpleMeterRegistry());

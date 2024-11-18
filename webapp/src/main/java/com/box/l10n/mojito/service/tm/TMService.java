@@ -621,7 +621,7 @@ public class TMService {
               && currentTmTextUnitVariant.getStatus() == TMTextUnitVariant.Status.OVERRIDDEN;
       if (currentTmTextUnitVariant.getStatus() == TMTextUnitVariant.Status.MT_REVIEW_NEEDED
           && status == TMTextUnitVariant.Status.APPROVED) {
-        logAiReviewMetrics(content, currentTmTextUnitVariant);
+        logAiReviewMetrics(content, currentTmTextUnitVariant, localeId);
       }
       boolean updateNeeded =
           !overridden
@@ -669,21 +669,21 @@ public class TMService {
   }
 
   private void logAiReviewMetrics(
-      String reviewedTranslation, TMTextUnitVariant currentTmTextUnitVariant) {
+      String reviewedTranslation, TMTextUnitVariant currentTmTextUnitVariant, Long localeId) {
     if (currentTmTextUnitVariant.getContent().equals(reviewedTranslation)) {
       meterRegistry
           .counter(
               "AiTranslation.review.similarity.match",
-              Tags.of("locale", currentTmTextUnitVariant.getLocale().getBcp47Tag()))
+              Tags.of("locale", localeService.findById(localeId).getBcp47Tag()))
           .increment();
     } else {
       // Translation has been updated in review, check similarity of original to new
-      logSimilarityMetrics(reviewedTranslation, currentTmTextUnitVariant);
+      logSimilarityMetrics(reviewedTranslation, currentTmTextUnitVariant, localeId);
     }
   }
 
   private void logSimilarityMetrics(
-      String reviewedTranslation, TMTextUnitVariant currentTmTextUnitVariant) {
+      String reviewedTranslation, TMTextUnitVariant currentTmTextUnitVariant, Long localeId) {
     LevenshteinDistance levenshteinDistance = new LevenshteinDistance(editDistanceMax);
     int editDistance =
         levenshteinDistance.apply(currentTmTextUnitVariant.getContent(), reviewedTranslation);
@@ -693,7 +693,7 @@ public class TMService {
       meterRegistry
           .counter(
               "AiTranslation.review.similarity.low",
-              Tags.of("locale", currentTmTextUnitVariant.getLocale().getBcp47Tag()))
+              Tags.of("locale", localeService.findById(localeId).getBcp47Tag()))
           .increment();
     } else {
       double similarityPercentage =
@@ -703,19 +703,19 @@ public class TMService {
         meterRegistry
             .counter(
                 "AiTranslation.review.similarity.high",
-                Tags.of("locale", currentTmTextUnitVariant.getLocale().getBcp47Tag()))
+                Tags.of("locale", localeService.findById(localeId).getBcp47Tag()))
             .increment();
       } else if (similarityPercentage >= aiTranslationSimilarityMediumPercentage) {
         meterRegistry
             .counter(
                 "AiTranslation.review.similarity.medium",
-                Tags.of("locale", currentTmTextUnitVariant.getLocale().getBcp47Tag()))
+                Tags.of("locale", localeService.findById(localeId).getBcp47Tag()))
             .increment();
       } else {
         meterRegistry
             .counter(
                 "AiTranslation.review.similarity.low",
-                Tags.of("locale", currentTmTextUnitVariant.getLocale().getBcp47Tag()))
+                Tags.of("locale", localeService.findById(localeId).getBcp47Tag()))
             .increment();
       }
     }
