@@ -11,6 +11,7 @@ import com.box.l10n.mojito.quartz.QuartzJobInfo;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.tm.BranchSourceRepository;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.text.MessageFormat;
 import java.util.Set;
@@ -103,22 +104,23 @@ public class BranchService {
     if (branch.getName() == null) return;
 
     com.box.l10n.mojito.service.branch.BranchSource branchSource =
-        branchSourceConfig.getBranchSources().get(branch.getRepository().getName());
+        branchSourceConfig.getRepoOverride().get(branch.getRepository().getName());
 
-    if (branchSource != null) {
-      String url =
-          StrSubstitutor.replace(
-              branchSource.getUrl(), ImmutableMap.of("branchName", branch.getName()), "{", "}");
+    String sourceUrl = (branchSource != null) ? branchSource.getUrl() : branchSourceConfig.getUrl();
+    if (Strings.isNullOrEmpty(sourceUrl)) return;
 
-      BranchSource bSource = new BranchSource();
-      bSource.setBranch(branch);
-      bSource.setUrl(url);
-      try {
-        branchSourceRepository.save(bSource);
-      } catch (Exception e) {
-        logger.error(
-            "Failed to save branch source for branch '{}' with url '{}'", branch.getName(), url, e);
-      }
+    String url =
+        StrSubstitutor.replace(
+            sourceUrl, ImmutableMap.of("branchName", branch.getName()), "{", "}");
+
+    BranchSource bSource = new BranchSource();
+    bSource.setBranch(branch);
+    bSource.setUrl(url);
+    try {
+      branchSourceRepository.save(bSource);
+    } catch (Exception e) {
+      logger.error(
+          "Failed to save branch source for branch '{}' with url '{}'", branch.getName(), url, e);
     }
   }
 }

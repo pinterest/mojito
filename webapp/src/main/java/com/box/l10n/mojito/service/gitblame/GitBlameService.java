@@ -10,6 +10,7 @@ import com.box.l10n.mojito.react.LinkConfig;
 import com.box.l10n.mojito.service.asset.AssetRepository;
 import com.box.l10n.mojito.service.assetTextUnit.AssetTextUnitRepository;
 import com.box.l10n.mojito.service.branch.BranchRepository;
+import com.box.l10n.mojito.service.branch.BranchSourceConfig;
 import com.box.l10n.mojito.service.pollableTask.Pollable;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.pollableTask.PollableFutureTaskResult;
@@ -31,7 +32,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,8 +65,7 @@ public class GitBlameService {
   @Autowired LinkConfig linkConfig;
   @Autowired private BranchSourceRepository branchSourceRepository;
 
-  @Value("${l10n.branchSource.notFound:-}")
-  private String branchSourceNotFound;
+  @Autowired private BranchSourceConfig branchSourceConfig;
 
   /**
    * Gets the {@link GitBlameWithUsage} information that matches the search parameters.
@@ -130,7 +129,7 @@ public class GitBlameService {
       if (branchSource != null) {
         gitBlameWithUsage.setIntroducedBy(branchSource.getUrl());
       } else {
-        gitBlameWithUsage.setIntroducedBy(branchSourceNotFound);
+        gitBlameWithUsage.setIntroducedBy(branchSourceConfig.getNotFound());
       }
 
       gitBlameWithUsages.add(gitBlameWithUsage);
