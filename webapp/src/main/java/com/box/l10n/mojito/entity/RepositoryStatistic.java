@@ -38,11 +38,9 @@ public class RepositoryStatistic extends AuditableEntity {
   private Long usedTextUnitWordCount = 0L;
 
   /** The number of unused text units in the repository */
-  @JsonView(View.Default.class)
   private Long unusedTextUnitCount = 0L;
 
   /** The word count of used text units */
-  @JsonView(View.Default.class)
   private Long unusedTextUnitWordCount = 0L;
 
   /** The number of text unit for plural forms */
@@ -66,7 +64,6 @@ public class RepositoryStatistic extends AuditableEntity {
   private ZonedDateTime ooslaCreatedBefore;
 
   /** The number of text unit without comments */
-  @JsonView(View.Default.class)
   private Long uncommentedTextUnitCount = 0L;
 
   @JsonView(View.RepositorySummary.class)
@@ -79,7 +76,6 @@ public class RepositoryStatistic extends AuditableEntity {
   // @OrderBy(value = "locale")
   private Set<RepositoryLocaleStatistic> repositoryLocaleStatistics = new HashSet<>();
 
-  @JsonView(View.Default.class)
   @CreatedBy
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(

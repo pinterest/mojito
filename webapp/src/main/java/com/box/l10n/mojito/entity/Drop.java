@@ -45,7 +45,6 @@ import org.springframework.data.annotation.CreatedBy;
     })
 public class Drop extends AuditableEntity {
 
-  @JsonView(View.Default.class)
   @Column(name = "drop_exporter_type")
   @Enumerated(EnumType.STRING)
   DropExporterType dropExporterType;

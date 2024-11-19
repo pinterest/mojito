@@ -91,7 +91,6 @@ public class Repository extends AuditableEntity {
 
   @OneToMany(mappedBy = "repository", fetch = FetchType.LAZY)
   @NotAudited
-  @JsonView(View.Default.class)
   //  @JsonManagedReference
   Set<Branch> branches = new HashSet<>();
 

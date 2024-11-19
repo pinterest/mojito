@@ -35,38 +35,30 @@ public class BranchNotification extends BaseEntity {
   private Branch branch;
 
   @Schema(type = "integer", format = "int64", example = "1715699917000")
-  @JsonView(View.Default.class)
   @Column(name = "new_msg_sent_at")
   ZonedDateTime newMsgSentAt;
 
   @Schema(type = "integer", format = "int64", example = "1715699917000")
-  @JsonView(View.Default.class)
   @Column(name = "updated_msg_sent_at")
   ZonedDateTime updatedMsgSentAt;
 
   @Schema(type = "integer", format = "int64", example = "1715699917000")
-  @JsonView(View.Default.class)
   @Column(name = "screenshot_missing_msg_sent_at")
   ZonedDateTime screenshotMissingMsgSentAt;
 
   @Schema(type = "integer", format = "int64", example = "1715699917000")
-  @JsonView(View.Default.class)
   @Column(name = "translated_msg_sent_at")
   ZonedDateTime translatedMsgSentAt;
 
-  @JsonView(View.Default.class)
   @Column(name = "content_md5")
   String contentMD5;
 
-  @JsonView(View.Default.class)
   @Column(name = "message_id")
   String messageId;
 
-  @JsonView(View.Default.class)
   @Column(name = "sender_type")
   String senderType;
 
-  @JsonView(View.Default.class)
   @Column(name = "notifier_id")
   String notifierId;
 

@@ -98,19 +98,15 @@ public class TranslationKit extends AuditableEntity {
   @JsonView(View.DropSummary.class)
   private Type type = Type.TRANSLATION;
 
-  @JsonView(View.Default.class)
   @Column(name = "num_translation_kit_units")
   private int numTranslationKitUnits;
 
-  @JsonView(View.Default.class)
   @Column(name = "num_translated_translation_kit_units")
   private int numTranslatedTranslationKitUnits;
 
-  @JsonView(View.Default.class)
   @Column(name = "num_source_equals_target")
   private int numSourceEqualsTarget;
 
-  @JsonView(View.Default.class)
   @Column(name = "num_bad_language_detections")
   private int numBadLanguageDetections;
 
@@ -122,7 +118,6 @@ public class TranslationKit extends AuditableEntity {
   @Column(name = "imported")
   private Boolean imported = false;
 
-  @JsonView(View.Default.class)
   @ElementCollection
   @CollectionTable(
       name = "translation_kit_not_found_text_unit_ids",
@@ -131,7 +126,6 @@ public class TranslationKit extends AuditableEntity {
           @ForeignKey(name = "FK__TRANSLATION_KIT_NOT_FOUND_TEXT_UNIT_IDS__TRANSLATION_KIT__ID"))
   private Set<String> notFoundTextUnitIds;
 
-  @JsonView(View.Default.class)
   @CreatedBy
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(

@@ -23,7 +23,6 @@ import jakarta.persistence.Table;
     })
 public class GitBlame extends AuditableEntity {
 
-  @JsonView(View.Default.class)
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(
       name = "tm_text_unit_id",

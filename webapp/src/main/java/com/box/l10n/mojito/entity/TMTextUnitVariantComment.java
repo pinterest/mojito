@@ -88,7 +88,6 @@ public class TMTextUnitVariantComment extends AuditableEntity {
   @JsonView(View.TranslationHistorySummary.class)
   private String content;
 
-  @JsonView(View.Default.class)
   @CreatedBy
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(
