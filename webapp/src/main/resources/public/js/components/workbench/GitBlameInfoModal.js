@@ -294,7 +294,6 @@ class GitBlameInfoModal extends React.Component {
     getIntroducedByLink = () => {
         try {
             const parsedUrl = new URL(this.getIntroducedBy());
-            const path = parsedUrl.pathname.slice(1);
             return <a href={parsedUrl.toString()}>{parsedUrl.toString()}</a>;
         } catch (error) {
             return this.getIntroducedBy();
