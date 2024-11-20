@@ -3,7 +3,6 @@ package com.box.l10n.mojito.security;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.core.userdetails.UserDetailsByNameServiceWrapper;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider;
 
 // This must in sync with {@link
@@ -15,15 +14,15 @@ class WebSecurityHeaderConfig {
   PreAuthenticatedAuthenticationProvider preAuthenticatedAuthenticationProvider() {
     PreAuthenticatedAuthenticationProvider preAuthenticatedAuthenticationProvider =
         new PreAuthenticatedAuthenticationProvider();
-    UserDetailsByNameServiceWrapper userDetailsByNameServiceWrapper =
-        new UserDetailsByNameServiceWrapper(getUserDetailsServiceCreatePartial());
+    UserDetailServiceAuthWrapper userDetailsByNameServiceWrapper =
+        new UserDetailServiceAuthWrapper(getPrincipalDetailsServiceCreatePartial());
     preAuthenticatedAuthenticationProvider.setPreAuthenticatedUserDetailsService(
         userDetailsByNameServiceWrapper);
     return preAuthenticatedAuthenticationProvider;
   }
 
   @Bean
-  protected UserDetailsServiceCreatePartialImpl getUserDetailsServiceCreatePartial() {
+  protected PrincipalDetailService getPrincipalDetailsServiceCreatePartial() {
     return new UserDetailsServiceCreatePartialImpl();
   }
 }

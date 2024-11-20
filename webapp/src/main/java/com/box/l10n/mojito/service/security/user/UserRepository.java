@@ -56,4 +56,14 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
       """)
   Page<User> findByUsernameOrName(
       @Param("username") String username, @Param("search") String search, Pageable pageable);
+
+  @Query(
+      value =
+          """
+    SELECT u FROM  User u
+      WHERE LOWER(u.username) LIKE 'spiffe://%'
+        AND LOWER(u.username) LIKE LOWER(CONCAT(:serviceName, '%'))
+        AND u.enabled = true
+    """)
+  Optional<List<User>> findService(@Param("serviceName") String serviceName);
 }

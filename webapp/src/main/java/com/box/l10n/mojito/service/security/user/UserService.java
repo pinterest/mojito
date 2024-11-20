@@ -4,13 +4,16 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.box.l10n.mojito.entity.security.user.Authority;
 import com.box.l10n.mojito.entity.security.user.User;
+import com.box.l10n.mojito.pagerduty.PagerDutyClient;
+import com.box.l10n.mojito.pagerduty.PagerDutyException;
+import com.box.l10n.mojito.pagerduty.PagerDutyIntegrationService;
+import com.box.l10n.mojito.pagerduty.PagerDutyPayload;
 import com.box.l10n.mojito.security.AuditorAwareImpl;
 import com.box.l10n.mojito.security.Role;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
@@ -39,6 +42,18 @@ public class UserService {
   @Autowired AuthorityRepository authorityRepository;
 
   @Autowired AuditorAwareImpl auditorAwareImpl;
+
+  PagerDutyClient pagerDutyClient;
+
+  @Autowired
+  public UserService(PagerDutyIntegrationService pagerDutyIntegrationService) {
+    Optional<PagerDutyClient> defaultPagerDutyClient =
+        pagerDutyIntegrationService.getDefaultPagerDutyClient();
+    if (defaultPagerDutyClient.isEmpty()) {
+      throw new RuntimeException("Default pager duty client is required");
+    }
+    this.pagerDutyClient = defaultPagerDutyClient.get();
+  }
 
   /**
    * Allow PMs and ADMINs to create / edit users. However, a PM user can not create / edit ADMIN
@@ -384,5 +399,51 @@ public class UserService {
           Hibernate.initialize(u.getCreatedByUser());
         });
     return users;
+  }
+
+  /**
+   * Gets a service by name and if it doesn't exist create a created user.
+   *
+   * <p>All admin service accounts should already be created beforehand however, create a non-admin
+   * account to so long. If they need admin permissions, we will promote the account
+   *
+   * @param serviceName
+   * @return
+   */
+  public User getOrCreateServiceAccountUser(String serviceName) {
+    Optional<List<User>> users = userRepository.findService(serviceName);
+    if (users.isEmpty()) {
+      sendPagerDutyNotification(serviceName);
+      return null;
+    }
+
+    List<User> matchingUsers = users.get();
+    if (matchingUsers.size() == 1) {
+      return matchingUsers.getFirst();
+    }
+
+    // if multiple users match the SPIFFE, then assign the longest SPIFFE as the user.
+    return matchingUsers.stream()
+        .sorted(
+            Comparator.comparingInt(
+                obj -> obj.getUsername() != null ? obj.getUsername().length() : 0))
+        .toList()
+        .reversed()
+        .getLast();
+  }
+
+  private void sendPagerDutyNotification(String serviceName) {
+    String dedupKey = "mojito:auth:unrecognized:service:account:" + serviceName;
+    try {
+      pagerDutyClient.triggerIncident(
+          dedupKey,
+          new PagerDutyPayload(
+              "Mojito unrecognized service attempting authentication: '" + serviceName + "'",
+              serviceName,
+              PagerDutyPayload.Severity.ERROR,
+              ImmutableMap.of("serviceName", serviceName)));
+    } catch (PagerDutyException e) {
+      logger.error("Unable to trigger pager duty incident for unrecognized service auth", e);
+    }
   }
 }
