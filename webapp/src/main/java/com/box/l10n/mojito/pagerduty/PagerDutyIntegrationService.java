@@ -7,20 +7,28 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+/**
+ * Service for serving PagerDuty clients created from the app properties. To use the default PD
+ * client method the default client must be set under `l10n.pagerduty.defaultIntegration`
+ *
+ * @author mattwilshire
+ */
 @Component
 public class PagerDutyIntegrationService {
 
   private final PagerDutyIntegrationConfiguration pagerDutyIntegrationConfiguration;
   private final PagerDutyRetryConfiguration pagerDutyRetryConfiguration;
-
   private Map<String, PagerDutyClient> pagerDutyClients;
+  private final PagerDutyIncidentRepository pagerDutyIncidentRepository;
 
   @Autowired
   public PagerDutyIntegrationService(
       PagerDutyIntegrationConfiguration pagerDutyIntegrationsConfiguration,
-      PagerDutyRetryConfiguration pagerDutyRetryConfiguration) {
+      PagerDutyRetryConfiguration pagerDutyRetryConfiguration,
+      PagerDutyIncidentRepository pagerDutyIncidentRepository) {
     this.pagerDutyIntegrationConfiguration = pagerDutyIntegrationsConfiguration;
     this.pagerDutyRetryConfiguration = pagerDutyRetryConfiguration;
+    this.pagerDutyIncidentRepository = pagerDutyIncidentRepository;
 
     createClientsFromConfiguration();
   }
@@ -47,6 +55,7 @@ public class PagerDutyIntegrationService {
                             e.getValue(),
                             HttpClient.newHttpClient(),
                             pagerDutyRetryConfiguration,
-                            e.getKey())));
+                            e.getKey(),
+                            pagerDutyIncidentRepository)));
   }
 }
