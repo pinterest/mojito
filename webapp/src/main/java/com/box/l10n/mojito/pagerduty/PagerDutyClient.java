@@ -27,16 +27,19 @@ public class PagerDutyClient {
   private final HttpClient httpClient;
   private final String integrationKey;
   private final PagerDutyRetryConfiguration retryConfiguration;
+  private final String clientName;
 
   public PagerDutyClient(
       String integrationKey,
       HttpClient httpClient,
-      PagerDutyRetryConfiguration retryConfiguration) {
+      PagerDutyRetryConfiguration retryConfiguration,
+      String clientName) {
     if (integrationKey == null || integrationKey.isEmpty())
       throw new IllegalArgumentException("Pager Duty integration key is null or empty.");
     this.integrationKey = integrationKey;
     this.httpClient = httpClient;
     this.retryConfiguration = retryConfiguration;
+    this.clientName = clientName;
   }
 
   /**

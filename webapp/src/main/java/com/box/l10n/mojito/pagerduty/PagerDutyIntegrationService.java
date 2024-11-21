@@ -32,7 +32,8 @@ public class PagerDutyIntegrationService {
   }
 
   public Optional<PagerDutyClient> getDefaultPagerDutyClient() {
-    return getPagerDutyClient("default");
+    if (pagerDutyIntegrationConfiguration.getDefaultIntegration() == null) return Optional.empty();
+    return getPagerDutyClient(pagerDutyIntegrationConfiguration.getDefaultIntegration());
   }
 
   private void createClientsFromConfiguration() {
@@ -45,6 +46,7 @@ public class PagerDutyIntegrationService {
                         new PagerDutyClient(
                             e.getValue(),
                             HttpClient.newHttpClient(),
-                            pagerDutyRetryConfiguration)));
+                            pagerDutyRetryConfiguration,
+                            e.getKey())));
   }
 }

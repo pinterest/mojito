@@ -35,7 +35,7 @@ public class PagerDutyClientTest {
     httpClient = mock(HttpClient.class);
     httpResponse = mock(HttpResponse.class);
 
-    pagerDutyClient = new PagerDutyClient("xxxyyyzzz", httpClient, retryConfiguration);
+    pagerDutyClient = new PagerDutyClient("xxxyyyzzz", httpClient, retryConfiguration, "test");
 
     Map<String, String> customDetails = new HashMap<>();
     customDetails.put("Example Custom Details", "Example Value");
@@ -177,9 +177,9 @@ public class PagerDutyClientTest {
 
     assertThrows(
         IllegalArgumentException.class,
-        () -> new PagerDutyClient(null, httpClient, retryConfiguration));
+        () -> new PagerDutyClient(null, httpClient, retryConfiguration, "test"));
     assertThrows(
         IllegalArgumentException.class,
-        () -> new PagerDutyClient("", httpClient, retryConfiguration));
+        () -> new PagerDutyClient("", httpClient, retryConfiguration, "test"));
   }
 }
