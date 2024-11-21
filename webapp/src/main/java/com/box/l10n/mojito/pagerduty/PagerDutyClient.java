@@ -24,8 +24,6 @@ public class PagerDutyClient {
   static final String BASE_URL = "https://events.pagerduty.com";
   static final String ENQUEUE_PATH = "/v2/enqueue";
 
-  public static final int MAX_RETRIES = 3;
-
   private final HttpClient httpClient;
   private final String integrationKey;
   private final PagerDutyRetryConfiguration retryConfiguration;
@@ -43,7 +41,7 @@ public class PagerDutyClient {
 
   /**
    * Trigger incident using a deduplication key and send PagerDutyPayload with it. The client will
-   * attempt to send the event request MAX_RETRIES times if an internal error is received from the
+   * attempt to send the event request 'maxRetries' times if an internal error is received from the
    * server. If the max number of retries is reached, a bad request is received or the payload
    * cannot be serialized a PagerDutyException is thrown.
    */
@@ -53,7 +51,7 @@ public class PagerDutyClient {
 
   /**
    * Resolve incident using a deduplication key. The client will attempt to send the event request
-   * MAX_RETRIES times if an internal error is received from the server. If the max number of
+   * 'maxRetries' times if an internal error is received from the server. If the max number of
    * retries is reached, a bad request is received or the payload cannot be serialized a
    * PagerDutyException is thrown.
    */
