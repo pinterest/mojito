@@ -5,3 +5,5 @@ CREATE TABLE pagerduty_incidents (
     triggered_at DATETIME NULL NOT NULL,
     resolved_at DATETIME NULL DEFAULT NULL
 );
+
+create index I__PAGERDUTY_INCIDENTS__CLIENT_NAME__DEDUP_KEY__RESOLVED_AT on pagerduty_incidents (client_name, dedup_key, resolved_at);
