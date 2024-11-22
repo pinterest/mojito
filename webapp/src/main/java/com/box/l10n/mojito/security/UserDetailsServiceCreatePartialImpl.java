@@ -24,7 +24,7 @@ public class UserDetailsServiceCreatePartialImpl implements PrincipalDetailServi
 
   @Override
   public UserDetails loadServiceWithName(String serviceName) throws UsernameNotFoundException {
-    User user = userService.getOrCreateServiceAccountUser(serviceName);
+    User user = userService.getServiceAccountUser(serviceName);
     return new UserDetailsImpl(user);
   }
 }

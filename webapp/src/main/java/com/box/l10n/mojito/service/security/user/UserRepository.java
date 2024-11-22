@@ -62,8 +62,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
           """
     SELECT u FROM  User u
       WHERE LOWER(u.username) LIKE 'spiffe://%'
-        AND LOWER(u.username) LIKE LOWER(CONCAT(:serviceName, '%'))
+        AND u.username <> '' AND u.username != NULL
+        AND LOWER(:serviceName) LIKE CONCAT(LOWER(u.username), '%')
         AND u.enabled = true
     """)
+  @EntityGraph(value = "User.legacy", type = EntityGraphType.FETCH)
   Optional<List<User>> findService(@Param("serviceName") String serviceName);
 }

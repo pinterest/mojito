@@ -10,6 +10,7 @@ import com.box.l10n.mojito.pagerduty.PagerDutyIntegrationService;
 import com.box.l10n.mojito.pagerduty.PagerDutyPayload;
 import com.box.l10n.mojito.security.AuditorAwareImpl;
 import com.box.l10n.mojito.security.Role;
+import com.box.l10n.mojito.security.ServiceDisambiguator;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
@@ -401,6 +402,9 @@ public class UserService {
     return users;
   }
 
+  @Autowired(required = false)
+  ServiceDisambiguator serviceDisambiguator;
+
   /**
    * Gets a service by name and if it doesn't exist create a created user.
    *
@@ -410,26 +414,23 @@ public class UserService {
    * @param serviceName
    * @return
    */
-  public User getOrCreateServiceAccountUser(String serviceName) {
+  public User getServiceAccountUser(String serviceName) {
+    if (serviceDisambiguator == null) {
+      return userRepository.findByUsername(serviceName);
+    }
+
     Optional<List<User>> users = userRepository.findService(serviceName);
     if (users.isEmpty()) {
       sendPagerDutyNotification(serviceName);
       return null;
     }
 
-    List<User> matchingUsers = users.get();
-    if (matchingUsers.size() == 1) {
-      return matchingUsers.getFirst();
+    User matchingUser =
+        serviceDisambiguator.findServiceWithCommonAncestor(users.get(), serviceName);
+    if (matchingUser == null) {
+      sendPagerDutyNotification(serviceName);
     }
-
-    // if multiple users match the SPIFFE, then assign the longest SPIFFE as the user.
-    return matchingUsers.stream()
-        .sorted(
-            Comparator.comparingInt(
-                obj -> obj.getUsername() != null ? obj.getUsername().length() : 0))
-        .toList()
-        .reversed()
-        .getLast();
+    return matchingUser;
   }
 
   private void sendPagerDutyNotification(String serviceName) {
