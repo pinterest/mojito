@@ -2,12 +2,15 @@ package com.box.l10n.mojito.security;
 
 import com.box.l10n.mojito.entity.security.user.User;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
 @ConditionalOnProperty("l10n.spring.security.services.enableFuzzyMatch")
 public class ServiceDisambiguator {
+  @Autowired HeaderSecurityConfig headerSecurityConfig;
+
   /***
    * This method finds the service with the longest shared path (basically a parent in path directory)
    * The service uses its parents user if it exists. If the exact service exists, then that user is
@@ -21,7 +24,7 @@ public class ServiceDisambiguator {
       return null;
     }
 
-    String[] servicePathElements = servicePath.split("/");
+    String[] servicePathElements = servicePath.split(headerSecurityConfig.serviceDelimiter);
     String longestAncestorPath = null;
     User closestService = null;
 
@@ -32,7 +35,8 @@ public class ServiceDisambiguator {
         return currentService;
       }
 
-      String[] currentPathElements = currentServicePath.split("/");
+      String[] currentPathElements =
+          currentServicePath.split(headerSecurityConfig.serviceDelimiter);
       StringBuilder commonAncestor = new StringBuilder();
 
       int minLength = Math.min(servicePathElements.length, currentPathElements.length);
@@ -41,7 +45,7 @@ public class ServiceDisambiguator {
         if (servicePathElements[i].equals(currentPathElements[i])) {
           commonAncestor.append(servicePathElements[i]);
           if (i < minLength - 1) {
-            commonAncestor.append("/");
+            commonAncestor.append(headerSecurityConfig.serviceDelimiter);
           }
         }
       }

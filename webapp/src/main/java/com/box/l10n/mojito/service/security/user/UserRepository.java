@@ -61,11 +61,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
       value =
           """
     SELECT u FROM  User u
-      WHERE LOWER(u.username) LIKE 'spiffe://%'
-        AND u.username <> '' AND u.username != NULL
+      WHERE COALESCE(u.username, '') <> ''
+        AND LOWER(u.username) LIKE CONCAT(LOWER(:servicePrefix), '%')
         AND LOWER(:serviceName) LIKE CONCAT(LOWER(u.username), '%')
-        AND u.enabled = true
+        AND u.enabled IS TRUE
     """)
   @EntityGraph(value = "User.legacy", type = EntityGraphType.FETCH)
-  Optional<List<User>> findService(@Param("serviceName") String serviceName);
+  Optional<List<User>> findService(
+      @Param("serviceName") String serviceName, @Param("servicePrefix") String servicePrefix);
 }

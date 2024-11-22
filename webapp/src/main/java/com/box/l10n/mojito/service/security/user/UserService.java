@@ -9,12 +9,18 @@ import com.box.l10n.mojito.pagerduty.PagerDutyException;
 import com.box.l10n.mojito.pagerduty.PagerDutyIntegrationService;
 import com.box.l10n.mojito.pagerduty.PagerDutyPayload;
 import com.box.l10n.mojito.security.AuditorAwareImpl;
+import com.box.l10n.mojito.security.HeaderSecurityConfig;
 import com.box.l10n.mojito.security.Role;
 import com.box.l10n.mojito.security.ServiceDisambiguator;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-import java.util.*;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
@@ -23,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,17 +51,14 @@ public class UserService {
 
   @Autowired AuditorAwareImpl auditorAwareImpl;
 
-  PagerDutyClient pagerDutyClient;
+  @Autowired(required = false)
+  ServiceDisambiguator serviceDisambiguator;
 
-  @Autowired
-  public UserService(PagerDutyIntegrationService pagerDutyIntegrationService) {
-    Optional<PagerDutyClient> defaultPagerDutyClient =
-        pagerDutyIntegrationService.getDefaultPagerDutyClient();
-    if (defaultPagerDutyClient.isEmpty()) {
-      throw new RuntimeException("Default pager duty client is required");
-    }
-    this.pagerDutyClient = defaultPagerDutyClient.get();
-  }
+  @Autowired HeaderSecurityConfig headerSecurityConfig;
+
+  @Autowired PagerDutyIntegrationService pagerDutyIntegrationService;
+
+  @Autowired MeterRegistry meterRegistry;
 
   /**
    * Allow PMs and ADMINs to create / edit users. However, a PM user can not create / edit ADMIN
@@ -402,9 +406,6 @@ public class UserService {
     return users;
   }
 
-  @Autowired(required = false)
-  ServiceDisambiguator serviceDisambiguator;
-
   /**
    * Gets a service by name and if it doesn't exist create a created user.
    *
@@ -419,9 +420,13 @@ public class UserService {
       return userRepository.findByUsername(serviceName);
     }
 
-    Optional<List<User>> users = userRepository.findService(serviceName);
+    Optional<List<User>> users =
+        userRepository.findService(serviceName, headerSecurityConfig.servicePrefix);
     if (users.isEmpty()) {
       sendPagerDutyNotification(serviceName);
+      logger.error(
+          "Service '{}' attempted and failed authentication. No matching services found.",
+          serviceName);
       return null;
     }
 
@@ -429,12 +434,36 @@ public class UserService {
         serviceDisambiguator.findServiceWithCommonAncestor(users.get(), serviceName);
     if (matchingUser == null) {
       sendPagerDutyNotification(serviceName);
+      logger.error(
+          "Service '{}' attempted and failed authentication. No services could be fuzzy matched",
+          serviceName);
+      throw new UsernameNotFoundException("Service with name '" + serviceName + "' was not found");
     }
     return matchingUser;
   }
 
+  private String normalizeServiceName(String serviceName) {
+    return serviceName
+        .replaceAll(headerSecurityConfig.servicePrefix, "")
+        .replaceAll(headerSecurityConfig.serviceDelimiter, ":");
+  }
+
   private void sendPagerDutyNotification(String serviceName) {
-    String dedupKey = "mojito:auth:unrecognized:service:account:" + serviceName;
+    Optional<PagerDutyClient> defaultPagerDutyClient =
+        pagerDutyIntegrationService.getDefaultPagerDutyClient();
+    if (defaultPagerDutyClient.isEmpty()) {
+      logger.error("No default Pager Duty client configured");
+      meterRegistry
+          .counter(
+              "UserService.sendPagerDutyNotification.defaultPagerDutyClientNotConfigured",
+              Tags.of("serviceName", serviceName))
+          .increment();
+      return;
+    }
+
+    PagerDutyClient pagerDutyClient = defaultPagerDutyClient.get();
+    String dedupKey =
+        "mojito:auth:unrecognized:service:account:" + normalizeServiceName(serviceName);
     try {
       pagerDutyClient.triggerIncident(
           dedupKey,

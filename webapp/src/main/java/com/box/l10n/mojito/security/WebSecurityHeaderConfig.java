@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.security;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,12 +11,15 @@ import org.springframework.security.web.authentication.preauth.PreAuthenticatedA
 @ConditionalOnExpression("'${l10n.security.authenticationType:}'.toUpperCase().contains('HEADER')")
 @Configuration
 class WebSecurityHeaderConfig {
+  @Autowired HeaderSecurityConfig headerSecurityConfig;
+
   @Bean
   PreAuthenticatedAuthenticationProvider preAuthenticatedAuthenticationProvider() {
     PreAuthenticatedAuthenticationProvider preAuthenticatedAuthenticationProvider =
         new PreAuthenticatedAuthenticationProvider();
     UserDetailServiceAuthWrapper userDetailsByNameServiceWrapper =
-        new UserDetailServiceAuthWrapper(getPrincipalDetailsServiceCreatePartial());
+        new UserDetailServiceAuthWrapper(
+            getPrincipalDetailsServiceCreatePartial(), headerSecurityConfig);
     preAuthenticatedAuthenticationProvider.setPreAuthenticatedUserDetailsService(
         userDetailsByNameServiceWrapper);
     return preAuthenticatedAuthenticationProvider;

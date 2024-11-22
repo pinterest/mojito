@@ -8,18 +8,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.junit.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
 
-@SpringBootTest
-@TestPropertySource(
-    properties = {
-      "app.name=InlineTestApplication",
-      "l10n.spring.security.header.service.prefix=spiffe://"
-    })
 public class ServiceDisambiguatorTest {
+  ServiceDisambiguator serviceDisambiguator;
 
-  ServiceDisambiguator serviceDisambiguator = new ServiceDisambiguator();
+  public ServiceDisambiguatorTest() {
+    this.serviceDisambiguator = new ServiceDisambiguator();
+    this.serviceDisambiguator.headerSecurityConfig = new HeaderSecurityConfig();
+    this.serviceDisambiguator.headerSecurityConfig.servicePrefix = "spiffe://";
+    this.serviceDisambiguator.headerSecurityConfig.serviceDelimiter = "/";
+  }
 
   @Test
   public void testFindServiceWithShortestSharedAncestor_EdgeCases() {

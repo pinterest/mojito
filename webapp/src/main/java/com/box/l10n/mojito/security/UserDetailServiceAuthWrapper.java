@@ -9,16 +9,20 @@ import org.springframework.security.web.authentication.preauth.PreAuthenticatedA
 public class UserDetailServiceAuthWrapper
     implements AuthenticationUserDetailsService<PreAuthenticatedAuthenticationToken> {
   protected PrincipalDetailService userDetailsService = null;
+  protected HeaderSecurityConfig headerSecurityConfig;
 
-  public UserDetailServiceAuthWrapper(PrincipalDetailService userDetailsService) {
+  public UserDetailServiceAuthWrapper(
+      PrincipalDetailService userDetailsService, HeaderSecurityConfig headerSecurityConfig) {
     this.userDetailsService = userDetailsService;
+    this.headerSecurityConfig = headerSecurityConfig;
   }
 
   @Override
   public UserDetails loadUserDetails(PreAuthenticatedAuthenticationToken token)
       throws UsernameNotFoundException {
     String username = token.getName();
-    boolean isService = username.contains("spiffe://");
+    boolean isService =
+        headerSecurityConfig != null && username.contains(headerSecurityConfig.servicePrefix);
     if (isService) {
       return this.userDetailsService.loadServiceWithName(username);
     } else {
