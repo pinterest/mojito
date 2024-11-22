@@ -261,6 +261,13 @@
                         <configuration>
                             <inputSpec>${project.parent.basedir}/webapp/src/main/resources/openapi.json</inputSpec>
                             <language>java</language>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <generateModelDocumentation>false</generateModelDocumentation>
+                            <configOptions>
+                                <dateLibrary>java8</dateLibrary>
+                            </configOptions>
                         </configuration>
                     </execution>
                 </executions>
