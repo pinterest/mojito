@@ -409,20 +409,23 @@ public class UserService {
   /**
    * Gets a service by name and if it doesn't exist create a created user.
    *
-   * <p>All admin service accounts should already be created beforehand however, create a non-admin
-   * account to so long. If they need admin permissions, we will promote the account
+   * <p>All admin service accounts should already be created beforehand.
+   * Get the exact service account or any service account which is the
+   * ancestor service to the account
    *
    * @param serviceName
    * @return
    */
   public User getServiceAccountUser(String serviceName) {
     if (serviceDisambiguator == null) {
+      logger.debug("Service Disambiguator is null. Falling back to regular exact match logic");
       return userRepository.findByUsername(serviceName);
     }
 
     Optional<List<User>> users =
-        userRepository.findService(serviceName, headerSecurityConfig.servicePrefix);
+        userRepository.findServicesByServiceNameAndPrefix(serviceName, headerSecurityConfig.getServicePrefix());
     if (users.isEmpty()) {
+      logger.debug("No matching services found as per DB query");
       sendPagerDutyNotification(serviceName);
       logger.error(
           "Service '{}' attempted and failed authentication. No matching services found.",
@@ -433,19 +436,22 @@ public class UserService {
     User matchingUser =
         serviceDisambiguator.findServiceWithCommonAncestor(users.get(), serviceName);
     if (matchingUser == null) {
+      logger.debug("No matching services found as per ServiceDisambiguator");
       sendPagerDutyNotification(serviceName);
       logger.error(
           "Service '{}' attempted and failed authentication. No services could be fuzzy matched",
           serviceName);
       throw new UsernameNotFoundException("Service with name '" + serviceName + "' was not found");
     }
+
+    logger.debug("Matching service found: {}", matchingUser.getUsername());
     return matchingUser;
   }
 
   private String normalizeServiceName(String serviceName) {
     return serviceName
-        .replaceAll(headerSecurityConfig.servicePrefix, "")
-        .replaceAll(headerSecurityConfig.serviceDelimiter, ":");
+        .replaceAll(headerSecurityConfig.getServicePrefix(), "")
+        .replaceAll(headerSecurityConfig.getServiceDelimiter(), ":");
   }
 
   private void sendPagerDutyNotification(String serviceName) {

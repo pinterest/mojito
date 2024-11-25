@@ -7,14 +7,46 @@ import org.springframework.context.annotation.Configuration;
 public class HeaderSecurityConfig {
 
   @Value("${l10n.spring.security.header.user.identifyingHeader:}")
-  public String userIdentifyingHeader;
+  protected String userIdentifyingHeader;
 
   @Value("${l10n.spring.security.header.service.identifyingHeader:}")
-  public String serviceIdentifyingHeader;
+  protected String serviceIdentifyingHeader;
 
   @Value("${l10n.spring.security.header.service.identifyingPrefix:}")
-  public String servicePrefix;
+  protected String servicePrefix;
 
   @Value("${l10n.spring.security.header.service.delimiter:/}")
-  public String serviceDelimiter;
+  protected String serviceDelimiter;
+
+  public String getUserIdentifyingHeader() {
+    return userIdentifyingHeader;
+  }
+
+  public void setUserIdentifyingHeader(String userIdentifyingHeader) {
+    this.userIdentifyingHeader = userIdentifyingHeader;
+  }
+
+  public String getServiceIdentifyingHeader() {
+    return serviceIdentifyingHeader;
+  }
+
+  public void setServiceIdentifyingHeader(String serviceIdentifyingHeader) {
+    this.serviceIdentifyingHeader = serviceIdentifyingHeader;
+  }
+
+  public String getServicePrefix() {
+    return servicePrefix;
+  }
+
+  public void setServicePrefix(String servicePrefix) {
+    this.servicePrefix = servicePrefix;
+  }
+
+  public String getServiceDelimiter() {
+    return serviceDelimiter;
+  }
+
+  public void setServiceDelimiter(String serviceDelimiter) {
+    this.serviceDelimiter = serviceDelimiter;
+  }
 }

@@ -2,6 +2,9 @@ package com.box.l10n.mojito.security;
 
 import com.box.l10n.mojito.entity.security.user.User;
 import java.util.List;
+import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -9,6 +12,9 @@ import org.springframework.stereotype.Component;
 @Component
 @ConditionalOnProperty("l10n.spring.security.services.enableFuzzyMatch")
 public class ServiceDisambiguator {
+
+  static Logger logger = LoggerFactory.getLogger(ServiceDisambiguator.class);
+
   @Autowired HeaderSecurityConfig headerSecurityConfig;
 
   /***
@@ -21,6 +27,7 @@ public class ServiceDisambiguator {
    */
   public User findServiceWithCommonAncestor(List<User> services, String servicePath) {
     if (services == null || servicePath == null || services.isEmpty() || servicePath.isEmpty()) {
+      logger.debug("No services found or no service path given");
       return null;
     }
 
@@ -30,8 +37,10 @@ public class ServiceDisambiguator {
 
     for (User currentService : services) {
       String currentServicePath = currentService.getUsername();
+      logger.debug("Evaluating service: {}", currentServicePath);
       // Check for exact match first
       if (servicePath.equals(currentServicePath)) {
+        logger.debug("Found exact service: {}", currentServicePath);
         return currentService;
       }
 
@@ -50,6 +59,8 @@ public class ServiceDisambiguator {
         }
       }
 
+      logger.debug("Common ancestor between services found: {}", commonAncestor);
+
       // Update the service which shares the shortest path
       String mostCommonAncestor = commonAncestor.toString();
       if (mostCommonAncestor.isEmpty()) {
@@ -67,6 +78,9 @@ public class ServiceDisambiguator {
       }
     }
 
+    logger.debug(
+        "Matching ancestor service: {}",
+        Optional.ofNullable(closestService).map(User::getUsername).orElse("null"));
     return closestService;
   }
 }

@@ -8,7 +8,6 @@ import org.springframework.security.web.authentication.preauth.AbstractPreAuthen
 public class HeaderPreAuthFilter extends AbstractPreAuthenticatedProcessingFilter {
   protected HeaderSecurityConfig headerSecurityConfig;
 
-  /** logger */
   static Logger logger = LoggerFactory.getLogger(HeaderPreAuthFilter.class);
 
   public HeaderPreAuthFilter(HeaderSecurityConfig headerSecurityConfig) {
@@ -19,6 +18,7 @@ public class HeaderPreAuthFilter extends AbstractPreAuthenticatedProcessingFilte
   protected Object getPreAuthenticatedPrincipal(HttpServletRequest request) {
     String forwardedUser = request.getHeader(headerSecurityConfig.userIdentifyingHeader);
     if (forwardedUser != null) {
+      logger.debug("Forwarded user: {}", forwardedUser);
       if (!forwardedUser.isEmpty()) {
         return forwardedUser;
       }
@@ -27,6 +27,7 @@ public class HeaderPreAuthFilter extends AbstractPreAuthenticatedProcessingFilte
     String forwardedServiceSpiffe =
         request.getHeader(headerSecurityConfig.serviceIdentifyingHeader);
     if (forwardedServiceSpiffe != null) {
+      logger.debug("Forwarded service: {}", forwardedServiceSpiffe);
       if (!forwardedServiceSpiffe.isEmpty()) {
         return forwardedServiceSpiffe;
       }
