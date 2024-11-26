@@ -2,12 +2,12 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.Console;
+import com.box.l10n.mojito.cli.model.Authority;
+import com.box.l10n.mojito.cli.model.User;
 import com.box.l10n.mojito.rest.entity.Role;
-import io.swagger.client.ApiException;
-import io.swagger.client.model.Authority;
-import io.swagger.client.model.User;
 import java.util.List;
 import org.fusesource.jansi.Ansi;
 import org.slf4j.Logger;
