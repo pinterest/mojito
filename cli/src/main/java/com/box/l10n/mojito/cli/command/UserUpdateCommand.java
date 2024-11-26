@@ -4,10 +4,13 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.Console;
-import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.UserClient;
 import com.box.l10n.mojito.rest.client.exception.ResourceNotFoundException;
 import com.box.l10n.mojito.rest.entity.Role;
+import io.swagger.client.ApiException;
+import io.swagger.client.model.Authority;
+import io.swagger.client.model.User;
+import java.util.ArrayList;
+import java.util.List;
 import org.fusesource.jansi.Ansi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,14 +28,10 @@ import org.springframework.stereotype.Component;
 @Parameters(
     commandNames = {"user-update"},
     commandDescription = "Updates a user")
-public class UserUpdateCommand extends Command {
+public class UserUpdateCommand extends UserCommand {
 
   /** logger */
   static Logger logger = LoggerFactory.getLogger(UserUpdateCommand.class);
-
-  @Autowired ConsoleWriter consoleWriter;
-
-  @Autowired UserClient userClient;
 
   @Parameter(
       names = {Param.USERNAME_LONG, Param.USERNAME_SHORT},
@@ -82,11 +81,28 @@ public class UserUpdateCommand extends Command {
     consoleWriter.a("Update user: ").fg(Ansi.Color.CYAN).a(username).println();
 
     try {
+      List<User> users = this.getPageUser(username).getContent();
+      if (users.isEmpty()) {
+        throw new ResourceNotFoundException("User with username [" + username + "] is not found");
+      }
+      User user = users.getFirst();
+      user.setPassword(getPassword());
+      user.setSurname(surname);
+      user.setGivenName(givenName);
+      user.setCommonName(commonName);
+
       Role role = Role.fromString(rolename);
-      userClient.updateUserByUsername(
-          username, getPassword(), role, surname, givenName, commonName);
+      List<Authority> authorities = new ArrayList<>();
+      if (role != null) {
+        Authority authority = new Authority();
+        authority.setAuthority(role.toString());
+        authorities.add(authority);
+      }
+      user.setAuthorities(authorities);
+
+      userClient.updateUserByUserId(user, user.getId());
       consoleWriter.newLine().a("updated --> user: ").fg(Ansi.Color.MAGENTA).a(username).println();
-    } catch (ResourceNotFoundException ex) {
+    } catch (ResourceNotFoundException | ApiException ex) {
       throw new CommandException(ex.getMessage(), ex);
     }
   }
