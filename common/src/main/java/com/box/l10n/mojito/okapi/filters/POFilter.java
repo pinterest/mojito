@@ -14,7 +14,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.sf.okapi.common.Event;
-import net.sf.okapi.common.EventType;
 import net.sf.okapi.common.LocaleId;
 import net.sf.okapi.common.MimeTypeMapper;
 import net.sf.okapi.common.encoder.EncoderManager;
@@ -130,33 +129,35 @@ public class POFilter extends net.sf.okapi.filters.po.POFilter {
 
     event = eventQueue.remove(0);
 
-    if (event.getEventType().equals(EventType.END_DOCUMENT) && !hasEnd) {
-      TextUnit tu =
-          new TextUnit("4", "Something went wrong saving the image on our side. Please tryagain.");
-      tu.setName("Something went wrong saving the image on our side. Please try again.");
-
-      GenericSkeleton genericSkeleton = new GenericSkeleton();
-      genericSkeleton.add(
-          new GenericSkeletonPart("\nmsgid \"" + tu.getSource().toString() + "\"\n" + "msgstr\""));
-
-      GenericSkeletonPart part = new GenericSkeletonPart("[#$$self$]");
-      part.setParent(tu);
-      part.setLocale(targetLocale);
-
-      genericSkeleton.add(part);
-      genericSkeleton.add(new GenericSkeletonPart("\"\n"));
-
-      tu.setSkeleton(genericSkeleton);
-
-      tu.setMimeType("application/x-gettext");
-      tu.setIsTranslatable(true);
-      tu.setPreserveWhitespaces(true);
-
-      eventQueue.add(new Event(EventType.TEXT_UNIT, tu));
-      eventQueue.add(event);
-      event = new Event(EventType.NO_OP);
-      hasEnd = true;
-    }
+    //    if (event.getEventType().equals(EventType.END_DOCUMENT) && !hasEnd) {
+    //      TextUnit tu =
+    //          new TextUnit("4", "Something went wrong saving the image on our side. Please
+    // tryagain.");
+    //      tu.setName("Something went wrong saving the image on our side. Please try again.");
+    //
+    //      GenericSkeleton genericSkeleton = new GenericSkeleton();
+    //      genericSkeleton.add(
+    //          new GenericSkeletonPart("\nmsgid \"" + tu.getSource().toString() + "\"\n" +
+    // "msgstr\""));
+    //
+    //      GenericSkeletonPart part = new GenericSkeletonPart("[#$$self$]");
+    //      part.setParent(tu);
+    //      part.setLocale(targetLocale);
+    //
+    //      genericSkeleton.add(part);
+    //      genericSkeleton.add(new GenericSkeletonPart("\"\n"));
+    //
+    //      tu.setSkeleton(genericSkeleton);
+    //
+    //      tu.setMimeType("application/x-gettext");
+    //      tu.setIsTranslatable(true);
+    //      tu.setPreserveWhitespaces(true);
+    //
+    //      eventQueue.add(new Event(EventType.TEXT_UNIT, tu));
+    //      eventQueue.add(event);
+    //      event = new Event(EventType.NO_OP);
+    //      hasEnd = true;
+    //    }
 
     return event;
   }

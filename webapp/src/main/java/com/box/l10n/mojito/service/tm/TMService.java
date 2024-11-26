@@ -39,6 +39,7 @@ import com.box.l10n.mojito.okapi.filters.CopyFormsOnImport;
 import com.box.l10n.mojito.okapi.filters.FilterOptions;
 import com.box.l10n.mojito.okapi.qualitycheck.Parameters;
 import com.box.l10n.mojito.okapi.qualitycheck.QualityCheckStep;
+import com.box.l10n.mojito.okapi.steps.AppendTextUnitsStep;
 import com.box.l10n.mojito.okapi.steps.CheckForDoNotTranslateStep;
 import com.box.l10n.mojito.okapi.steps.FilterEventsToInMemoryRawDocumentStep;
 import com.box.l10n.mojito.quartz.QuartzJobInfo;
@@ -1278,6 +1279,7 @@ public class TMService {
       IPipelineDriver driver = new PipelineDriver();
 
       driver.addStep(new RawDocumentToFilterEventsStep());
+      driver.addStep(new AppendTextUnitsStep());
       driver.addStep(new CheckForDoNotTranslateStep());
       driver.addStep(step);
 
