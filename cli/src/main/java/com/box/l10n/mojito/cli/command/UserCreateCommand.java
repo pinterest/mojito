@@ -5,10 +5,12 @@ import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.Console;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.UserClient;
-import com.box.l10n.mojito.rest.client.exception.ResourceNotCreatedException;
 import com.box.l10n.mojito.rest.entity.Role;
-import com.box.l10n.mojito.rest.entity.User;
+import io.swagger.client.ApiException;
+import io.swagger.client.api.UserWsApi;
+import io.swagger.client.model.Authority;
+import io.swagger.client.model.User;
+import java.util.List;
 import org.fusesource.jansi.Ansi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +35,7 @@ public class UserCreateCommand extends Command {
 
   @Autowired ConsoleWriter consoleWriter;
 
-  @Autowired UserClient userClient;
+  @Autowired UserWsApi userClient;
 
   @Parameter(
       names = {Param.USERNAME_LONG, Param.USERNAME_SHORT},
@@ -81,14 +83,25 @@ public class UserCreateCommand extends Command {
       String password = console.readPassword();
 
       Role role = Role.fromString(rolename);
-      User user = userClient.createUser(username, password, role, surname, givenName, commonName);
+      User userBody = new User();
+      userBody.setUsername(username);
+      userBody.setPassword(password);
+      userBody.setSurname(surname);
+      userBody.setGivenName(givenName);
+      userBody.setCommonName(commonName);
+      if (role != null) {
+        Authority authority = new Authority();
+        authority.setAuthority(role.toString());
+        userBody.setAuthorities(List.of(authority));
+      }
+      User user = userClient.createUser(userBody);
       consoleWriter
           .newLine()
           .a("created --> user: ")
           .fg(Ansi.Color.MAGENTA)
           .a(user.getUsername())
           .println();
-    } catch (ResourceNotCreatedException ex) {
+    } catch (ApiException ex) {
       throw new CommandException(ex.getMessage(), ex);
     }
   }

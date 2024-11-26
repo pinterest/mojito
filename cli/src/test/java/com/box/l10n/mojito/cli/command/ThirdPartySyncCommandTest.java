@@ -130,9 +130,9 @@ public class ThirdPartySyncCommandTest extends CLITestBase {
   @Test
   public void repalce() {
     ThirdPartySyncCommand thirdPartySyncCommand = new ThirdPartySyncCommand();
-    assertThat(thirdPartySyncCommand.unescpeUnicodeSpaceSequence("\\u0032")).isEqualTo(" ");
-    assertThat(thirdPartySyncCommand.unescpeUnicodeSpaceSequence("\\u0032a\\u0032"))
+    assertThat(thirdPartySyncCommand.unescapeUnicodeSpaceSequence("\\u0032")).isEqualTo(" ");
+    assertThat(thirdPartySyncCommand.unescapeUnicodeSpaceSequence("\\u0032a\\u0032"))
         .isEqualTo(" a ");
-    assertThat(thirdPartySyncCommand.unescpeUnicodeSpaceSequence("nop")).isEqualTo("nop");
+    assertThat(thirdPartySyncCommand.unescapeUnicodeSpaceSequence("nop")).isEqualTo("nop");
   }
 }
