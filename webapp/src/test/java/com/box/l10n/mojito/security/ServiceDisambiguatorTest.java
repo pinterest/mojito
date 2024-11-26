@@ -22,16 +22,16 @@ public class ServiceDisambiguatorTest {
   @Test
   public void testFindServiceWithShortestSharedAncestor_EdgeCases() {
     User sharedAncestor =
-        serviceDisambiguator.findServiceWithCommonAncestor(
+        serviceDisambiguator.getServiceWithCommonAncestor(
             new ArrayList<>(), "spiffe://test.com/container/service");
     assertNull(sharedAncestor);
-    sharedAncestor = serviceDisambiguator.findServiceWithCommonAncestor(new ArrayList<>(), "");
+    sharedAncestor = serviceDisambiguator.getServiceWithCommonAncestor(new ArrayList<>(), "");
     assertNull(sharedAncestor);
-    sharedAncestor = serviceDisambiguator.findServiceWithCommonAncestor(new ArrayList<>(), null);
+    sharedAncestor = serviceDisambiguator.getServiceWithCommonAncestor(new ArrayList<>(), null);
     assertNull(sharedAncestor);
-    sharedAncestor = serviceDisambiguator.findServiceWithCommonAncestor(null, "");
+    sharedAncestor = serviceDisambiguator.getServiceWithCommonAncestor(null, "");
     assertNull(sharedAncestor);
-    sharedAncestor = serviceDisambiguator.findServiceWithCommonAncestor(null, "test");
+    sharedAncestor = serviceDisambiguator.getServiceWithCommonAncestor(null, "test");
     assertNull(sharedAncestor);
   }
 
@@ -47,11 +47,11 @@ public class ServiceDisambiguatorTest {
                 "spiffe://test.com/container1/imageService",
                 "spiffe://test.com/container1/userService"));
     User result =
-        serviceDisambiguator.findServiceWithCommonAncestor(
+        serviceDisambiguator.getServiceWithCommonAncestor(
             services, "spiffe://test.com/container1/tagService");
     assertEquals(result, services.get(3));
     result =
-        serviceDisambiguator.findServiceWithCommonAncestor(
+        serviceDisambiguator.getServiceWithCommonAncestor(
             services, "spiffe://test.com/container1/imageService");
     assertEquals(result, services.get(4));
   }
@@ -65,14 +65,14 @@ public class ServiceDisambiguatorTest {
                 "spiffe://test.com/infra/jenkins/agent2",
                 "spiffe://test.com/infra/jenkins"));
     User result =
-        serviceDisambiguator.findServiceWithCommonAncestor(
+        serviceDisambiguator.getServiceWithCommonAncestor(
             services, "spiffe://test.com/infra/jenkins/agent1");
     assertEquals(result, services.getFirst());
     result =
-        serviceDisambiguator.findServiceWithCommonAncestor(
+        serviceDisambiguator.getServiceWithCommonAncestor(
             services, "spiffe://test.com/infra/jenkins/agent3");
     assertEquals(result, services.get(2));
-    result = serviceDisambiguator.findServiceWithCommonAncestor(services, "spiffe://test.com");
+    result = serviceDisambiguator.getServiceWithCommonAncestor(services, "spiffe://test.com");
     assertNull(result);
   }
 

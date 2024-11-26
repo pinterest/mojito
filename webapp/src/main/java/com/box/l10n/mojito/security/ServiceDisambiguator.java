@@ -1,6 +1,7 @@
 package com.box.l10n.mojito.security;
 
 import com.box.l10n.mojito.entity.security.user.User;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -25,7 +26,7 @@ public class ServiceDisambiguator {
    * @param services list of relevant services
    * @return the User or null if none match
    */
-  public User findServiceWithCommonAncestor(List<User> services, String servicePath) {
+  public User getServiceWithCommonAncestor(List<User> services, String servicePath) {
     if (services == null || servicePath == null || services.isEmpty() || servicePath.isEmpty()) {
       logger.debug("No services found or no service path given");
       return null;
@@ -46,34 +47,22 @@ public class ServiceDisambiguator {
 
       String[] currentPathElements =
           currentServicePath.split(headerSecurityConfig.serviceDelimiter);
-      StringBuilder commonAncestor = new StringBuilder();
 
-      int minLength = Math.min(servicePathElements.length, currentPathElements.length);
-
-      for (int i = 0; i < minLength; i++) {
-        if (servicePathElements[i].equals(currentPathElements[i])) {
-          commonAncestor.append(servicePathElements[i]);
-          if (i < minLength - 1) {
-            commonAncestor.append(headerSecurityConfig.serviceDelimiter);
-          }
-        }
-      }
-
-      logger.debug("Common ancestor between services found: {}", commonAncestor);
-
-      // Update the service which shares the shortest path
-      String mostCommonAncestor = commonAncestor.toString();
-      if (mostCommonAncestor.isEmpty()) {
+      String commonAncestor = getCommonAncestorPath(servicePathElements, currentPathElements);
+      if (commonAncestor.isEmpty()) {
         continue;
       }
 
-      if (mostCommonAncestor.length() != currentServicePath.length()) {
+      // We ignore this service because it is a sibling (i.e different child service)
+      // example case: service doing auth -> test.com/infra/jenkins/agent3
+      // currentServicePath -> test.com/infra/jenkins/agent1
+      // commonAncestor -> test.com/infra/jenkins
+      if (commonAncestor.length() < currentServicePath.length()) {
         continue;
       }
 
-      if (longestAncestorPath == null
-          || mostCommonAncestor.length() > longestAncestorPath.length()) {
-        longestAncestorPath = mostCommonAncestor;
+      if (longestAncestorPath == null || commonAncestor.length() > longestAncestorPath.length()) {
+        longestAncestorPath = commonAncestor;
         closestService = currentService;
       }
     }
@@ -82,5 +71,19 @@ public class ServiceDisambiguator {
         "Matching ancestor service: {}",
         Optional.ofNullable(closestService).map(User::getUsername).orElse("null"));
     return closestService;
+  }
+
+  private String getCommonAncestorPath(String[] servicePathElements, String[] currentPathElements) {
+    StringBuilder commonAncestor = new StringBuilder();
+    int minLength = Math.min(servicePathElements.length, currentPathElements.length);
+    List<String> matchedElements = new ArrayList<>(currentPathElements.length);
+    for (int i = 0; i < minLength; i++) {
+      if (servicePathElements[i].equals(currentPathElements[i])) {
+        matchedElements.add(servicePathElements[i]);
+      }
+    }
+
+    logger.debug("Common ancestor between services found: {}", commonAncestor);
+    return String.join(headerSecurityConfig.serviceDelimiter, matchedElements);
   }
 }

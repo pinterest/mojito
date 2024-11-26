@@ -409,9 +409,8 @@ public class UserService {
   /**
    * Gets a service by name and if it doesn't exist create a created user.
    *
-   * <p>All admin service accounts should already be created beforehand.
-   * Get the exact service account or any service account which is the
-   * ancestor service to the account
+   * <p>All admin service accounts should already be created beforehand. Get the exact service
+   * account or any service account which is the ancestor service to the account
    *
    * @param serviceName
    * @return
@@ -423,7 +422,8 @@ public class UserService {
     }
 
     Optional<List<User>> users =
-        userRepository.findServicesByServiceNameAndPrefix(serviceName, headerSecurityConfig.getServicePrefix());
+        userRepository.findServicesByServiceNameAndPrefix(
+            serviceName, headerSecurityConfig.getServicePrefix());
     if (users.isEmpty()) {
       logger.debug("No matching services found as per DB query");
       sendPagerDutyNotification(serviceName);
@@ -433,8 +433,7 @@ public class UserService {
       return null;
     }
 
-    User matchingUser =
-        serviceDisambiguator.findServiceWithCommonAncestor(users.get(), serviceName);
+    User matchingUser = serviceDisambiguator.getServiceWithCommonAncestor(users.get(), serviceName);
     if (matchingUser == null) {
       logger.debug("No matching services found as per ServiceDisambiguator");
       sendPagerDutyNotification(serviceName);
