@@ -1,10 +1,10 @@
 package com.box.l10n.mojito.cli.command;
 
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.UserWsApi;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import io.swagger.client.ApiException;
-import io.swagger.client.api.UserWsApi;
-import io.swagger.client.model.PageUser;
-import io.swagger.client.model.Pageable;
+import com.box.l10n.mojito.cli.model.PageUser;
+import com.box.l10n.mojito.cli.model.Pageable;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 

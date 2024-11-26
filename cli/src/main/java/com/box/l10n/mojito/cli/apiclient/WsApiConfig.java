@@ -1,8 +1,8 @@
 package com.box.l10n.mojito.cli.apiclient;
 
-import io.swagger.client.ApiClient;
-import io.swagger.client.api.ThirdPartyWsApi;
-import io.swagger.client.api.UserWsApi;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ThirdPartyWsApi;
+import com.box.l10n.mojito.cli.apiclient.UserWsApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

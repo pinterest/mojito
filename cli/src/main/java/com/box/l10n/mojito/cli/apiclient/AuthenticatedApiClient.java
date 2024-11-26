@@ -1,7 +1,7 @@
 package com.box.l10n.mojito.cli.apiclient;
 
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.squareup.okhttp.OkHttpClient;
-import io.swagger.client.ApiClient;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
