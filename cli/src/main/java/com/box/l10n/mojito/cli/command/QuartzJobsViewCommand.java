@@ -1,8 +1,9 @@
 package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.QuartzWsApi;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.QuartzJobsClient;
 import java.util.List;
 import org.fusesource.jansi.Ansi;
 import org.slf4j.Logger;
@@ -23,7 +24,7 @@ public class QuartzJobsViewCommand extends Command {
 
   @Autowired ConsoleWriter consoleWriter;
 
-  @Autowired QuartzJobsClient quartzJobsClient;
+  @Autowired QuartzWsApi quartzJobsClient;
 
   @Override
   public boolean shouldShowInCommandList() {
@@ -33,7 +34,12 @@ public class QuartzJobsViewCommand extends Command {
   @Override
   protected void execute() throws CommandException {
     consoleWriter.a("Dynamic quartz jobs:").println();
-    List<String> allDynamicJobs = quartzJobsClient.getAllDynamicJobs();
+    List<String> allDynamicJobs;
+    try {
+      allDynamicJobs = quartzJobsClient.getAllDynamicJobs();
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
     if (allDynamicJobs.isEmpty()) {
       consoleWriter.println().fg(Ansi.Color.CYAN).a("None").println();
     } else {
