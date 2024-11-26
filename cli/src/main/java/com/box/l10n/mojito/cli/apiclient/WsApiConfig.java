@@ -1,8 +1,5 @@
 package com.box.l10n.mojito.cli.apiclient;
 
-import com.box.l10n.mojito.cli.apiclient.ApiClient;
-import com.box.l10n.mojito.cli.apiclient.ThirdPartyWsApi;
-import com.box.l10n.mojito.cli.apiclient.UserWsApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,5 +16,20 @@ public class WsApiConfig {
   @Bean
   public UserWsApi userWsApi() {
     return new UserWsApi(this.apiClient);
+  }
+
+  @Bean
+  public QuartzWsApi quartzWsApi() {
+    return new QuartzWsApi(this.apiClient);
+  }
+
+  @Bean
+  public VirtualAssetWsApi virtualAssetWsApi() {
+    return new VirtualAssetWsApi(this.apiClient);
+  }
+
+  @Bean
+  public RepositoryWsApi repositoryWsApi() {
+    return new RepositoryWsApi(this.apiClient);
   }
 }
