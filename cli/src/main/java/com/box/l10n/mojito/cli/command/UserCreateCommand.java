@@ -4,10 +4,8 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.Console;
-import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.rest.entity.Role;
 import io.swagger.client.ApiException;
-import io.swagger.client.api.UserWsApi;
 import io.swagger.client.model.Authority;
 import io.swagger.client.model.User;
 import java.util.List;
@@ -28,14 +26,10 @@ import org.springframework.stereotype.Component;
 @Parameters(
     commandNames = {"user-create"},
     commandDescription = "Creates a user")
-public class UserCreateCommand extends Command {
+public class UserCreateCommand extends UserCommand {
 
   /** logger */
   static Logger logger = LoggerFactory.getLogger(UserCreateCommand.class);
-
-  @Autowired ConsoleWriter consoleWriter;
-
-  @Autowired UserWsApi userClient;
 
   @Parameter(
       names = {Param.USERNAME_LONG, Param.USERNAME_SHORT},
