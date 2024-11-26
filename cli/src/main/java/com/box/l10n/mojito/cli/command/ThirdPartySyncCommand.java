@@ -6,10 +6,11 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.ThirdPartySyncAction;
-import com.box.l10n.mojito.rest.client.ThirdPartyClient;
-import com.box.l10n.mojito.rest.entity.PollableTask;
 import com.box.l10n.mojito.rest.entity.Repository;
+import io.swagger.client.ApiException;
+import io.swagger.client.api.ThirdPartyWsApi;
+import io.swagger.client.model.PollableTask;
+import io.swagger.client.model.ThirdPartySync;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -56,8 +57,9 @@ public class ThirdPartySyncCommand extends Command {
       required = false,
       description = "Actions to synchronize",
       converter = ThirdPartySyncActionsConverter.class)
-  List<ThirdPartySyncAction> actions =
-      Arrays.asList(ThirdPartySyncAction.MAP_TEXTUNIT, ThirdPartySyncAction.PUSH_SCREENSHOT);
+  List<ThirdPartySync.ActionsEnum> actions =
+      Arrays.asList(
+          ThirdPartySync.ActionsEnum.MAP_TEXTUNIT, ThirdPartySync.ActionsEnum.PUSH_SCREENSHOT);
 
   /**
    * The plural separator changes depending on the file type: android, po files and can also change
@@ -116,14 +118,29 @@ public class ThirdPartySyncCommand extends Command {
       description = "Options to synchronize")
   List<String> options;
 
-  @Autowired ThirdPartyClient thirdPartyClient;
+  @Autowired ThirdPartyWsApi thirdPartyClient;
 
   @Autowired CommandHelper commandHelper;
+
+  private ThirdPartySync getThirdPartySync(Repository repository) {
+    ThirdPartySync thirdPartySyncBody = new ThirdPartySync();
+    thirdPartySyncBody.setRepositoryId(repository.getId());
+    thirdPartySyncBody.setProjectId(thirdPartyProjectId);
+    thirdPartySyncBody.setPluralSeparator(pluralSeparator);
+    thirdPartySyncBody.setLocaleMapping(localeMapping);
+    thirdPartySyncBody.setActions(actions);
+    thirdPartySyncBody.setSkipTextUnitsWithPattern(skipTextUnitsWithPattern);
+    thirdPartySyncBody.setSkipAssetsWithPathPattern(skipAssetsWithPathPattern);
+    thirdPartySyncBody.setIncludeTextUnitsWithPattern(includeTextUnitsWithPattern);
+    thirdPartySyncBody.setOptions(options);
+    thirdPartySyncBody.setTimeout(timeoutInSeconds);
+    return thirdPartySyncBody;
+  }
 
   @Override
   public void execute() throws CommandException {
 
-    pluralSeparator = unescpeUnicodeSpaceSequence(pluralSeparator);
+    pluralSeparator = unescapeUnicodeSpaceSequence(pluralSeparator);
 
     consoleWriter
         .newLine()
@@ -171,22 +188,16 @@ public class ThirdPartySyncCommand extends Command {
 
     Repository repository = commandHelper.findRepositoryByName(repositoryParam);
 
-    PollableTask pollableTask =
-        thirdPartyClient.sync(
-            repository.getId(),
-            thirdPartyProjectId,
-            pluralSeparator,
-            localeMapping,
-            actions,
-            skipTextUnitsWithPattern,
-            skipAssetsWithPathPattern,
-            includeTextUnitsWithPattern,
-            options,
-            timeoutInSeconds);
+    ThirdPartySync thirdPartySyncBody = getThirdPartySync(repository);
 
-    commandHelper.waitForPollableTask(pollableTask.getId());
+    try {
+      PollableTask pollableTask = thirdPartyClient.sync(thirdPartySyncBody);
+      commandHelper.waitForPollableTask(pollableTask.getId());
 
-    consoleWriter.fg(Ansi.Color.GREEN).newLine().a("Finished").println(2);
+      consoleWriter.fg(Ansi.Color.GREEN).newLine().a("Finished").println(2);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
   }
 
   /**
@@ -196,7 +207,7 @@ public class ThirdPartySyncCommand extends Command {
    *
    * <p>So for now we allow passing the unicode escape sequence into the parameter and escape
    */
-  String unescpeUnicodeSpaceSequence(String input) {
+  String unescapeUnicodeSpaceSequence(String input) {
     return input.replace("\\u0032", " ");
   }
 }
