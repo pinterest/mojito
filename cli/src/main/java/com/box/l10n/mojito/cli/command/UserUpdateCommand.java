@@ -7,7 +7,6 @@ import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.Console;
 import com.box.l10n.mojito.cli.model.Authority;
 import com.box.l10n.mojito.cli.model.User;
-import com.box.l10n.mojito.rest.client.exception.ResourceNotFoundException;
 import com.box.l10n.mojito.rest.entity.Role;
 import java.util.ArrayList;
 import java.util.List;
@@ -83,7 +82,7 @@ public class UserUpdateCommand extends UserCommand {
     try {
       List<User> users = this.getPageUser(username).getContent();
       if (users.isEmpty()) {
-        throw new ResourceNotFoundException("User with username [" + username + "] is not found");
+        throw new CommandException("User with username [" + username + "] is not found");
       }
       User user = users.getFirst();
       user.setPassword(getPassword());
@@ -102,7 +101,7 @@ public class UserUpdateCommand extends UserCommand {
 
       userClient.updateUserByUserId(user, user.getId());
       consoleWriter.newLine().a("updated --> user: ").fg(Ansi.Color.MAGENTA).a(username).println();
-    } catch (ResourceNotFoundException | ApiException ex) {
+    } catch (ApiException ex) {
       throw new CommandException(ex.getMessage(), ex);
     }
   }
