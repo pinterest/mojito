@@ -7,7 +7,7 @@ import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.apiclient.CommitWsApi;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.cli.model.CommitBodyCommit;
+import com.box.l10n.mojito.cli.model.CommitBody;
 import com.box.l10n.mojito.cli.model.CommitCommit;
 import com.box.l10n.mojito.rest.entity.Repository;
 import com.google.common.collect.Streams;
@@ -104,7 +104,7 @@ public class CommitCreateCommand extends Command {
       commitInfo = new CommitInfo(commitHash, authorEmailParam, authorNameParam, creationDateParam);
     }
 
-    CommitBodyCommit commitBody = new CommitBodyCommit();
+    CommitBody commitBody = new CommitBody();
     commitBody.setCommitName(commitInfo.hash);
     commitBody.setRepositoryId(repository.getId());
     commitBody.setAuthorName(commitInfo.authorName);

@@ -128,8 +128,7 @@ public class TMImportCommand extends Command {
       ImportRepositoryBody importRepositoryBody = new ImportRepositoryBody();
       importRepositoryBody.setUpdateTM(updateTMParam);
       importRepositoryBody.setXliffContent(getFileContent(fileMatch));
-      repositoryClient.importRepository(importRepositoryBody,
-          repository.getId());
+      repositoryClient.importRepository(importRepositoryBody, repository.getId());
 
       consoleWriter.erasePreviouslyPrintedLines();
       consoleWriter
