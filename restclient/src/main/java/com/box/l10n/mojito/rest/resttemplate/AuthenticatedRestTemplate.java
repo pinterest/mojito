@@ -52,6 +52,8 @@ public class AuthenticatedRestTemplate {
 
   @Autowired ResttemplateConfig restTemplateConfig;
 
+  @Autowired ProxyCheckService proxyCheckService;
+
   /** Will delegate calls to the {@link RestTemplate} instance that was configured */
   @Autowired ProxiedCookieStoreRestTemplate restTemplate;
 
@@ -122,7 +124,7 @@ public class AuthenticatedRestTemplate {
 
         ObjectMapper objectMapper = jackson2ObjectMapperFactoryBean.getObject();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        // To keep backward compatibility with the Joda output, disable write/reading nano seconds
+        // To keep backward compatibility with the Joda output, disable write/reading nanoseconds
         // with
         // Java time and ZonedDateTime
         // also see {@link com.box.l10n.mojito.json.ObjectMapper}
@@ -170,7 +172,7 @@ public class AuthenticatedRestTemplate {
    * adds headers to indicate the host
    */
   protected void configureEnvoyProxy(ProxiedCookieStoreRestTemplate restTemplate) {
-    boolean isEnvoyConfigured = isProxyConfigured();
+    boolean isEnvoyConfigured = proxyCheckService.hasProxy();
     if (isEnvoyConfigured) {
       restTemplate.configureProxy(
           true,

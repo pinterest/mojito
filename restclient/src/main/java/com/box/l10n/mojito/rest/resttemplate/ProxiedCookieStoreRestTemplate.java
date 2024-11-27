@@ -47,10 +47,12 @@ public class ProxiedCookieStoreRestTemplate extends RestTemplate {
 
   public void configureProxy(
       boolean useProxy, String proxyHost, int proxyPort, HttpRequestInterceptor proxyInterceptor) {
+    logger.debug("Configuring proxy for Rest Template. Enabled = {}", useProxy);
     HttpClientBuilder clientBuilder =
         HttpClients.custom().setDefaultCookieStore(cookieStore).disableRedirectHandling();
 
     if (useProxy) {
+      logger.debug("Configuring proxy for Rest Template. Proxy settings {}:{}", proxyHost, proxyPort);
       if (proxyInterceptor != null) {
         HttpHost proxy = new HttpHost(proxyHost, proxyPort);
         DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);

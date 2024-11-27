@@ -51,6 +51,8 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
 
   @Autowired RestTemplateUtil restTemplateUtil;
 
+  @Autowired ProxyCheckService proxyCheckService;
+
   /**
    * This is used for the authentication flow to keep things separate from the restTemplate that
    * this interceptor is intercepting
@@ -83,6 +85,16 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
 
     restTemplateForAuthenticationFlow = new ProxiedCookieStoreRestTemplate();
     cookieStore = restTemplateForAuthenticationFlow.getCookieStore();
+    boolean hasProxy = proxyCheckService.hasProxy();
+    if (hasProxy) {
+      logger.debug("Configuring Proxy for authenticationRestTemplate");
+      restTemplateForAuthenticationFlow.configureProxy(
+          true,
+          resttemplateConfig.getProxyHost(),
+          resttemplateConfig.getProxyPort(),
+          (httpRequest, entityDetails, httpContext) ->
+              httpRequest.addHeader("Host", resttemplateConfig.getHost()));
+    }
 
     logger.debug(
         "Inject cookie store used in the rest template for authentication flow into the restTemplate so that they will match");
@@ -202,7 +214,8 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
   protected void startAuthenticationAndInjectCsrfToken(HttpRequest request) {
     logger.debug(
         "Authenticate because no session is found in cookie store or it doesn't match with the one used to get the CSRF token we have.");
-    startAuthenticationFlow();
+    // TODO: Remove logic once PreAuth logic is configured on all environments
+    startAuthenticationFlow(false);
 
     logger.debug("Injecting CSRF token");
     injectCsrfTokenIntoHeader(request, latestCsrfToken);
@@ -272,6 +285,13 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
       ResponseEntity<String> loginResponseEntity =
           restTemplateForAuthenticationFlow.getForEntity(
               restTemplateUtil.getURIForResource(formLoginConfig.getLoginFormPath()), String.class);
+
+      logger.error("login Resonse status code {}", loginResponseEntity.getStatusCode());
+      if (!loginResponseEntity.hasBody()) {
+        throw new SessionAuthenticationException(
+            "Authentication failed: no CSRF token could be found.  GET login status code = "
+                + loginResponseEntity.getStatusCode());
+      }
 
       latestCsrfToken = getCsrfTokenFromLoginHtml(loginResponseEntity.getBody());
       latestSessionIdForLatestCsrfToken = getAuthenticationSessionIdFromCookieStore();
