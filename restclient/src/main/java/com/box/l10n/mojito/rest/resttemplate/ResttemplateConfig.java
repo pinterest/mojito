@@ -16,6 +16,8 @@ public class ResttemplateConfig {
   Integer port = 8080;
   String scheme = "http";
   String contextPath = "";
+  String proxyHost = "localhost";
+  int proxyPort = 19193;
 
   Authentication authentication = new Authentication();
 
@@ -94,5 +96,21 @@ public class ResttemplateConfig {
 
   public void setContextPath(String contextPath) {
     this.contextPath = contextPath;
+  }
+
+  public String getProxyHost() {
+    return proxyHost;
+  }
+
+  public void setProxyHost(String proxyHost) {
+    this.proxyHost = proxyHost;
+  }
+
+  public int getProxyPort() {
+    return proxyPort;
+  }
+
+  public void setProxyPort(int proxyPort) {
+    this.proxyPort = proxyPort;
   }
 }
