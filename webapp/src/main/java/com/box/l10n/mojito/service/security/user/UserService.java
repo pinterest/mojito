@@ -51,14 +51,16 @@ public class UserService {
 
   @Autowired AuditorAwareImpl auditorAwareImpl;
 
+  @Autowired MeterRegistry meterRegistry;
+
   @Autowired(required = false)
   ServiceDisambiguator serviceDisambiguator;
 
-  @Autowired HeaderSecurityConfig headerSecurityConfig;
+  @Autowired(required = false)
+  HeaderSecurityConfig headerSecurityConfig;
 
-  @Autowired PagerDutyIntegrationService pagerDutyIntegrationService;
-
-  @Autowired MeterRegistry meterRegistry;
+  @Autowired(required = false)
+  PagerDutyIntegrationService pagerDutyIntegrationService;
 
   /**
    * Allow PMs and ADMINs to create / edit users. However, a PM user can not create / edit ADMIN
@@ -421,64 +423,114 @@ public class UserService {
       return userRepository.findByUsername(serviceName);
     }
 
-    Optional<List<User>> users =
+    if (headerSecurityConfig == null) {
+      logger.debug("Header config does not exist. Falling back to regular exact match logic");
+      return userRepository.findByUsername(serviceName);
+    }
+
+    List<User> users =
         userRepository.findServicesByServiceNameAndPrefix(
             serviceName, headerSecurityConfig.getServicePrefix());
     if (users.isEmpty()) {
       logger.debug("No matching services found as per DB query");
-      sendPagerDutyNotification(serviceName);
+      sendPagerDutyNotification(serviceName, PagerDutyTypeNotificationType.CreateIncident);
       logger.error(
           "Service '{}' attempted and failed authentication. No matching services found.",
           serviceName);
       return null;
     }
 
-    User matchingUser = serviceDisambiguator.getServiceWithCommonAncestor(users.get(), serviceName);
+    User matchingUser = serviceDisambiguator.getServiceWithCommonAncestor(users, serviceName);
     if (matchingUser == null) {
       logger.debug("No matching services found as per ServiceDisambiguator");
-      sendPagerDutyNotification(serviceName);
+      sendPagerDutyNotification(serviceName, PagerDutyTypeNotificationType.CreateIncident);
       logger.error(
           "Service '{}' attempted and failed authentication. No services could be fuzzy matched",
           serviceName);
       throw new UsernameNotFoundException("Service with name '" + serviceName + "' was not found");
+    } else {
+      sendPagerDutyNotification(serviceName, PagerDutyTypeNotificationType.ResolveIncident);
     }
 
     logger.debug("Matching service found: {}", matchingUser.getUsername());
     return matchingUser;
   }
 
-  private String normalizeServiceName(String serviceName) {
-    return serviceName
-        .replaceAll(headerSecurityConfig.getServicePrefix(), "")
-        .replaceAll(headerSecurityConfig.getServiceDelimiter(), ":");
+  enum PagerDutyTypeNotificationType {
+    CreateIncident,
+    ResolveIncident
   }
 
-  private void sendPagerDutyNotification(String serviceName) {
-    Optional<PagerDutyClient> defaultPagerDutyClient =
-        pagerDutyIntegrationService.getDefaultPagerDutyClient();
-    if (defaultPagerDutyClient.isEmpty()) {
-      logger.error("No default Pager Duty client configured");
-      meterRegistry
-          .counter(
-              "UserService.sendPagerDutyNotification.defaultPagerDutyClientNotConfigured",
-              Tags.of("serviceName", serviceName))
-          .increment();
+  private void sendPagerDutyNotification(
+      String serviceName, PagerDutyTypeNotificationType notificationType) {
+    if (!headerSecurityConfig.isPagerDutyEnabled()) {
       return;
     }
 
-    PagerDutyClient pagerDutyClient = defaultPagerDutyClient.get();
-    String dedupKey =
-        "mojito:auth:unrecognized:service:account:" + normalizeServiceName(serviceName);
+    if (pagerDutyIntegrationService == null) {
+      logger.error(
+          "Pager Duty Integration service is null but configured to send notifications for service auth");
+      incrementPagerDutyNotConfiguredCounter(serviceName);
+      return;
+    }
+
+    Optional<PagerDutyClient> configuredPagerDutyClient =
+        Optional.of(headerSecurityConfig)
+            .map(HeaderSecurityConfig::getPagerDutyIntegrationName)
+            .map(
+                integrationName ->
+                    pagerDutyIntegrationService.getPagerDutyClient((integrationName)))
+            .orElse(pagerDutyIntegrationService.getDefaultPagerDutyClient());
+    if (configuredPagerDutyClient.isEmpty()) {
+      logger.error(
+          "No PagerDuty client configured with name {}",
+          Optional.of(headerSecurityConfig.getPagerDutyIntegrationName())
+              .map(name -> "'" + name + "'")
+              .orElse("null"));
+      incrementPagerDutyNotConfiguredCounter(serviceName);
+      return;
+    }
+
+    PagerDutyClient pagerDutyClient = configuredPagerDutyClient.get();
+    String dedupKey = buildUnrecognizedServiceDedupKey(serviceName);
     try {
-      pagerDutyClient.triggerIncident(
-          dedupKey,
-          new PagerDutyPayload(
-              "Mojito unrecognized service attempting authentication: '" + serviceName + "'",
-              serviceName,
-              PagerDutyPayload.Severity.ERROR,
-              ImmutableMap.of("serviceName", serviceName)));
+      if (notificationType == PagerDutyTypeNotificationType.CreateIncident) {
+        pagerDutyClient.triggerIncident(
+            dedupKey,
+            new PagerDutyPayload(
+                "Mojito unrecognized service attempting authentication: '" + serviceName + "'",
+                serviceName,
+                PagerDutyPayload.Severity.ERROR,
+                ImmutableMap.of("serviceName", serviceName)));
+      }
+
+      if (notificationType == PagerDutyTypeNotificationType.ResolveIncident) {
+        pagerDutyClient.resolveIncident(dedupKey);
+      }
     } catch (PagerDutyException e) {
       logger.error("Unable to trigger pager duty incident for unrecognized service auth", e);
     }
+  }
+
+  private String buildUnrecognizedServiceDedupKey(String serviceName) {
+    String normalizedServiceName =
+        serviceName
+            .replaceAll(headerSecurityConfig.getServicePrefix(), "")
+            .replaceAll(headerSecurityConfig.getServiceDelimiter(), ":");
+    return "mojito:auth:unrecognized:service:account:" + normalizedServiceName;
+  }
+
+  private void incrementPagerDutyNotConfiguredCounter(String serviceName) {
+    meterRegistry
+        .counter(
+            "UserService.sendPagerDutyNotification.pagerDutyClientNotConfigured",
+            Tags.of(
+                "serviceName",
+                serviceName,
+                "clientIntegrationName",
+                Optional.of(headerSecurityConfig)
+                    .map(HeaderSecurityConfig::getPagerDutyIntegrationName)
+                    .orElse("null")))
+        .increment();
   }
 }

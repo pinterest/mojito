@@ -3,7 +3,7 @@ package com.box.l10n.mojito.security;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
-@Configuration()
+@Configuration
 public class HeaderSecurityConfig {
 
   @Value("${l10n.spring.security.header.user.identifyingHeader:}")
@@ -17,6 +17,28 @@ public class HeaderSecurityConfig {
 
   @Value("${l10n.spring.security.header.service.delimiter:/}")
   protected String serviceDelimiter;
+
+  @Value("${l10n.spring.security.header.service.pagerduty.enableFailedAuthIncidents:false}")
+  protected boolean isPagerDutyEnabled;
+
+  @Value("${l10n.spring.security.header.service.pagerduty.integration.name:#{null}}")
+  protected String pagerDutyIntegrationName;
+
+  public boolean isPagerDutyEnabled() {
+    return isPagerDutyEnabled;
+  }
+
+  public void setPagerDutyEnabled(boolean pagerDutyEnabled) {
+    isPagerDutyEnabled = pagerDutyEnabled;
+  }
+
+  public String getPagerDutyIntegrationName() {
+    return pagerDutyIntegrationName;
+  }
+
+  public void setPagerDutyIntegrationName(String pagerDutyIntegrationName) {
+    this.pagerDutyIntegrationName = pagerDutyIntegrationName;
+  }
 
   public String getUserIdentifyingHeader() {
     return userIdentifyingHeader;

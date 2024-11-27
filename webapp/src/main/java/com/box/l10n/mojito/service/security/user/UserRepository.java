@@ -67,6 +67,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         AND u.enabled IS TRUE
     """)
   @EntityGraph(value = "User.legacy", type = EntityGraphType.FETCH)
-  Optional<List<User>> findServicesByServiceNameAndPrefix(
+  List<User> findServicesByServiceNameAndPrefix(
       @Param("serviceName") String serviceName, @Param("servicePrefix") String servicePrefix);
 }
