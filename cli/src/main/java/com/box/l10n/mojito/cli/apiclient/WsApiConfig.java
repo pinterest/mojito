@@ -37,4 +37,9 @@ public class WsApiConfig {
   public CommitWsApi commitWsApi() {
     return new CommitWsApi(this.apiClient);
   }
+
+  @Bean
+  public ImageWsApi imageWsApi() {
+    return new ImageWsApi(this.apiClient);
+  }
 }
