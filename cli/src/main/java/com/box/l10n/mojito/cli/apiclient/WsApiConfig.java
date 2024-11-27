@@ -32,4 +32,9 @@ public class WsApiConfig {
   public RepositoryWsApi repositoryWsApi() {
     return new RepositoryWsApi(this.apiClient);
   }
+
+  @Bean
+  public CommitWsApi commitWsApi() {
+    return new CommitWsApi(this.apiClient);
+  }
 }
