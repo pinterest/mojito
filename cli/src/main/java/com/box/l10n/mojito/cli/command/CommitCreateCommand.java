@@ -3,11 +3,12 @@ package com.box.l10n.mojito.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.JSR310Migration;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.CommitWsApi;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.CommitClient;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
-import com.box.l10n.mojito.rest.entity.Commit;
+import com.box.l10n.mojito.cli.model.CommitBodyCommit;
+import com.box.l10n.mojito.cli.model.CommitCommit;
 import com.box.l10n.mojito.rest.entity.Repository;
 import com.google.common.collect.Streams;
 import java.io.IOException;
@@ -42,9 +43,7 @@ public class CommitCreateCommand extends Command {
 
   @Autowired CommandHelper commandHelper;
 
-  @Autowired CommitClient commitClient;
-
-  @Autowired RepositoryClient repositoryClient;
+  @Autowired CommitWsApi commitClient;
 
   @Parameter(
       names = {Param.COMMIT_HASH_LONG, Param.COMMIT_HASH_SHORT},
@@ -105,13 +104,18 @@ public class CommitCreateCommand extends Command {
       commitInfo = new CommitInfo(commitHash, authorEmailParam, authorNameParam, creationDateParam);
     }
 
-    Commit commit =
-        commitClient.createCommit(
-            commitInfo.hash,
-            repository.getId(),
-            commitInfo.authorName,
-            commitInfo.authorEmail,
-            commitInfo.creationDate);
+    CommitBodyCommit commitBody = new CommitBodyCommit();
+    commitBody.setCommitName(commitInfo.hash);
+    commitBody.setRepositoryId(repository.getId());
+    commitBody.setAuthorName(commitInfo.authorName);
+    commitBody.setAuthorEmail(commitInfo.authorEmail);
+    commitBody.setSourceCreationDate(commitInfo.creationDate.toOffsetDateTime());
+    CommitCommit commit;
+    try {
+      commit = commitClient.createCommit(commitBody);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
 
     consoleWriter
         .fg(Ansi.Color.GREEN)

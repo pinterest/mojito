@@ -2,10 +2,12 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.CommitWsApi;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
+import com.box.l10n.mojito.cli.model.CommitToPullRunBody;
 import com.box.l10n.mojito.json.ObjectMapper;
-import com.box.l10n.mojito.rest.client.CommitClient;
 import com.box.l10n.mojito.rest.entity.Repository;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -57,11 +59,9 @@ public class CommitToPullRunCommand extends Command {
 
   @Autowired ObjectMapper objectMapper;
 
-  @Autowired CommitClient commitClient;
+  @Autowired CommitWsApi commitClient;
 
   Repository repository;
-
-  String pullRunName;
 
   @Override
   public void execute() throws CommandException {
@@ -87,7 +87,15 @@ public class CommitToPullRunCommand extends Command {
   }
 
   void associateCommitToPullRun(Repository repository, String commitHash, String pullRunName) {
-    commitClient.associateCommitToPullRun(commitHash, repository.getId(), pullRunName);
+    CommitToPullRunBody commitToPullRunBody = new CommitToPullRunBody();
+    commitToPullRunBody.setCommitName(commitHash);
+    commitToPullRunBody.setRepositoryId(repository.getId());
+    commitToPullRunBody.setPullRunName(pullRunName);
+    try {
+      commitClient.associateCommitToPullRun(commitToPullRunBody);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
   }
 
   String readPullRunNameFromFile() {
