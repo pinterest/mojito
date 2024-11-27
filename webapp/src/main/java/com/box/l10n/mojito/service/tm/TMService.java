@@ -18,6 +18,7 @@ import com.box.l10n.mojito.entity.TMTextUnitVariant;
 import com.box.l10n.mojito.entity.TMXliff;
 import com.box.l10n.mojito.entity.security.user.User;
 import com.box.l10n.mojito.okapi.AbstractImportTranslationsStep;
+import com.box.l10n.mojito.okapi.AppendTextUnitsStep;
 import com.box.l10n.mojito.okapi.FilterConfigIdOverride;
 import com.box.l10n.mojito.okapi.ImportTranslationsByIdStep;
 import com.box.l10n.mojito.okapi.ImportTranslationsByMd5Step;
@@ -39,7 +40,6 @@ import com.box.l10n.mojito.okapi.filters.CopyFormsOnImport;
 import com.box.l10n.mojito.okapi.filters.FilterOptions;
 import com.box.l10n.mojito.okapi.qualitycheck.Parameters;
 import com.box.l10n.mojito.okapi.qualitycheck.QualityCheckStep;
-import com.box.l10n.mojito.okapi.steps.AppendTextUnitsStep;
 import com.box.l10n.mojito.okapi.steps.CheckForDoNotTranslateStep;
 import com.box.l10n.mojito.okapi.steps.FilterEventsToInMemoryRawDocumentStep;
 import com.box.l10n.mojito.quartz.QuartzJobInfo;
@@ -1189,9 +1189,18 @@ public class TMService {
     TranslateStep translateStep =
         new TranslateStep(
             asset, repositoryLocale, inheritanceMode, status, replaceUsedTmTextUnitVariantIds);
+    AppendTextUnitsStep appendTextUnitsStep =
+        new AppendTextUnitsStep(asset, repositoryLocale, inheritanceMode);
+
     String generateLocalizedBase =
         generateLocalizedBase(
-            asset, content, filterConfigIdOverride, filterOptions, translateStep, bcp47Tag);
+            asset,
+            content,
+            filterConfigIdOverride,
+            filterOptions,
+            translateStep,
+            bcp47Tag,
+            appendTextUnitsStep);
 
     if (replaceUsedTmTextUnitVariantIds) {
       dataIntegrityViolationExceptionRetryTemplate.execute(
@@ -1243,7 +1252,7 @@ public class TMService {
 
     BasePipelineStep pseudoLocalizedStep = (BasePipelineStep) new PseudoLocalizeStep(asset);
     return generateLocalizedBase(
-        asset, content, filterConfigIdOverride, null, pseudoLocalizedStep, bcp47tag);
+        asset, content, filterConfigIdOverride, null, pseudoLocalizedStep, bcp47tag, null);
   }
 
   /**
@@ -1269,7 +1278,8 @@ public class TMService {
       FilterConfigIdOverride filterConfigIdOverride,
       List<String> filterOptions,
       BasePipelineStep step,
-      String outputBcp47tag)
+      String outputBcp47tag,
+      AppendTextUnitsStep appendTextUnitsStep)
       throws UnsupportedAssetFilterTypeException {
 
     try (Timer.ResourceSample timer =
@@ -1279,7 +1289,7 @@ public class TMService {
       IPipelineDriver driver = new PipelineDriver();
 
       driver.addStep(new RawDocumentToFilterEventsStep());
-      driver.addStep(new AppendTextUnitsStep());
+      if (appendTextUnitsStep != null) driver.addStep(appendTextUnitsStep);
       driver.addStep(new CheckForDoNotTranslateStep());
       driver.addStep(step);
 
