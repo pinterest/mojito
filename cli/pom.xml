@@ -273,9 +273,9 @@
                             <configOptions>
                                 <dateLibrary>java8</dateLibrary>
                             </configOptions>
-                            <apiPackage>com.box.l10n.mojito.cli.apiclient</apiPackage>
-                            <modelPackage>com.box.l10n.mojito.cli.model</modelPackage>
-                            <invokerPackage>com.box.l10n.mojito.cli.apiclient</invokerPackage>
+                            <apiPackage>${parent.groupId}.cli.apiclient</apiPackage>
+                            <modelPackage>${parent.groupId}.cli.model</modelPackage>
+                            <invokerPackage>${parent.groupId}.cli.apiclient</invokerPackage>
                         </configuration>
                     </execution>
                 </executions>

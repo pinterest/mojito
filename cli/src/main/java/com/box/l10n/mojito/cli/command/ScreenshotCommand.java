@@ -3,9 +3,10 @@ package com.box.l10n.mojito.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.LocaleMappingHelper;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.ImageWsApi;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.ImageClient;
 import com.box.l10n.mojito.rest.client.ScreenshotClient;
 import com.box.l10n.mojito.rest.entity.Locale;
 import com.box.l10n.mojito.rest.entity.Repository;
@@ -89,7 +90,7 @@ public class ScreenshotCommand extends Command {
 
   CommandDirectories commandDirectories;
 
-  @Autowired ImageClient imageClient;
+  @Autowired ImageWsApi imageClient;
 
   @Autowired ScreenshotClient screenshotClient;
 
@@ -205,8 +206,8 @@ public class ScreenshotCommand extends Command {
     logger.debug("Upload image: {} to path: {}", image.toString(), uploadPath);
     try {
       byte[] content = Files.readAllBytes(image);
-      imageClient.uploadImage(uploadPath, content);
-    } catch (IOException ex) {
+      imageClient.uploadImage(content, uploadPath);
+    } catch (IOException | ApiException ex) {
       throw new CommandException("Failed to upload image: " + image.toString(), ex);
     }
   }
