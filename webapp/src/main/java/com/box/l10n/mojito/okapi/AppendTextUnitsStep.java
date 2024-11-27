@@ -9,9 +9,9 @@ import com.box.l10n.mojito.okapi.steps.AbstractMd5ComputationStep;
 import com.box.l10n.mojito.service.branch.BranchRepository;
 import com.box.l10n.mojito.service.branch.BranchStatisticRepository;
 import com.box.l10n.mojito.service.branch.BranchStatisticService;
-import com.box.l10n.mojito.service.tm.TranslatorWithInheritance;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.google.common.base.Strings;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,19 +45,16 @@ public class AppendTextUnitsStep extends AbstractMd5ComputationStep {
   @Autowired BranchStatisticRepository branchStatisticRepository;
   @Autowired BranchStatisticService branchStatisticService;
 
-  private final TranslatorWithInheritance translatorWithInheritance;
   private final Queue<Event> additionalEvents = new LinkedList<>();
   private boolean endDocumentProcessed = false;
   private Event endDocumentEvent = null;
-  private final HashSet<Long> sourceTextUnitIds = new HashSet<>();
+  private final HashSet<String> sourceTextUnitMD5s = new HashSet<>();
+  private final List<Long> branchIdsWithTextUnitsAdded = new ArrayList<>();
 
   private final LinkedList<TextUnitDTO> textUnitQueue = new LinkedList<>();
 
   public AppendTextUnitsStep(
-      Asset asset, RepositoryLocale repositoryLocale, InheritanceMode inheritanceMode) {
-    this.translatorWithInheritance =
-        new TranslatorWithInheritance(asset, repositoryLocale, inheritanceMode);
-  }
+      Asset asset, RepositoryLocale repositoryLocale, InheritanceMode inheritanceMode) {}
 
   @Override
   public String getName() {
@@ -82,11 +79,9 @@ public class AppendTextUnitsStep extends AbstractMd5ComputationStep {
       endDocumentProcessed = true;
 
       List<Branch> branches =
-          branchRepository.findByRepositoryIdAndDeletedFalseAndNameNotNullAndNameNot(
-              13L, PRIMARY_BRANCH);
-
-      branches =
-          branches.stream()
+          branchRepository
+              .findByRepositoryIdAndDeletedFalseAndNameNotNullAndNameNot(2L, PRIMARY_BRANCH)
+              .stream()
               .filter(
                   branch ->
                       branchStatisticRepository.findByBranch(branch) != null
@@ -94,31 +89,41 @@ public class AppendTextUnitsStep extends AbstractMd5ComputationStep {
                               == 0)
               .toList();
 
-      branches.forEach(
-          branch -> {
-            branchStatisticService
-                .getTextUnitDTOsForBranch(branch)
-                .forEach(
-                    textUnitDTO -> {
-                      if (sourceTextUnitIds.contains(textUnitDTO.getTmTextUnitId())) return;
-                      textUnitQueue.add(textUnitDTO);
-                    });
-          });
+      for (Branch branch : branches) {
+        int textUnitsAdded = 0;
+        for (TextUnitDTO textUnit : branchStatisticService.getTextUnitDTOsForBranch(branch)) {
+          String md5 =
+              textUnitUtils.computeTextUnitMD5(
+                  textUnit.getName(), textUnit.getSource(), textUnit.getComment());
+          if (sourceTextUnitMD5s.contains(md5)) continue;
+          textUnitQueue.add(textUnit);
+          textUnitsAdded++;
+        }
+
+        if (textUnitsAdded > 0) {
+          branchIdsWithTextUnitsAdded.add(branch.getId());
+        }
+      }
 
       processTextUnitQueue();
       endDocumentEvent = event;
       return new Event(EventType.NO_OP);
     } else if (event.getEventType() == EventType.TEXT_UNIT && !endDocumentProcessed) {
-      return this.handleTextUnit(event);
+      return this.handleSourceTextUnit(event);
     }
     return event;
   }
 
-  @Override
-  public Event handleTextUnit(Event event) {
+  /**
+   * Text units that are originally in the source asset get passed here and their md5 is added to
+   * the source text unit md5 list.
+   *
+   * @param event Okapi text unit event.
+   * @return Okapi text unit event.
+   */
+  public Event handleSourceTextUnit(Event event) {
     super.handleTextUnit(event);
-    TextUnitDTO textUnitDTO = translatorWithInheritance.getTextUnitDTO(md5);
-    sourceTextUnitIds.add(textUnitDTO.getTmTextUnitId());
+    sourceTextUnitMD5s.add(this.md5);
     return event;
   }
 

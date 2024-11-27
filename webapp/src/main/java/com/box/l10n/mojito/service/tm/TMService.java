@@ -1289,8 +1289,8 @@ public class TMService {
       IPipelineDriver driver = new PipelineDriver();
 
       driver.addStep(new RawDocumentToFilterEventsStep());
-      if (appendTextUnitsStep != null) driver.addStep(appendTextUnitsStep);
       driver.addStep(new CheckForDoNotTranslateStep());
+      if (appendTextUnitsStep != null) driver.addStep(appendTextUnitsStep);
       driver.addStep(step);
 
       // TODO(P1) see assetExtractor comments
