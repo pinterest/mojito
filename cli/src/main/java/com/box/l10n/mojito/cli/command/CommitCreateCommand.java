@@ -5,11 +5,12 @@ import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.apiclient.CommitWsApi;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiHelper;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.model.CommitBody;
 import com.box.l10n.mojito.cli.model.CommitCommit;
-import com.box.l10n.mojito.rest.entity.Repository;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
 import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -44,6 +45,8 @@ public class CommitCreateCommand extends Command {
   @Autowired CommandHelper commandHelper;
 
   @Autowired CommitWsApi commitClient;
+
+  @Autowired RepositoryWsApiHelper repositoryWsApiHelper;
 
   @Parameter(
       names = {Param.COMMIT_HASH_LONG, Param.COMMIT_HASH_SHORT},
@@ -94,7 +97,8 @@ public class CommitCreateCommand extends Command {
         .a(repositoryParam)
         .println(2);
 
-    Repository repository = commandHelper.findRepositoryByName(repositoryParam);
+    RepositoryRepository repository =
+        this.repositoryWsApiHelper.findRepositoryByName(repositoryParam);
 
     final CommitInfo commitInfo;
 
@@ -109,7 +113,8 @@ public class CommitCreateCommand extends Command {
     commitBody.setRepositoryId(repository.getId());
     commitBody.setAuthorName(commitInfo.authorName);
     commitBody.setAuthorEmail(commitInfo.authorEmail);
-    commitBody.setSourceCreationDate(commitInfo.creationDate.toOffsetDateTime());
+    commitBody.setSourceCreationDate(
+        commitInfo.creationDate == null ? null : commitInfo.creationDate.toOffsetDateTime());
     CommitCommit commit;
     try {
       commit = commitClient.createCommit(commitBody);

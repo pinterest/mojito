@@ -5,7 +5,6 @@ import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.model.User;
-import com.box.l10n.mojito.rest.client.exception.ResourceNotFoundException;
 import java.util.List;
 import org.fusesource.jansi.Ansi;
 import org.springframework.context.annotation.Scope;
@@ -37,11 +36,11 @@ public class UserDeleteCommand extends UserCommand {
     try {
       List<User> users = this.getPageUser(username).getContent();
       if (users.isEmpty()) {
-        throw new ResourceNotFoundException("User with username [" + username + "] is not found");
+        throw new CommandException("User with username [" + username + "] is not found");
       }
       this.userClient.deleteUserByUserId(users.getFirst().getId());
       consoleWriter.newLine().a("deleted --> user: ").fg(Ansi.Color.MAGENTA).a(username).println();
-    } catch (ResourceNotFoundException | ApiException ex) {
+    } catch (ApiException ex) {
       throw new CommandException(ex.getMessage(), ex);
     }
   }

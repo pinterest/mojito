@@ -12,12 +12,11 @@ import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_TRANSLATED_SHOR
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiHelper;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.AssetClient;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
-import com.box.l10n.mojito.rest.entity.Branch;
-import com.box.l10n.mojito.rest.entity.Repository;
+import com.box.l10n.mojito.cli.model.BranchBranchSummary;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
 import java.util.List;
 import org.fusesource.jansi.Ansi;
 import org.slf4j.Logger;
@@ -37,9 +36,7 @@ public class BranchViewCommand extends Command {
 
   @Autowired ConsoleWriter consoleWriter;
 
-  @Autowired RepositoryClient repositoryClient;
-
-  @Autowired AssetClient assetClient;
+  @Autowired RepositoryWsApiHelper repositoryWsApiHelper;
 
   @Autowired CommandHelper commandHelper;
 
@@ -88,19 +85,21 @@ public class BranchViewCommand extends Command {
         .fg(Ansi.Color.CYAN)
         .a(repositoryParam)
         .println();
-    Repository repository = commandHelper.findRepositoryByName(repositoryParam);
+    RepositoryRepository repository = repositoryWsApiHelper.findRepositoryByName(repositoryParam);
 
-    List<Branch> branches =
-        repositoryClient.getBranches(
+    List<BranchBranchSummary> branches =
+        this.repositoryWsApiHelper.getBranchesOfRepository(
             repository.getId(),
             null,
             branchNameRegex,
             deleted,
             translated,
             includeNullBranch,
-            commandHelper.getLastWeekDateIfTrue(beforeLastWeek));
+            commandHelper.getLastWeekDateIfTrue(beforeLastWeek) == null
+                ? null
+                : commandHelper.getLastWeekDateIfTrue(beforeLastWeek).toOffsetDateTime());
 
-    for (Branch branch : branches) {
+    for (BranchBranchSummary branch : branches) {
       consoleWriter
           .newLine()
           .a(" - ")
@@ -108,7 +107,7 @@ public class BranchViewCommand extends Command {
           .a(branch.getName())
           .reset()
           .a(" (" + branch.getId() + ") ");
-      if (branch.getDeleted()) {
+      if (branch.isDeleted()) {
         consoleWriter.fg(Ansi.Color.MAGENTA).a(" deleted").reset();
       }
     }

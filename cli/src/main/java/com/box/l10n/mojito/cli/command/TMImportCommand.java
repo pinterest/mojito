@@ -140,7 +140,13 @@ public class TMImportCommand extends Command {
           .println();
 
     } catch (ApiException e) {
-      throw new CommandException(e.getMessage(), e);
+      throw new CommandException(
+          "Error importing ["
+              + fileMatch.getPath().toString()
+              + "] into repo ["
+              + repositoryParam
+              + "]",
+          e);
     }
   }
 
