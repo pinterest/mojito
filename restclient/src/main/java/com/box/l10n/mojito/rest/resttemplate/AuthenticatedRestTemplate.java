@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -52,29 +51,28 @@ public class AuthenticatedRestTemplate {
 
   @Autowired ResttemplateConfig restTemplateConfig;
 
-  @Autowired ProxyCheckService proxyCheckService;
-
   /** Will delegate calls to the {@link RestTemplate} instance that was configured */
-  @Autowired ProxiedCookieStoreRestTemplate restTemplate;
+  @Autowired CookieStoreRestTemplate restTemplate;
 
   /** Used to intercept requests and inject CSRF token */
   @Autowired LoginAuthenticationCsrfTokenInterceptor loginAuthenticationCsrfTokenInterceptor;
 
   @Autowired RestTemplateUtil restTemplateUtil;
 
+  @Autowired ProxyOutboundRequestInterceptor proxyOutboundRequestInterceptor;
+
   /** Initialize the internal restTemplate instance */
   @PostConstruct
   protected void init() {
     logger.debug("Create the RestTemplate instance that will be wrapped");
 
-    configureEnvoyProxy(restTemplate);
     makeRestTemplateWithCustomObjectMapper(restTemplate);
     setErrorHandlerWithLogging(restTemplate);
 
     logger.debug("Set interceptor for authentication");
     List<ClientHttpRequestInterceptor> interceptors =
-        Collections.<ClientHttpRequestInterceptor>singletonList(
-            loginAuthenticationCsrfTokenInterceptor);
+        Collections.<ClientHttpRequestInterceptor>unmodifiableList(
+            List.of(proxyOutboundRequestInterceptor, loginAuthenticationCsrfTokenInterceptor));
 
     restTemplate.setRequestFactory(
         new InterceptingClientHttpRequestFactory(restTemplate.getRequestFactory(), interceptors));
@@ -144,42 +142,6 @@ public class AuthenticatedRestTemplate {
         stringHttpMessageConverter.setSupportedMediaTypes(
             Arrays.asList(MediaType.parseMediaType("text/plain;charset=UTF-8"), MediaType.ALL));
       }
-    }
-  }
-
-  /***
-   * Send a dummy request to the proxy. If we get a success, it's configured
-   */
-  protected boolean isProxyConfigured() {
-    String testUrl =
-        UriComponentsBuilder.newInstance()
-            .scheme("http")
-            .host(restTemplateConfig.getProxyHost())
-            .port(restTemplateConfig.getProxyPort())
-            .path("login")
-            .build()
-            .toUriString();
-    HttpHeaders headers = new HttpHeaders();
-    headers.set("Host", restTemplateConfig.getHost());
-    HttpEntity<String> httpEntity = new HttpEntity<>(null, headers);
-    ResponseEntity<Void> response =
-        restTemplate.exchange(testUrl, HttpMethod.GET, httpEntity, Void.class);
-    return response.getStatusCode().is2xxSuccessful();
-  }
-
-  /***
-   * Update RestTemplate to use Proxy for all requests going forward;
-   * adds headers to indicate the host
-   */
-  protected void configureEnvoyProxy(ProxiedCookieStoreRestTemplate restTemplate) {
-    boolean isEnvoyConfigured = proxyCheckService.hasProxy();
-    if (isEnvoyConfigured) {
-      restTemplate.configureProxy(
-          true,
-          restTemplateConfig.getProxyHost(),
-          restTemplateConfig.getProxyPort(),
-          (httpRequest, entityDetails, httpContext) ->
-              httpRequest.addHeader("Host", restTemplateConfig.getHost()));
     }
   }
 
@@ -395,7 +357,7 @@ public class AuthenticatedRestTemplate {
   }
 
   @VisibleForTesting
-  public ProxiedCookieStoreRestTemplate getRestTemplate() {
+  public CookieStoreRestTemplate getRestTemplate() {
     return restTemplate;
   }
 }

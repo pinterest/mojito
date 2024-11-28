@@ -4,7 +4,6 @@ import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -57,7 +56,7 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
    * This is used for the authentication flow to keep things separate from the restTemplate that
    * this interceptor is intercepting
    */
-  ProxiedCookieStoreRestTemplate restTemplateForAuthenticationFlow;
+  CookieStoreRestTemplate restTemplateForAuthenticationFlow;
 
   /**
    * This is so that we obtain access to the cookie store used inside HttpClient to check to see if
@@ -77,31 +76,24 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
   @Autowired CredentialProvider credentialProvider;
 
   /** Will delegate calls to the {@link RestTemplate} instance that was configured */
-  @Autowired ProxiedCookieStoreRestTemplate restTemplate;
+  @Autowired CookieStoreRestTemplate restTemplate;
+
+  @Autowired ProxyOutboundRequestInterceptor proxyOutboundRequestInterceptor;
 
   /** Init */
   @PostConstruct
   protected void init() {
 
-    restTemplateForAuthenticationFlow = new ProxiedCookieStoreRestTemplate();
+    restTemplateForAuthenticationFlow = new CookieStoreRestTemplate();
     cookieStore = restTemplateForAuthenticationFlow.getCookieStore();
-    boolean hasProxy = proxyCheckService.hasProxy();
-    if (hasProxy) {
-      logger.debug("Configuring Proxy for authenticationRestTemplate");
-      restTemplateForAuthenticationFlow.configureProxy(
-          true,
-          resttemplateConfig.getProxyHost(),
-          resttemplateConfig.getProxyPort(),
-          (httpRequest, entityDetails, httpContext) ->
-              httpRequest.addHeader("Host", resttemplateConfig.getHost()));
-    }
 
     logger.debug(
         "Inject cookie store used in the rest template for authentication flow into the restTemplate so that they will match");
     restTemplate.setCookieStoreAndUpdateRequestFactory(cookieStore);
 
     List<ClientHttpRequestInterceptor> interceptors =
-        Collections.singletonList(
+        List.of(
+            proxyOutboundRequestInterceptor,
             new ClientHttpRequestInterceptor() {
               @Override
               public ClientHttpResponse intercept(
@@ -152,8 +144,8 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
 
   /**
    * Handle http response from the intercept. It will check to see if the initial response was
-   * successful (ie. error status such as 301, 403). If so, it'll try the authentication flow again.
-   * If it further encounters an unsuccessful response, then it'll throw a {@link
+   * successful (i.e. error status such as 301, 403). If so, it'll try the authentication flow
+   * again. If it further encounters an unsuccessful response, then it'll throw a {@link
    * RestClientException}
    *
    * @param request
@@ -261,7 +253,7 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
     }
 
     logger.debug(
-        "Injecting CSRF token into request {} header: {}", request.getURI(), csrfToken.getToken());
+        "Injecting CSRF token into request {} token: {}", request.getURI(), csrfToken.getToken());
     request.getHeaders().add(csrfToken.getHeaderName(), csrfToken.getToken());
   }
 
@@ -286,7 +278,7 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
           restTemplateForAuthenticationFlow.getForEntity(
               restTemplateUtil.getURIForResource(formLoginConfig.getLoginFormPath()), String.class);
 
-      logger.error("login Resonse status code {}", loginResponseEntity.getStatusCode());
+      logger.debug("login Resonse status code {}", loginResponseEntity.getStatusCode());
       if (!loginResponseEntity.hasBody()) {
         throw new SessionAuthenticationException(
             "Authentication failed: no CSRF token could be found.  GET login status code = "
@@ -301,6 +293,7 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
       MultiValueMap<String, Object> loginPostParams = new LinkedMultiValueMap<>();
       loginPostParams.add("username", credentialProvider.getUsername());
       loginPostParams.add("password", credentialProvider.getPassword());
+      loginPostParams.add("_csrf", latestCsrfToken.getToken());
 
       logger.debug(
           "Post to login url to startAuthenticationFlow with user={}, pwd={}",
@@ -313,7 +306,7 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
               String.class);
 
       // TODO(P1) This current way of checking if authentication is successful is somewhat
-      // hacky. Bascailly it says that authentication is successful if a 302 is returned
+      // hacky. Basically it says that authentication is successful if a 302 is returned
       // and the redirect (from location header) maps to the login redirect path from the config.
       URI locationURI = URI.create(postLoginResponseEntity.getHeaders().get("Location").get(0));
       String expectedLocation =

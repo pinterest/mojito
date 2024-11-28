@@ -35,6 +35,6 @@ public class ResttemplateConfigTest {
     assertEquals("ChangeMe", resttemplateConfig.getAuthentication().getPassword());
     assertEquals("", resttemplateConfig.getContextPath());
     assertEquals("localhost", resttemplateConfig.getProxyHost());
-    assertEquals(19193, resttemplateConfig.getProxyPort());
+    assertEquals(Integer.valueOf(19193), resttemplateConfig.getProxyPort());
   }
 }

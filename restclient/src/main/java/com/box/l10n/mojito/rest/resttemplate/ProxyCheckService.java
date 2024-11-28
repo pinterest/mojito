@@ -1,5 +1,8 @@
 package com.box.l10n.mojito.rest.resttemplate;
 
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -8,6 +11,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -20,8 +24,6 @@ public class ProxyCheckService implements InitializingBean {
 
   @Autowired ResttemplateConfig restTemplateConfig;
 
-  @Autowired RestTemplate restTemplate;
-
   @Override
   public void afterPropertiesSet() {
     hasProxy = isProxyConfigured();
@@ -31,11 +33,11 @@ public class ProxyCheckService implements InitializingBean {
     return hasProxy;
   }
 
-  protected boolean isProxyConfigured() {
+  private boolean isProxyConfigured() {
 
     String testUrl =
         UriComponentsBuilder.newInstance()
-            .scheme("http")
+            .scheme(restTemplateConfig.getProxyScheme())
             .host(restTemplateConfig.getProxyHost())
             .port(restTemplateConfig.getProxyPort())
             .path("login")
@@ -44,15 +46,29 @@ public class ProxyCheckService implements InitializingBean {
     logger.debug("Checking if proxy is configured with URL '{}'", testUrl);
     HttpHeaders headers = new HttpHeaders();
     headers.set("Host", restTemplateConfig.getHost());
+    logger.debug("With headers {}", headers);
     HttpEntity<String> httpEntity = new HttpEntity<>(null, headers);
     try {
+      RestTemplate tempRestTemplate = buildRestTemplate();
       ResponseEntity<Void> response =
-          restTemplate.exchange(testUrl, HttpMethod.GET, httpEntity, Void.class);
+          tempRestTemplate.exchange(testUrl, HttpMethod.GET, httpEntity, Void.class);
       logger.debug("Proxy login request response code {}", response.getStatusCode());
       return response.getStatusCode().is2xxSuccessful();
     } catch (Exception e) {
-      logger.warn("Unable to reach service via proxy. Defaulting to direct access", e.getMessage());
+      logger.warn(
+          "Proxy does not allow access to specified host. Falling back to directly accessing it",
+          e);
       return false;
     }
+  }
+
+  /***
+   * This is needed because the default RestTemplate does not allow the caller
+   * to set the Host header
+   */
+  private RestTemplate buildRestTemplate() {
+    CloseableHttpClient httpClient =
+        HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom().build()).build();
+    return new RestTemplate(new HttpComponentsClientHttpRequestFactory(httpClient));
   }
 }

@@ -55,7 +55,7 @@ public class AuthenticatedRestTemplateTest {
     wireMockServer.start();
 
     // resets the mock server that was set inside the rest template
-    authenticatedRestTemplate.restTemplate = new ProxiedCookieStoreRestTemplate();
+    authenticatedRestTemplate.restTemplate = new CookieStoreRestTemplate();
     authenticatedRestTemplate.init();
 
     // if port was 0, then the server will randomize it on start up, and now we
