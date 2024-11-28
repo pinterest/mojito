@@ -3,13 +3,14 @@ package com.box.l10n.mojito.cli.command.checks;
 import static com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificationSender.QUOTE_MARKER;
 import static java.util.stream.Collectors.toList;
 
+import com.box.l10n.mojito.cli.apiclient.AiChecksWsApi;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.command.CommandException;
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
+import com.box.l10n.mojito.cli.model.AICheckRequest;
+import com.box.l10n.mojito.cli.model.AICheckResponse;
+import com.box.l10n.mojito.cli.model.AICheckResult;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
-import com.box.l10n.mojito.rest.client.AIServiceClient;
-import com.box.l10n.mojito.rest.entity.AICheckRequest;
-import com.box.l10n.mojito.rest.entity.AICheckResponse;
-import com.box.l10n.mojito.rest.entity.AICheckResult;
 import com.google.common.base.Strings;
 import java.time.Duration;
 import java.util.HashMap;
@@ -38,7 +39,7 @@ public class AIChecker extends AbstractCliChecker {
       Retry.backoff(RETRY_MAX_ATTEMPTS, Duration.ofSeconds(RETRY_MIN_DURATION_SECONDS))
           .maxBackoff(Duration.ofSeconds(RETRY_MAX_BACKOFF_DURATION_SECONDS));
 
-  @Autowired AIServiceClient AIServiceClient;
+  @Autowired AiChecksWsApi aiServiceClient;
 
   @Override
   public CliCheckResult run(List<AssetExtractionDiff> assetExtractionDiffs) {
@@ -57,17 +58,39 @@ public class AIChecker extends AbstractCliChecker {
           "Repository name must be provided in checker options when using OpenAI checks.");
     }
 
-    AICheckRequest AICheckRequest = new AICheckRequest(textUnits, repositoryName);
+    List<com.box.l10n.mojito.cli.model.AssetExtractorTextUnit> assetExtractorTextUnits =
+        textUnits.stream()
+            .map(
+                textUnit -> {
+                  com.box.l10n.mojito.cli.model.AssetExtractorTextUnit assetExtractorTextUnit =
+                      new com.box.l10n.mojito.cli.model.AssetExtractorTextUnit();
+                  assetExtractorTextUnit.setName(textUnit.getName());
+                  assetExtractorTextUnit.setSource(textUnit.getSource());
+                  assetExtractorTextUnit.setComments(textUnit.getComments());
+                  assetExtractorTextUnit.setPluralForm(textUnit.getPluralForm());
+                  assetExtractorTextUnit.setUsages(textUnit.getUsages().stream().toList());
+                  return assetExtractorTextUnit;
+                })
+            .toList();
 
-    return Mono.fromCallable(() -> executeChecks(AICheckRequest))
+    AICheckRequest aiCheckRequest = new AICheckRequest();
+    aiCheckRequest.setTextUnits(assetExtractorTextUnits);
+    aiCheckRequest.setRepositoryName(repositoryName);
+
+    return Mono.fromCallable(() -> executeChecks(aiCheckRequest))
         .retryWhen(retryConfiguration)
         .doOnError(ex -> logger.error("Failed to run AI checks: {}", ex.getMessage(), ex))
         .onErrorReturn(getRetriesExhaustedResult())
         .block();
   }
 
-  private CliCheckResult executeChecks(AICheckRequest AICheckRequest) {
-    AICheckResponse response = AIServiceClient.executeAIChecks(AICheckRequest);
+  private CliCheckResult executeChecks(AICheckRequest aiCheckRequest) {
+    AICheckResponse response;
+    try {
+      response = aiServiceClient.executeAIChecks(aiCheckRequest);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
 
     if (response.isError()) {
       throw new CommandException("Failed to run AI checks: " + response.getErrorMessage());
