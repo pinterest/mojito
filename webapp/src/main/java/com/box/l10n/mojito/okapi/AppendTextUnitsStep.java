@@ -72,7 +72,7 @@ public class AppendTextUnitsStep extends AbstractMd5ComputationStep {
 
       List<Branch> branches =
           branchRepository
-              .findByRepositoryIdAndDeletedFalseAndNameNotNullAndNameNot(2L, PRIMARY_BRANCH)
+              .findByRepositoryIdAndDeletedFalseAndNameNotNullAndNameNot(14L, PRIMARY_BRANCH)
               .stream()
               .filter(
                   branch ->
@@ -123,7 +123,11 @@ public class AppendTextUnitsStep extends AbstractMd5ComputationStep {
     while (!textUnitQueue.isEmpty()) {
       TextUnitDTO textUnitDTO = textUnitQueue.poll();
       if (textUnitDTO.getPluralForm() != null) {
-        // Add all plural events
+        // Should not have reached a plural form that is other, other will be packages with plural
+        // form 'one'.
+        // If we find this it means the POFilter extracted a plural to 'one', 'few', 'many' but not
+        // other (expected)
+        if (textUnitDTO.getPluralForm().equals("other")) continue;
         additionalEvents.addAll(
             textUnitDTOConverter.toOkapiPluralEvents(
                 List.of(textUnitDTO, textUnitQueue.poll()), this.getTargetLocale()));

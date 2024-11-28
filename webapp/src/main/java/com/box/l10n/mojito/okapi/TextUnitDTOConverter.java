@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.okapi;
 
+import com.box.l10n.mojito.po.PoPluralRule;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.google.common.base.Strings;
 import java.util.ArrayList;
@@ -42,6 +43,10 @@ public class TextUnitDTOConverter {
   // Only handles english source as of now.
   public List<Event> toOkapiPluralEvents(List<TextUnitDTO> pluralTextUnitDTOs, LocaleId locale) {
     List<Event> events = new ArrayList<>();
+
+    PoPluralRule pluralRule = PoPluralRule.fromBcp47Tag(locale.toBCP47());
+    List<String> forms = pluralRule.getCldrForms().stream().toList();
+
     TextUnitDTO singular =
         pluralTextUnitDTOs.stream()
             .filter(tu -> tu.getPluralForm().equals("one"))
@@ -50,7 +55,7 @@ public class TextUnitDTOConverter {
 
     TextUnitDTO plural =
         pluralTextUnitDTOs.stream()
-            .filter(tu -> !tu.getPluralForm().equals("one"))
+            .filter(tu -> tu.getPluralForm().equals("other"))
             .findFirst()
             .orElse(null);
 
@@ -58,14 +63,26 @@ public class TextUnitDTOConverter {
     assert plural != null;
 
     TextUnit singularTU = toOkapiTU(singular, locale);
-    singularTU.setSkeleton(createSkeletonForPluralEntry("0", singularTU, locale));
-
     TextUnit pluralTU = toOkapiTU(plural, locale);
-    pluralTU.setSkeleton(createSkeletonForPluralEntry("1", pluralTU, locale));
 
     events.add(createPluralStartEvent(singular, plural));
-    events.add(new Event(EventType.TEXT_UNIT, singularTU));
-    events.add(new Event(EventType.TEXT_UNIT, pluralTU));
+
+    /**
+     * We have _one and _other from the DB. Just need to replace the _other with the CLDRs for the
+     * target locale to simulate POFilter.
+     */
+    for (int i = 0; i < forms.size(); i++) {
+      TextUnit textUnit;
+      if (forms.get(i).equals("one")) {
+        textUnit = singularTU.clone();
+      } else {
+        textUnit = pluralTU.clone();
+        textUnit.setName(textUnit.getName().replace("_other", "_" + forms.get(i)));
+      }
+      textUnit.setSkeleton(createSkeletonForPluralEntry(Integer.toString(i), textUnit, locale));
+      events.add(new Event(EventType.TEXT_UNIT, textUnit));
+    }
+
     events.add(createPluralEndEvent(singular, plural));
     return events;
   }
@@ -92,7 +109,7 @@ public class TextUnitDTOConverter {
 
     StringBuilder skeletonString = new StringBuilder();
     if (!Strings.isNullOrEmpty(comment)) {
-      skeletonString.append("\n#. ").append(comment);
+      skeletonString.append("\n#. ").append(comment.replaceAll("\n", "\n#. "));
     }
 
     if (textUnit.getName().contains(CONTEXT_DELIMETER)) {
@@ -135,7 +152,7 @@ public class TextUnitDTOConverter {
     startGroup.setPreserveWhitespaces(false);
 
     if (!Strings.isNullOrEmpty(singular.getComment())) {
-      startGroupSkeleton.append("\n#. ").append(singular.getComment());
+      startGroupSkeleton.append("\n#. ").append(singular.getComment().replaceAll("\n", "\n#. "));
     }
 
     if (singular.getName().contains(CONTEXT_DELIMETER)) {
