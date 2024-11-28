@@ -25,6 +25,11 @@ import org.springframework.beans.factory.annotation.Configurable;
 /**
  * Append text units from external source.
  *
+ * <p>When the end document is reached, this step will artificially return a NO_OP event. This
+ * results in the pipeline going into a NO_OP slide (continuously sending NO_OP events), we will
+ * read from our virtual event queue (VEQ) during this no op phase and once the VEQ is empty we can
+ * return the end document event.
+ *
  * @author mattwilshire
  */
 @Configurable
@@ -37,8 +42,8 @@ public class AppendTextUnitsStep extends AbstractMd5ComputationStep {
   @Autowired BranchStatisticService branchStatisticService;
   @Autowired TextUnitDTOConverter textUnitDTOConverter;
 
-  private final Queue<Event> additionalEvents = new LinkedList<>();
-  private boolean endDocumentProcessed = false;
+  private final Queue<Event> virtualEvents = new LinkedList<>();
+  private boolean endDocumentReached = false;
   private Event endDocumentEvent = null;
   private final HashSet<String> sourceTextUnitMD5s = new HashSet<>();
   private final List<Long> branchIdsWithTextUnitsAdded = new ArrayList<>();
@@ -60,50 +65,70 @@ public class AppendTextUnitsStep extends AbstractMd5ComputationStep {
 
   @Override
   public Event handleEvent(Event event) {
-    if (endDocumentProcessed) {
-      if (!additionalEvents.isEmpty()) {
-        return additionalEvents.poll();
+    if (!endDocumentReached) {
+      switch (event.getEventType()) {
+        case EventType.TEXT_UNIT:
+          return this.handleSourceTextUnit(event);
+        case EventType.END_DOCUMENT:
+          // Reached the end of the document, process text units from branches into the virtual
+          // event queue.
+          endDocumentReached = true;
+          this.handleEndDocument();
+          endDocumentEvent = event;
+          return new Event(EventType.NO_OP);
+      }
+
+    } else {
+      if (!virtualEvents.isEmpty()) {
+        return virtualEvents.poll();
       }
       return endDocumentEvent;
     }
 
-    if (event.getEventType() == EventType.END_DOCUMENT && !endDocumentProcessed) {
-      endDocumentProcessed = true;
+    return event;
+  }
 
-      List<Branch> branches =
-          branchRepository
-              .findByRepositoryIdAndDeletedFalseAndNameNotNullAndNameNot(14L, PRIMARY_BRANCH)
-              .stream()
-              .filter(
-                  branch ->
-                      branchStatisticRepository.findByBranch(branch) != null
-                          && branchStatisticRepository.findByBranch(branch).getForTranslationCount()
-                              == 0)
-              .toList();
+  /**
+   * Reached the end of the document. Fetch all text units from branches that are fully translated
+   * and append them into the textUnitQueue. These text units will be processed into Okapi events in
+   * the virtual queue. When the NO_OP slide occurs (end document, no_op returned) this step will
+   * read from the virtualEventQueue.
+   */
+  public void handleEndDocument() {
+    List<Branch> branches =
+        branchRepository
+            .findByRepositoryIdAndDeletedFalseAndNameNotNullAndNameNot(14L, PRIMARY_BRANCH)
+            .stream()
+            .filter(
+                branch ->
+                    branchStatisticRepository.findByBranch(branch) != null
+                        && branchStatisticRepository.findByBranch(branch).getForTranslationCount()
+                            == 0)
+            .toList();
 
-      for (Branch branch : branches) {
-        int textUnitsAdded = 0;
-        for (TextUnitDTO textUnit : branchStatisticService.getTextUnitDTOsForBranch(branch)) {
-          String md5 =
-              textUnitUtils.computeTextUnitMD5(
-                  textUnit.getName(), textUnit.getSource(), textUnit.getComment());
-          if (sourceTextUnitMD5s.contains(md5)) continue;
-          textUnitQueue.add(textUnit);
-          textUnitsAdded++;
-        }
-
-        if (textUnitsAdded > 0) {
-          branchIdsWithTextUnitsAdded.add(branch.getId());
-        }
+    for (Branch branch : branches) {
+      /**
+       * NOTE: Plurals will be returned by the root locale, e.g English -> 'one' and 'other' This is
+       * fine for this use case, when we reach a plural pop them both off, we will use the target
+       * locale to get the CLDRs and inject events for them to the pipeline. see {@link
+       * BranchStatisticService#getTextUnitDTOSForTmTextUnitIds}
+       */
+      boolean addedTU = false;
+      for (TextUnitDTO textUnit : branchStatisticService.getTextUnitDTOsForBranch(branch)) {
+        String md5 =
+            textUnitUtils.computeTextUnitMD5(
+                textUnit.getName(), textUnit.getSource(), textUnit.getComment());
+        if (sourceTextUnitMD5s.contains(md5)) continue;
+        textUnitQueue.add(textUnit);
+        addedTU = true;
       }
 
-      processTextUnitQueue();
-      endDocumentEvent = event;
-      return new Event(EventType.NO_OP);
-    } else if (event.getEventType() == EventType.TEXT_UNIT && !endDocumentProcessed) {
-      return this.handleSourceTextUnit(event);
+      if (addedTU) {
+        branchIdsWithTextUnitsAdded.add(branch.getId());
+      }
     }
-    return event;
+
+    processTextUnitQueue();
   }
 
   /**
@@ -123,24 +148,24 @@ public class AppendTextUnitsStep extends AbstractMd5ComputationStep {
     while (!textUnitQueue.isEmpty()) {
       TextUnitDTO textUnitDTO = textUnitQueue.poll();
       if (textUnitDTO.getPluralForm() != null) {
-        // Should not have reached a plural form that is other, other will be packages with plural
+        // Should not have reached a plural form that is other, other will be packaged with plural
         // form 'one'.
         // If we find this it means the POFilter extracted a plural to 'one', 'few', 'many' but not
-        // other (expected)
+        // other (expected), we don't have a match for this md5 but can confirm it would have
+        // matched if its 'one' form is missing.
         if (textUnitDTO.getPluralForm().equals("other")) continue;
-        additionalEvents.addAll(
+        virtualEvents.addAll(
             textUnitDTOConverter.toOkapiPluralEvents(
                 List.of(textUnitDTO, textUnitQueue.poll()), this.getTargetLocale()));
-
       } else {
-        additionalEvents.add(textUnitToOkapiEvent(textUnitDTO));
+        virtualEvents.add(textUnitToOkapiEvent(textUnitDTO));
       }
     }
   }
 
   @Override
   public boolean isDone() {
-    return endDocumentProcessed && additionalEvents.isEmpty();
+    return endDocumentReached && virtualEvents.isEmpty();
   }
 
   public Event textUnitToOkapiEvent(TextUnitDTO textUnitDTO) {
