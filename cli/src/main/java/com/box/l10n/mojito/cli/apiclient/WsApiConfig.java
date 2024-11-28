@@ -42,4 +42,9 @@ public class WsApiConfig {
   public ImageWsApi imageWsApi() {
     return new ImageWsApi(this.apiClient);
   }
+
+  @Bean
+  public AiPromptWsApi aiPromptWsApi() {
+    return new AiPromptWsApi(this.apiClient);
+  }
 }
