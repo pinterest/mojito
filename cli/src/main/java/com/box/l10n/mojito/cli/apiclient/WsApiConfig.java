@@ -47,4 +47,9 @@ public class WsApiConfig {
   public AiPromptWsApi aiPromptWsApi() {
     return new AiPromptWsApi(this.apiClient);
   }
+
+  @Bean
+  public AiChecksWsApi aiChecksWsApi() {
+    return new AiChecksWsApi(this.apiClient);
+  }
 }
