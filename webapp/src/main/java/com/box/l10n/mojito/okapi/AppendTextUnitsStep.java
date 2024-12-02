@@ -50,8 +50,12 @@ public class AppendTextUnitsStep extends AbstractMd5ComputationStep {
 
   private final LinkedList<TextUnitDTO> textUnitQueue = new LinkedList<>();
 
+  private final Asset asset;
+
   public AppendTextUnitsStep(
-      Asset asset, RepositoryLocale repositoryLocale, InheritanceMode inheritanceMode) {}
+      Asset asset, RepositoryLocale repositoryLocale, InheritanceMode inheritanceMode) {
+    this.asset = asset;
+  }
 
   @Override
   public String getName() {
@@ -97,7 +101,8 @@ public class AppendTextUnitsStep extends AbstractMd5ComputationStep {
   public void handleEndDocument() {
     List<Branch> branches =
         branchRepository
-            .findByRepositoryIdAndDeletedFalseAndNameNotNullAndNameNot(14L, PRIMARY_BRANCH)
+            .findByRepositoryIdAndDeletedFalseAndNameNotNullAndNameNot(
+                this.asset.getRepository().getId(), PRIMARY_BRANCH)
             .stream()
             .filter(
                 branch ->
