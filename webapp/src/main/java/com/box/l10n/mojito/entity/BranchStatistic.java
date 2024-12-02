@@ -104,6 +104,14 @@ public class BranchStatistic extends AuditableEntity {
   @Column(name = "for_translation_count")
   private long forTranslationCount = 0;
 
+  @JsonView(View.BranchStatistic.class)
+  @Column(name = "in_localized_asset")
+  private boolean inLocalizedAsset;
+
+  @JsonView(View.BranchStatistic.class)
+  @Column(name = "localized_asset_commit")
+  private Long localizedAssetCommit;
+
   public Branch getBranch() {
     return branch;
   }
@@ -134,5 +142,21 @@ public class BranchStatistic extends AuditableEntity {
 
   public void setForTranslationCount(long forTranslationCount) {
     this.forTranslationCount = forTranslationCount;
+  }
+
+  public Long getLocalizedAssetCommit() {
+    return localizedAssetCommit;
+  }
+
+  public void setLocalizedAssetCommit(Long localizedAssetCommit) {
+    this.localizedAssetCommit = localizedAssetCommit;
+  }
+
+  public boolean isInLocalizedAsset() {
+    return inLocalizedAsset;
+  }
+
+  public void setInLocalizedAsset(boolean inLocalizedAsset) {
+    this.inLocalizedAsset = inLocalizedAsset;
   }
 }

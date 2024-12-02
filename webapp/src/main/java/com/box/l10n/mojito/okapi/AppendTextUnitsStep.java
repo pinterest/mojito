@@ -4,6 +4,7 @@ import static com.box.l10n.mojito.service.assetExtraction.AssetExtractionService
 
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.Branch;
+import com.box.l10n.mojito.entity.BranchStatistic;
 import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.okapi.steps.AbstractMd5ComputationStep;
 import com.box.l10n.mojito.service.branch.BranchRepository;
@@ -129,7 +130,10 @@ public class AppendTextUnitsStep extends AbstractMd5ComputationStep {
       }
 
       if (addedTU) {
-        branchIdsWithTextUnitsAdded.add(branch.getId());
+        BranchStatistic branchStatistic = branch.getBranchStatistic();
+        branchStatistic.setInLocalizedAsset(true);
+        branchStatisticRepository.save(branchStatistic);
+        logger.info("Updated 'inLocalizedAsset' field for branch name '{}'", branch.getName());
       }
     }
 
