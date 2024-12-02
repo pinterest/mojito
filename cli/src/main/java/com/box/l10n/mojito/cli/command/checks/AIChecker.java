@@ -68,7 +68,8 @@ public class AIChecker extends AbstractCliChecker {
                   assetExtractorTextUnit.setSource(textUnit.getSource());
                   assetExtractorTextUnit.setComments(textUnit.getComments());
                   assetExtractorTextUnit.setPluralForm(textUnit.getPluralForm());
-                  assetExtractorTextUnit.setUsages(textUnit.getUsages().stream().toList());
+                  assetExtractorTextUnit.setUsages(
+                      textUnit.getUsages() == null ? null : textUnit.getUsages().stream().toList());
                   return assetExtractorTextUnit;
                 })
             .toList();
