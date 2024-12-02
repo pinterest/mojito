@@ -1,5 +1,7 @@
 package com.box.l10n.mojito.rest.commit;
 
+import com.box.l10n.mojito.entity.Branch;
+import com.box.l10n.mojito.entity.BranchStatistic;
 import com.box.l10n.mojito.entity.Commit;
 import com.box.l10n.mojito.entity.PullRun;
 import com.box.l10n.mojito.entity.PushRun;
@@ -7,6 +9,8 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.rest.PageView;
 import com.box.l10n.mojito.rest.View;
 import com.box.l10n.mojito.rest.repository.RepositoryWithIdNotFoundException;
+import com.box.l10n.mojito.service.branch.BranchRepository;
+import com.box.l10n.mojito.service.branch.BranchStatisticRepository;
 import com.box.l10n.mojito.service.commit.CommitService;
 import com.box.l10n.mojito.service.commit.SaveCommitMismatchedExistingDataException;
 import com.box.l10n.mojito.service.pullrun.PullRunWithNameNotFoundException;
@@ -17,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -40,6 +45,9 @@ public class CommitWS {
   RepositoryRepository repositoryRepository;
 
   CommitService commitService;
+
+  @Autowired BranchRepository branchRepository;
+  @Autowired BranchStatisticRepository branchStatisticRepository;
 
   public CommitWS(RepositoryRepository repositoryRepository, CommitService commitService) {
     this.repositoryRepository = repositoryRepository;
@@ -216,12 +224,29 @@ public class CommitWS {
             .findById(commitBody.getRepositoryId())
             .orElseThrow(() -> new RepositoryWithIdNotFoundException(commitBody.getRepositoryId()));
 
-    return commitService.getOrCreateCommit(
-        repository,
-        commitBody.getCommitName(),
-        commitBody.getAuthorEmail(),
-        commitBody.getAuthorName(),
-        commitBody.getSourceCreationDate());
+    Commit commit =
+        commitService.getOrCreateCommit(
+            repository,
+            commitBody.getCommitName(),
+            commitBody.getAuthorEmail(),
+            commitBody.getAuthorName(),
+            commitBody.getSourceCreationDate());
+
+    // TODO: Only do this if CLI param is passed.
+    List<Branch> branches =
+        branchRepository
+            .findByRepositoryAndDeletedFalseAndBranchStatisticInLocalizedAssetTrueAndBranchStatisticLocalizedAssetCommitIsNullAndNameIsNotNull(
+                repository);
+
+    branches.forEach(
+        branch -> {
+          BranchStatistic branchStatistic = branch.getBranchStatistic();
+          branchStatistic.setLocalizedAssetCommit(commit.getId());
+          branchStatisticRepository.save(branchStatistic);
+          logger.info("Updated commit id for branch: '{}'", branch.getName());
+        });
+
+    return commit;
   }
 
   /**

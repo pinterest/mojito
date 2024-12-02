@@ -27,4 +27,9 @@ public interface BranchRepository
       Long repositoryId, String primaryBranch);
 
   List<Branch> findByDeletedFalseAndNameNotNullAndNameNot(String primaryBranch);
+
+  // Amazing query below     TODO: Use @Query annotation
+  List<Branch>
+      findByRepositoryAndDeletedFalseAndBranchStatisticInLocalizedAssetTrueAndBranchStatisticLocalizedAssetCommitIsNullAndNameIsNotNull(
+          Repository repository);
 }
