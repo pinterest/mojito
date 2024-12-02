@@ -20,13 +20,13 @@ public class ProxyOutboundRequestInterceptor implements ClientHttpRequestInterce
   Logger logger = LoggerFactory.getLogger(ProxyOutboundRequestInterceptor.class);
 
   @Autowired ResttemplateConfig restTemplateConfig;
-  @Autowired ProxyCheckService proxyCheckService;
+  @Autowired ProxyHealthCheckService proxyHealthCheckService;
 
   @Override
   public ClientHttpResponse intercept(
       HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
 
-    if (proxyCheckService.hasProxy()) {
+    if (proxyHealthCheckService.isProxyHealthy()) {
       // To prevent adding extra layers, when the proxied request fails and is retried
       if (request.getURI().getHost().equals(restTemplateConfig.getProxyHost())) {
         logger.debug("Proxy has already been configured for request");

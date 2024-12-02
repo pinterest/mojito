@@ -111,7 +111,7 @@ public class ResttemplateConfig {
     return proxyPort;
   }
 
-  public void setProxyPort(int proxyPort) {
+  public void setProxyPort(Integer proxyPort) {
     this.proxyPort = proxyPort;
   }
 

@@ -50,7 +50,7 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
 
   @Autowired RestTemplateUtil restTemplateUtil;
 
-  @Autowired ProxyCheckService proxyCheckService;
+  @Autowired ProxyHealthCheckService proxyHealthCheckService;
 
   /**
    * This is used for the authentication flow to keep things separate from the restTemplate that
