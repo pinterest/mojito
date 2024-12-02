@@ -174,7 +174,11 @@ public class BranchNotificationService {
     }
 
     if (shouldSendTranslatedMessage(branch, branchNotification)) {
-      sendTranslatedMessage(branchNotificationMessageSender, branch, branchNotification);
+      if (branch.getBranchStatistic().isInLocalizedAsset()
+          && branch.getBranchStatistic().getLocalizedAssetCommit() != null) {
+        //TODO: Only do the above check if the repository matches repositories listed in app properties.
+        sendTranslatedMessage(branchNotificationMessageSender, branch, branchNotification);
+      }
     }
   }
 
