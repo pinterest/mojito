@@ -54,7 +54,7 @@ public class Application {
   public static void main(String[] args) throws IOException {
     // Added a custom converter to hide fields that are not annotated with the @JsonView annotation
     // in Swagger
-    ModelConverters.getInstance().addConverter(new JsonViewAwareModelResolver(Json.mapper()));
+    ModelConverters.getInstance().addConverter(new CustomModelResolver(Json.mapper()));
 
     XmlParsingConfiguration.disableXPathLimits();
 
