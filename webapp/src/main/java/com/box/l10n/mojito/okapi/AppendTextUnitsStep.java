@@ -11,6 +11,7 @@ import com.box.l10n.mojito.service.branch.BranchRepository;
 import com.box.l10n.mojito.service.branch.BranchStatisticRepository;
 import com.box.l10n.mojito.service.branch.BranchStatisticService;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
+import com.google.common.base.Strings;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -126,7 +127,10 @@ public class AppendTextUnitsStep extends AbstractMd5ComputationStep {
                 textUnit.getName(), textUnit.getSource(), textUnit.getComment());
         if (sourceTextUnitMD5s.contains(md5)) continue;
         textUnitQueue.add(textUnit);
-        addedTU = true;
+        if (Strings.isNullOrEmpty(textUnit.getPluralForm())
+            || !textUnit.getPluralForm().equals("other")) {
+          addedTU = true;
+        }
       }
 
       if (addedTU) {
