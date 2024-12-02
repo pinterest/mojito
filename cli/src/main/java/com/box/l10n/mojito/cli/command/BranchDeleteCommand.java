@@ -137,7 +137,7 @@ public class BranchDeleteCommand extends Command {
       try {
         pollableTask = repositoryClient.deleteBranch(repository.getId(), branch.getId());
       } catch (ApiException e) {
-        throw new RuntimeException(e);
+        throw new CommandException(e.getMessage(), e);
       }
       commandHelper.waitForPollableTask(pollableTask.getId());
     }

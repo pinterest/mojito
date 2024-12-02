@@ -2,14 +2,15 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.AssetWsApi;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.AssetClient;
+import com.box.l10n.mojito.cli.model.AssetAssetSummary;
+import com.box.l10n.mojito.cli.model.XliffExportBody;
 import com.box.l10n.mojito.rest.client.exception.PollableTaskException;
-import com.box.l10n.mojito.rest.entity.Asset;
 import com.box.l10n.mojito.rest.entity.Repository;
 import com.box.l10n.mojito.rest.entity.RepositoryLocale;
-import com.box.l10n.mojito.rest.entity.XliffExportBody;
 import com.google.common.base.MoreObjects;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -69,7 +70,7 @@ public class TMExportCommand extends Command {
 
   @Autowired CommandHelper commandHelper;
 
-  @Autowired AssetClient assetClient;
+  @Autowired AssetWsApi assetClient;
 
   CommandDirectories commandDirectories;
 
@@ -90,13 +91,18 @@ public class TMExportCommand extends Command {
 
     Repository repository = commandHelper.findRepositoryByName(repositoryParam);
 
-    List<Asset> assets = assetClient.getAssetsByRepositoryId(repository.getId());
+    List<AssetAssetSummary> assets;
+    try {
+      assets = assetClient.getAssets(repository.getId(), null, null, null, null);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
 
     Set<RepositoryLocale> repositoryLocales = repository.getRepositoryLocales();
 
     long assetNumber = 0;
 
-    for (Asset asset : assets) {
+    for (AssetAssetSummary asset : assets) {
       assetNumber++;
 
       consoleWriter.newLine().a("Asset: ").fg(Color.CYAN).a(asset.getPath()).println();
@@ -108,8 +114,13 @@ public class TMExportCommand extends Command {
         if (bcp47tagsParam == null || bcp47tagsParam.contains(bcp47Tag)) {
           consoleWriter.a("Exporting: ").fg(Color.CYAN).a(bcp47Tag).print();
 
-          XliffExportBody xliffExport =
-              assetClient.exportAssetAsXLIFFAsync(asset.getId(), bcp47Tag);
+          XliffExportBody exportBody = new XliffExportBody();
+          XliffExportBody xliffExport;
+          try {
+            xliffExport = assetClient.xliffExportAsync(exportBody, bcp47Tag, asset.getId());
+          } catch (ApiException e) {
+            throw new CommandException(e.getMessage(), e);
+          }
           Long pollableTaskId = xliffExport.getPollableTask().getId();
 
           try {
@@ -119,7 +130,13 @@ public class TMExportCommand extends Command {
           }
 
           Path exportFile = getExportFile(repositoryLocale, assetNumber);
-          String export = assetClient.getExportedXLIFF(asset.getId(), xliffExport.getTmXliffId());
+          String export;
+          try {
+            export =
+                assetClient.xliffExport(asset.getId(), xliffExport.getTmXliffId()).getContent();
+          } catch (ApiException e) {
+            throw new CommandException(e.getMessage(), e);
+          }
           commandHelper.writeFileContent(export, exportFile);
 
           consoleWriter.a(" --> ").fg(Color.MAGENTA).a(exportFile.toString()).println();
