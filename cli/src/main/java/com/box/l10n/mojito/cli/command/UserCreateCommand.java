@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 /**
@@ -96,6 +97,9 @@ public class UserCreateCommand extends UserCommand {
           .a(user.getUsername())
           .println();
     } catch (ApiException ex) {
+      if (ex.getCode() == HttpStatus.CONFLICT.value()) {
+        throw new CommandException("User with username [" + username + "] already exists");
+      }
       throw new CommandException(ex.getMessage(), ex);
     }
   }

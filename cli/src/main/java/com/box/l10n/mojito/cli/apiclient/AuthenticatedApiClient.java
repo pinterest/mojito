@@ -1,6 +1,7 @@
 package com.box.l10n.mojito.cli.apiclient;
 
 import com.squareup.okhttp.OkHttpClient;
+import jakarta.annotation.PostConstruct;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
@@ -9,9 +10,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuthenticatedApiClient extends ApiClient {
 
-  private final CookieManager cookieManager;
+  private CookieManager cookieManager;
 
-  public AuthenticatedApiClient() {
+  @PostConstruct
+  public void init() {
     this.cookieManager = this.getCookieManager();
     this.setHttpClient(this.getOkHttpClient());
   }
@@ -24,12 +26,10 @@ public class AuthenticatedApiClient extends ApiClient {
   }
 
   private OkHttpClient getOkHttpClient() {
-    String cookieName =
-        this.getBasePath().equals("http://localhost:8080") ? "SESSION" : "JSESSIONID";
     OkHttpClient httpClient = new OkHttpClient();
     httpClient
         .interceptors()
-        .add(new AuthenticatedApiInterceptor(this.cookieManager, cookieName, this.getBasePath()));
+        .add(new AuthenticatedApiInterceptor(this.cookieManager, this.getBasePath()));
     return httpClient;
   }
 }

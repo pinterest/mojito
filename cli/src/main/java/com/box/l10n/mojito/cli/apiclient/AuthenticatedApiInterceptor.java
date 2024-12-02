@@ -27,27 +27,25 @@ public class AuthenticatedApiInterceptor implements Interceptor {
 
   private static final String CSRF_TOKEN_HEADER_NAME = "X-CSRF-TOKEN";
 
+  private static final String COOKIE_NAME = "JSESSIONID";
+
   private String latestSessionId;
 
   private CsrfToken latestCsrfToken;
 
   private final CookieManager cookieManager;
 
-  private final String cookieName;
-
   private final String basePath;
 
-  public AuthenticatedApiInterceptor(
-      CookieManager cookieManager, String cookieName, String basePath) {
+  public AuthenticatedApiInterceptor(CookieManager cookieManager, String basePath) {
     this.cookieManager = cookieManager;
-    this.cookieName = cookieName;
     this.basePath = basePath;
   }
 
   private Optional<HttpCookie> getCookie() {
     CookieStore cookieStore = this.cookieManager.getCookieStore();
     return cookieStore.getCookies().stream()
-        .filter(cookie -> cookie.getName().equalsIgnoreCase(this.cookieName))
+        .filter(cookie -> cookie.getName().equalsIgnoreCase(COOKIE_NAME))
         .findFirst();
   }
 
@@ -100,7 +98,7 @@ public class AuthenticatedApiInterceptor implements Interceptor {
     if (cookie.isPresent()) {
       this.latestSessionId = cookie.get().getValue();
     } else {
-      throw new SessionAuthenticationException("Could not find cookie: " + this.cookieName);
+      throw new SessionAuthenticationException("Could not find cookie: " + COOKIE_NAME);
     }
   }
 

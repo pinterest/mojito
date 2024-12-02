@@ -52,4 +52,9 @@ public class WsApiConfig {
   public AiChecksWsApi aiChecksWsApi() {
     return new AiChecksWsApi(this.apiClient);
   }
+
+  @Bean
+  public AssetWsApi assetWsApi() {
+    return new AssetWsApi(this.apiClient);
+  }
 }

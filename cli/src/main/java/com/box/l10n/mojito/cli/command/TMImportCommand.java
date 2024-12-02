@@ -4,13 +4,14 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.apiclient.RepositoryWsApi;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiHelper;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.filefinder.FileMatch;
 import com.box.l10n.mojito.cli.filefinder.file.FileType;
 import com.box.l10n.mojito.cli.filefinder.file.XliffFileType;
 import com.box.l10n.mojito.cli.model.ImportRepositoryBody;
-import com.box.l10n.mojito.rest.entity.Repository;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
 import java.nio.file.Path;
 import java.util.Arrays;
 import org.fusesource.jansi.Ansi;
@@ -73,7 +74,9 @@ public class TMImportCommand extends Command {
 
   @Autowired CommandHelper commandHelper;
 
-  Repository repository;
+  @Autowired RepositoryWsApiHelper repositoryWsApiHelper;
+
+  RepositoryRepository repository;
 
   CommandDirectories commandDirectories;
 
@@ -87,7 +90,7 @@ public class TMImportCommand extends Command {
         .a(repositoryParam)
         .println(2);
 
-    repository = commandHelper.findRepositoryByName(repositoryParam);
+    repository = this.repositoryWsApiHelper.findRepositoryByName(repositoryParam);
     commandDirectories = new CommandDirectories(sourceDirectoryParam);
 
     FileType xliffFileType = new XliffFileType();
