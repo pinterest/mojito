@@ -77,7 +77,7 @@ public class CliWS {
   @RequestMapping(
       value = "/cli/install.sh",
       method = RequestMethod.GET,
-      produces = MediaType.TEXT_PLAIN_VALUE)
+      produces = {MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_JSON_VALUE})
   @ResponseBody
   public String getInstallCliScript(
       HttpServletRequest httpServletRequest,
@@ -97,7 +97,7 @@ public class CliWS {
   @RequestMapping(
       value = "/cli/version",
       method = RequestMethod.GET,
-      produces = MediaType.TEXT_PLAIN_VALUE)
+      produces = {MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_JSON_VALUE})
   public String getVersion() {
     return cliService.getVersion();
   }

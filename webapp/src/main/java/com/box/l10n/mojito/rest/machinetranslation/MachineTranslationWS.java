@@ -90,7 +90,7 @@ public class MachineTranslationWS {
   @RequestMapping(
       method = RequestMethod.GET,
       value = "/api/machine-translation/config",
-      produces = MediaType.TEXT_PLAIN_VALUE)
+      produces = {MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_JSON_VALUE})
   @ResponseStatus(HttpStatus.OK)
   public String getMachineTranslationConfiguration() {
     return machineTranslationService.getConfiguredEngineSource().toString();

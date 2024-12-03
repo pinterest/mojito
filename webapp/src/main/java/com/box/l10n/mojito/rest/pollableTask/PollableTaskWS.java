@@ -45,7 +45,7 @@ public class PollableTaskWS {
   @RequestMapping(
       method = RequestMethod.GET,
       value = "/api/pollableTasks/{pollableTaskId}/output",
-      produces = MediaType.TEXT_PLAIN_VALUE)
+      produces = {MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_JSON_VALUE})
   public String getPollableTaskOutput(@PathVariable Long pollableTaskId) {
     String outputJson = pollableTaskBlobStorage.getOutputJson(pollableTaskId);
     return outputJson;
@@ -55,7 +55,7 @@ public class PollableTaskWS {
   @RequestMapping(
       method = RequestMethod.GET,
       value = "/api/pollableTasks/{pollableTaskId}/input",
-      produces = MediaType.TEXT_PLAIN_VALUE)
+      produces = {MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_JSON_VALUE})
   public String getPollableTaskInput(@PathVariable Long pollableTaskId) {
     String inputJson = pollableTaskBlobStorage.getInputJson(pollableTaskId);
     return inputJson;

@@ -32,7 +32,7 @@ public class CsrfTokenController {
   @RequestMapping(
       method = RequestMethod.GET,
       value = CSRF_TOKEN_PATH,
-      produces = MediaType.TEXT_PLAIN_VALUE)
+      produces = {MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_JSON_VALUE})
   @ResponseStatus(HttpStatus.OK)
   public String getCsrfToken(HttpServletRequest httpServletRequest) {
 

@@ -2,14 +2,17 @@ package com.box.l10n.mojito;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.SimpleType;
 import io.swagger.v3.core.converter.AnnotatedType;
 import io.swagger.v3.core.converter.ModelConverter;
 import io.swagger.v3.core.converter.ModelConverterContext;
 import io.swagger.v3.core.jackson.ModelResolver;
 import io.swagger.v3.oas.models.media.BooleanSchema;
+import io.swagger.v3.oas.models.media.IntegerSchema;
 import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import java.lang.annotation.Annotation;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
  * JsonView} annotation in Swagger
  */
 public class CustomModelResolver extends ModelResolver {
+
   public CustomModelResolver(ObjectMapper mapper) {
     super(mapper);
   }
@@ -29,7 +33,11 @@ public class CustomModelResolver extends ModelResolver {
   @Override
   public Schema<?> resolve(
       AnnotatedType annotatedType, ModelConverterContext context, Iterator<ModelConverter> next) {
-    if (annotatedType.getType().getTypeName().equals(SortObject.class.getTypeName())) {
+    if (annotatedType.getType() instanceof SimpleType
+        && ((SimpleType) annotatedType.getType()).getRawClass().equals(ZonedDateTime.class)) {
+      return new IntegerSchema().format("int64").example(1715699917000L);
+    }
+    if (annotatedType.getType().equals(SortObject.class)) {
       ObjectSchema objectSchema = new ObjectSchema();
       objectSchema.setName("SortObject");
       objectSchema.setProperties(
@@ -46,12 +54,7 @@ public class CustomModelResolver extends ModelResolver {
         && annotatedType.getCtxAnnotations() != null) {
       boolean hasRequestBodyAnnotation =
           Arrays.stream(annotatedType.getCtxAnnotations())
-              .anyMatch(
-                  annotation ->
-                      annotation
-                          .annotationType()
-                          .getTypeName()
-                          .equals(RequestBody.class.getTypeName()));
+              .anyMatch(annotation -> annotation.annotationType().equals(RequestBody.class));
       if (hasRequestBodyAnnotation) {
         annotatedType.jsonViewAnnotation(null);
         return super.resolve(annotatedType, context, next);

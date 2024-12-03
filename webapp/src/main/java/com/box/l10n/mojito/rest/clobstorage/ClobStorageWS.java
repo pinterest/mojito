@@ -31,8 +31,8 @@ public class ClobStorageWS {
   @RequestMapping(
       method = RequestMethod.POST,
       value = "/api/clobstorage",
-      consumes = MediaType.TEXT_PLAIN_VALUE,
-      produces = MediaType.TEXT_PLAIN_VALUE)
+      consumes = {MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_JSON_VALUE},
+      produces = {MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_JSON_VALUE})
   @ResponseStatus(HttpStatus.OK)
   public UUID postClob(@RequestBody String content) throws InvalidTextUnitSearchParameterException {
 
@@ -50,7 +50,7 @@ public class ClobStorageWS {
   @RequestMapping(
       method = RequestMethod.GET,
       value = "/api/clobstorage/{uuid}",
-      produces = MediaType.TEXT_PLAIN_VALUE)
+      produces = {MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_JSON_VALUE})
   @ResponseStatus(HttpStatus.OK)
   public String getClob(@PathVariable(value = "uuid") UUID uuid)
       throws InvalidTextUnitSearchParameterException {

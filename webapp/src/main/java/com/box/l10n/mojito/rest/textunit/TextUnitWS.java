@@ -299,7 +299,7 @@ public class TextUnitWS {
   @RequestMapping(
       method = RequestMethod.POST,
       value = "/api/textunitsBatch",
-      consumes = MediaType.TEXT_PLAIN_VALUE,
+      consumes = {MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_JSON_VALUE},
       produces = MediaType.APPLICATION_JSON_VALUE)
   public PollableTask importTextUnitBatch(@RequestBody String string) {
 

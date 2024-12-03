@@ -59,7 +59,6 @@ public class PollableTask extends AuditableEntity {
   @Column(name = "name")
   private String name;
 
-  @Schema(type = "integer", format = "int64", example = "1715699917000")
   @Column(name = "finished_date")
   private ZonedDateTime finishedDate;
 

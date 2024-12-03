@@ -83,7 +83,7 @@ public class RepositoryWS {
    * @param repositoryName To filer on the name. Can be {@code null}
    * @return List of {@link Repository}s
    */
-  @JsonView(View.RepositorySummary.class)
+  @JsonView(View.Repository.class)
   @RequestMapping(
       value = "/api/repositories",
       method = RequestMethod.GET,

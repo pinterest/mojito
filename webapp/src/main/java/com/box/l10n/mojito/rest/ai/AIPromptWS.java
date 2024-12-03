@@ -31,7 +31,7 @@ public class AIPromptWS {
       value = "/api/ai/prompts",
       method = RequestMethod.POST,
       consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.TEXT_PLAIN_VALUE)
+      produces = {MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_JSON_VALUE})
   @Timed("AIWS.createPrompt")
   public long createPrompt(@RequestBody AIPromptCreateRequest AIPromptCreateRequest) {
     logger.debug("Received request to create prompt");
@@ -98,7 +98,7 @@ public class AIPromptWS {
       value = "/api/ai/prompts/contextMessage",
       method = RequestMethod.POST,
       consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.TEXT_PLAIN_VALUE)
+      produces = {MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_JSON_VALUE})
   @Timed("AIWS.createPromptMessage")
   public Long createPromptMessage(
       @RequestBody AIPromptContextMessageCreateRequest aiPromptContextMessageCreateRequest) {
@@ -121,7 +121,7 @@ public class AIPromptWS {
       value = "/api/ai/prompts/translation/locale/overrides",
       method = RequestMethod.POST,
       consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.TEXT_PLAIN_VALUE)
+      produces = {MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_JSON_VALUE})
   @Timed("AIWS.createOrUpdateRepositoryLocalePromptOverrides")
   public ResponseEntity<String> createOrUpdateRepositoryLocalePromptOverrides(
       @RequestBody AITranslationLocalePromptOverridesRequest request) {
