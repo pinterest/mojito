@@ -12,13 +12,25 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class ProxyHealthChecker {
   Logger logger = LoggerFactory.getLogger(ProxyHealthChecker.class);
 
-  public boolean isProxyHealthy(RestTemplate restTemplate, ResttemplateConfig restTemplateConfig) {
+  public boolean isProxyHealthy(
+      RestTemplate restTemplate, ResttemplateConfig restTemplateConfig, ProxyConfig proxyConfig) {
+
+    if (proxyConfig == null) {
+      logger.warn("Proxy configuration was not provided. Falling back to directly accessing host");
+      return false;
+    }
+
+    if (!proxyConfig.isValidConfiguration()) {
+      logger.warn(
+          "Proxy configuration is missing some required fields. Falling back to directly accessing host");
+      return false;
+    }
 
     String testUrl =
         UriComponentsBuilder.newInstance()
-            .scheme(restTemplateConfig.getProxyScheme())
-            .host(restTemplateConfig.getProxyHost())
-            .port(restTemplateConfig.getProxyPort())
+            .scheme(proxyConfig.getScheme())
+            .host(proxyConfig.getHost())
+            .port(proxyConfig.getPort())
             .path("login")
             .build()
             .toUriString();

@@ -5,8 +5,10 @@ import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import org.apache.hc.client5.http.cookie.Cookie;
 import org.apache.hc.client5.http.cookie.CookieStore;
 import org.slf4j.Logger;
@@ -50,8 +52,6 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
 
   @Autowired RestTemplateUtil restTemplateUtil;
 
-  @Autowired ProxyHealthCheckService proxyHealthCheckService;
-
   /**
    * This is used for the authentication flow to keep things separate from the restTemplate that
    * this interceptor is intercepting
@@ -78,7 +78,8 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
   /** Will delegate calls to the {@link RestTemplate} instance that was configured */
   @Autowired CookieStoreRestTemplate restTemplate;
 
-  @Autowired ProxyOutboundRequestInterceptor proxyOutboundRequestInterceptor;
+  @Autowired(required = false)
+  ProxyOutboundRequestInterceptor proxyOutboundRequestInterceptor;
 
   /** Init */
   @PostConstruct
@@ -92,20 +93,22 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
     restTemplate.setCookieStoreAndUpdateRequestFactory(cookieStore);
 
     List<ClientHttpRequestInterceptor> interceptors =
-        List.of(
-            proxyOutboundRequestInterceptor,
-            new ClientHttpRequestInterceptor() {
-              @Override
-              public ClientHttpResponse intercept(
-                  HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
-                  throws IOException {
-                if (latestCsrfToken != null) {
-                  // At the beginning of auth flow, there's no token yet
-                  injectCsrfTokenIntoHeader(request, latestCsrfToken);
-                }
-                return execution.execute(request, body);
-              }
-            });
+        Stream.of(
+                proxyOutboundRequestInterceptor,
+                new ClientHttpRequestInterceptor() {
+                  @Override
+                  public ClientHttpResponse intercept(
+                      HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
+                      throws IOException {
+                    if (latestCsrfToken != null) {
+                      // At the beginning of auth flow, there's no token yet
+                      injectCsrfTokenIntoHeader(request, latestCsrfToken);
+                    }
+                    return execution.execute(request, body);
+                  }
+                })
+            .filter(Objects::nonNull)
+            .toList();
 
     restTemplateForAuthenticationFlow.setRequestFactory(
         new InterceptingClientHttpRequestFactory(
@@ -207,7 +210,7 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
     logger.debug(
         "Authenticate because no session is found in cookie store or it doesn't match with the one used to get the CSRF token we have.");
     // TODO: Remove logic once PreAuth logic is configured on all environments
-    startAuthenticationFlow(false);
+    startAuthenticationFlow(resttemplateConfig.usesLoginAuthentication());
 
     logger.debug("Injecting CSRF token");
     injectCsrfTokenIntoHeader(request, latestCsrfToken);
@@ -266,12 +269,11 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
    *
    * @throws AuthenticationException
    */
-  protected synchronized void startAuthenticationFlow(boolean usesPreAuthAuthentication)
+  protected synchronized void startAuthenticationFlow(boolean usesLoginAuthentication)
       throws AuthenticationException {
     logger.debug("Getting authenticated session");
 
-    boolean isAuthenticated = usesPreAuthAuthentication;
-    if (!isAuthenticated) {
+    if (usesLoginAuthentication) {
       logger.debug(
           "Start by loading up the login form to get a valid unauthenticated session and CSRF token");
       ResponseEntity<String> loginResponseEntity =
@@ -312,7 +314,7 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
       String expectedLocation =
           resttemplateConfig.getContextPath() + "/" + formLoginConfig.getLoginRedirectPath();
 
-      isAuthenticated =
+      boolean isAuthenticated =
           postLoginResponseEntity.getStatusCode().equals(HttpStatus.FOUND)
               && expectedLocation.equals(locationURI.getPath());
 

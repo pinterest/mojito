@@ -12,6 +12,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,7 +61,8 @@ public class AuthenticatedRestTemplate {
 
   @Autowired RestTemplateUtil restTemplateUtil;
 
-  @Autowired ProxyOutboundRequestInterceptor proxyOutboundRequestInterceptor;
+  @Autowired(required = false)
+  ProxyOutboundRequestInterceptor proxyOutboundRequestInterceptor;
 
   /** Initialize the internal restTemplate instance */
   @PostConstruct
@@ -72,7 +75,9 @@ public class AuthenticatedRestTemplate {
     logger.debug("Set interceptor for authentication");
     List<ClientHttpRequestInterceptor> interceptors =
         Collections.<ClientHttpRequestInterceptor>unmodifiableList(
-            List.of(proxyOutboundRequestInterceptor, loginAuthenticationCsrfTokenInterceptor));
+            Stream.of(proxyOutboundRequestInterceptor, loginAuthenticationCsrfTokenInterceptor)
+                .filter(Objects::nonNull)
+                .toList());
 
     restTemplate.setRequestFactory(
         new InterceptingClientHttpRequestFactory(restTemplate.getRequestFactory(), interceptors));

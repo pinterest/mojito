@@ -5,6 +5,7 @@ import java.net.URI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpRequest;
@@ -15,20 +16,29 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
+@ConditionalOnProperty("l10n.proxy.enabled")
 public class ProxyOutboundRequestInterceptor implements ClientHttpRequestInterceptor {
 
   Logger logger = LoggerFactory.getLogger(ProxyOutboundRequestInterceptor.class);
 
   @Autowired ResttemplateConfig restTemplateConfig;
-  @Autowired ProxyHealthCheckService proxyHealthCheckService;
+
+  @Autowired(required = false)
+  ProxyHealthCheckService proxyHealthCheckService;
+
+  @Autowired(required = false)
+  ProxyConfig proxyConfig;
 
   @Override
   public ClientHttpResponse intercept(
       HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
+    if (proxyConfig == null || !proxyConfig.isValidConfiguration()) {
+      return execution.execute(request, body);
+    }
 
     if (proxyHealthCheckService.isProxyHealthy()) {
       // To prevent adding extra layers, when the proxied request fails and is retried
-      if (request.getURI().getHost().equals(restTemplateConfig.getProxyHost())) {
+      if (request.getURI().getHost().equals(proxyConfig.getHost())) {
         logger.debug("Proxy has already been configured for request");
         return execution.execute(request, body);
       }
@@ -38,9 +48,9 @@ public class ProxyOutboundRequestInterceptor implements ClientHttpRequestInterce
       String rawQuery = request.getURI().getRawQuery();
       URI proxyUri =
           UriComponentsBuilder.newInstance()
-              .scheme(restTemplateConfig.getProxyScheme())
-              .host(restTemplateConfig.getProxyHost())
-              .port(restTemplateConfig.getProxyPort())
+              .scheme(proxyConfig.getScheme())
+              .host(proxyConfig.getHost())
+              .port(proxyConfig.getPort())
               .path(rawPath)
               .query(rawQuery)
               .build()

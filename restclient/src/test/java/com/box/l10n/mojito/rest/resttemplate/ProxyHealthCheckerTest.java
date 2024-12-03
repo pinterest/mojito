@@ -27,10 +27,31 @@ class ProxyHealthCheckerTest {
 
   ProxyHealthChecker proxyHealthChecker;
 
+  ProxyConfig proxyConfig;
+
   @BeforeEach
   void init() {
     MockitoAnnotations.openMocks(this);
     proxyHealthChecker = new ProxyHealthChecker();
+    proxyConfig = new ProxyConfig();
+    proxyConfig.setHost("localhost");
+    proxyConfig.setPort(19193);
+    proxyConfig.setScheme("http");
+  }
+
+  @Test
+  void shouldReturnFalseWhenProxyConfigIsNullOrIncomplete() {
+    when(restTemplate.exchange(
+            anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
+        .thenReturn(new ResponseEntity<Void>(HttpStatus.OK));
+
+    boolean isHealthy =
+        proxyHealthChecker.isProxyHealthy(restTemplate, new ResttemplateConfig(), null);
+    assertFalse(isHealthy);
+    isHealthy =
+        proxyHealthChecker.isProxyHealthy(
+            restTemplate, new ResttemplateConfig(), new ProxyConfig());
+    assertFalse(isHealthy);
   }
 
   @Test
@@ -39,7 +60,8 @@ class ProxyHealthCheckerTest {
             anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
         .thenReturn(new ResponseEntity<Void>(HttpStatus.OK));
 
-    boolean isHealthy = proxyHealthChecker.isProxyHealthy(restTemplate, new ResttemplateConfig());
+    boolean isHealthy =
+        proxyHealthChecker.isProxyHealthy(restTemplate, new ResttemplateConfig(), proxyConfig);
     assertTrue(isHealthy);
   }
 
@@ -49,7 +71,8 @@ class ProxyHealthCheckerTest {
             anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
         .thenThrow(new RestClientException("An error occurred"));
 
-    boolean isHealthy = proxyHealthChecker.isProxyHealthy(restTemplate, new ResttemplateConfig());
+    boolean isHealthy =
+        proxyHealthChecker.isProxyHealthy(restTemplate, new ResttemplateConfig(), proxyConfig);
     assertFalse(isHealthy);
   }
 
@@ -59,7 +82,8 @@ class ProxyHealthCheckerTest {
             anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
         .thenReturn(new ResponseEntity<Void>(HttpStatus.NOT_FOUND));
 
-    boolean isHealthy = proxyHealthChecker.isProxyHealthy(restTemplate, new ResttemplateConfig());
+    boolean isHealthy =
+        proxyHealthChecker.isProxyHealthy(restTemplate, new ResttemplateConfig(), proxyConfig);
     assertFalse(isHealthy);
   }
 }
