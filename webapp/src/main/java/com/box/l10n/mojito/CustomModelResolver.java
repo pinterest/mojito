@@ -1,5 +1,6 @@
 package com.box.l10n.mojito;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.SimpleType;
@@ -21,13 +22,21 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.RequestBody;
 
 /**
- * A custom {@link ModelResolver} class to hide fields that are not annotated with the {@link
- * JsonView} annotation in Swagger
+ * A custom {@link ModelResolver} class to align generated Open API specification schemas with the
+ * actual structure of the requests and responses
  */
 public class CustomModelResolver extends ModelResolver {
 
   public CustomModelResolver(ObjectMapper mapper) {
     super(mapper);
+  }
+
+  private boolean hasAnnotation(AnnotatedType annotatedType, Class<?> annotationClass) {
+    if (annotatedType.getCtxAnnotations() != null) {
+      return Arrays.stream(annotatedType.getCtxAnnotations())
+          .anyMatch(annotation -> annotation.annotationType().equals(annotationClass));
+    }
+    return false;
   }
 
   @Override
@@ -50,15 +59,14 @@ public class CustomModelResolver extends ModelResolver {
               new BooleanSchema()));
       return objectSchema;
     }
-    if (annotatedType.getJsonViewAnnotation() != null
-        && annotatedType.getCtxAnnotations() != null) {
-      boolean hasRequestBodyAnnotation =
-          Arrays.stream(annotatedType.getCtxAnnotations())
-              .anyMatch(annotation -> annotation.annotationType().equals(RequestBody.class));
-      if (hasRequestBodyAnnotation) {
+    if (annotatedType.getJsonViewAnnotation() != null) {
+      if (this.hasAnnotation(annotatedType, RequestBody.class)) {
         annotatedType.jsonViewAnnotation(null);
         return super.resolve(annotatedType, context, next);
       }
+    }
+    if (this.hasAnnotation(annotatedType, JsonBackReference.class)) {
+      return null;
     }
     return super.resolve(annotatedType, context, next);
   }

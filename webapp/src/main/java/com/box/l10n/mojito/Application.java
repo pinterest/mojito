@@ -52,8 +52,8 @@ public class Application {
   boolean shouldIndentJacksonOutput;
 
   public static void main(String[] args) throws IOException {
-    // Added a custom converter to hide fields that are not annotated with the @JsonView annotation
-    // in Swagger
+    // Added a custom model converter to align generated Open API specification schemas with the
+    // actual structure of the requests and responses
     ModelConverters.getInstance().addConverter(new CustomModelResolver(Json.mapper()));
 
     XmlParsingConfiguration.disableXPathLimits();
