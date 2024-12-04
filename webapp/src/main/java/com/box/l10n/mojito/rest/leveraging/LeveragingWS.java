@@ -10,7 +10,6 @@ import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -36,11 +35,7 @@ public class LeveragingWS {
    * @return the config updated with a pollable task
    */
   @Operation(summary = "Copy the TM of a source repository into the a target repository")
-  @RequestMapping(
-      value = "/api/leveraging/copyTM",
-      method = RequestMethod.POST,
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(value = "/api/leveraging/copyTM", method = RequestMethod.POST)
   public CopyTmConfig copyTM(@RequestBody CopyTmConfig copyTmConfig)
       throws AssetWithIdNotFoundException, RepositoryWithIdNotFoundException {
     logger.debug("Copy repository TM");

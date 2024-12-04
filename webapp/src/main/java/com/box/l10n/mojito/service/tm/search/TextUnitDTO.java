@@ -25,18 +25,14 @@ public class TextUnitDTO {
   private Long tmTextUnitCurrentVariantId;
   private TMTextUnitVariant.Status status;
   private boolean includedInLocalizedFile;
-
   private ZonedDateTime createdDate;
-
   private boolean assetDeleted;
   private String pluralForm;
   private String pluralFormOther;
   private String repositoryName;
   private String assetPath;
   private Long assetTextUnitId;
-
   private ZonedDateTime tmTextUnitCreatedDate;
-
   private boolean doNotTranslate;
   private String uploadedFileUri;
 

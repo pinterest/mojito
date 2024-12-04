@@ -44,7 +44,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -100,10 +99,7 @@ public class TextUnitWS {
    *
    * @throws InvalidTextUnitSearchParameterException
    */
-  @RequestMapping(
-      method = RequestMethod.GET,
-      value = "/api/textunits",
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(method = RequestMethod.GET, value = "/api/textunits")
   @ResponseStatus(HttpStatus.OK)
   public List<TextUnitDTO> getTextUnitsWithGet(TextUnitSearchBody textUnitSearchBody)
       throws InvalidTextUnitSearchParameterException {
@@ -118,11 +114,7 @@ public class TextUnitWS {
    * <p>This entry point is now used by Mojito Frontend. Keeping the GET implementation for other
    * integrations.
    */
-  @RequestMapping(
-      method = RequestMethod.POST,
-      value = "/api/textunits/search",
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(method = RequestMethod.POST, value = "/api/textunits/search")
   @ResponseStatus(HttpStatus.OK)
   public List<TextUnitDTO> getTextUnitsWithPost(@RequestBody TextUnitSearchBody textUnitSearchBody)
       throws InvalidTextUnitSearchParameterException {
@@ -150,10 +142,7 @@ public class TextUnitWS {
    * Return the total count of text units that a {@link #getTextUnitsWithGet(TextUnitSearchBody)}
    * search with the same parameters would return.
    */
-  @RequestMapping(
-      method = RequestMethod.GET,
-      value = "/api/textunits/count",
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(method = RequestMethod.GET, value = "/api/textunits/count")
   @ResponseStatus(HttpStatus.OK)
   public TextUnitAndWordCount getTextUnitsCount(TextUnitSearchBody textUnitSearchBody)
       throws InvalidTextUnitSearchParameterException {
@@ -180,10 +169,7 @@ public class TextUnitWS {
    * @throws InvalidTextUnitSearchParameterException
    */
   @Operation(summary = "Get the translation history for a given text unit for a particular locale")
-  @RequestMapping(
-      method = RequestMethod.GET,
-      value = "/api/textunits/{tmTextUnitId}/history",
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(method = RequestMethod.GET, value = "/api/textunits/{tmTextUnitId}/history")
   @ResponseStatus(HttpStatus.OK)
   @JsonView(View.TranslationHistorySummary.class)
   public List<TMTextUnitVariant> getTextUnitHistory(
@@ -262,11 +248,7 @@ public class TextUnitWS {
    * @return the created TextUnit (contains the new translation with its id)
    */
   @Transactional
-  @RequestMapping(
-      method = RequestMethod.POST,
-      value = "/api/textunits",
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(method = RequestMethod.POST, value = "/api/textunits")
   public TextUnitDTO addTextUnit(@RequestBody TextUnitDTO textUnitDTO) {
     logger.debug("Add TextUnit");
     textUnitDTO.setTarget(NormalizationUtils.normalize(textUnitDTO.getTarget()));
@@ -296,11 +278,7 @@ public class TextUnitWS {
    * @return
    */
   @Operation(summary = "Import batch of text units asynchronously")
-  @RequestMapping(
-      method = RequestMethod.POST,
-      value = "/api/textunitsBatch",
-      consumes = {MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_JSON_VALUE},
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(method = RequestMethod.POST, value = "/api/textunitsBatch")
   public PollableTask importTextUnitBatch(@RequestBody String string) {
 
     ImportTextUnitsBatch importTextUnitsBatch = new ImportTextUnitsBatch();
@@ -343,11 +321,7 @@ public class TextUnitWS {
   }
 
   @Operation(summary = "Run integrity checks on a Text Unit")
-  @RequestMapping(
-      method = RequestMethod.POST,
-      value = "/api/textunits/check",
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(method = RequestMethod.POST, value = "/api/textunits/check")
   public TMTextUnitIntegrityCheckResult checkTMTextUnit(
       @RequestBody TextUnitCheckBody textUnitCheckBody) {
     logger.debug("Checking TextUnit, id: {}", textUnitCheckBody.getTmTextUnitId());
@@ -386,11 +360,7 @@ public class TextUnitWS {
    * @throws AssetPathNotFoundException If the asset path is not found in the database.
    */
   @Operation(summary = "Update a bulk of text unit statistics information asynchronously")
-  @RequestMapping(
-      method = RequestMethod.POST,
-      value = "/api/textunits/statistics",
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(method = RequestMethod.POST, value = "/api/textunits/statistics")
   public PollableTask importStatistics(
       @RequestParam(value = "repositoryName") String repositoryName,
       @RequestParam(value = "assetPath") String assetPath,
@@ -419,8 +389,7 @@ public class TextUnitWS {
 
   @RequestMapping(
       method = RequestMethod.GET,
-      value = "/api/assetTextUnits/{assetTextUnitId}/usages",
-      produces = MediaType.APPLICATION_JSON_VALUE)
+      value = "/api/assetTextUnits/{assetTextUnitId}/usages")
   public Set<String> getAssetTextUnitUsages(@PathVariable Long assetTextUnitId)
       throws AssetTextUnitWithIdNotFoundException {
     logger.debug("Get usages of asset text unit for id: {}", assetTextUnitId);
@@ -450,10 +419,7 @@ public class TextUnitWS {
    * @throws InvalidTextUnitSearchParameterException
    */
   @JsonView(View.GitBlameWithUsage.class)
-  @RequestMapping(
-      method = RequestMethod.GET,
-      value = "/api/textunits/gitBlameWithUsages",
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(method = RequestMethod.GET, value = "/api/textunits/gitBlameWithUsages")
   public List<GitBlameWithUsage> getGitBlameWithUsages(
       @RequestParam(value = "repositoryIds[]", required = false) ArrayList<Long> repositoryIds,
       @RequestParam(value = "repositoryNames[]", required = false)
@@ -500,11 +466,7 @@ public class TextUnitWS {
    * @return
    */
   @Operation(summary = "Save the GitBlame information of the text units asynchronously")
-  @RequestMapping(
-      method = RequestMethod.POST,
-      value = "/api/textunits/gitBlameWithUsagesBatch",
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(method = RequestMethod.POST, value = "/api/textunits/gitBlameWithUsagesBatch")
   public PollableTask saveGitBlameWithUsages(
       @RequestBody List<GitBlameWithUsage> gitBlameWithUsages) {
     logger.debug("saveGitBlameWithUsages");

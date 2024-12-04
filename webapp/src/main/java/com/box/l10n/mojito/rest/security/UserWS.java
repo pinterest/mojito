@@ -15,7 +15,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -44,10 +43,7 @@ public class UserWS {
    * @return
    */
   @Operation(summary = "Get paginated Users")
-  @RequestMapping(
-      value = "/api/users",
-      method = RequestMethod.GET,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(value = "/api/users", method = RequestMethod.GET)
   public Page<User> getUsers(
       @RequestParam(value = "username", required = false) String username,
       @RequestParam(value = "search", required = false) String search,
@@ -72,11 +68,7 @@ public class UserWS {
    * @param user
    * @return
    */
-  @RequestMapping(
-      value = "api/users",
-      method = RequestMethod.POST,
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(value = "api/users", method = RequestMethod.POST)
   public ResponseEntity<User> createUser(@RequestBody User user) {
 
     User existingUser = userRepository.findByUsername(user.getUsername());
@@ -133,10 +125,7 @@ public class UserWS {
    * @param user
    * @return
    */
-  @RequestMapping(
-      value = "/api/users/{userId}",
-      method = RequestMethod.PATCH,
-      consumes = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(value = "/api/users/{userId}", method = RequestMethod.PATCH)
   public void updateUserByUserId(@PathVariable Long userId, @RequestBody User user)
       throws UserWithIdNotFoundException {
     logger.info("Updating user [{}]", userId);
@@ -163,11 +152,7 @@ public class UserWS {
   }
 
   @Operation(summary = "Update a user password")
-  @RequestMapping(
-      value = "/api/users/pw",
-      method = RequestMethod.POST,
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(value = "/api/users/pw", method = RequestMethod.POST)
   public ResponseEntity<User> changePassword(@RequestBody PasswordChangeRequest requestDTO) {
     User user = userService.updatePassword(requestDTO.currentPassword(), requestDTO.newPassword());
     logger.info("Updated password for user [{}]", user.getId());

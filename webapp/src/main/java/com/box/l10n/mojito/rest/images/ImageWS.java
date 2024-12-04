@@ -37,15 +37,7 @@ public class ImageWS {
   }
 
   @Operation(summary = "Get an image by its name")
-  @RequestMapping(
-      value = "/api/images/{*imageName}",
-      method = RequestMethod.GET,
-      produces = {
-        MediaType.APPLICATION_OCTET_STREAM_VALUE,
-        MediaType.IMAGE_JPEG_VALUE,
-        MediaType.IMAGE_PNG_VALUE,
-        MediaType.IMAGE_GIF_VALUE
-      })
+  @RequestMapping(value = "/api/images/{*imageName}", method = RequestMethod.GET)
   @ResponseBody
   public ResponseEntity<byte[]> getImage(@PathVariable String imageName) throws IOException {
     String fixedImageName = this.getFixedImageName(imageName);
@@ -61,15 +53,7 @@ public class ImageWS {
   }
 
   @Operation(summary = "Upload an image")
-  @RequestMapping(
-      value = "/api/images/{*imageName}",
-      method = RequestMethod.PUT,
-      consumes = {
-        MediaType.APPLICATION_OCTET_STREAM_VALUE,
-        MediaType.IMAGE_JPEG_VALUE,
-        MediaType.IMAGE_PNG_VALUE,
-        MediaType.IMAGE_GIF_VALUE
-      })
+  @RequestMapping(value = "/api/images/{*imageName}", method = RequestMethod.PUT)
   @ResponseBody
   public void uploadImage(@RequestBody byte[] imageContent, @PathVariable String imageName) {
     String fixedImageName = this.getFixedImageName(imageName);
