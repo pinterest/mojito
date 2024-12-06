@@ -74,21 +74,6 @@ public class RepositoryWS {
   }
 
   /**
-   * Gets all undeleted repositories with @{link View.RepositorySummary}
-   *
-   * @return List of {@link Repository}s
-   */
-  @JsonView(View.RepositorySummary.class)
-  @RequestMapping(
-      value = "/api/repositories",
-      method = RequestMethod.GET,
-      produces = MediaType.APPLICATION_JSON_VALUE)
-  @ResponseStatus(HttpStatus.OK)
-  public List<Repository> getRepositories() {
-    return repositoryService.findRepositoriesIsNotDeletedOrderByName(null);
-  }
-
-  /**
    * Gets repository matching the given name
    *
    * @param repositoryName To filer on the name. Can be {@code null}

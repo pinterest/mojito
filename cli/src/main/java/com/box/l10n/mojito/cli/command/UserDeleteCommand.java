@@ -35,9 +35,6 @@ public class UserDeleteCommand extends UserCommand {
 
     try {
       List<User> users = this.getPageUser(username).getContent();
-      if (users.isEmpty()) {
-        throw new CommandException("User with username [" + username + "] is not found");
-      }
       this.userClient.deleteUserByUserId(users.getFirst().getId());
       consoleWriter.newLine().a("deleted --> user: ").fg(Ansi.Color.MAGENTA).a(username).println();
     } catch (ApiException ex) {

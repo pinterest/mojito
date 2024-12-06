@@ -3,8 +3,9 @@ package com.box.l10n.mojito.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.cli.GitInfo;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.CliWsApi;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.CliClient;
 import org.fusesource.jansi.Ansi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,7 +38,7 @@ public class MainCommand extends Command {
 
   @Autowired GitInfo gitInfo;
 
-  @Autowired CliClient cliClient;
+  @Autowired CliWsApi cliClient;
 
   @Override
   void showUsage() {
@@ -56,7 +57,12 @@ public class MainCommand extends Command {
   }
 
   void checkServerVersion() throws CommandException {
-    String serverVersion = cliClient.getVersion();
+    String serverVersion;
+    try {
+      serverVersion = cliClient.getVersion();
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
     String cliVersion = getCliVersion();
     if (!cliVersion.equals(serverVersion)) {
       throw new CommandException(

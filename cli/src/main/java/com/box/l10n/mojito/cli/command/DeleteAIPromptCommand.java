@@ -21,7 +21,7 @@ public class DeleteAIPromptCommand extends Command {
 
   static Logger logger = LoggerFactory.getLogger(DeleteAIPromptCommand.class);
 
-  @Autowired AiPromptWsApi AIServiceClient;
+  @Autowired AiPromptWsApi aiServiceClient;
 
   @Parameter(
       names = {"--prompt-id", "-pi"},
@@ -44,7 +44,7 @@ public class DeleteAIPromptCommand extends Command {
   private void deletePrompt() {
     logger.debug("Received request to delete prompt {}", promptId);
     try {
-      AIServiceClient.deletePrompt(promptId);
+      aiServiceClient.deletePrompt(promptId);
     } catch (ApiException e) {
       throw new CommandException(e.getMessage(), e);
     }

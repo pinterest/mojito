@@ -18,7 +18,6 @@ import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.cli.model.AICheckResponse;
 import com.box.l10n.mojito.cli.model.AICheckResult;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
-import com.box.l10n.mojito.rest.ai.AIException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import java.time.Duration;
@@ -124,7 +123,7 @@ public class AICheckerTest {
   public void testRetryExhausted() throws ApiException {
     AIChecker.retryConfiguration =
         Retry.backoff(10, Duration.ofMillis(1)).maxBackoff(Duration.ofMillis(1));
-    when(aiServiceClient.executeAIChecks(any())).thenThrow(new AIException("Test error"));
+    when(aiServiceClient.executeAIChecks(any())).thenThrow(new ApiException("Test error"));
     CliCheckResult result = AIChecker.run(assetExtractionDiffs);
     verify(aiServiceClient, times(11)).executeAIChecks(any());
     assertFalse(result.isSuccessful());

@@ -5,10 +5,7 @@ import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.Console;
-import com.box.l10n.mojito.cli.model.Authority;
 import com.box.l10n.mojito.cli.model.User;
-import com.box.l10n.mojito.rest.entity.Role;
-import java.util.List;
 import org.fusesource.jansi.Ansi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,18 +74,14 @@ public class UserCreateCommand extends UserCommand {
       consoleWriter.a("Enter new password for " + username + ":").println();
       String password = console.readPassword();
 
-      Role role = Role.fromString(rolename);
       User userBody = new User();
       userBody.setUsername(username);
       userBody.setPassword(password);
       userBody.setSurname(surname);
       userBody.setGivenName(givenName);
       userBody.setCommonName(commonName);
-      if (role != null) {
-        Authority authority = new Authority();
-        authority.setAuthority(role.toString());
-        userBody.setAuthorities(List.of(authority));
-      }
+      this.addAuthorities(userBody, this.rolename);
+
       User user = userClient.createUser(userBody);
       consoleWriter
           .newLine()

@@ -12,6 +12,7 @@ import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_NULL_BRANCH_SHO
 import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_TRANSLATED_DESCRIPTION;
 import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_TRANSLATED_LONG;
 import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_TRANSLATED_SHORT;
+import static java.util.Optional.ofNullable;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
@@ -124,7 +125,7 @@ public class BranchDeleteCommand extends Command {
             false,
             translated,
             includeNullBranch,
-            createdBeforeDateTime == null ? null : createdBeforeDateTime.toOffsetDateTime());
+            ofNullable(createdBeforeDateTime).map(ZonedDateTime::toOffsetDateTime).orElse(null));
 
     for (BranchBranchSummary branch : branches) {
       consoleWriter

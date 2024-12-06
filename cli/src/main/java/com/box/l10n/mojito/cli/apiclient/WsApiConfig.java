@@ -57,4 +57,14 @@ public class WsApiConfig {
   public AssetWsApi assetWsApi() {
     return new AssetWsApi(this.apiClient);
   }
+
+  @Bean
+  public DropWsApi dropWsApi() {
+    return new DropWsApi(this.apiClient);
+  }
+
+  @Bean
+  public CliWsApi cliWsApi() {
+    return new CliWsApi(this.apiClient);
+  }
 }

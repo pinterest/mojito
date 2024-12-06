@@ -1,5 +1,7 @@
 package com.box.l10n.mojito.cli.command;
 
+import static java.util.Optional.ofNullable;
+
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.JSR310Migration;
@@ -113,8 +115,11 @@ public class CommitCreateCommand extends Command {
     commitBody.setRepositoryId(repository.getId());
     commitBody.setAuthorName(commitInfo.authorName);
     commitBody.setAuthorEmail(commitInfo.authorEmail);
-    commitBody.setSourceCreationDate(
-        commitInfo.creationDate == null ? null : commitInfo.creationDate.toOffsetDateTime());
+    Long creationDateMilliSeconds =
+        ofNullable(commitInfo.creationDate)
+            .map(creationDate -> creationDate.toInstant().getEpochSecond() * 1_000)
+            .orElse(null);
+    commitBody.setSourceCreationDate(creationDateMilliSeconds);
     CommitCommit commit;
     try {
       commit = commitClient.createCommit(commitBody);

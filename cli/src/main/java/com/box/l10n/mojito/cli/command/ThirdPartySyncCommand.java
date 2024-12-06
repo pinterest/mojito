@@ -5,12 +5,13 @@ import static org.fusesource.jansi.Ansi.Color.CYAN;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiHelper;
 import com.box.l10n.mojito.cli.apiclient.ThirdPartyWsApi;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.model.PollableTask;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
 import com.box.l10n.mojito.cli.model.ThirdPartySync;
-import com.box.l10n.mojito.rest.entity.Repository;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -122,7 +123,9 @@ public class ThirdPartySyncCommand extends Command {
 
   @Autowired CommandHelper commandHelper;
 
-  private ThirdPartySync getThirdPartySync(Repository repository) {
+  @Autowired RepositoryWsApiHelper repositoryWsApiHelper;
+
+  private ThirdPartySync getThirdPartySync(RepositoryRepository repository) {
     ThirdPartySync thirdPartySyncBody = new ThirdPartySync();
     thirdPartySyncBody.setRepositoryId(repository.getId());
     thirdPartySyncBody.setProjectId(thirdPartyProjectId);
@@ -186,7 +189,8 @@ public class ThirdPartySyncCommand extends Command {
         .a(Objects.toString(options))
         .println(2);
 
-    Repository repository = commandHelper.findRepositoryByName(repositoryParam);
+    RepositoryRepository repository =
+        this.repositoryWsApiHelper.findRepositoryByName(repositoryParam);
 
     ThirdPartySync thirdPartySyncBody = getThirdPartySync(repository);
 
