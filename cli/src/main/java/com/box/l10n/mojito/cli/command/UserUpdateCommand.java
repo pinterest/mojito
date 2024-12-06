@@ -5,10 +5,7 @@ import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.Console;
-import com.box.l10n.mojito.cli.model.Authority;
 import com.box.l10n.mojito.cli.model.User;
-import com.box.l10n.mojito.rest.entity.Role;
-import java.util.ArrayList;
 import java.util.List;
 import org.fusesource.jansi.Ansi;
 import org.slf4j.Logger;
@@ -81,23 +78,13 @@ public class UserUpdateCommand extends UserCommand {
 
     try {
       List<User> users = this.getPageUser(username).getContent();
-      if (users.isEmpty()) {
-        throw new CommandException("User with username [" + username + "] is not found");
-      }
       User user = users.getFirst();
       user.setPassword(getPassword());
       user.setSurname(surname);
       user.setGivenName(givenName);
       user.setCommonName(commonName);
 
-      Role role = Role.fromString(rolename);
-      List<Authority> authorities = new ArrayList<>();
-      if (role != null) {
-        Authority authority = new Authority();
-        authority.setAuthority(role.toString());
-        authorities.add(authority);
-      }
-      user.setAuthorities(authorities);
+      this.addAuthorities(user, this.rolename);
 
       userClient.updateUserByUserId(user, user.getId());
       consoleWriter.newLine().a("updated --> user: ").fg(Ansi.Color.MAGENTA).a(username).println();

@@ -4,18 +4,18 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.apiclient.AssetWsApi;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiHelper;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.model.AssetAssetSummary;
+import com.box.l10n.mojito.cli.model.RepositoryLocaleRepository;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
 import com.box.l10n.mojito.cli.model.XliffExportBody;
 import com.box.l10n.mojito.rest.client.exception.PollableTaskException;
-import com.box.l10n.mojito.rest.entity.Repository;
-import com.box.l10n.mojito.rest.entity.RepositoryLocale;
 import com.google.common.base.MoreObjects;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Set;
 import org.fusesource.jansi.Ansi.Color;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +70,8 @@ public class TMExportCommand extends Command {
 
   @Autowired CommandHelper commandHelper;
 
+  @Autowired RepositoryWsApiHelper repositoryWsApiHelper;
+
   @Autowired AssetWsApi assetClient;
 
   CommandDirectories commandDirectories;
@@ -89,7 +91,8 @@ public class TMExportCommand extends Command {
     logger.debug("Initialize targetBasename (use repository if no target bases name is specified)");
     targetBasenameParam = MoreObjects.firstNonNull(targetBasenameParam, repositoryParam);
 
-    Repository repository = commandHelper.findRepositoryByName(repositoryParam);
+    RepositoryRepository repository =
+        this.repositoryWsApiHelper.findRepositoryByName(repositoryParam);
 
     List<AssetAssetSummary> assets;
     try {
@@ -98,7 +101,7 @@ public class TMExportCommand extends Command {
       throw new CommandException(e.getMessage(), e);
     }
 
-    Set<RepositoryLocale> repositoryLocales = repository.getRepositoryLocales();
+    List<RepositoryLocaleRepository> repositoryLocales = repository.getRepositoryLocales();
 
     long assetNumber = 0;
 
@@ -107,7 +110,7 @@ public class TMExportCommand extends Command {
 
       consoleWriter.newLine().a("Asset: ").fg(Color.CYAN).a(asset.getPath()).println();
 
-      for (RepositoryLocale repositoryLocale : repositoryLocales) {
+      for (RepositoryLocaleRepository repositoryLocale : repositoryLocales) {
 
         String bcp47Tag = repositoryLocale.getLocale().getBcp47Tag();
 
@@ -154,7 +157,7 @@ public class TMExportCommand extends Command {
    * @param assetNumber the asset number
    * @return the export file
    */
-  private Path getExportFile(RepositoryLocale repositoryLocale, long assetNumber)
+  private Path getExportFile(RepositoryLocaleRepository repositoryLocale, long assetNumber)
       throws CommandException {
     String filename;
 

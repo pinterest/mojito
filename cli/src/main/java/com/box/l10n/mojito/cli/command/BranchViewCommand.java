@@ -9,6 +9,7 @@ import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_NULL_BRANCH_SHO
 import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_TRANSLATED_DESCRIPTION;
 import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_TRANSLATED_LONG;
 import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_TRANSLATED_SHORT;
+import static java.util.Optional.ofNullable;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
@@ -17,6 +18,7 @@ import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.model.BranchBranchSummary;
 import com.box.l10n.mojito.cli.model.RepositoryRepository;
+import java.time.ZonedDateTime;
 import java.util.List;
 import org.fusesource.jansi.Ansi;
 import org.slf4j.Logger;
@@ -95,9 +97,9 @@ public class BranchViewCommand extends Command {
             deleted,
             translated,
             includeNullBranch,
-            commandHelper.getLastWeekDateIfTrue(beforeLastWeek) == null
-                ? null
-                : commandHelper.getLastWeekDateIfTrue(beforeLastWeek).toOffsetDateTime());
+            ofNullable(commandHelper.getLastWeekDateIfTrue(beforeLastWeek))
+                .map(ZonedDateTime::toOffsetDateTime)
+                .orElse(null));
 
     for (BranchBranchSummary branch : branches) {
       consoleWriter
