@@ -12,16 +12,18 @@ import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_NULL_BRANCH_SHO
 import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_TRANSLATED_DESCRIPTION;
 import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_TRANSLATED_LONG;
 import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_TRANSLATED_SHORT;
+import static java.util.Optional.ofNullable;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApi;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiHelper;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.AssetClient;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
-import com.box.l10n.mojito.rest.entity.Branch;
-import com.box.l10n.mojito.rest.entity.PollableTask;
-import com.box.l10n.mojito.rest.entity.Repository;
+import com.box.l10n.mojito.cli.model.BranchBranchSummary;
+import com.box.l10n.mojito.cli.model.PollableTask;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
 import java.time.ZonedDateTime;
 import java.util.List;
 import org.fusesource.jansi.Ansi;
@@ -42,9 +44,9 @@ public class BranchDeleteCommand extends Command {
 
   @Autowired ConsoleWriter consoleWriter;
 
-  @Autowired RepositoryClient repositoryClient;
+  @Autowired RepositoryWsApi repositoryClient;
 
-  @Autowired AssetClient assetClient;
+  @Autowired RepositoryWsApiHelper repositoryWsApiHelper;
 
   @Autowired CommandHelper commandHelper;
 
@@ -99,7 +101,8 @@ public class BranchDeleteCommand extends Command {
         .fg(Ansi.Color.CYAN)
         .a(repositoryParam)
         .println();
-    Repository repository = commandHelper.findRepositoryByName(repositoryParam);
+    RepositoryRepository repository =
+        this.repositoryWsApiHelper.findRepositoryByName(this.repositoryParam);
 
     ZonedDateTime createdBeforeDateTime =
         this.commandHelper.getLastWeekDateIfTrue(this.beforeLastWeek);
@@ -114,24 +117,29 @@ public class BranchDeleteCommand extends Command {
       }
     }
 
-    List<Branch> branches =
-        repositoryClient.getBranches(
+    List<BranchBranchSummary> branches =
+        this.repositoryWsApiHelper.getBranchesOfRepository(
             repository.getId(),
             branchName,
             branchNameRegex,
             false,
             translated,
             includeNullBranch,
-            createdBeforeDateTime);
+            ofNullable(createdBeforeDateTime).map(ZonedDateTime::toOffsetDateTime).orElse(null));
 
-    for (Branch branch : branches) {
+    for (BranchBranchSummary branch : branches) {
       consoleWriter
           .newLine()
           .a("Delete branch: ")
           .fg(Ansi.Color.CYAN)
           .a(branch.getName())
           .println();
-      PollableTask pollableTask = repositoryClient.deleteBranch(branch.getId(), repository.getId());
+      PollableTask pollableTask;
+      try {
+        pollableTask = repositoryClient.deleteBranch(repository.getId(), branch.getId());
+      } catch (ApiException e) {
+        throw new CommandException(e.getMessage(), e);
+      }
       commandHelper.waitForPollableTask(pollableTask.getId());
     }
 

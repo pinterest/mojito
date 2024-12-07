@@ -2,11 +2,14 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.CommitWsApi;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiHelper;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
+import com.box.l10n.mojito.cli.model.CommitToPullRunBody;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
 import com.box.l10n.mojito.json.ObjectMapper;
-import com.box.l10n.mojito.rest.client.CommitClient;
-import com.box.l10n.mojito.rest.entity.Repository;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.fusesource.jansi.Ansi.Color;
@@ -57,18 +60,18 @@ public class CommitToPullRunCommand extends Command {
 
   @Autowired ObjectMapper objectMapper;
 
-  @Autowired CommitClient commitClient;
+  @Autowired CommitWsApi commitClient;
 
-  Repository repository;
+  @Autowired RepositoryWsApiHelper repositoryWsApiHelper;
 
-  String pullRunName;
+  RepositoryRepository repository;
 
   @Override
   public void execute() throws CommandException {
 
     consoleWriter.newLine().a("Mapping commit: ").fg(Color.CYAN).a(commitHash).println(2);
 
-    repository = commandHelper.findRepositoryByName(repositoryParam);
+    repository = this.repositoryWsApiHelper.findRepositoryByName(repositoryParam);
 
     String pullRunName = readPullRunNameFromFile();
 
@@ -86,8 +89,17 @@ public class CommitToPullRunCommand extends Command {
     consoleWriter.fg(Color.GREEN).newLine().a("Finished").println(2);
   }
 
-  void associateCommitToPullRun(Repository repository, String commitHash, String pullRunName) {
-    commitClient.associateCommitToPullRun(commitHash, repository.getId(), pullRunName);
+  void associateCommitToPullRun(
+      RepositoryRepository repository, String commitHash, String pullRunName) {
+    CommitToPullRunBody commitToPullRunBody = new CommitToPullRunBody();
+    commitToPullRunBody.setCommitName(commitHash);
+    commitToPullRunBody.setRepositoryId(repository.getId());
+    commitToPullRunBody.setPullRunName(pullRunName);
+    try {
+      commitClient.associateCommitToPullRun(commitToPullRunBody);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
   }
 
   String readPullRunNameFromFile() {
