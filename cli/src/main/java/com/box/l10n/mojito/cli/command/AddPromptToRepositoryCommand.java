@@ -2,9 +2,11 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.box.l10n.mojito.cli.apiclient.AiPromptWsApi;
+import com.box.l10n.mojito.cli.apiclient.AiPromptWsApiProxy;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +22,7 @@ public class AddPromptToRepositoryCommand extends Command {
 
   static Logger logger = LoggerFactory.getLogger(AddPromptToRepositoryCommand.class);
 
-  @Autowired AiPromptWsApi aiServiceClient;
+  AiPromptWsApiProxy aiServiceClient;
 
   @Parameter(
       names = {"--repository-name", "-r"},
@@ -41,6 +43,13 @@ public class AddPromptToRepositoryCommand extends Command {
   String promptType;
 
   @Autowired ConsoleWriter consoleWriter;
+
+  @Autowired ApiClient apiClient;
+
+  @PostConstruct
+  public void init() {
+    this.aiServiceClient = new AiPromptWsApiProxy(this.apiClient);
+  }
 
   public void execute() {
     logger.debug("Add prompt to {} repository with id: {}", repository, promptId);

@@ -9,10 +9,11 @@ import static java.util.Optional.ofNullable;
 import static org.junit.Assert.assertEquals;
 
 import com.box.l10n.mojito.cli.CLITestBase;
-import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiHelper;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.cli.model.BranchBranchSummary;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.service.branch.BranchRepository;
+import jakarta.annotation.PostConstruct;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Comparator;
@@ -25,9 +26,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 public class BranchDeleteCommandTest extends CLITestBase {
 
-  @Autowired RepositoryWsApiHelper repositoryClient;
+  RepositoryWsApiProxy repositoryClient;
 
   @Autowired BranchRepository branchRepository;
+
+  @PostConstruct
+  public void init() {
+    this.repositoryClient = new RepositoryWsApiProxy(this.apiClient);
+  }
 
   @Test
   public void delete() throws Exception {

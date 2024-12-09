@@ -1,19 +1,24 @@
 package com.box.l10n.mojito.cli.command;
 
 import com.box.l10n.mojito.cli.CLITestBase;
-import com.box.l10n.mojito.cli.apiclient.AssetWsApiHelper;
+import com.box.l10n.mojito.cli.apiclient.AssetWsApiProxy;
 import com.box.l10n.mojito.cli.model.AssetAssetSummary;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.test.XliffUtils;
+import jakarta.annotation.PostConstruct;
 import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author jaurambault
  */
 public class TMExportCommandTest extends CLITestBase {
 
-  @Autowired AssetWsApiHelper assetWsApiHelper;
+  AssetWsApiProxy assetClient;
+
+  @PostConstruct
+  public void init() {
+    this.assetClient = new AssetWsApiProxy(this.apiClient);
+  }
 
   @Test
   public void export() throws Exception {
@@ -29,14 +34,12 @@ public class TMExportCommandTest extends CLITestBase {
             getInputResourcesTestDir("source").getAbsolutePath());
 
     AssetAssetSummary asset =
-        this.assetWsApiHelper.getAssetByPathAndRepositoryId(
-            "source-xliff.xliff", repository.getId());
+        this.assetClient.getAssetByPathAndRepositoryId("source-xliff.xliff", repository.getId());
     importTranslations(asset.getId(), "source-xliff_", "fr-FR");
     importTranslations(asset.getId(), "source-xliff_", "ja-JP");
 
     AssetAssetSummary asset2 =
-        this.assetWsApiHelper.getAssetByPathAndRepositoryId(
-            "source2-xliff.xliff", repository.getId());
+        this.assetClient.getAssetByPathAndRepositoryId("source2-xliff.xliff", repository.getId());
     importTranslations(asset2.getId(), "source2-xliff_", "fr-FR");
     importTranslations(asset2.getId(), "source2-xliff_", "ja-JP");
 

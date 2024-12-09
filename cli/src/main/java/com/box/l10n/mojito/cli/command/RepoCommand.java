@@ -1,11 +1,13 @@
 package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.ParameterException;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
-import com.box.l10n.mojito.rest.entity.IntegrityChecker;
-import com.box.l10n.mojito.rest.entity.IntegrityCheckerType;
-import java.util.HashSet;
+import com.box.l10n.mojito.cli.model.AssetIntegrityChecker;
+import jakarta.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import org.fusesource.jansi.Ansi;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,23 +27,31 @@ public abstract class RepoCommand extends Command {
 
   @Autowired protected ConsoleWriter consoleWriter;
 
-  @Autowired protected RepositoryClient repositoryClient;
-
   @Autowired protected LocaleHelper localeHelper;
 
+  @Autowired private ApiClient apiClient;
+
+  protected RepositoryWsApiProxy repositoryClient;
+
+  @PostConstruct
+  protected void init() {
+    this.repositoryClient = new RepositoryWsApiProxy(this.apiClient);
+  }
+
   /**
-   * Extract {@link IntegrityChecker} Set from {@link RepoCreateCommand#integrityCheckParam} to prep
-   * for {@link Repository} creation
+   * Extract {@link com.box.l10n.mojito.cli.model.AssetIntegrityChecker} Set from {@link
+   * RepoCreateCommand#integrityCheckParam} to prep for {@link
+   * com.box.l10n.mojito.cli.model.Repository} creation
    *
    * @param integrityCheckParam
    * @param doPrint
    * @return
    */
-  protected Set<IntegrityChecker> extractIntegrityCheckersFromInput(
+  protected List<AssetIntegrityChecker> extractIntegrityCheckersFromInput(
       String integrityCheckParam, boolean doPrint) throws CommandException {
-    Set<IntegrityChecker> integrityCheckers = null;
+    List<AssetIntegrityChecker> integrityCheckers = null;
     if (integrityCheckParam != null) {
-      integrityCheckers = new HashSet<>();
+      integrityCheckers = new ArrayList<>();
       Set<String> integrityCheckerParams = StringUtils.commaDelimitedListToSet(integrityCheckParam);
       if (doPrint) {
         consoleWriter.a("Extracted Integrity Checkers").println();
@@ -55,10 +65,11 @@ public abstract class RepoCommand extends Command {
         }
         String fileExtension = param[0];
         String checkerType = param[1];
-        IntegrityChecker integrityChecker = new IntegrityChecker();
+        AssetIntegrityChecker integrityChecker = new AssetIntegrityChecker();
         integrityChecker.setAssetExtension(fileExtension);
         try {
-          integrityChecker.setIntegrityCheckerType(IntegrityCheckerType.valueOf(checkerType));
+          integrityChecker.setIntegrityCheckerType(
+              AssetIntegrityChecker.IntegrityCheckerTypeEnum.valueOf(checkerType));
         } catch (IllegalArgumentException ex) {
           throw new ParameterException("Invalid integrity checker type [" + checkerType + "]");
         }

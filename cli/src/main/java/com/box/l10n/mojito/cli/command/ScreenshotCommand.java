@@ -1,18 +1,24 @@
 package com.box.l10n.mojito.cli.command;
 
+import static java.util.Optional.ofNullable;
+
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.LocaleMappingHelper;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
-import com.box.l10n.mojito.cli.apiclient.ImageWsApi;
+import com.box.l10n.mojito.cli.apiclient.ImageWsApiProxy;
+import com.box.l10n.mojito.cli.apiclient.ScreenshotWsApiProxy;
+import com.box.l10n.mojito.cli.apiclient.mappers.RepositoryMapper;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.ScreenshotClient;
-import com.box.l10n.mojito.rest.entity.Locale;
-import com.box.l10n.mojito.rest.entity.Repository;
-import com.box.l10n.mojito.rest.entity.Screenshot;
-import com.box.l10n.mojito.rest.entity.ScreenshotRun;
+import com.box.l10n.mojito.cli.model.Locale;
+import com.box.l10n.mojito.cli.model.LocaleRepository;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
+import com.box.l10n.mojito.cli.model.Screenshot;
+import com.box.l10n.mojito.cli.model.ScreenshotRun;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -90,16 +96,24 @@ public class ScreenshotCommand extends Command {
 
   CommandDirectories commandDirectories;
 
-  @Autowired ImageWsApi imageClient;
-
-  @Autowired ScreenshotClient screenshotClient;
+  @Autowired ApiClient apiClient;
 
   @Autowired LocaleMappingHelper localeMappingHelper;
 
   /** Contains a map of locale for generating localized file a locales defined in the repository. */
   Map<String, String> localeMappings;
 
-  Map<String, Locale> repositoryLocales;
+  Map<String, LocaleRepository> repositoryLocales;
+
+  ScreenshotWsApiProxy screenshotClient;
+
+  ImageWsApiProxy imageClient;
+
+  @PostConstruct
+  public void init() {
+    this.screenshotClient = new ScreenshotWsApiProxy(this.apiClient);
+    this.imageClient = new ImageWsApiProxy(this.apiClient);
+  }
 
   @Override
   public void execute() throws CommandException {
@@ -110,29 +124,32 @@ public class ScreenshotCommand extends Command {
         .fg(Color.CYAN)
         .a(repositoryParam)
         .println(2);
-    Repository repository = commandHelper.findRepositoryByName(repositoryParam);
+    try {
+      RepositoryRepository repository = this.commandHelper.findRepositoryByName(repositoryParam);
 
-    commandDirectories = new CommandDirectories(sourceDirectoryParam);
-    localeMappings = localeMappingHelper.getLocaleMapping(localeMappingParam);
-    repositoryLocales = commandHelper.getSortedRepositoryLocales(repository);
+      commandDirectories = new CommandDirectories(sourceDirectoryParam);
+      localeMappings = localeMappingHelper.getLocaleMapping(localeMappingParam);
+      repositoryLocales = commandHelper.getSortedRepositoryLocales(repository);
 
-    List<Path> listFilesWithExtensionInSourceDirectory =
-        commandDirectories.listFilesWithExtensionInSourceDirectory("png", "jpg", "jpeg", "gif");
+      List<Path> listFilesWithExtensionInSourceDirectory =
+          commandDirectories.listFilesWithExtensionInSourceDirectory("png", "jpg", "jpeg", "gif");
 
-    ScreenshotRun screenshotRun = new ScreenshotRun();
-    screenshotRun.setRepository(repository);
+      ScreenshotRun screenshotRun = new ScreenshotRun();
+      screenshotRun.setRepository(RepositoryMapper.mapToRepository(repository));
 
-    if (screenshotRunName == null) {
-      screenshotRun.setName(UUID.randomUUID().toString());
-    } else {
-      screenshotRun.setName(screenshotRunName);
+      if (screenshotRunName == null) {
+        screenshotRun.setName(UUID.randomUUID().toString());
+      } else {
+        screenshotRun.setName(screenshotRunName);
+      }
+
+      for (Path imagePath : listFilesWithExtensionInSourceDirectory) {
+        processImage(imagePath, screenshotRun);
+      }
+      this.screenshotClient.createOrAddToScreenshotRun(screenshotRun);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
     }
-
-    for (Path imagePath : listFilesWithExtensionInSourceDirectory) {
-      processImage(imagePath, screenshotRun);
-    }
-
-    screenshotClient.uploadScreenshots(screenshotRun);
   }
 
   void processImage(Path imagePath, ScreenshotRun screenshotRun) throws CommandException {
@@ -177,7 +194,9 @@ public class ScreenshotCommand extends Command {
             "The locale: " + localeStr + " is not supported by the repository");
       }
 
-      return repositoryLocales.get(localeStr);
+      return ofNullable(repositoryLocales.get(localeStr))
+          .map(RepositoryMapper::mapToLocale)
+          .orElse(null);
     } catch (IllegalArgumentException iae) {
       throw new InvalidLocaleException(
           "The image: "
@@ -206,7 +225,7 @@ public class ScreenshotCommand extends Command {
     logger.debug("Upload image: {} to path: {}", image.toString(), uploadPath);
     try {
       byte[] content = Files.readAllBytes(image);
-      imageClient.uploadImage(content, uploadPath);
+      this.imageClient.uploadImage(content, uploadPath);
     } catch (IOException | ApiException ex) {
       throw new CommandException("Failed to upload image: " + image.toString(), ex);
     }

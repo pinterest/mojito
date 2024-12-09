@@ -2,17 +2,18 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
-import com.box.l10n.mojito.cli.apiclient.AssetWsApi;
-import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiHelper;
+import com.box.l10n.mojito.cli.apiclient.AssetWsApiProxy;
+import com.box.l10n.mojito.cli.apiclient.exceptions.PollableTaskException;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.model.AssetAssetSummary;
 import com.box.l10n.mojito.cli.model.RepositoryLocaleRepository;
 import com.box.l10n.mojito.cli.model.RepositoryRepository;
 import com.box.l10n.mojito.cli.model.XliffExportBody;
-import com.box.l10n.mojito.rest.client.exception.PollableTaskException;
 import com.google.common.base.MoreObjects;
+import jakarta.annotation.PostConstruct;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -70,11 +71,16 @@ public class TMExportCommand extends Command {
 
   @Autowired CommandHelper commandHelper;
 
-  @Autowired RepositoryWsApiHelper repositoryWsApiHelper;
-
-  @Autowired AssetWsApi assetClient;
+  @Autowired private ApiClient apiClient;
 
   CommandDirectories commandDirectories;
+
+  AssetWsApiProxy assetClient;
+
+  @PostConstruct
+  public void init() {
+    this.assetClient = new AssetWsApiProxy(this.apiClient);
+  }
 
   @Override
   public void execute() throws CommandException {
@@ -91,8 +97,12 @@ public class TMExportCommand extends Command {
     logger.debug("Initialize targetBasename (use repository if no target bases name is specified)");
     targetBasenameParam = MoreObjects.firstNonNull(targetBasenameParam, repositoryParam);
 
-    RepositoryRepository repository =
-        this.repositoryWsApiHelper.findRepositoryByName(repositoryParam);
+    RepositoryRepository repository;
+    try {
+      repository = this.commandHelper.findRepositoryByName(repositoryParam);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
 
     List<AssetAssetSummary> assets;
     try {

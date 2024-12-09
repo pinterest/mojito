@@ -2,14 +2,18 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.DropWsApi;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.Console;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.DropClient;
-import com.box.l10n.mojito.rest.entity.Drop;
-import com.box.l10n.mojito.rest.entity.ImportDropConfig;
-import com.box.l10n.mojito.rest.entity.PollableTask;
-import com.box.l10n.mojito.rest.entity.Repository;
+import com.box.l10n.mojito.cli.model.DropDropSummary;
+import com.box.l10n.mojito.cli.model.ImportDropConfig;
+import com.box.l10n.mojito.cli.model.Pageable;
+import com.box.l10n.mojito.cli.model.PollableTask;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
+import jakarta.annotation.PostConstruct;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -65,7 +69,7 @@ public class DropImportCommand extends Command {
       required = false,
       description = Param.DROP_IMPORT_STATUS_DESCRIPTION,
       converter = ImportDropConfigStatusConverter.class)
-  ImportDropConfig.Status importStatusParam = null;
+  ImportDropConfig.StatusEnum importStatusParam = null;
 
   @Parameter(
       names = {"--import-fetched"},
@@ -77,14 +81,35 @@ public class DropImportCommand extends Command {
 
   @Autowired Console console;
 
-  @Autowired DropClient dropClient;
+  @Autowired ApiClient apiClient;
+
+  DropWsApi dropClient;
+
+  @PostConstruct
+  public void init() {
+    this.dropClient = new DropWsApi(this.apiClient);
+  }
+
+  private ImportDropConfig getImportDropConfig(Long dropId, RepositoryRepository repository) {
+    ImportDropConfig importDropConfigBody = new ImportDropConfig();
+    importDropConfigBody.setRepositoryId(repository.getId());
+    importDropConfigBody.setDropId(dropId);
+    importDropConfigBody.setStatus(importStatusParam);
+    return importDropConfigBody;
+  }
 
   @Override
   public void execute() throws CommandException {
 
-    Repository repository = commandHelper.findRepositoryByName(repositoryParam);
+    RepositoryRepository repository;
+    try {
+      repository = this.commandHelper.findRepositoryByName(repositoryParam);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
 
-    Map<Long, Drop> numberedAvailableDrops = getNumberedAvailableDrops(repository.getId());
+    Map<Long, DropDropSummary> numberedAvailableDrops =
+        getNumberedAvailableDrops(repository.getId());
 
     if (numberedAvailableDrops.isEmpty()) {
       consoleWriter.newLine().a("No drop available").println();
@@ -92,9 +117,9 @@ public class DropImportCommand extends Command {
       consoleWriter.newLine().a("Drops available").println();
 
       logger.debug("Display drops information");
-      for (Map.Entry<Long, Drop> entry : numberedAvailableDrops.entrySet()) {
+      for (Map.Entry<Long, DropDropSummary> entry : numberedAvailableDrops.entrySet()) {
 
-        Drop drop = entry.getValue();
+        DropDropSummary drop = entry.getValue();
 
         consoleWriter
             .a("  ")
@@ -110,7 +135,7 @@ public class DropImportCommand extends Command {
             .a(drop.getName())
             .reset();
 
-        if (Boolean.TRUE.equals(drop.getCanceled())) {
+        if (Boolean.TRUE.equals(drop.isCanceled())) {
           consoleWriter.fg(Color.GREEN).a(" CANCELED");
         } else if (drop.getLastImportedDate() == null) {
           consoleWriter.fg(Color.GREEN).a(" NEW");
@@ -135,8 +160,13 @@ public class DropImportCommand extends Command {
             .a(repositoryParam)
             .println(2);
 
-        ImportDropConfig importDropConfig =
-            dropClient.importDrop(repository, dropId, importStatusParam);
+        ImportDropConfig importDropConfigBody = getImportDropConfig(dropId, repository);
+        ImportDropConfig importDropConfig;
+        try {
+          importDropConfig = dropClient.importDrop(importDropConfigBody);
+        } catch (ApiException e) {
+          throw new RuntimeException(e);
+        }
         PollableTask pollableTask = importDropConfig.getPollableTask();
 
         commandHelper.waitForPollableTask(pollableTask.getId());
@@ -147,32 +177,37 @@ public class DropImportCommand extends Command {
   }
 
   /**
-   * Gets available {@link Drop}s and assign them a number (map key) to be referenced in the console
-   * input for selection.
+   * Gets available {@link com.box.l10n.mojito.cli.model.DropDropSummary}s and assign them a number
+   * (map key) to be referenced in the console input for selection.
    *
    * @return
    */
-  private Map<Long, Drop> getNumberedAvailableDrops(Long repositoryId) {
+  private Map<Long, DropDropSummary> getNumberedAvailableDrops(Long repositoryId) {
 
     logger.debug("Build a map of drops keyed by an incremented integer");
-    Map<Long, Drop> dropIds = new HashMap<>();
+    Map<Long, DropDropSummary> dropIds = new HashMap<>();
 
     long i = 1;
 
-    for (Drop availableDrop :
-        dropClient
-            .getDrops(repositoryId, getImportedFilter(), 0L, numberOfDropsToFetchParam)
-            .getContent()) {
-      dropIds.put(i++, availableDrop);
+    Pageable pageable = new Pageable();
+    pageable.setPage(0);
+    pageable.setSize(this.numberOfDropsToFetchParam.intValue());
+    try {
+      for (DropDropSummary availableDrop :
+          dropClient.getDrops(pageable, repositoryId, getImportedFilter(), null).getContent()) {
+        dropIds.put(i++, availableDrop);
+      }
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
     }
 
     return dropIds;
   }
 
   /**
-   * Returns the "imported" filter to be passed to {@link DropClient#getDrops(java.lang.Long,
-   * java.lang.Boolean, java.lang.Long, java.lang.Long) } based on the CLI parameter {@link
-   * #alsoShowImportedParam}.
+   * Returns the "imported" filter to be passed to {@link
+   * com.box.l10n.mojito.cli.apiclient.DropWsApi#getDrops(com.box.l10n.mojito.cli.model.Pageable,
+   * Long, Boolean, Boolean)} based on the CLI parameter {@link #alsoShowImportedParam}.
    *
    * @return the imported filter to get drops
    */
@@ -181,17 +216,19 @@ public class DropImportCommand extends Command {
   }
 
   /**
-   * Gets the list of selected {@link Drop#id}.
+   * Gets the list of selected {@link com.box.l10n.mojito.cli.model.DropDropSummary#getId()}.
    *
-   * <p>First, reads a drop number from the console and then gets the {@link Drop} from the map of
-   * available {@link Drop}s.
+   * <p>First, reads a drop number from the console and then gets the {@link
+   * com.box.l10n.mojito.cli.model.DropDropSummary} from the map of available {@link
+   * com.box.l10n.mojito.cli.model.DropDropSummary}s.
    *
-   * @param numberedAvailableDrops candidate {@link Drop}s for selection
-   * @return selected {@link Drop#id}
+   * @param numberedAvailableDrops candidate {@link com.box.l10n.mojito.cli.model.DropDropSummary}s
+   *     for selection
+   * @return selected {@link com.box.l10n.mojito.cli.model.DropDropSummary#getId()}
    * @throws CommandException if the input doesn't match a number from the map of available {@link
-   *     Drop}s
+   *     com.box.l10n.mojito.cli.model.DropDropSummary}s
    */
-  private List<Long> getSelectedDropIds(Map<Long, Drop> numberedAvailableDrops)
+  private List<Long> getSelectedDropIds(Map<Long, DropDropSummary> numberedAvailableDrops)
       throws CommandException {
     List<Long> selectedDropIds;
 
@@ -204,7 +241,7 @@ public class DropImportCommand extends Command {
     return selectedDropIds;
   }
 
-  private List<Long> getFromConsoleDropIds(Map<Long, Drop> numberedAvailableDrops)
+  private List<Long> getFromConsoleDropIds(Map<Long, DropDropSummary> numberedAvailableDrops)
       throws CommandException {
     consoleWriter.newLine().a("Enter Drop number to import").println();
     Long dropNumber = console.readLine(Long.class);
@@ -219,9 +256,10 @@ public class DropImportCommand extends Command {
     return Arrays.asList(selectId);
   }
 
-  private List<Long> getWithImportFetchedDropIds(Map<Long, Drop> numberedAvailableDrops) {
+  private List<Long> getWithImportFetchedDropIds(
+      Map<Long, DropDropSummary> numberedAvailableDrops) {
     return numberedAvailableDrops.entrySet().stream()
-        .filter(x -> !Boolean.TRUE.equals(x.getValue().getCanceled()))
+        .filter(x -> !Boolean.TRUE.equals(x.getValue().isCanceled()))
         .map(x -> x.getValue().getId())
         .collect(Collectors.toList());
   }

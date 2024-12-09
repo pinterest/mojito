@@ -4,14 +4,15 @@ import static org.fusesource.jansi.Ansi.Color.CYAN;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
-import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiHelper;
 import com.box.l10n.mojito.cli.apiclient.ThirdPartyWsApi;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.model.PollableTask;
 import com.box.l10n.mojito.cli.model.RepositoryRepository;
 import com.box.l10n.mojito.cli.model.ThirdPartySync;
+import jakarta.annotation.PostConstruct;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -119,11 +120,16 @@ public class ThirdPartySyncCommand extends Command {
       description = "Options to synchronize")
   List<String> options;
 
-  @Autowired ThirdPartyWsApi thirdPartyClient;
-
   @Autowired CommandHelper commandHelper;
 
-  @Autowired RepositoryWsApiHelper repositoryWsApiHelper;
+  @Autowired ApiClient apiClient;
+
+  ThirdPartyWsApi thirdPartyClient;
+
+  @PostConstruct
+  public void init() {
+    this.thirdPartyClient = new ThirdPartyWsApi(this.apiClient);
+  }
 
   private ThirdPartySync getThirdPartySync(RepositoryRepository repository) {
     ThirdPartySync thirdPartySyncBody = new ThirdPartySync();
@@ -189,13 +195,12 @@ public class ThirdPartySyncCommand extends Command {
         .a(Objects.toString(options))
         .println(2);
 
-    RepositoryRepository repository =
-        this.repositoryWsApiHelper.findRepositoryByName(repositoryParam);
-
-    ThirdPartySync thirdPartySyncBody = getThirdPartySync(repository);
-
     try {
-      PollableTask pollableTask = thirdPartyClient.sync(thirdPartySyncBody);
+      RepositoryRepository repository = this.commandHelper.findRepositoryByName(repositoryParam);
+
+      ThirdPartySync thirdPartySyncBody = getThirdPartySync(repository);
+
+      PollableTask pollableTask = this.thirdPartyClient.sync(thirdPartySyncBody);
       commandHelper.waitForPollableTask(pollableTask.getId());
 
       consoleWriter.fg(Ansi.Color.GREEN).newLine().a("Finished").println(2);
