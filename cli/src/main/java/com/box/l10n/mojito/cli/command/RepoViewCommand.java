@@ -2,7 +2,8 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiHelper;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.RepositoryClient;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.model.AssetIntegrityCheckerRepository;
 import com.box.l10n.mojito.cli.model.RepositoryLocaleRepository;
@@ -39,13 +40,13 @@ public class RepoViewCommand extends RepoCommand {
       description = Param.REPOSITORY_NAME_DESCRIPTION)
   String nameParam;
 
-  @Autowired RepositoryWsApiHelper repositoryWsApiHelper;
+  @Autowired private ApiClient apiClient;
 
   @Override
   public void execute() throws CommandException {
     consoleWriter.a("View repository: ").fg(Ansi.Color.CYAN).a(nameParam).println();
-
-    RepositoryRepository repository = this.repositoryWsApiHelper.findRepositoryByName(nameParam);
+    RepositoryRepository repository =
+        new RepositoryClient(this.apiClient).findRepositoryByName(nameParam);
     consoleWriter
         .newLine()
         .a("Repository id --> ")

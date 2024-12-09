@@ -3,6 +3,7 @@ package com.box.l10n.mojito.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.cli.apiclient.AiPromptWsApi;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.model.AIPromptCreateRequest;
@@ -20,8 +21,6 @@ import org.springframework.stereotype.Component;
 public class CreateAIPromptCommand extends Command {
 
   static Logger logger = LoggerFactory.getLogger(CreateAIPromptCommand.class);
-
-  @Autowired AiPromptWsApi aiServiceClient;
 
   @Parameter(
       names = {"--repository-name", "-r"},
@@ -73,6 +72,8 @@ public class CreateAIPromptCommand extends Command {
 
   @Autowired private ConsoleWriter consoleWriter;
 
+  @Autowired ApiClient apiClient;
+
   @Override
   protected void execute() throws CommandException {
     createPrompt();
@@ -94,7 +95,7 @@ public class CreateAIPromptCommand extends Command {
     aiPromptCreateRequest.setJsonResponseKey(jsonResponseKey);
     long promptId;
     try {
-      promptId = aiServiceClient.createPrompt(aiPromptCreateRequest);
+      promptId = new AiPromptWsApi(this.apiClient).createPrompt(aiPromptCreateRequest);
     } catch (ApiException e) {
       throw new CommandException(e.getMessage(), e);
     }

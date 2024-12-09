@@ -2,9 +2,10 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.RepositoryClient;
 import com.box.l10n.mojito.cli.apiclient.RepositoryWsApi;
-import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiHelper;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.filefinder.FileMatch;
@@ -70,11 +71,9 @@ public class TMImportCommand extends Command {
       description = "Skip the source file import")
   Boolean skipSourceImportParam = false;
 
-  @Autowired RepositoryWsApi repositoryClient;
-
   @Autowired CommandHelper commandHelper;
 
-  @Autowired RepositoryWsApiHelper repositoryWsApiHelper;
+  @Autowired private ApiClient apiClient;
 
   RepositoryRepository repository;
 
@@ -90,7 +89,7 @@ public class TMImportCommand extends Command {
         .a(repositoryParam)
         .println(2);
 
-    repository = this.repositoryWsApiHelper.findRepositoryByName(repositoryParam);
+    repository = new RepositoryClient(this.apiClient).findRepositoryByName(repositoryParam);
     commandDirectories = new CommandDirectories(sourceDirectoryParam);
 
     FileType xliffFileType = new XliffFileType();
@@ -131,7 +130,8 @@ public class TMImportCommand extends Command {
       ImportRepositoryBody importRepositoryBody = new ImportRepositoryBody();
       importRepositoryBody.setUpdateTM(updateTMParam);
       importRepositoryBody.setXliffContent(getFileContent(fileMatch));
-      repositoryClient.importRepository(importRepositoryBody, repository.getId());
+      new RepositoryWsApi(this.apiClient)
+          .importRepository(importRepositoryBody, repository.getId());
 
       consoleWriter.erasePreviouslyPrintedLines();
       consoleWriter

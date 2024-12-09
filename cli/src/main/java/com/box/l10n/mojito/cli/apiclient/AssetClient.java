@@ -3,13 +3,13 @@ package com.box.l10n.mojito.cli.apiclient;
 import com.box.l10n.mojito.cli.command.CommandException;
 import com.box.l10n.mojito.cli.model.AssetAssetSummary;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
-@Component
-public class AssetWsApiHelper {
-  @Autowired AssetWsApi assetClient;
+public class AssetClient extends AssetWsApi {
+
+  public AssetClient(ApiClient apiClient) {
+    super(apiClient);
+  }
 
   public AssetAssetSummary getAssetByPathAndRepositoryId(String path, Long repositoryId)
       throws CommandException {
@@ -18,7 +18,7 @@ public class AssetWsApiHelper {
 
     List<AssetAssetSummary> assets;
     try {
-      assets = this.assetClient.getAssets(repositoryId, path, null, null, null);
+      assets = this.getAssets(repositoryId, path, null, null, null);
     } catch (ApiException e) {
       throw new RuntimeException(e);
     }

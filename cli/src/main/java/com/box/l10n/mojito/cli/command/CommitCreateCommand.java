@@ -5,9 +5,10 @@ import static java.util.Optional.ofNullable;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.JSR310Migration;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.apiclient.CommitWsApi;
-import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiHelper;
+import com.box.l10n.mojito.cli.apiclient.RepositoryClient;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.model.CommitBody;
@@ -45,10 +46,6 @@ public class CommitCreateCommand extends Command {
   @Autowired ConsoleWriter consoleWriter;
 
   @Autowired CommandHelper commandHelper;
-
-  @Autowired CommitWsApi commitClient;
-
-  @Autowired RepositoryWsApiHelper repositoryWsApiHelper;
 
   @Parameter(
       names = {Param.COMMIT_HASH_LONG, Param.COMMIT_HASH_SHORT},
@@ -90,6 +87,8 @@ public class CommitCreateCommand extends Command {
               + " the first commit from 'git log' is used.")
   boolean readInfoFromGit = false;
 
+  @Autowired private ApiClient apiClient;
+
   @Override
   protected void execute() throws CommandException {
     consoleWriter
@@ -98,9 +97,8 @@ public class CommitCreateCommand extends Command {
         .fg(Ansi.Color.CYAN)
         .a(repositoryParam)
         .println(2);
-
     RepositoryRepository repository =
-        this.repositoryWsApiHelper.findRepositoryByName(repositoryParam);
+        new RepositoryClient(this.apiClient).findRepositoryByName(repositoryParam);
 
     final CommitInfo commitInfo;
 
@@ -122,7 +120,7 @@ public class CommitCreateCommand extends Command {
     commitBody.setSourceCreationDate(creationDateMilliSeconds);
     CommitCommit commit;
     try {
-      commit = commitClient.createCommit(commitBody);
+      commit = new CommitWsApi(this.apiClient).createCommit(commitBody);
     } catch (ApiException e) {
       throw new CommandException(e.getMessage(), e);
     }

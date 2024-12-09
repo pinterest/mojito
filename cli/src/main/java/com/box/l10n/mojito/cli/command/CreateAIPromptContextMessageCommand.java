@@ -3,6 +3,7 @@ package com.box.l10n.mojito.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.cli.apiclient.AiPromptWsApi;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.model.AIPromptContextMessageCreateRequest;
@@ -20,8 +21,6 @@ import org.springframework.stereotype.Component;
 public class CreateAIPromptContextMessageCommand extends Command {
 
   static Logger logger = LoggerFactory.getLogger(CreateAIPromptContextMessageCommand.class);
-
-  @Autowired AiPromptWsApi aiServiceClient;
 
   @Parameter(
       names = {"--content", "-c"},
@@ -49,6 +48,8 @@ public class CreateAIPromptContextMessageCommand extends Command {
 
   @Autowired private ConsoleWriter consoleWriter;
 
+  @Autowired private ApiClient apiClient;
+
   @Override
   protected void execute() throws CommandException {
     createPromptContextMessage();
@@ -65,7 +66,8 @@ public class CreateAIPromptContextMessageCommand extends Command {
     long contextMessageId;
     try {
       contextMessageId =
-          this.aiServiceClient.createPromptMessage(AIPromptContextMessageCreateRequest);
+          new AiPromptWsApi(this.apiClient)
+              .createPromptMessage(AIPromptContextMessageCreateRequest);
     } catch (ApiException e) {
       throw new CommandException(e.getMessage(), e);
     }
