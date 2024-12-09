@@ -59,13 +59,13 @@ public class CustomModelResolver extends ModelResolver {
               new BooleanSchema()));
       return objectSchema;
     }
-    if (annotatedType.getJsonViewAnnotation() != null) {
-      if (this.hasAnnotation(annotatedType, RequestBody.class)) {
-        annotatedType.jsonViewAnnotation(null);
-        return super.resolve(annotatedType, context, next);
-      }
+    if (annotatedType.getJsonViewAnnotation() != null
+        && this.hasAnnotation(annotatedType, RequestBody.class)) {
+      annotatedType.jsonViewAnnotation(null);
+      return super.resolve(annotatedType, context, next);
     }
-    if (this.hasAnnotation(annotatedType, JsonBackReference.class)) {
+    if (this.hasAnnotation(annotatedType, JsonBackReference.class)
+        && !this.hasAnnotation(annotatedType, io.swagger.v3.oas.annotations.media.Schema.class)) {
       return null;
     }
     return super.resolve(annotatedType, context, next);
