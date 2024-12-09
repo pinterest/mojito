@@ -2,10 +2,17 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.UserWsApiProxy;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.Console;
+import com.box.l10n.mojito.cli.console.ConsoleWriter;
+import com.box.l10n.mojito.cli.model.Authority;
 import com.box.l10n.mojito.cli.model.User;
+import com.box.l10n.mojito.cli.models.Role;
+import jakarta.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.List;
 import org.fusesource.jansi.Ansi;
 import org.slf4j.Logger;
@@ -24,7 +31,7 @@ import org.springframework.stereotype.Component;
 @Parameters(
     commandNames = {"user-update"},
     commandDescription = "Updates a user")
-public class UserUpdateCommand extends UserCommand {
+public class UserUpdateCommand extends Command {
 
   /** logger */
   static Logger logger = LoggerFactory.getLogger(UserUpdateCommand.class);
@@ -72,21 +79,38 @@ public class UserUpdateCommand extends UserCommand {
 
   @Autowired Console console;
 
+  @Autowired ConsoleWriter consoleWriter;
+
+  @Autowired ApiClient apiClient;
+
+  UserWsApiProxy userClient;
+
+  @PostConstruct
+  public void init() {
+    this.userClient = new UserWsApiProxy(this.apiClient);
+  }
+
   @Override
   protected void execute() throws CommandException {
     consoleWriter.a("Update user: ").fg(Ansi.Color.CYAN).a(username).println();
 
     try {
-      List<User> users = this.getPageUser(username).getContent();
-      User user = users.getFirst();
+      User user = new User();
       user.setPassword(getPassword());
       user.setSurname(surname);
       user.setGivenName(givenName);
       user.setCommonName(commonName);
 
-      this.addAuthorities(user, this.rolename);
+      Role role = Role.fromString(this.rolename);
+      List<Authority> authorities = new ArrayList<>();
+      if (role != null) {
+        Authority authority = new Authority();
+        authority.setAuthority(role.toString());
+        authorities.add(authority);
+      }
+      user.setAuthorities(authorities);
 
-      userClient.updateUserByUserId(user, user.getId());
+      userClient.updateUserByUsername(user, this.username);
       consoleWriter.newLine().a("updated --> user: ").fg(Ansi.Color.MAGENTA).a(username).println();
     } catch (ApiException ex) {
       throw new CommandException(ex.getMessage(), ex);

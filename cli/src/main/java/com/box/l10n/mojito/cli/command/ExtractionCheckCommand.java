@@ -2,6 +2,8 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.command.checks.AbstractCliChecker;
 import com.box.l10n.mojito.cli.command.checks.CheckerOptionsMapEntry;
 import com.box.l10n.mojito.cli.command.checks.CheckerOptionsMapEntryConverter;
@@ -28,12 +30,13 @@ import com.box.l10n.mojito.github.GithubClients;
 import com.box.l10n.mojito.github.GithubException;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.regex.PlaceholderRegularExpressions;
-import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.ibm.icu.text.MessageFormat;
+import com.squareup.okhttp.Call;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -273,7 +276,7 @@ public class ExtractionCheckCommand extends Command {
       description = "Full git commit sha, used for setting a status on a commit in Github.")
   String commitSha;
 
-  @Autowired AuthenticatedRestTemplate restTemplate;
+  @Autowired ApiClient apiClient;
 
   List<ExtractionCheckNotificationSender> extractionCheckNotificationSenders = new ArrayList<>();
 
@@ -393,7 +396,23 @@ public class ExtractionCheckCommand extends Command {
               .put("outcome", result.isSuccessful() ? "success" : "failure")
               .build();
       String url = urlMessageFormat.format(paramMap);
-      restTemplate.put(url, null);
+
+      try {
+        Call call =
+            this.apiClient.buildCall(
+                url,
+                "PUT",
+                new ArrayList<>(),
+                new ArrayList<>(),
+                null,
+                new HashMap<>(),
+                new HashMap<>(),
+                new String[] {},
+                null);
+        this.apiClient.execute(call);
+      } catch (ApiException e) {
+        throw new CommandException(e.getMessage(), e);
+      }
     } catch (RestClientException e) {
       logger.error("Error reporting statistics to http endpoint " + e.getMessage(), e);
       consoleWriter

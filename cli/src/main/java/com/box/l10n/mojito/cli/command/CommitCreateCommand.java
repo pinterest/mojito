@@ -5,15 +5,16 @@ import static java.util.Optional.ofNullable;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.JSR310Migration;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.apiclient.CommitWsApi;
-import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiHelper;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.model.CommitBody;
 import com.box.l10n.mojito.cli.model.CommitCommit;
 import com.box.l10n.mojito.cli.model.RepositoryRepository;
 import com.google.common.collect.Streams;
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import org.eclipse.jgit.api.Git;
@@ -46,9 +47,7 @@ public class CommitCreateCommand extends Command {
 
   @Autowired CommandHelper commandHelper;
 
-  @Autowired CommitWsApi commitClient;
-
-  @Autowired RepositoryWsApiHelper repositoryWsApiHelper;
+  CommitWsApi commitClient;
 
   @Parameter(
       names = {Param.COMMIT_HASH_LONG, Param.COMMIT_HASH_SHORT},
@@ -90,6 +89,22 @@ public class CommitCreateCommand extends Command {
               + " the first commit from 'git log' is used.")
   boolean readInfoFromGit = false;
 
+  @Autowired private ApiClient apiClient;
+
+  @PostConstruct
+  public void init() {
+    this.commitClient = new CommitWsApi(this.apiClient);
+  }
+
+  private static CommitBody getCommitBody(CommitInfo commitInfo, RepositoryRepository repository) {
+    CommitBody commitBody = new CommitBody();
+    commitBody.setCommitName(commitInfo.hash);
+    commitBody.setRepositoryId(repository.getId());
+    commitBody.setAuthorName(commitInfo.authorName);
+    commitBody.setAuthorEmail(commitInfo.authorEmail);
+    return commitBody;
+  }
+
   @Override
   protected void execute() throws CommandException {
     consoleWriter
@@ -98,9 +113,12 @@ public class CommitCreateCommand extends Command {
         .fg(Ansi.Color.CYAN)
         .a(repositoryParam)
         .println(2);
-
-    RepositoryRepository repository =
-        this.repositoryWsApiHelper.findRepositoryByName(repositoryParam);
+    RepositoryRepository repository;
+    try {
+      repository = this.commandHelper.findRepositoryByName(repositoryParam);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
 
     final CommitInfo commitInfo;
 
@@ -110,19 +128,13 @@ public class CommitCreateCommand extends Command {
       commitInfo = new CommitInfo(commitHash, authorEmailParam, authorNameParam, creationDateParam);
     }
 
-    CommitBody commitBody = new CommitBody();
-    commitBody.setCommitName(commitInfo.hash);
-    commitBody.setRepositoryId(repository.getId());
-    commitBody.setAuthorName(commitInfo.authorName);
-    commitBody.setAuthorEmail(commitInfo.authorEmail);
+    CommitBody commitBody = getCommitBody(commitInfo, repository);
     Long creationDateMilliSeconds =
-        ofNullable(commitInfo.creationDate)
-            .map(creationDate -> creationDate.toInstant().getEpochSecond() * 1_000)
-            .orElse(null);
+        ofNullable(commitInfo.creationDate).map(JSR310Migration::getMillis).orElse(null);
     commitBody.setSourceCreationDate(creationDateMilliSeconds);
     CommitCommit commit;
     try {
-      commit = commitClient.createCommit(commitBody);
+      commit = this.commitClient.createCommit(commitBody);
     } catch (ApiException e) {
       throw new CommandException(e.getMessage(), e);
     }

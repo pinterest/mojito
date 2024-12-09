@@ -15,6 +15,7 @@ import io.swagger.v3.oas.models.media.Schema;
 import java.lang.annotation.Annotation;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import org.springdoc.core.converters.models.SortObject;
@@ -43,7 +44,8 @@ public class CustomModelResolver extends ModelResolver {
   public Schema<?> resolve(
       AnnotatedType annotatedType, ModelConverterContext context, Iterator<ModelConverter> next) {
     if (annotatedType.getType() instanceof SimpleType
-        && ((SimpleType) annotatedType.getType()).getRawClass().equals(ZonedDateTime.class)) {
+        && (((SimpleType) annotatedType.getType()).getRawClass().equals(ZonedDateTime.class)
+            || ((SimpleType) annotatedType.getType()).getRawClass().equals(Date.class))) {
       return new IntegerSchema().format("int64").example(1715699917000L);
     }
     if (annotatedType.getType().equals(SortObject.class)) {

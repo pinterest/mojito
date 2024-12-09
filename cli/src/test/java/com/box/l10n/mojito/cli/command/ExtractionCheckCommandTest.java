@@ -1,6 +1,11 @@
 package com.box.l10n.mojito.cli.command;
 
 import static com.box.l10n.mojito.cli.command.checks.AbstractCliChecker.BULLET_POINT;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
@@ -8,10 +13,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.box.l10n.mojito.cli.CLITestBase;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.command.checks.CliCheckResult;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
 import com.google.common.collect.Lists;
+import com.squareup.okhttp.Call;
 import java.util.List;
 import org.fusesource.jansi.Ansi;
 import org.junit.Assert;
@@ -580,7 +587,7 @@ public class ExtractionCheckCommandTest extends CLITestBase {
 
   /**
    * this is a functional test for the {@link
-   * com.box.l10n.mojito.cli.command.checks.AbstractCliChecker#getAddedTextUnitsExcludingInconsistentComments(List)}
+   * com.box.l10n.mojito.cli.command.checks.AbstractCliChecker#getAddedTextUnitsExcludingInconsistentComments(java.util.List)}
    *
    * <p>If combination source+context is added again with a different comment we run the check and
    * eventually reject it if it is not valid
@@ -787,62 +794,143 @@ public class ExtractionCheckCommandTest extends CLITestBase {
   }
 
   @Test
-  public void testStatsAreReportedIfUrlTemplateSet() {
+  public void testStatsAreReportedIfUrlTemplateSet() throws ApiException {
     ConsoleWriter consoleWriter = Mockito.mock(ConsoleWriter.class);
-    AuthenticatedRestTemplate restTemplateMock = Mockito.mock(AuthenticatedRestTemplate.class);
+    ApiClient apiClientMock = Mockito.mock(ApiClient.class);
+    Call callMock = Mockito.mock(Call.class);
+    when(apiClientMock.buildCall(
+            anyString(),
+            anyString(),
+            anyList(),
+            anyList(),
+            any(),
+            anyMap(),
+            anyMap(),
+            any(),
+            any()))
+        .thenReturn(callMock);
     when(consoleWriter.fg(isA(Ansi.Color.class))).thenReturn(consoleWriter);
     when(consoleWriter.newLine()).thenReturn(consoleWriter);
     when(consoleWriter.a(isA(String.class))).thenReturn(consoleWriter);
 
     ExtractionCheckCommand extractionCheckCommand = new ExtractionCheckCommand();
     extractionCheckCommand.consoleWriter = consoleWriter;
-    extractionCheckCommand.restTemplate = restTemplateMock;
+    extractionCheckCommand.apiClient = apiClientMock;
     extractionCheckCommand.statsUrlTemplate =
         "http://someUrl.com/my_test_stat_{check_name}_{outcome}?value=1";
     CliCheckResult success = new CliCheckResult(true, false, "testCheck1");
     CliCheckResult failure = new CliCheckResult(false, false, "testCheck2");
     extractionCheckCommand.reportStatistics(Lists.newArrayList(success, failure));
-    verify(restTemplateMock, times(1))
-        .put("http://someUrl.com/my_test_stat_testCheck1_success?value=1", null);
-    verify(restTemplateMock, times(1))
-        .put("http://someUrl.com/my_test_stat_testCheck2_failure?value=1", null);
+    verify(apiClientMock, times(1))
+        .buildCall(
+            eq("http://someUrl.com/my_test_stat_testCheck1_success?value=1"),
+            eq("PUT"),
+            anyList(),
+            anyList(),
+            any(),
+            anyMap(),
+            anyMap(),
+            any(),
+            any());
+    verify(apiClientMock, times(1))
+        .buildCall(
+            eq("http://someUrl.com/my_test_stat_testCheck2_failure?value=1"),
+            eq("PUT"),
+            anyList(),
+            anyList(),
+            any(),
+            anyMap(),
+            anyMap(),
+            any(),
+            any());
   }
 
   @Test
-  public void testStatsAreNotReportedIfUrlTemplateIsNull() {
+  public void testStatsAreNotReportedIfUrlTemplateIsNull() throws ApiException {
     ConsoleWriter consoleWriter = Mockito.mock(ConsoleWriter.class);
-    AuthenticatedRestTemplate restTemplateMock = Mockito.mock(AuthenticatedRestTemplate.class);
+    ApiClient apiClientMock = Mockito.mock(ApiClient.class);
+    Call callMock = Mockito.mock(Call.class);
+    when(apiClientMock.buildCall(
+            anyString(),
+            anyString(),
+            anyList(),
+            anyList(),
+            any(),
+            anyMap(),
+            anyMap(),
+            any(),
+            any()))
+        .thenReturn(callMock);
     when(consoleWriter.fg(isA(Ansi.Color.class))).thenReturn(consoleWriter);
     when(consoleWriter.newLine()).thenReturn(consoleWriter);
     when(consoleWriter.a(isA(String.class))).thenReturn(consoleWriter);
 
     ExtractionCheckCommand extractionCheckCommand = new ExtractionCheckCommand();
     extractionCheckCommand.consoleWriter = consoleWriter;
-    extractionCheckCommand.restTemplate = restTemplateMock;
+    extractionCheckCommand.apiClient = apiClientMock;
     extractionCheckCommand.statsUrlTemplate = null;
     CliCheckResult success = new CliCheckResult(true, false, "testCheck1");
     CliCheckResult failure = new CliCheckResult(false, false, "testCheck2");
     extractionCheckCommand.reportStatistics(Lists.newArrayList(success, failure));
-    verify(restTemplateMock, times(0))
-        .put("http://someUrl.com/my_test_stat_testCheck1_success?value=1", null);
-    verify(restTemplateMock, times(0))
-        .put("http://someUrl.com/my_test_stat_testCheck2_failure?value=1", null);
+    verify(apiClientMock, times(0))
+        .buildCall(
+            eq("http://someUrl.com/my_test_stat_testCheck1_success?value=1"),
+            eq("PUT"),
+            anyList(),
+            anyList(),
+            any(),
+            anyMap(),
+            anyMap(),
+            any(),
+            any());
+    verify(apiClientMock, times(0))
+        .buildCall(
+            eq("http://someUrl.com/my_test_stat_testCheck2_failure?value=1"),
+            eq("PUT"),
+            anyList(),
+            anyList(),
+            any(),
+            anyMap(),
+            anyMap(),
+            any(),
+            any());
   }
 
   @Test
-  public void testErrorReportingStatistics() {
+  public void testErrorReportingStatistics() throws ApiException {
     ConsoleWriter consoleWriter = Mockito.mock(ConsoleWriter.class);
-    AuthenticatedRestTemplate restTemplateMock = Mockito.mock(AuthenticatedRestTemplate.class);
+    ApiClient apiClientMock = Mockito.mock(ApiClient.class);
+    Call callMock = Mockito.mock(Call.class);
+    when(apiClientMock.buildCall(
+            anyString(),
+            anyString(),
+            anyList(),
+            anyList(),
+            any(),
+            anyMap(),
+            anyMap(),
+            any(),
+            any()))
+        .thenReturn(callMock);
     when(consoleWriter.fg(isA(Ansi.Color.class))).thenReturn(consoleWriter);
     when(consoleWriter.newLine()).thenReturn(consoleWriter);
     when(consoleWriter.a(isA(String.class))).thenReturn(consoleWriter);
     doThrow(new RestClientException("test exception"))
-        .when(restTemplateMock)
-        .put("http://someUrl.com/my_test_stat_testCheck1_success?value=1", null);
+        .when(apiClientMock)
+        .buildCall(
+            eq("http://someUrl.com/my_test_stat_testCheck1_success?value=1"),
+            eq("PUT"),
+            anyList(),
+            anyList(),
+            any(),
+            anyMap(),
+            anyMap(),
+            any(),
+            any());
 
     ExtractionCheckCommand extractionCheckCommand = new ExtractionCheckCommand();
     extractionCheckCommand.consoleWriter = consoleWriter;
-    extractionCheckCommand.restTemplate = restTemplateMock;
+    extractionCheckCommand.apiClient = apiClientMock;
     extractionCheckCommand.statsUrlTemplate =
         "http://someUrl.com/my_test_stat_{check_name}_{outcome}?value=1";
     CliCheckResult success = new CliCheckResult(true, false, "testCheck1");

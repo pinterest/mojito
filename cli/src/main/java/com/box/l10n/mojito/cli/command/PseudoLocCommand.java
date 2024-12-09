@@ -1,16 +1,20 @@
 package com.box.l10n.mojito.cli.command;
 
+import static java.util.Optional.ofNullable;
+
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.AssetWsApiProxy;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.filefinder.FileMatch;
 import com.box.l10n.mojito.cli.filefinder.file.FileType;
-import com.box.l10n.mojito.rest.client.AssetClient;
-import com.box.l10n.mojito.rest.client.exception.AssetNotFoundException;
-import com.box.l10n.mojito.rest.entity.Asset;
-import com.box.l10n.mojito.rest.entity.LocalizedAssetBody;
-import com.box.l10n.mojito.rest.entity.Repository;
+import com.box.l10n.mojito.cli.model.AssetAssetSummary;
+import com.box.l10n.mojito.cli.model.LocalizedAssetBody;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
+import jakarta.annotation.PostConstruct;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -99,16 +103,23 @@ public class PseudoLocCommand extends Command {
       description = Param.DIR_PATH_EXCLUDE_PATTERNS_DESCRIPTION)
   List<String> directoriesExcludePatterns = null;
 
-  @Autowired AssetClient assetClient;
+  @Autowired ApiClient apiClient;
 
   @Autowired CommandHelper commandHelper;
 
-  Repository repository;
+  AssetWsApiProxy assetClient;
+
+  RepositoryRepository repository;
 
   CommandDirectories commandDirectories;
 
   /** Contains a map of locale for generating localized file a locales defined in the repository. */
   Map<String, String> localeMappings;
+
+  @PostConstruct
+  public void init() {
+    this.assetClient = new AssetWsApiProxy(this.apiClient);
+  }
 
   @Override
   public void execute() throws CommandException {
@@ -119,7 +130,11 @@ public class PseudoLocCommand extends Command {
         .a(repositoryParam)
         .println(2);
 
-    repository = commandHelper.findRepositoryByName(repositoryParam);
+    try {
+      repository = this.commandHelper.findRepositoryByName(repositoryParam);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
 
     commandDirectories = new CommandDirectories(sourceDirectoryParam, targetDirectoryParam);
 
@@ -150,7 +165,7 @@ public class PseudoLocCommand extends Command {
    * @throws CommandException
    */
   void generatePseudoLocalizedFile(
-      Repository repository, FileMatch sourceFileMatch, List<String> filterOptions)
+      RepositoryRepository repository, FileMatch sourceFileMatch, List<String> filterOptions)
       throws CommandException {
     logger.debug("Generate pseudo localzied files");
 
@@ -175,28 +190,43 @@ public class PseudoLocCommand extends Command {
     consoleWriter.a(" --> ").fg(Color.MAGENTA).a(relativeTargetFilePath.toString()).println();
   }
 
+  private static LocalizedAssetBody getLocalizedAssetBody(
+      FileMatch sourceFileMatch, List<String> filterOptions, String assetContent) {
+    LocalizedAssetBody localizedAssetBody = new LocalizedAssetBody();
+    localizedAssetBody.setContent(assetContent);
+    localizedAssetBody.setOutputBcp47tag(AssetWsApiProxy.OUTPUT_BCP47_TAG);
+    localizedAssetBody.setFilterConfigIdOverride(
+        ofNullable(sourceFileMatch.getFileType().getFilterConfigIdOverride())
+            .map(
+                filterConfigIdOverride ->
+                    LocalizedAssetBody.FilterConfigIdOverrideEnum.fromValue(
+                        filterConfigIdOverride.name()))
+            .orElse(null));
+    localizedAssetBody.setFilterOptions(filterOptions);
+    return localizedAssetBody;
+  }
+
   LocalizedAssetBody getPseudoLocalizedAsset(
-      Repository repository, FileMatch sourceFileMatch, List<String> filterOptions)
+      RepositoryRepository repository, FileMatch sourceFileMatch, List<String> filterOptions)
       throws CommandException {
     consoleWriter.a(" - Processing locale: ").fg(Color.CYAN).a(OUTPUT_BCP47_TAG).print();
 
     try {
-      Asset assetByPathAndRepositoryId =
+      AssetAssetSummary assetByPathAndRepositoryId =
           assetClient.getAssetByPathAndRepositoryId(
               sourceFileMatch.getSourcePath(), repository.getId());
 
       String assetContent = commandHelper.getFileContentWithXcodePatch(sourceFileMatch);
 
+      LocalizedAssetBody localizedAssetBody =
+          getLocalizedAssetBody(sourceFileMatch, filterOptions, assetContent);
       LocalizedAssetBody pseudoLocalizedAsset =
           assetClient.getPseudoLocalizedAssetForContent(
-              assetByPathAndRepositoryId.getId(),
-              assetContent,
-              sourceFileMatch.getFileType().getFilterConfigIdOverride(),
-              filterOptions);
+              localizedAssetBody, assetByPathAndRepositoryId.getId());
 
       logger.trace("PseudoLocalizedAsset content = {}", pseudoLocalizedAsset.getContent());
       return pseudoLocalizedAsset;
-    } catch (AssetNotFoundException e) {
+    } catch (ApiException e) {
       throw new CommandException(
           "Asset with path ["
               + sourceFileMatch.getSourcePath()

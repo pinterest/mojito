@@ -1,13 +1,11 @@
 package com.box.l10n.mojito.cli;
 
 import com.box.l10n.mojito.Application;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.command.L10nJCommander;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
-import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
-import com.box.l10n.mojito.rest.resttemplate.ResttemplateConfig;
 import com.box.l10n.mojito.service.asset.AssetRepository;
 import com.box.l10n.mojito.service.locale.LocaleService;
 import com.box.l10n.mojito.service.repository.RepositoryService;
@@ -17,9 +15,7 @@ import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.box.l10n.mojito.service.tm.search.TextUnitSearcher;
 import com.box.l10n.mojito.service.tm.search.TextUnitSearcherParameters;
 import com.box.l10n.mojito.test.IOTestBase;
-import com.box.l10n.mojito.xml.XmlParsingConfiguration;
 import com.google.common.io.Files;
-import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -52,8 +48,6 @@ public class CLITestBase extends IOTestBase {
   /** logger */
   static Logger logger = LoggerFactory.getLogger(CLITestBase.class);
 
-  @Autowired AuthenticatedRestTemplate authenticatedRestTemplate;
-
   @Autowired protected RepositoryService repositoryService;
 
   @Autowired LocaleService localeService;
@@ -61,10 +55,6 @@ public class CLITestBase extends IOTestBase {
   @Autowired TMImportService tmImportService;
 
   @Autowired TMService tmService;
-
-  @Autowired ResttemplateConfig resttemplateConfig;
-
-  @Autowired RepositoryClient repositoryClient;
 
   @Autowired AssetRepository assetRepository;
 
@@ -74,21 +64,7 @@ public class CLITestBase extends IOTestBase {
 
   @LocalServerPort int port;
 
-  @PostConstruct
-  public void setPort() {
-    logger.debug("Saving port number = {}", port);
-    resttemplateConfig.setPort(port);
-
-    XmlParsingConfiguration.disableXPathLimits();
-  }
-
-  public void resetHost() {
-    resttemplateConfig.setHost("localhost");
-  }
-
-  public void setNonExistentHost() {
-    resttemplateConfig.setHost("nonExistentHostAddress");
-  }
+  @Autowired protected ApiClient apiClient;
 
   public L10nJCommander getL10nJCommander() {
     L10nJCommander l10nJCommander = new L10nJCommander();

@@ -1,13 +1,20 @@
 package com.box.l10n.mojito.cli.command;
 
+import static java.util.Optional.ofNullable;
+
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.DropWsApi;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.Console;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.DropClient;
-import com.box.l10n.mojito.rest.entity.ImportDropConfig;
-import com.box.l10n.mojito.rest.entity.Repository;
+import com.box.l10n.mojito.cli.model.ImportDropConfig;
+import com.box.l10n.mojito.cli.model.ImportXliffBody;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
+import com.google.common.base.Preconditions;
+import jakarta.annotation.PostConstruct;
 import java.nio.file.Path;
 import java.util.List;
 import org.fusesource.jansi.Ansi;
@@ -63,7 +70,7 @@ public class DropXliffImportCommand extends Command {
       required = false,
       description = Param.DROP_IMPORT_STATUS_DESCRIPTION,
       converter = ImportDropConfigStatusConverter.class)
-  ImportDropConfig.Status importStatusParam = null;
+  ImportDropConfig.StatusEnum importStatusParam = null;
 
   @Parameter(
       names = {"--import-by-md5"},
@@ -75,11 +82,18 @@ public class DropXliffImportCommand extends Command {
 
   @Autowired Console console;
 
-  @Autowired DropClient dropClient;
+  @Autowired ApiClient apiClient;
 
-  Repository repository;
+  RepositoryRepository repository;
 
   CommandDirectories commandDirectories;
+
+  DropWsApi dropClient;
+
+  @PostConstruct
+  public void init() {
+    this.dropClient = new DropWsApi(this.apiClient);
+  }
 
   @Override
   public void execute() throws CommandException {
@@ -91,7 +105,11 @@ public class DropXliffImportCommand extends Command {
         .a(repositoryParam)
         .println(2);
 
-    repository = commandHelper.findRepositoryByName(repositoryParam);
+    try {
+      repository = this.commandHelper.findRepositoryByName(repositoryParam);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
 
     commandDirectories = new CommandDirectories(sourceDirectoryParam, targetDirectoryParam);
 
@@ -109,6 +127,20 @@ public class DropXliffImportCommand extends Command {
     }
   }
 
+  private ImportXliffBody getImportXliffBody(String xliffContent) {
+    ImportXliffBody importXliffBody = new ImportXliffBody();
+    importXliffBody.setRepositoryId(Preconditions.checkNotNull(this.repository.getId()));
+    importXliffBody.setTranslationKit(!this.importByMD5);
+    importXliffBody.setImportStatus(
+        ofNullable(this.importStatusParam)
+            .map(
+                importStatusParam ->
+                    ImportXliffBody.ImportStatusEnum.fromValue(importStatusParam.name()))
+            .orElse(null));
+    importXliffBody.setXliffContent(xliffContent);
+    return importXliffBody;
+  }
+
   void importXliff(Path xliffPath) throws CommandException {
 
     consoleWriter
@@ -119,8 +151,13 @@ public class DropXliffImportCommand extends Command {
 
     String xliffContent = commandHelper.getFileContent(xliffPath);
 
-    String importedXliff =
-        dropClient.importXiff(xliffContent, repository.getId(), !importByMD5, importStatusParam);
+    String importedXliff;
+    try {
+      importedXliff =
+          this.dropClient.importXliff(getImportXliffBody(xliffContent)).getXliffContent();
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
 
     Path outputPath =
         commandDirectories.resolveWithTargetDirectoryAndCreateParentDirectories(xliffPath);

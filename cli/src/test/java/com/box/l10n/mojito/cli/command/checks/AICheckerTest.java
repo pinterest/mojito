@@ -11,7 +11,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.box.l10n.mojito.cli.apiclient.AiChecksWsApi;
+import com.box.l10n.mojito.cli.apiclient.AiChecksWsApiProxy;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.command.CommandException;
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
@@ -33,7 +33,7 @@ import reactor.util.retry.Retry;
 
 public class AICheckerTest {
 
-  @Mock AiChecksWsApi aiServiceClient;
+  @Mock AiChecksWsApiProxy aiServiceClient;
 
   List<AssetExtractionDiff> assetExtractionDiffs;
 

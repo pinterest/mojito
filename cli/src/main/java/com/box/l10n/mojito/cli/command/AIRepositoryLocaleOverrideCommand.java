@@ -2,9 +2,11 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.box.l10n.mojito.cli.apiclient.AiPromptWsApi;
+import com.box.l10n.mojito.cli.apiclient.AiPromptWsApiProxy;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.model.AITranslationLocalePromptOverridesRequest;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +24,7 @@ public class AIRepositoryLocaleOverrideCommand extends Command {
 
   static Logger logger = LoggerFactory.getLogger(CreateAIPromptCommand.class);
 
-  @Autowired AiPromptWsApi aiServiceClient;
+  AiPromptWsApiProxy aiServiceClient;
 
   @Parameter(
       names = {"--repository-name", "-r"},
@@ -55,8 +57,14 @@ public class AIRepositoryLocaleOverrideCommand extends Command {
       description = "Delete the AI prompt overrides for the given locales")
   boolean isDelete = false;
 
-  @Override
-  protected void execute() throws CommandException {
+  @Autowired private ApiClient apiClient;
+
+  @PostConstruct
+  public void init() {
+    this.aiServiceClient = new AiPromptWsApiProxy(this.apiClient);
+  }
+
+  private AITranslationLocalePromptOverridesRequest getAiTranslationLocalePromptOverridesRequest() {
     AITranslationLocalePromptOverridesRequest aiTranslationLocalePromptOverridesRequest =
         new AITranslationLocalePromptOverridesRequest();
     aiTranslationLocalePromptOverridesRequest.setRepositoryName(repository);
@@ -64,6 +72,13 @@ public class AIRepositoryLocaleOverrideCommand extends Command {
         StringUtils.commaDelimitedListToSet(locales).stream().toList());
     aiTranslationLocalePromptOverridesRequest.setAiPromptId(aiPromptId);
     aiTranslationLocalePromptOverridesRequest.setDisabled(disabled);
+    return aiTranslationLocalePromptOverridesRequest;
+  }
+
+  @Override
+  protected void execute() throws CommandException {
+    AITranslationLocalePromptOverridesRequest aiTranslationLocalePromptOverridesRequest =
+        getAiTranslationLocalePromptOverridesRequest();
     try {
       if (isDelete) {
         aiServiceClient.deleteRepositoryLocalePromptOverrides(

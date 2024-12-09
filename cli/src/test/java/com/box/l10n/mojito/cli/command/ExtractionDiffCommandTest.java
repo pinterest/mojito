@@ -7,6 +7,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.box.l10n.mojito.cli.CLITestBase;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.command.utils.SlackNotificationSender;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
@@ -35,9 +36,11 @@ public class ExtractionDiffCommandTest extends CLITestBase {
 
   @Autowired TextUnitSearcher textUnitSearcher;
 
+  @Autowired ApiClient apiClient;
+
   @Before
   public void init() {
-    resetHost();
+    this.apiClient.setBasePath("http://localhost:8080");
   }
 
   @Test
@@ -324,7 +327,7 @@ public class ExtractionDiffCommandTest extends CLITestBase {
             "-fo",
             "sometestoption=value1");
 
-    setNonExistentHost();
+    this.apiClient.setBasePath("http://nonExistentHostAddress:8080");
 
     L10nJCommander l10nJCommander = getL10nJCommander();
     l10nJCommander.run(

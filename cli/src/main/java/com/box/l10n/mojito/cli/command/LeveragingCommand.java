@@ -1,17 +1,22 @@
 package com.box.l10n.mojito.cli.command;
 
+import static java.util.Optional.ofNullable;
+
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.AssetWsApiProxy;
+import com.box.l10n.mojito.cli.apiclient.LeveragingWsApi;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.AssetClient;
-import com.box.l10n.mojito.rest.client.LeveragingClient;
-import com.box.l10n.mojito.rest.client.exception.AssetNotFoundException;
-import com.box.l10n.mojito.rest.entity.Asset;
-import com.box.l10n.mojito.rest.entity.CopyTmConfig;
-import com.box.l10n.mojito.rest.entity.PollableTask;
-import com.box.l10n.mojito.rest.entity.Repository;
+import com.box.l10n.mojito.cli.model.AssetAssetSummary;
+import com.box.l10n.mojito.cli.model.CopyTmConfig;
+import com.box.l10n.mojito.cli.model.PollableTask;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
+import jakarta.annotation.PostConstruct;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.fusesource.jansi.Ansi.Color;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,7 +93,7 @@ public class LeveragingCommand extends Command {
               + "MD5 will perform matching based on the ID, content and comment. "
               + "EXACT match is only using the content.",
       converter = CopyTmConfigModeConverter.class)
-  CopyTmConfig.Mode mode = CopyTmConfig.Mode.MD5;
+  CopyTmConfig.ModeEnum mode = CopyTmConfig.ModeEnum.MD5;
 
   @Parameter(
       names = {"--tuids-mapping"},
@@ -102,14 +107,22 @@ public class LeveragingCommand extends Command {
 
   @Autowired CommandHelper commandHelper;
 
-  @Autowired LeveragingClient leveragingClient;
+  LeveragingWsApi leveragingClient;
 
-  @Autowired AssetClient assetClient;
+  @Autowired ApiClient apiClient;
+
+  AssetWsApiProxy assetClient;
+
+  @PostConstruct
+  public void init() {
+    this.assetClient = new AssetWsApiProxy(this.apiClient);
+    this.leveragingClient = new LeveragingWsApi(this.apiClient);
+  }
 
   @Override
   public void execute() throws CommandException {
 
-    if (CopyTmConfig.Mode.TUIDS.equals(mode)) {
+    if (CopyTmConfig.ModeEnum.TUIDS.equals(mode)) {
       copyTranslationBetweenTextUnits();
     } else {
       copyTmBetweenRepositories();
@@ -135,42 +148,57 @@ public class LeveragingCommand extends Command {
         .a(targetRepositoryParam)
         .println(2);
 
-    Repository sourceRepository = commandHelper.findRepositoryByName(sourceRepositoryParam);
-    Repository targetRepository = commandHelper.findRepositoryByName(targetRepositoryParam);
-
+    RepositoryRepository sourceRepository;
+    RepositoryRepository targetRepository;
     try {
-      CopyTmConfig copyTmConfig = new CopyTmConfig();
-      copyTmConfig.setSourceRepositoryId(sourceRepository.getId());
-      copyTmConfig.setTargetRepositoryId(targetRepository.getId());
-      copyTmConfig.setNameRegex(nameRegexParam);
-      copyTmConfig.setTargetBranchName(targetBranchNameParam);
+      sourceRepository = commandHelper.findRepositoryByName(sourceRepositoryParam);
+      targetRepository = commandHelper.findRepositoryByName(targetRepositoryParam);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
 
-      if (mode != null) {
-        copyTmConfig.setMode(mode);
-      }
+    CopyTmConfig copyTmConfig = new CopyTmConfig();
+    copyTmConfig.setSourceRepositoryId(sourceRepository.getId());
+    copyTmConfig.setTargetRepositoryId(targetRepository.getId());
+    copyTmConfig.setNameRegex(nameRegexParam);
+    copyTmConfig.setTargetBranchName(targetBranchNameParam);
 
-      if (targetAssetPathParam != null) {
-        Asset asset =
+    if (mode != null) {
+      copyTmConfig.setMode(mode);
+    }
+
+    if (targetAssetPathParam != null) {
+      AssetAssetSummary asset;
+      try {
+        asset =
             assetClient.getAssetByPathAndRepositoryId(
                 targetAssetPathParam, targetRepository.getId());
-        copyTmConfig.setTargetAssetId(asset.getId());
+      } catch (ApiException e) {
+        throw new CommandException(e.getMessage(), e);
       }
+      copyTmConfig.setTargetAssetId(asset.getId());
+    }
 
-      if (sourceAssetPathParam != null) {
-        Asset asset =
+    if (sourceAssetPathParam != null) {
+      AssetAssetSummary asset;
+      try {
+        asset =
             assetClient.getAssetByPathAndRepositoryId(
                 sourceAssetPathParam, sourceRepository.getId());
-        copyTmConfig.setSourceAssetId(asset.getId());
+      } catch (ApiException e) {
+        throw new CommandException(e.getMessage(), e);
       }
-
-      copyTmConfig = leveragingClient.copyTM(copyTmConfig);
-
-      PollableTask pollableTask = copyTmConfig.getPollableTask();
-      commandHelper.waitForPollableTask(pollableTask.getId());
-
-    } catch (AssetNotFoundException assetNotFoundException) {
-      throw new CommandException(assetNotFoundException);
+      copyTmConfig.setSourceAssetId(asset.getId());
     }
+
+    try {
+      copyTmConfig = leveragingClient.copyTM(copyTmConfig);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
+
+    PollableTask pollableTask = copyTmConfig.getPollableTask();
+    commandHelper.waitForPollableTask(pollableTask.getId());
   }
 
   void copyTranslationBetweenTextUnits() throws CommandException {
@@ -189,10 +217,22 @@ public class LeveragingCommand extends Command {
 
     CopyTmConfig copyTmConfig = new CopyTmConfig();
     copyTmConfig.setNameRegex(nameRegexParam);
-    copyTmConfig.setMode(CopyTmConfig.Mode.TUIDS);
-    copyTmConfig.setSourceToTargetTmTextUnitIds(sourceToTargetTmTextUnitMapping);
+    copyTmConfig.setMode(CopyTmConfig.ModeEnum.TUIDS);
+    copyTmConfig.setSourceToTargetTmTextUnitIds(
+        ofNullable(sourceToTargetTmTextUnitMapping)
+            .map(
+                sourceToTargetTmTextUnitMapping ->
+                    sourceToTargetTmTextUnitMapping.entrySet().stream()
+                        .collect(
+                            Collectors.toMap(
+                                entry -> String.valueOf(entry.getKey()), Map.Entry::getValue)))
+            .orElse(null));
 
-    copyTmConfig = leveragingClient.copyTM(copyTmConfig);
+    try {
+      copyTmConfig = leveragingClient.copyTM(copyTmConfig);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
 
     PollableTask pollableTask = copyTmConfig.getPollableTask();
     commandHelper.waitForPollableTask(pollableTask.getId());

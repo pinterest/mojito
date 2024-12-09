@@ -1,5 +1,7 @@
 package com.box.l10n.mojito.cli.apiclient;
 
+import com.box.l10n.mojito.cli.console.ConsoleWriter;
+import com.box.l10n.mojito.cli.credentialprovider.CredentialProvider;
 import com.squareup.okhttp.FormEncodingBuilder;
 import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.Interceptor;
@@ -11,6 +13,7 @@ import com.squareup.okhttp.ResponseBody;
 import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
+import java.net.CookiePolicy;
 import java.net.CookieStore;
 import java.net.HttpCookie;
 import java.util.Optional;
@@ -37,9 +40,23 @@ public class AuthenticatedApiInterceptor implements Interceptor {
 
   private final String basePath;
 
-  public AuthenticatedApiInterceptor(CookieManager cookieManager, String basePath) {
-    this.cookieManager = cookieManager;
+  private final CredentialProvider credentialProvider;
+
+  private ConsoleWriter consoleWriter;
+
+  public AuthenticatedApiInterceptor(
+      String basePath, CredentialProvider credentialProvider, ConsoleWriter consoleWriter) {
+    this.cookieManager = getCookieManager();
     this.basePath = basePath;
+    this.credentialProvider = credentialProvider;
+    this.consoleWriter = consoleWriter;
+  }
+
+  private CookieManager getCookieManager() {
+    CookieManager cookieManager = new CookieManager();
+    cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ORIGINAL_SERVER);
+    CookieHandler.setDefault(cookieManager);
+    return cookieManager;
   }
 
   private Optional<HttpCookie> getCookie() {
@@ -71,8 +88,15 @@ public class AuthenticatedApiInterceptor implements Interceptor {
     httpClient.setCookieHandler(CookieHandler.getDefault());
     Request request = new Request.Builder().url(url).build();
     this.latestCsrfToken = this.getCsrfToken(httpClient, request);
+    consoleWriter
+        .newLine()
+        .a(credentialProvider.getUsername() + " : " + credentialProvider.getPassword())
+        .println();
     RequestBody requestBody =
-        new FormEncodingBuilder().add("username", "admin").add("password", "ChangeMe").build();
+        new FormEncodingBuilder()
+            .add("username", credentialProvider.getUsername())
+            .add("password", credentialProvider.getPassword())
+            .build();
     request =
         new Request.Builder()
             .url(url)

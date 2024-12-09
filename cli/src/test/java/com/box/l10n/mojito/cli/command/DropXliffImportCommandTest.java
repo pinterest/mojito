@@ -5,11 +5,13 @@ import static com.box.l10n.mojito.service.drop.exporter.DropExporterDirectories.
 import com.box.l10n.mojito.boxsdk.BoxSDKService;
 import com.box.l10n.mojito.boxsdk.BoxSDKServiceException;
 import com.box.l10n.mojito.cli.CLITestBase;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.AssetWsApiProxy;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
+import com.box.l10n.mojito.cli.model.AssetAssetSummary;
 import com.box.l10n.mojito.entity.Drop;
 import com.box.l10n.mojito.entity.Repository;
-import com.box.l10n.mojito.rest.client.AssetClient;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
-import com.box.l10n.mojito.rest.entity.Asset;
 import com.box.l10n.mojito.service.drop.DropRepository;
 import com.box.l10n.mojito.service.drop.DropService;
 import com.box.l10n.mojito.service.drop.exporter.DropExporterException;
@@ -21,6 +23,7 @@ import com.box.l10n.mojito.service.tm.TMImportService;
 import com.box.l10n.mojito.service.tm.TMTextUnitCurrentVariantRepository;
 import com.box.l10n.mojito.test.XliffUtils;
 import com.google.common.io.Files;
+import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -42,7 +45,7 @@ public class DropXliffImportCommandTest extends CLITestBase {
 
   @Autowired TMImportService tmImport;
 
-  @Autowired AssetClient assetClient;
+  AssetWsApiProxy assetClient;
 
   @Autowired TMTextUnitCurrentVariantRepository textUnitCurrentVariantRepository;
 
@@ -58,7 +61,15 @@ public class DropXliffImportCommandTest extends CLITestBase {
 
   @Autowired DropImportCommand dropImportCommand;
 
-  @Autowired RepositoryClient repositoryClient;
+  @Autowired ApiClient apiClient;
+
+  RepositoryWsApiProxy repositoryClient;
+
+  @PostConstruct
+  public void init() {
+    this.assetClient = new AssetWsApiProxy(this.apiClient);
+    this.repositoryClient = new RepositoryWsApiProxy(this.apiClient);
+  }
 
   @Test
   public void dropXliffImport() throws Exception {
@@ -73,12 +84,12 @@ public class DropXliffImportCommandTest extends CLITestBase {
             "-s",
             getInputResourcesTestDir("source").getAbsolutePath());
 
-    Asset asset =
+    AssetAssetSummary asset =
         assetClient.getAssetByPathAndRepositoryId("source-xliff.xliff", repository.getId());
     importTranslations(asset.getId(), "source-xliff_", "fr-FR");
     importTranslations(asset.getId(), "source-xliff_", "ja-JP");
 
-    Asset asset2 =
+    AssetAssetSummary asset2 =
         assetClient.getAssetByPathAndRepositoryId("source2-xliff.xliff", repository.getId());
     importTranslations(asset2.getId(), "source2-xliff_", "fr-FR");
     importTranslations(asset2.getId(), "source2-xliff_", "ja-JP");
@@ -86,9 +97,14 @@ public class DropXliffImportCommandTest extends CLITestBase {
     RepositoryStatusChecker repositoryStatusChecker = new RepositoryStatusChecker();
     waitForCondition(
         "wait for repository stats to show forTranslationCount > 0 before exporting a drop",
-        () ->
-            repositoryStatusChecker.hasStringsForTranslationsForExportableLocales(
-                repositoryClient.getRepositoryById(repository.getId())));
+        () -> {
+          try {
+            return repositoryStatusChecker.hasStringsForTranslationsForExportableLocales(
+                this.repositoryClient.getRepositoryById(repository.getId()));
+          } catch (ApiException e) {
+            throw new CommandException(e.getMessage(), e);
+          }
+        });
 
     getL10nJCommander().run("drop-export", "-r", repository.getName());
 

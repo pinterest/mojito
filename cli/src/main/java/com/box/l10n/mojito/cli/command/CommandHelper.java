@@ -3,24 +3,26 @@ package com.box.l10n.mojito.cli.command;
 import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_CREATED_BEFORE_OPTIONS_AND_EXAMPLE;
 
 import com.box.l10n.mojito.JSR310Migration;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.PollableTaskWsApiProxy;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
+import com.box.l10n.mojito.cli.apiclient.exceptions.PollableTaskException;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.filefinder.FileFinder;
 import com.box.l10n.mojito.cli.filefinder.FileFinderException;
 import com.box.l10n.mojito.cli.filefinder.FileMatch;
 import com.box.l10n.mojito.cli.filefinder.file.FileType;
 import com.box.l10n.mojito.cli.filefinder.file.XcodeXliffFileType;
-import com.box.l10n.mojito.rest.client.PollableTaskClient;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
-import com.box.l10n.mojito.rest.client.exception.PollableTaskException;
-import com.box.l10n.mojito.rest.client.exception.RestClientException;
-import com.box.l10n.mojito.rest.entity.Locale;
-import com.box.l10n.mojito.rest.entity.PollableTask;
-import com.box.l10n.mojito.rest.entity.Repository;
-import com.box.l10n.mojito.rest.entity.RepositoryLocale;
+import com.box.l10n.mojito.cli.model.LocaleRepository;
+import com.box.l10n.mojito.cli.model.PollableTask;
+import com.box.l10n.mojito.cli.model.RepositoryLocaleRepository;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
+import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -71,11 +73,13 @@ public class CommandHelper {
     ByteOrderMark.UTF_8, ByteOrderMark.UTF_16BE, ByteOrderMark.UTF_16LE
   };
 
-  @Autowired RepositoryClient repositoryClient;
+  @Autowired ApiClient apiClient;
 
-  @Autowired PollableTaskClient pollableTaskClient;
+  @Autowired PollableTaskWsApiProxy pollableTaskClient;
 
   @Autowired ConsoleWriter consoleWriter;
+
+  private RepositoryWsApiProxy repositoryClient;
 
   static {
     TIMEFRAME_FUNCTIONS = new HashMap<>();
@@ -85,18 +89,19 @@ public class CommandHelper {
     TIMEFRAME_FUNCTIONS.put(TimeframeType.YEARS, Period::ofYears);
   }
 
+  @PostConstruct
+  public void init() {
+    this.repositoryClient = new RepositoryWsApiProxy(this.apiClient);
+  }
+
   /**
    * @param repositoryName Name of repository
    * @return
    */
-  public Repository findRepositoryByName(String repositoryName) throws CommandException {
-
-    try {
-      Preconditions.checkNotNull(repositoryName, "Repository name can't be null");
-      return repositoryClient.getRepositoryByName(repositoryName);
-    } catch (RestClientException e) {
-      throw new CommandException("Repository [" + repositoryName + "] is not found", e);
-    }
+  public RepositoryRepository findRepositoryByName(String repositoryName)
+      throws CommandException, ApiException {
+    Preconditions.checkNotNull(repositoryName, "Repository name can't be null");
+    return repositoryClient.getRepositoryByName(repositoryName);
   }
 
   /**
@@ -104,7 +109,7 @@ public class CommandHelper {
    *
    * @return
    */
-  public List<Repository> getAllRepositories() {
+  public List<RepositoryRepository> getAllRepositories() throws ApiException {
     return repositoryClient.getRepositories(null);
   }
 
@@ -290,7 +295,7 @@ public class CommandHelper {
    * Waits for {@link PollableTask} to be all finished (see {@link PollableTask#isAllFinished() }).
    * Infinite timeout.
    *
-   * @param pollableId the {@link PollableTask#id}
+   * @param pollableId the {@link PollableTask#getId()}
    * @throws com.box.l10n.mojito.cli.command.CommandException
    */
   public void waitForPollableTask(Long pollableId) throws CommandException {
@@ -305,7 +310,7 @@ public class CommandHelper {
 
     try {
       pollableTaskClient.waitForPollableTask(
-          pollableId, PollableTaskClient.NO_TIMEOUT, new CommandWaitForPollableTaskListener());
+          pollableId, PollableTaskWsApiProxy.NO_TIMEOUT, new CommandWaitForPollableTaskListener());
     } catch (PollableTaskException e) {
       throw new CommandException(e.getMessage(), e.getCause());
     }
@@ -314,7 +319,7 @@ public class CommandHelper {
   public void waitForPollableTaskSilencedOutput(Long pollableId) throws CommandException {
 
     try {
-      pollableTaskClient.waitForPollableTask(pollableId, PollableTaskClient.NO_TIMEOUT, null);
+      pollableTaskClient.waitForPollableTask(pollableId, PollableTaskWsApiProxy.NO_TIMEOUT, null);
     } catch (PollableTaskException e) {
       throw new CommandException(e.getMessage(), e.getCause());
     }
@@ -326,14 +331,15 @@ public class CommandHelper {
    * @param repository
    * @return
    */
-  public Map<String, Locale> getSortedRepositoryLocales(Repository repository) {
+  public Map<String, LocaleRepository> getSortedRepositoryLocales(RepositoryRepository repository) {
 
-    LinkedHashMap<String, Locale> locales = new LinkedHashMap<>();
+    LinkedHashMap<String, LocaleRepository> locales = new LinkedHashMap<>();
 
-    ArrayDeque<RepositoryLocale> toProcess = new ArrayDeque<>(repository.getRepositoryLocales());
-    Locale rootLocale = null;
+    ArrayDeque<RepositoryLocaleRepository> toProcess =
+        new ArrayDeque<>(repository.getRepositoryLocales());
+    LocaleRepository rootLocale = null;
 
-    for (RepositoryLocale rl : toProcess) {
+    for (RepositoryLocaleRepository rl : toProcess) {
       if (rl.getParentLocale() == null) {
         rootLocale = rl.getLocale();
         toProcess.remove(rl);
@@ -344,7 +350,7 @@ public class CommandHelper {
     Set<Long> localeIds = new HashSet<>();
 
     while (!toProcess.isEmpty()) {
-      RepositoryLocale rl = toProcess.removeFirst();
+      RepositoryLocaleRepository rl = toProcess.removeFirst();
       Long parentLocaleId = rl.getParentLocale().getLocale().getId();
       if (parentLocaleId.equals(rootLocale.getId()) || localeIds.contains(parentLocaleId)) {
         localeIds.add(rl.getLocale().getId());

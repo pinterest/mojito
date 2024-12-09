@@ -37,6 +37,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>com.box.l10n.mojito</groupId>
             <artifactId>mojito-webapp</artifactId>
             <version>0.111-SNAPSHOT</version>
@@ -46,12 +51,6 @@
         <dependency>
             <groupId>com.box.l10n.mojito</groupId>
             <artifactId>mojito-common</artifactId>
-            <version>0.111-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.box.l10n.mojito</groupId>
-            <artifactId>mojito-restclient</artifactId>
             <version>0.111-SNAPSHOT</version>
         </dependency>
 

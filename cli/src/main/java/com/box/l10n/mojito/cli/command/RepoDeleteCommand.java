@@ -2,10 +2,12 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
-import com.box.l10n.mojito.rest.client.exception.RepositoryNotFoundException;
+import jakarta.annotation.PostConstruct;
 import org.fusesource.jansi.Ansi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,21 +39,28 @@ public class RepoDeleteCommand extends Command {
       description = Param.REPOSITORY_NAME_DESCRIPTION)
   String nameParam;
 
-  @Autowired RepositoryClient repositoryClient;
+  @Autowired private ApiClient apiClient;
+
+  RepositoryWsApiProxy repositoryClient;
+
+  @PostConstruct
+  public void init() {
+    this.repositoryClient = new RepositoryWsApiProxy(this.apiClient);
+  }
 
   @Override
   protected void execute() throws CommandException {
     consoleWriter.a("Delete repository: ").fg(Ansi.Color.CYAN).a(nameParam).println();
 
     try {
-      repositoryClient.deleteRepositoryByName(nameParam);
+      this.repositoryClient.deleteRepositoryByName(nameParam);
       consoleWriter
           .newLine()
           .a("deleted --> repository name: ")
           .fg(Ansi.Color.MAGENTA)
           .a(nameParam)
           .println();
-    } catch (RepositoryNotFoundException ex) {
+    } catch (ApiException ex) {
       throw new CommandException(ex.getMessage(), ex);
     }
   }

@@ -1,9 +1,11 @@
 package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
-import com.box.l10n.mojito.cli.apiclient.QuartzWsApi;
+import com.box.l10n.mojito.cli.apiclient.QuartzWsApiProxy;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
+import jakarta.annotation.PostConstruct;
 import java.util.List;
 import org.fusesource.jansi.Ansi;
 import org.slf4j.Logger;
@@ -24,7 +26,14 @@ public class QuartzJobsViewCommand extends Command {
 
   @Autowired ConsoleWriter consoleWriter;
 
-  @Autowired QuartzWsApi quartzJobsClient;
+  @Autowired ApiClient apiClient;
+
+  QuartzWsApiProxy quartzJobsClient;
+
+  @PostConstruct
+  public void init() {
+    this.quartzJobsClient = new QuartzWsApiProxy(this.apiClient);
+  }
 
   @Override
   public boolean shouldShowInCommandList() {
@@ -36,7 +45,7 @@ public class QuartzJobsViewCommand extends Command {
     consoleWriter.a("Dynamic quartz jobs:").println();
     List<String> allDynamicJobs;
     try {
-      allDynamicJobs = quartzJobsClient.getAllDynamicJobs();
+      allDynamicJobs = this.quartzJobsClient.getAllDynamicJobs();
     } catch (ApiException e) {
       throw new CommandException(e.getMessage(), e);
     }

@@ -2,21 +2,23 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.AssetWsApiProxy;
+import com.box.l10n.mojito.cli.apiclient.PollableTaskWsApiProxy;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
+import com.box.l10n.mojito.cli.model.LocaleRepository;
+import com.box.l10n.mojito.cli.model.LocalizedAssetBody;
+import com.box.l10n.mojito.cli.model.RepositoryLocaleRepository;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
+import com.box.l10n.mojito.cli.model.SourceAsset;
 import com.box.l10n.mojito.evolve.Course;
 import com.box.l10n.mojito.evolve.Evolve;
 import com.box.l10n.mojito.io.Files;
-import com.box.l10n.mojito.rest.client.AssetClient;
-import com.box.l10n.mojito.rest.client.PollableTaskClient;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
-import com.box.l10n.mojito.rest.entity.Locale;
-import com.box.l10n.mojito.rest.entity.LocalizedAssetBody;
-import com.box.l10n.mojito.rest.entity.Repository;
-import com.box.l10n.mojito.rest.entity.RepositoryLocale;
-import com.box.l10n.mojito.rest.entity.SourceAsset;
 import com.google.common.base.Preconditions;
 import com.ibm.icu.util.ULocale;
+import jakarta.annotation.PostConstruct;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -79,13 +81,18 @@ public class EvolveCommand extends Command {
   @Autowired(required = false)
   Evolve evolve;
 
-  @Autowired RepositoryClient repositoryClient;
+  @Autowired ApiClient apiClient;
 
-  @Autowired AssetClient assetClient;
-
-  @Autowired PollableTaskClient pollableTaskClient;
+  @Autowired PollableTaskWsApiProxy pollableTaskClient;
 
   @Autowired CommandHelper commandHelper;
+
+  private AssetWsApiProxy assetClient;
+
+  @PostConstruct
+  public void init() {
+    this.assetClient = new AssetWsApiProxy(this.apiClient);
+  }
 
   @Override
   public boolean shouldShowInCommandList() {
@@ -107,7 +114,12 @@ public class EvolveCommand extends Command {
         .a(repositoryParam)
         .println(2);
 
-    Repository repository = commandHelper.findRepositoryByName(repositoryParam);
+    RepositoryRepository repository;
+    try {
+      repository = this.commandHelper.findRepositoryByName(repositoryParam);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
 
     evolve
         .getCourses()
@@ -118,7 +130,7 @@ public class EvolveCommand extends Command {
             });
   }
 
-  void translateCourse(Repository repository, Course course) {
+  void translateCourse(RepositoryRepository repository, Course course) {
 
     consoleWriter
         .a("Get translations for course: ")
@@ -131,7 +143,7 @@ public class EvolveCommand extends Command {
 
     repository.getRepositoryLocales().stream()
         .filter(repositoryLocale -> repositoryLocale.getParentLocale() != null)
-        .map(RepositoryLocale::getLocale)
+        .map(RepositoryLocaleRepository::getLocale)
         .forEach(
             locale -> {
               consoleWriter
@@ -157,7 +169,10 @@ public class EvolveCommand extends Command {
   }
 
   void writeJsonToFile(
-      Repository repository, Course course, Locale locale, String localizedCourse) {
+      RepositoryRepository repository,
+      Course course,
+      LocaleRepository locale,
+      String localizedCourse) {
     Preconditions.checkNotNull(writeJsonTo);
     Path path =
         Paths.get(
@@ -166,31 +181,48 @@ public class EvolveCommand extends Command {
     Files.write(path, localizedCourse);
   }
 
-  SourceAsset sendSource(Repository repository, String courseId, String translationsByCourseId) {
+  SourceAsset sendSource(
+      RepositoryRepository repository, String courseId, String translationsByCourseId) {
     consoleWriter.a("Sending source course to Mojito").println();
     SourceAsset sourceAsset = new SourceAsset();
     sourceAsset.setRepositoryId(repository.getId());
     sourceAsset.setPath(courseId + ".json");
     sourceAsset.setContent(translationsByCourseId);
     sourceAsset.setFilterOptions(FILTER_OPTIONS);
-    sourceAsset = assetClient.sendSourceAsset(sourceAsset);
+    try {
+      sourceAsset = assetClient.importSourceAsset(sourceAsset);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
     pollableTaskClient.waitForPollableTask(sourceAsset.getPollableTask().getId());
     return sourceAsset;
   }
 
-  String getLocalizedCourse(Long assetId, long localeId, String translationsByCourseId) {
+  private static LocalizedAssetBody getLocalizedAssetBody(
+      Long assetId, long localeId, String translationsByCourseId) {
+    LocalizedAssetBody localizedAssetBody = new LocalizedAssetBody();
+    localizedAssetBody.setAssetId(assetId);
+    localizedAssetBody.setLocaleId(localeId);
+    localizedAssetBody.setContent(translationsByCourseId);
+    localizedAssetBody.setOutputBcp47tag(null);
+    localizedAssetBody.setFilterConfigIdOverride(null);
+    localizedAssetBody.setFilterOptions(FILTER_OPTIONS);
+    localizedAssetBody.setStatus(LocalizedAssetBody.StatusEnum.ALL);
+    localizedAssetBody.setInheritanceMode(LocalizedAssetBody.InheritanceModeEnum.USE_PARENT);
+    localizedAssetBody.setPullRunName(null);
+    return localizedAssetBody;
+  }
 
-    LocalizedAssetBody localizedAssetForContent =
-        assetClient.getLocalizedAssetForContent(
-            assetId,
-            localeId,
-            translationsByCourseId,
-            null,
-            null,
-            FILTER_OPTIONS,
-            LocalizedAssetBody.Status.ALL,
-            LocalizedAssetBody.InheritanceMode.USE_PARENT,
-            null);
+  String getLocalizedCourse(Long assetId, long localeId, String translationsByCourseId) {
+    LocalizedAssetBody localizedAssetBody =
+        getLocalizedAssetBody(assetId, localeId, translationsByCourseId);
+    LocalizedAssetBody localizedAssetForContent;
+    try {
+      localizedAssetForContent =
+          assetClient.getLocalizedAssetForContent(localizedAssetBody, assetId, localeId);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
 
     return localizedAssetForContent.getContent();
   }

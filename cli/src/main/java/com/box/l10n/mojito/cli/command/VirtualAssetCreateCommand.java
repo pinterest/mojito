@@ -2,15 +2,16 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
-import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiHelper;
 import com.box.l10n.mojito.cli.apiclient.VirtualAssetWsApi;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.model.RepositoryRepository;
 import com.box.l10n.mojito.cli.model.VirtualAsset;
-import com.box.l10n.mojito.rest.client.HttpClientErrorJson;
+import com.box.l10n.mojito.cli.models.HttpClientErrorJson;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import org.fusesource.jansi.Ansi;
 import org.slf4j.Logger;
@@ -48,9 +49,16 @@ public class VirtualAssetCreateCommand extends Command {
       description = Param.REPOSITORY_DESCRIPTION)
   String pathParam;
 
-  @Autowired VirtualAssetWsApi virtualAssetClient;
+  @Autowired private ApiClient apiClient;
 
-  @Autowired RepositoryWsApiHelper repositoryWsApiHelper;
+  @Autowired CommandHelper commandHelper;
+
+  VirtualAssetWsApi virtualAssetClient;
+
+  @PostConstruct
+  public void init() {
+    this.virtualAssetClient = new VirtualAssetWsApi(this.apiClient);
+  }
 
   private HttpClientErrorJson toHttpClientErrorJson(ApiException ae) {
     try {
@@ -74,8 +82,12 @@ public class VirtualAssetCreateCommand extends Command {
         .a(repositoryParam)
         .println(2);
 
-    RepositoryRepository repository =
-        this.repositoryWsApiHelper.findRepositoryByName(repositoryParam);
+    RepositoryRepository repository;
+    try {
+      repository = this.commandHelper.findRepositoryByName(repositoryParam);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
 
     VirtualAsset virtualAsset = new VirtualAsset();
     virtualAsset.setPath(pathParam);
@@ -84,7 +96,7 @@ public class VirtualAssetCreateCommand extends Command {
 
     try {
       consoleWriter.a(" - Create virtual asset: ").fg(Ansi.Color.CYAN).a(pathParam).println();
-      virtualAsset = virtualAssetClient.createOrUpdateVirtualAsset(virtualAsset);
+      virtualAsset = this.virtualAssetClient.createOrUpdateVirtualAsset(virtualAsset);
       consoleWriter.a(" --> asset id: ").fg(Ansi.Color.MAGENTA).a(virtualAsset.getId()).println();
       consoleWriter.fg(Ansi.Color.GREEN).newLine().a("Finished").println(2);
     } catch (ApiException ae) {

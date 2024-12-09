@@ -16,14 +16,15 @@ import static java.util.Optional.ofNullable;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
-import com.box.l10n.mojito.cli.apiclient.RepositoryWsApi;
-import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiHelper;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.model.BranchBranchSummary;
 import com.box.l10n.mojito.cli.model.PollableTask;
 import com.box.l10n.mojito.cli.model.RepositoryRepository;
+import jakarta.annotation.PostConstruct;
 import java.time.ZonedDateTime;
 import java.util.List;
 import org.fusesource.jansi.Ansi;
@@ -43,10 +44,6 @@ public class BranchDeleteCommand extends Command {
   static Logger logger = LoggerFactory.getLogger(BranchDeleteCommand.class);
 
   @Autowired ConsoleWriter consoleWriter;
-
-  @Autowired RepositoryWsApi repositoryClient;
-
-  @Autowired RepositoryWsApiHelper repositoryWsApiHelper;
 
   @Autowired CommandHelper commandHelper;
 
@@ -93,6 +90,15 @@ public class BranchDeleteCommand extends Command {
       description = BRANCH_CREATED_BEFORE_DESCRIPTION)
   String createdBefore = null;
 
+  @Autowired private ApiClient apiClient;
+
+  private RepositoryWsApiProxy repositoryClient;
+
+  @PostConstruct
+  public void init() {
+    this.repositoryClient = new RepositoryWsApiProxy(this.apiClient);
+  }
+
   @Override
   public void execute() throws CommandException {
     consoleWriter
@@ -101,8 +107,12 @@ public class BranchDeleteCommand extends Command {
         .fg(Ansi.Color.CYAN)
         .a(repositoryParam)
         .println();
-    RepositoryRepository repository =
-        this.repositoryWsApiHelper.findRepositoryByName(this.repositoryParam);
+    RepositoryRepository repository;
+    try {
+      repository = this.commandHelper.findRepositoryByName(this.repositoryParam);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
 
     ZonedDateTime createdBeforeDateTime =
         this.commandHelper.getLastWeekDateIfTrue(this.beforeLastWeek);
@@ -118,7 +128,7 @@ public class BranchDeleteCommand extends Command {
     }
 
     List<BranchBranchSummary> branches =
-        this.repositoryWsApiHelper.getBranchesOfRepository(
+        repositoryClient.getBranchesOfRepository(
             repository.getId(),
             branchName,
             branchNameRegex,

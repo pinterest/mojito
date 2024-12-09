@@ -2,10 +2,17 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.UserWsApiProxy;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.Console;
+import com.box.l10n.mojito.cli.console.ConsoleWriter;
+import com.box.l10n.mojito.cli.model.Authority;
 import com.box.l10n.mojito.cli.model.User;
+import com.box.l10n.mojito.cli.models.Role;
+import java.util.List;
+import javax.annotation.PostConstruct;
 import org.fusesource.jansi.Ansi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +31,7 @@ import org.springframework.stereotype.Component;
 @Parameters(
     commandNames = {"user-create"},
     commandDescription = "Creates a user")
-public class UserCreateCommand extends UserCommand {
+public class UserCreateCommand extends Command {
 
   /** logger */
   static Logger logger = LoggerFactory.getLogger(UserCreateCommand.class);
@@ -66,6 +73,17 @@ public class UserCreateCommand extends UserCommand {
 
   @Autowired Console console;
 
+  @Autowired ConsoleWriter consoleWriter;
+
+  @Autowired ApiClient apiClient;
+
+  private UserWsApiProxy userClient;
+
+  @PostConstruct
+  protected void init() {
+    this.userClient = new UserWsApiProxy(this.apiClient);
+  }
+
   @Override
   protected void execute() throws CommandException {
     consoleWriter.a("Create user: ").fg(Ansi.Color.CYAN).a(username).println();
@@ -80,8 +98,13 @@ public class UserCreateCommand extends UserCommand {
       userBody.setSurname(surname);
       userBody.setGivenName(givenName);
       userBody.setCommonName(commonName);
-      this.addAuthorities(userBody, this.rolename);
 
+      Role role = Role.fromString(this.rolename);
+      if (role != null) {
+        Authority authority = new Authority();
+        authority.setAuthority(role.toString());
+        userBody.setAuthorities(List.of(authority));
+      }
       User user = userClient.createUser(userBody);
       consoleWriter
           .newLine()

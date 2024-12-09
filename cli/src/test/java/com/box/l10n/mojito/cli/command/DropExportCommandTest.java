@@ -3,16 +3,19 @@ package com.box.l10n.mojito.cli.command;
 import static org.junit.Assert.assertEquals;
 
 import com.box.l10n.mojito.cli.CLITestBase;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.AssetWsApiProxy;
+import com.box.l10n.mojito.cli.apiclient.DropWsApi;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
+import com.box.l10n.mojito.cli.model.AssetAssetSummary;
+import com.box.l10n.mojito.cli.model.PageDropDropSummary;
+import com.box.l10n.mojito.cli.model.Pageable;
 import com.box.l10n.mojito.entity.Repository;
-import com.box.l10n.mojito.rest.client.AssetClient;
-import com.box.l10n.mojito.rest.client.DropClient;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
-import com.box.l10n.mojito.rest.entity.Asset;
-import com.box.l10n.mojito.rest.entity.Drop;
-import com.box.l10n.mojito.rest.entity.Page;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.tm.TMImportService;
 import com.google.common.collect.Sets;
+import jakarta.annotation.PostConstruct;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -23,12 +26,22 @@ public class DropExportCommandTest extends CLITestBase {
 
   @Autowired TMImportService tmImport;
 
-  @Autowired AssetClient assetClient;
+  AssetWsApiProxy assetClient;
 
-  @Autowired DropClient dropClient;
   @Autowired RepositoryRepository repositoryRepository;
 
-  @Autowired RepositoryClient repositoryClient;
+  @Autowired ApiClient apiClient;
+
+  DropWsApi dropClient;
+
+  RepositoryWsApiProxy repositoryClient;
+
+  @PostConstruct
+  public void init() {
+    this.assetClient = new AssetWsApiProxy(this.apiClient);
+    this.dropClient = new DropWsApi(this.apiClient);
+    this.repositoryClient = new RepositoryWsApiProxy(this.apiClient);
+  }
 
   @Test
   public void export() throws Exception {
@@ -46,20 +59,27 @@ public class DropExportCommandTest extends CLITestBase {
     RepositoryStatusChecker repositoryStatusChecker = new RepositoryStatusChecker();
     waitForCondition(
         "wait for repository stats to show forTranslationCount > 0 before exporting a drop",
-        () ->
-            repositoryStatusChecker.hasStringsForTranslationsForExportableLocales(
-                repositoryClient.getRepositoryById(repository.getId())));
+        () -> {
+          try {
+            return repositoryStatusChecker.hasStringsForTranslationsForExportableLocales(
+                this.repositoryClient.getRepositoryById(repository.getId()));
+          } catch (ApiException e) {
+            throw new CommandException(e.getMessage(), e);
+          }
+        });
 
-    Page<Drop> findAllBefore = dropClient.getDrops(repository.getId(), null, null, null);
+    PageDropDropSummary findAllBefore =
+        dropClient.getDrops(new Pageable(), repository.getId(), null, null);
 
     getL10nJCommander().run("drop-export", "-r", repository.getName());
 
-    Page<Drop> findAllAfter = dropClient.getDrops(repository.getId(), null, null, null);
+    PageDropDropSummary findAllAfter =
+        dropClient.getDrops(new Pageable(), repository.getId(), null, null);
 
     assertEquals(
         "A Drop must have been added",
         findAllBefore.getTotalElements() + 1,
-        findAllAfter.getTotalElements());
+        (long) findAllAfter.getTotalElements());
   }
 
   @Test
@@ -75,7 +95,7 @@ public class DropExportCommandTest extends CLITestBase {
             "-s",
             getInputResourcesTestDir("source").getAbsolutePath());
 
-    Asset asset =
+    AssetAssetSummary asset =
         assetClient.getAssetByPathAndRepositoryId("source-xliff.xliff", repository.getId());
     importTranslations(asset.getId(), "source-xliff_", "fr-FR");
     importTranslations(asset.getId(), "source-xliff_", "ja-JP");
@@ -97,11 +117,13 @@ public class DropExportCommandTest extends CLITestBase {
               .orElse(false);
         });
 
-    Page<Drop> findAllBefore = dropClient.getDrops(repository.getId(), null, null, null);
+    PageDropDropSummary findAllBefore =
+        dropClient.getDrops(new Pageable(), repository.getId(), null, null);
 
     getL10nJCommander().run("drop-export", "-r", repository.getName());
 
-    Page<Drop> findAllAfter = dropClient.getDrops(repository.getId(), null, null, null);
+    PageDropDropSummary findAllAfter =
+        dropClient.getDrops(new Pageable(), repository.getId(), null, null);
 
     assertEquals(
         "A Drop should not have been added",
@@ -122,17 +144,18 @@ public class DropExportCommandTest extends CLITestBase {
             "-s",
             getInputResourcesTestDir("source").getAbsolutePath());
 
-    Asset asset =
+    AssetAssetSummary asset =
         assetClient.getAssetByPathAndRepositoryId("source-xliff.xliff", repository.getId());
     importTranslations(asset.getId(), "source-xliff_", "fr-FR");
     importTranslations(asset.getId(), "source-xliff_", "ja-JP");
 
-    Asset asset2 =
+    AssetAssetSummary asset2 =
         assetClient.getAssetByPathAndRepositoryId("source2-xliff.xliff", repository.getId());
     importTranslations(asset2.getId(), "source2-xliff_", "fr-FR");
     importTranslations(asset2.getId(), "source2-xliff_", "ja-JP");
 
-    Page<Drop> findAllBefore = dropClient.getDrops(repository.getId(), null, null, null);
+    PageDropDropSummary findAllBefore =
+        dropClient.getDrops(new Pageable(), repository.getId(), null, null);
 
     getL10nJCommander()
         .run(
@@ -147,11 +170,12 @@ public class DropExportCommandTest extends CLITestBase {
               "--use-inheritance"
             });
 
-    Page<Drop> findAllAfter = dropClient.getDrops(repository.getId(), null, null, null);
+    PageDropDropSummary findAllAfter =
+        dropClient.getDrops(new Pageable(), repository.getId(), null, null);
 
     assertEquals(
         "A Drop must have been added",
         findAllBefore.getTotalElements() + 1,
-        findAllAfter.getTotalElements());
+        (long) findAllAfter.getTotalElements());
   }
 }

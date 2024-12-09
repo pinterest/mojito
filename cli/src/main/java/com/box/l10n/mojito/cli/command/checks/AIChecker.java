@@ -3,7 +3,8 @@ package com.box.l10n.mojito.cli.command.checks;
 import static com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificationSender.QUOTE_MARKER;
 import static java.util.stream.Collectors.toList;
 
-import com.box.l10n.mojito.cli.apiclient.AiChecksWsApi;
+import com.box.l10n.mojito.cli.apiclient.AiChecksWsApiProxy;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.command.CommandException;
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
@@ -16,6 +17,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +41,14 @@ public class AIChecker extends AbstractCliChecker {
       Retry.backoff(RETRY_MAX_ATTEMPTS, Duration.ofSeconds(RETRY_MIN_DURATION_SECONDS))
           .maxBackoff(Duration.ofSeconds(RETRY_MAX_BACKOFF_DURATION_SECONDS));
 
-  @Autowired AiChecksWsApi aiServiceClient;
+  @Autowired ApiClient apiClient;
+
+  AiChecksWsApiProxy aiServiceClient;
+
+  @PostConstruct
+  public void init() {
+    this.aiServiceClient = new AiChecksWsApiProxy(apiClient);
+  }
 
   @Override
   public CliCheckResult run(List<AssetExtractionDiff> assetExtractionDiffs) {
