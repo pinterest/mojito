@@ -13,7 +13,8 @@ import static java.util.Optional.ofNullable;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiHelper;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.RepositoryClient;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.model.BranchBranchSummary;
@@ -37,8 +38,6 @@ public class BranchViewCommand extends Command {
   static Logger logger = LoggerFactory.getLogger(BranchViewCommand.class);
 
   @Autowired ConsoleWriter consoleWriter;
-
-  @Autowired RepositoryWsApiHelper repositoryWsApiHelper;
 
   @Autowired CommandHelper commandHelper;
 
@@ -79,6 +78,8 @@ public class BranchViewCommand extends Command {
       description = BRANCH_CREATED_BEFORE_LAST_WEEK_DESCRIPTION)
   boolean beforeLastWeek;
 
+  @Autowired private ApiClient apiClient;
+
   @Override
   public void execute() throws CommandException {
     consoleWriter
@@ -87,10 +88,11 @@ public class BranchViewCommand extends Command {
         .fg(Ansi.Color.CYAN)
         .a(repositoryParam)
         .println();
-    RepositoryRepository repository = repositoryWsApiHelper.findRepositoryByName(repositoryParam);
+    RepositoryClient repositoryClient = new RepositoryClient(this.apiClient);
+    RepositoryRepository repository = repositoryClient.findRepositoryByName(repositoryParam);
 
     List<BranchBranchSummary> branches =
-        this.repositoryWsApiHelper.getBranchesOfRepository(
+        repositoryClient.getBranchesOfRepository(
             repository.getId(),
             null,
             branchNameRegex,

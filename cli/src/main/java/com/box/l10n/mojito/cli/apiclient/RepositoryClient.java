@@ -7,12 +7,12 @@ import com.google.common.base.Preconditions;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.regex.Pattern;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-@Component
-public class RepositoryWsApiHelper {
-  @Autowired RepositoryWsApi repositoryClient;
+public class RepositoryClient extends RepositoryWsApi {
+
+  public RepositoryClient(ApiClient apiClient) {
+    super(apiClient);
+  }
 
   public List<BranchBranchSummary> getBranchesOfRepository(
       Long repositoryId,
@@ -26,7 +26,7 @@ public class RepositoryWsApiHelper {
     List<BranchBranchSummary> branches;
     try {
       branches =
-          this.repositoryClient.getBranchesOfRepository(
+          this.getBranchesOfRepository(
               repositoryId, branchName, deleted, translated, createdBefore);
     } catch (ApiException e) {
       throw new CommandException(e.getMessage(), e);
@@ -51,7 +51,7 @@ public class RepositoryWsApiHelper {
   public RepositoryRepository findRepositoryByName(String repositoryName) throws CommandException {
     try {
       Preconditions.checkNotNull(repositoryName, "Repository name can't be null");
-      List<RepositoryRepository> repositories = repositoryClient.getRepositories(repositoryName);
+      List<RepositoryRepository> repositories = this.getRepositories(repositoryName);
       if (repositories.size() != 1) {
         throw new CommandException("Repository with name [" + repositoryName + "] is not found");
       }

@@ -2,9 +2,10 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.apiclient.AssetWsApi;
-import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiHelper;
+import com.box.l10n.mojito.cli.apiclient.RepositoryClient;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.model.AssetAssetSummary;
@@ -70,9 +71,7 @@ public class TMExportCommand extends Command {
 
   @Autowired CommandHelper commandHelper;
 
-  @Autowired RepositoryWsApiHelper repositoryWsApiHelper;
-
-  @Autowired AssetWsApi assetClient;
+  @Autowired private ApiClient apiClient;
 
   CommandDirectories commandDirectories;
 
@@ -92,8 +91,9 @@ public class TMExportCommand extends Command {
     targetBasenameParam = MoreObjects.firstNonNull(targetBasenameParam, repositoryParam);
 
     RepositoryRepository repository =
-        this.repositoryWsApiHelper.findRepositoryByName(repositoryParam);
+        new RepositoryClient(this.apiClient).findRepositoryByName(repositoryParam);
 
+    AssetWsApi assetClient = new AssetWsApi(this.apiClient);
     List<AssetAssetSummary> assets;
     try {
       assets = assetClient.getAssets(repository.getId(), null, null, null, null);

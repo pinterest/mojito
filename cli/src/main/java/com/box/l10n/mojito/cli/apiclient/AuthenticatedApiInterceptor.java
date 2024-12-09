@@ -11,6 +11,7 @@ import com.squareup.okhttp.ResponseBody;
 import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
+import java.net.CookiePolicy;
 import java.net.CookieStore;
 import java.net.HttpCookie;
 import java.util.Optional;
@@ -37,9 +38,16 @@ public class AuthenticatedApiInterceptor implements Interceptor {
 
   private final String basePath;
 
-  public AuthenticatedApiInterceptor(CookieManager cookieManager, String basePath) {
-    this.cookieManager = cookieManager;
+  public AuthenticatedApiInterceptor(String basePath) {
+    this.cookieManager = getCookieManager();
     this.basePath = basePath;
+  }
+
+  private CookieManager getCookieManager() {
+    CookieManager cookieManager = new CookieManager();
+    cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ORIGINAL_SERVER);
+    CookieHandler.setDefault(cookieManager);
+    return cookieManager;
   }
 
   private Optional<HttpCookie> getCookie() {

@@ -1,6 +1,7 @@
 package com.box.l10n.mojito.cli;
 
 import com.box.l10n.mojito.Application;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
 import com.box.l10n.mojito.cli.command.L10nJCommander;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
@@ -73,6 +74,8 @@ public class CLITestBase extends IOTestBase {
   @Rule public OutputCaptureRule outputCapture = new OutputCaptureRule();
 
   @LocalServerPort int port;
+
+  @Autowired protected ApiClient apiClient;
 
   @PostConstruct
   public void setPort() {
