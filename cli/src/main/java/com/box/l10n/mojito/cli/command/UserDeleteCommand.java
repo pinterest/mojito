@@ -2,12 +2,11 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.command.param.Param;
-import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.UserClient;
-import com.box.l10n.mojito.rest.client.exception.ResourceNotFoundException;
+import com.box.l10n.mojito.cli.model.User;
+import java.util.List;
 import org.fusesource.jansi.Ansi;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -21,9 +20,7 @@ import org.springframework.stereotype.Component;
 @Parameters(
     commandNames = {"user-delete"},
     commandDescription = "Deletes a user")
-public class UserDeleteCommand extends Command {
-
-  @Autowired ConsoleWriter consoleWriter;
+public class UserDeleteCommand extends UserCommand {
 
   @Parameter(
       names = {Param.USERNAME_LONG, Param.USERNAME_SHORT},
@@ -32,16 +29,15 @@ public class UserDeleteCommand extends Command {
       description = Param.USERNAME_DESCRIPTION)
   String username;
 
-  @Autowired UserClient userClient;
-
   @Override
   protected void execute() throws CommandException {
     consoleWriter.a("Delete user: ").fg(Ansi.Color.CYAN).a(username).println();
 
     try {
-      userClient.deleteUserByUsername(username);
+      List<User> users = this.getPageUser(username).getContent();
+      this.userClient.deleteUserByUserId(users.getFirst().getId());
       consoleWriter.newLine().a("deleted --> user: ").fg(Ansi.Color.MAGENTA).a(username).println();
-    } catch (ResourceNotFoundException ex) {
+    } catch (ApiException ex) {
       throw new CommandException(ex.getMessage(), ex);
     }
   }

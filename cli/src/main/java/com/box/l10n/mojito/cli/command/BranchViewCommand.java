@@ -9,15 +9,17 @@ import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_NULL_BRANCH_SHO
 import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_TRANSLATED_DESCRIPTION;
 import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_TRANSLATED_LONG;
 import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_TRANSLATED_SHORT;
+import static java.util.Optional.ofNullable;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.RepositoryClient;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.AssetClient;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
-import com.box.l10n.mojito.rest.entity.Branch;
-import com.box.l10n.mojito.rest.entity.Repository;
+import com.box.l10n.mojito.cli.model.BranchBranchSummary;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
+import java.time.ZonedDateTime;
 import java.util.List;
 import org.fusesource.jansi.Ansi;
 import org.slf4j.Logger;
@@ -36,10 +38,6 @@ public class BranchViewCommand extends Command {
   static Logger logger = LoggerFactory.getLogger(BranchViewCommand.class);
 
   @Autowired ConsoleWriter consoleWriter;
-
-  @Autowired RepositoryClient repositoryClient;
-
-  @Autowired AssetClient assetClient;
 
   @Autowired CommandHelper commandHelper;
 
@@ -80,6 +78,8 @@ public class BranchViewCommand extends Command {
       description = BRANCH_CREATED_BEFORE_LAST_WEEK_DESCRIPTION)
   boolean beforeLastWeek;
 
+  @Autowired private ApiClient apiClient;
+
   @Override
   public void execute() throws CommandException {
     consoleWriter
@@ -88,19 +88,22 @@ public class BranchViewCommand extends Command {
         .fg(Ansi.Color.CYAN)
         .a(repositoryParam)
         .println();
-    Repository repository = commandHelper.findRepositoryByName(repositoryParam);
+    RepositoryClient repositoryClient = new RepositoryClient(this.apiClient);
+    RepositoryRepository repository = repositoryClient.findRepositoryByName(repositoryParam);
 
-    List<Branch> branches =
-        repositoryClient.getBranches(
+    List<BranchBranchSummary> branches =
+        repositoryClient.getBranchesOfRepository(
             repository.getId(),
             null,
             branchNameRegex,
             deleted,
             translated,
             includeNullBranch,
-            commandHelper.getLastWeekDateIfTrue(beforeLastWeek));
+            ofNullable(commandHelper.getLastWeekDateIfTrue(beforeLastWeek))
+                .map(ZonedDateTime::toOffsetDateTime)
+                .orElse(null));
 
-    for (Branch branch : branches) {
+    for (BranchBranchSummary branch : branches) {
       consoleWriter
           .newLine()
           .a(" - ")
@@ -108,7 +111,7 @@ public class BranchViewCommand extends Command {
           .a(branch.getName())
           .reset()
           .a(" (" + branch.getId() + ") ");
-      if (branch.getDeleted()) {
+      if (branch.isDeleted()) {
         consoleWriter.fg(Ansi.Color.MAGENTA).a(" deleted").reset();
       }
     }

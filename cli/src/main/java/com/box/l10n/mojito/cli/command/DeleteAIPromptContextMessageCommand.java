@@ -2,8 +2,10 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.AiPromptWsApi;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.AIServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +21,6 @@ public class DeleteAIPromptContextMessageCommand extends Command {
 
   static Logger logger = LoggerFactory.getLogger(DeleteAIPromptContextMessageCommand.class);
 
-  @Autowired AIServiceClient aiServiceClient;
-
   @Parameter(
       names = {"--id", "-i"},
       required = true,
@@ -29,6 +29,8 @@ public class DeleteAIPromptContextMessageCommand extends Command {
 
   @Autowired private ConsoleWriter consoleWriter;
 
+  @Autowired private ApiClient apiClient;
+
   @Override
   protected void execute() throws CommandException {
     deletePromptContextMessage();
@@ -36,7 +38,11 @@ public class DeleteAIPromptContextMessageCommand extends Command {
 
   private void deletePromptContextMessage() {
     logger.debug("Received request to create prompt content message");
-    aiServiceClient.deletePromptContextMessage(id);
+    try {
+      new AiPromptWsApi(this.apiClient).deletePromptMessage(id);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
     consoleWriter.newLine().a("Prompt context message deleted").println();
   }
 }

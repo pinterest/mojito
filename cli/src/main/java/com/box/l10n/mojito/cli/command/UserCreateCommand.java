@@ -2,18 +2,16 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.Console;
-import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.UserClient;
-import com.box.l10n.mojito.rest.client.exception.ResourceNotCreatedException;
-import com.box.l10n.mojito.rest.entity.Role;
-import com.box.l10n.mojito.rest.entity.User;
+import com.box.l10n.mojito.cli.model.User;
 import org.fusesource.jansi.Ansi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,14 +24,10 @@ import org.springframework.stereotype.Component;
 @Parameters(
     commandNames = {"user-create"},
     commandDescription = "Creates a user")
-public class UserCreateCommand extends Command {
+public class UserCreateCommand extends UserCommand {
 
   /** logger */
   static Logger logger = LoggerFactory.getLogger(UserCreateCommand.class);
-
-  @Autowired ConsoleWriter consoleWriter;
-
-  @Autowired UserClient userClient;
 
   @Parameter(
       names = {Param.USERNAME_LONG, Param.USERNAME_SHORT},
@@ -80,15 +74,25 @@ public class UserCreateCommand extends Command {
       consoleWriter.a("Enter new password for " + username + ":").println();
       String password = console.readPassword();
 
-      Role role = Role.fromString(rolename);
-      User user = userClient.createUser(username, password, role, surname, givenName, commonName);
+      User userBody = new User();
+      userBody.setUsername(username);
+      userBody.setPassword(password);
+      userBody.setSurname(surname);
+      userBody.setGivenName(givenName);
+      userBody.setCommonName(commonName);
+      this.addAuthorities(userBody, this.rolename);
+
+      User user = userClient.createUser(userBody);
       consoleWriter
           .newLine()
           .a("created --> user: ")
           .fg(Ansi.Color.MAGENTA)
           .a(user.getUsername())
           .println();
-    } catch (ResourceNotCreatedException ex) {
+    } catch (ApiException ex) {
+      if (ex.getCode() == HttpStatus.CONFLICT.value()) {
+        throw new CommandException("User with username [" + username + "] already exists");
+      }
       throw new CommandException(ex.getMessage(), ex);
     }
   }

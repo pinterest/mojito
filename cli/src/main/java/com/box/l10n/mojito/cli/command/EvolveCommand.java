@@ -2,19 +2,20 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.AssetWsApi;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
+import com.box.l10n.mojito.cli.model.LocalizedAssetBody;
+import com.box.l10n.mojito.cli.model.SourceAsset;
 import com.box.l10n.mojito.evolve.Course;
 import com.box.l10n.mojito.evolve.Evolve;
 import com.box.l10n.mojito.io.Files;
-import com.box.l10n.mojito.rest.client.AssetClient;
 import com.box.l10n.mojito.rest.client.PollableTaskClient;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
 import com.box.l10n.mojito.rest.entity.Locale;
-import com.box.l10n.mojito.rest.entity.LocalizedAssetBody;
 import com.box.l10n.mojito.rest.entity.Repository;
 import com.box.l10n.mojito.rest.entity.RepositoryLocale;
-import com.box.l10n.mojito.rest.entity.SourceAsset;
 import com.google.common.base.Preconditions;
 import com.ibm.icu.util.ULocale;
 import java.nio.file.Path;
@@ -79,13 +80,13 @@ public class EvolveCommand extends Command {
   @Autowired(required = false)
   Evolve evolve;
 
-  @Autowired RepositoryClient repositoryClient;
-
-  @Autowired AssetClient assetClient;
+  @Autowired ApiClient apiClient;
 
   @Autowired PollableTaskClient pollableTaskClient;
 
   @Autowired CommandHelper commandHelper;
+
+  private AssetWsApi assetClient;
 
   @Override
   public boolean shouldShowInCommandList() {
@@ -94,6 +95,7 @@ public class EvolveCommand extends Command {
 
   @Override
   public void execute() throws CommandException {
+    this.assetClient = new AssetWsApi(apiClient);
     checkEvolveConfiguration();
 
     consoleWriter
@@ -173,24 +175,33 @@ public class EvolveCommand extends Command {
     sourceAsset.setPath(courseId + ".json");
     sourceAsset.setContent(translationsByCourseId);
     sourceAsset.setFilterOptions(FILTER_OPTIONS);
-    sourceAsset = assetClient.sendSourceAsset(sourceAsset);
+    try {
+      sourceAsset = assetClient.importSourceAsset(sourceAsset);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
     pollableTaskClient.waitForPollableTask(sourceAsset.getPollableTask().getId());
     return sourceAsset;
   }
 
   String getLocalizedCourse(Long assetId, long localeId, String translationsByCourseId) {
-
-    LocalizedAssetBody localizedAssetForContent =
-        assetClient.getLocalizedAssetForContent(
-            assetId,
-            localeId,
-            translationsByCourseId,
-            null,
-            null,
-            FILTER_OPTIONS,
-            LocalizedAssetBody.Status.ALL,
-            LocalizedAssetBody.InheritanceMode.USE_PARENT,
-            null);
+    LocalizedAssetBody localizedAssetBody = new LocalizedAssetBody();
+    localizedAssetBody.setAssetId(assetId);
+    localizedAssetBody.setLocaleId(localeId);
+    localizedAssetBody.setContent(translationsByCourseId);
+    localizedAssetBody.setOutputBcp47tag(null);
+    localizedAssetBody.setFilterConfigIdOverride(null);
+    localizedAssetBody.setFilterOptions(FILTER_OPTIONS);
+    localizedAssetBody.setStatus(LocalizedAssetBody.StatusEnum.ALL);
+    localizedAssetBody.setInheritanceMode(LocalizedAssetBody.InheritanceModeEnum.USE_PARENT);
+    localizedAssetBody.setPullRunName(null);
+    LocalizedAssetBody localizedAssetForContent;
+    try {
+      localizedAssetForContent =
+          assetClient.getLocalizedAssetForContent(localizedAssetBody, assetId, localeId);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
 
     return localizedAssetForContent.getContent();
   }
