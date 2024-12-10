@@ -1,8 +1,10 @@
 package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.QuartzWsApi;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.QuartzJobsClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +23,7 @@ public class QuartzJobsDeleteCommand extends Command {
 
   @Autowired ConsoleWriter consoleWriter;
 
-  @Autowired QuartzJobsClient quartzJobsClient;
+  @Autowired ApiClient apiClient;
 
   @Override
   public boolean shouldShowInCommandList() {
@@ -31,6 +33,10 @@ public class QuartzJobsDeleteCommand extends Command {
   @Override
   protected void execute() throws CommandException {
     consoleWriter.a("Delete quartz jobs").println();
-    quartzJobsClient.deleteAllDynamicJobs();
+    try {
+      new QuartzWsApi(this.apiClient).deleteAllDynamicJobs();
+    } catch (ApiException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

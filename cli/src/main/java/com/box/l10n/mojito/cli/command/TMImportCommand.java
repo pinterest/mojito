@@ -2,15 +2,17 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.RepositoryClient;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApi;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.filefinder.FileMatch;
 import com.box.l10n.mojito.cli.filefinder.file.FileType;
 import com.box.l10n.mojito.cli.filefinder.file.XliffFileType;
-import com.box.l10n.mojito.rest.client.AssetClient;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
-import com.box.l10n.mojito.rest.client.exception.ResourceNotCreatedException;
-import com.box.l10n.mojito.rest.entity.Repository;
+import com.box.l10n.mojito.cli.model.ImportRepositoryBody;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
 import java.nio.file.Path;
 import java.util.Arrays;
 import org.fusesource.jansi.Ansi;
@@ -69,13 +71,11 @@ public class TMImportCommand extends Command {
       description = "Skip the source file import")
   Boolean skipSourceImportParam = false;
 
-  @Autowired AssetClient assetClient;
-
-  @Autowired RepositoryClient repositoryClient;
-
   @Autowired CommandHelper commandHelper;
 
-  Repository repository;
+  @Autowired private ApiClient apiClient;
+
+  RepositoryRepository repository;
 
   CommandDirectories commandDirectories;
 
@@ -89,7 +89,7 @@ public class TMImportCommand extends Command {
         .a(repositoryParam)
         .println(2);
 
-    repository = commandHelper.findRepositoryByName(repositoryParam);
+    repository = new RepositoryClient(this.apiClient).findRepositoryByName(repositoryParam);
     commandDirectories = new CommandDirectories(sourceDirectoryParam);
 
     FileType xliffFileType = new XliffFileType();
@@ -127,8 +127,11 @@ public class TMImportCommand extends Command {
           .a(" Running")
           .println();
 
-      repositoryClient.importRepository(
-          repository.getId(), getFileContent(fileMatch), updateTMParam);
+      ImportRepositoryBody importRepositoryBody = new ImportRepositoryBody();
+      importRepositoryBody.setUpdateTM(updateTMParam);
+      importRepositoryBody.setXliffContent(getFileContent(fileMatch));
+      new RepositoryWsApi(this.apiClient)
+          .importRepository(importRepositoryBody, repository.getId());
 
       consoleWriter.erasePreviouslyPrintedLines();
       consoleWriter
@@ -139,7 +142,7 @@ public class TMImportCommand extends Command {
           .a(" Done")
           .println();
 
-    } catch (ResourceNotCreatedException e) {
+    } catch (ApiException e) {
       throw new CommandException(
           "Error importing ["
               + fileMatch.getPath().toString()

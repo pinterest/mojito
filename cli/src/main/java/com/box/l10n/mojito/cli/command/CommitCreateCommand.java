@@ -1,14 +1,19 @@
 package com.box.l10n.mojito.cli.command;
 
+import static java.util.Optional.ofNullable;
+
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.JSR310Migration;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.CommitWsApi;
+import com.box.l10n.mojito.cli.apiclient.RepositoryClient;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.CommitClient;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
-import com.box.l10n.mojito.rest.entity.Commit;
-import com.box.l10n.mojito.rest.entity.Repository;
+import com.box.l10n.mojito.cli.model.CommitBody;
+import com.box.l10n.mojito.cli.model.CommitCommit;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
 import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -41,10 +46,6 @@ public class CommitCreateCommand extends Command {
   @Autowired ConsoleWriter consoleWriter;
 
   @Autowired CommandHelper commandHelper;
-
-  @Autowired CommitClient commitClient;
-
-  @Autowired RepositoryClient repositoryClient;
 
   @Parameter(
       names = {Param.COMMIT_HASH_LONG, Param.COMMIT_HASH_SHORT},
@@ -86,6 +87,8 @@ public class CommitCreateCommand extends Command {
               + " the first commit from 'git log' is used.")
   boolean readInfoFromGit = false;
 
+  @Autowired private ApiClient apiClient;
+
   @Override
   protected void execute() throws CommandException {
     consoleWriter
@@ -94,8 +97,8 @@ public class CommitCreateCommand extends Command {
         .fg(Ansi.Color.CYAN)
         .a(repositoryParam)
         .println(2);
-
-    Repository repository = commandHelper.findRepositoryByName(repositoryParam);
+    RepositoryRepository repository =
+        new RepositoryClient(this.apiClient).findRepositoryByName(repositoryParam);
 
     final CommitInfo commitInfo;
 
@@ -105,13 +108,22 @@ public class CommitCreateCommand extends Command {
       commitInfo = new CommitInfo(commitHash, authorEmailParam, authorNameParam, creationDateParam);
     }
 
-    Commit commit =
-        commitClient.createCommit(
-            commitInfo.hash,
-            repository.getId(),
-            commitInfo.authorName,
-            commitInfo.authorEmail,
-            commitInfo.creationDate);
+    CommitBody commitBody = new CommitBody();
+    commitBody.setCommitName(commitInfo.hash);
+    commitBody.setRepositoryId(repository.getId());
+    commitBody.setAuthorName(commitInfo.authorName);
+    commitBody.setAuthorEmail(commitInfo.authorEmail);
+    Long creationDateMilliSeconds =
+        ofNullable(commitInfo.creationDate)
+            .map(creationDate -> creationDate.toInstant().getEpochSecond() * 1_000)
+            .orElse(null);
+    commitBody.setSourceCreationDate(creationDateMilliSeconds);
+    CommitCommit commit;
+    try {
+      commit = new CommitWsApi(this.apiClient).createCommit(commitBody);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
 
     consoleWriter
         .fg(Ansi.Color.GREEN)

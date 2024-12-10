@@ -2,8 +2,10 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.box.l10n.mojito.rest.client.AIServiceClient;
-import com.box.l10n.mojito.rest.entity.AITranslationLocalePromptOverridesRequest;
+import com.box.l10n.mojito.cli.apiclient.AiPromptWsApi;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.model.AITranslationLocalePromptOverridesRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +22,6 @@ import org.springframework.util.StringUtils;
 public class AIRepositoryLocaleOverrideCommand extends Command {
 
   static Logger logger = LoggerFactory.getLogger(CreateAIPromptCommand.class);
-
-  @Autowired AIServiceClient aiServiceClient;
 
   @Parameter(
       names = {"--repository-name", "-r"},
@@ -54,18 +54,28 @@ public class AIRepositoryLocaleOverrideCommand extends Command {
       description = "Delete the AI prompt overrides for the given locales")
   boolean isDelete = false;
 
+  @Autowired private ApiClient apiClient;
+
   @Override
   protected void execute() throws CommandException {
     AITranslationLocalePromptOverridesRequest aiTranslationLocalePromptOverridesRequest =
-        new AITranslationLocalePromptOverridesRequest(
-            repository, StringUtils.commaDelimitedListToSet(locales), aiPromptId, disabled);
-
-    if (isDelete) {
-      aiServiceClient.deleteRepositoryLocalePromptOverrides(
-          aiTranslationLocalePromptOverridesRequest);
-    } else {
-      aiServiceClient.createOrUpdateRepositoryLocalePromptOverrides(
-          aiTranslationLocalePromptOverridesRequest);
+        new AITranslationLocalePromptOverridesRequest();
+    aiTranslationLocalePromptOverridesRequest.setRepositoryName(repository);
+    aiTranslationLocalePromptOverridesRequest.setLocales(
+        StringUtils.commaDelimitedListToSet(locales).stream().toList());
+    aiTranslationLocalePromptOverridesRequest.setAiPromptId(aiPromptId);
+    aiTranslationLocalePromptOverridesRequest.setDisabled(disabled);
+    AiPromptWsApi aiServiceClient = new AiPromptWsApi(this.apiClient);
+    try {
+      if (isDelete) {
+        aiServiceClient.deleteRepositoryLocalePromptOverrides(
+            aiTranslationLocalePromptOverridesRequest);
+      } else {
+        aiServiceClient.createOrUpdateRepositoryLocalePromptOverrides(
+            aiTranslationLocalePromptOverridesRequest);
+      }
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
     }
   }
 }
