@@ -28,6 +28,7 @@ export default [
         }],
       'no-trailing-spaces': 'error',
       "prefer-const": ["error"],
+      "eqeqeq": ["error", "always"]
     },
     settings: {
       react: {
