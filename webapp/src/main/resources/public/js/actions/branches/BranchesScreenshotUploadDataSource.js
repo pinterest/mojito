@@ -3,7 +3,7 @@ import ScreenshotClient from "../../sdk/ScreenshotClient";
 import ScreenshotRun from "../../sdk/entity/ScreenshotRun";
 import BranchesScreenshotUploadActions from "./BranchesScreenshotUploadActions";
 import BranchesStore from "../../stores/branches/BranchesStore";
-import Screenshot, {TextUnit, TmTextUnit} from "../../sdk/entity/Screenshot";
+import Screenshot, { TextUnit, TmTextUnit } from "../../sdk/entity/Screenshot";
 import uuidv4 from "uuid/v4";
 import BranchTextUnitsStore from "../../stores/branches/BranchTextUnitsStore";
 

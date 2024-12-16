@@ -18,6 +18,14 @@ export default [
     },
     rules: {
       'react/prop-types': 'off',
+      'object-curly-spacing': ['error', 'always'],
+      'no-unused-vars': ['error', {
+            'vars': 'all',
+            'args': 'after-used',
+            'caughtErrors': 'all',
+            'ignoreRestSiblings': false,
+            'reportUsedIgnorePattern': false
+        }]
     },
     settings: {
       react: {

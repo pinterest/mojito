@@ -83,8 +83,8 @@ const SearchDataSource = {
             let promise;
 
             if (returnEmpty) {
-                promise = new Promise(function (resolve, reject) {
-                    resolve({textUnits: [], hasMore: false});
+                promise = new Promise(function (resolve) {
+                    resolve({ textUnits: [], hasMore: false });
                 });
             } else {
                 promise = TextUnitClient.getTextUnits(textUnitSearcherParameters).then(function (textUnits) {
@@ -96,7 +96,7 @@ const SearchDataSource = {
                         textUnits = textUnits.slice(0, limit - 1);
                     }
 
-                    return {textUnits, hasMore};
+                    return { textUnits, hasMore };
                 });
             }
 

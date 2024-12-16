@@ -5,7 +5,6 @@ import SearchDataSource from "../../actions/workbench/SearchDataSource";
 import SearchParamsStore from "./SearchParamsStore";
 import WorkbenchActions from "../../actions/workbench/WorkbenchActions";
 import RepositoryActions from "../../actions/RepositoryActions";
-import TextUnit from "../../sdk/TextUnit";
 import textUnitStore from "./TextUnitStore";
 
 class SearchResultsStore {
@@ -76,7 +75,6 @@ class SearchResultsStore {
      */
     onSearchResultsReceivedSuccess(response) {
         this.waitFor(SearchParamsStore);
-        let paramsStoreState = SearchParamsStore.getState();
         this.noMoreResults = !response.hasMore;
         this.searchResults = response.textUnits;
         this.isSearching = false;
@@ -144,14 +142,14 @@ class SearchResultsStore {
     /**
      * @param {TextUnit} textUnit response The response sent by the promise when the delete request succeeds
      */
-    onDeleteTextUnitsSuccess(textUnit) {
+    onDeleteTextUnitsSuccess() {
         console.log("SearchResultsStore::onDeleteTextUnitsSuccess");
     }
 
     /**
      * @param {TextUnitError} errorResponse
      */
-    onDeleteTextUnitsError(errorResponse) {
+    onDeleteTextUnitsError() {
         console.log("SearchResultsStore::onDeleteTextUnitsError");
     }
 
@@ -233,7 +231,7 @@ class SearchResultsStore {
         }
     }
    
-    getAllRepositoriesSuccess(repositories) {
+    getAllRepositoriesSuccess() {
         this.onSearchParamsChanged();
     }
 
@@ -250,7 +248,7 @@ class SearchResultsStore {
      */
     static getSelectedTextUnits() {
         let result = [];
-        Object.keys(this.getState().selectedTextUnitsMap).forEach((key, i) => {
+        Object.keys(this.getState().selectedTextUnitsMap).forEach((key) => {
             result.push(this.getState().selectedTextUnitsMap[key]);
         });
 

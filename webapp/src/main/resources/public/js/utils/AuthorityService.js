@@ -10,7 +10,6 @@ class AuthorityService {
         let admin = UserStatics.authorityAdmin();
         let pm = UserStatics.authorityPm();
         let translator = UserStatics.authorityTranslator();
-        let user = UserStatics.authorityUser();
 
         let level=[];
 

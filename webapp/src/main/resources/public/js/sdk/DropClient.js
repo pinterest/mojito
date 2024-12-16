@@ -1,6 +1,5 @@
 import BaseClient from './BaseClient';
 import Drop from './drop/Drop';
-import ExportDropConfig from './drop/ExportDropConfig';
 import PageRequestResults from "./PageRequestResults";
 
 class DropClient extends BaseClient {

@@ -1,5 +1,3 @@
-import _ from "lodash";
-
 /**
  * Used to communicate with textunits WS (search for translated/untranslated strings, create/update new translation)
  *

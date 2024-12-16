@@ -56,7 +56,7 @@ const BranchesDataSource = {
             let promise;
 
             if (returnEmpty) {
-                promise = new Promise(function (resolve, reject) {
+                promise = new Promise(function (resolve) {
                     resolve({
                         "hasNext": false,
                         "size": 10,

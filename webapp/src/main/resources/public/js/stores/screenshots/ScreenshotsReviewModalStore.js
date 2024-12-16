@@ -3,7 +3,7 @@ import ScreenshotsReviewModalActions from "../../actions/screenshots/Screenshots
 import ScreenshotsPageActions from "../../actions/screenshots/ScreenshotsPageActions";
 import ScreenshotDataSource from "../../actions/screenshots/ScreenshotDataSource";
 import ScreenshotsPageStore from "../../stores/screenshots/ScreenshotsPageStore";
-import {StatusCommonTypes} from "../../components/screenshots/StatusCommon";
+import { StatusCommonTypes } from "../../components/screenshots/StatusCommon";
 
 class ScreenshotsReviewModalStore {
 

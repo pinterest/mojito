@@ -140,7 +140,7 @@ class TextUnitStore {
      * @param {ReviewTextUnitsDTO} reviewTextUnitsDTO
      */
     onReviewTextUnits(reviewTextUnitsDTO) {
-        let {textUnits, comment, textUnitAction} = reviewTextUnitsDTO;
+        let { comment, textUnitAction } = reviewTextUnitsDTO;
 
         reviewTextUnitsDTO.textUnits.forEach(textUnit => {
             textUnit.setTargetComment(comment);

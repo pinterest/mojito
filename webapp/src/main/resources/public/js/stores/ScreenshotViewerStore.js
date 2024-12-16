@@ -65,7 +65,7 @@ class ScreenshotViewerStore {
         console.log("ScreenshotViewerStore::onDeleteScreenshotSuccess");
     }
 
-    onDeleteScreenshotFailure({response}) {
+    onDeleteScreenshotFailure({ response }) {
         this.isDeleting = false;
         this.error = true;
         console.log("ScreenshotViewerStore::onDeleteScreenshotFailure", response);

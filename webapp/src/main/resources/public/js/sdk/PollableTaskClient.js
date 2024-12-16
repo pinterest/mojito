@@ -6,7 +6,7 @@ import PollableTask from "./entity/PollableTask";
  * @return {Promise}
  */
 function delay(ms) {
-    return new Promise((resolve, reject) => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 class PollableTaskClient extends BaseClient {

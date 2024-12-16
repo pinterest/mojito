@@ -1,5 +1,4 @@
 import BaseClient from "./BaseClient";
-import User from "./entity/User";
 import UserPage from "./UsersPage";
 
 class UserClient extends BaseClient {

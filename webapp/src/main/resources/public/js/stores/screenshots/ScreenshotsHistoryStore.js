@@ -8,7 +8,7 @@ import ScreenshotsPaginatorActions from "../../actions/screenshots/ScreenshotsPa
 import ScreenshotsPaginatorStore from "../../stores/screenshots/ScreenshotsPaginatorStore";
 import ScreenshotsSearchTextStore from "../../stores/screenshots/ScreenshotsSearchTextStore";
 import SearchParamsStore from "../workbench/SearchParamsStore";
-import {StatusCommonTypes} from "../../components/screenshots/StatusCommon";
+import { StatusCommonTypes } from "../../components/screenshots/StatusCommon";
 
 
 class ScreenshotsHistoryStore {
@@ -100,8 +100,8 @@ class ScreenshotsHistoryStore {
     }
 
     static initStoreFromLocationQuery(query) {
-        let {searchAttribute, searchText, searchType, status, screenshotRunType,
-            currentPageNumber, selectedScreenshotIdx} = query;
+        let { searchAttribute, searchText, searchType, status, screenshotRunType,
+            currentPageNumber, selectedScreenshotIdx } = query;
 
         let selectedRepositoryIds = query["selectedRepositoryIds[]"];
         let bcp47Tags = query["selectedBcp47Tags[]"];

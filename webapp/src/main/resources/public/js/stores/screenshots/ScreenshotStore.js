@@ -13,8 +13,7 @@ class ScreenshotStore {
         this.getInstance().changeStatus(data.status, data.comment, data.idx);
     }
 
-    changeStatusSuccess(data) {
-    }
+    changeStatusSuccess() {}
 
 }
 

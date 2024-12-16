@@ -339,7 +339,7 @@ class SearchParamsStore {
             this.pageOffset = pageOffset;
     }
 
-    getAllRepositoriesSuccess(repositories) {
+    getAllRepositoriesSuccess() {
         if (this.repoNames && this.repoNames.length > 0) {
             this.waitFor(RepositoryStore);
             this.repoIds = [];

@@ -143,7 +143,7 @@ class UserStore {
         this.getInstance().savePassword(userParams);
     }
 
-    onSavePasswordSuccess(updatedUser) {
+    onSavePasswordSuccess() {
         this.onReloadCurrentPage();
     }
 

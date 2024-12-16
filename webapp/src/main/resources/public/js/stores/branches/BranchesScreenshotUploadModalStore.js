@@ -32,7 +32,7 @@ class BranchesScreenshotUploadModalStore {
         this.errorMessage = null;
     }
 
-    openWithBranch(branch) {
+    openWithBranch() {
         this.show = true;
     }
 
@@ -93,7 +93,7 @@ class BranchesScreenshotUploadModalStore {
         this.imageForUpload = imageForUpload;
     }
 
-    isImageExtensionSupported(name) {
+    isImageExtensionSupported() {
         let fileExtension = this.fileToUpload.name.substring(this.fileToUpload.name.lastIndexOf(".")).toLowerCase();
         return this.supportedImageExtensionsSet.has(fileExtension);
     }

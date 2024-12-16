@@ -96,7 +96,7 @@ export default class Drop {
         return this.status;
     }
 
-    setStatus(status) {
+    setStatus() {
         return this.status;
     }
 

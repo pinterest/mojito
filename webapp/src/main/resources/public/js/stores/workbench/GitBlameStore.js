@@ -45,7 +45,7 @@ class GitBlameStore {
         this.loading = false;
     }
 
-    onGetGitBlameInfoError(errorResponse) {
+    onGetGitBlameInfoError() {
         console.log("GitBlameStore::onGetGitBlameInfoError");
         this.loading = false;
     }

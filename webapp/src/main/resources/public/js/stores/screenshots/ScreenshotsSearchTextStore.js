@@ -2,7 +2,7 @@ import alt from "../../alt";
 import ScreenshotsSearchTextActions from "../../actions/screenshots/ScreenshotsSearchTextActions";
 import ScreenshotsPageActions from "../../actions/screenshots/ScreenshotsPageActions";
 import SearchParamsStore from "../../stores/workbench/SearchParamsStore";
-import {StatusCommonTypes} from "../../components/screenshots/StatusCommon";
+import { StatusCommonTypes } from "../../components/screenshots/StatusCommon";
 
 class ScreenshotsSearchTextStore {
 

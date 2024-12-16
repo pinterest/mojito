@@ -101,7 +101,7 @@ class TextUnitClient extends BaseClient {
      * @returns {Promise}
      */
     getGitBlameInfo(textUnit) {
-        return this.get(this.getUrl() + "/gitBlameWithUsages", {"tmTextUnitId": textUnit.getTmTextUnitId()});
+        return this.get(this.getUrl() + "/gitBlameWithUsages", { "tmTextUnitId": textUnit.getTmTextUnitId() });
     }
 
     getTranslationHistory(textUnit) {

@@ -4,12 +4,12 @@ import ScreenshotsLocaleStore from "../../stores/screenshots/ScreenshotsLocaleSt
 import ScreenshotsSearchTextStore from "../../stores/screenshots/ScreenshotsSearchTextStore";
 import ScreenshotsPaginatorStore from "../../stores/screenshots/ScreenshotsPaginatorStore";
 import ScreenshotClient from "../../sdk/ScreenshotClient";
-import {StatusCommonTypes} from "../../components/screenshots/StatusCommon";
+import { StatusCommonTypes } from "../../components/screenshots/StatusCommon";
 import SearchParamsStore from "../../stores/workbench/SearchParamsStore";
 
 const ScreenshotsPageDataSource = {
     performScreenshotSearch: {
-        remote(state) {
+        remote() {
             let screenshotsRepositoryStoreState = ScreenshotsRepositoryStore.getState();
             let screenshotsLocaleStoreState = ScreenshotsLocaleStore.getState();
             let screenshotsSearchTextStoreState = ScreenshotsSearchTextStore.getState();
@@ -22,7 +22,7 @@ const ScreenshotsPageDataSource = {
 
                 promise = new Promise((resolve) => {
                     setTimeout(function () {
-                        resolve({'content': [], 'hasNext': false, 'size': 0});
+                        resolve({ 'content': [], 'hasNext': false, 'size': 0 });
                     }, 0);
                 });
             } else {
@@ -59,7 +59,7 @@ const ScreenshotsPageDataSource = {
                         screenshots = screenshots.slice(0, screenshotsPaginatorStoreState.limit);
                     }
 
-                    return {'content': screenshots, 'hasNext': hasNext, 'size': screenshots.length};
+                    return { 'content': screenshots, 'hasNext': hasNext, 'size': screenshots.length };
                 });
             }
 
