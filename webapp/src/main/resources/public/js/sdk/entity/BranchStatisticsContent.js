@@ -1,4 +1,4 @@
-import Branch from "./Branch"
+import Branch from "./Branch";
 import BranchTextUnitStatistics from "./BranchTextUnitStatistics";
 const totalCountLte = 30000;
 

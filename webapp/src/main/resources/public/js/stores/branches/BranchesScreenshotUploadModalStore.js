@@ -10,7 +10,7 @@ class BranchesScreenshotUploadModalStore {
         this.setDefaultState();
         this.bindActions(BranchesScreenshotUploadActions);
         this.registerAsync(BranchesScreenshotUploadDataSource);
-        this.supportedImageExtensionsSet = new Set([".png", ".gif", ".tiff", ".jpg",".jpeg"])
+        this.supportedImageExtensionsSet = new Set([".png", ".gif", ".tiff", ".jpg",".jpeg"]);
     }
 
     setDefaultState() {
@@ -47,7 +47,7 @@ class BranchesScreenshotUploadModalStore {
             this.uploadInProgress = true;
             this.getInstance().performUploadScreenshotImage(generatedUuid);
         } else {
-            this.errorMessage =  this.fileToUpload.name + " is not in .png, .gif, .tiff, .jpg or .jpeg format."
+            this.errorMessage =  this.fileToUpload.name + " is not in .png, .gif, .tiff, .jpg or .jpeg format.";
         }
     }
 

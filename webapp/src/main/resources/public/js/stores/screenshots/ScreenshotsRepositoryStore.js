@@ -73,7 +73,7 @@ class ScreenshotsRepositoryStore {
                 repository.repositoryLocales.forEach(repositoryLocale => {
 
                     let toFilter = (filterRootLocale && RepositoryLocale.isRootLocale(repositoryLocale)) ||
-                        (filteredByFullyTranslated && repositoryLocale.toBeFullyTranslated)
+                        (filteredByFullyTranslated && repositoryLocale.toBeFullyTranslated);
 
                     if (!toFilter) {
                         bcp47Tags[repositoryLocale.locale.bcp47Tag] = null;

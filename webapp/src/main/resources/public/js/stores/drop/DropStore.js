@@ -1,6 +1,6 @@
 import alt from "../../alt";
 
-import PageRequestResults from "../../sdk/PageRequestResults"
+import PageRequestResults from "../../sdk/PageRequestResults";
 import DropActions from "../../actions/drop/dropActions";
 import DropDataSource from "./DropDataSource";
 

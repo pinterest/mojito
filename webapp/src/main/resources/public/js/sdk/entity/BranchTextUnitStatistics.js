@@ -1,4 +1,4 @@
-import TmTextUnit from "./TmTextUnit"
+import TmTextUnit from "./TmTextUnit";
 
 export default class BranchTextUnitStatistics {
     constructor() {

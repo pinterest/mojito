@@ -83,7 +83,7 @@ export default class PollableTask {
      * @return {PollableTask[]}
      */
     static toPollableTasks(jsons) {
-        let results = null
+        let results = null;
         if (jsons) {
             results = [];
             for (let json of jsons) {

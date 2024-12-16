@@ -63,7 +63,7 @@ class BranchesStore {
 
             for (let j = 0; j < this.branchStatistics[i].branch.screenshots.length; j++) {
                 for (let k = 0; k < this.branchStatistics[i].branch.screenshots[j].textUnits.length; k++) {
-                    let tmTextUnitId = this.branchStatistics[i].branch.screenshots[j].textUnits[k].tmTextUnit.id
+                    let tmTextUnitId = this.branchStatistics[i].branch.screenshots[j].textUnits[k].tmTextUnit.id;
                     textUnitsWithScreenshots.add(tmTextUnitId);
                 }
             }
@@ -83,9 +83,9 @@ class BranchesStore {
     }
 
     onDeleteScreenshotSuccess() {
-        this.branchStatistics.find(branch => branch.id === this.openBranchStatisticId).branch.screenshots = GitBlameScreenshotViewerStore.state.branchStatisticScreenshots
+        this.branchStatistics.find(branch => branch.id === this.openBranchStatisticId).branch.screenshots = GitBlameScreenshotViewerStore.state.branchStatisticScreenshots;
         this.computeTextUnitsWithScreenshotsByBranchStatisticId();
     }
 }
 
-export default alt.createStore(BranchesStore, "BranchesStore")
+export default alt.createStore(BranchesStore, "BranchesStore");

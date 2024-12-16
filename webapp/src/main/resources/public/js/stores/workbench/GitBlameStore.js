@@ -36,7 +36,7 @@ class GitBlameStore {
     }
 
     onDeleteScreenshotSuccess() {
-        this.gitBlameWithUsage.screenshots = GitBlameScreenshotViewerStore.state.branchStatisticScreenshots
+        this.gitBlameWithUsage.screenshots = GitBlameScreenshotViewerStore.state.branchStatisticScreenshots;
     }
 
     onGetGitBlameInfoSuccess(gitBlameWithUsage) {

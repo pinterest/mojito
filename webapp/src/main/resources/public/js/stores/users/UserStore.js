@@ -164,7 +164,7 @@ class UserStore {
     }
 
     getUsersSuccess(users) {
-        this.userPage = UserPage.toUserPage(users)
+        this.userPage = UserPage.toUserPage(users);
         this.isSearching = false;
     }
 

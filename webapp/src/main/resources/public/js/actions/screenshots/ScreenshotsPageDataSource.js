@@ -68,6 +68,6 @@ const ScreenshotsPageDataSource = {
         success: ScreenshotsPageActions.screenshotsSearchResultsReceivedSuccess,
         error: ScreenshotsPageActions.screenshotsSearchResultsReceivedError
     },
-}
+};
 
 export default ScreenshotsPageDataSource;

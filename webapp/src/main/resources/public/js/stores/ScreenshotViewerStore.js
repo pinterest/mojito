@@ -50,24 +50,24 @@ class ScreenshotViewerStore {
     delete() {
         this.isDeleting = true;
         this.error = false;
-        this.getInstance().delete()
+        this.getInstance().delete();
     }
 
     onDeleteScreenshotSuccess() {
-        this.branchStatisticScreenshots.splice(this.number - 1, 1)
+        this.branchStatisticScreenshots.splice(this.number - 1, 1);
 
         if (this.branchStatisticScreenshots.length) {
-            this.loadScreenshot(1)
+            this.loadScreenshot(1);
         } else {
-            this.closeScreenshotsViewer()
+            this.closeScreenshotsViewer();
         }
-        this.isDeleting = false
+        this.isDeleting = false;
         console.log("ScreenshotViewerStore::onDeleteScreenshotSuccess");
     }
 
     onDeleteScreenshotFailure({response}) {
-        this.isDeleting = false
-        this.error = true
+        this.isDeleting = false;
+        this.error = true;
         console.log("ScreenshotViewerStore::onDeleteScreenshotFailure", response);
     }
 }

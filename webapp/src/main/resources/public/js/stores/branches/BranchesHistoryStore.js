@@ -46,11 +46,11 @@ class BranchesHistoryStore {
     }
 
     changeCreatedBefore(createdBefore) {
-        this.createdBefore = createdBefore
+        this.createdBefore = createdBefore;
     }
 
     changeCreatedAfter(createdAfter) {
-        this.createdAfter = createdAfter
+        this.createdAfter = createdAfter;
     }
 
     changeSearchText(searchText) {
@@ -129,10 +129,10 @@ class BranchesHistoryStore {
         BranchesSearchParamsActions.changeNotEmpty(notEmpty === "true");
         BranchesSearchParamsActions.changeOnlyMyBranches(onlyMyBranches === "true");
         if (createdBefore !== null) {
-            BranchesSearchParamsActions.changeCreatedBefore(createdBefore)
+            BranchesSearchParamsActions.changeCreatedBefore(createdBefore);
         }
         if (createdAfter !== null) {
-            BranchesSearchParamsActions.changeCreatedAfter(createdAfter)
+            BranchesSearchParamsActions.changeCreatedAfter(createdAfter);
         }
 
         if (openBranchStatistic) {

@@ -22,13 +22,13 @@ export default class RepositoryLocaleStatistic {
         this.reviewNeededCount = 0;
 
         /** @type {Number} */
-        this.reviewNeededWordCount = 0
+        this.reviewNeededWordCount = 0;
         
         /** @type {Number} */
         this.forTranslationCount = 0;
 
         /** @type {Number} */
-        this.forTranslationWordCount = 0
+        this.forTranslationWordCount = 0;
 
         /** @type {Number} */
         this.includeInFileCount = 0;
