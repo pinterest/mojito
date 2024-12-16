@@ -96,8 +96,9 @@ class BranchesHistoryStore {
     }
 
     static initStoreFromLocationQuery(query) {
+        let { searchText } = query;
         const {
-            openBranchStatistic, currentPageNumber = 1, searchText,
+            openBranchStatistic, currentPageNumber = 1,
             deleted = "false", undeleted = "true", empty = "true", notEmpty = "true", onlyMyBranches = "true",
             createdBefore = null, createdAfter = null
         } = query;
