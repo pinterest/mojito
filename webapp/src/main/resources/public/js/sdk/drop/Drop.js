@@ -218,7 +218,7 @@ export default class Drop {
         result.id = json.id;
 
         // @NOTE dropExporterConfig can be null.  This is because before Drops are done processing but after it was first
-        // created, this property is null. 
+        // created, this property is null.
         if (json.dropExporterConfig) {
             result.dropExporterConfig = DropExporterConfig.toDropExporterConfig(json.dropExporterConfig);
         }

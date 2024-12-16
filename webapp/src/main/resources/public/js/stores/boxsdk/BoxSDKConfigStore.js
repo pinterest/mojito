@@ -13,7 +13,7 @@ class BoxSDKConfigStore {
 
         /** @type {PollableTaskFuture} */
         this.boxSDKConfigPollableTaskFuture = null;
-        
+
         /** @Type {Boolean} */
         this.isBeingProcessed = false;
 
@@ -36,7 +36,7 @@ class BoxSDKConfigStore {
     }
 
     onGetConfigError() {
-        
+
     }
 
     /**

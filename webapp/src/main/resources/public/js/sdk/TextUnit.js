@@ -86,7 +86,7 @@ class TextUnit {
     setName(name) {
         this.data.name = name;
     }
-    
+
     getAssetPath() {
         return this.data.assetPath;
     }
@@ -229,7 +229,7 @@ class TextUnit {
     setPluralForm(pluralForm) {
         this.data.pluralForm = pluralForm;
     }
-    
+
     getPluralFormOther() {
         return this.data.pluralFormOther;
     }

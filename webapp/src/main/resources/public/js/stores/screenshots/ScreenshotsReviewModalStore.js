@@ -13,7 +13,7 @@ class ScreenshotsReviewModalStore {
         this.bindActions(ScreenshotsPageActions);
         this.registerAsync(ScreenshotDataSource);
     }
-    
+
     setDefaultState() {
         this.show = false;
         this.comment = "";
@@ -22,16 +22,16 @@ class ScreenshotsReviewModalStore {
         this.screenshotIdx = null;
         this.screenshot = null;
     }
-    
+
     resetScreenshotSearchParams() {
         this.setDefaultState();
     }
-    
+
     openWithScreenshot(screenshotIdx) {
         this.show = true;
         this.screenshotIdx = screenshotIdx;
         this.screenshot = ScreenshotsPageStore.getScreenshotByIdx(screenshotIdx);
-        
+
         if (this.screenshot !== null) {
             this.comment = this.getScreenshotComment();
             this.status = this.getScreenshotStatus();
@@ -44,7 +44,7 @@ class ScreenshotsReviewModalStore {
     close() {
         this.show = false;
     }
-    
+
     save() {
         this.show = false;
         this.getInstance().changeStatus(this.status, this.comment, this.screenshotIdx);

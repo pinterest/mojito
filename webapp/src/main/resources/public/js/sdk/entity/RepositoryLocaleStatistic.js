@@ -23,7 +23,7 @@ export default class RepositoryLocaleStatistic {
 
         /** @type {Number} */
         this.reviewNeededWordCount = 0;
-        
+
         /** @type {Number} */
         this.forTranslationCount = 0;
 
@@ -35,7 +35,7 @@ export default class RepositoryLocaleStatistic {
 
         /** @type {Number} */
         this.includeInFileWordCount = 0;
-        
+
          /** @type {Number} */
         this.diffToSourcePluralCount = 0;
     }

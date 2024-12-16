@@ -7,7 +7,7 @@ import RepositoryLocale from "../sdk/entity/RepositoryLocale";
 class RepositoryStore {
 
     constructor() {
-        this.repositories = [];        
+        this.repositories = [];
         this.bindActions(RepositoryActions);
         this.bindActions(WorkbenchActions);
         this.registerAsync(RepositoryDataSource);
@@ -20,7 +20,7 @@ class RepositoryStore {
     getAllRepositoriesSuccess(repositories) {
         this.repositories = repositories;
     }
-    
+
     /**
      * Get the repository with the id from the state.
      * @param id of repository
@@ -39,7 +39,7 @@ class RepositoryStore {
 
         return result;
     }
-    
+
     /**
      * Get the repository with given name from the state.
      * @param name of repository
@@ -48,7 +48,7 @@ class RepositoryStore {
     static getRepositoryByName(name) {
         let state = this.getState();
         let result = null;
-        
+
         for (let key of Object.keys(state.repositories)) {
             if (state.repositories[key].name === name) {
                 result = state.repositories[key];

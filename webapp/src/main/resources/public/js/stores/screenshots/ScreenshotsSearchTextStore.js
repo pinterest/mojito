@@ -24,7 +24,7 @@ class ScreenshotsSearchTextStore {
     resetScreenshotSearchParams() {
         this.setDefaultState();
     }
-    
+
     changeSearchAttribute(searchAttribute) {
         this.searchAttribute = searchAttribute;
     }

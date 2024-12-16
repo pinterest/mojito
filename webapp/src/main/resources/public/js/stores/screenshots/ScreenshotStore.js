@@ -7,7 +7,7 @@ class ScreenshotStore {
     constructor() {
         this.bindActions(ScreenshotActions);
         this.registerAsync(ScreenshotDataSource);
-    } 
+    }
 
     changeStatus(data) {
         this.getInstance().changeStatus(data.status, data.comment, data.idx);

@@ -15,7 +15,7 @@ class ScreenshotsHistoryStore {
 
     constructor() {
         this.setDefaultState();
-        
+
         this.bindActions(ScreenshotsRepositoryActions);
         this.bindActions(ScreenshotsHistoryActions);
         this.bindActions(ScreenshotsLocaleActions);
@@ -23,13 +23,13 @@ class ScreenshotsHistoryStore {
         this.bindActions(ScreenshotsPaginatorActions);
         this.bindActions(ScreenshotsSearchTextActions);
     }
-    
+
     setDefaultState() {
         // use to skip location update (Initiated by the ScreenshotsPage) when
-        // this store is initializing from the browser location or to do 
+        // this store is initializing from the browser location or to do
         // group updates together
         this.skipLocationHistoryUpdate = false;
-        
+
         this.selectedRepositoryIds = [];
         this.bcp47Tags = [];
         this.searchAttribute = SearchParamsStore.SEARCH_ATTRIBUTES.TARGET;
@@ -92,7 +92,7 @@ class ScreenshotsHistoryStore {
     changeCurrentPageNumber(currentPageNumber) {
         this.currentPageNumber = currentPageNumber;
     }
-    
+
     static getQueryParams() {
         let params = this.getState();
         delete params.skipLocationHistoryUpdate;
@@ -143,7 +143,7 @@ class ScreenshotsHistoryStore {
             searchType = SearchParamsStore.SEARCH_TYPES.CONTAINS;
         }
         ScreenshotsSearchTextActions.changeSearchType(searchType);
-        
+
         if (!status) {
             status = StatusCommonTypes.ALL;
         }

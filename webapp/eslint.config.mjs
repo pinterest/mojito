@@ -25,7 +25,8 @@ export default [
             'caughtErrors': 'all',
             'ignoreRestSiblings': false,
             'reportUsedIgnorePattern': false
-        }]
+        }],
+      'no-trailing-spaces': 'error',
     },
     settings: {
       react: {

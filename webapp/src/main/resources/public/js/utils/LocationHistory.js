@@ -5,7 +5,7 @@ class LocationHistory {
     /**
      * Updates the browser location for a given pathname and query params
      *
-     * If the URL is only the pathname replace the history state 
+     * If the URL is only the pathname replace the history state
      * (to reflect the params) else if the query has changed
      * push a new state to keep track of the change param modification.
      *

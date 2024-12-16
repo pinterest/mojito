@@ -18,7 +18,7 @@ class BranchesHistoryStore {
 
     setDefaultState() {
         // use to skip location update (Initiated by the BranchesPage) when
-        // this store is initializing from the browser location or to do 
+        // this store is initializing from the browser location or to do
         // group updates together
         this.skipLocationHistoryUpdate = false;
 

@@ -30,13 +30,13 @@ export default class RepositoryStatistic {
 
         /** @type {Number} */
         this.usedTextUnitWordCount = 0;
-        
+
         /** @type {Number} */
         this.reviewNeededCount = 0;
-        
+
         /** @type {Number} */
         this.pluralTextUnitCount = 0;
-        
+
         /** @type {Number} */
         this.pluralTextUnitWordCount = 0;
     }
@@ -49,7 +49,7 @@ export default class RepositoryStatistic {
         let result = null;
         if (json) {
             result = new RepositoryStatistic();
-            
+
             this.createdByUser = User.toUser(json.createdByUser);
             this.createdDate = new Date(json.createdDate);
             this.lastModifiedDate = new Date(json.lastModifiedDate);
@@ -66,7 +66,7 @@ export default class RepositoryStatistic {
             this.reviewNeededCount = json.reviewNeededCount;
             this.pluralTextUnitCount = json.pluralTextUnitCount;
             this.pluralTextUnitWordCount = json.pluralTextUnitWordCount;
-            
+
         }
         return result;
     }
