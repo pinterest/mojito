@@ -32,7 +32,7 @@ class ScreenshotsLocaleStore {
 
     getAllRepositoriesSuccess() {
         this.waitFor(ScreenshotsRepositoryStore);
-        let selectedRepositoryIds = ScreenshotsRepositoryStore.getState().selectedRepositoryIds;
+        const selectedRepositoryIds = ScreenshotsRepositoryStore.getState().selectedRepositoryIds;
         this.bcp47Tags = this.getSortedBcp47TagsFromStore(selectedRepositoryIds);
         this.fullyTranslatedBcp47Tags = this.getSortedFullyTranslatedBcp47TagsFromStore(selectedRepositoryIds);
     }

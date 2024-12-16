@@ -289,7 +289,7 @@ class TextUnit {
 
         var textUnits = [];
 
-        for (let textUnit of jsonTextUnits) {
+        for (const textUnit of jsonTextUnits) {
             textUnits.push(TextUnit.toTextUnit(textUnit));
         }
 

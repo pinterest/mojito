@@ -10,10 +10,10 @@ import SearchParamsStore from "../../stores/workbench/SearchParamsStore";
 const ScreenshotsPageDataSource = {
     performScreenshotSearch: {
         remote() {
-            let screenshotsRepositoryStoreState = ScreenshotsRepositoryStore.getState();
-            let screenshotsLocaleStoreState = ScreenshotsLocaleStore.getState();
-            let screenshotsSearchTextStoreState = ScreenshotsSearchTextStore.getState();
-            let screenshotsPaginatorStoreState = ScreenshotsPaginatorStore.getState();
+            const screenshotsRepositoryStoreState = ScreenshotsRepositoryStore.getState();
+            const screenshotsLocaleStoreState = ScreenshotsLocaleStore.getState();
+            const screenshotsSearchTextStoreState = ScreenshotsSearchTextStore.getState();
+            const screenshotsPaginatorStoreState = ScreenshotsPaginatorStore.getState();
 
             let promise;
 
@@ -26,7 +26,7 @@ const ScreenshotsPageDataSource = {
                     }, 0);
                 });
             } else {
-                let params = {
+                const params = {
                     repositoryIds: screenshotsRepositoryStoreState.selectedRepositoryIds,
                     bcp47Tags: screenshotsLocaleStoreState.selectedBcp47Tags,
                     status: screenshotsSearchTextStoreState.status === StatusCommonTypes.ALL ? null : screenshotsSearchTextStoreState.status,

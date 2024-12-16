@@ -213,7 +213,7 @@ export default class Drop {
      * @return {Drop}
      */
     static toDrop(json) {
-        let result = new Drop();
+        const result = new Drop();
 
         result.id = json.id;
 
@@ -268,7 +268,7 @@ export default class Drop {
 
         var results = [];
 
-        for (let drop of jsons) {
+        for (const drop of jsons) {
             results.push(Drop.toDrop(drop));
         }
 

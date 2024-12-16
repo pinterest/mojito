@@ -90,13 +90,13 @@ class BranchesHistoryStore {
     }
 
     static getQueryParams() {
-        let params = this.getState();
+        const params = this.getState();
         delete params.skipLocationHistoryUpdate;
         return params;
     }
 
     static initStoreFromLocationQuery(query) {
-        let {
+        const {
             openBranchStatistic, currentPageNumber = 1, searchText,
             deleted = "false", undeleted = "true", empty = "true", notEmpty = "true", onlyMyBranches = "true",
             createdBefore = null, createdAfter = null

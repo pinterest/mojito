@@ -94,7 +94,7 @@ class ScreenshotsHistoryStore {
     }
 
     static getQueryParams() {
-        let params = this.getState();
+        const params = this.getState();
         delete params.skipLocationHistoryUpdate;
         return params;
     }

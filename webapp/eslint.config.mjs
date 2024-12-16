@@ -14,7 +14,7 @@ export default [
     },
     plugins: {
       react: esLintPluginReact,
-      reactHooks: esLintPluginReactHooks, 
+      reactHooks: esLintPluginReactHooks,
     },
     rules: {
       'react/prop-types': 'off',
@@ -27,6 +27,7 @@ export default [
             'reportUsedIgnorePattern': false
         }],
       'no-trailing-spaces': 'error',
+      "prefer-const": ["error"],
     },
     settings: {
       react: {

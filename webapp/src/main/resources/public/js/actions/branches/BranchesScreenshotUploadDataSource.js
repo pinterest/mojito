@@ -19,15 +19,15 @@ const BranchesScreenshotUploadDataSource = {
 
     performUploadScreenshot: {
         remote(state) {
-            let BranchesStoreState = BranchesStore.getState();
+            const BranchesStoreState = BranchesStore.getState();
 
-            let branchStatistic = BranchesStore.getSelectedBranchStatistic();
-            let repository = branchStatistic.branch.repository;
+            const branchStatistic = BranchesStore.getSelectedBranchStatistic();
+            const repository = branchStatistic.branch.repository;
 
-            let screenshotRun =  new ScreenshotRun();
+            const screenshotRun =  new ScreenshotRun();
             screenshotRun.id = repository.manualScreenshotRun.id;
 
-            let screenshot = new Screenshot();
+            const screenshot = new Screenshot();
             screenshotRun.screenshots.push(screenshot);
 
             screenshot.name = uuidv4();

@@ -52,7 +52,7 @@ class BoxSDKConfigStore {
     onSetConfigSuccess(pollableTaskFuture) {
         this.boxSDKConfigPollableTaskFuture = pollableTaskFuture;
 
-        let pollableTask = pollableTaskFuture.pollableTask;
+        const pollableTask = pollableTaskFuture.pollableTask;
         if (!pollableTask.isAllFinished) {
             this.setState({ "isBeingProcessed": true });
             PollableTaskClient.waitForPollableTaskToFinish(pollableTask.id)

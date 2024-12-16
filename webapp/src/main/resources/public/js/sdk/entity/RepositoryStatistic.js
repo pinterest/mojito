@@ -76,9 +76,9 @@ export default class RepositoryStatistic {
      * @return {RepositoryStatistic[]}
      */
     static toRepositoryStatistics(jsons) {
-        let results = [];
+        const results = [];
 
-        for (let json of jsons) {
+        for (const json of jsons) {
             results.push(RepositoryStatistic.toRepositoryStatistic(json));
         }
 

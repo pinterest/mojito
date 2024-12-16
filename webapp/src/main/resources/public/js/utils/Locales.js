@@ -206,7 +206,7 @@ class Locales {
     sortByDisplayName(objects, getBcp47Tag) {
         return objects
             .map(object => {
-                let bcp47Tag = getBcp47Tag(object);
+                const bcp47Tag = getBcp47Tag(object);
                 object.localeDisplayName = this.getDisplayName(bcp47Tag);
                 return object;
             })

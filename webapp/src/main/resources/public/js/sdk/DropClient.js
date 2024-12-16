@@ -13,7 +13,7 @@ class DropClient extends BaseClient {
      */
     getDrops(repoId = null, isImported = null, isCanceled = null, page = 0, size = 10) {
 
-        let promise = this.get(this.getUrl(), {
+        const promise = this.get(this.getUrl(), {
             "repositoryId": repoId,
             "imported": isImported,
             "canceled": isCanceled,
@@ -23,7 +23,7 @@ class DropClient extends BaseClient {
 
         return promise.then(function (result) {
 
-            let pageRequestResults = new PageRequestResults();
+            const pageRequestResults = new PageRequestResults();
 
             pageRequestResults.results = Drop.toDrops(result.content);
             pageRequestResults.hasMoreResults = result.hasNext;
@@ -39,7 +39,7 @@ class DropClient extends BaseClient {
      * @return {Promise}
      */
     exportDrop(exportDropConfig) {
-        let promise = this.post(this.getUrl() + "/export", exportDropConfig);
+        const promise = this.post(this.getUrl() + "/export", exportDropConfig);
         return promise.then((result) => result);
     }
 
@@ -48,7 +48,7 @@ class DropClient extends BaseClient {
      * @return {Promise}
      */
     importDrop(importDropConfig) {
-        let promise = this.post(this.getUrl() + "/import", importDropConfig);
+        const promise = this.post(this.getUrl() + "/import", importDropConfig);
         return promise.then((result) => result);
     }
 
@@ -57,7 +57,7 @@ class DropClient extends BaseClient {
      * @return {Promise}
      */
     completeDrop(dropId) {
-        let promise = this.post(this.getUrl() + "/complete/" + dropId);
+        const promise = this.post(this.getUrl() + "/complete/" + dropId);
         return promise.then((result) => result);
     }
 
@@ -66,7 +66,7 @@ class DropClient extends BaseClient {
      * @return {Promise}
      */
     cancelDrop(cancelDropConfig) {
-        let promise = this.post(this.getUrl() + "/cancel", cancelDropConfig);
+        const promise = this.post(this.getUrl() + "/cancel", cancelDropConfig);
         return promise.then((result) => result);
     }
 

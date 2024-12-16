@@ -86,7 +86,7 @@ export default class PollableTask {
         let results = null;
         if (jsons) {
             results = [];
-            for (let json of jsons) {
+            for (const json of jsons) {
                 results.push(PollableTask.toPollableTask(json));
             }
         }

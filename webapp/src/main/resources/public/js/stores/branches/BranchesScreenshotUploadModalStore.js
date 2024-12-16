@@ -42,7 +42,7 @@ class BranchesScreenshotUploadModalStore {
 
     uploadScreenshotImage() {
         if (this.isImageExtensionSupported(this.fileToUpload.name)) {
-            let generatedUuid = v4() + this.fileToUpload.name;
+            const generatedUuid = v4() + this.fileToUpload.name;
             this.screenshotSrc = 'api/images/' + generatedUuid;
             this.uploadInProgress = true;
             this.getInstance().performUploadScreenshotImage(generatedUuid);
@@ -94,15 +94,15 @@ class BranchesScreenshotUploadModalStore {
     }
 
     isImageExtensionSupported() {
-        let fileExtension = this.fileToUpload.name.substring(this.fileToUpload.name.lastIndexOf(".")).toLowerCase();
+        const fileExtension = this.fileToUpload.name.substring(this.fileToUpload.name.lastIndexOf(".")).toLowerCase();
         return this.supportedImageExtensionsSet.has(fileExtension);
     }
 
     loadImage() {
       if (this.fileToUpload) {
 
-            let readerPreview = new FileReader();
-            let readerUpload = new FileReader();
+            const readerPreview = new FileReader();
+            const readerUpload = new FileReader();
 
             readerPreview.onloadend = () => {
                 BranchesScreenshotUploadActions.changeImageForPreview(readerPreview.result);

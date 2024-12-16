@@ -50,7 +50,7 @@ class ScreenshotsPageStore {
     static getScreenshotByIdx(screenshotIdx) {
 
         let screenshot = null;
-        let state = this.getState();
+        const state = this.getState();
 
         if(!(screenshotIdx >= state.screenshotsData.length)) {
            screenshot = state.screenshotsData[screenshotIdx];

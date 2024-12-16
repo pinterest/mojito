@@ -25,7 +25,7 @@ class ScreenshotViewerStore {
         if (this.branchStatisticScreenshots.length > 0) {
             this.number = number;
             this.total = this.branchStatisticScreenshots.length;
-            let branchStatisticScreenshot = this.branchStatisticScreenshots[this.number - 1];
+            const branchStatisticScreenshot = this.branchStatisticScreenshots[this.number - 1];
             this.src = branchStatisticScreenshot.src;
             this.textUnits = branchStatisticScreenshot.textUnits;
         }
