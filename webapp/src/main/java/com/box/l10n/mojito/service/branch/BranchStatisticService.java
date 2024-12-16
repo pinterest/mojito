@@ -64,8 +64,6 @@ public class BranchStatisticService {
   /** logger */
   static Logger logger = getLogger(BranchStatisticService.class);
 
-  @Autowired BranchService branchService;
-
   @Autowired BranchRepository branchRepository;
 
   @Autowired BranchStatisticRepository branchStatisticRepository;
@@ -117,6 +115,37 @@ public class BranchStatisticService {
     }
   }
 
+  /**
+   * Compute statistics for a specific branch.
+   *
+   * @param repository Repository
+   * @param branchName Branch name
+   * @param updateType Update type
+   */
+  public void computeAndSaveBranchStatistic(
+      Repository repository, String branchName, UpdateType updateType) {
+    logger.debug(
+        "computeAndSaveBranchStatistic for repository: {} and branch: {}",
+        repository.getName(),
+        branchName);
+
+    if (branchName == null) {
+      return;
+    }
+
+    try (var timer =
+        Timer.resource(meterRegistry, "BranchStatisticService.computeAndSaveBranchStatistic")
+            .tag("repository", repository.getName())
+            .tag("branchName", branchName)) {
+
+      Branch branch = branchRepository.findByNameAndRepository(branchName, repository);
+      Preconditions.checkNotNull(branch);
+      List<Branch> branches = List.of(branch);
+      computeAndSaveBranchStatistics(repository.getId(), updateType, branches);
+      sendBranchNotifications(branches);
+    }
+  }
+
   private void sendBranchNotifications(List<Branch> branchesToCheck) {
     waitForAllFutures(
         branchesToCheck.stream()
@@ -146,7 +175,7 @@ public class BranchStatisticService {
       ImmutableSet<String> branchNamesToCheck =
           branches.stream().map(Branch::getName).collect(ImmutableSet.toImmutableSet());
 
-      logger.info("Computing branch stastistics");
+      logger.info("Computing branch statistics");
 
       Map<String, ImmutableMap<Long, ForTranslationCountForTmTextUnitId>>
           mapBranchNameToTranslationCountForTextUnitId =

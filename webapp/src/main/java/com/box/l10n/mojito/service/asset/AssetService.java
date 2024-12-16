@@ -163,7 +163,7 @@ public class AssetService {
       FilterConfigIdOverride filterConfigIdOverride,
       List<String> filterOptions,
       @InjectCurrentTask PollableTask currentTask)
-      throws InterruptedException, ExecutionException, UnsupportedAssetFilterTypeException {
+      throws InterruptedException, UnsupportedAssetFilterTypeException {
 
     PollableFutureTaskResult<Asset> pollableFutureTaskResult = new PollableFutureTaskResult<>();
 
