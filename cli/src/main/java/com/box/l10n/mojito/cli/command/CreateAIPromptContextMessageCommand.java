@@ -2,9 +2,12 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.AiPromptWsApiProxy;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.AIServiceClient;
-import com.box.l10n.mojito.rest.entity.AIPromptContextMessageCreateRequest;
+import com.box.l10n.mojito.cli.model.AIPromptContextMessageCreateRequest;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +22,6 @@ import org.springframework.stereotype.Component;
 public class CreateAIPromptContextMessageCommand extends Command {
 
   static Logger logger = LoggerFactory.getLogger(CreateAIPromptContextMessageCommand.class);
-
-  @Autowired AIServiceClient aiServiceClient;
 
   @Parameter(
       names = {"--content", "-c"},
@@ -48,21 +49,41 @@ public class CreateAIPromptContextMessageCommand extends Command {
 
   @Autowired private ConsoleWriter consoleWriter;
 
+  @Autowired private ApiClient apiClient;
+
+  AiPromptWsApiProxy aiServiceClient;
+
+  @PostConstruct
+  public void init() {
+    this.aiServiceClient = new AiPromptWsApiProxy(this.apiClient);
+  }
+
   @Override
   protected void execute() throws CommandException {
     createPromptContextMessage();
   }
 
-  private void createPromptContextMessage() {
-    logger.debug("Received request to create prompt content message");
+  private AIPromptContextMessageCreateRequest getAiPromptContextMessageCreateRequest() {
     AIPromptContextMessageCreateRequest AIPromptContextMessageCreateRequest =
         new AIPromptContextMessageCreateRequest();
     AIPromptContextMessageCreateRequest.setContent(content);
     AIPromptContextMessageCreateRequest.setMessageType(messageType);
     AIPromptContextMessageCreateRequest.setAiPromptId(promptId);
     AIPromptContextMessageCreateRequest.setOrderIndex(orderIndex);
-    long contextMessageId =
-        aiServiceClient.createPromptContextMessage(AIPromptContextMessageCreateRequest);
+    return AIPromptContextMessageCreateRequest;
+  }
+
+  private void createPromptContextMessage() {
+    logger.debug("Received request to create prompt content message");
+    AIPromptContextMessageCreateRequest AIPromptContextMessageCreateRequest =
+        getAiPromptContextMessageCreateRequest();
+    long contextMessageId;
+    try {
+      contextMessageId =
+          this.aiServiceClient.createPromptMessage(AIPromptContextMessageCreateRequest);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
     consoleWriter
         .newLine()
         .a("Prompt context message created with id: " + contextMessageId)
