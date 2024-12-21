@@ -340,7 +340,7 @@ public class AssetClient extends BaseClient {
     Map<String, String> filterParams = new HashMap<>();
 
     if (path != null) {
-      filterParams.put("path", path);
+      filterParams.put("assetPath", path);
     }
 
     if (repositoryId != null) {
