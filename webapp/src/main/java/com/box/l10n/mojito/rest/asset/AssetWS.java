@@ -95,7 +95,7 @@ public class AssetWS {
   @RequestMapping(value = "/api/assets", method = RequestMethod.GET)
   public List<Asset> getAssets(
       @RequestParam(value = "repositoryId") Long repositoryId,
-      @RequestParam(value = "path", required = false) String path,
+      @RequestParam(value = "assetPath", required = false) String path,
       @RequestParam(value = "deleted", required = false) Boolean deleted,
       @RequestParam(value = "virtual", required = false) Boolean virtual,
       @RequestParam(value = "branchId", required = false) Long branchId) {
