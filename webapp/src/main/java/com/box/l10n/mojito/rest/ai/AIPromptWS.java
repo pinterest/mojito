@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,11 +26,7 @@ public class AIPromptWS {
   @Autowired PromptService promptService;
 
   @Operation(summary = "Create a new Prompt")
-  @RequestMapping(
-      value = "/api/ai/prompts",
-      method = RequestMethod.POST,
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.TEXT_PLAIN_VALUE)
+  @RequestMapping(value = "/api/ai/prompts", method = RequestMethod.POST)
   @Timed("AIWS.createPrompt")
   public long createPrompt(@RequestBody AIPromptCreateRequest AIPromptCreateRequest) {
     logger.debug("Received request to create prompt");
@@ -60,10 +55,7 @@ public class AIPromptWS {
   }
 
   @Operation(summary = "Get a Prompt by ID")
-  @RequestMapping(
-      value = "/api/ai/prompts/{prompt_id}",
-      method = RequestMethod.GET,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(value = "/api/ai/prompts/{prompt_id}", method = RequestMethod.GET)
   @Timed("AIWS.getPrompt")
   public AIPrompt getPrompt(@PathVariable("prompt_id") Long promptId) {
     logger.debug("Received request to get prompt id {}", promptId);
@@ -71,10 +63,7 @@ public class AIPromptWS {
   }
 
   @Operation(summary = "Get all active Prompts")
-  @RequestMapping(
-      value = "/api/ai/prompts",
-      method = RequestMethod.GET,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(value = "/api/ai/prompts", method = RequestMethod.GET)
   @Timed("AIWS.getAllActivePrompts")
   public List<AIPrompt> getAllActivePrompts() {
     logger.debug("Received request to get all active prompts");
@@ -94,11 +83,7 @@ public class AIPromptWS {
   }
 
   @Operation(summary = "Create a Prompt Context Message")
-  @RequestMapping(
-      value = "/api/ai/prompts/contextMessage",
-      method = RequestMethod.POST,
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.TEXT_PLAIN_VALUE)
+  @RequestMapping(value = "/api/ai/prompts/contextMessage", method = RequestMethod.POST)
   @Timed("AIWS.createPromptMessage")
   public Long createPromptMessage(
       @RequestBody AIPromptContextMessageCreateRequest aiPromptContextMessageCreateRequest) {
@@ -119,9 +104,7 @@ public class AIPromptWS {
   @Operation(summary = "Create or update a Repository Locale Prompt Overrides")
   @RequestMapping(
       value = "/api/ai/prompts/translation/locale/overrides",
-      method = RequestMethod.POST,
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.TEXT_PLAIN_VALUE)
+      method = RequestMethod.POST)
   @Timed("AIWS.createOrUpdateRepositoryLocalePromptOverrides")
   public ResponseEntity<String> createOrUpdateRepositoryLocalePromptOverrides(
       @RequestBody AITranslationLocalePromptOverridesRequest request) {
@@ -137,9 +120,7 @@ public class AIPromptWS {
   @Operation(summary = "Delete a Repository Locale Prompt Overrides for a given request")
   @RequestMapping(
       value = "/api/ai/prompts/translation/locale/overrides",
-      method = RequestMethod.DELETE,
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+      method = RequestMethod.DELETE)
   @Timed("AIWS.deleteRepositoryLocalePromptOverrides")
   public ResponseEntity<String> deleteRepositoryLocalePromptOverrides(
       @RequestBody AITranslationLocalePromptOverridesRequest request) {

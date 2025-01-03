@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -48,11 +47,7 @@ public class MachineTranslationWS {
   String schedulerName;
 
   @Operation(summary = "Generate translations asynchronously")
-  @RequestMapping(
-      method = RequestMethod.POST,
-      value = "/api/machine-translation-batch",
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(method = RequestMethod.POST, value = "/api/machine-translation-batch")
   @ResponseStatus(HttpStatus.OK)
   @Cacheable(MACHINE_TRANSLATION)
   public PollableTask getTranslations(@RequestBody BatchTranslationRequestDTO translationRequest) {
@@ -68,11 +63,7 @@ public class MachineTranslationWS {
   }
 
   @Operation(summary = "Return a single Translation")
-  @RequestMapping(
-      method = RequestMethod.POST,
-      value = "/api/machine-translation",
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(method = RequestMethod.POST, value = "/api/machine-translation")
   @ResponseStatus(HttpStatus.OK)
   @Cacheable(MACHINE_TRANSLATION)
   public TranslationDTO getSingleTranslation(
@@ -87,20 +78,13 @@ public class MachineTranslationWS {
         translationRequest.getRepositoryNames());
   }
 
-  @RequestMapping(
-      method = RequestMethod.GET,
-      value = "/api/machine-translation/config",
-      produces = MediaType.TEXT_PLAIN_VALUE)
+  @RequestMapping(method = RequestMethod.GET, value = "/api/machine-translation/config")
   @ResponseStatus(HttpStatus.OK)
   public String getMachineTranslationConfiguration() {
     return machineTranslationService.getConfiguredEngineSource().toString();
   }
 
-  @RequestMapping(
-      method = RequestMethod.POST,
-      value = "/api/machine-translation/repository",
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(method = RequestMethod.POST, value = "/api/machine-translation/repository")
   public RepositoryMachineTranslationBody translateRepository(
       @RequestBody RepositoryMachineTranslationBody repositoryMachineTranslationBody) {
 

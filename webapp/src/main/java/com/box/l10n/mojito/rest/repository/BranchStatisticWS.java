@@ -33,7 +33,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -59,10 +58,7 @@ public class BranchStatisticWS {
 
   @Operation(summary = "Get paginated Branch Statistics for a given set of parameters")
   @JsonView(View.BranchStatistic.class)
-  @RequestMapping(
-      value = "/api/branchStatistics",
-      method = RequestMethod.GET,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(value = "/api/branchStatistics", method = RequestMethod.GET)
   @StopWatch
   public Page<BranchStatistic> getBranchesOfRepository(
       @RequestParam(value = "createdByUserName", required = false) String createdByUserName,
@@ -131,8 +127,7 @@ public class BranchStatisticWS {
   @JsonView(View.BranchTextUnitStatistic.class)
   @RequestMapping(
       value = "/api/branchStatistics/{id}/branchTextUnitStatistics",
-      method = RequestMethod.GET,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+      method = RequestMethod.GET)
   @StopWatch
   public Page<BranchTextUnitStatistic> getBranchTextUnitStatisticsOfBranch(
       @PathVariable("id") long id,

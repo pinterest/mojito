@@ -42,7 +42,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -93,10 +92,7 @@ public class AssetWS {
    * @return the list of {@link Asset} for a given {@link Repository}
    */
   @JsonView(View.AssetSummary.class)
-  @RequestMapping(
-      value = "/api/assets",
-      method = RequestMethod.GET,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(value = "/api/assets", method = RequestMethod.GET)
   public List<Asset> getAssets(
       @RequestParam(value = "repositoryId") Long repositoryId,
       @RequestParam(value = "path", required = false) String path,
@@ -116,11 +112,7 @@ public class AssetWS {
    * @throws java.lang.InterruptedException
    */
   @Operation(summary = "Create an Asset and kicks off extraction process")
-  @RequestMapping(
-      value = "/api/assets",
-      method = RequestMethod.POST,
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(value = "/api/assets", method = RequestMethod.POST)
   public SourceAsset importSourceAsset(@RequestBody SourceAsset sourceAsset) throws Throwable {
     logger.debug("Importing source asset");
 
@@ -186,11 +178,7 @@ public class AssetWS {
    * @return the localized payload as a {@link LocalizedAssetBody}
    */
   @Operation(summary = "Localize the payload content with translations of a given Asset")
-  @RequestMapping(
-      value = "/api/assets/{assetId}/localized/{localeId}",
-      method = RequestMethod.POST,
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(value = "/api/assets/{assetId}/localized/{localeId}", method = RequestMethod.POST)
   public LocalizedAssetBody getLocalizedAssetForContent(
       @PathVariable("assetId") long assetId,
       @PathVariable("localeId") long localeId,
@@ -238,11 +226,7 @@ public class AssetWS {
   }
 
   @Operation(summary = "Get Localized Asset asynchronously")
-  @RequestMapping(
-      value = "/api/assets/{assetId}/localized",
-      method = RequestMethod.POST,
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(value = "/api/assets/{assetId}/localized", method = RequestMethod.POST)
   public PollableTask getLocalizedAssetForContentAsync(
       @PathVariable("assetId") long assetId, @RequestBody LocalizedAssetBody localizedAssetBody)
       throws UnsupportedAssetFilterTypeException {
@@ -278,11 +262,7 @@ public class AssetWS {
    */
   @Operation(
       summary = "Localize the payload content with translations of a given Asset in parallel")
-  @RequestMapping(
-      value = "/api/assets/{assetId}/localized/parallel",
-      method = RequestMethod.POST,
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(value = "/api/assets/{assetId}/localized/parallel", method = RequestMethod.POST)
   public PollableTask getLocalizedAssetForContentParallel(
       @PathVariable("assetId") long assetId,
       @RequestBody MultiLocalizedAssetBody multiLocalizedAssetBody) {
@@ -323,11 +303,7 @@ public class AssetWS {
    * @return the pseudo localized payload as a {@link LocalizedAssetBody}
    */
   @Operation(summary = "Pseudo localize the payload content with translations of a given Asset")
-  @RequestMapping(
-      value = "/api/assets/{assetId}/pseudo",
-      method = RequestMethod.POST,
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(value = "/api/assets/{assetId}/pseudo", method = RequestMethod.POST)
   public LocalizedAssetBody getPseudoLocalizedAssetForContent(
       @PathVariable("assetId") long assetId, @RequestBody LocalizedAssetBody localizedAssetBody)
       throws UnsupportedAssetFilterTypeException {
@@ -352,9 +328,7 @@ public class AssetWS {
   // be the logic URL usage
   @RequestMapping(
       value = "/api/assets/{assetId}/localized/{localeId}/import",
-      method = RequestMethod.POST,
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+      method = RequestMethod.POST)
   public ImportLocalizedAssetBody importLocalizedAsset(
       @PathVariable("assetId") long assetId,
       @PathVariable("localeId") long localeId,
@@ -387,8 +361,7 @@ public class AssetWS {
   @Operation(summary = "Exports all the translations (used and unused) of an Asset into XLIFF")
   @RequestMapping(
       method = RequestMethod.GET,
-      value = "/api/assets/{assetId}/xliffExport/{tmXliffId}",
-      produces = MediaType.APPLICATION_JSON_VALUE)
+      value = "/api/assets/{assetId}/xliffExport/{tmXliffId}")
   @ResponseStatus(HttpStatus.OK)
   public XliffExportBody xliffExport(
       @PathVariable("assetId") long assetId, @PathVariable("tmXliffId") long tmXliffId) {
@@ -410,11 +383,7 @@ public class AssetWS {
   @Operation(
       summary =
           "Exports all the translations (used and unused) of an Asset into XLIFF asynchronously")
-  @RequestMapping(
-      method = RequestMethod.POST,
-      value = "/api/assets/{assetId}/xliffExport",
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(method = RequestMethod.POST, value = "/api/assets/{assetId}/xliffExport")
   public XliffExportBody xliffExportAsync(
       @PathVariable("assetId") long assetId,
       @RequestParam("bcp47tag") String bcp47tag,
@@ -454,11 +423,7 @@ public class AssetWS {
    * @return
    */
   @Operation(summary = "Deletes multiple Assets for a given Branch asynchronously")
-  @RequestMapping(
-      value = "/api/assets",
-      method = RequestMethod.DELETE,
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(value = "/api/assets", method = RequestMethod.DELETE)
   public PollableTask deleteAssetsOfBranches(
       @RequestParam(value = "branchId", required = false) Long branchId,
       @RequestBody Set<Long> ids) {
@@ -474,10 +439,7 @@ public class AssetWS {
    * @param deleted
    * @return
    */
-  @RequestMapping(
-      value = "/api/assets/ids",
-      method = RequestMethod.GET,
-      produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(value = "/api/assets/ids", method = RequestMethod.GET)
   public Set<Long> getAssetIds(
       @RequestParam(value = "repositoryId", required = true) Long repositoryId,
       @RequestParam(value = "deleted", required = false) Boolean deleted,
