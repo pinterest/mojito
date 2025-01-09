@@ -5,13 +5,16 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ServiceIdentifierParserConfig {
+  @Value("${l10n.spring.security.header.parser.serviceInstanceDelimiter:,}")
+  protected String serviceInstanceDelimiter;
+
   @Value("${l10n.spring.security.header.parser.keyValueDelimiter:;}")
   protected String keyValueDelimiter;
 
   @Value("${l10n.spring.security.header.parser.valueDelimiter:=}")
   protected String valueDelimiter;
 
-  @Value("${l10n.spring.security.header.parser.identifierKey:}")
+  @Value("${l10n.spring.security.header.parser.identifierKey:URI}")
   protected String identifierKey;
 
   @Value("${l10n.spring.security.header.serviceParser.enabled:false}")
@@ -47,5 +50,13 @@ public class ServiceIdentifierParserConfig {
 
   public void setIdentifierKey(String identifierKey) {
     this.identifierKey = identifierKey;
+  }
+
+  public String getServiceInstanceDelimiter() {
+    return serviceInstanceDelimiter;
+  }
+
+  public void setServiceInstanceDelimiter(String serviceInstanceDelimiter) {
+    this.serviceInstanceDelimiter = serviceInstanceDelimiter;
   }
 }

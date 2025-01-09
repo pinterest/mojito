@@ -13,6 +13,7 @@ public class ServiceIdentifierParser {
     if (serviceIdentifierParserConfig.isEnabled()) {
       return keyValueParser.parseHeader(
           header,
+          serviceIdentifierParserConfig.getServiceInstanceDelimiter(),
           serviceIdentifierParserConfig.getKeyValueDelimiter(),
           serviceIdentifierParserConfig.getValueDelimiter(),
           serviceIdentifierParserConfig.getIdentifierKey());
