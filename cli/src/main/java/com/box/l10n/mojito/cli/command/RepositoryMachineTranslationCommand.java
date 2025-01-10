@@ -2,11 +2,14 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.MachineTranslationWsApi;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.RepositoryMachineTranslationClient;
-import com.box.l10n.mojito.rest.entity.PollableTask;
-import com.box.l10n.mojito.rest.entity.RepositoryMachineTranslationBody;
+import com.box.l10n.mojito.cli.model.PollableTask;
+import com.box.l10n.mojito.cli.model.RepositoryMachineTranslationBody;
+import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.fusesource.jansi.Ansi.Color;
@@ -57,7 +60,14 @@ public class RepositoryMachineTranslationCommand extends Command {
 
   @Autowired CommandHelper commandHelper;
 
-  @Autowired RepositoryMachineTranslationClient repositoryMachineTranslationClient;
+  @Autowired ApiClient apiClient;
+
+  MachineTranslationWsApi repositoryMachineTranslationClient;
+
+  @PostConstruct
+  public void init() {
+    this.repositoryMachineTranslationClient = new MachineTranslationWsApi(this.apiClient);
+  }
 
   @Override
   public boolean shouldShowInCommandList() {
@@ -84,8 +94,13 @@ public class RepositoryMachineTranslationCommand extends Command {
     repositoryMachineTranslationBody.setTargetBcp47tags(locales);
     repositoryMachineTranslationBody.setSourceTextMaxCountPerLocale(sourceTextMaxCount);
 
-    repositoryMachineTranslationBody =
-        repositoryMachineTranslationClient.translateRepository(repositoryMachineTranslationBody);
+    try {
+      repositoryMachineTranslationBody =
+          this.repositoryMachineTranslationClient.translateRepository(
+              repositoryMachineTranslationBody);
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
 
     PollableTask pollableTask = repositoryMachineTranslationBody.getPollableTask();
     commandHelper.waitForPollableTask(pollableTask.getId());

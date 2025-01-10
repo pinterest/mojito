@@ -5,13 +5,15 @@ import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_CREATED_BEFORE_
 import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_CREATED_BEFORE_OPTIONS_AND_EXAMPLE;
 import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_CREATED_BEFORE_SHORT;
 import static java.util.Arrays.asList;
+import static java.util.Optional.ofNullable;
 import static org.junit.Assert.assertEquals;
 
 import com.box.l10n.mojito.cli.CLITestBase;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
+import com.box.l10n.mojito.cli.model.BranchBranchSummary;
 import com.box.l10n.mojito.entity.Repository;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
-import com.box.l10n.mojito.rest.entity.Branch;
 import com.box.l10n.mojito.service.branch.BranchRepository;
+import jakarta.annotation.PostConstruct;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Comparator;
@@ -24,9 +26,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 public class BranchDeleteCommandTest extends CLITestBase {
 
-  @Autowired RepositoryClient repositoryClient;
+  RepositoryWsApiProxy repositoryClient;
 
   @Autowired BranchRepository branchRepository;
+
+  @PostConstruct
+  public void init() {
+    this.repositoryClient = new RepositoryWsApiProxy(this.apiClient);
+  }
 
   @Test
   public void delete() throws Exception {
@@ -77,11 +84,11 @@ public class BranchDeleteCommandTest extends CLITestBase {
         () -> {
           List<String> branches =
               repositoryClient
-                  .getBranches(repository.getId(), null, null, null, false, true, null)
+                  .getBranchesOfRepository(repository.getId(), null, null, null, false, true, null)
                   .stream()
-                  .map(Branch::getName)
+                  .map(BranchBranchSummary::getName)
                   .sorted()
-                  .collect(Collectors.toList());
+                  .toList();
 
           return branches.equals(asList("b1", "b2", "b3", "b4"));
         });
@@ -101,19 +108,19 @@ public class BranchDeleteCommandTest extends CLITestBase {
         () -> {
           List<String> branchesTranslated =
               repositoryClient
-                  .getBranches(repository.getId(), null, null, null, true, false, null)
+                  .getBranchesOfRepository(repository.getId(), null, null, null, true, false, null)
                   .stream()
-                  .map(Branch::getName)
+                  .map(BranchBranchSummary::getName)
                   .sorted()
-                  .collect(Collectors.toList());
+                  .toList();
 
           List<String> branchesUntransaslted =
               repositoryClient
-                  .getBranches(repository.getId(), null, null, null, false, false, null)
+                  .getBranchesOfRepository(repository.getId(), null, null, null, false, false, null)
                   .stream()
-                  .map(Branch::getName)
+                  .map(BranchBranchSummary::getName)
                   .sorted()
-                  .collect(Collectors.toList());
+                  .toList();
           return branchesTranslated.equals(asList("b4"))
               && branchesUntransaslted.equals(asList("b1", "b2", "b3"));
         });
@@ -334,9 +341,16 @@ public class BranchDeleteCommandTest extends CLITestBase {
 
     List<String> actual =
         repositoryClient
-            .getBranches(repository.getId(), null, null, false, translated, true, createdBefore)
+            .getBranchesOfRepository(
+                repository.getId(),
+                null,
+                null,
+                false,
+                translated,
+                true,
+                ofNullable(createdBefore).map(ZonedDateTime::toOffsetDateTime).orElse(null))
             .stream()
-            .map(Branch::getName)
+            .map(BranchBranchSummary::getName)
             .sorted(Comparator.nullsFirst(Comparator.naturalOrder()))
             .collect(Collectors.toList());
 

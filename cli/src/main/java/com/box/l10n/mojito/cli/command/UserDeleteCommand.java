@@ -2,10 +2,12 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.UserWsApiProxy;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.UserClient;
-import com.box.l10n.mojito.rest.client.exception.ResourceNotFoundException;
+import javax.annotation.PostConstruct;
 import org.fusesource.jansi.Ansi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -23,8 +25,6 @@ import org.springframework.stereotype.Component;
     commandDescription = "Deletes a user")
 public class UserDeleteCommand extends Command {
 
-  @Autowired ConsoleWriter consoleWriter;
-
   @Parameter(
       names = {Param.USERNAME_LONG, Param.USERNAME_SHORT},
       arity = 1,
@@ -32,16 +32,25 @@ public class UserDeleteCommand extends Command {
       description = Param.USERNAME_DESCRIPTION)
   String username;
 
-  @Autowired UserClient userClient;
+  @Autowired ConsoleWriter consoleWriter;
+
+  @Autowired ApiClient apiClient;
+
+  private UserWsApiProxy userClient;
+
+  @PostConstruct
+  protected void init() {
+    this.userClient = new UserWsApiProxy(this.apiClient);
+  }
 
   @Override
   protected void execute() throws CommandException {
     consoleWriter.a("Delete user: ").fg(Ansi.Color.CYAN).a(username).println();
 
     try {
-      userClient.deleteUserByUsername(username);
+      this.userClient.deleteUserByUsername(username);
       consoleWriter.newLine().a("deleted --> user: ").fg(Ansi.Color.MAGENTA).a(username).println();
-    } catch (ResourceNotFoundException ex) {
+    } catch (ApiException ex) {
       throw new CommandException(ex.getMessage(), ex);
     }
   }

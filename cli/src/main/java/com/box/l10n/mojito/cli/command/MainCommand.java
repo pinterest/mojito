@@ -3,8 +3,11 @@ package com.box.l10n.mojito.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.cli.GitInfo;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.ApiException;
+import com.box.l10n.mojito.cli.apiclient.CliWsApi;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.client.CliClient;
+import jakarta.annotation.PostConstruct;
 import org.fusesource.jansi.Ansi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,7 +40,14 @@ public class MainCommand extends Command {
 
   @Autowired GitInfo gitInfo;
 
-  @Autowired CliClient cliClient;
+  @Autowired ApiClient apiClient;
+
+  CliWsApi cliClient;
+
+  @PostConstruct
+  public void init() {
+    this.cliClient = new CliWsApi(this.apiClient);
+  }
 
   @Override
   void showUsage() {
@@ -56,7 +66,12 @@ public class MainCommand extends Command {
   }
 
   void checkServerVersion() throws CommandException {
-    String serverVersion = cliClient.getVersion();
+    String serverVersion;
+    try {
+      serverVersion = this.cliClient.getVersion();
+    } catch (ApiException e) {
+      throw new CommandException(e.getMessage(), e);
+    }
     String cliVersion = getCliVersion();
     if (!cliVersion.equals(serverVersion)) {
       throw new CommandException(
