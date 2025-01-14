@@ -695,7 +695,6 @@ let SearchResults = createReactClass({
             }
         }
 
-        return result;
     },
 
     /**
@@ -710,6 +709,13 @@ let SearchResults = createReactClass({
     },
 
     render() {
+        if (this.state.isSearching) {
+            return <div class="branch-spinner mtl mbl">
+                <span className="glyphicon glyphicon-refresh spinning" />
+            </div>
+        }
+
+
         return (
             <div onKeyUp={this.onKeyUpSearchResults} onClick={this.onChangeSearchResults}>
                 {this.getTextUnitToolbarUI()}
