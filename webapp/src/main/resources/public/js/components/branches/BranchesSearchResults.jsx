@@ -29,6 +29,7 @@ import BranchesPageActions from "../../actions/branches/BranchesPageActions";
 class BranchesSearchResults extends React.Component {
 
     static propTypes = {
+        "branchesSearchParamStore": PropTypes.object.isRequired,
         "branchesStore": PropTypes.object.isRequired,
         "branchTextUnitsStore": PropTypes.object.isRequired,
         "onChangeOpenBranchStatistic": PropTypes.func.isRequired,
@@ -63,7 +64,7 @@ class BranchesSearchResults extends React.Component {
 
     renderGridHeader() {
         return (
-            <Row className="bms" className="branches-branchstatistic-header">
+            <Row className="bms branches-branchstatistic-header">
                 <Col md={4} className="branches-branchstatistic-col1">
                     <FormattedMessage id="branches.header.branch"/>
                 </Col>
@@ -343,9 +344,15 @@ class BranchesSearchResults extends React.Component {
     }
 
     render() {
+        if (this.props.branchesSearchParamStore.isSpinnerShown) {
+            return <div class="clear branch-spinner mtl mbl">
+                <span className="glyphicon glyphicon-refresh spinning" />
+            </div>
+        }
+
         return (
             <div>
-                <div className="mll mrl" className="branches-branchstatistic">
+                <div className="mll mrl branches-branchstatistic">
                     <Grid fluid={true}>
                         {this.renderGridHeader()}
                         {this.props.branchesStore.branchStatistics.map(this.renderBranchStatistic.bind(this))}
