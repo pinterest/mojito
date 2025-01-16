@@ -1,7 +1,7 @@
 import _ from "lodash";
 import FluxyMixin from "alt-mixins/FluxyMixin";
 import keycode from "keycode";
-import React from "react";
+import React, {Fragment} from "react";
 import createReactClass from 'create-react-class';
 import {FormattedMessage, injectIntl} from "react-intl";
 import {Button, ButtonToolbar, DropdownButton, MenuItem} from "react-bootstrap";
@@ -565,7 +565,8 @@ let SearchResults = createReactClass({
         let isAtLeastOneTextUnitSelected = numberOfSelectedTextUnits >= 1;
 
         let selectorCheckBoxDisabled = !AuthorityService.canEditTranslations();
-        let actionButtonsDisabled = isSearching || !isAtLeastOneTextUnitSelected || !AuthorityService.canEditTranslations();
+        const canEditTranslations = AuthorityService.canEditTranslations();
+        let actionButtonsDisabled = isSearching || !isAtLeastOneTextUnitSelected || !canEditTranslations;
         let nextPageButtonDisabled = isSearching || noMoreResults;
         let previousPageButtonDisabled = isSearching || isFirstPage;
 
@@ -591,50 +592,105 @@ let SearchResults = createReactClass({
                     <div>
                         <div className="pull-left">
                             <ButtonToolbar>
-                                <Button bsSize="small" disabled={actionButtonsDisabled}
-                                        onClick={this.onDeleteTextUnitsClicked}>
-                                    <FormattedMessage id="label.delete"/>
-                                </Button>
-                                <Button bsSize="small" bsStyle="primary" disabled={actionButtonsDisabled}
-                                        onClick={this.onStatusTextUnitsClicked}>
-                                    <FormattedMessage id="workbench.toolbar.status"/>
-                                </Button>
+                                {canEditTranslations && (
+                                    <Fragment>
+                                        <Button
+                                            bsSize="small"
+                                            disabled={actionButtonsDisabled}
+                                            onClick={
+                                                this.onDeleteTextUnitsClicked
+                                            }
+                                        >
+                                            <FormattedMessage id="label.delete" />
+                                        </Button>
+                                        <Button
+                                            bsSize="small"
+                                            bsStyle="primary"
+                                            disabled={actionButtonsDisabled}
+                                            onClick={
+                                                this.onStatusTextUnitsClicked
+                                            }
+                                        >
+                                            <FormattedMessage id="workbench.toolbar.status" />
+                                        </Button>
 
-                                <DropdownButton bsSize="small"
-                                                disabled={actionButtonsDisabled}
-                                                noCaret
-                                                id="dropdown-more-options"
-                                                title={(
-                                                    <span className="glyphicon glyphicon-option-horizontal"></span>)}>
-
-                                    <MenuItem header><FormattedMessage id="workbench.toolbar.textUnitsAttribute"/></MenuItem>
-                                    <MenuItem eventKey="1" onClick={this.onDoNotTranslateClick}><FormattedMessage id="workbench.toolbar.setTranslate"/></MenuItem>
-                                </DropdownButton>
+                                        <DropdownButton
+                                            bsSize="small"
+                                            disabled={actionButtonsDisabled}
+                                            noCaret
+                                            id="dropdown-more-options"
+                                            title={
+                                                <span className="glyphicon glyphicon-option-horizontal"></span>
+                                            }
+                                        >
+                                            <MenuItem header>
+                                                <FormattedMessage id="workbench.toolbar.textUnitsAttribute" />
+                                            </MenuItem>
+                                            <MenuItem
+                                                eventKey="1"
+                                                onClick={
+                                                    this.onDoNotTranslateClick
+                                                }
+                                            >
+                                                <FormattedMessage id="workbench.toolbar.setTranslate" />
+                                            </MenuItem>
+                                        </DropdownButton>
+                                    </Fragment>
+                                )}
                             </ButtonToolbar>
                         </div>
-                        <div className="pull-right" style={{display: "flex", alignItems: "center", "gap": "15px"}}>
+                        <div
+                            className="pull-right"
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "15px",
+                            }}
+                        >
                             <AltContainer store={ViewModeStore}>
-                                <ViewModeDropdown onModeSelected={(mode) => ViewModeActions.changeViewMode(mode)}/>
+                                <ViewModeDropdown
+                                    onModeSelected={(mode) =>
+                                        ViewModeActions.changeViewMode(mode)
+                                    }
+                                />
                             </AltContainer>
 
-                            <TextUnitSelectorCheckBox numberOfSelectedTextUnits={numberOfSelectedTextUnits} disabled={selectorCheckBoxDisabled}/>
+                            {!selectorCheckBoxDisabled && (
+                                <TextUnitSelectorCheckBox
+                                    numberOfSelectedTextUnits={
+                                        numberOfSelectedTextUnits
+                                    }
+                                    disabled={selectorCheckBoxDisabled}
+                                />
+                            )}
 
-                            <DropdownButton id="text-units-per-page" title={title}>
+                            <DropdownButton
+                                id="text-units-per-page"
+                                title={title}
+                            >
                                 {pageSizes}
                             </DropdownButton>
-                            <Button bsSize="small" disabled={previousPageButtonDisabled}
-                                    onClick={this.onFetchPreviousPageClicked}><span
-                                className="glyphicon glyphicon-chevron-left"></span></Button>
+                            <Button
+                                bsSize="small"
+                                disabled={previousPageButtonDisabled}
+                                onClick={this.onFetchPreviousPageClicked}
+                            >
+                                <span className="glyphicon glyphicon-chevron-left"></span>
+                            </Button>
                             <label className="default-label current-pageNumber">
                                 {this.displayCurrentPageNumber()}
                             </label>
-                            <Button bsSize="small" disabled={nextPageButtonDisabled}
-                                    onClick={this.onFetchNextPageClicked}><span
-                                className="glyphicon glyphicon-chevron-right"></span></Button>
+                            <Button
+                                bsSize="small"
+                                disabled={nextPageButtonDisabled}
+                                onClick={this.onFetchNextPageClicked}
+                            >
+                                <span className="glyphicon glyphicon-chevron-right"></span>
+                            </Button>
                         </div>
                     </div>
 
-                    <div className="textunit-toolbar-clear"/>
+                    <div className="textunit-toolbar-clear" />
                 </div>
             );
         }
