@@ -3,9 +3,11 @@ package com.box.l10n.mojito.cli.command;
 import static com.box.l10n.mojito.github.PRLabel.TRANSLATIONS_REQUIRED;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
+import static java.util.Optional.ofNullable;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.cli.command.extraction.ExtractionDiffPaths;
 import com.box.l10n.mojito.cli.command.extraction.ExtractionDiffService;
@@ -15,14 +17,13 @@ import com.box.l10n.mojito.cli.command.extraction.MissingExtractionDirectoryExce
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.command.utils.SlackNotificationSender;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
+import com.box.l10n.mojito.cli.model.BranchBranchSummary;
+import com.box.l10n.mojito.cli.model.PollableTask;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
+import com.box.l10n.mojito.cli.model.SourceAsset;
 import com.box.l10n.mojito.github.GithubClient;
 import com.box.l10n.mojito.github.GithubClients;
 import com.box.l10n.mojito.json.ObjectMapper;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
-import com.box.l10n.mojito.rest.entity.Branch;
-import com.box.l10n.mojito.rest.entity.PollableTask;
-import com.box.l10n.mojito.rest.entity.Repository;
-import com.box.l10n.mojito.rest.entity.SourceAsset;
 import com.box.l10n.mojito.shell.Shell;
 import com.box.l10n.mojito.slack.SlackClient;
 import com.google.common.base.Strings;
@@ -32,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.fusesource.jansi.Ansi;
@@ -175,7 +175,7 @@ public class ExtractionDiffCommand extends Command {
       required = false,
       description =
           "Optional list of notifiers when pusing to a repository, (notification will be sent eg. when new strings are processed or when translations are ready")
-  Set<String> pushToBranchNotifiers = Collections.emptySet();
+  List<String> pushToBranchNotifiers = Collections.emptyList();
 
   @Parameter(
       names = Param.PUSH_TYPE_LONG,
@@ -262,7 +262,7 @@ public class ExtractionDiffCommand extends Command {
 
   @Autowired PushService pushService;
 
-  @Autowired RepositoryClient repositoryClient;
+  @Autowired RepositoryWsApiProxy repositoryClient;
 
   @Autowired(required = false)
   private SlackClient slackClient;
@@ -342,11 +342,13 @@ public class ExtractionDiffCommand extends Command {
     if (github.isLabelAppliedToPR(
         this.githubRepository, this.githubPrNumber, TRANSLATIONS_REQUIRED.toString())) {
       this.pushToRepository = getValidRepositoryName();
-      Repository repository = this.commandHelper.findRepositoryByName(this.pushToRepository);
-      Branch branch = this.repositoryClient.getBranch(repository.getId(), this.pushToBranchName);
+      RepositoryRepository repository =
+          this.commandHelper.findRepositoryByName(this.pushToRepository);
+      BranchBranchSummary branch =
+          this.repositoryClient.getBranch(repository.getId(), this.pushToBranchName);
       if (branch != null) {
         PollableTask pollableTask =
-            this.repositoryClient.deleteBranch(branch.getId(), repository.getId());
+            this.repositoryClient.deleteBranch(repository.getId(), branch.getId());
         this.commandHelper.waitForPollableTask(pollableTask.getId());
       }
     }
@@ -422,7 +424,7 @@ public class ExtractionDiffCommand extends Command {
   }
 
   private String getValidRepositoryName() {
-    List<Repository> repositories = commandHelper.getAllRepositories();
+    List<RepositoryRepository> repositories = commandHelper.getAllRepositories();
 
     if (repositories.stream()
         .anyMatch(repository -> repository.getName().equals(pushToRepository))) {
@@ -443,7 +445,7 @@ public class ExtractionDiffCommand extends Command {
 
   void pushToRepository(ExtractionDiffPaths extractionDiffPaths) throws CommandException {
 
-    Repository repository = commandHelper.findRepositoryByName(pushToRepository);
+    RepositoryRepository repository = commandHelper.findRepositoryByName(pushToRepository);
 
     Stream<Path> allAssetExtractionDiffPaths =
         extractionDiffPaths.findAllAssetExtractionDiffPaths();
@@ -475,7 +477,12 @@ public class ExtractionDiffCommand extends Command {
                     sourceAsset.setExtractedContent(true);
                     sourceAsset.setRepositoryId(repository.getId());
                     sourceAsset.setFilterConfigIdOverride(
-                        assetExtractionDiff.getCurrentFilterConfigIdOverride());
+                        ofNullable(assetExtractionDiff.getCurrentFilterConfigIdOverride())
+                            .map(
+                                filterConfigIdOverride ->
+                                    SourceAsset.FilterConfigIdOverrideEnum.fromValue(
+                                        filterConfigIdOverride.name()))
+                            .orElse(null));
                     sourceAsset.setFilterOptions(assetExtractionDiff.getCurrentFilterOptions());
                   }
 
