@@ -1,21 +1,22 @@
 package com.box.l10n.mojito.cli.command;
 
+import static java.util.Optional.ofNullable;
+
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.filefinder.FileMatch;
 import com.box.l10n.mojito.cli.filefinder.file.FileType;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
-import com.box.l10n.mojito.rest.entity.Repository;
-import com.box.l10n.mojito.rest.entity.SourceAsset;
+import com.box.l10n.mojito.cli.model.RepositoryRepository;
+import com.box.l10n.mojito.cli.model.SourceAsset;
 import com.ibm.icu.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
@@ -118,7 +119,7 @@ public class PushCommand extends Command {
       required = false,
       description =
           "Optional list of notifiers when pusing to a repository (notification will be sent eg. when new strings are processed or when translations are ready)")
-  Set<String> pushToBranchNotifiers = Collections.emptySet();
+  List<String> pushToBranchNotifiers = Collections.emptyList();
 
   @Parameter(
       names = Param.PUSH_TYPE_LONG,
@@ -147,7 +148,7 @@ public class PushCommand extends Command {
       converter = AssetMappingConverter.class)
   Map<String, String> assetMapping;
 
-  @Autowired RepositoryClient repositoryClient;
+  @Autowired RepositoryWsApiProxy repositoryClient;
 
   @Autowired CommandHelper commandHelper;
 
@@ -167,7 +168,7 @@ public class PushCommand extends Command {
         .a(repositoryParam)
         .println(2);
 
-    Repository repository = commandHelper.findRepositoryByName(repositoryParam);
+    RepositoryRepository repository = commandHelper.findRepositoryByName(repositoryParam);
 
     if (commitHash != null && StringUtils.isBlank(commitHash)) {
       throw new CommandException(
@@ -225,7 +226,12 @@ public class PushCommand extends Command {
                   sourceAsset.setRepositoryId(repository.getId());
                   sourceAsset.setPushRunName(recordPushRun ? pushRunName : null);
                   sourceAsset.setFilterConfigIdOverride(
-                      sourceFileMatch.getFileType().getFilterConfigIdOverride());
+                      ofNullable(sourceFileMatch.getFileType().getFilterConfigIdOverride())
+                          .map(
+                              filterConfigIdOverride ->
+                                  SourceAsset.FilterConfigIdOverrideEnum.fromValue(
+                                      filterConfigIdOverride.name()))
+                          .orElse(null));
                   sourceAsset.setFilterOptions(
                       commandHelper.getFilterOptionsOrDefaults(
                           sourceFileMatch.getFileType(), filterOptionsParam));
