@@ -269,7 +269,7 @@ public class WebSecurityConfig {
           logger.debug("Add request header Auth filter with fallback");
           requestHeaderAuthenticationFilter.setAuthenticationManager(
               authenticationConfiguration.getAuthenticationManager());
-          http.addFilterBefore(
+          http.addFilterAfter(
               requestHeaderAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
           break;
         case OAUTH2:
