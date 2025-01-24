@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -52,6 +53,8 @@ public class UserService {
   @Autowired AuditorAwareImpl auditorAwareImpl;
 
   @Autowired MeterRegistry meterRegistry;
+
+  @Autowired Environment environment;
 
   @Autowired(required = false)
   ServiceDisambiguator serviceDisambiguator;
@@ -499,7 +502,10 @@ public class UserService {
         pagerDutyClient.triggerIncident(
             dedupKey,
             new PagerDutyPayload(
-                "Mojito unrecognized service attempting authentication: '" + serviceName + "'",
+                environment.getProperty("env.server.url", "Mojito")
+                    + " - unrecognized service attempting authentication: '"
+                    + serviceName
+                    + "'",
                 serviceName,
                 PagerDutyPayload.Severity.ERROR,
                 ImmutableMap.of("serviceName", serviceName)));
