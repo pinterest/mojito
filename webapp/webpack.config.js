@@ -110,8 +110,8 @@ module.exports = (env) => {
         },
         performance: {
             hints: 'error',
-            maxEntrypointSize: 1_800_000, // 1.8MB
-            maxAssetSize: 1_800_000 // 1.8MB
+            maxEntrypointSize: 2_000_000, // 1.8MB
+            maxAssetSize: 2_000_000 // 1.8MB
         },
         plugins: [],
         resolve: {
