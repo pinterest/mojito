@@ -61,7 +61,7 @@ public interface PushRunRepository extends JpaRepository<PushRun, Long> {
       JOIN push_run_asset pra ON pra.id = pratu.push_run_asset_id
       JOIN push_run pr ON pr.id = pra.push_run_id
       WHERE pr.id = (
-          SELECT p.id FROM push_run p WHERE p.repository_id = 4 ORDER BY p.created_date DESC LIMIT 1
+          SELECT p.id FROM push_run p WHERE p.repository_id = :repositoryId ORDER BY p.created_date DESC LIMIT 1
       )
     """,
       nativeQuery = true)

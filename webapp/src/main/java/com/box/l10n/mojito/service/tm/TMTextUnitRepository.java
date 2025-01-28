@@ -55,6 +55,6 @@ public interface TMTextUnitRepository extends JpaRepository<TMTextUnit, Long> {
       "SELECT t FROM TMTextUnit t JOIN FETCH t.asset a JOIN FETCH a.repository JOIN FETCH t.tm WHERE t.id = :id")
   Optional<TMTextUnit> findByIdWithAssetAndRepositoryAndTMFetched(@Param("id") Long id);
 
-  @Procedure(procedureName = "fetch_text_units_ready_for_appending")
-  Long countTextUnitsReadyForAppending(@Param("repo") Long repositoryId);
+  @Procedure(procedureName = "fetch_text_unit_count_for_appending")
+  Long countTextUnitsReadyForAppending(@Param("repositoryId") Long repositoryId);
 }
