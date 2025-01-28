@@ -26,6 +26,7 @@ import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.tm.GenerateLocalizedAssetJob;
 import com.box.l10n.mojito.service.tm.GenerateMultiLocalizedAssetJob;
 import com.box.l10n.mojito.service.tm.TMService;
+import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.service.tm.TMXliffRepository;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.github.pnowy.nc.utils.Strings;
@@ -33,6 +34,8 @@ import com.google.common.base.MoreObjects;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.swagger.v3.oas.annotations.Operation;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -79,8 +82,13 @@ public class AssetWS {
 
   @Autowired MeterRegistry meterRegistry;
 
+  @Autowired TMTextUnitRepository tmTextUnitRepository;
+
   @Value("${l10n.assetWS.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   String schedulerName;
+
+  @Value("#{'${l10n.assetWS.metrics.append-text-units.repositories:}'.split(',')}")
+  private List<String> recordMetricsForRepositories;
 
   /**
    * Gets the list of {@link Asset} for a given {@link Repository} and other optional filters
@@ -284,6 +292,11 @@ public class AssetWS {
                 asset.getRepository().getName()))
         .increment();
 
+    Repository repository = asset.getRepository();
+    if (recordMetricsForRepositories.contains(repository.getId().toString())) {
+      recordAppendMetrics(repository);
+    }
+
     QuartzJobInfo<MultiLocalizedAssetBody, MultiLocalizedAssetBody> quartzJobInfo =
         QuartzJobInfo.newBuilder(GenerateMultiLocalizedAssetJob.class)
             .withInlineInput(false)
@@ -469,5 +482,41 @@ public class AssetWS {
     }
 
     return pushRun;
+  }
+
+  private void recordAppendMetrics(Repository repository) {
+    try {
+      Long countTextUnitsPushed =
+          pushRunRepository.countTextUnitsFromLastPushRun(repository.getId());
+      Long countTextUnitsToAppend =
+          tmTextUnitRepository.countTextUnitsReadyForAppending(repository.getId());
+
+      // Uptick counter before decimal calculation in the chance an exception is thrown
+      meterRegistry
+          .counter("AssetWS.textUnits.appendCount", Tags.of("repository", repository.getName()))
+          .increment(countTextUnitsToAppend);
+
+      double percentageIncrease =
+          countTextUnitsToAppend.doubleValue() / countTextUnitsPushed.doubleValue() * 100;
+
+      // Round to two decimal places
+      percentageIncrease =
+          new BigDecimal(Double.toString(percentageIncrease))
+              .setScale(2, RoundingMode.HALF_UP)
+              .doubleValue();
+
+      logger.info(
+          "[TextUnit Appending Metrics] Repository '{}' would have appended '{}' text unit(s) to its current asset containing '{}' text units ({}% increase).",
+          repository.getName(), countTextUnitsToAppend, countTextUnitsPushed, percentageIncrease);
+
+      meterRegistry
+          .counter("AssetWS.textUnits.appendPercent", Tags.of("repository", repository.getName()))
+          .increment(percentageIncrease);
+    } catch (Exception e) {
+      logger.error(
+          "Failed to collect appending text units metrics for repository '{}' : ",
+          repository.getName(),
+          e);
+    }
   }
 }

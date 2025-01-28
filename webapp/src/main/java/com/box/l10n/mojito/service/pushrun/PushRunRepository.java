@@ -52,4 +52,18 @@ public interface PushRunRepository extends JpaRepository<PushRun, Long> {
           where pr.created_date < :beforeDate
           """)
   void deleteAllByCreatedDateBefore(@Param("beforeDate") ZonedDateTime beforeDate);
+
+  @Query(
+      value =
+          """
+      SELECT COUNT(*)
+      FROM push_run_asset_tm_text_unit pratu
+      JOIN push_run_asset pra ON pra.id = pratu.push_run_asset_id
+      JOIN push_run pr ON pr.id = pra.push_run_id
+      WHERE pr.id = (
+          SELECT p.id FROM push_run p WHERE p.repository_id = 4 ORDER BY p.created_date DESC LIMIT 1
+      )
+    """,
+      nativeQuery = true)
+  Long countTextUnitsFromLastPushRun(@Param("repositoryId") Long repositoryId);
 }
