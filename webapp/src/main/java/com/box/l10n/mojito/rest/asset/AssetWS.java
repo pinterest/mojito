@@ -293,7 +293,7 @@ public class AssetWS {
         .increment();
 
     Repository repository = asset.getRepository();
-    if (recordMetricsForRepositories.contains(repository.getId().toString())) {
+    if (recordMetricsForRepositories.contains(repository.getName())) {
       recordAppendMetrics(repository);
     }
 
