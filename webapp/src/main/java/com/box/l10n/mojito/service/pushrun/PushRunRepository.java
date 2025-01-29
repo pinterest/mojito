@@ -66,4 +66,12 @@ public interface PushRunRepository extends JpaRepository<PushRun, Long> {
     """,
       nativeQuery = true)
   Long countTextUnitsFromLastPushRun(@Param("repositoryId") Long repositoryId);
+
+  @Query(
+      value =
+          """
+          SELECT p.id FROM PushRun p
+          WHERE p.repository.id = :repositoryId ORDER BY p.createdDate DESC LIMIT 1
+          """)
+  Optional<Long> findLatestPushRunIdByRepositoryId(@Param("repositoryId") Long repositoryId);
 }

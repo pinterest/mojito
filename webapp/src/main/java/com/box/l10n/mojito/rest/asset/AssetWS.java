@@ -487,6 +487,14 @@ public class AssetWS {
 
   private void recordAppendMetrics(Repository repository) {
     try {
+
+      if (pushRunRepository.findLatestPushRunIdByRepositoryId(repository.getId()).isEmpty()) {
+        logger.warn(
+            "Attempted to log append text unit metrics for repository '{}' but there was no latest push run id found for this repository.",
+            repository.getName());
+        return;
+      }
+
       AssetMetricsConfigurationProperties assetMetricsConfigurationProperties =
           assetMetricsConfigurationsProperties.getAssetMetrics().get(repository.getName());
 
