@@ -16,6 +16,8 @@ import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
 import com.box.l10n.mojito.rest.View;
 import com.box.l10n.mojito.rest.repository.RepositoryWithIdNotFoundException;
 import com.box.l10n.mojito.service.NormalizationUtils;
+import com.box.l10n.mojito.service.asset.AssetMetricsConfigurationProperties;
+import com.box.l10n.mojito.service.asset.AssetMetricsConfigurationsProperties;
 import com.box.l10n.mojito.service.asset.AssetRepository;
 import com.box.l10n.mojito.service.asset.AssetService;
 import com.box.l10n.mojito.service.locale.LocaleService;
@@ -84,11 +86,10 @@ public class AssetWS {
 
   @Autowired TMTextUnitRepository tmTextUnitRepository;
 
+  @Autowired AssetMetricsConfigurationsProperties assetMetricsConfigurationsProperties;
+
   @Value("${l10n.assetWS.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   String schedulerName;
-
-  @Value("#{'${l10n.assetWS.metrics.append-text-units.repositories:}'.split(',')}")
-  private List<String> recordMetricsForRepositories;
 
   /**
    * Gets the list of {@link Asset} for a given {@link Repository} and other optional filters
@@ -293,7 +294,7 @@ public class AssetWS {
         .increment();
 
     Repository repository = asset.getRepository();
-    if (recordMetricsForRepositories.contains(repository.getName())) {
+    if (assetMetricsConfigurationsProperties.getAssetMetrics().containsKey(repository.getName())) {
       recordAppendMetrics(repository);
     }
 
@@ -486,10 +487,16 @@ public class AssetWS {
 
   private void recordAppendMetrics(Repository repository) {
     try {
+      AssetMetricsConfigurationProperties assetMetricsConfigurationProperties =
+          assetMetricsConfigurationsProperties.getAssetMetrics().get(repository.getName());
+
       Long countTextUnitsPushed =
           pushRunRepository.countTextUnitsFromLastPushRun(repository.getId());
       Long countTextUnitsToAppend =
-          tmTextUnitRepository.countTextUnitsReadyForAppending(repository.getId(), "master", 14);
+          tmTextUnitRepository.countTextUnitsReadyForAppending(
+              repository.getId(),
+              assetMetricsConfigurationProperties.getMainBranch(),
+              assetMetricsConfigurationProperties.getDaysInterval());
 
       // Uptick counter before decimal calculation in the chance an exception is thrown
       meterRegistry
