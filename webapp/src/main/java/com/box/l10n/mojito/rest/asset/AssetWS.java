@@ -489,7 +489,7 @@ public class AssetWS {
       Long countTextUnitsPushed =
           pushRunRepository.countTextUnitsFromLastPushRun(repository.getId());
       Long countTextUnitsToAppend =
-          tmTextUnitRepository.countTextUnitsReadyForAppending(repository.getId());
+          tmTextUnitRepository.countTextUnitsReadyForAppending(repository.getId(), "master", 14);
 
       // Uptick counter before decimal calculation in the chance an exception is thrown
       meterRegistry

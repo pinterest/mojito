@@ -56,5 +56,8 @@ public interface TMTextUnitRepository extends JpaRepository<TMTextUnit, Long> {
   Optional<TMTextUnit> findByIdWithAssetAndRepositoryAndTMFetched(@Param("id") Long id);
 
   @Procedure(procedureName = "fetch_text_unit_count_for_appending")
-  Long countTextUnitsReadyForAppending(@Param("repositoryId") Long repositoryId);
+  Long countTextUnitsReadyForAppending(
+      @Param("repositoryId") Long repositoryId,
+      @Param("mainBranch") String mainBranch,
+      @Param("daysInterval") int daysInterval);
 }
