@@ -6,7 +6,6 @@ import com.box.l10n.mojito.cli.command.L10nJCommander;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
 import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
 import com.box.l10n.mojito.rest.resttemplate.ResttemplateConfig;
 import com.box.l10n.mojito.service.asset.AssetRepository;
@@ -64,8 +63,6 @@ public class CLITestBase extends IOTestBase {
   @Autowired TMService tmService;
 
   @Autowired ResttemplateConfig resttemplateConfig;
-
-  @Autowired RepositoryClient repositoryClient;
 
   @Autowired AssetRepository assetRepository;
 

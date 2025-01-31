@@ -1,14 +1,14 @@
 package com.box.l10n.mojito.cli.apiclient;
 
+import com.box.l10n.mojito.cli.apiclient.exception.RepositoryNotFoundException;
+import com.box.l10n.mojito.cli.apiclient.exception.ResourceNotCreatedException;
+import com.box.l10n.mojito.cli.apiclient.exception.ResourceNotUpdatedException;
 import com.box.l10n.mojito.cli.command.CommandException;
 import com.box.l10n.mojito.cli.model.BranchBranchSummary;
 import com.box.l10n.mojito.cli.model.ImportRepositoryBody;
 import com.box.l10n.mojito.cli.model.PollableTask;
 import com.box.l10n.mojito.cli.model.Repository;
 import com.box.l10n.mojito.cli.model.RepositoryRepository;
-import com.box.l10n.mojito.rest.client.exception.RepositoryNotFoundException;
-import com.box.l10n.mojito.rest.client.exception.ResourceNotCreatedException;
-import com.box.l10n.mojito.rest.client.exception.ResourceNotUpdatedException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
