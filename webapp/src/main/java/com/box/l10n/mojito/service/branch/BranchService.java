@@ -11,6 +11,7 @@ import com.box.l10n.mojito.quartz.QuartzJobInfo;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.tm.BranchSourceRepository;
+import com.box.l10n.mojito.service.tm.textunitdtocache.UpdateType;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.text.MessageFormat;
@@ -42,6 +43,8 @@ public class BranchService {
 
   @Autowired BranchSourceConfig branchSourceConfig;
 
+  @Autowired BranchStatisticService branchStatisticService;
+
   @Value("${l10n.branchService.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   String schedulerName;
 
@@ -56,8 +59,9 @@ public class BranchService {
     branch.setCreatedByUser(createdByUser);
     branch.setNotifiers(branchNotifierIds);
     branch = branchRepository.save(branch);
-
     addBranchSource(branch);
+
+    branchStatisticService.computeAndSaveBranchStatistic(repository, branchName, UpdateType.ALWAYS);
 
     return branch;
   }
