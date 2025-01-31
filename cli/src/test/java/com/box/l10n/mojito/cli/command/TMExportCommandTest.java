@@ -1,10 +1,9 @@
 package com.box.l10n.mojito.cli.command;
 
 import com.box.l10n.mojito.cli.CLITestBase;
+import com.box.l10n.mojito.cli.apiclient.AssetWsApiProxy;
+import com.box.l10n.mojito.cli.model.AssetAssetSummary;
 import com.box.l10n.mojito.entity.Repository;
-import com.box.l10n.mojito.rest.client.AssetClient;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
-import com.box.l10n.mojito.rest.entity.Asset;
 import com.box.l10n.mojito.test.XliffUtils;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,9 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class TMExportCommandTest extends CLITestBase {
 
-  @Autowired RepositoryClient repositoryClient;
-
-  @Autowired AssetClient assetClient;
+  @Autowired AssetWsApiProxy assetClient;
 
   @Test
   public void export() throws Exception {
@@ -31,12 +28,12 @@ public class TMExportCommandTest extends CLITestBase {
             "-s",
             getInputResourcesTestDir("source").getAbsolutePath());
 
-    Asset asset =
+    AssetAssetSummary asset =
         assetClient.getAssetByPathAndRepositoryId("source-xliff.xliff", repository.getId());
     importTranslations(asset.getId(), "source-xliff_", "fr-FR");
     importTranslations(asset.getId(), "source-xliff_", "ja-JP");
 
-    Asset asset2 =
+    AssetAssetSummary asset2 =
         assetClient.getAssetByPathAndRepositoryId("source2-xliff.xliff", repository.getId());
     importTranslations(asset2.getId(), "source2-xliff_", "fr-FR");
     importTranslations(asset2.getId(), "source2-xliff_", "ja-JP");

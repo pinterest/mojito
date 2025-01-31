@@ -3,6 +3,7 @@ package com.box.l10n.mojito.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.box.l10n.mojito.cli.apiclient.AssetWsApiProxy;
+import com.box.l10n.mojito.cli.apiclient.PollableTaskWsApiProxy;
 import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
@@ -14,7 +15,6 @@ import com.box.l10n.mojito.cli.model.SourceAsset;
 import com.box.l10n.mojito.evolve.Course;
 import com.box.l10n.mojito.evolve.Evolve;
 import com.box.l10n.mojito.io.Files;
-import com.box.l10n.mojito.rest.client.PollableTaskClient;
 import com.google.common.base.Preconditions;
 import com.ibm.icu.util.ULocale;
 import java.nio.file.Path;
@@ -83,7 +83,7 @@ public class EvolveCommand extends Command {
 
   @Autowired AssetWsApiProxy assetClient;
 
-  @Autowired PollableTaskClient pollableTaskClient;
+  @Autowired PollableTaskWsApiProxy pollableTaskClient;
 
   @Autowired CommandHelper commandHelper;
 
