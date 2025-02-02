@@ -97,8 +97,8 @@ class Header extends React.Component {
                             this.updateSearchParamsForDefaultView();
                         }
                     }}><NavItem><FormattedMessage id="header.workbench"/></NavItem></LinkContainer>
-                    <LinkContainer to="/project-requests"><NavItem><FormattedMessage
-                        id="header.projectRequests"/></NavItem></LinkContainer>
+                    {/*<LinkContainer to="/project-requests"><NavItem><FormattedMessage*/}
+                    {/*    id="header.projectRequests"/></NavItem></LinkContainer>*/}
                     <LinkContainer to="/branches" onClick={() => {
                         if (this.props.router.isActive("/branches")) {
                             BranchesPageActions.resetBranchesSearchParams();
@@ -114,6 +114,11 @@ class Header extends React.Component {
                             ScreenshotsRepositoryActions.getAllRepositories();
                         }
                     }}><NavItem><FormattedMessage id="header.screenshots"/></NavItem></LinkContainer>
+                    <LinkContainer to="/jobs" onClick={() => {}}>
+                        <NavItem>
+                            Jobs
+                        </NavItem>
+                    </LinkContainer>
                 </Nav>
                 <Nav pullRight={true}>
                     <NavDropdown title={this.getUsernameDisplay()} id="user-menu">

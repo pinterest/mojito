@@ -71,6 +71,14 @@ public class ScheduledThirdPartySync implements IScheduledJob {
             Tags.of("Repository", scheduledJob.getRepository().getName()))
         .increment();
 
+    pollableTaskId = 10L;
+    try {
+      Thread.sleep(20000);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    if (true) return;
+
     // Create ThirdPartySyncInput from scheduled job and properties
     ThirdPartySyncJobInput thirdPartySyncJobInput =
         new ThirdPartySyncJobInput(scheduledJob, scheduledJobProperties);
