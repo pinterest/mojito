@@ -8,7 +8,8 @@ class JobActions {
             "getAllJobsError",
             "triggerJob",
             "triggerJobSuccess",
-            "triggerJobError"
+            "triggerJobError",
+            "setJobStatus",
         );
     }
 }

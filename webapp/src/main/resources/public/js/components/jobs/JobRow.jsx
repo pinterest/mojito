@@ -5,6 +5,7 @@ import JobStatusLabel from "./JobStatusLabel";
 import JobButton from "./JobButton";
 import {ImSpinner2} from "react-icons/im";
 import jobButton from "./JobButton";
+import {JobStatus} from "../../utils/JobStatus";
 
 class JobRow extends React.Component {
 
@@ -87,7 +88,7 @@ class JobRow extends React.Component {
     render() {
 
         const job = this.props.job;
-        const inProgress = job.status === "IN_PROGRESS";
+        const inProgress = job.status === JobStatus.IN_PROGRESS;
         const jobTypeFormatted = job.type.replaceAll('_', ' ').toLowerCase()
             .split(' ')
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))

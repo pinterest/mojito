@@ -3,7 +3,10 @@ import JobActions from "../../actions/jobs/JobActions";
 
 class JobButton extends React.Component {
 
-    handleClick = (job, type) => {
+    handleClick = (job, type, button) => {
+        // Disable the button to avoid register spam clicks
+        button.disabled = true;
+
         switch(type) {
             case JobButton.TYPES.RUN:
                 JobActions.triggerJob(job);
@@ -20,9 +23,7 @@ class JobButton extends React.Component {
      */
     render() {
 
-        const type = this.props.type;
-        const disabled = this.props.disabled;
-        const job = this.props.job;
+        const {type, disabled, job} = this.props;
 
         const disabledStyle = {
             "backgroundColor": "#c2c2c257",
@@ -32,7 +33,7 @@ class JobButton extends React.Component {
 
         return (
             <button className="job-button" disabled={disabled}
-                    style={disabled ? disabledStyle : {}} onClick={() => this.handleClick(job, type)} >
+                    style={disabled ? disabledStyle : {}} onClick={(e) => this.handleClick(job, type, e.currentTarget)} >
                 {type}
             </button>
         );

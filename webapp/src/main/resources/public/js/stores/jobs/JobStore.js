@@ -22,6 +22,11 @@ class JobStore {
     triggerJob(job) {
         this.getInstance().triggerJob(job);
     }
+
+    setJobStatus(args) {
+        const [job, status] = args;
+        this.jobs = this.jobs.map(j => job.id === j.id ? {...j, status} : j)
+    }
 }
 
 export default alt.createStore(JobStore, 'JobStore');
