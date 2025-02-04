@@ -114,6 +114,11 @@ class Header extends React.Component {
                             ScreenshotsRepositoryActions.getAllRepositories();
                         }
                     }}><NavItem><FormattedMessage id="header.screenshots"/></NavItem></LinkContainer>
+                    <LinkContainer to="/jobs" onClick={() => {}}>
+                        <NavItem>
+                            Jobs
+                        </NavItem>
+                    </LinkContainer>
                 </Nav>
                 <Nav pullRight={true}>
                     <NavDropdown title={this.getUsernameDisplay()} id="user-menu">

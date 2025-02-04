@@ -49,6 +49,7 @@ import BranchesHistoryStore from "./stores/branches/BranchesHistoryStore";
 import enMessages from '../../properties/en.properties';
 import GoogleAnalytics from "./utils/GoogleAnalytics";
 import ShareSearchParamsModalActions from "./actions/workbench/ShareSearchParamsModalActions";
+import Jobs from "./components/jobs/Jobs";
 
 addLocaleData([...en, ...fr, ...be, ...ko, ...ru, ...de, ...es, ...it, ...ja, ...pt, ...zh]);
 
@@ -117,6 +118,7 @@ function startApp(messages) {
                             <Route path="screenshots" component={ScreenshotsPage}
                                    onEnter={onEnterScreenshots}
                                    onLeave={ScreenshotsPageActions.resetScreenshotSearchParams}/>
+                            <Route path="jobs" component={Jobs}/>
                             <Route path="settings" component={Settings} onEnter={onEnterSettings} onChange={onChangeSettings}>
                                 <Route path="user-management" component={UserManagement}/>
                                 <Route path="box" component={BoxSettings}/>
