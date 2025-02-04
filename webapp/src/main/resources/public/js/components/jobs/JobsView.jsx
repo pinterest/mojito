@@ -10,15 +10,14 @@ class JobsView extends React.Component {
         super(props);
 
         this.state = JobStore.getState();
-        // Bind this to the function call to unsure this references this instance.
+
+        // Bind this to the function call to ensure this references this instance.
         this.jobStoreChange = this.jobStoreChange.bind(this);
         JobActions.getAllJobs();
 
         this.interval = setInterval(() => {
             JobActions.getAllJobs();
         }, 5000);
-
-
     }
 
     componentDidMount() {

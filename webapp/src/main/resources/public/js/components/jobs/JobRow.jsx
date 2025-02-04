@@ -50,18 +50,24 @@ class JobRow extends React.Component {
         }
     };
 
-    convertUnixToTime(unixTime) {
+    convertUnixToDate(unixTime) {
         const date = new Date(unixTime);
+
+        const month = date.toLocaleString('default', { month: 'long' }).substring(0, 3);
+        const day = date.getUTCDay();
+
         const hours = date.getUTCHours();
         const minutes = date.getUTCMinutes();
         const seconds = date.getUTCSeconds();
 
         // Pad with zeros if single digit
-        return [
+        const time = [
             hours.toString().padStart(2, '0'),
             minutes.toString().padStart(2, '0'),
             seconds.toString().padStart(2, '0')
         ].join(':');
+
+        return `${month} ${day}, ${time}`;
     }
 
 
@@ -93,8 +99,8 @@ class JobRow extends React.Component {
                         <div>{job.repository}</div>
                     </div>
                     <div className="job-timings">
-                        <div>Started @ {job.startDate && this.convertUnixToTime(job.startDate)}</div>
-                        <div>Ended @ {job.endDate ? this.convertUnixToTime(job.endDate) : "..."}</div>
+                        <div>Started @ {job.startDate && this.convertUnixToDate(job.startDate)}</div>
+                        <div>Ended @ {job.endDate ? this.convertUnixToDate(job.endDate) : "..."}</div>
                     </div>
                 </div>
                 <div className="job-bottom-row">
