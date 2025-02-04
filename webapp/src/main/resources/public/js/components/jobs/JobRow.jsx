@@ -70,6 +70,15 @@ class JobRow extends React.Component {
         return `${month} ${day}, ${time}`;
     }
 
+    getThirdPartyLink(job) {
+        if(job.repository && job.repository in APP_CONFIG.link) {
+            const url = new URL(APP_CONFIG.link[job.repository].thirdParty.url);
+            url.search = '';
+            return url;
+        }
+        return "";
+    }
+
 
     /**
      * @return {XML}
@@ -78,6 +87,12 @@ class JobRow extends React.Component {
 
         const job = this.props.job;
         const inProgress = job.status === "IN_PROGRESS";
+        const jobTypeFormatted = job.type.replaceAll('_', ' ').toLowerCase()
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ')
+
+
 
         return (
             <div className="job-row">
@@ -86,17 +101,11 @@ class JobRow extends React.Component {
                     <div className="job-details">
                         <div className="job-details-title">
                             <h1 className={inProgress ? "job-details-title-loading" : ""}>
-                            {
-                                job.type && job.type
-                                    .replaceAll('_', ' ').toLowerCase()
-                                    .split(' ')
-                                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                                    .join(' ')
-                            }
+                            { job.type && jobTypeFormatted }
                             </h1>
                             <JobStatusLabel status={job.enabled ? job.status : "DISABLED"} />
                         </div>
-                        <div>{job.repository}</div>
+                        <div>{job.repository} - <a href={this.getThirdPartyLink(job)}>{job.properties.thirdPartyProjectId}</a></div>
                     </div>
                     <div className="job-timings">
                         <div>Started @ {job.startDate && this.convertUnixToDate(job.startDate)}</div>
