@@ -38,9 +38,9 @@ class JobRow extends React.Component {
         } else {
             const minutesLeft = Math.ceil(difference / 60);
             if(minutesLeft > 1) {
-                this.setState({ timeLeft: `Running in ${minutesLeft} minutes` });
+                this.setState({ timeLeft: `Starting in ${minutesLeft} minutes` });
             } else {
-                this.setState({ timeLeft: `Running in ${minutesLeft} minute` });
+                this.setState({ timeLeft: `Starting in ${minutesLeft} minute` });
             }
 
 
