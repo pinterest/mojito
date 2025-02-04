@@ -13,8 +13,8 @@ let JobTypeDropDown = createReactClass({
      */
     render() {
         return (
-                <span className="mlm locale-dropdown">
-                    <DropdownButton id="JobTypeDropdown" disabled={true} title={"THIRD_PARTY_SYNC"}>
+                <span className="mlm">
+                    <DropdownButton id="JobTypeDropdown" disabled={true} title={"Third Party Sync"}>
                         <MenuItem divider/>
                         <MenuItem active={true}>Third Party Sync</MenuItem>
                     </DropdownButton>
