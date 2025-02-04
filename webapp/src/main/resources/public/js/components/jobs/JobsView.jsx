@@ -36,22 +36,6 @@ class JobsView extends React.Component {
         this.setState({jobs: state.jobs})
     }
 
-    runClick = (job) => {
-        JobActions.triggerJob(job);
-    }
-
-    disableEnableClick = (job) => {
-        this.setState(prevState => {
-            const newJobs = prevState.jobs.map(j => {
-                if(j === job) {
-                    return {...j, enabled: !j.enabled}
-                }
-                return j;
-            })
-            return {jobs: newJobs}
-        })
-    }
-
     /**
      * @return {XML}
      */
@@ -61,7 +45,7 @@ class JobsView extends React.Component {
                 <div className="jobs-container">
                     {
                         this.state.jobs.map(job =>
-                            <JobRow job={job} runClick={this.runClick} disableEnableClick={this.disableEnableClick} />
+                            <JobRow job={job} />
                         )
                     }
                 </div>

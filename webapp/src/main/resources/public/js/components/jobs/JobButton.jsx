@@ -1,6 +1,19 @@
 import React from "react";
+import JobActions from "../../actions/jobs/JobActions";
 
 class JobButton extends React.Component {
+
+    handleClick = (job, type) => {
+        switch(type) {
+            case JobButton.TYPES.RUN:
+                JobActions.triggerJob(job);
+                break;
+            case JobButton.TYPES.DISABLE:
+                break;
+            case JobButton.TYPES.ENABLE:
+                break;
+        }
+    }
 
     /**
      * @return {XML}
@@ -19,11 +32,17 @@ class JobButton extends React.Component {
 
         return (
             <button className="job-button" disabled={disabled}
-                    style={disabled ? disabledStyle : {}} onClick={() => this.props.click(job)} >
+                    style={disabled ? disabledStyle : {}} onClick={() => this.handleClick(job, type)} >
                 {type}
             </button>
         );
     }
+}
+
+JobButton.TYPES = {
+    "RUN": "RUN",
+    "DISABLE": "DISABLE",
+    "ENABLE": "ENABLE"
 }
 
 export default JobButton;

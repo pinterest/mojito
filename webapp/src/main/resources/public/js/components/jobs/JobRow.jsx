@@ -4,6 +4,7 @@ import {MdSyncAlt} from "react-icons/md";
 import JobStatusLabel from "./JobStatusLabel";
 import JobButton from "./JobButton";
 import {ImSpinner2} from "react-icons/im";
+import jobButton from "./JobButton";
 
 class JobRow extends React.Component {
 
@@ -92,8 +93,6 @@ class JobRow extends React.Component {
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ')
 
-
-
         return (
             <div className="job-row">
                 <div className="job-inner-row">
@@ -129,8 +128,12 @@ class JobRow extends React.Component {
                     {!job.enabled && <div>Disabled</div>}
 
                     <div className="job-controls">
-                        <JobButton job={job} type={"RUN"} disabled={inProgress || !job.enabled} click={this.props.runClick} />
-                        <JobButton job={job} type={ job.enabled ? "DISABLE" : "ENABLE"} click={this.props.disableEnableClick} />
+                        <JobButton job={job}
+                                   type={JobButton.TYPES.RUN} disabled={inProgress || !job.enabled}
+                        />
+                        <JobButton job={job}
+                                   type={ job.enabled ? JobButton.TYPES.DISABLE : jobButton.TYPES.ENABLE}
+                        />
                     </div>
                 </div>
             </div>
