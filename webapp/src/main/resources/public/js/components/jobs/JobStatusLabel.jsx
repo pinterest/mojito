@@ -8,22 +8,22 @@ class JobStatusLabel extends React.Component {
      */
     render() {
 
-        const status = this.props.status;
+        const {status} = this.props;
 
         const styleConfig = {
-            "IN_PROGRESS" : {
+            IN_PROGRESS : {
                 "backgroundColor": "rgba(147, 112, 219, 0.24)",
                 "color": "mediumpurple"
             },
-            "SUCCEEDED" : {
+            SUCCEEDED : {
                 "backgroundColor": "rgba(85, 151, 69, 0.25)",
                 "color": "#559745"
             },
-            "FAILED" : {
+            FAILED : {
                 "backgroundColor": "rgba(251, 52, 52, 0.25)",
                 "color": "rgb(251, 52, 52)"
             },
-            "DISABLED" : {
+            DISABLED : {
                 "backgroundColor": "rgba(182, 182, 182, 0.25)",
                 "color": "#656565"
             }

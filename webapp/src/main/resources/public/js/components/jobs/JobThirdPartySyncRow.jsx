@@ -7,18 +7,18 @@ import {ImSpinner2} from "react-icons/im";
 import jobButton from "./JobButton";
 import {JobStatus} from "../../utils/JobStatus";
 
-class JobRow extends React.Component {
+class JobThirdPartySyncRow extends React.Component {
 
     constructor(props) {
         super(props);
         this.state = {
-            timeLeft: '',
+            nextStartMessage: '',
         };
     }
 
     componentDidMount() {
-        this.updateTimeLeft();
-        this.intervalId = setInterval(this.updateTimeLeft, 1000);
+        this.updateNextStartMessage();
+        this.intervalId = setInterval(this.updateNextStartMessage, 1000);
     }
 
     componentWillUnmount() {
@@ -27,27 +27,27 @@ class JobRow extends React.Component {
 
     componentDidUpdate(prevProps, prevState) {
         if (prevProps.job.nextStartDate !== this.props.job.nextStartDate) {
-            this.updateTimeLeft();
+            this.updateNextStartMessage();
         }
     }
 
-    updateTimeLeft = () => {
+    updateNextStartMessage = () => {
         const difference = (this.props.job.nextStartDate - Date.now()) / 1000;
 
         if (difference <= 0) {
-            this.setState({ timeLeft: 'Starting...' });
+            this.setState({ nextStartMessage: 'Starting...' });
             clearInterval(this.intervalId);
         } else {
             const minutesLeft = Math.ceil(difference / 60);
             if(minutesLeft > 1) {
-                this.setState({ timeLeft: `Starting in ${minutesLeft} minutes` });
+                this.setState({ nextStartMessage: `Starting in ${minutesLeft} minutes` });
             } else {
-                this.setState({ timeLeft: `Starting in ${minutesLeft} minute` });
+                this.setState({ nextStartMessage: `Starting in ${minutesLeft} minute` });
             }
 
 
             if (this.intervalId === null) {
-                this.intervalId = setInterval(this.updateTimeLeft, 1000);
+                this.intervalId = setInterval(this.updateNextStartMessage, 1000);
             }
         }
     };
@@ -87,7 +87,7 @@ class JobRow extends React.Component {
      */
     render() {
 
-        const job = this.props.job;
+        const { job } = this.props;
         const inProgress = job.status === JobStatus.IN_PROGRESS;
         const jobTypeFormatted = job.type.replaceAll('_', ' ').toLowerCase()
             .split(' ')
@@ -122,7 +122,7 @@ class JobRow extends React.Component {
 
                     {job.enabled && !inProgress &&
                         <div>
-                            <div>{this.state.timeLeft}</div>
+                            <div>{this.state.nextStartMessage}</div>
                         </div>
                     }
 
@@ -142,4 +142,4 @@ class JobRow extends React.Component {
     }
 }
 
-export default withAppConfig(JobRow);
+export default withAppConfig(JobThirdPartySyncRow);

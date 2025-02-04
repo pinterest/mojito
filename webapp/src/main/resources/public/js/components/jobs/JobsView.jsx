@@ -1,10 +1,10 @@
 import React from "react";
 import {withAppConfig} from "../../utils/AppConfig";
-import JobRow from "./JobRow";
 import JobStore from "../../stores/jobs/JobStore";
 import JobActions from "../../actions/jobs/JobActions";
 import AuthorityService from "../../utils/AuthorityService";
-import {FormattedMessage} from "react-intl";
+import JobThirdPartySyncRow from "./JobThirdPartySyncRow";
+import {JobType} from "../../utils/JobType";
 
 class JobsView extends React.Component {
 
@@ -17,7 +17,7 @@ class JobsView extends React.Component {
         this.jobStoreChange = this.jobStoreChange.bind(this);
 
         if(AuthorityService.canViewJobs()) {
-            // Only poll if we have access, stops polling for 403 responses
+            // Only poll if we have access (stops polling for 403 responses)
             JobActions.getAllJobs();
             this.interval = setInterval(() => {
                 JobActions.getAllJobs();
@@ -26,7 +26,7 @@ class JobsView extends React.Component {
     }
 
     componentDidMount() {
-        // Start listening the JobStore updates
+        // Start listening to JobStore updates
         JobStore.listen(this.jobStoreChange);
     }
 
@@ -39,6 +39,16 @@ class JobsView extends React.Component {
     jobStoreChange(state) {
         // Any change to the JobStore will come here
         this.setState({jobs: state.jobs})
+    }
+
+    createJobRow(job, index) {
+        // Render specific row with correct job information depending on the type.
+        switch(job.type) {
+            case JobType.THIRD_PARTY_SYNC:
+                return <JobThirdPartySyncRow key={index} job={job} />;
+            default:
+                return "";
+        }
     }
 
     /**
@@ -57,8 +67,8 @@ class JobsView extends React.Component {
             <div>
                 <div className="jobs-container">
                     {
-                        this.state.jobs.map(job =>
-                            <JobRow job={job} />
+                        this.state.jobs.map((job, index) =>
+                            this.createJobRow(job, index)
                         )
                     }
                 </div>
