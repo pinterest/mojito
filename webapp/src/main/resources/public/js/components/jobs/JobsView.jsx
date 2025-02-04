@@ -13,7 +13,7 @@ class JobsView extends React.Component {
 
         this.state = JobStore.getState();
 
-        // Bind this to the function call to ensure this references this instance.
+        // Bind this to the function call to ensure 'this' references the current instance.
         this.jobStoreChange = this.jobStoreChange.bind(this);
 
         if(AuthorityService.canViewJobs()) {

@@ -18,6 +18,12 @@ class JobButton extends React.Component {
                 JobActions.enableJob(job);
                 break;
         }
+
+        setTimeout(() => {
+            // Wait before switching on the button to avoid double clicks
+            button.disabled = false;
+        }, 500)
+
     }
 
     /**
