@@ -17,6 +17,22 @@ class JobClient extends BaseClient {
             });
     }
 
+    disableJob(job) {
+        const jobDisableUrl = `/${job.id}/disable`
+        return this.post(this.getUrl() + jobDisableUrl, null)
+            .then(resp => {
+                JobActions.setJobStatus(job, JobStatus.DISABLED);
+            });
+    }
+
+    enableJob(job) {
+        const jobEnableUrl = `/${job.id}/enable`
+        return this.post(this.getUrl() + jobEnableUrl, null)
+            .then(resp => {
+                JobActions.setJobStatus(job, JobStatus.ENABLED);
+            });
+    }
+
     getEntityName() {
         return 'jobs';
     }

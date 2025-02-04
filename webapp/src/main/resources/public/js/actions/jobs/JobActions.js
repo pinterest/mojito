@@ -9,6 +9,8 @@ class JobActions {
             "triggerJob",
             "triggerJobSuccess",
             "triggerJobError",
+            "disableJob",
+            "enableJob",
             "setJobStatus",
         );
     }

@@ -2,6 +2,7 @@ import alt from "../../alt";
 import JobDataSource from "../../actions/jobs/JobDataSource";
 import JobActions from "../../actions/jobs/JobActions";
 import RepositoryActions from "../../actions/RepositoryActions";
+import {JobStatus} from "../../utils/JobStatus";
 
 class JobStore {
 
@@ -23,9 +24,22 @@ class JobStore {
         this.getInstance().triggerJob(job);
     }
 
+    disableJob(job) {
+        this.getInstance().disableJob(job);
+    }
+
+    enableJob(job) {
+        this.getInstance().enableJob(job);
+    }
+
     setJobStatus(args) {
         const [job, status] = args;
-        this.jobs = this.jobs.map(j => job.id === j.id ? {...j, status} : j)
+        if(status === JobStatus.DISABLED || status === JobStatus.ENABLED) {
+            // The jobs enabled attribute should be switched
+            this.jobs = this.jobs.map(j => job.id === j.id ? {...j, enabled: status === JobStatus.ENABLED} : j)
+        } else {
+            this.jobs = this.jobs.map(j => job.id === j.id ? {...j, status} : j)
+        }
     }
 }
 

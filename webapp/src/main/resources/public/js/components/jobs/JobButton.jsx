@@ -12,8 +12,10 @@ class JobButton extends React.Component {
                 JobActions.triggerJob(job);
                 break;
             case JobButton.TYPES.DISABLE:
+                JobActions.disableJob(job);
                 break;
             case JobButton.TYPES.ENABLE:
+                JobActions.enableJob(job);
                 break;
         }
     }
