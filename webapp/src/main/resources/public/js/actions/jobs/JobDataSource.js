@@ -14,21 +14,21 @@ const JobDataSource = {
         remote(state, job) {
             return JobClient.triggerJob(job);
         },
-        success: null,
+        success: JobActions.triggerJobSuccess,
         error: JobActions.triggerJobError
     },
     disableJob: {
         remote(state, job) {
             return JobClient.disableJob(job);
         },
-        success: null,
+        success: JobActions.disableJobSuccess,
         error: JobActions.disableJobError
     },
     enableJob: {
         remote(state, job) {
             return JobClient.enableJob(job);
         },
-        success: null,
+        success: JobActions.enableJobSuccess,
         error: JobActions.enableJobError
     }
 };

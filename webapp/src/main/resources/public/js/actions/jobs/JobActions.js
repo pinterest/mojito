@@ -10,8 +10,9 @@ class JobActions {
             "triggerJobSuccess",
             "triggerJobError",
             "disableJob",
+            "disableJobSuccess",
             "enableJob",
-            "setJobStatus",
+            "enableJobSuccess",
             "setJobFilter"
         );
     }

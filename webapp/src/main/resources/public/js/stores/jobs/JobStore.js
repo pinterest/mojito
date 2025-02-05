@@ -25,22 +25,28 @@ class JobStore {
         this.getInstance().triggerJob(job);
     }
 
+    triggerJobSuccess(response) {
+        const jobId = response.jobId;
+        // Update job on client side before the full sync (poll) occurs
+        this.jobs = this.jobs.map(j => jobId === j.id ? {...j, status: JobStatus.IN_PROGRESS} : j)
+    }
+
     disableJob(job) {
         this.getInstance().disableJob(job);
+    }
+
+    disableJobSuccess(response) {
+        const jobId = response.jobId;
+        this.jobs = this.jobs.map(j => jobId === j.id ? {...j, enabled: false} : j)
     }
 
     enableJob(job) {
         this.getInstance().enableJob(job);
     }
 
-    setJobStatus(args) {
-        const [job, status] = args;
-        if(status === JobStatus.DISABLED || status === JobStatus.ENABLED) {
-            // The jobs enabled attribute should be switched
-            this.jobs = this.jobs.map(j => job.id === j.id ? {...j, enabled: status === JobStatus.ENABLED} : j)
-        } else {
-            this.jobs = this.jobs.map(j => job.id === j.id ? {...j, status} : j)
-        }
+    enableJobSuccess(response) {
+        const jobId = response.jobId;
+        this.jobs = this.jobs.map(j => jobId === j.id ? {...j, enabled: true} : j);
     }
 
     setJobFilter(repos) {

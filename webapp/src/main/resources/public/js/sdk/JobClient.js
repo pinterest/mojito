@@ -11,26 +11,17 @@ class JobClient extends BaseClient {
 
     triggerJob(job) {
         const jobTriggerUrl = `/${job.id}/trigger`
-        return this.post(this.getUrl() + jobTriggerUrl, null)
-            .then(resp => {
-                JobActions.setJobStatus(job, JobStatus.IN_PROGRESS);
-            });
+        return this.post(this.getUrl() + jobTriggerUrl, null);
     }
 
     disableJob(job) {
         const jobDisableUrl = `/${job.id}/disable`
-        return this.post(this.getUrl() + jobDisableUrl, null)
-            .then(resp => {
-                JobActions.setJobStatus(job, JobStatus.DISABLED);
-            });
+        return this.post(this.getUrl() + jobDisableUrl, null);
     }
 
     enableJob(job) {
         const jobEnableUrl = `/${job.id}/enable`
-        return this.post(this.getUrl() + jobEnableUrl, null)
-            .then(resp => {
-                JobActions.setJobStatus(job, JobStatus.ENABLED);
-            });
+        return this.post(this.getUrl() + jobEnableUrl, null);
     }
 
     getEntityName() {
