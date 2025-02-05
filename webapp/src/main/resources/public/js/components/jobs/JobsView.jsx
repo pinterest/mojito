@@ -38,7 +38,7 @@ class JobsView extends React.Component {
 
     jobStoreChange(state) {
         // Any change to the JobStore will come here
-        this.setState({jobs: state.jobs})
+        this.setState({jobs: state.jobs, filter: state.filter})
     }
 
     createJobRow(job, index) {
@@ -67,9 +67,11 @@ class JobsView extends React.Component {
             <div>
                 <div className="jobs-container">
                     {
-                        this.state.jobs.map((job, index) =>
-                            this.createJobRow(job, index)
-                        )
+                        this.state.jobs
+                            .filter(job => this.state.filter.length === 0 ? true : this.state.filter.includes(job.repository))
+                            .map((job, index) =>
+                                this.createJobRow(job, index)
+                            )
                     }
                 </div>
             </div>

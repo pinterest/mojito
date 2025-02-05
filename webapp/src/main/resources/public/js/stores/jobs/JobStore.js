@@ -8,6 +8,7 @@ class JobStore {
 
     constructor() {
         this.jobs = [];
+        this.filter = [];
         this.bindActions(JobActions);
         this.registerAsync(JobDataSource);
     }
@@ -40,6 +41,10 @@ class JobStore {
         } else {
             this.jobs = this.jobs.map(j => job.id === j.id ? {...j, status} : j)
         }
+    }
+
+    setJobFilter(repos) {
+        this.filter = repos;
     }
 }
 

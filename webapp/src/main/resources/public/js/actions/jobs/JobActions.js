@@ -12,6 +12,7 @@ class JobActions {
             "disableJob",
             "enableJob",
             "setJobStatus",
+            "setJobFilter"
         );
     }
 }

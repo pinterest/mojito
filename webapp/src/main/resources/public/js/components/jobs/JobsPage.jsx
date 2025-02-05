@@ -3,10 +3,13 @@ import createReactClass from 'create-react-class';
 import {withRouter} from "react-router";
 import JobTypeDropdown from "./JobTypeDropdown";
 import JobsView from "./JobsView";
+import AltContainer from "alt-container";
+import JobStore from "../../stores/jobs/JobStore";
+import RepositoryDropDown from "./RepositoryDropDown";
 
-let Jobs = createReactClass({
-    displayName: 'Jobs',
-    componentWillUnmount() {},
+let JobsPage = createReactClass({
+    displayName: 'JobsPage',
+
     render: function () {
         const clearLeftFix = {
             clear: 'left',
@@ -15,14 +18,17 @@ let Jobs = createReactClass({
             <div>
                 <div className="pull-left">
                     <JobTypeDropdown />
+                    <RepositoryDropDown />
                 </div>
 
-                <div className="mtl mbl" style={clearLeftFix}>
+                <div style={clearLeftFix}></div>
+
+                <AltContainer store={JobStore} className="mtl mbl" >
                     <JobsView />
-                </div>
+                </AltContainer>
             </div>
         );
     },
 });
 
-export default withRouter(Jobs);
+export default withRouter(JobsPage);
