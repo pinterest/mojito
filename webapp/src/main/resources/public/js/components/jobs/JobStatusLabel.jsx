@@ -1,6 +1,25 @@
 import React from "react";
 import {withAppConfig} from "../../utils/AppConfig";
 
+const styleConfig = {
+    IN_PROGRESS : {
+        "backgroundColor": "rgba(147, 112, 219, 0.24)",
+        "color": "mediumpurple"
+    },
+    SUCCEEDED : {
+        "backgroundColor": "rgba(85, 151, 69, 0.25)",
+        "color": "#559745"
+    },
+    FAILED : {
+        "backgroundColor": "rgba(251, 52, 52, 0.25)",
+        "color": "rgb(251, 52, 52)"
+    },
+    DISABLED : {
+        "backgroundColor": "rgba(182, 182, 182, 0.25)",
+        "color": "#656565"
+    }
+}
+
 class JobStatusLabel extends React.Component {
 
     /**
@@ -9,25 +28,6 @@ class JobStatusLabel extends React.Component {
     render() {
 
         const {status} = this.props;
-
-        const styleConfig = {
-            IN_PROGRESS : {
-                "backgroundColor": "rgba(147, 112, 219, 0.24)",
-                "color": "mediumpurple"
-            },
-            SUCCEEDED : {
-                "backgroundColor": "rgba(85, 151, 69, 0.25)",
-                "color": "#559745"
-            },
-            FAILED : {
-                "backgroundColor": "rgba(251, 52, 52, 0.25)",
-                "color": "rgb(251, 52, 52)"
-            },
-            DISABLED : {
-                "backgroundColor": "rgba(182, 182, 182, 0.25)",
-                "color": "#656565"
-            }
-        }
 
         return (
             <div className={"job-status"} style={styleConfig[status]}>

@@ -84,7 +84,7 @@ let RepositoryDropDown = createReactClass({
     renderRepositories() {
         return this.state.repositories.map(
             (repository) =>
-                <MenuItem key={"WorkbenchRepositoryDropdown." + repository} eventKey={repository} active={this.state.selectedRepositories.includes(repository)} onSelect={this.onRepositorySelected}>{repository}</MenuItem>
+                <MenuItem key={"JobsRepositoryDropdown." + repository} eventKey={repository} active={this.state.selectedRepositories.includes(repository)} onSelect={this.onRepositorySelected}>{repository}</MenuItem>
         );
     },
 
@@ -103,7 +103,7 @@ let RepositoryDropDown = createReactClass({
 
                     {this.renderRepositories()}
                 </DropdownButton>
-                </span>
+            </span>
         );
     },
 });
