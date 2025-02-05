@@ -65,6 +65,21 @@ let RepositoryDropDown = createReactClass({
         return this.state.selectedRepositories.length === 0;
     },
 
+    getButtonText() {
+
+        let label = '';
+
+        let numberOfSelectedRepositories = this.state.selectedRepositories.length;
+
+        if (numberOfSelectedRepositories === 1) {
+            let repo = this.state.selectedRepositories[0];
+            label = repo ? repo : "";
+        } else {
+            label = this.props.intl.formatMessage({"id": "search.repository.btn.text"}, {"numberOfSelectedRepositories": numberOfSelectedRepositories});
+        }
+
+        return label;
+    },
 
     renderRepositories() {
         return this.state.repositories.map(
@@ -81,7 +96,7 @@ let RepositoryDropDown = createReactClass({
 
         return (
             <span className="mlm repository-dropdown">
-                <DropdownButton id="WorkbenchRepositoryDropdown" title={"Repository"} onToggle={this.onDropdownToggle} open={this.state.isDropdownOpenned}>
+                <DropdownButton id="WorkbenchRepositoryDropdown" title={this.getButtonText()} onToggle={this.onDropdownToggle} open={this.state.isDropdownOpenned}>
                     <MenuItem id="WorkbenchRepositoryDropdown.selectAll" active={this.isAllActive()} onSelect={this.onSelectAll}><FormattedMessage id="search.repository.selectAll"/></MenuItem>
 
                     <MenuItem id="WorkbenchRepositoryDropdown.divider" divider/>
