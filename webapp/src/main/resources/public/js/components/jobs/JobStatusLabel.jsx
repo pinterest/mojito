@@ -1,5 +1,6 @@
 import React from "react";
 import {withAppConfig} from "../../utils/AppConfig";
+import PropTypes from "prop-types";
 
 const styleConfig = {
     IN_PROGRESS : {
@@ -21,6 +22,10 @@ const styleConfig = {
 }
 
 class JobStatusLabel extends React.Component {
+
+    static propTypes = {
+        "status": PropTypes.string.isRequired
+    }
 
     /**
      * @return {XML}

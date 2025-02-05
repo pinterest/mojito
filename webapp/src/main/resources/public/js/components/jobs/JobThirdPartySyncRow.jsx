@@ -4,10 +4,14 @@ import {MdSyncAlt} from "react-icons/md";
 import JobStatusLabel from "./JobStatusLabel";
 import JobButton from "./JobButton";
 import {ImSpinner2} from "react-icons/im";
-import jobButton from "./JobButton";
 import {JobStatus} from "../../utils/JobStatus";
+import PropTypes from "prop-types";
 
 class JobThirdPartySyncRow extends React.Component {
+
+    static propTypes = {
+        "job": PropTypes.object.isRequired
+    }
 
     constructor(props) {
         super(props);
@@ -133,7 +137,7 @@ class JobThirdPartySyncRow extends React.Component {
                                    type={JobButton.TYPES.RUN} disabled={inProgress || !job.enabled}
                         />
                         <JobButton job={job}
-                                   type={ job.enabled ? JobButton.TYPES.DISABLE : jobButton.TYPES.ENABLE}
+                                   type={ job.enabled ? JobButton.TYPES.DISABLE : JobButton.TYPES.ENABLE}
                         />
                     </div>
                 </div>

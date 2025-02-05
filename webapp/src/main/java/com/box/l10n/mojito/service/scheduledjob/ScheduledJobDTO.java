@@ -31,7 +31,7 @@ public class ScheduledJobDTO {
     this.endDate = scheduledJob.getEndDate();
     this.enabled = scheduledJob.isEnabled();
 
-    // This will parse, the application will not start if we used an invalid cron.
+    // Get the next start date using the cron expression
     try {
       CronExpression cron = new CronExpression(this.cron);
       Date nextValidTime = cron.getNextValidTimeAfter(new Date());
