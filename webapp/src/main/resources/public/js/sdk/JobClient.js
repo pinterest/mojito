@@ -1,7 +1,4 @@
 import BaseClient from "./BaseClient";
-import JobActions from "../actions/jobs/JobActions";
-import JobStore from "../stores/jobs/JobStore";
-import {JobStatus} from "../utils/JobStatus";
 
 class JobClient extends BaseClient {
 

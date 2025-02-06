@@ -1,8 +1,7 @@
 import alt from "../../alt";
 import JobDataSource from "../../actions/jobs/JobDataSource";
 import JobActions from "../../actions/jobs/JobActions";
-import RepositoryActions from "../../actions/RepositoryActions";
-import {JobStatus} from "../../utils/JobStatus";
+import { JobStatus } from "../../utils/JobStatus";
 
 class JobStore {
 
@@ -28,7 +27,7 @@ class JobStore {
     triggerJobSuccess(response) {
         const jobId = response.jobId;
         // Update job on client side before the full sync (poll) occurs
-        this.jobs = this.jobs.map(j => jobId === j.id ? {...j, status: JobStatus.IN_PROGRESS} : j)
+        this.jobs = this.jobs.map(j => jobId === j.id ? { ...j, status: JobStatus.IN_PROGRESS } : j)
     }
 
     disableJob(job) {
@@ -37,7 +36,7 @@ class JobStore {
 
     disableJobSuccess(response) {
         const jobId = response.jobId;
-        this.jobs = this.jobs.map(j => jobId === j.id ? {...j, enabled: false} : j)
+        this.jobs = this.jobs.map(j => jobId === j.id ? { ...j, enabled: false } : j)
     }
 
     enableJob(job) {
@@ -46,7 +45,7 @@ class JobStore {
 
     enableJobSuccess(response) {
         const jobId = response.jobId;
-        this.jobs = this.jobs.map(j => jobId === j.id ? {...j, enabled: true} : j);
+        this.jobs = this.jobs.map(j => jobId === j.id ? { ...j, enabled: true } : j);
     }
 
     setJobFilter(repos) {
