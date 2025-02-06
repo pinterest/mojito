@@ -4,7 +4,6 @@ import com.box.l10n.mojito.entity.ScheduledJob;
 import com.box.l10n.mojito.rest.thirdparty.ThirdPartySyncAction;
 import com.box.l10n.mojito.service.scheduledjob.jobs.ScheduledThirdPartySyncProperties;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author jaurambault
@@ -27,10 +26,7 @@ public class ThirdPartySyncJobInput {
     this.setRepositoryId(job.getRepository().getId());
     this.setThirdPartyProjectId(properties.getThirdPartyProjectId());
     this.setActions(properties.getActions());
-    this.setPluralSeparator(
-        Objects.equals(properties.getPluralSeparator(), "")
-            ? " _"
-            : properties.getPluralSeparator());
+    this.setPluralSeparator(properties.getPluralSeparator());
     this.setLocaleMapping(properties.getLocaleMapping());
 
     this.setSkipTextUnitsWithPattern(

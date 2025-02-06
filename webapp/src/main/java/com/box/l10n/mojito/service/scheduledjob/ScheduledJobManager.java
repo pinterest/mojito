@@ -64,6 +64,8 @@ public class ScheduledJobManager {
 
   public HashSet<String> uuidPool = new HashSet<>();
 
+  private static String DEFAULT_PLURAL_SEPARATOR = " _";
+
   @Autowired
   public ScheduledJobManager(
       ThirdPartySyncJobsConfig thirdPartySyncJobConfig,
@@ -212,7 +214,9 @@ public class ScheduledJobManager {
     thirdPartySyncProperties.setThirdPartyProjectId(jobConfig.getThirdPartyProjectId());
     thirdPartySyncProperties.setActions(jobConfig.getActions());
     thirdPartySyncProperties.setPluralSeparator(
-        Objects.equals(jobConfig.getPluralSeparator(), "") ? " _" : jobConfig.getPluralSeparator());
+        Objects.equals(jobConfig.getPluralSeparator(), "")
+            ? DEFAULT_PLURAL_SEPARATOR
+            : jobConfig.getPluralSeparator());
     thirdPartySyncProperties.setLocaleMapping(jobConfig.getLocaleMapping());
     thirdPartySyncProperties.setSkipTextUnitsWithPattern(jobConfig.getSkipTextUnitsWithPattern());
     thirdPartySyncProperties.setSkipAssetsWithPathPattern(jobConfig.getSkipAssetsWithPathPattern());
