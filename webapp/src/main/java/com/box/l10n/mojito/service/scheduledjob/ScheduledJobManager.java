@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.quartz.CronScheduleBuilder;
@@ -210,7 +211,8 @@ public class ScheduledJobManager {
         new ScheduledThirdPartySyncProperties();
     thirdPartySyncProperties.setThirdPartyProjectId(jobConfig.getThirdPartyProjectId());
     thirdPartySyncProperties.setActions(jobConfig.getActions());
-    thirdPartySyncProperties.setPluralSeparator(jobConfig.getPluralSeparator());
+    thirdPartySyncProperties.setPluralSeparator(
+        Objects.equals(jobConfig.getPluralSeparator(), "") ? " _" : jobConfig.getPluralSeparator());
     thirdPartySyncProperties.setLocaleMapping(jobConfig.getLocaleMapping());
     thirdPartySyncProperties.setSkipTextUnitsWithPattern(jobConfig.getSkipTextUnitsWithPattern());
     thirdPartySyncProperties.setSkipAssetsWithPathPattern(jobConfig.getSkipAssetsWithPathPattern());
