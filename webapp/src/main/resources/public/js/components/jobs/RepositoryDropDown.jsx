@@ -19,7 +19,8 @@ let RepositoryDropDown = createReactClass({
 
     getAllJobsSuccess(store) {
         if(!this.loaded) {
-            this.setState({repositories: store.jobs.map(j => j.repository).sort((r1, r2) => r1.localeCompare(r2))})
+            const repositories = store.jobs.map(j => j.repository).sort((r1, r2) => r1.localeCompare(r2))
+            this.setState({repositories})
             this.loaded = true;
         }
     },
@@ -33,7 +34,7 @@ let RepositoryDropDown = createReactClass({
         }
     },
 
-    getInitialState: function () {
+    getInitialState() {
         return {
             "repositories": [],
             "selectedRepositories": []
@@ -43,7 +44,7 @@ let RepositoryDropDown = createReactClass({
     onRepositorySelected(repository, event) {
         this.forceDropdownOpen = true;
 
-        let selectedRepos = this.state.selectedRepositories;
+        let selectedRepos = [...this.state.selectedRepositories];
 
         if(selectedRepos.includes(repository)) {
             selectedRepos = selectedRepos.filter(repo => repo !== repository);
@@ -84,7 +85,7 @@ let RepositoryDropDown = createReactClass({
     renderRepositories() {
         return this.state.repositories.map(
             (repository) =>
-                <MenuItem key={"JobsRepositoryDropdown." + repository} eventKey={repository} active={this.state.selectedRepositories.includes(repository)} onSelect={this.onRepositorySelected}>{repository}</MenuItem>
+                <MenuItem key={`JobsRepositoryDropdown.${repository}`} eventKey={repository} active={this.state.selectedRepositories.includes(repository)} onSelect={this.onRepositorySelected}>{repository}</MenuItem>
         );
     },
 

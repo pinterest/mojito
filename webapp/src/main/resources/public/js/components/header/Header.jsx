@@ -117,7 +117,7 @@ class Header extends React.Component {
                     }}><NavItem><FormattedMessage id="header.screenshots"/></NavItem></LinkContainer>
 
                     { AuthorityService.canViewJobs() &&
-                    <LinkContainer to="/jobs" onClick={() => {}}>
+                    <LinkContainer to="/jobs">
                         <NavItem>
                             <FormattedMessage id="header.jobs"/>
                         </NavItem>

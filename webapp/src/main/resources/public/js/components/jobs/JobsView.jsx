@@ -53,7 +53,7 @@ class JobsView extends React.Component {
             case JobType.THIRD_PARTY_SYNC:
                 return <JobThirdPartySyncRow key={index} job={job} />;
             default:
-                return "";
+                return null;
         }
     }
 
