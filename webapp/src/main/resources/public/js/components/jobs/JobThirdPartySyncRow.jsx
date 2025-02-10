@@ -1,4 +1,4 @@
-import React from "react";
+import React, {Fragment} from "react";
 import {withAppConfig} from "../../utils/AppConfig";
 import {MdSyncAlt} from "react-icons/md";
 import JobStatusLabel from "./JobStatusLabel";
@@ -60,7 +60,7 @@ class JobThirdPartySyncRow extends React.Component {
         const date = new Date(unixTime);
 
         const month = date.toLocaleString('default', { month: 'long' }).substring(0, 3);
-        const day = date.getUTCDay();
+        const day = date.getUTCDate();
 
         const hours = date.getUTCHours();
         const minutes = date.getUTCMinutes();
@@ -80,9 +80,9 @@ class JobThirdPartySyncRow extends React.Component {
         if(job.repository && job.repository in APP_CONFIG.link) {
             const url = new URL(APP_CONFIG.link[job.repository].thirdParty.url);
             url.search = '';
-            return url;
+            return <a href={url}>{job.properties.thirdPartyProjectId}</a>;
         }
-        return "";
+        return job.properties.thirdPartyProjectId;
     }
 
 
@@ -109,7 +109,7 @@ class JobThirdPartySyncRow extends React.Component {
                             </h1>
                             <JobStatusLabel status={job.enabled ? job.status : "DISABLED"} />
                         </div>
-                        <div>{job.repository} - <a href={this.getThirdPartyLink(job)}>{job.properties.thirdPartyProjectId}</a></div>
+                        <div>{job.repository} - {this.getThirdPartyLink(job)}</div>
                     </div>
                     <div className="job-timings">
                         <div>Started @ {job.startDate && this.convertUnixToDate(job.startDate)}</div>

@@ -1067,6 +1067,7 @@ label.current-pageNumber {
     flex-direction: column;
     padding: 0 1em;
     gap: 5px;
+    max-width: 400px;
 
     .job-details-title {
         display: flex;

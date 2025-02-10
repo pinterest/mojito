@@ -5,13 +5,19 @@ import JobActions from "../../actions/jobs/JobActions";
 import AuthorityService from "../../utils/AuthorityService";
 import JobThirdPartySyncRow from "./JobThirdPartySyncRow";
 import {JobType} from "../../utils/JobType";
+import PropTypes from "prop-types";
 
 class JobsView extends React.Component {
+    static propTypes = {
+        "jobs": PropTypes.array.isRequired,
+        "filter": PropTypes.array.isRequired
+    }
 
     constructor(props) {
         super(props);
 
-        this.state = JobStore.getState();
+        const {jobs, filter} = this.props
+        this.state = {jobs, filter}
 
         // Bind this to the function call to ensure 'this' references the current instance.
         this.jobStoreChange = this.jobStoreChange.bind(this);

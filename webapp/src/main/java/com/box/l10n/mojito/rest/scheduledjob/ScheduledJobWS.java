@@ -47,7 +47,7 @@ public class ScheduledJobWS {
 
   private final ResponseEntity<ScheduledJobResponse> notFoundResponse =
       createResponse(
-          HttpStatus.NOT_FOUND, ScheduledJobResponse.Status.FAILURE, "Job doesn't exist", "");
+          HttpStatus.NOT_FOUND, ScheduledJobResponse.Status.FAILURE, "Job doesn't exist", null);
 
   @RequestMapping(method = RequestMethod.GET, value = "/api/jobs")
   @ResponseStatus(HttpStatus.OK)
