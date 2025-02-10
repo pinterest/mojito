@@ -1031,7 +1031,7 @@ label.current-pageNumber {
     border: 1px solid rgba(128, 128, 128, 0.25);
     min-width: 450px;
     max-width: 700px;
-    color: gray;
+    color: #808080;
     padding: 1.5em;
     border-radius: 5px;
     margin-bottom: 20px;
@@ -1129,6 +1129,11 @@ label.current-pageNumber {
     color: white;
 }
 
+.job-button.disabled {
+    background-color: #c2c2c257;
+    color: #a9a9a945;
+    border: 1px solid #c2c2c242;
+}
 
 .job-controls {
     display: flex;

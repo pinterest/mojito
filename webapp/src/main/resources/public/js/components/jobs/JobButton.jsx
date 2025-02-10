@@ -2,11 +2,6 @@ import React from "react";
 import JobActions from "../../actions/jobs/JobActions";
 import PropTypes from "prop-types";
 
-const disabledStyle = {
-    "backgroundColor": "#c2c2c257",
-    "color" : "#a9a9a945",
-    "border" : "1px solid #c2c2c242"
-}
 
 class JobButton extends React.Component {
 
@@ -46,8 +41,8 @@ class JobButton extends React.Component {
         const {type, disabled, job} = this.props;
 
         return (
-            <button className="job-button" disabled={disabled}
-                    style={disabled ? disabledStyle : {}} onClick={(e) => this.handleClick(job, type, e.currentTarget)} >
+            <button className={`job-button ${disabled ? 'disabled' : ''}`} disabled={disabled}
+                    onClick={(e) => this.handleClick(job, type, e.currentTarget)} >
                 {type}
             </button>
         );

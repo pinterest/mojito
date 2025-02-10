@@ -5,7 +5,7 @@ import PropTypes from "prop-types";
 const styleConfig = {
     IN_PROGRESS : {
         "backgroundColor": "rgba(147, 112, 219, 0.24)",
-        "color": "mediumpurple"
+        "color": "#9370DB"
     },
     SUCCEEDED : {
         "backgroundColor": "rgba(85, 151, 69, 0.25)",
