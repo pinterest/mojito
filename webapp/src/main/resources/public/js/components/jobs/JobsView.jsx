@@ -71,7 +71,7 @@ class JobsView extends React.Component {
 
         return (
             <div>
-                <div className="jobs-container">
+                <div className="ptm">
                     {
                         this.state.jobs
                             .filter(job => this.state.filter.length === 0 ? true : this.state.filter.includes(job.repository))

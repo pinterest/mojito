@@ -13,7 +13,7 @@ const styleConfig = {
     },
     FAILED : {
         "backgroundColor": "rgba(251, 52, 52, 0.25)",
-        "color": "rgb(251, 52, 52)"
+        "color": "#FB3434FF"
     },
     DISABLED : {
         "backgroundColor": "rgba(182, 182, 182, 0.25)",

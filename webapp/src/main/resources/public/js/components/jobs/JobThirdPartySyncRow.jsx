@@ -1,4 +1,4 @@
-import React, {Fragment} from "react";
+import React from "react";
 import {withAppConfig} from "../../utils/AppConfig";
 import {MdSyncAlt} from "react-icons/md";
 import JobStatusLabel from "./JobStatusLabel";
@@ -57,23 +57,14 @@ class JobThirdPartySyncRow extends React.Component {
     };
 
     convertUnixToDate(unixTime) {
-        const date = new Date(unixTime);
-
-        const month = date.toLocaleString('default', { month: 'long' }).substring(0, 3);
-        const day = date.getUTCDate();
-
-        const hours = date.getUTCHours();
-        const minutes = date.getUTCMinutes();
-        const seconds = date.getUTCSeconds();
-
-        // Pad with zeros if single digit
-        const time = [
-            hours.toString().padStart(2, '0'),
-            minutes.toString().padStart(2, '0'),
-            seconds.toString().padStart(2, '0')
-        ].join(':');
-
-        return `${month} ${day}, ${time}`;
+        return new Intl.DateTimeFormat('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        }).format(new Date(unixTime));
     }
 
     getThirdPartyLink(job) {
