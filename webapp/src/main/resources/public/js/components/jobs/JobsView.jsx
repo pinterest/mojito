@@ -16,8 +16,9 @@ class JobsView extends React.Component {
     constructor(props) {
         super(props);
 
-        const {jobs, filter} = this.props
-        this.state = {jobs, filter}
+        const {jobs, filter} = this.props;
+        this.state = {jobs, filter};
+        this.searching = true;
 
         // Bind this to the function call to ensure 'this' references the current instance.
         this.jobStoreChange = this.jobStoreChange.bind(this);
@@ -44,6 +45,7 @@ class JobsView extends React.Component {
 
     jobStoreChange(state) {
         // Any change to the JobStore will come here
+        this.searching = false;
         this.setState({jobs: state.jobs, filter: state.filter})
     }
 
@@ -65,6 +67,14 @@ class JobsView extends React.Component {
             return (
                 <div className="ptl">
                     <h3 className="text-center mtl">You do not have permissions to view Jobs.</h3>
+                </div>
+            )
+        }
+
+        if(!this.searching && this.state.jobs.length === 0)  {
+            return (
+                <div className="ptl">
+                    <h3 className="text-center mtl">No jobs have been configured.</h3>
                 </div>
             )
         }
