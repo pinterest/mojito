@@ -1152,24 +1152,24 @@ label.current-pageNumber {
         90deg,
         rgba(111, 111, 111, 1) 0%,
         rgba(111, 111, 111, 1) 45%,
-        rgb(191, 191, 191) 50%,
+        rgb(150, 150, 150) 50%,
         rgba(111, 111, 111, 1) 65%,
         rgba(111, 111, 111, 1) 100%,
     );
 
-    background-size: 200%;
+    background-size: 300%;
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    animation: loadingText 3.5s linear infinite;
+    animation: loadingText 8s linear infinite;
 }
 
 @keyframes loadingText {
     0% {
-        background-position: 200% center;
+        background-position: 300% center;
     }
     100% {
-        background-position: -200% center;
+        background-position: -300% center;
     }
 
 }
