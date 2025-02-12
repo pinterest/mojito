@@ -85,6 +85,7 @@ class JobsView extends React.Component {
                     {
                         this.state.jobs
                             .filter(job => this.state.filter.length === 0 ? true : this.state.filter.includes(job.repository))
+                            .sort((j1, j2) => j1.repository.localeCompare(j2.repository))
                             .map((job, index) =>
                                 this.createJobRow(job, index)
                             )

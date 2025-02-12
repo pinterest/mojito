@@ -18,6 +18,7 @@ $modal-backdrop-bg: #fff;
 $modal-backdrop-opacity: 0.9;
 $color-gray-light: #CCC;
 $color-white: #FFF;
+$color-dark-gray: #393939;
 $large-spacer: 20px;
 
 $icon-font-path: "../../../../node_modules/bootstrap-sass/assets/fonts/bootstrap/";
@@ -1023,7 +1024,7 @@ label.current-pageNumber {
     flex-direction: column;
     gap: 10px;
     margin: 0 auto;
-    border: 1px solid rgba(128, 128, 128, 0.25);
+    border: 1px solid rgba($color-gray-light, 0.5);
     min-width: 450px;
     max-width: 700px;
     color: #808080;
@@ -1038,8 +1039,8 @@ label.current-pageNumber {
     align-items: center;
     gap: 8px;
 
-    svg {
-        background-color: rgba(211, 211, 211, 0.20);
+    > svg {
+        background-color: rgba($color-gray-light, 0.3);
         padding: 0.5em;
         width: 60px;
         height: 60px;
@@ -1109,11 +1110,11 @@ label.current-pageNumber {
     font-size: 12px;
     margin: 0 auto;
 
-    background-color: rgba(182, 182, 182, 0.25);
-    color: #656565;
-    border: 0.5px solid rgba(58, 58, 58, 0.43);
+    background-color: rgba($color-gray-light, 0.25);
+    color: rgba($color-dark-gray, 0.8);
+    border: 0.5px solid rgba($color-dark-gray, 0.5);
 
-    svg {
+    > svg {
         width: 20px;
         height: 20px;
     }
@@ -1142,7 +1143,7 @@ label.current-pageNumber {
     gap: 10px;
     align-items: center;
 
-    svg {
+    > svg {
         animation: spin 1s infinite linear;
     }
 }

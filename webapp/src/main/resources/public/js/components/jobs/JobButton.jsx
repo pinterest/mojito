@@ -13,11 +13,15 @@ class JobButton extends React.Component {
     constructor(props) {
         super(props);
         this.timeout = null;
+
+        this.state = {
+            disabled: false
+        }
     }
 
     handleClick = (job, type, button) => {
         // Disable the button to avoid register spam clicks
-        button.disabled = true;
+        this.setState({disabled: true})
 
         switch(type) {
             case JobButton.TYPES.RUN:
@@ -33,7 +37,7 @@ class JobButton extends React.Component {
 
         this.timeout = setTimeout(() => {
             // Wait before switching on the button to avoid double clicks
-            button.disabled = false;
+            this.setState({disabled: false})
         }, 500)
     }
 
@@ -51,8 +55,8 @@ class JobButton extends React.Component {
         const {type, disabled, job} = this.props;
 
         return (
-            <button className={`job-button ${disabled ? 'disabled' : ''}`} disabled={disabled}
-                    onClick={(e) => this.handleClick(job, type, e.currentTarget)} >
+            <button className={`job-button ${disabled || this.state.disabled ? 'disabled' : ''}`} disabled={disabled || this.state.disabled}
+                    onClick={() => this.handleClick(job, type)} >
                 {type}
             </button>
         );
