@@ -1153,7 +1153,7 @@ label.current-pageNumber {
         90deg,
         rgba(111, 111, 111, 1) 0%,
         rgba(111, 111, 111, 1) 45%,
-        rgb(150, 150, 150) 50%,
+        rgb(180, 180, 180) 50%,
         rgba(111, 111, 111, 1) 65%,
         rgba(111, 111, 111, 1) 100%,
     );
@@ -1163,6 +1163,12 @@ label.current-pageNumber {
     background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: loadingText 8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .job-details-title-loading {
+        animation: none;
+    }
 }
 
 @keyframes loadingText {
