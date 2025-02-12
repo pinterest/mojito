@@ -10,6 +10,11 @@ class JobButton extends React.Component {
         "type": PropTypes.string.isRequired,
     }
 
+    constructor(props) {
+        super(props);
+        this.timeout = null;
+    }
+
     handleClick = (job, type, button) => {
         // Disable the button to avoid register spam clicks
         button.disabled = true;
@@ -26,11 +31,16 @@ class JobButton extends React.Component {
                 break;
         }
 
-        setTimeout(() => {
+        this.timeout = setTimeout(() => {
             // Wait before switching on the button to avoid double clicks
             button.disabled = false;
         }, 500)
+    }
 
+    componentWillUnmount() {
+        if(this.timeout) {
+            clearTimeout(this.timeout);
+        }
     }
 
     /**
