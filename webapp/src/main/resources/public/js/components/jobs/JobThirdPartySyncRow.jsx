@@ -44,9 +44,9 @@ class JobThirdPartySyncRow extends React.Component {
         } else {
             const minutesLeft = Math.ceil(difference / 60);
             if(minutesLeft > 1) {
-                this.setState({ nextStartMessage: `Starting in ${minutesLeft} minutes` });
+                this.setState({ nextStartMessage: `Scheduled to run in ${minutesLeft} minutes` });
             } else {
-                this.setState({ nextStartMessage: `Starting in ${minutesLeft} minute` });
+                this.setState({ nextStartMessage: `Scheduled to run in ${minutesLeft} minute` });
             }
 
 
@@ -108,20 +108,22 @@ class JobThirdPartySyncRow extends React.Component {
                     </div>
                 </div>
                 <div className="job-bottom-row">
-                    {job.enabled && inProgress &&
+                    {inProgress ?
                         <div className="job-next-run-info">
                             <ImSpinner2/>
                             <div>Running ...</div>
+                            {!job.enabled && <div>(Job will not run again)</div>}
                         </div>
+                        :
+                        job.enabled ?
+                            <div>
+                                <div>{this.state.nextStartMessage}</div>
+                            </div>
+                            :
+                            <div>
+                                <div>Disabled</div>
+                            </div>
                     }
-
-                    {job.enabled && !inProgress &&
-                        <div>
-                            <div>{this.state.nextStartMessage}</div>
-                        </div>
-                    }
-
-                    {!job.enabled && <div>Disabled</div>}
 
                     <div className="job-controls">
                         <JobButton job={job}
