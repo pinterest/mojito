@@ -18,6 +18,10 @@ const styleConfig = {
     DISABLED : {
         "backgroundColor": "rgba(182, 182, 182, 0.25)",
         "color": "#656565"
+    },
+    SCHEDULED : {
+        "backgroundColor": "rgb(255, 205, 0, 0.25)",
+        "color": "#f7ac11"
     }
 }
 
