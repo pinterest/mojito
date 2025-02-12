@@ -27,7 +27,7 @@ class JobStore {
     triggerJobSuccess(response) {
         const jobId = response.jobId;
         // Update job on client side before the full sync (poll) occurs
-        this.jobs = this.jobs.map(j => jobId === j.id ? { ...j, status: JobStatus.IN_PROGRESS } : j)
+        this.jobs = this.jobs.map(j => jobId === j.id ? { ...j, status: JobStatus.IN_PROGRESS, endDate: null } : j)
     }
 
     disableJob(job) {
