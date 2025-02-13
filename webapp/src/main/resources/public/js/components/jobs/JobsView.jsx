@@ -18,7 +18,7 @@ class JobsView extends React.Component {
 
         const {jobs, filter} = this.props;
         this.state = {jobs, filter};
-        this.searching = true;
+        this.isDoneInitialLoad = false;
 
         // Bind this to the function call to ensure 'this' references the current instance.
         this.jobStoreChange = this.jobStoreChange.bind(this);
@@ -45,7 +45,7 @@ class JobsView extends React.Component {
 
     jobStoreChange(state) {
         // Any change to the JobStore will come here
-        this.searching = false;
+        this.isDoneInitialLoad = true;
         this.setState({jobs: state.jobs, filter: state.filter})
     }
 
@@ -53,7 +53,7 @@ class JobsView extends React.Component {
         // Render specific row with correct job information depending on the type.
         switch(job.type) {
             case JobType.THIRD_PARTY_SYNC:
-                return <JobThirdPartySyncRow key={index} job={job} />;
+                return <JobThirdPartySyncRow key={job.id} job={job} />;
             default:
                 return null;
         }
@@ -71,7 +71,7 @@ class JobsView extends React.Component {
             )
         }
 
-        if(!this.searching && this.state.jobs.length === 0)  {
+        if(this.isDoneInitialLoad && this.state.jobs.length === 0)  {
             return (
                 <div className="ptl">
                     <h4 className="text-center mtl">No jobs have been configured.</h4>

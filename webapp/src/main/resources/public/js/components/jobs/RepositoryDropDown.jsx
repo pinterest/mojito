@@ -97,7 +97,7 @@ let RepositoryDropDown = createReactClass({
 
         return (
             <span className="mlm repository-dropdown">
-                <DropdownButton id="WorkbenchRepositoryDropdown" title={this.getButtonText()} onToggle={this.onDropdownToggle} open={this.state.isDropdownOpenned}>
+                <DropdownButton id="WorkbenchRepositoryDropdown" title={this.getButtonText()} onToggle={this.onDropdownToggle} open={this.state.isDropdownOpenned} disabled={this.state.repositories.length === 0}>
                     <MenuItem id="WorkbenchRepositoryDropdown.selectAll" active={this.isAllActive()} onSelect={this.onSelectAll}><FormattedMessage id="search.repository.selectAll"/></MenuItem>
 
                     <MenuItem id="WorkbenchRepositoryDropdown.divider" divider/>
