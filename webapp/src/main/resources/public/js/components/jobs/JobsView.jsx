@@ -66,7 +66,7 @@ class JobsView extends React.Component {
         if (!AuthorityService.canViewJobs()) {
             return (
                 <div className="ptl">
-                    <h3 className="text-center mtl">You do not have permissions to view Jobs.</h3>
+                    <h4 className="text-center mtl">You do not have permissions to view Jobs.</h4>
                 </div>
             )
         }
@@ -74,7 +74,7 @@ class JobsView extends React.Component {
         if(!this.searching && this.state.jobs.length === 0)  {
             return (
                 <div className="ptl">
-                    <h3 className="text-center mtl">No jobs have been configured.</h3>
+                    <h4 className="text-center mtl">No jobs have been configured.</h4>
                 </div>
             )
         }
