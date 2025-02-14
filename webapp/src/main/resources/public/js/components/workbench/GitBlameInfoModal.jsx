@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import React from "react";
 import {FormattedMessage, injectIntl} from "react-intl";
-import {Button, Modal} from "react-bootstrap";
+import {Button, Modal, Panel} from "react-bootstrap";
 import {withAppConfig} from "../../utils/AppConfig";
 import TemplateHelper from "../../utils/TemplateHelper";
 import {Link} from "react-router";
@@ -83,21 +83,50 @@ class GitBlameInfoModal extends React.Component {
      * @returns {*} Generated content for the text unit information section
      */
     renderTextUnitInfo = () => {
+        if (this.props.textUnit === null) {
+            return null;
+        }
+
+        const hasComments = this.props.textUnit.getComment() || this.props.textUnit.getTargetComment();
+        const hasPlurals = this.props.textUnit.getPluralForm() || this.props.textUnit.getPluralFormOther()
+        return <div>
+            {this.displayInfoWithId("textUnit.gitBlameModal.id", this.props.textUnit.getName())}
+            {this.displayInfoWithId("textUnit.gitBlameModal.source", this.props.textUnit.getSource())}
+            {this.displayInfoWithId("textUnit.gitBlameModal.target", this.props.textUnit.getTarget(), Locales.getLanguageDirection(this.props.textUnit.getTargetLocale()))}
+            {this.displayInfoWithId("textUnit.gitBlameModal.locale", this.props.textUnit.getTargetLocale())}
+            {this.displayInfoWithId("textUnit.gitBlameModal.created", this.convertDateTime(this.props.textUnit.getTmTextUnitCreatedDate()))}
+            {this.displayInfoWithId("textUnit.gitBlameModal.translated", this.getTranslatedDate())}
+           
+            <hr id='origin-section'></hr>
+            {this.displayInfoWithId("textUnit.gitBlameModal.repository", this.props.textUnit.getRepositoryName())}
+            {this.displayInfoWithId("textUnit.gitBlameModal.assetPath", this.props.textUnit.getAssetPath())}
+
+            { hasPlurals && 
+                <React.Fragment>
+                     <hr id='comment-plural-section' />
+                    {this.displayInfoWithId("textUnit.gitBlameModal.pluralForm", this.props.textUnit.getPluralForm())}
+                    {this.displayInfoWithId("textUnit.gitBlameModal.pluralFormOther", this.props.textUnit.getPluralFormOther())}
+                </React.Fragment>
+            }
+
+            { hasComments && 
+                <React.Fragment>
+                    <hr id='comment-section' />
+                    {this.displayInfoWithId("textUnit.gitBlameModal.comment", this.props.textUnit.getComment())}
+                    {this.displayInfoWithId("textUnit.gitBlameModal.targetComment", this.props.textUnit.getTargetComment())}
+                </React.Fragment>
+            }
+        </div>
+    };
+
+    /**
+     * @returns {*} Generated content for the text unit information section
+     */
+    renderTextUnitLinkInfo = () => {
         return this.props.textUnit === null ? "" :
             (
                 <div>
-                    {this.displayInfoWithId("textUnit.gitBlameModal.repository", this.props.textUnit.getRepositoryName())}
-                    {this.displayInfoWithId("textUnit.gitBlameModal.assetPath", this.props.textUnit.getAssetPath())}
-                    {this.displayInfoWithId("textUnit.gitBlameModal.id", this.props.textUnit.getName())}
-                    {this.displayInfoWithId("textUnit.gitBlameModal.source", this.props.textUnit.getSource())}
-                    {this.displayInfoWithId("textUnit.gitBlameModal.target", this.props.textUnit.getTarget(), Locales.getLanguageDirection(this.props.textUnit.getTargetLocale()))}
-                    {this.displayInfoWithId("textUnit.gitBlameModal.locale", this.props.textUnit.getTargetLocale())}
-                    {this.displayInfoWithId("textUnit.gitBlameModal.created", this.convertDateTime(this.props.textUnit.getTmTextUnitCreatedDate()))}
-                    {this.displayInfoWithId("textUnit.gitBlameModal.translated", this.getTranslatedDate())}
-                    {this.displayInfoWithId("textUnit.gitBlameModal.pluralForm", this.props.textUnit.getPluralForm())}
-                    {this.displayInfoWithId("textUnit.gitBlameModal.pluralFormOther", this.props.textUnit.getPluralFormOther())}
-                    {this.displayInfoWithId("textUnit.gitBlameModal.comment", this.props.textUnit.getComment())}
-                    {this.displayInfoWithId("textUnit.gitBlameModal.targetComment", this.props.textUnit.getTargetComment())}
+                    
                     {this.displayInfoWithId("textUnit.gitBlameModal.location", this.getLocationLinks())}
                     {this.shouldShowThirdPartyTMS() && this.displayInfoWithId("textUnit.gitBlameModal.thirdPartyTMS", this.getThirdPartyLink())}
                     {this.shouldShowCustomMd5() && this.displayInfoWithId("textUnit.gitBlameModal.customMd5", this.getCustomMd5Link())}
@@ -621,26 +650,54 @@ class GitBlameInfoModal extends React.Component {
                     <Modal.Title>{this.getTitle()}</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <div className={"row"}>
-                        <div className={"col-sm-4"}><h4><FormattedMessage id={"textUnit.gitBlameModal.textUnit"}/></h4>
-                        </div>
-                    </div>
-                    {this.renderTextUnitInfo()}
-                    <hr/>
-                    <div className={"row"}>
-                        <div className={"col-sm-4"}><h4><FormattedMessage id={"textUnit.gitBlameModal.gitBlame"}/></h4>
-                        </div>
-                        <div className={"col-sm-8"}>
-                            {this.props.loading ? (<span className="glyphicon glyphicon-refresh spinning"/>) : ""}
-                        </div>
-                    </div>
-                    {this.renderGitBlameInfo()}
-                    <hr/>
-                    <div className={"row"}>
-                        <div className={"col-sm-4"}><h4><FormattedMessage id={"textUnit.gitBlameModal.more"}/></h4>
-                        </div>
-                    </div>
-                    {this.renderDebugInfo()}
+                    <Panel id="text-unit-panel" defaultExpanded>
+                        <Panel.Heading>
+                            <Panel.Title allowFullScreen={true} toggle>
+                                <FormattedMessage id={"textUnit.gitBlameModal.textUnit"}/>
+                            </Panel.Title>
+                        </Panel.Heading>
+                        <Panel.Collapse>
+                            <Panel.Body>
+                                {this.props.loading ? (<span className="glyphicon glyphicon-refresh spinning"/>) : this.renderTextUnitInfo()}
+                            </Panel.Body>
+                        </Panel.Collapse>
+                    </Panel>
+                    <Panel id="text-unit-location-panel" defaultExpanded>
+                        <Panel.Heading>
+                            <Panel.Title allowFullScreen={true} toggle>
+                                <FormattedMessage id={"textUnit.gitBlameModal.links"}/>
+                            </Panel.Title>
+                        </Panel.Heading>
+                        <Panel.Collapse>
+                            <Panel.Body>
+                                {this.props.loading ? (<span className="glyphicon glyphicon-refresh spinning"/>) : this.renderTextUnitLinkInfo()}
+                            </Panel.Body>
+                        </Panel.Collapse>
+                    </Panel>
+                    <Panel id="git-blame-panel">
+                        <Panel.Heading>
+                            <Panel.Title allowFullScreen={true} toggle>
+                                <FormattedMessage id={"textUnit.gitBlameModal.gitBlame"}/>
+                            </Panel.Title>
+                        </Panel.Heading>
+                        <Panel.Collapse>
+                            <Panel.Body>
+                                {this.props.loading ? (<span className="glyphicon glyphicon-refresh spinning"/>) : this.renderGitBlameInfo()}
+                            </Panel.Body>
+                        </Panel.Collapse>
+                    </Panel>
+                    <Panel id="debug-info-panel">
+                        <Panel.Heading>
+                            <Panel.Title allowFullScreen={true} toggle>
+                                <FormattedMessage id={"textUnit.gitBlameModal.more"}/>
+                            </Panel.Title>
+                        </Panel.Heading>
+                        <Panel.Collapse>
+                            <Panel.Body>
+                                {this.props.loading ? (<span className="glyphicon glyphicon-refresh spinning"/>) : this.renderDebugInfo()}
+                            </Panel.Body>
+                        </Panel.Collapse>
+                    </Panel>
                 </Modal.Body>
                 <Modal.Footer>
                     <Button bsStyle="primary" onClick={this.closeModal}>
