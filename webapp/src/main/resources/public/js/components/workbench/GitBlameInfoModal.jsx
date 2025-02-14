@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import React from "react";
 import {FormattedMessage, injectIntl} from "react-intl";
-import {Button, Modal} from "react-bootstrap";
+import {Button, Modal, Panel} from "react-bootstrap";
 import {withAppConfig} from "../../utils/AppConfig";
 import TemplateHelper from "../../utils/TemplateHelper";
 import {Link} from "react-router";
@@ -621,26 +621,42 @@ class GitBlameInfoModal extends React.Component {
                     <Modal.Title>{this.getTitle()}</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <div className={"row"}>
-                        <div className={"col-sm-4"}><h4><FormattedMessage id={"textUnit.gitBlameModal.textUnit"}/></h4>
-                        </div>
-                    </div>
-                    {this.renderTextUnitInfo()}
-                    <hr/>
-                    <div className={"row"}>
-                        <div className={"col-sm-4"}><h4><FormattedMessage id={"textUnit.gitBlameModal.gitBlame"}/></h4>
-                        </div>
-                        <div className={"col-sm-8"}>
-                            {this.props.loading ? (<span className="glyphicon glyphicon-refresh spinning"/>) : ""}
-                        </div>
-                    </div>
-                    {this.renderGitBlameInfo()}
-                    <hr/>
-                    <div className={"row"}>
-                        <div className={"col-sm-4"}><h4><FormattedMessage id={"textUnit.gitBlameModal.more"}/></h4>
-                        </div>
-                    </div>
-                    {this.renderDebugInfo()}
+                    <Panel id="text-unit-panel" defaultExpanded>
+                        <Panel.Heading>
+                            <Panel.Title allowFullScreen={true} toggle>
+                                <FormattedMessage id={"textUnit.gitBlameModal.textUnit"}/>
+                            </Panel.Title>
+                        </Panel.Heading>
+                        <Panel.Collapse>
+                            <Panel.Body>
+                                {this.props.loading ? (<span className="glyphicon glyphicon-refresh spinning"/>) : this.renderTextUnitInfo()}
+                            </Panel.Body>
+                        </Panel.Collapse>
+                    </Panel>
+                    <Panel id="git-blame-panel">
+                        <Panel.Heading>
+                            <Panel.Title allowFullScreen={true} toggle>
+                                <FormattedMessage id={"textUnit.gitBlameModal.gitBlame"}/>
+                            </Panel.Title>
+                        </Panel.Heading>
+                        <Panel.Collapse>
+                            <Panel.Body>
+                                {this.props.loading ? (<span className="glyphicon glyphicon-refresh spinning"/>) : this.renderGitBlameInfo()}
+                            </Panel.Body>
+                        </Panel.Collapse>
+                    </Panel>
+                    <Panel id="debug-info-panel">
+                        <Panel.Heading>
+                            <Panel.Title allowFullScreen={true} toggle>
+                                <FormattedMessage id={"textUnit.gitBlameModal.more"}/>
+                            </Panel.Title>
+                        </Panel.Heading>
+                        <Panel.Collapse>
+                            <Panel.Body>
+                                {this.props.loading ? (<span className="glyphicon glyphicon-refresh spinning"/>) : this.renderDebugInfo()}
+                            </Panel.Body>
+                        </Panel.Collapse>
+                    </Panel>
                 </Modal.Body>
                 <Modal.Footer>
                     <Button bsStyle="primary" onClick={this.closeModal}>
