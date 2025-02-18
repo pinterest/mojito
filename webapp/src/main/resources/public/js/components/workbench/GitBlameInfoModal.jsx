@@ -126,10 +126,9 @@ class GitBlameInfoModal extends React.Component {
      * @returns {*} Generated content for the text unit information section
      */
     renderTextUnitLinkInfo = () => {
-        return this.props.textUnit === null ? "" :
+        return this.props.textUnit === null ? null :
             (
                 <div>
-                    
                     {this.displayInfoWithId("textUnit.gitBlameModal.location", this.getLocationLinks())}
                     {this.shouldShowThirdPartyTMS() && this.displayInfoWithId("textUnit.gitBlameModal.thirdPartyTMS", this.getThirdPartyLink())}
                     {this.shouldShowCustomMd5() && this.displayInfoWithId("textUnit.gitBlameModal.customMd5", this.getCustomMd5Link())}
@@ -156,7 +155,7 @@ class GitBlameInfoModal extends React.Component {
      * @returns {*} Generated content for the additional text unit information section
      */
     renderDebugInfo = () => {
-        return this.props.textUnit === null ? "" :
+        return this.props.textUnit === null ? null :
             (
                 <div className="panel-body">
                     {this.displayInfoWithId("textUnit.gitBlameModal.isVirtual", this.getVirtual())}
@@ -537,7 +536,7 @@ class GitBlameInfoModal extends React.Component {
         try {
             return this.props.appConfig.link[this.props.textUnit.getRepositoryName()].thirdParty.label;
         } catch (e) {
-            return 'Third Party System';
+            return null;
         }
     };
 
@@ -647,7 +646,9 @@ class GitBlameInfoModal extends React.Component {
         return (
             <Modal className={"git-blame-modal"} show={this.props.show} onHide={this.closeModal}>
                 <Modal.Header closeButton>
-                    <Modal.Title>{this.getTitle()}</Modal.Title>
+                    <Modal.Title>
+                        {this.getTitle()}
+                    </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <Panel id="text-unit-panel" defaultExpanded>

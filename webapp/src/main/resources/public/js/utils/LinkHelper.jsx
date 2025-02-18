@@ -16,7 +16,6 @@ class LinkHelper {
         }
         const url = TemplateHelper.renderTemplate(urlTemplate, paramsWithEncoded);
 
-        console.log('renderLinkOrLabel', {url})
         if (url) {
             linkOrLabel = <a href={url}>{label}</a>;
         } else {
