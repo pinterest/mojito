@@ -537,7 +537,7 @@ class GitBlameInfoModal extends React.Component {
         try {
             return this.props.appConfig.link[this.props.textUnit.getRepositoryName()].thirdParty.label;
         } catch (e) {
-            return null;
+            return 'Third Party System';
         }
     };
 
