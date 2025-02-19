@@ -1,13 +1,13 @@
-package com.box.l10n.mojito.cli.apiclient;
+package com.box.l10n.mojito.apiclient;
 
-import com.box.l10n.mojito.cli.model.BranchBranchSummary;
-import com.box.l10n.mojito.cli.model.ImportRepositoryBody;
-import com.box.l10n.mojito.cli.model.PollableTask;
-import com.box.l10n.mojito.cli.model.Repository;
-import com.box.l10n.mojito.cli.model.RepositoryRepository;
-import com.box.l10n.mojito.rest.client.exception.RepositoryNotFoundException;
-import com.box.l10n.mojito.rest.client.exception.ResourceNotCreatedException;
-import com.box.l10n.mojito.rest.client.exception.ResourceNotUpdatedException;
+import com.box.l10n.mojito.apiclient.exception.RepositoryNotFoundException;
+import com.box.l10n.mojito.apiclient.exception.ResourceNotCreatedException;
+import com.box.l10n.mojito.apiclient.exception.ResourceNotUpdatedException;
+import com.box.l10n.mojito.model.BranchBranchSummary;
+import com.box.l10n.mojito.model.ImportRepositoryBody;
+import com.box.l10n.mojito.model.PollableTask;
+import com.box.l10n.mojito.model.Repository;
+import com.box.l10n.mojito.model.RepositoryRepository;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -19,7 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 
-@Component
+@Component("RepositoryWsApiProxyWebapp")
 public class RepositoryWsApiProxy {
   /** logger */
   static Logger logger = LoggerFactory.getLogger(RepositoryWsApiProxy.class);

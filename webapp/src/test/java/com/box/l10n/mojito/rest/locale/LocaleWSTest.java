@@ -3,10 +3,10 @@ package com.box.l10n.mojito.rest.locale;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.box.l10n.mojito.apiclient.LocaleWsApiProxy;
+import com.box.l10n.mojito.apiclient.exception.LocaleNotFoundException;
+import com.box.l10n.mojito.model.Locale;
 import com.box.l10n.mojito.rest.WSTestBase;
-import com.box.l10n.mojito.rest.client.LocaleClient;
-import com.box.l10n.mojito.rest.client.exception.LocaleNotFoundException;
-import com.box.l10n.mojito.rest.entity.Locale;
 import com.box.l10n.mojito.service.locale.LocaleRepository;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class LocaleWSTest extends WSTestBase {
 
-  @Autowired LocaleClient localeClient;
+  @Autowired LocaleWsApiProxy localeClient;
 
   @Autowired LocaleRepository localeRepository;
 
