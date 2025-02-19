@@ -310,6 +310,9 @@ public class AITranslateCronJob implements Job {
     List<TmTextUnitPendingMT> pendingMTs;
     try {
       do {
+        meterRegistry
+            .counter("AITranslateCronJob.pendingMT.queueSize")
+            .increment(tmTextUnitPendingMTRepository.count());
         pendingMTs =
             tmTextUnitPendingMTRepository.findBatch(aiTranslationConfiguration.getBatchSize());
         logger.info("Processing {} pending MTs", pendingMTs.size());
