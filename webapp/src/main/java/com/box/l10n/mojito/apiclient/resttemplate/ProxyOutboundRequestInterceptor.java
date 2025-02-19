@@ -1,6 +1,5 @@
-package com.box.l10n.mojito.resttemplate;
+package com.box.l10n.mojito.apiclient.resttemplate;
 
-import com.box.l10n.mojito.rest.resttemplate.ResttemplateConfig;
 import java.io.IOException;
 import java.net.URI;
 import org.slf4j.Logger;
@@ -16,7 +15,7 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
-@Component("ProxyOutboundRequestInterceptor")
+@Component
 @ConditionalOnProperty("l10n.proxy.enabled")
 public class ProxyOutboundRequestInterceptor implements ClientHttpRequestInterceptor {
 

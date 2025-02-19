@@ -1,4 +1,4 @@
-package com.box.l10n.mojito.model;
+package com.box.l10n.mojito.apiclient.model;
 
 public class ErrorMessage {
   String type;

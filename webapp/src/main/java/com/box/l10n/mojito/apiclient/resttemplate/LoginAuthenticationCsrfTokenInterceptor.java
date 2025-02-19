@@ -1,7 +1,5 @@
-package com.box.l10n.mojito.resttemplate;
+package com.box.l10n.mojito.apiclient.resttemplate;
 
-import com.box.l10n.mojito.rest.resttemplate.CredentialProvider;
-import com.box.l10n.mojito.rest.resttemplate.ResttemplateConfig;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
@@ -33,7 +31,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 
-@Component("LoginAuthenticationCsrfTokenInterceptorWebapp")
+@Component
 public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpRequestInterceptor {
 
   /** logger */

@@ -1,14 +1,15 @@
 package com.box.l10n.mojito.cli.apiclient;
 
-import com.box.l10n.mojito.cli.model.AIPromptContextMessageCreateRequest;
-import com.box.l10n.mojito.cli.model.AIPromptCreateRequest;
-import com.box.l10n.mojito.cli.model.AITranslationLocalePromptOverridesRequest;
+import com.box.l10n.mojito.apiclient.AiPromptWsApi;
+import com.box.l10n.mojito.apiclient.model.AIPromptContextMessageCreateRequest;
+import com.box.l10n.mojito.apiclient.model.AIPromptCreateRequest;
+import com.box.l10n.mojito.apiclient.model.AITranslationLocalePromptOverridesRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("AiPromptWsApiProxy")
 public class AiPromptWsApiProxy {
   /** logger */
   static Logger logger = LoggerFactory.getLogger(AiPromptWsApiProxy.class);

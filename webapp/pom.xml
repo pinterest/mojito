@@ -256,12 +256,6 @@
 
         <dependency>
             <groupId>com.box.l10n.mojito</groupId>
-            <artifactId>mojito-restclient</artifactId>
-            <version>0.111-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.box.l10n.mojito</groupId>
             <artifactId>mojito-test-common</artifactId>
             <version>0.111-SNAPSHOT</version>
             <scope>test</scope>
@@ -400,7 +394,7 @@
                                 <localVariablePrefix>mojito_</localVariablePrefix>
                             </configOptions>
                             <apiPackage>${parent.groupId}.apiclient</apiPackage>
-                            <modelPackage>${parent.groupId}.model</modelPackage>
+                            <modelPackage>${parent.groupId}.apiclient.model</modelPackage>
                             <invokerPackage>${parent.groupId}.apiclient</invokerPackage>
                         </configuration>
                     </execution>

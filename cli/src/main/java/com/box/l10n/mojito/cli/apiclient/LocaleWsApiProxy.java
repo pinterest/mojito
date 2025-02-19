@@ -1,7 +1,8 @@
 package com.box.l10n.mojito.cli.apiclient;
 
-import com.box.l10n.mojito.cli.model.Locale;
-import com.box.l10n.mojito.rest.client.exception.LocaleNotFoundException;
+import com.box.l10n.mojito.apiclient.LocaleWsApi;
+import com.box.l10n.mojito.apiclient.exception.LocaleNotFoundException;
+import com.box.l10n.mojito.apiclient.model.Locale;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

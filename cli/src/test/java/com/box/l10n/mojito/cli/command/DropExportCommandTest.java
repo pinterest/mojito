@@ -2,13 +2,13 @@ package com.box.l10n.mojito.cli.command;
 
 import static org.junit.Assert.assertEquals;
 
+import com.box.l10n.mojito.apiclient.DropWsApi;
+import com.box.l10n.mojito.apiclient.model.AssetAssetSummary;
+import com.box.l10n.mojito.apiclient.model.PageDropDropSummary;
+import com.box.l10n.mojito.apiclient.model.Pageable;
 import com.box.l10n.mojito.cli.CLITestBase;
 import com.box.l10n.mojito.cli.apiclient.AssetWsApiProxy;
-import com.box.l10n.mojito.cli.apiclient.DropWsApi;
 import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
-import com.box.l10n.mojito.cli.model.AssetAssetSummary;
-import com.box.l10n.mojito.cli.model.PageDropDropSummary;
-import com.box.l10n.mojito.cli.model.Pageable;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.tm.TMImportService;

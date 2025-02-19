@@ -1,6 +1,5 @@
-package com.box.l10n.mojito.resttemplate;
+package com.box.l10n.mojito.apiclient.resttemplate;
 
-import com.box.l10n.mojito.rest.resttemplate.ResttemplateConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;

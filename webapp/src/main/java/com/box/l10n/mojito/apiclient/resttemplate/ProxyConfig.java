@@ -1,9 +1,9 @@
-package com.box.l10n.mojito.resttemplate;
+package com.box.l10n.mojito.apiclient.resttemplate;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
-@Configuration("ProxyConfigWebapp")
+@Configuration
 public class ProxyConfig {
 
   @Value("${l10n.proxy.host:}")

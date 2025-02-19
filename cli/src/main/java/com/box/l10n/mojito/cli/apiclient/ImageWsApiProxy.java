@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.cli.apiclient;
 
+import com.box.l10n.mojito.apiclient.ImageWsApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

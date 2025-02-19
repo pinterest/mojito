@@ -5,9 +5,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.box.l10n.mojito.apiclient.exception.PollableTaskException;
 import com.box.l10n.mojito.apiclient.exception.PollableTaskExecutionException;
 import com.box.l10n.mojito.apiclient.exception.PollableTaskTimeoutException;
+import com.box.l10n.mojito.apiclient.model.ErrorMessage;
+import com.box.l10n.mojito.apiclient.model.PollableTask;
 import com.box.l10n.mojito.json.ObjectMapper;
-import com.box.l10n.mojito.model.ErrorMessage;
-import com.box.l10n.mojito.model.PollableTask;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
@@ -44,7 +44,7 @@ public class PollableTaskWsApiProxy {
   /**
    * Waits for {@link PollableTask} to be all finished (see {@link PollableTask#isAllFinished() }).
    *
-   * @param pollableId the {@link com.box.l10n.mojito.model.PollableTask#getId()}
+   * @param pollableId the {@link PollableTask#getId()}
    * @param timeout timeout in milliseconds.
    * @param waitForPollableTaskListener listener to be called during polling
    * @throws PollableTaskException

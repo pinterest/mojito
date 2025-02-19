@@ -1,6 +1,5 @@
-package com.box.l10n.mojito.resttemplate;
+package com.box.l10n.mojito.apiclient.resttemplate;
 
-import com.box.l10n.mojito.rest.resttemplate.ResttemplateConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -11,7 +10,7 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-@Component("ProxyHealthCheckServiceWebapp")
+@Component
 @ConditionalOnProperty("l10n.proxy.enabled")
 public class ProxyHealthCheckService implements InitializingBean {
 

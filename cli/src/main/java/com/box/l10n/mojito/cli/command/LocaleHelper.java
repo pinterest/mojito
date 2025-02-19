@@ -1,10 +1,10 @@
 package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.internal.Lists;
+import com.box.l10n.mojito.apiclient.model.Locale;
+import com.box.l10n.mojito.apiclient.model.RepositoryLocale;
 import com.box.l10n.mojito.cli.apiclient.LocaleWsApiProxy;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.cli.model.Locale;
-import com.box.l10n.mojito.cli.model.RepositoryLocale;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -38,7 +38,7 @@ public class LocaleHelper {
 
   /**
    * Extract {@link RepositoryLocale} set from {@link RepoCreateCommand#encodedBcp47Tags} to prep
-   * for {@link com.box.l10n.mojito.cli.model.Repository} creation
+   * for {@link com.box.l10n.mojito.apiclient.model.Repository} creation
    *
    * @return
    * @throws CommandException

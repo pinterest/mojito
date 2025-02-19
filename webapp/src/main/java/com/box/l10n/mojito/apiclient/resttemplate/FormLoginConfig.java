@@ -1,9 +1,9 @@
-package com.box.l10n.mojito.resttemplate;
+package com.box.l10n.mojito.apiclient.resttemplate;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-@Component("FormLoginConfigWebapp")
+@Component
 @ConfigurationProperties(prefix = "l10n.resttemplate.authentication.formlogin")
 public class FormLoginConfig {
 

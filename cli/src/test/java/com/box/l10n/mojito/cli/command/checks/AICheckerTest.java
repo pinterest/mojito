@@ -11,11 +11,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.box.l10n.mojito.apiclient.model.AICheckResponse;
+import com.box.l10n.mojito.apiclient.model.AICheckResult;
 import com.box.l10n.mojito.cli.apiclient.AiChecksWsApiProxy;
 import com.box.l10n.mojito.cli.command.CommandException;
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
-import com.box.l10n.mojito.cli.model.AICheckResponse;
-import com.box.l10n.mojito.cli.model.AICheckResult;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.rest.ai.AIException;
 import com.google.common.collect.ImmutableMap;

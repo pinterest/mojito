@@ -1,8 +1,9 @@
 package com.box.l10n.mojito.cli.apiclient;
 
-import com.box.l10n.mojito.cli.model.GitBlameWithUsage;
-import com.box.l10n.mojito.cli.model.GitBlameWithUsageGitBlameWithUsage;
-import com.box.l10n.mojito.cli.model.PollableTask;
+import com.box.l10n.mojito.apiclient.TextUnitWsApi;
+import com.box.l10n.mojito.apiclient.model.GitBlameWithUsage;
+import com.box.l10n.mojito.apiclient.model.GitBlameWithUsageGitBlameWithUsage;
+import com.box.l10n.mojito.apiclient.model.PollableTask;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

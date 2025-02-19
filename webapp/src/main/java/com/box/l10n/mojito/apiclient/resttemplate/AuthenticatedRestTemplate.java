@@ -1,6 +1,5 @@
-package com.box.l10n.mojito.resttemplate;
+package com.box.l10n.mojito.apiclient.resttemplate;
 
-import com.box.l10n.mojito.rest.resttemplate.ResttemplateConfig;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,7 +37,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-@Component("AuthenticatedRestTemplateWebapp")
+@Component
 public class AuthenticatedRestTemplate {
 
   /** logger */

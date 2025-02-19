@@ -8,10 +8,10 @@ import static org.junit.Assert.fail;
 import com.box.l10n.mojito.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.apiclient.exception.RepositoryNotFoundException;
 import com.box.l10n.mojito.apiclient.exception.ResourceNotUpdatedException;
+import com.box.l10n.mojito.apiclient.model.LocaleRepository;
+import com.box.l10n.mojito.apiclient.model.RepositoryLocale;
+import com.box.l10n.mojito.apiclient.model.RepositoryLocaleRepository;
 import com.box.l10n.mojito.entity.Repository;
-import com.box.l10n.mojito.model.LocaleRepository;
-import com.box.l10n.mojito.model.RepositoryLocale;
-import com.box.l10n.mojito.model.RepositoryLocaleRepository;
 import com.box.l10n.mojito.rest.WSTestBase;
 import com.box.l10n.mojito.rest.WSTestDataFactory;
 import com.box.l10n.mojito.service.locale.LocaleService;
@@ -54,7 +54,7 @@ public class RepositoryWSTest extends WSTestBase {
   public void testGetRepositoryByName()
       throws RepositoryNameAlreadyUsedException, RepositoryNotFoundException {
     Repository expectedRepository = wsTestDataFactory.createRepository(testIdWatcher);
-    com.box.l10n.mojito.model.RepositoryRepository actualRepository =
+    com.box.l10n.mojito.apiclient.model.RepositoryRepository actualRepository =
         repositoryClient.getRepositoryByName(expectedRepository.getName());
 
     assertRepositoriesAreEqual(expectedRepository, actualRepository);
@@ -68,7 +68,7 @@ public class RepositoryWSTest extends WSTestBase {
     final Optional<Repository> byId = repositoryRepository.findById(expectedRepository.getId());
     System.out.println(byId.get().getName());
 
-    com.box.l10n.mojito.model.RepositoryRepository actualRepository =
+    com.box.l10n.mojito.apiclient.model.RepositoryRepository actualRepository =
         repositoryClient.getRepositoryById(expectedRepository.getId());
 
     assertRepositoriesAreEqual(expectedRepository, actualRepository);
@@ -93,7 +93,7 @@ public class RepositoryWSTest extends WSTestBase {
   public void testDeleteRepositoryById()
       throws RepositoryNotFoundException, RepositoryNameAlreadyUsedException {
     Repository expectedRepository = wsTestDataFactory.createRepository(testIdWatcher);
-    com.box.l10n.mojito.model.RepositoryRepository actualRepository =
+    com.box.l10n.mojito.apiclient.model.RepositoryRepository actualRepository =
         repositoryClient.getRepositoryById(expectedRepository.getId());
     assertRepositoriesAreEqual(expectedRepository, actualRepository);
 
@@ -112,13 +112,14 @@ public class RepositoryWSTest extends WSTestBase {
 
     String newName = expectedRepository.getName() + "_updated";
 
-    com.box.l10n.mojito.model.Repository repository = new com.box.l10n.mojito.model.Repository();
+    com.box.l10n.mojito.apiclient.model.Repository repository =
+        new com.box.l10n.mojito.apiclient.model.Repository();
     repository.setDescription(null);
     repository.setName(newName);
     repository.setRepositoryLocales(null);
     repository.setCheckSLA(null);
     repositoryClient.updateRepository(expectedRepository.getName(), repository);
-    com.box.l10n.mojito.model.RepositoryRepository actualRepository =
+    com.box.l10n.mojito.apiclient.model.RepositoryRepository actualRepository =
         repositoryClient.getRepositoryById(expectedRepository.getId());
     assertEquals(
         "Id should have remained the same", expectedRepository.getId(), actualRepository.getId());
@@ -134,7 +135,7 @@ public class RepositoryWSTest extends WSTestBase {
 
     String newDescription = newName + "_description";
 
-    repository = new com.box.l10n.mojito.model.Repository();
+    repository = new com.box.l10n.mojito.apiclient.model.Repository();
     repository.setDescription(newDescription);
     repository.setName(null);
     repository.setRepositoryLocales(null);
@@ -161,13 +162,14 @@ public class RepositoryWSTest extends WSTestBase {
 
     List<RepositoryLocale> repositoryLocales = getRepositoryLocales(Arrays.asList("de-DE"));
 
-    com.box.l10n.mojito.model.Repository repository = new com.box.l10n.mojito.model.Repository();
+    com.box.l10n.mojito.apiclient.model.Repository repository =
+        new com.box.l10n.mojito.apiclient.model.Repository();
     repository.setDescription(null);
     repository.setName(null);
     repository.setRepositoryLocales(repositoryLocales);
     repository.setCheckSLA(null);
     repositoryClient.updateRepository(expectedRepository.getName(), repository);
-    com.box.l10n.mojito.model.RepositoryRepository actualRepository =
+    com.box.l10n.mojito.apiclient.model.RepositoryRepository actualRepository =
         repositoryClient.getRepositoryById(expectedRepository.getId());
     assertEquals(
         "Id should have remained the same", expectedRepository.getId(), actualRepository.getId());
@@ -191,7 +193,7 @@ public class RepositoryWSTest extends WSTestBase {
 
     repositoryLocales = getRepositoryLocales(Arrays.asList("fr-FR", "ko-KR", "ja-JP", "es-ES"));
 
-    repository = new com.box.l10n.mojito.model.Repository();
+    repository = new com.box.l10n.mojito.apiclient.model.Repository();
     repository.setDescription(null);
     repository.setName(null);
     repository.setRepositoryLocales(repositoryLocales);
@@ -221,7 +223,7 @@ public class RepositoryWSTest extends WSTestBase {
 
   protected void assertRepositoriesAreEqual(
       Repository expectedRepository,
-      com.box.l10n.mojito.model.RepositoryRepository actualRepository) {
+      com.box.l10n.mojito.apiclient.model.RepositoryRepository actualRepository) {
     logger.debug("Basic asserts");
     assertEquals(expectedRepository.getName(), actualRepository.getName());
     assertEquals(expectedRepository.getDescription(), actualRepository.getDescription());

@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.cli.apiclient;
 
+import com.box.l10n.mojito.apiclient.QuartzWsApi;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

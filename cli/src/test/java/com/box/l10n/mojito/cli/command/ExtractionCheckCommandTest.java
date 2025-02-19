@@ -7,10 +7,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.box.l10n.mojito.apiclient.resttemplate.AuthenticatedRestTemplate;
 import com.box.l10n.mojito.cli.CLITestBase;
 import com.box.l10n.mojito.cli.command.checks.CliCheckResult;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
 import com.google.common.collect.Lists;
 import java.util.List;
 import org.fusesource.jansi.Ansi;

@@ -1,13 +1,14 @@
 package com.box.l10n.mojito.cli.apiclient;
 
-import com.box.l10n.mojito.cli.model.AssetAssetSummary;
-import com.box.l10n.mojito.cli.model.ImportLocalizedAssetBody;
-import com.box.l10n.mojito.cli.model.LocalizedAssetBody;
-import com.box.l10n.mojito.cli.model.MultiLocalizedAssetBody;
-import com.box.l10n.mojito.cli.model.PollableTask;
-import com.box.l10n.mojito.cli.model.SourceAsset;
-import com.box.l10n.mojito.cli.model.XliffExportBody;
-import com.box.l10n.mojito.rest.client.exception.AssetNotFoundException;
+import com.box.l10n.mojito.apiclient.AssetWsApi;
+import com.box.l10n.mojito.apiclient.exception.AssetNotFoundException;
+import com.box.l10n.mojito.apiclient.model.AssetAssetSummary;
+import com.box.l10n.mojito.apiclient.model.ImportLocalizedAssetBody;
+import com.box.l10n.mojito.apiclient.model.LocalizedAssetBody;
+import com.box.l10n.mojito.apiclient.model.MultiLocalizedAssetBody;
+import com.box.l10n.mojito.apiclient.model.PollableTask;
+import com.box.l10n.mojito.apiclient.model.SourceAsset;
+import com.box.l10n.mojito.apiclient.model.XliffExportBody;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

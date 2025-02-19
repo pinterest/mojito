@@ -5,7 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.box.l10n.mojito.apiclient.LocaleWsApiProxy;
 import com.box.l10n.mojito.apiclient.exception.LocaleNotFoundException;
-import com.box.l10n.mojito.model.Locale;
+import com.box.l10n.mojito.apiclient.model.Locale;
 import com.box.l10n.mojito.rest.WSTestBase;
 import com.box.l10n.mojito.service.locale.LocaleRepository;
 import java.util.ArrayList;

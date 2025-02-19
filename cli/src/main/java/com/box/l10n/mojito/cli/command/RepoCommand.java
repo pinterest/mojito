@@ -3,9 +3,9 @@ package com.box.l10n.mojito.cli.command;
 import static java.util.Optional.ofNullable;
 
 import com.beust.jcommander.ParameterException;
+import com.box.l10n.mojito.apiclient.model.AssetIntegrityChecker;
 import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.cli.model.AssetIntegrityChecker;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;

@@ -1,11 +1,10 @@
-package com.box.l10n.mojito.resttemplate;
+package com.box.l10n.mojito.apiclient.resttemplate;
 
-import com.box.l10n.mojito.rest.resttemplate.ResttemplateConfig;
 import com.google.common.base.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@Component("RestTemplateUtilWebapp")
+@Component
 public class RestTemplateUtil {
 
   @Autowired ResttemplateConfig resttemplateConfig;

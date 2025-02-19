@@ -1,16 +1,14 @@
-package com.box.l10n.mojito.resttemplate;
+package com.box.l10n.mojito.apiclient.resttemplate;
 
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.cookie.BasicCookieStore;
 import org.apache.hc.client5.http.cookie.CookieStore;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
-import org.springframework.context.annotation.Primary;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-@Component("CookieStoreRestTemplateWebapp")
-@Primary
+@Component
 public class CookieStoreRestTemplate extends RestTemplate {
 
   CookieStore cookieStore;

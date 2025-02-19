@@ -2,18 +2,18 @@ package com.box.l10n.mojito.apiclient;
 
 import static java.util.Optional.ofNullable;
 
-import com.box.l10n.mojito.model.AssetIntegrityChecker;
-import com.box.l10n.mojito.model.AssetIntegrityCheckerRepository;
-import com.box.l10n.mojito.model.Locale;
-import com.box.l10n.mojito.model.LocaleRepository;
-import com.box.l10n.mojito.model.Repository;
-import com.box.l10n.mojito.model.RepositoryLocale;
-import com.box.l10n.mojito.model.RepositoryLocaleRepository;
-import com.box.l10n.mojito.model.RepositoryLocaleStatistic;
-import com.box.l10n.mojito.model.RepositoryLocaleStatisticRepository;
-import com.box.l10n.mojito.model.RepositoryRepository;
-import com.box.l10n.mojito.model.RepositoryStatistic;
-import com.box.l10n.mojito.model.RepositoryStatisticRepository;
+import com.box.l10n.mojito.apiclient.model.AssetIntegrityChecker;
+import com.box.l10n.mojito.apiclient.model.AssetIntegrityCheckerRepository;
+import com.box.l10n.mojito.apiclient.model.Locale;
+import com.box.l10n.mojito.apiclient.model.LocaleRepository;
+import com.box.l10n.mojito.apiclient.model.Repository;
+import com.box.l10n.mojito.apiclient.model.RepositoryLocale;
+import com.box.l10n.mojito.apiclient.model.RepositoryLocaleRepository;
+import com.box.l10n.mojito.apiclient.model.RepositoryLocaleStatistic;
+import com.box.l10n.mojito.apiclient.model.RepositoryLocaleStatisticRepository;
+import com.box.l10n.mojito.apiclient.model.RepositoryRepository;
+import com.box.l10n.mojito.apiclient.model.RepositoryStatistic;
+import com.box.l10n.mojito.apiclient.model.RepositoryStatisticRepository;
 
 public class RepositoryMapper {
   public static Locale mapToLocale(LocaleRepository localeRepository) {

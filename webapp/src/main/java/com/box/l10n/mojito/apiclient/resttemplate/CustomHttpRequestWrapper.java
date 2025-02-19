@@ -1,4 +1,4 @@
-package com.box.l10n.mojito.resttemplate;
+package com.box.l10n.mojito.apiclient.resttemplate;
 
 import java.net.URI;
 import org.springframework.http.HttpHeaders;

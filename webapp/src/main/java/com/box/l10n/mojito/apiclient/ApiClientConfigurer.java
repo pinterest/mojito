@@ -1,11 +1,11 @@
 package com.box.l10n.mojito.apiclient;
 
-import com.box.l10n.mojito.rest.resttemplate.ResttemplateConfig;
+import com.box.l10n.mojito.apiclient.resttemplate.ResttemplateConfig;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@Component("ApiClientConfigurerWebapp")
+@Component
 public class ApiClientConfigurer {
 
   @Autowired private ApiClient apiClient;

@@ -8,9 +8,9 @@ import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
 import static org.junit.Assert.assertEquals;
 
+import com.box.l10n.mojito.apiclient.model.BranchBranchSummary;
 import com.box.l10n.mojito.cli.CLITestBase;
 import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
-import com.box.l10n.mojito.cli.model.BranchBranchSummary;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.service.branch.BranchRepository;
 import java.time.ZonedDateTime;
