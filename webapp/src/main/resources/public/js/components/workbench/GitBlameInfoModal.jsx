@@ -126,15 +126,18 @@ class GitBlameInfoModal extends React.Component {
      * @returns {*} Generated content for the text unit information section
      */
     renderTextUnitLinkInfo = () => {
-        return this.props.textUnit === null ? null :
-            (
-                <div>
-                    {this.displayInfoWithId("textUnit.gitBlameModal.location", this.getLocationLinks())}
-                    {this.shouldShowThirdPartyTMS() && this.displayInfoWithId("textUnit.gitBlameModal.thirdPartyTMS", this.getThirdPartyLink())}
-                    {this.shouldShowCustomMd5() && this.displayInfoWithId("textUnit.gitBlameModal.customMd5", this.getCustomMd5Link())}
-                    {this.displayInfoWithId("textUnit.gitBlameModal.introducedBy", this.getIntroducedByLink())}
-                </div>
-            );
+        if (this.props.textUnit === null) {
+            return null;
+        }
+    
+        return (
+            <div>
+                {this.displayInfoWithId("textUnit.gitBlameModal.location", this.getLocationLinks())}
+                {this.shouldShowThirdPartyTMS() && this.displayInfoWithId("textUnit.gitBlameModal.thirdPartyTMS", this.getThirdPartyLink())}
+                {this.shouldShowCustomMd5() && this.displayInfoWithId("textUnit.gitBlameModal.customMd5", this.getCustomMd5Link())}
+                {this.displayInfoWithId("textUnit.gitBlameModal.introducedBy", this.getIntroducedByLink())}
+            </div>
+        );
     };
 
     /**
@@ -155,19 +158,22 @@ class GitBlameInfoModal extends React.Component {
      * @returns {*} Generated content for the additional text unit information section
      */
     renderDebugInfo = () => {
-        return this.props.textUnit === null ? null :
-            (
-                <div className="panel-body">
-                    {this.displayInfoWithId("textUnit.gitBlameModal.isVirtual", this.getVirtual())}
-                    {this.displayInfo("TmTextUnitCurrentVariantId", this.props.textUnit.getTmTextUnitCurrentVariantId())}
-                    {this.displayInfo("AssetTextUnitId", this.props.textUnit.getAssetTextUnitId())}
-                    {this.displayInfo("ThirdPartyTMSId", this.getThirdPartyTextUnitId())}
-                    {this.displayInfo("AssetId", this.props.textUnit.getAssetId())}
-                    {this.displayInfo("LastSuccessfulAsset\nExtractionId", this.props.textUnit.getLastSuccessfulAssetExtractionId())}
-                    {this.displayInfo("AssetExtractionId", this.props.textUnit.getAssetExtractionId())}
-                    {this.displayScreenshotLink()}
-                </div>
-            );
+        if (this.props.textUnit === null) {
+            return null;
+        }
+
+        return (
+            <div className="panel-body">
+                {this.displayInfoWithId("textUnit.gitBlameModal.isVirtual", this.getVirtual())}
+                {this.displayInfo("TmTextUnitCurrentVariantId", this.props.textUnit.getTmTextUnitCurrentVariantId())}
+                {this.displayInfo("AssetTextUnitId", this.props.textUnit.getAssetTextUnitId())}
+                {this.displayInfo("ThirdPartyTMSId", this.getThirdPartyTextUnitId())}
+                {this.displayInfo("AssetId", this.props.textUnit.getAssetId())}
+                {this.displayInfo("LastSuccessfulAsset\nExtractionId", this.props.textUnit.getLastSuccessfulAssetExtractionId())}
+                {this.displayInfo("AssetExtractionId", this.props.textUnit.getAssetExtractionId())}
+                {this.displayScreenshotLink()}
+            </div>
+        );
     };
 
     /**
