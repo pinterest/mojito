@@ -19,7 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 
-@Component("RepositoryWsApiProxyWebapp")
+@Component
 public class RepositoryWsApiProxy {
   /** logger */
   static Logger logger = LoggerFactory.getLogger(RepositoryWsApiProxy.class);

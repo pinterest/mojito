@@ -2,11 +2,11 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.apiclient.UserWsApiProxy;
 import com.box.l10n.mojito.apiclient.exception.ResourceNotCreatedException;
 import com.box.l10n.mojito.apiclient.model.Authority;
 import com.box.l10n.mojito.apiclient.model.Role;
 import com.box.l10n.mojito.apiclient.model.User;
-import com.box.l10n.mojito.cli.apiclient.UserWsApiProxy;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.Console;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;

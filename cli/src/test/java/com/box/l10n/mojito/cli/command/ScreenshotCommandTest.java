@@ -3,10 +3,10 @@ package com.box.l10n.mojito.cli.command;
 import static org.junit.Assert.assertEquals;
 
 import com.box.l10n.mojito.LocaleMappingHelper;
+import com.box.l10n.mojito.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.apiclient.model.Locale;
 import com.box.l10n.mojito.apiclient.model.RepositoryRepository;
 import com.box.l10n.mojito.cli.CLITestBase;
-import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.entity.Repository;
 import java.nio.file.Path;
 import java.nio.file.Paths;

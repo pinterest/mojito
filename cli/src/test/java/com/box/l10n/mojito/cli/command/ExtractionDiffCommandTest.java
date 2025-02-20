@@ -11,9 +11,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.box.l10n.mojito.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.apiclient.model.BranchBranchSummary;
 import com.box.l10n.mojito.cli.CLITestBase;
-import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.cli.command.utils.SlackNotificationSender;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.github.GithubClient;

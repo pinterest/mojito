@@ -1,8 +1,8 @@
 package com.box.l10n.mojito.cli.command;
 
+import com.box.l10n.mojito.apiclient.AssetWsApiProxy;
 import com.box.l10n.mojito.apiclient.model.AssetAssetSummary;
 import com.box.l10n.mojito.cli.CLITestBase;
-import com.box.l10n.mojito.cli.apiclient.AssetWsApiProxy;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.test.XliffUtils;
 import org.junit.Test;

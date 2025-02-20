@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@Component("AiChecksWsApiProxyCLI")
+@Component
 public class AiChecksWsApiProxy {
   /** logger */
   static Logger logger = LoggerFactory.getLogger(AiChecksWsApiProxy.class);

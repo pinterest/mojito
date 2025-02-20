@@ -2,14 +2,14 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.apiclient.AssetWsApiProxy;
+import com.box.l10n.mojito.apiclient.PollableTaskWsApiProxy;
+import com.box.l10n.mojito.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.apiclient.model.LocaleRepository;
 import com.box.l10n.mojito.apiclient.model.LocalizedAssetBody;
 import com.box.l10n.mojito.apiclient.model.RepositoryLocaleRepository;
 import com.box.l10n.mojito.apiclient.model.RepositoryRepository;
 import com.box.l10n.mojito.apiclient.model.SourceAsset;
-import com.box.l10n.mojito.cli.apiclient.AssetWsApiProxy;
-import com.box.l10n.mojito.cli.apiclient.PollableTaskWsApiProxy;
-import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.evolve.Course;

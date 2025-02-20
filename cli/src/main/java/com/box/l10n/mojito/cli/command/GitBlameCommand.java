@@ -5,14 +5,14 @@ import static org.fusesource.jansi.Ansi.Color.YELLOW;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.apiclient.AssetWsApiProxy;
+import com.box.l10n.mojito.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.apiclient.exception.PollableTaskException;
 import com.box.l10n.mojito.apiclient.model.GitBlameGitBlameWithUsage;
 import com.box.l10n.mojito.apiclient.model.GitBlameWithUsageGitBlameWithUsage;
 import com.box.l10n.mojito.apiclient.model.PollableTask;
 import com.box.l10n.mojito.apiclient.model.RepositoryRepository;
-import com.box.l10n.mojito.cli.apiclient.AssetWsApiProxy;
 import com.box.l10n.mojito.cli.apiclient.GitBlameWithUsageMapper;
-import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.cli.apiclient.TextUnitWsApiProxy;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;

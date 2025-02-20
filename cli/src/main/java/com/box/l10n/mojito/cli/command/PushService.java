@@ -1,14 +1,14 @@
 package com.box.l10n.mojito.cli.command;
 
+import com.box.l10n.mojito.apiclient.AssetWsApiProxy;
 import com.box.l10n.mojito.apiclient.CommitWsApi;
+import com.box.l10n.mojito.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.apiclient.exception.PollableTaskException;
 import com.box.l10n.mojito.apiclient.model.BranchBranchSummary;
 import com.box.l10n.mojito.apiclient.model.CommitToPushRunBody;
 import com.box.l10n.mojito.apiclient.model.PollableTask;
 import com.box.l10n.mojito.apiclient.model.RepositoryRepository;
 import com.box.l10n.mojito.apiclient.model.SourceAsset;
-import com.box.l10n.mojito.cli.apiclient.AssetWsApiProxy;
-import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import java.util.ArrayList;
 import java.util.HashSet;

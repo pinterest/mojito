@@ -1,9 +1,9 @@
 package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.internal.Lists;
+import com.box.l10n.mojito.apiclient.LocaleWsApiProxy;
 import com.box.l10n.mojito.apiclient.model.Locale;
 import com.box.l10n.mojito.apiclient.model.RepositoryLocale;
-import com.box.l10n.mojito.cli.apiclient.LocaleWsApiProxy;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;

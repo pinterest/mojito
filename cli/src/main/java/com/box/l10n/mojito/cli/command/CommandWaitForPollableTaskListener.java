@@ -1,8 +1,8 @@
 package com.box.l10n.mojito.cli.command;
 
+import com.box.l10n.mojito.apiclient.WaitForPollableTaskListener;
 import com.box.l10n.mojito.apiclient.model.ErrorMessage;
 import com.box.l10n.mojito.apiclient.model.PollableTask;
-import com.box.l10n.mojito.cli.apiclient.WaitForPollableTaskListener;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.json.ObjectMapper;
 import com.google.common.base.Strings;

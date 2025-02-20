@@ -2,9 +2,9 @@ package com.box.l10n.mojito.cli.command;
 
 import static org.junit.Assert.assertEquals;
 
+import com.box.l10n.mojito.apiclient.AssetWsApiProxy;
 import com.box.l10n.mojito.apiclient.model.AssetAssetSummary;
 import com.box.l10n.mojito.cli.CLITestBase;
-import com.box.l10n.mojito.cli.apiclient.AssetWsApiProxy;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
