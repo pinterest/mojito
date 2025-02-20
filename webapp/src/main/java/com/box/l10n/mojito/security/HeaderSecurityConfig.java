@@ -1,10 +1,9 @@
 package com.box.l10n.mojito.security;
 
 import jakarta.annotation.PostConstruct;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.regex.Pattern;
 
 @Configuration
 public class HeaderSecurityConfig {
@@ -89,9 +88,5 @@ public class HeaderSecurityConfig {
 
   public Pattern getForbiddenServicePattern() {
     return forbiddenServicePattern;
-  }
-
-  public void setForbiddenServicePattern(Pattern forbiddenServicePattern) {
-    this.forbiddenServicePattern = forbiddenServicePattern;
   }
 }

@@ -36,9 +36,11 @@ public class UserDetailServiceAuthWrapper
     logger.debug("Is using service authentication flow: {}", isService);
     if (isService) {
       String serviceName = serviceIdentifierParser.parseHeader(username);
-      if (headerSecurityConfig.getForbiddenServicePattern() != null && headerSecurityConfig.getForbiddenServicePattern().matcher(serviceName).matches()) {
+      if (headerSecurityConfig.getForbiddenServicePattern() != null
+          && headerSecurityConfig.getForbiddenServicePattern().matcher(serviceName).matches()) {
         logger.debug("Forbidden service identified: {}. Not allowing authentication", serviceName);
-        // Cannot use a custom exception since Spring only expects a UsernameNotFoundException to abort with a non 500 error code
+        // Cannot use a custom exception since Spring only expects a UsernameNotFoundException to
+        // abort with a non 500 error code
         throw new UsernameNotFoundException("Forbidden service identified: " + serviceName);
       }
 
