@@ -156,4 +156,8 @@ public class PollableTaskWsApiProxy {
   public String getPollableTaskOutput(Long pollableTaskId) {
     return this.pollableTaskClient.getPollableTaskOutput(pollableTaskId);
   }
+
+  public PollableTask getPollableTaskById(Long pollableTaskId) {
+    return this.pollableTaskClient.getPollableTaskById(pollableTaskId);
+  }
 }

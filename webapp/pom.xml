@@ -317,6 +317,13 @@
             <artifactId>javax.annotation-api</artifactId>
             <version>${javax-annotation}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.github.tomakehurst</groupId>
+            <artifactId>wiremock</artifactId>
+            <version>1.53</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -367,7 +374,8 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <outputFileName>openapi.json</outputFileName>
+                    <apiDocsUrl>http://localhost:8080/v3/api-docs.yaml</apiDocsUrl>
+                    <outputFileName>openapi.yaml</outputFileName>
                     <outputDir>${project.basedir}/src/main/resources</outputDir>
                 </configuration>
             </plugin>
@@ -381,7 +389,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/openapi.json</inputSpec>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi.yaml</inputSpec>
                             <language>java</language>
                             <generateApiTests>false</generateApiTests>
                             <generateModelTests>false</generateModelTests>
