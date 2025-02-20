@@ -228,13 +228,13 @@ public class TextUnitSearcher {
           new NativeJoin(
               "branch_text_unit_statistic",
               "btus",
-              NativeJoin.JoinType.LEFT_OUTER,
+              NativeJoin.JoinType.INNER,
               onClauseBranchTextUnitStatistic));
       NativeJunctionExp onClauseBranchStatistic = NativeExps.conjunction();
       onClauseBranchStatistic.add(new NativeColumnEqExp("bs.id", "btus.branch_statistic_id"));
       c.addJoin(
           new NativeJoin(
-              "branch_statistic", "bs", NativeJoin.JoinType.LEFT_OUTER, onClauseBranchStatistic));
+              "branch_statistic", "bs", NativeJoin.JoinType.INNER, onClauseBranchStatistic));
     }
 
     logger.debug("Set projections");
