@@ -317,13 +317,6 @@
             <artifactId>javax.annotation-api</artifactId>
             <version>${javax-annotation}</version>
         </dependency>
-
-        <dependency>
-            <groupId>com.github.tomakehurst</groupId>
-            <artifactId>wiremock</artifactId>
-            <version>1.53</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
