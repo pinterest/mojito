@@ -366,6 +366,7 @@
             <plugin>
                 <groupId>org.springdoc</groupId>
                 <artifactId>springdoc-openapi-maven-plugin</artifactId>
+                <version>1.4</version>
                 <executions>
                     <execution>
                         <goals>
@@ -383,6 +384,7 @@
             <plugin>
                 <groupId>io.swagger.codegen.v3</groupId>
                 <artifactId>swagger-codegen-maven-plugin</artifactId>
+                <version>${io-swagger-codegen-v3}</version>
                 <executions>
                     <execution>
                         <goals>
@@ -401,9 +403,9 @@
                                 <java8>true</java8>
                                 <localVariablePrefix>mojito_</localVariablePrefix>
                             </configOptions>
-                            <apiPackage>${parent.groupId}.apiclient</apiPackage>
-                            <modelPackage>${parent.groupId}.apiclient.model</modelPackage>
-                            <invokerPackage>${parent.groupId}.apiclient</invokerPackage>
+                            <apiPackage>${project.parent.groupId}.apiclient</apiPackage>
+                            <modelPackage>${project.parent.groupId}.apiclient.model</modelPackage>
+                            <invokerPackage>${project.parent.groupId}.apiclient</invokerPackage>
                         </configuration>
                     </execution>
                 </executions>
