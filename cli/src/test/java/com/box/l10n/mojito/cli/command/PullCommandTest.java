@@ -3,11 +3,6 @@ package com.box.l10n.mojito.cli.command;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import com.box.l10n.mojito.apiclient.AssetWsApiProxy;
-import com.box.l10n.mojito.apiclient.RepositoryWsApiProxy;
-import com.box.l10n.mojito.apiclient.model.AssetAssetSummary;
-import com.box.l10n.mojito.apiclient.model.RepositoryRepository;
-import com.box.l10n.mojito.apiclient.model.RepositoryStatisticRepository;
 import com.box.l10n.mojito.cli.CLITestBase;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.PullRun;
@@ -15,6 +10,11 @@ import com.box.l10n.mojito.entity.PushRun;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
+import com.box.l10n.mojito.rest.apiclient.model.AssetAssetSummary;
+import com.box.l10n.mojito.rest.apiclient.model.RepositoryRepository;
+import com.box.l10n.mojito.rest.apiclient.model.RepositoryStatisticRepository;
+import com.box.l10n.mojito.rest.client.AssetClient;
+import com.box.l10n.mojito.rest.client.RepositoryClient;
 import com.box.l10n.mojito.service.commit.CommitService;
 import com.box.l10n.mojito.service.delta.DeltaService;
 import com.box.l10n.mojito.service.delta.DeltaType;
@@ -47,9 +47,9 @@ public class PullCommandTest extends CLITestBase {
   /** logger */
   static Logger logger = LoggerFactory.getLogger(PullCommandTest.class);
 
-  @Autowired RepositoryWsApiProxy repositoryClient;
+  @Autowired RepositoryClient repositoryClient;
 
-  @Autowired AssetWsApiProxy assetClient;
+  @Autowired AssetClient assetClient;
 
   @Autowired TMTextUnitVariantRepository tmTextUnitVariantRepository;
 

@@ -1,9 +1,9 @@
 package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.JCommander;
-import com.box.l10n.mojito.apiclient.resttemplate.AuthenticatedRestTemplate;
 import com.box.l10n.mojito.cli.command.utils.SlackNotificationSender;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
+import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
 import com.box.l10n.mojito.slack.SlackClient;
 import com.google.common.base.Strings;
 import jakarta.annotation.PostConstruct;

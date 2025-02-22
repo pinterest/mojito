@@ -31,11 +31,18 @@
             <groupId>com.box.l10n.mojito</groupId>
             <artifactId>mojito-webapp</artifactId>
             <version>0.111-SNAPSHOT</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>com.box.l10n.mojito</groupId>
             <artifactId>mojito-common</artifactId>
+            <version>0.111-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.box.l10n.mojito</groupId>
+            <artifactId>mojito-restclient</artifactId>
             <version>0.111-SNAPSHOT</version>
         </dependency>
 

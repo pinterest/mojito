@@ -1,9 +1,9 @@
 package com.box.l10n.mojito.cli.command;
 
-import com.box.l10n.mojito.apiclient.AssetWsApiProxy;
-import com.box.l10n.mojito.apiclient.model.AssetAssetSummary;
 import com.box.l10n.mojito.cli.CLITestBase;
 import com.box.l10n.mojito.entity.Repository;
+import com.box.l10n.mojito.rest.apiclient.model.AssetAssetSummary;
+import com.box.l10n.mojito.rest.client.AssetClient;
 import com.box.l10n.mojito.test.XliffUtils;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class TMExportCommandTest extends CLITestBase {
 
-  @Autowired AssetWsApiProxy assetClient;
+  @Autowired AssetClient assetClient;
 
   @Test
   public void export() throws Exception {

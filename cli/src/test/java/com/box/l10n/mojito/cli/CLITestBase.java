@@ -1,13 +1,13 @@
 package com.box.l10n.mojito.cli;
 
 import com.box.l10n.mojito.Application;
-import com.box.l10n.mojito.apiclient.ApiClientConfigurer;
-import com.box.l10n.mojito.apiclient.resttemplate.AuthenticatedRestTemplate;
-import com.box.l10n.mojito.apiclient.resttemplate.ResttemplateConfig;
 import com.box.l10n.mojito.cli.command.L10nJCommander;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
+import com.box.l10n.mojito.rest.client.ApiClientConfigurer;
+import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
+import com.box.l10n.mojito.rest.resttemplate.ResttemplateConfig;
 import com.box.l10n.mojito.service.asset.AssetRepository;
 import com.box.l10n.mojito.service.locale.LocaleService;
 import com.box.l10n.mojito.service.repository.RepositoryService;

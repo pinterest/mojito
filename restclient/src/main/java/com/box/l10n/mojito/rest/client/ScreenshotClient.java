@@ -1,8 +1,10 @@
 package com.box.l10n.mojito.rest.client;
 
-import com.box.l10n.mojito.rest.entity.ScreenshotRun;
+import com.box.l10n.mojito.rest.apiclient.ScreenshotWsApi;
+import com.box.l10n.mojito.rest.apiclient.model.ScreenshotRun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -11,26 +13,19 @@ import org.springframework.stereotype.Component;
  * @author jaurambault
  */
 @Component
-public class ScreenshotClient extends BaseClient {
+public class ScreenshotClient {
 
   /** logger */
   static Logger logger = LoggerFactory.getLogger(ScreenshotClient.class);
 
-  @Override
-  public String getEntityName() {
-    return "screenshots";
-  }
+  @Autowired private ScreenshotWsApi screenshotWsApi;
 
-  public void uploadScreenshots(ScreenshotRun screenshotRun) {
-
-    if (screenshotRun.getRepository() != null) {
-      logger.debug(
-          "Upload screenshots into repository = {}", screenshotRun.getRepository().getName());
+  public ScreenshotRun createOrAddToScreenshotRun(ScreenshotRun body) {
+    if (body.getRepository() != null) {
+      logger.debug("Upload screenshots into repository = {}", body.getRepository().getName());
     } else {
-      logger.debug("Upload screenshots for run with id = {}", screenshotRun.getId());
+      logger.debug("Upload screenshots for run with id = {}", body.getId());
     }
-
-    authenticatedRestTemplate.postForObject(
-        getBasePath() + "/screenshots", screenshotRun, Void.class);
+    return this.screenshotWsApi.createOrAddToScreenshotRun(body);
   }
 }

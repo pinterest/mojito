@@ -5,20 +5,20 @@ import static org.fusesource.jansi.Ansi.Color.YELLOW;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.box.l10n.mojito.apiclient.AssetWsApiProxy;
-import com.box.l10n.mojito.apiclient.RepositoryWsApiProxy;
-import com.box.l10n.mojito.apiclient.exception.PollableTaskException;
-import com.box.l10n.mojito.apiclient.model.GitBlameGitBlameWithUsage;
-import com.box.l10n.mojito.apiclient.model.GitBlameWithUsageGitBlameWithUsage;
-import com.box.l10n.mojito.apiclient.model.PollableTask;
-import com.box.l10n.mojito.apiclient.model.RepositoryRepository;
-import com.box.l10n.mojito.cli.apiclient.GitBlameWithUsageMapper;
-import com.box.l10n.mojito.cli.apiclient.TextUnitWsApiProxy;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.filefinder.FileMatch;
 import com.box.l10n.mojito.cli.filefinder.file.FileType;
 import com.box.l10n.mojito.cli.filefinder.file.GitBlameType;
+import com.box.l10n.mojito.rest.apiclient.model.GitBlameGitBlameWithUsage;
+import com.box.l10n.mojito.rest.apiclient.model.GitBlameWithUsageGitBlameWithUsage;
+import com.box.l10n.mojito.rest.apiclient.model.PollableTask;
+import com.box.l10n.mojito.rest.apiclient.model.RepositoryRepository;
+import com.box.l10n.mojito.rest.client.AssetClient;
+import com.box.l10n.mojito.rest.client.GitBlameWithUsageClient;
+import com.box.l10n.mojito.rest.client.GitBlameWithUsageMapper;
+import com.box.l10n.mojito.rest.client.RepositoryClient;
+import com.box.l10n.mojito.rest.client.exception.PollableTaskException;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.nio.file.NoSuchFileException;
@@ -124,11 +124,11 @@ public class GitBlameCommand extends Command {
       converter = GitBlameOverrideConverter.class)
   OverrideType overrideType = OverrideType.NONE;
 
-  @Autowired AssetWsApiProxy assetClient;
+  @Autowired AssetClient assetClient;
 
-  @Autowired RepositoryWsApiProxy repositoryClient;
+  @Autowired RepositoryClient repositoryClient;
 
-  @Autowired TextUnitWsApiProxy gitBlameWithUsageClient;
+  @Autowired GitBlameWithUsageClient gitBlameWithUsageClient;
 
   @Autowired CommandHelper commandHelper;
 

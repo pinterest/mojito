@@ -1,14 +1,14 @@
 package com.box.l10n.mojito.rest;
 
 import com.box.l10n.mojito.Application;
-import com.box.l10n.mojito.apiclient.ApiClientConfigurer;
-import com.box.l10n.mojito.apiclient.LocaleWsApiProxy;
-import com.box.l10n.mojito.apiclient.exception.LocaleNotFoundException;
-import com.box.l10n.mojito.apiclient.model.RepositoryLocale;
-import com.box.l10n.mojito.apiclient.resttemplate.AuthenticatedRestTemplate;
-import com.box.l10n.mojito.apiclient.resttemplate.ResttemplateConfig;
 import com.box.l10n.mojito.factory.XliffDataFactory;
 import com.box.l10n.mojito.rest.annotation.WithDefaultTestUser;
+import com.box.l10n.mojito.rest.apiclient.model.RepositoryLocale;
+import com.box.l10n.mojito.rest.client.ApiClientConfigurer;
+import com.box.l10n.mojito.rest.client.LocaleClient;
+import com.box.l10n.mojito.rest.client.exception.LocaleNotFoundException;
+import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
+import com.box.l10n.mojito.rest.resttemplate.ResttemplateConfig;
 import com.box.l10n.mojito.xml.XmlParsingConfiguration;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
@@ -43,7 +43,7 @@ public class WSTestBase {
 
   @Autowired protected XliffDataFactory xliffDataFactory;
 
-  @Autowired protected LocaleWsApiProxy localeClient;
+  @Autowired protected LocaleClient localeClient;
 
   @Autowired ResttemplateConfig resttemplateConfig;
 

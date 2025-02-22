@@ -3,20 +3,20 @@ package com.box.l10n.mojito.cli.command;
 import static com.box.l10n.mojito.cli.command.param.Param.BRANCH_CREATED_BEFORE_OPTIONS_AND_EXAMPLE;
 
 import com.box.l10n.mojito.JSR310Migration;
-import com.box.l10n.mojito.apiclient.PollableTaskWsApiProxy;
-import com.box.l10n.mojito.apiclient.RepositoryWsApiProxy;
-import com.box.l10n.mojito.apiclient.exception.PollableTaskException;
-import com.box.l10n.mojito.apiclient.exception.RestClientException;
-import com.box.l10n.mojito.apiclient.model.LocaleRepository;
-import com.box.l10n.mojito.apiclient.model.PollableTask;
-import com.box.l10n.mojito.apiclient.model.RepositoryLocaleRepository;
-import com.box.l10n.mojito.apiclient.model.RepositoryRepository;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.filefinder.FileFinder;
 import com.box.l10n.mojito.cli.filefinder.FileFinderException;
 import com.box.l10n.mojito.cli.filefinder.FileMatch;
 import com.box.l10n.mojito.cli.filefinder.file.FileType;
 import com.box.l10n.mojito.cli.filefinder.file.XcodeXliffFileType;
+import com.box.l10n.mojito.rest.apiclient.model.LocaleRepository;
+import com.box.l10n.mojito.rest.apiclient.model.PollableTask;
+import com.box.l10n.mojito.rest.apiclient.model.RepositoryLocaleRepository;
+import com.box.l10n.mojito.rest.apiclient.model.RepositoryRepository;
+import com.box.l10n.mojito.rest.client.PollableTaskClient;
+import com.box.l10n.mojito.rest.client.RepositoryClient;
+import com.box.l10n.mojito.rest.client.exception.PollableTaskException;
+import com.box.l10n.mojito.rest.client.exception.RestClientException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
@@ -71,9 +71,9 @@ public class CommandHelper {
     ByteOrderMark.UTF_8, ByteOrderMark.UTF_16BE, ByteOrderMark.UTF_16LE
   };
 
-  @Autowired RepositoryWsApiProxy repositoryClient;
+  @Autowired RepositoryClient repositoryClient;
 
-  @Autowired PollableTaskWsApiProxy pollableTaskClient;
+  @Autowired PollableTaskClient pollableTaskClient;
 
   @Autowired ConsoleWriter consoleWriter;
 
@@ -305,7 +305,7 @@ public class CommandHelper {
 
     try {
       pollableTaskClient.waitForPollableTask(
-          pollableId, PollableTaskWsApiProxy.NO_TIMEOUT, new CommandWaitForPollableTaskListener());
+          pollableId, PollableTaskClient.NO_TIMEOUT, new CommandWaitForPollableTaskListener());
     } catch (PollableTaskException e) {
       throw new CommandException(e.getMessage(), e.getCause());
     }
@@ -314,7 +314,7 @@ public class CommandHelper {
   public void waitForPollableTaskSilencedOutput(Long pollableId) throws CommandException {
 
     try {
-      pollableTaskClient.waitForPollableTask(pollableId, PollableTaskWsApiProxy.NO_TIMEOUT, null);
+      pollableTaskClient.waitForPollableTask(pollableId, PollableTaskClient.NO_TIMEOUT, null);
     } catch (PollableTaskException e) {
       throw new CommandException(e.getMessage(), e.getCause());
     }

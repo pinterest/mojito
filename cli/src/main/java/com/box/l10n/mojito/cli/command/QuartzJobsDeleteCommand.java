@@ -1,8 +1,8 @@
 package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameters;
-import com.box.l10n.mojito.apiclient.QuartzWsApi;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
+import com.box.l10n.mojito.rest.apiclient.QuartzWsApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

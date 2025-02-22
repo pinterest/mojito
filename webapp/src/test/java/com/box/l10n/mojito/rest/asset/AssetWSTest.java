@@ -6,13 +6,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import com.box.l10n.mojito.apiclient.AssetWsApiProxy;
-import com.box.l10n.mojito.apiclient.PollableTaskWsApiProxy;
-import com.box.l10n.mojito.apiclient.exception.RepositoryNotFoundException;
-import com.box.l10n.mojito.apiclient.model.AssetAssetSummary;
-import com.box.l10n.mojito.apiclient.model.PollableTask;
-import com.box.l10n.mojito.apiclient.model.SourceAsset;
-import com.box.l10n.mojito.apiclient.model.XliffExportBody;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.AssetExtractionByBranch;
 import com.box.l10n.mojito.entity.AssetTextUnit;
@@ -20,6 +13,13 @@ import com.box.l10n.mojito.entity.Branch;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.rest.WSTestBase;
 import com.box.l10n.mojito.rest.WSTestDataFactory;
+import com.box.l10n.mojito.rest.apiclient.model.AssetAssetSummary;
+import com.box.l10n.mojito.rest.apiclient.model.PollableTask;
+import com.box.l10n.mojito.rest.apiclient.model.SourceAsset;
+import com.box.l10n.mojito.rest.apiclient.model.XliffExportBody;
+import com.box.l10n.mojito.rest.client.AssetClient;
+import com.box.l10n.mojito.rest.client.PollableTaskClient;
+import com.box.l10n.mojito.rest.client.exception.RepositoryNotFoundException;
 import com.box.l10n.mojito.service.asset.AssetRepository;
 import com.box.l10n.mojito.service.assetExtraction.AssetExtractionByBranchRepository;
 import com.box.l10n.mojito.service.assetTextUnit.AssetTextUnitRepository;
@@ -56,9 +56,9 @@ public class AssetWSTest extends WSTestBase {
 
   @Autowired LocaleService localeService;
 
-  @Autowired AssetWsApiProxy assetClient;
+  @Autowired AssetClient assetClient;
 
-  @Autowired PollableTaskWsApiProxy pollableTaskClient;
+  @Autowired PollableTaskClient pollableTaskClient;
 
   @Autowired BranchRepository branchRepository;
 

@@ -2,7 +2,6 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.box.l10n.mojito.apiclient.resttemplate.AuthenticatedRestTemplate;
 import com.box.l10n.mojito.cli.command.checks.AbstractCliChecker;
 import com.box.l10n.mojito.cli.command.checks.CheckerOptionsMapEntry;
 import com.box.l10n.mojito.cli.command.checks.CheckerOptionsMapEntryConverter;
@@ -29,6 +28,7 @@ import com.box.l10n.mojito.github.GithubClients;
 import com.box.l10n.mojito.github.GithubException;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.regex.PlaceholderRegularExpressions;
+import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;

@@ -1,10 +1,12 @@
 package com.box.l10n.mojito.rest.client;
 
 import com.box.l10n.mojito.JSR310Migration;
+import com.box.l10n.mojito.rest.apiclient.VirtualAssetWsApi;
+import com.box.l10n.mojito.rest.apiclient.model.PollableTask;
+import com.box.l10n.mojito.rest.apiclient.model.RepositoryRepository;
+import com.box.l10n.mojito.rest.apiclient.model.VirtualAsset;
+import com.box.l10n.mojito.rest.apiclient.model.VirtualAssetTextUnit;
 import com.box.l10n.mojito.rest.client.exception.RepositoryNotFoundException;
-import com.box.l10n.mojito.rest.entity.PollableTask;
-import com.box.l10n.mojito.rest.entity.Repository;
-import com.box.l10n.mojito.rest.entity.VirtualAssetTextUnit;
 import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
 import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplateTest;
 import com.google.common.base.Strings;
@@ -29,7 +31,7 @@ import org.springframework.test.context.junit4.SpringRunner;
     classes = {
       AuthenticatedRestTemplateTest.class,
       RepositoryClient.class,
-      VirtualAssetClient.class,
+      VirtualAssetWsApi.class,
       PollableTaskClient.class
     })
 @EnableConfigurationProperties
@@ -43,7 +45,7 @@ public class VirtualAssetPerformanceTest {
 
   @Autowired RepositoryClient repositoryClient;
 
-  @Autowired VirtualAssetClient virtualAssetClient;
+  @Autowired VirtualAssetWsApi virtualAssetClient;
 
   @Autowired PollableTaskClient pollableTaskClient;
 
@@ -57,13 +59,13 @@ public class VirtualAssetPerformanceTest {
     // "sk-SK" "sv-SE" "th-TH" "tl-PH" "tr-TR" "uk-UA" "vi-VN"
     String repoName = "perftest3";
 
-    Repository repository = repositoryClient.getRepositoryByName(repoName);
+    RepositoryRepository repository = repositoryClient.getRepositoryByName(repoName);
 
     VirtualAsset v = new VirtualAsset();
     v.setPath("default");
     v.setRepositoryId(repository.getId());
     v.setDeleted(false);
-    VirtualAsset virtualAsset = virtualAssetClient.createOrUpdate(v);
+    VirtualAsset virtualAsset = virtualAssetClient.createOrUpdateVirtualAsset(v);
 
     logger.debug("virtual asset id: {}", virtualAsset.getId());
 
@@ -80,7 +82,7 @@ public class VirtualAssetPerformanceTest {
     logger.debug("total: {}", JSR310Migration.toWordBasedDuration(start, end));
   }
 
-  private void pullSourceString(VirtualAsset virtualAsset, Repository repository) {
+  private void pullSourceString(VirtualAsset virtualAsset, RepositoryRepository repository) {
     repository.getRepositoryLocales().stream()
         .filter(rl -> rl.getParentLocale() == null)
         .forEach(
@@ -100,7 +102,7 @@ public class VirtualAssetPerformanceTest {
             });
   }
 
-  void pullTranslations(VirtualAsset virtualAsset, Repository repository) {
+  void pullTranslations(VirtualAsset virtualAsset, RepositoryRepository repository) {
     logger.debug("pull translations");
 
     repository.getRepositoryLocales().stream()
@@ -141,13 +143,13 @@ public class VirtualAssetPerformanceTest {
             .collect(Collectors.toList());
 
     PollableTask pollableTask =
-        virtualAssetClient.repalceTextUnits(virtualAsset.getId(), virtualAssetTextUnits);
+        virtualAssetClient.replaceTextUnits(virtualAssetTextUnits, virtualAsset.getId());
     pollableTaskClient.waitForPollableTask(pollableTask.getId());
-    pollableTask = pollableTaskClient.getPollableTask(pollableTask.getId());
+    pollableTask = pollableTaskClient.getPollableTaskById(pollableTask.getId());
     logger.debug("create source strings: {}", getElapsedTime(pollableTask));
   }
 
-  void importTranslations(Repository repository, VirtualAsset virtualAsset) {
+  void importTranslations(RepositoryRepository repository, VirtualAsset virtualAsset) {
     logger.debug("Import translations");
 
     repository.getRepositoryLocales().stream()
@@ -174,10 +176,10 @@ public class VirtualAssetPerformanceTest {
                       .collect(Collectors.toList());
 
               PollableTask pollableTask =
-                  virtualAssetClient.importTextUnits(
-                      virtualAsset.getId(), rl.getLocale().getId(), toImport);
+                  virtualAssetClient.importLocalizedTextUnits(
+                      toImport, virtualAsset.getId(), rl.getLocale().getId());
               pollableTaskClient.waitForPollableTask(pollableTask.getId());
-              pollableTask = pollableTaskClient.getPollableTask(pollableTask.getId());
+              pollableTask = pollableTaskClient.getPollableTaskById(pollableTask.getId());
               logger.debug(
                   "import {}: {}", rl.getLocale().getBcp47Tag(), getElapsedTime(pollableTask));
             });
