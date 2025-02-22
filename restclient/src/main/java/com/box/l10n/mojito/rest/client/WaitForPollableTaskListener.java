@@ -1,6 +1,6 @@
 package com.box.l10n.mojito.rest.client;
 
-import com.box.l10n.mojito.rest.entity.PollableTask;
+import com.box.l10n.mojito.rest.apiclient.model.PollableTask;
 
 /**
  * Listener to be passed to {@link PollableTaskClient#waitForPollableTask(java.lang.Long, long,

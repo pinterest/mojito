@@ -3,16 +3,16 @@ package com.box.l10n.mojito.rest;
 import com.box.l10n.mojito.Application;
 import com.box.l10n.mojito.factory.XliffDataFactory;
 import com.box.l10n.mojito.rest.annotation.WithDefaultTestUser;
+import com.box.l10n.mojito.rest.apiclient.model.RepositoryLocale;
+import com.box.l10n.mojito.rest.client.ApiClientConfigurer;
 import com.box.l10n.mojito.rest.client.LocaleClient;
 import com.box.l10n.mojito.rest.client.exception.LocaleNotFoundException;
-import com.box.l10n.mojito.rest.entity.RepositoryLocale;
 import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
 import com.box.l10n.mojito.rest.resttemplate.ResttemplateConfig;
 import com.box.l10n.mojito.xml.XmlParsingConfiguration;
 import jakarta.annotation.PostConstruct;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Supplier;
 import org.junit.Assert;
 import org.junit.runner.RunWith;
@@ -49,10 +49,13 @@ public class WSTestBase {
 
   @LocalServerPort int port;
 
+  @Autowired ApiClientConfigurer apiClientConfigurer;
+
   @PostConstruct
   public void setPort() {
     logger.debug("Saving port number = {}", port);
     resttemplateConfig.setPort(port);
+    this.apiClientConfigurer.init();
 
     XmlParsingConfiguration.disableXPathLimits();
   }
@@ -63,9 +66,9 @@ public class WSTestBase {
    * @param bcp47Tags
    * @return
    */
-  protected Set<RepositoryLocale> getRepositoryLocales(List<String> bcp47Tags) {
+  protected List<RepositoryLocale> getRepositoryLocales(List<String> bcp47Tags) {
 
-    Set<RepositoryLocale> repositoryLocales = new HashSet<>();
+    List<RepositoryLocale> repositoryLocales = new ArrayList<>();
 
     for (String bcp47Tag : bcp47Tags) {
       try {

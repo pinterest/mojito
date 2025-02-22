@@ -11,6 +11,7 @@ import com.box.l10n.mojito.cli.utils.TestingJobListener;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.quartz.QuartzSchedulerManager;
+import com.box.l10n.mojito.rest.apiclient.model.ThirdPartySync;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJob;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobInput;
 import java.util.Arrays;

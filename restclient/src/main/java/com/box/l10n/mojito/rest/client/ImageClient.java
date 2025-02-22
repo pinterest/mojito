@@ -1,7 +1,9 @@
 package com.box.l10n.mojito.rest.client;
 
+import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -10,15 +12,12 @@ import org.springframework.stereotype.Component;
  * @author jaurambault
  */
 @Component
-public class ImageClient extends BaseClient {
+public class ImageClient {
 
   /** logger */
   static Logger logger = LoggerFactory.getLogger(ImageClient.class);
 
-  @Override
-  public String getEntityName() {
-    return "images";
-  }
+  @Autowired private AuthenticatedRestTemplate authenticatedRestTemplate;
 
   /**
    * Uploads an image.
@@ -28,6 +27,6 @@ public class ImageClient extends BaseClient {
    */
   public void uploadImage(String name, byte[] content) {
     logger.debug("Upload image with name = {}", name);
-    authenticatedRestTemplate.put(getBasePathForEntity() + "/" + name, content);
+    this.authenticatedRestTemplate.put("/api/images/" + name, content);
   }
 }

@@ -2,12 +2,12 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.box.l10n.mojito.cli.apiclient.UserWsApiProxy;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.Console;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.cli.model.Authority;
-import com.box.l10n.mojito.cli.model.User;
+import com.box.l10n.mojito.rest.apiclient.model.Authority;
+import com.box.l10n.mojito.rest.apiclient.model.User;
+import com.box.l10n.mojito.rest.client.UserClient;
 import com.box.l10n.mojito.rest.client.exception.ResourceNotFoundException;
 import com.box.l10n.mojito.rest.entity.Role;
 import java.util.ArrayList;
@@ -36,7 +36,7 @@ public class UserUpdateCommand extends Command {
 
   @Autowired ConsoleWriter consoleWriter;
 
-  @Autowired UserWsApiProxy userClient;
+  @Autowired UserClient userClient;
 
   @Parameter(
       names = {Param.USERNAME_LONG, Param.USERNAME_SHORT},

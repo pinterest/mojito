@@ -15,6 +15,11 @@
         <version>0.111-SNAPSHOT</version>
     </parent>
 
+    <properties>
+        <io-swagger-codegen-v3>3.0.64</io-swagger-codegen-v3>
+        <javax-annotation>1.3.2</javax-annotation>
+    </properties>
+
     <dependencies>
 
         <dependency>
@@ -62,6 +67,16 @@
             <artifactId>jakarta.servlet-api</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>io.swagger.codegen.v3</groupId>
+            <artifactId>swagger-codegen-maven-plugin</artifactId>
+            <version>${io-swagger-codegen-v3}</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.annotation</groupId>
+            <artifactId>javax.annotation-api</artifactId>
+            <version>${javax-annotation}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -74,6 +89,36 @@
                         -Dspring.profiles.active=${user.name},test -Xmx1024m
                     </argLine>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>io.swagger.codegen.v3</groupId>
+                <artifactId>swagger-codegen-maven-plugin</artifactId>
+                <version>${io-swagger-codegen-v3}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.parent.basedir}/webapp/src/main/resources/openapi.yaml</inputSpec>
+                            <language>java</language>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <generateModelDocumentation>false</generateModelDocumentation>
+                            <library>resttemplate</library>
+                            <configOptions>
+                                <dateLibrary>java8</dateLibrary>
+                                <java8>true</java8>
+                                <localVariablePrefix>mojito_</localVariablePrefix>
+                            </configOptions>
+                            <apiPackage>${project.parent.groupId}.rest.apiclient</apiPackage>
+                            <modelPackage>${project.parent.groupId}.rest.apiclient.model</modelPackage>
+                            <invokerPackage>${project.parent.groupId}.rest.apiclient</invokerPackage>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

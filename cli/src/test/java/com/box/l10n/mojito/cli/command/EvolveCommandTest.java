@@ -6,6 +6,8 @@ import com.box.l10n.mojito.cli.model.RepositoryRepository;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.evolve.Course;
 import com.box.l10n.mojito.evolve.Evolve;
+import com.box.l10n.mojito.rest.apiclient.model.LocaleRepository;
+import com.box.l10n.mojito.rest.apiclient.model.RepositoryRepository;
 import org.junit.Assume;
 import org.junit.Test;
 import org.slf4j.Logger;

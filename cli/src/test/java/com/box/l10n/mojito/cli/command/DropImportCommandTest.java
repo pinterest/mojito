@@ -17,6 +17,9 @@ import com.box.l10n.mojito.cli.console.Console;
 import com.box.l10n.mojito.cli.model.AssetAssetSummary;
 import com.box.l10n.mojito.entity.Drop;
 import com.box.l10n.mojito.entity.Repository;
+import com.box.l10n.mojito.rest.apiclient.model.AssetAssetSummary;
+import com.box.l10n.mojito.rest.client.AssetClient;
+import com.box.l10n.mojito.rest.client.RepositoryClient;
 import com.box.l10n.mojito.service.drop.DropRepository;
 import com.box.l10n.mojito.service.drop.DropService;
 import com.box.l10n.mojito.service.drop.exporter.DropExporterException;
@@ -53,7 +56,7 @@ public class DropImportCommandTest extends CLITestBase {
 
   @Autowired TMImportService tmImport;
 
-  @Autowired AssetWsApiProxy assetClient;
+  @Autowired AssetClient assetClient;
 
   @Autowired TMTextUnitCurrentVariantRepository textUnitCurrentVariantRepository;
 
@@ -67,7 +70,7 @@ public class DropImportCommandTest extends CLITestBase {
 
   @Autowired DropRepository dropRepository;
 
-  @Autowired private RepositoryWsApiProxy repositoryClient;
+  @Autowired private RepositoryClient repositoryClient;
 
   @Test
   public void dropImport() throws Exception {

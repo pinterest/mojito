@@ -8,6 +8,9 @@ import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.cli.model.Locale;
 import com.box.l10n.mojito.cli.model.RepositoryRepository;
 import com.box.l10n.mojito.entity.Repository;
+import com.box.l10n.mojito.rest.apiclient.model.Locale;
+import com.box.l10n.mojito.rest.apiclient.model.RepositoryRepository;
+import com.box.l10n.mojito.rest.client.RepositoryClient;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Test;
@@ -20,7 +23,7 @@ public class ScreenshotCommandTest extends CLITestBase {
   /** logger */
   static Logger logger = LoggerFactory.getLogger(ScreenshotCommandTest.class);
 
-  @Autowired RepositoryWsApiProxy repositoryClient;
+  @Autowired RepositoryClient repositoryClient;
 
   @Autowired CommandHelper commandHelper;
 

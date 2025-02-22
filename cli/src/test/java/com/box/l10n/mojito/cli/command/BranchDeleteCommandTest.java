@@ -12,6 +12,8 @@ import com.box.l10n.mojito.cli.CLITestBase;
 import com.box.l10n.mojito.cli.apiclient.RepositoryWsApiProxy;
 import com.box.l10n.mojito.cli.model.BranchBranchSummary;
 import com.box.l10n.mojito.entity.Repository;
+import com.box.l10n.mojito.rest.apiclient.model.BranchBranchSummary;
+import com.box.l10n.mojito.rest.client.RepositoryClient;
 import com.box.l10n.mojito.service.branch.BranchRepository;
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -25,7 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 public class BranchDeleteCommandTest extends CLITestBase {
 
-  @Autowired RepositoryWsApiProxy repositoryClient;
+  @Autowired RepositoryClient repositoryClient;
 
   @Autowired BranchRepository branchRepository;
 

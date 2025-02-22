@@ -2,14 +2,18 @@ package com.box.l10n.mojito.rest.client;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.box.l10n.mojito.json.ObjectMapper;
+import com.box.l10n.mojito.rest.apiclient.PollableTaskWsApi;
+import com.box.l10n.mojito.rest.apiclient.model.PollableTask;
 import com.box.l10n.mojito.rest.client.exception.PollableTaskException;
 import com.box.l10n.mojito.rest.client.exception.PollableTaskExecutionException;
 import com.box.l10n.mojito.rest.client.exception.PollableTaskTimeoutException;
-import com.box.l10n.mojito.rest.entity.PollableTask;
+import com.box.l10n.mojito.rest.entity.ErrorMessage;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -17,52 +21,28 @@ import org.springframework.stereotype.Component;
  *     <p>// TODO(P1) Move into its own module
  */
 @Component
-public class PollableTaskClient extends BaseClient {
+public class PollableTaskClient {
 
   /** logger */
   static Logger logger = getLogger(PollableTaskClient.class);
 
   public static final Long NO_TIMEOUT = -1L;
 
-  @Override
-  public String getEntityName() {
-    return "pollableTasks";
-  }
+  @Autowired private PollableTaskWsApi pollableTaskWsApi;
 
-  /**
-   * @param pollableTaskId {@link PollableTask#id}
-   * @return The {@link PollableTask} associated to the given id
-   */
-  public PollableTask getPollableTask(Long pollableTaskId) {
-    return authenticatedRestTemplate.getForObject(
-        getBasePathForResource(pollableTaskId), PollableTask.class);
-  }
-
-  public String getPollableTaskOutput(Long pollableTaskId) {
-    String output =
-        authenticatedRestTemplate.getForObject(
-            getBasePathForResource(pollableTaskId, "output"), String.class);
-    return output;
-  }
+  @Autowired private ObjectMapper objectMapper;
 
   /**
    * Waits for {@link PollableTask} to be all finished (see {@link PollableTask#isAllFinished() }).
    * Infinite timeout.
    *
-   * @param pollableId the {@link PollableTask#id}
+   * @param pollableId the {@link PollableTask#getId()}
    * @throws PollableTaskException
    */
   public void waitForPollableTask(Long pollableId) throws PollableTaskException {
     waitForPollableTask(pollableId, NO_TIMEOUT);
   }
 
-  /**
-   * Waits for {@link PollableTask} to be all finished (see {@link PollableTask#isAllFinished() }).
-   *
-   * @param pollableTaskId the {@link PollableTask#id}
-   * @param timeout timeout in milliseconds.
-   * @throws PollableTaskException
-   */
   public void waitForPollableTask(Long pollableTaskId, long timeout) throws PollableTaskException {
     waitForPollableTask(pollableTaskId, timeout, null);
   }
@@ -70,7 +50,7 @@ public class PollableTaskClient extends BaseClient {
   /**
    * Waits for {@link PollableTask} to be all finished (see {@link PollableTask#isAllFinished() }).
    *
-   * @param pollableId the {@link PollableTask#id}
+   * @param pollableId the {@link PollableTask#getId()}
    * @param timeout timeout in milliseconds.
    * @param waitForPollableTaskListener listener to be called during polling
    * @throws PollableTaskException
@@ -88,7 +68,7 @@ public class PollableTaskClient extends BaseClient {
 
       logger.debug("Waiting for PollableTask: {} to finish", pollableId);
 
-      pollableTask = getPollableTask(pollableId);
+      pollableTask = this.pollableTaskWsApi.getPollableTaskById(pollableId);
 
       if (waitForPollableTaskListener != null) {
         waitForPollableTaskListener.afterPoll(pollableTask);
@@ -99,10 +79,13 @@ public class PollableTaskClient extends BaseClient {
       if (!pollableTaskWithErrors.isEmpty()) {
 
         for (PollableTask pollableTaskWithError : pollableTaskWithErrors) {
+          ErrorMessage errorMessage =
+              this.objectMapper.convertValue(
+                  pollableTaskWithError.getErrorMessage(), ErrorMessage.class);
           logger.debug(
               "Error happened in PollableTask {}: {}",
               pollableTaskWithError.getId(),
-              pollableTaskWithError.getErrorMessage().getMessage());
+              errorMessage.getMessage());
         }
 
         // Last task is the root task if it has an error or any of the sub task
@@ -110,7 +93,9 @@ public class PollableTaskClient extends BaseClient {
         PollableTask lastTaskInError =
             pollableTaskWithErrors.get(pollableTaskWithErrors.size() - 1);
 
-        throw new PollableTaskExecutionException(lastTaskInError.getErrorMessage().getMessage());
+        ErrorMessage errorMessage =
+            this.objectMapper.convertValue(lastTaskInError.getErrorMessage(), ErrorMessage.class);
+        throw new PollableTaskExecutionException(errorMessage.getMessage());
       }
 
       if (!pollableTask.isAllFinished()) {
@@ -172,5 +157,13 @@ public class PollableTaskClient extends BaseClient {
     if (pollableTask.getErrorMessage() != null) {
       pollableTasksWithError.add(pollableTask);
     }
+  }
+
+  public String getPollableTaskOutput(Long pollableTaskId) {
+    return this.pollableTaskWsApi.getPollableTaskOutput(pollableTaskId);
+  }
+
+  public PollableTask getPollableTaskById(Long pollableTaskId) {
+    return this.pollableTaskWsApi.getPollableTaskById(pollableTaskId);
   }
 }

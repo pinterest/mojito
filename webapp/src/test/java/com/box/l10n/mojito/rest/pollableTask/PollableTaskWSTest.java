@@ -26,8 +26,8 @@ public class PollableTaskWSTest extends WSTestBase {
     String pollableTaskName = "testGetPollableTask";
     PollableTask parentTask =
         pollableTaskService.createPollableTask(null, pollableTaskName, null, 0);
-    com.box.l10n.mojito.rest.entity.PollableTask pollableTask =
-        pollableTaskClient.getPollableTask(parentTask.getId());
+    com.box.l10n.mojito.rest.apiclient.model.PollableTask pollableTask =
+        pollableTaskClient.getPollableTaskById(parentTask.getId());
 
     assertEquals(pollableTaskName, pollableTask.getName());
     assertNull(pollableTask.getFinishedDate());

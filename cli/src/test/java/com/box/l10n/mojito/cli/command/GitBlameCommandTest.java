@@ -17,6 +17,8 @@ import com.box.l10n.mojito.cli.filefinder.file.POFileType;
 import com.box.l10n.mojito.cli.model.GitBlameGitBlameWithUsage;
 import com.box.l10n.mojito.cli.model.GitBlameWithUsageGitBlameWithUsage;
 import com.box.l10n.mojito.entity.Repository;
+import com.box.l10n.mojito.rest.apiclient.model.GitBlameGitBlameWithUsage;
+import com.box.l10n.mojito.rest.apiclient.model.GitBlameWithUsageGitBlameWithUsage;
 import com.box.l10n.mojito.service.gitblame.GitBlameService;
 import com.box.l10n.mojito.service.tm.search.TextUnitSearcherParameters;
 import java.io.File;

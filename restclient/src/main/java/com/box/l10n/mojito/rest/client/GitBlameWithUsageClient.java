@@ -1,52 +1,49 @@
 package com.box.l10n.mojito.rest.client;
 
-import com.box.l10n.mojito.rest.entity.GitBlameWithUsage;
-import com.box.l10n.mojito.rest.entity.PollableTask;
-import java.util.HashMap;
+import com.box.l10n.mojito.rest.apiclient.TextUnitWsApi;
+import com.box.l10n.mojito.rest.apiclient.model.GitBlameWithUsage;
+import com.box.l10n.mojito.rest.apiclient.model.GitBlameWithUsageGitBlameWithUsage;
+import com.box.l10n.mojito.rest.apiclient.model.PollableTask;
 import java.util.List;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
  * @author emagalindan
  */
 @Component
-public class GitBlameWithUsageClient extends BaseClient {
+public class GitBlameWithUsageClient {
 
   /** logger */
   static Logger logger = LoggerFactory.getLogger(GitBlameWithUsageClient.class);
 
-  @Override
-  public String getEntityName() {
-    return "textunits";
-  }
+  @Autowired private TextUnitWsApi textUnitClient;
 
-  public List<GitBlameWithUsage> getGitBlameWithUsages(
-      Long repositoryId, Integer offset, Integer batchSize) {
+  public List<GitBlameWithUsageGitBlameWithUsage> getGitBlameWithUsages(
+      List<Long> repositoryIds,
+      List<String> repositoryNames,
+      Long tmTextUnitId,
+      String usedFilter,
+      String statusFilter,
+      Boolean doNotTranslateFilter,
+      Integer limit,
+      Integer offset) {
     logger.debug("getGitBlameWithUsages");
-    Map<String, String> filterParams = new HashMap<>();
-
-    // GitBlameWithUsageClient.getGitBlameWithUsages relies on [] not being encoded. keeps this for
-    // backward compatibility
-    // TODO(spring2) - relaxed-query-chars - should we encode here instead?
-    // I'm wondering why spring client doesn't encode those query param, it may be the way we call
-    // it that is not
-    // good enough since it seems those should be encoded by default
-    filterParams.put("repositoryIds[]", repositoryId.toString());
-    filterParams.put("offset", offset.toString());
-    filterParams.put("limit", batchSize.toString());
-
-    return authenticatedRestTemplate.getForObjectAsListWithQueryStringParams(
-        getBasePathForEntity() + "/gitBlameWithUsages", GitBlameWithUsage[].class, filterParams);
+    return this.textUnitClient.getGitBlameWithUsages(
+        repositoryIds,
+        repositoryNames,
+        tmTextUnitId,
+        usedFilter,
+        statusFilter,
+        doNotTranslateFilter,
+        limit,
+        offset);
   }
 
-  public PollableTask saveGitBlameWithUsages(List<GitBlameWithUsage> gitBlameWithUsages) {
+  public PollableTask saveGitBlameWithUsages(List<GitBlameWithUsage> body) {
     logger.debug("saveGitBlameWithUsages");
-    return authenticatedRestTemplate.postForObject(
-        getBasePathForEntity() + "/gitBlameWithUsagesBatch",
-        gitBlameWithUsages,
-        PollableTask.class);
+    return this.textUnitClient.saveGitBlameWithUsages(body);
   }
 }
