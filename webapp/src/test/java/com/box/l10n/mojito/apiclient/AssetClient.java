@@ -1,13 +1,13 @@
-package com.box.l10n.mojito.rest.client;
+package com.box.l10n.mojito.apiclient;
 
-import com.box.l10n.mojito.rest.apiclient.AssetWsApi;
-import com.box.l10n.mojito.rest.apiclient.model.AssetAssetSummary;
-import com.box.l10n.mojito.rest.apiclient.model.ImportLocalizedAssetBody;
-import com.box.l10n.mojito.rest.apiclient.model.LocalizedAssetBody;
-import com.box.l10n.mojito.rest.apiclient.model.MultiLocalizedAssetBody;
-import com.box.l10n.mojito.rest.apiclient.model.PollableTask;
-import com.box.l10n.mojito.rest.apiclient.model.SourceAsset;
-import com.box.l10n.mojito.rest.apiclient.model.XliffExportBody;
+import com.box.l10n.mojito.cli.apiclient.AssetWsApi;
+import com.box.l10n.mojito.cli.apiclient.model.AssetAssetSummary;
+import com.box.l10n.mojito.cli.apiclient.model.ImportLocalizedAssetBody;
+import com.box.l10n.mojito.cli.apiclient.model.LocalizedAssetBody;
+import com.box.l10n.mojito.cli.apiclient.model.MultiLocalizedAssetBody;
+import com.box.l10n.mojito.cli.apiclient.model.PollableTask;
+import com.box.l10n.mojito.cli.apiclient.model.SourceAsset;
+import com.box.l10n.mojito.cli.apiclient.model.XliffExportBody;
 import com.box.l10n.mojito.rest.client.exception.AssetNotFoundException;
 import java.util.List;
 import org.slf4j.Logger;
@@ -16,9 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
-/**
- * @author wyau
- */
 @Component
 public class AssetClient {
 

@@ -1,6 +1,6 @@
 package com.box.l10n.mojito.cli.command;
 
-import com.box.l10n.mojito.rest.apiclient.model.ImportDropConfig;
+import com.box.l10n.mojito.cli.apiclient.model.ImportDropConfig;
 
 /**
  * @author jaurambault

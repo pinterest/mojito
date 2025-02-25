@@ -1,4 +1,4 @@
-package com.box.l10n.mojito.rest.client;
+package com.box.l10n.mojito.cli.apiclient;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;

@@ -1,14 +1,12 @@
-package com.box.l10n.mojito.rest.client;
+package com.box.l10n.mojito.cli.apiclient;
 
 import com.box.l10n.mojito.JSR310Migration;
-import com.box.l10n.mojito.rest.apiclient.VirtualAssetWsApi;
-import com.box.l10n.mojito.rest.apiclient.model.PollableTask;
-import com.box.l10n.mojito.rest.apiclient.model.RepositoryRepository;
-import com.box.l10n.mojito.rest.apiclient.model.VirtualAsset;
-import com.box.l10n.mojito.rest.apiclient.model.VirtualAssetTextUnit;
+import com.box.l10n.mojito.cli.apiclient.model.PollableTask;
+import com.box.l10n.mojito.cli.apiclient.model.RepositoryRepository;
+import com.box.l10n.mojito.cli.apiclient.model.VirtualAsset;
+import com.box.l10n.mojito.cli.apiclient.model.VirtualAssetTextUnit;
 import com.box.l10n.mojito.rest.client.exception.RepositoryNotFoundException;
 import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
-import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplateTest;
 import com.google.common.base.Strings;
 import java.util.Comparator;
 import java.util.List;

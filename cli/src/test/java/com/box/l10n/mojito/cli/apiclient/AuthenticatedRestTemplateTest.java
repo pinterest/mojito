@@ -1,5 +1,9 @@
-package com.box.l10n.mojito.rest.resttemplate;
+package com.box.l10n.mojito.cli.apiclient;
 
+import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
+import com.box.l10n.mojito.rest.resttemplate.CookieStoreRestTemplate;
+import com.box.l10n.mojito.rest.resttemplate.FormLoginConfig;
+import com.box.l10n.mojito.rest.resttemplate.ResttemplateConfig;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import java.util.HashMap;

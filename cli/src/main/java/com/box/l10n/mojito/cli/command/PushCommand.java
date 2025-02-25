@@ -4,13 +4,13 @@ import static java.util.Optional.ofNullable;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.RepositoryClient;
+import com.box.l10n.mojito.cli.apiclient.model.RepositoryRepository;
+import com.box.l10n.mojito.cli.apiclient.model.SourceAsset;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.filefinder.FileMatch;
 import com.box.l10n.mojito.cli.filefinder.file.FileType;
-import com.box.l10n.mojito.rest.apiclient.model.RepositoryRepository;
-import com.box.l10n.mojito.rest.apiclient.model.SourceAsset;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
 import com.ibm.icu.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;

@@ -4,11 +4,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.box.l10n.mojito.apiclient.UserClient;
 import com.box.l10n.mojito.bootstrap.BootstrapConfig;
+import com.box.l10n.mojito.cli.apiclient.model.Authority;
+import com.box.l10n.mojito.cli.apiclient.model.User;
 import com.box.l10n.mojito.rest.WSTestBase;
-import com.box.l10n.mojito.rest.apiclient.model.Authority;
-import com.box.l10n.mojito.rest.apiclient.model.User;
-import com.box.l10n.mojito.rest.client.UserClient;
 import com.box.l10n.mojito.rest.client.exception.ResourceNotCreatedException;
 import com.box.l10n.mojito.rest.client.exception.ResourceNotFoundException;
 import com.box.l10n.mojito.rest.entity.Role;

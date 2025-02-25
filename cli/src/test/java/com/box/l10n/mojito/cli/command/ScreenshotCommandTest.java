@@ -4,10 +4,10 @@ import static org.junit.Assert.assertEquals;
 
 import com.box.l10n.mojito.LocaleMappingHelper;
 import com.box.l10n.mojito.cli.CLITestBase;
+import com.box.l10n.mojito.cli.apiclient.RepositoryClient;
+import com.box.l10n.mojito.cli.apiclient.model.Locale;
+import com.box.l10n.mojito.cli.apiclient.model.RepositoryRepository;
 import com.box.l10n.mojito.entity.Repository;
-import com.box.l10n.mojito.rest.apiclient.model.Locale;
-import com.box.l10n.mojito.rest.apiclient.model.RepositoryRepository;
-import com.box.l10n.mojito.rest.client.RepositoryClient;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Test;

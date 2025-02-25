@@ -3,6 +3,8 @@ package com.box.l10n.mojito.cli.command;
 import static org.junit.Assert.*;
 
 import com.box.l10n.mojito.cli.CLITestBase;
+import com.box.l10n.mojito.cli.apiclient.AssetClient;
+import com.box.l10n.mojito.cli.apiclient.model.AssetAssetSummary;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.entity.Commit;
 import com.box.l10n.mojito.entity.Locale;
@@ -11,8 +13,6 @@ import com.box.l10n.mojito.entity.PushRunAsset;
 import com.box.l10n.mojito.entity.PushRunAssetTmTextUnit;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnit;
-import com.box.l10n.mojito.rest.apiclient.model.AssetAssetSummary;
-import com.box.l10n.mojito.rest.client.AssetClient;
 import com.box.l10n.mojito.service.commit.CommitRepository;
 import com.box.l10n.mojito.service.commit.CommitService;
 import com.box.l10n.mojito.service.locale.LocaleService;

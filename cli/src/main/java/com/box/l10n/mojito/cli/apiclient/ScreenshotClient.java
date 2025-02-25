@@ -1,17 +1,11 @@
-package com.box.l10n.mojito.rest.client;
+package com.box.l10n.mojito.cli.apiclient;
 
-import com.box.l10n.mojito.rest.apiclient.ScreenshotWsApi;
-import com.box.l10n.mojito.rest.apiclient.model.ScreenshotRun;
+import com.box.l10n.mojito.cli.apiclient.model.ScreenshotRun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-/**
- * Client to upload screenshots.
- *
- * @author jaurambault
- */
 @Component
 public class ScreenshotClient {
 

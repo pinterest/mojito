@@ -1,11 +1,11 @@
-package com.box.l10n.mojito.rest.client;
+package com.box.l10n.mojito.cli.apiclient;
 
 import static java.util.Optional.ofNullable;
 
-import com.box.l10n.mojito.rest.apiclient.model.GitBlame;
-import com.box.l10n.mojito.rest.apiclient.model.GitBlameGitBlameWithUsage;
-import com.box.l10n.mojito.rest.apiclient.model.GitBlameWithUsage;
-import com.box.l10n.mojito.rest.apiclient.model.GitBlameWithUsageGitBlameWithUsage;
+import com.box.l10n.mojito.cli.apiclient.model.GitBlame;
+import com.box.l10n.mojito.cli.apiclient.model.GitBlameGitBlameWithUsage;
+import com.box.l10n.mojito.cli.apiclient.model.GitBlameWithUsage;
+import com.box.l10n.mojito.cli.apiclient.model.GitBlameWithUsageGitBlameWithUsage;
 
 public class GitBlameWithUsageMapper {
   public static GitBlame mapToGitBlame(GitBlameGitBlameWithUsage gitBlameWithUsage) {

@@ -2,13 +2,13 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.AssetClient;
+import com.box.l10n.mojito.cli.apiclient.model.AssetAssetSummary;
+import com.box.l10n.mojito.cli.apiclient.model.RepositoryLocaleRepository;
+import com.box.l10n.mojito.cli.apiclient.model.RepositoryRepository;
+import com.box.l10n.mojito.cli.apiclient.model.XliffExportBody;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.apiclient.model.AssetAssetSummary;
-import com.box.l10n.mojito.rest.apiclient.model.RepositoryLocaleRepository;
-import com.box.l10n.mojito.rest.apiclient.model.RepositoryRepository;
-import com.box.l10n.mojito.rest.apiclient.model.XliffExportBody;
-import com.box.l10n.mojito.rest.client.AssetClient;
 import com.box.l10n.mojito.rest.client.exception.PollableTaskException;
 import com.google.common.base.MoreObjects;
 import java.nio.file.Path;

@@ -1,12 +1,10 @@
-package com.box.l10n.mojito.rest.client;
+package com.box.l10n.mojito.cli.apiclient;
 
-import com.box.l10n.mojito.rest.apiclient.AiChecksWsApi;
-import com.box.l10n.mojito.rest.apiclient.AiPromptWsApi;
-import com.box.l10n.mojito.rest.apiclient.model.AICheckRequest;
-import com.box.l10n.mojito.rest.apiclient.model.AICheckResponse;
-import com.box.l10n.mojito.rest.apiclient.model.AIPromptContextMessageCreateRequest;
-import com.box.l10n.mojito.rest.apiclient.model.AIPromptCreateRequest;
-import com.box.l10n.mojito.rest.apiclient.model.AITranslationLocalePromptOverridesRequest;
+import com.box.l10n.mojito.cli.apiclient.model.AICheckRequest;
+import com.box.l10n.mojito.cli.apiclient.model.AICheckResponse;
+import com.box.l10n.mojito.cli.apiclient.model.AIPromptContextMessageCreateRequest;
+import com.box.l10n.mojito.cli.apiclient.model.AIPromptCreateRequest;
+import com.box.l10n.mojito.cli.apiclient.model.AITranslationLocalePromptOverridesRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

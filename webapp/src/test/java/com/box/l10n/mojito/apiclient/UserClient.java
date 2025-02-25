@@ -1,9 +1,9 @@
-package com.box.l10n.mojito.rest.client;
+package com.box.l10n.mojito.apiclient;
 
-import com.box.l10n.mojito.rest.apiclient.UserWsApi;
-import com.box.l10n.mojito.rest.apiclient.model.PageUser;
-import com.box.l10n.mojito.rest.apiclient.model.Pageable;
-import com.box.l10n.mojito.rest.apiclient.model.User;
+import com.box.l10n.mojito.cli.apiclient.UserWsApi;
+import com.box.l10n.mojito.cli.apiclient.model.PageUser;
+import com.box.l10n.mojito.cli.apiclient.model.Pageable;
+import com.box.l10n.mojito.cli.apiclient.model.User;
 import com.box.l10n.mojito.rest.client.exception.ResourceNotCreatedException;
 import com.box.l10n.mojito.rest.client.exception.ResourceNotFoundException;
 import java.util.List;
@@ -14,9 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 
-/**
- * @author jyi
- */
 @Component
 public class UserClient {
 

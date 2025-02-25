@@ -1,11 +1,11 @@
 package com.box.l10n.mojito.rest;
 
 import com.box.l10n.mojito.Application;
+import com.box.l10n.mojito.apiclient.LocaleClient;
+import com.box.l10n.mojito.cli.apiclient.ApiClient;
+import com.box.l10n.mojito.cli.apiclient.model.RepositoryLocale;
 import com.box.l10n.mojito.factory.XliffDataFactory;
 import com.box.l10n.mojito.rest.annotation.WithDefaultTestUser;
-import com.box.l10n.mojito.rest.apiclient.model.RepositoryLocale;
-import com.box.l10n.mojito.rest.client.ApiClientConfigurer;
-import com.box.l10n.mojito.rest.client.LocaleClient;
 import com.box.l10n.mojito.rest.client.exception.LocaleNotFoundException;
 import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
 import com.box.l10n.mojito.rest.resttemplate.ResttemplateConfig;
@@ -49,13 +49,18 @@ public class WSTestBase {
 
   @LocalServerPort int port;
 
-  @Autowired ApiClientConfigurer apiClientConfigurer;
+  @Autowired ApiClient apiClient;
 
   @PostConstruct
   public void setPort() {
     logger.debug("Saving port number = {}", port);
     resttemplateConfig.setPort(port);
-    this.apiClientConfigurer.init();
+    this.apiClient.setBasePath(
+        String.format(
+            "%s://%s:%d",
+            this.resttemplateConfig.getScheme(),
+            this.resttemplateConfig.getHost(),
+            this.resttemplateConfig.getPort()));
 
     XmlParsingConfiguration.disableXPathLimits();
   }

@@ -1,10 +1,10 @@
-package com.box.l10n.mojito.rest.client;
+package com.box.l10n.mojito.cli.apiclient;
 
-import com.box.l10n.mojito.rest.apiclient.model.PollableTask;
+import com.box.l10n.mojito.cli.apiclient.model.PollableTask;
 
 /**
  * Listener to be passed to {@link PollableTaskClient#waitForPollableTask(java.lang.Long, long,
- * com.box.l10n.mojito.rest.client.WaitForPollableTaskListener) } to react to polling process.
+ * WaitForPollableTaskListener) } to react to polling process.
  *
  * @author jaurambault
  */

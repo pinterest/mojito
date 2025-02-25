@@ -1,11 +1,10 @@
-package com.box.l10n.mojito.rest.client;
+package com.box.l10n.mojito.cli.apiclient;
 
-import com.box.l10n.mojito.rest.apiclient.RepositoryWsApi;
-import com.box.l10n.mojito.rest.apiclient.model.BranchBranchSummary;
-import com.box.l10n.mojito.rest.apiclient.model.ImportRepositoryBody;
-import com.box.l10n.mojito.rest.apiclient.model.PollableTask;
-import com.box.l10n.mojito.rest.apiclient.model.Repository;
-import com.box.l10n.mojito.rest.apiclient.model.RepositoryRepository;
+import com.box.l10n.mojito.cli.apiclient.model.BranchBranchSummary;
+import com.box.l10n.mojito.cli.apiclient.model.ImportRepositoryBody;
+import com.box.l10n.mojito.cli.apiclient.model.PollableTask;
+import com.box.l10n.mojito.cli.apiclient.model.Repository;
+import com.box.l10n.mojito.cli.apiclient.model.RepositoryRepository;
 import com.box.l10n.mojito.rest.client.exception.RepositoryNotFoundException;
 import com.box.l10n.mojito.rest.client.exception.ResourceNotCreatedException;
 import com.box.l10n.mojito.rest.client.exception.ResourceNotUpdatedException;
@@ -20,9 +19,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 
-/**
- * @author wyau
- */
 @Component
 public class RepositoryClient {
 

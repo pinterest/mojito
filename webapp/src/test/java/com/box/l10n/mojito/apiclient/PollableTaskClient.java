@@ -1,10 +1,10 @@
-package com.box.l10n.mojito.rest.client;
+package com.box.l10n.mojito.apiclient;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.box.l10n.mojito.cli.apiclient.PollableTaskWsApi;
+import com.box.l10n.mojito.cli.apiclient.model.PollableTask;
 import com.box.l10n.mojito.json.ObjectMapper;
-import com.box.l10n.mojito.rest.apiclient.PollableTaskWsApi;
-import com.box.l10n.mojito.rest.apiclient.model.PollableTask;
 import com.box.l10n.mojito.rest.client.exception.PollableTaskException;
 import com.box.l10n.mojito.rest.client.exception.PollableTaskExecutionException;
 import com.box.l10n.mojito.rest.client.exception.PollableTaskTimeoutException;
@@ -16,10 +16,6 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-/**
- * @author aloison
- *     <p>// TODO(P1) Move into its own module
- */
 @Component
 public class PollableTaskClient {
 
@@ -37,14 +33,10 @@ public class PollableTaskClient {
    * Infinite timeout.
    *
    * @param pollableId the {@link PollableTask#getId()}
-   * @throws PollableTaskException
+   * @throws com.box.l10n.mojito.rest.client.exception.PollableTaskException
    */
   public void waitForPollableTask(Long pollableId) throws PollableTaskException {
     waitForPollableTask(pollableId, NO_TIMEOUT);
-  }
-
-  public void waitForPollableTask(Long pollableTaskId, long timeout) throws PollableTaskException {
-    waitForPollableTask(pollableTaskId, timeout, null);
   }
 
   /**
@@ -52,12 +44,9 @@ public class PollableTaskClient {
    *
    * @param pollableId the {@link PollableTask#getId()}
    * @param timeout timeout in milliseconds.
-   * @param waitForPollableTaskListener listener to be called during polling
-   * @throws PollableTaskException
+   * @throws com.box.l10n.mojito.rest.client.exception.PollableTaskException
    */
-  public void waitForPollableTask(
-      Long pollableId, long timeout, WaitForPollableTaskListener waitForPollableTaskListener)
-      throws PollableTaskException {
+  public void waitForPollableTask(Long pollableId, long timeout) throws PollableTaskException {
 
     long timeoutTime = System.currentTimeMillis() + timeout;
     long waitTime = 0;
@@ -69,10 +58,6 @@ public class PollableTaskClient {
       logger.debug("Waiting for PollableTask: {} to finish", pollableId);
 
       pollableTask = this.pollableTaskWsApi.getPollableTaskById(pollableId);
-
-      if (waitForPollableTaskListener != null) {
-        waitForPollableTaskListener.afterPoll(pollableTask);
-      }
 
       List<PollableTask> pollableTaskWithErrors = getAllPollableTasksWithError(pollableTask);
 
@@ -157,10 +142,6 @@ public class PollableTaskClient {
     if (pollableTask.getErrorMessage() != null) {
       pollableTasksWithError.add(pollableTask);
     }
-  }
-
-  public String getPollableTaskOutput(Long pollableTaskId) {
-    return this.pollableTaskWsApi.getPollableTaskOutput(pollableTaskId);
   }
 
   public PollableTask getPollableTaskById(Long pollableTaskId) {

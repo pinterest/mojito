@@ -1,4 +1,4 @@
-package com.box.l10n.mojito.rest.client;
+package com.box.l10n.mojito.apiclient;
 
 import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
 import org.slf4j.Logger;
@@ -6,11 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-/**
- * Client to upload images.
- *
- * @author jaurambault
- */
 @Component
 public class ImageClient {
 

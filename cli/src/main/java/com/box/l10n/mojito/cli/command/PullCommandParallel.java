@@ -1,12 +1,12 @@
 package com.box.l10n.mojito.cli.command;
 
+import com.box.l10n.mojito.cli.apiclient.model.AssetAssetSummary;
+import com.box.l10n.mojito.cli.apiclient.model.LocalizedAssetBody;
+import com.box.l10n.mojito.cli.apiclient.model.MultiLocalizedAssetBody;
+import com.box.l10n.mojito.cli.apiclient.model.PollableTask;
+import com.box.l10n.mojito.cli.apiclient.model.RepositoryLocaleRepository;
+import com.box.l10n.mojito.cli.apiclient.model.RepositoryRepository;
 import com.box.l10n.mojito.cli.filefinder.FileMatch;
-import com.box.l10n.mojito.rest.apiclient.model.AssetAssetSummary;
-import com.box.l10n.mojito.rest.apiclient.model.LocalizedAssetBody;
-import com.box.l10n.mojito.rest.apiclient.model.MultiLocalizedAssetBody;
-import com.box.l10n.mojito.rest.apiclient.model.PollableTask;
-import com.box.l10n.mojito.rest.apiclient.model.RepositoryLocaleRepository;
-import com.box.l10n.mojito.rest.apiclient.model.RepositoryRepository;
 import com.box.l10n.mojito.rest.client.exception.AssetNotFoundException;
 import com.google.common.collect.Lists;
 import java.nio.file.Path;

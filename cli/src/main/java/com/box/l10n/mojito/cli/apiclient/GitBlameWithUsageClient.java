@@ -1,18 +1,14 @@
-package com.box.l10n.mojito.rest.client;
+package com.box.l10n.mojito.cli.apiclient;
 
-import com.box.l10n.mojito.rest.apiclient.TextUnitWsApi;
-import com.box.l10n.mojito.rest.apiclient.model.GitBlameWithUsage;
-import com.box.l10n.mojito.rest.apiclient.model.GitBlameWithUsageGitBlameWithUsage;
-import com.box.l10n.mojito.rest.apiclient.model.PollableTask;
+import com.box.l10n.mojito.cli.apiclient.model.GitBlameWithUsage;
+import com.box.l10n.mojito.cli.apiclient.model.GitBlameWithUsageGitBlameWithUsage;
+import com.box.l10n.mojito.cli.apiclient.model.PollableTask;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-/**
- * @author emagalindan
- */
 @Component
 public class GitBlameWithUsageClient {
 

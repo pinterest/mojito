@@ -55,7 +55,7 @@ public class AuthenticatedRestTemplate {
   @Autowired ResttemplateConfig restTemplateConfig;
 
   /** Will delegate calls to the {@link RestTemplate} instance that was configured */
-  @Autowired CookieStoreRestTemplate restTemplate;
+  @Autowired public CookieStoreRestTemplate restTemplate;
 
   /** Used to intercept requests and inject CSRF token */
   @Autowired LoginAuthenticationCsrfTokenInterceptor loginAuthenticationCsrfTokenInterceptor;
@@ -67,7 +67,7 @@ public class AuthenticatedRestTemplate {
 
   /** Initialize the internal restTemplate instance */
   @PostConstruct
-  protected void init() {
+  public void init() {
     logger.debug("Create the RestTemplate instance that will be wrapped");
 
     makeRestTemplateWithCustomObjectMapper(restTemplate);
@@ -200,7 +200,7 @@ public class AuthenticatedRestTemplate {
     return restTemplate.getForObject(getURIForResource(resourcePath), responseType);
   }
 
-  protected <T> T getForObjectWithQueryStringParams(
+  public <T> T getForObjectWithQueryStringParams(
       String resourcePath, Class<T> responseType, Map<String, ?> queryStringParams)
       throws RestClientException {
     return restTemplate.getForObject(

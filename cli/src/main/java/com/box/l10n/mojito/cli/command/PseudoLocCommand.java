@@ -4,14 +4,14 @@ import static java.util.Optional.ofNullable;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.cli.apiclient.AssetClient;
+import com.box.l10n.mojito.cli.apiclient.model.AssetAssetSummary;
+import com.box.l10n.mojito.cli.apiclient.model.LocalizedAssetBody;
+import com.box.l10n.mojito.cli.apiclient.model.RepositoryRepository;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.cli.filefinder.FileMatch;
 import com.box.l10n.mojito.cli.filefinder.file.FileType;
-import com.box.l10n.mojito.rest.apiclient.model.AssetAssetSummary;
-import com.box.l10n.mojito.rest.apiclient.model.LocalizedAssetBody;
-import com.box.l10n.mojito.rest.apiclient.model.RepositoryRepository;
-import com.box.l10n.mojito.rest.client.AssetClient;
 import com.box.l10n.mojito.rest.client.exception.AssetNotFoundException;
 import java.nio.file.Path;
 import java.util.List;

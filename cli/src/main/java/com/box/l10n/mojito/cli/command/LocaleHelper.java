@@ -1,10 +1,10 @@
 package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.internal.Lists;
+import com.box.l10n.mojito.cli.apiclient.LocaleClient;
+import com.box.l10n.mojito.cli.apiclient.model.Locale;
+import com.box.l10n.mojito.cli.apiclient.model.RepositoryLocale;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.rest.apiclient.model.Locale;
-import com.box.l10n.mojito.rest.apiclient.model.RepositoryLocale;
-import com.box.l10n.mojito.rest.client.LocaleClient;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
