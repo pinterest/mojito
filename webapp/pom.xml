@@ -363,24 +363,6 @@
             </plugin>
 
             <plugin>
-                <groupId>org.springdoc</groupId>
-                <artifactId>springdoc-openapi-maven-plugin</artifactId>
-                <version>1.4</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <apiDocsUrl>http://localhost:8080/v3/api-docs.yaml</apiDocsUrl>
-                    <outputFileName>openapi.yaml</outputFileName>
-                    <outputDir>${project.basedir}/src/main/resources</outputDir>
-                </configuration>
-            </plugin>
-
-            <plugin>
                 <groupId>io.swagger.codegen.v3</groupId>
                 <artifactId>swagger-codegen-maven-plugin</artifactId>
                 <executions>
@@ -566,6 +548,9 @@
             <id>git-commit-id-plugin</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
+                <property>
+                    <name>generate-openapi</name>
+                </property>
             </activation>
             <build>
                 <plugins>
@@ -625,6 +610,39 @@
                                 </configuration>
                             </execution>
                         </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>generate-openapi</id>
+            <properties>
+                <skipTests>true</skipTests>
+            </properties>
+            <activation>
+                <property>
+                    <name>generate-openapi</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.springdoc</groupId>
+                        <artifactId>springdoc-openapi-maven-plugin</artifactId>
+                        <version>1.4</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>generate</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <apiDocsUrl>http://localhost:8080/v3/api-docs.yaml</apiDocsUrl>
+                            <outputFileName>openapi.yaml</outputFileName>
+                            <outputDir>${project.basedir}/src/main/resources</outputDir>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
