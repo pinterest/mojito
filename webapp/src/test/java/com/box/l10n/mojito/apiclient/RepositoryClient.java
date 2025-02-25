@@ -2,8 +2,6 @@ package com.box.l10n.mojito.apiclient;
 
 import com.box.l10n.mojito.cli.apiclient.RepositoryWsApi;
 import com.box.l10n.mojito.cli.apiclient.model.BranchBranchSummary;
-import com.box.l10n.mojito.cli.apiclient.model.ImportRepositoryBody;
-import com.box.l10n.mojito.cli.apiclient.model.PollableTask;
 import com.box.l10n.mojito.cli.apiclient.model.Repository;
 import com.box.l10n.mojito.cli.apiclient.model.RepositoryRepository;
 import com.box.l10n.mojito.rest.client.exception.RepositoryNotFoundException;
@@ -11,7 +9,6 @@ import com.box.l10n.mojito.rest.client.exception.ResourceNotCreatedException;
 import com.box.l10n.mojito.rest.client.exception.ResourceNotUpdatedException;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,16 +79,6 @@ public class RepositoryClient {
     this.repositoryWsApi.deleteRepositoryById(repository.getId());
   }
 
-  public BranchBranchSummary getBranch(Long repositoryId, String branchName) {
-    List<BranchBranchSummary> branches =
-        this.getBranchesOfRepository(repositoryId, branchName, null, null, null, false, null);
-    logger.debug("Support the \"null\" branch (name is null and param filtering doesn't work)");
-    return branches.stream()
-        .filter((b) -> Objects.equals(b.getName(), branchName))
-        .findFirst()
-        .orElse(null);
-  }
-
   public RepositoryRepository createRepository(Repository body) throws ResourceNotCreatedException {
     logger.debug(
         "Creating repo with name = {}, and description = {}, and repositoryLocales = {}",
@@ -103,20 +90,6 @@ public class RepositoryClient {
     } catch (HttpClientErrorException exception) {
       if (exception.getStatusCode().equals(HttpStatus.CONFLICT)) {
         throw new ResourceNotCreatedException(exception.getResponseBodyAsString());
-      } else {
-        throw exception;
-      }
-    }
-  }
-
-  public String importRepository(ImportRepositoryBody body, Long repositoryId)
-      throws ResourceNotCreatedException {
-    try {
-      return this.repositoryWsApi.importRepository(body, repositoryId);
-    } catch (HttpClientErrorException exception) {
-      if (exception.getStatusCode().equals(HttpStatus.CONFLICT)) {
-        throw new ResourceNotCreatedException(
-            "Importing to repository [" + repositoryId + "] failed");
       } else {
         throw exception;
       }
@@ -144,14 +117,6 @@ public class RepositoryClient {
         throw exception;
       }
     }
-  }
-
-  public PollableTask deleteBranch(Long repositoryId, Long branchId) {
-    return this.repositoryWsApi.deleteBranch(repositoryId, branchId);
-  }
-
-  public List<RepositoryRepository> getRepositories(String name) {
-    return this.repositoryWsApi.getRepositories(name);
   }
 
   public RepositoryRepository getRepositoryById(Long repositoryId) {

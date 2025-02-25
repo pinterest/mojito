@@ -105,8 +105,4 @@ public class AssetClient {
       LocalizedAssetBody body, Long assetId) {
     return this.assetWsApi.getPseudoLocalizedAssetForContent(body, assetId);
   }
-
-  public void deleteAssetById(Long assetId) {
-    this.assetWsApi.deleteAssetById(assetId);
-  }
 }

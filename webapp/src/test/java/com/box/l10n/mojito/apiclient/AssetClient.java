@@ -2,13 +2,10 @@ package com.box.l10n.mojito.apiclient;
 
 import com.box.l10n.mojito.cli.apiclient.AssetWsApi;
 import com.box.l10n.mojito.cli.apiclient.model.AssetAssetSummary;
-import com.box.l10n.mojito.cli.apiclient.model.ImportLocalizedAssetBody;
 import com.box.l10n.mojito.cli.apiclient.model.LocalizedAssetBody;
-import com.box.l10n.mojito.cli.apiclient.model.MultiLocalizedAssetBody;
 import com.box.l10n.mojito.cli.apiclient.model.PollableTask;
 import com.box.l10n.mojito.cli.apiclient.model.SourceAsset;
 import com.box.l10n.mojito.cli.apiclient.model.XliffExportBody;
-import com.box.l10n.mojito.rest.client.exception.AssetNotFoundException;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,54 +19,7 @@ public class AssetClient {
   /** logger */
   static Logger logger = LoggerFactory.getLogger(AssetClient.class);
 
-  public static final String OUTPUT_BCP47_TAG = "en-x-pseudo";
-
   @Autowired private AssetWsApi assetWsApi;
-
-  public AssetAssetSummary getAssetByPathAndRepositoryId(String path, Long repositoryId)
-      throws AssetNotFoundException {
-    Assert.notNull(path, "path must not be null");
-    Assert.notNull(repositoryId, "repository must not be null");
-
-    List<AssetAssetSummary> assets = this.getAssets(repositoryId, path, null, null, null);
-    if (!assets.isEmpty()) {
-      return assets.getFirst();
-    } else {
-      throw new AssetNotFoundException(
-          "Could not find asset with path = [" + path + "] at repo id [" + repositoryId + "]");
-    }
-  }
-
-  public LocalizedAssetBody getLocalizedAssetForContent(
-      LocalizedAssetBody body, Long assetId, Long localeId) {
-    logger.debug(
-        "Getting localized asset with asset id = {}, locale id = {}, outputBcp47tag: {}",
-        assetId,
-        localeId,
-        body.getOutputBcp47tag());
-    return this.assetWsApi.getLocalizedAssetForContent(body, assetId, localeId);
-  }
-
-  public ImportLocalizedAssetBody importLocalizedAsset(
-      ImportLocalizedAssetBody body, Long assetId, Long localeId) {
-    logger.debug("Import localized asset with asset id = {}, locale id = {}", assetId, localeId);
-    return this.assetWsApi.importLocalizedAsset(body, assetId, localeId);
-  }
-
-  public PollableTask getLocalizedAssetForContentParallel(
-      MultiLocalizedAssetBody body, Long assetId) {
-    logger.debug("Getting localized assets with asset id = {}", assetId);
-    return this.assetWsApi.getLocalizedAssetForContentParallel(body, assetId);
-  }
-
-  public PollableTask getLocalizedAssetForContentAsync(LocalizedAssetBody body, Long assetId) {
-    logger.debug(
-        "Getting localized asset with asset id = {}, locale id = {}, outputBcp47tag: {}",
-        assetId,
-        body.getLocaleId(),
-        body.getOutputBcp47tag());
-    return this.assetWsApi.getLocalizedAssetForContentAsync(body, assetId);
-  }
 
   public List<Long> getAssetIds(
       Long repositoryId, Boolean deleted, Boolean virtual, Long branchId) {
