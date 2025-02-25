@@ -77,6 +77,9 @@ public class OpenAILLMService implements LLMService {
   @Value("${l10n.ai.translate.retry.maxBackoffDurationSeconds:60}")
   int retryMaxBackoffDurationSeconds;
 
+  @Value("${l10n.ai.maxOutputTokens:256}")
+  int maxOutputTokens;
+
   RetryBackoffSpec llmTranslateRetryConfig;
 
   Map<String, Pattern> patternCache = new HashMap<>();
@@ -168,7 +171,12 @@ public class OpenAILLMService implements LLMService {
 
     OpenAIClient.ChatCompletionsRequest chatCompletionsRequest =
         buildChatCompletionsRequest(
-            prompt, systemPrompt, userPrompt, prompt.getContextMessages(), prompt.isJsonResponse());
+            prompt,
+            systemPrompt,
+            userPrompt,
+            prompt.getContextMessages(),
+            prompt.isJsonResponse(),
+            maxOutputTokens);
 
     return Mono.fromCallable(
             () -> {
@@ -309,7 +317,7 @@ public class OpenAILLMService implements LLMService {
 
       OpenAIClient.ChatCompletionsRequest chatCompletionsRequest =
           buildChatCompletionsRequest(
-              prompt, systemPrompt, userPrompt, prompt.getContextMessages(), true);
+              prompt, systemPrompt, userPrompt, prompt.getContextMessages(), true, maxOutputTokens);
 
       OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
           openAIClient.getChatCompletions(chatCompletionsRequest).join();
@@ -421,11 +429,13 @@ public class OpenAILLMService implements LLMService {
       String systemPrompt,
       String userPrompt,
       List<AIPromptContextMessage> contextMessages,
-      boolean isJsonResponseType) {
+      boolean isJsonResponseType,
+      int maxOutputTokens) {
     return chatCompletionsRequest()
         .temperature(prompt.getPromptTemperature())
         .model(prompt.getModelName())
         .messages(buildPromptMessages(systemPrompt, userPrompt, contextMessages))
+        .maxTokens(maxOutputTokens)
         .jsonResponseType(isJsonResponseType)
         .build();
   }
