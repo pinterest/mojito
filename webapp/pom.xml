@@ -363,6 +363,24 @@
             </plugin>
 
             <plugin>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-maven-plugin</artifactId>
+                <version>1.4</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <apiDocsUrl>http://localhost:8080/v3/api-docs.yaml</apiDocsUrl>
+                    <outputFileName>openapi.yaml</outputFileName>
+                    <outputDir>${project.basedir}/src/main/resources</outputDir>
+                </configuration>
+            </plugin>
+
+            <plugin>
                 <groupId>io.swagger.codegen.v3</groupId>
                 <artifactId>swagger-codegen-maven-plugin</artifactId>
                 <executions>
@@ -537,7 +555,6 @@
                     </resources>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
 
@@ -549,7 +566,7 @@
             <activation>
                 <activeByDefault>true</activeByDefault>
                 <property>
-                    <name>generate-openapi</name>
+                    <name>update-checksum</name>
                 </property>
             </activation>
             <build>
@@ -616,33 +633,73 @@
         </profile>
 
         <profile>
-            <id>generate-openapi</id>
+            <id>verify-checksum</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.8</version>
+                        <executions>
+                            <execution>
+                                <id>verify-checksum</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <checksum file="${project.basedir}/src/main/resources/openapi.yaml" property="generated.checksum" algorithm="SHA-256"/>
+                                        <loadfile srcFile="${project.basedir}/src/main/resources/openapi-checksum.txt" property="existing.checksum"/>
+                                        <echo message="Generated checksum: ${generated.checksum}"/>
+                                        <echo message="Existing checksum: ${existing.checksum}"/>
+                                        <condition property="checksums.match">
+                                            <equals arg1="${generated.checksum}" arg2="${existing.checksum}"/>
+                                        </condition>
+                                        <fail unless="checksums.match" message="Checksums do not match!"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>update-checksum</id>
             <properties>
                 <skipTests>true</skipTests>
             </properties>
             <activation>
                 <property>
-                    <name>generate-openapi</name>
+                    <name>update-checksum</name>
                 </property>
             </activation>
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.springdoc</groupId>
-                        <artifactId>springdoc-openapi-maven-plugin</artifactId>
-                        <version>1.4</version>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.8</version>
                         <executions>
                             <execution>
+                                <id>update-checksum</id>
+                                <phase>install</phase>
                                 <goals>
-                                    <goal>generate</goal>
+                                    <goal>run</goal>
                                 </goals>
+                                <configuration>
+                                    <target>
+                                        <checksum file="${project.basedir}/src/main/resources/openapi.yaml" property="new.checksum" algorithm="SHA-256"/>
+                                        <echo file="${project.basedir}/src/main/resources/openapi-checksum.txt" message="${new.checksum}"/>
+                                    </target>
+                                </configuration>
                             </execution>
                         </executions>
-                        <configuration>
-                            <apiDocsUrl>http://localhost:8080/v3/api-docs.yaml</apiDocsUrl>
-                            <outputFileName>openapi.yaml</outputFileName>
-                            <outputDir>${project.basedir}/src/main/resources</outputDir>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>
