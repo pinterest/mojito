@@ -1,10 +1,10 @@
 package com.box.l10n.mojito.cli.apiclient;
 
+import com.box.l10n.mojito.cli.apiclient.exception.ResourceNotCreatedException;
+import com.box.l10n.mojito.cli.apiclient.exception.ResourceNotFoundException;
 import com.box.l10n.mojito.cli.model.PageUser;
 import com.box.l10n.mojito.cli.model.Pageable;
 import com.box.l10n.mojito.cli.model.User;
-import com.box.l10n.mojito.rest.client.exception.ResourceNotCreatedException;
-import com.box.l10n.mojito.rest.client.exception.ResourceNotFoundException;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
