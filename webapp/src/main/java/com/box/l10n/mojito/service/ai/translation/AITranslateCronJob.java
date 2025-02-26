@@ -15,6 +15,10 @@ import com.box.l10n.mojito.service.ai.RepositoryLocaleAIPromptRepository;
 import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitVariantRepository;
+import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
+import com.box.l10n.mojito.service.tm.search.TextUnitSearcher;
+import com.box.l10n.mojito.service.tm.search.TextUnitSearcherParameters;
+import com.box.l10n.mojito.service.tm.search.UsedFilter;
 import com.google.common.collect.Lists;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -86,6 +90,8 @@ public class AITranslateCronJob implements Job {
   @Autowired TmTextUnitPendingMTRepository tmTextUnitPendingMTRepository;
 
   @Autowired JdbcTemplate jdbcTemplate;
+
+  @Autowired TextUnitSearcher textUnitSearcher;
 
   @Value("${l10n.ai.translation.job.threads:1}")
   int threads;
@@ -292,6 +298,18 @@ public class AITranslateCronJob implements Job {
                 .minus(aiTranslationConfiguration.getExpiryDuration()));
   }
 
+  private List<Long> getUnusedIds(List<TmTextUnitPendingMT> pendingMTList) {
+    TextUnitSearcherParameters params = new TextUnitSearcherParameters();
+    params.setTmTextUnitIds(
+        pendingMTList.stream()
+            .map(TmTextUnitPendingMT::getTmTextUnitId)
+            .collect(Collectors.toList()));
+    params.setUsedFilter(UsedFilter.UNUSED);
+    return textUnitSearcher.search(params).stream()
+        .map(TextUnitDTO::getTmTextUnitId)
+        .collect(Collectors.toList());
+  }
+
   /**
    * Iterates over all pending MTs and translates them.
    *
@@ -316,11 +334,13 @@ public class AITranslateCronJob implements Job {
             .increment(tmTextUnitPendingMTRepository.count());
         pendingMTs =
             tmTextUnitPendingMTRepository.findBatch(aiTranslationConfiguration.getBatchSize());
+
         logger.info("Processing {} pending MTs", pendingMTs.size());
         Queue<TmTextUnitPendingMT> textUnitsToClearPendingMT = new ConcurrentLinkedQueue<>();
-
+        List<Long> unusedIds = getUnusedIds(pendingMTs);
         List<CompletableFuture<Void>> futures =
             pendingMTs.stream()
+                .filter(pendingMT -> !isUnused(pendingMT, unusedIds))
                 .map(
                     pendingMT ->
                         CompletableFuture.runAsync(
@@ -358,6 +378,16 @@ public class AITranslateCronJob implements Job {
     }
 
     logger.info("Finished executing AITranslateCronJob");
+  }
+
+  private static boolean isUnused(TmTextUnitPendingMT pendingMT, List<Long> unusedIds) {
+    boolean isUnused = unusedIds.contains(pendingMT.getTmTextUnitId());
+    if (isUnused) {
+      logger.info(
+          "Skipping AI translation for tmTextUnitId: {} as it is unused",
+          pendingMT.getTmTextUnitId());
+    }
+    return isUnused;
   }
 
   private static void shutdownExecutor(ExecutorService executorService) {

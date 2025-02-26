@@ -566,7 +566,7 @@
             <activation>
                 <activeByDefault>true</activeByDefault>
                 <property>
-                    <name>update-checksum</name>
+                    <name>update-openapi-checksum</name>
                 </property>
             </activation>
             <build>
@@ -633,7 +633,7 @@
         </profile>
 
         <profile>
-            <id>verify-checksum</id>
+            <id>verify-openapi-checksum</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
@@ -645,7 +645,7 @@
                         <version>1.8</version>
                         <executions>
                             <execution>
-                                <id>verify-checksum</id>
+                                <id>verify-openapi-checksum</id>
                                 <phase>verify</phase>
                                 <goals>
                                     <goal>run</goal>
@@ -670,13 +670,13 @@
         </profile>
 
         <profile>
-            <id>update-checksum</id>
+            <id>update-openapi-checksum</id>
             <properties>
                 <skipTests>true</skipTests>
             </properties>
             <activation>
                 <property>
-                    <name>update-checksum</name>
+                    <name>update-openapi-checksum</name>
                 </property>
             </activation>
             <build>
@@ -687,7 +687,7 @@
                         <version>1.8</version>
                         <executions>
                             <execution>
-                                <id>update-checksum</id>
+                                <id>update-openapi-checksum</id>
                                 <phase>install</phase>
                                 <goals>
                                     <goal>run</goal>
