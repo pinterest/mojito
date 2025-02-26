@@ -232,6 +232,8 @@ public class TextUnitSearcher {
               onClauseBranchTextUnitStatistic));
       NativeJunctionExp onClauseBranchStatistic = NativeExps.conjunction();
       onClauseBranchStatistic.add(new NativeColumnEqExp("bs.id", "btus.branch_statistic_id"));
+      onClauseBranchStatistic.add(
+          new NativeEqExpFix("bs.branch_id", searchParameters.getBranchStatisticBranchId()));
       c.addJoin(
           new NativeJoin(
               "branch_statistic", "bs", NativeJoin.JoinType.INNER, onClauseBranchStatistic));
@@ -506,11 +508,6 @@ public class TextUnitSearcher {
     if (searchParameters.getTmTextUnitCreatedAfter() != null) {
       conjunction.add(
           new NativeDateGteExp("tu.created_date", searchParameters.getTmTextUnitCreatedAfter()));
-    }
-
-    if (searchParameters.getBranchStatisticBranchId() != null) {
-      conjunction.add(
-          new NativeEqExpFix("bs.branch_id", searchParameters.getBranchStatisticBranchId()));
     }
 
     if (!conjunction.toSQL().isEmpty()) {
