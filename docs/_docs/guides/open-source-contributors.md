@@ -294,7 +294,17 @@ To build from a clean slate:
 ```sh
 docker run -v $(pwd):/mnt/mojito -it aurambaj/mojito-dev mvn install -DskipTests
 ```    
-   
+
+## Adding/updating API endpoints
+
+After adding or updating API endpoints and before building the project, you need to run the following command in the **webapp** module:
+
+```sh
+mvn clean install -Dupdate-openapi-checksum
+```
+
+This will update the OpenAPI file checksum; otherwise, the build will fail.
+
 ## Troubleshooting
 
 ### Check Java version 
