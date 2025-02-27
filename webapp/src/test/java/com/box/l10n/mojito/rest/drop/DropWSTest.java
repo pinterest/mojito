@@ -4,19 +4,19 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.box.l10n.mojito.apiclient.DropWsApi;
 import com.box.l10n.mojito.apiclient.PollableTaskClient;
 import com.box.l10n.mojito.apiclient.RepositoryClient;
-import com.box.l10n.mojito.cli.apiclient.DropWsApi;
-import com.box.l10n.mojito.cli.apiclient.model.ExportDropConfig;
-import com.box.l10n.mojito.cli.apiclient.model.ImportDropConfig;
-import com.box.l10n.mojito.cli.apiclient.model.ImportXliffBody;
-import com.box.l10n.mojito.cli.apiclient.model.PollableTask;
-import com.box.l10n.mojito.cli.apiclient.model.Repository;
-import com.box.l10n.mojito.cli.apiclient.model.RepositoryLocale;
-import com.box.l10n.mojito.cli.apiclient.model.RepositoryLocaleRepository;
-import com.box.l10n.mojito.cli.apiclient.model.RepositoryRepository;
+import com.box.l10n.mojito.apiclient.exception.ResourceNotCreatedException;
+import com.box.l10n.mojito.apiclient.model.ExportDropConfig;
+import com.box.l10n.mojito.apiclient.model.ImportDropConfig;
+import com.box.l10n.mojito.apiclient.model.ImportXliffBody;
+import com.box.l10n.mojito.apiclient.model.PollableTask;
+import com.box.l10n.mojito.apiclient.model.Repository;
+import com.box.l10n.mojito.apiclient.model.RepositoryLocale;
+import com.box.l10n.mojito.apiclient.model.RepositoryLocaleRepository;
+import com.box.l10n.mojito.apiclient.model.RepositoryRepository;
 import com.box.l10n.mojito.rest.WSTestBase;
-import com.box.l10n.mojito.rest.client.exception.ResourceNotCreatedException;
 import com.box.l10n.mojito.test.TestIdWatcher;
 import com.box.l10n.mojito.test.category.IntegrationTest;
 import com.google.common.base.Preconditions;
@@ -101,8 +101,8 @@ public class DropWSTest extends WSTestBase {
 
     pollableTaskClient.waitForPollableTask(exportDropConfig.getPollableTask().getId());
 
-    com.box.l10n.mojito.cli.apiclient.model.ImportDropConfig importDropConfig =
-        new com.box.l10n.mojito.cli.apiclient.model.ImportDropConfig();
+    com.box.l10n.mojito.apiclient.model.ImportDropConfig importDropConfig =
+        new com.box.l10n.mojito.apiclient.model.ImportDropConfig();
     importDropConfig.setRepositoryId(repository.getId());
     importDropConfig.setDropId(exportDropConfig.getDropId());
     importDropConfig.setStatus(null);
@@ -150,7 +150,7 @@ public class DropWSTest extends WSTestBase {
             + "</file>\n"
             + "</xliff>";
 
-    com.box.l10n.mojito.cli.apiclient.model.ImportXliffBody importXliffBody = new ImportXliffBody();
+    com.box.l10n.mojito.apiclient.model.ImportXliffBody importXliffBody = new ImportXliffBody();
 
     importXliffBody.setRepositoryId(Preconditions.checkNotNull(repository.getId()));
     importXliffBody.setTranslationKit(false);

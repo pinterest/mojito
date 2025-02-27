@@ -2,12 +2,12 @@ package com.box.l10n.mojito.cli.command;
 
 import static com.box.l10n.mojito.service.drop.exporter.DropExporterDirectories.DROP_FOLDER_SOURCE_FILES_NAME;
 
+import com.box.l10n.mojito.apiclient.AssetClient;
+import com.box.l10n.mojito.apiclient.RepositoryClient;
+import com.box.l10n.mojito.apiclient.model.AssetAssetSummary;
 import com.box.l10n.mojito.boxsdk.BoxSDKService;
 import com.box.l10n.mojito.boxsdk.BoxSDKServiceException;
 import com.box.l10n.mojito.cli.CLITestBase;
-import com.box.l10n.mojito.cli.apiclient.AssetClient;
-import com.box.l10n.mojito.cli.apiclient.RepositoryClient;
-import com.box.l10n.mojito.cli.apiclient.model.AssetAssetSummary;
 import com.box.l10n.mojito.entity.Drop;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.service.drop.DropRepository;

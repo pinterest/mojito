@@ -3,10 +3,10 @@ package com.box.l10n.mojito.cli.command.checks;
 import static com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificationSender.QUOTE_MARKER;
 import static java.util.stream.Collectors.toList;
 
-import com.box.l10n.mojito.cli.apiclient.AIServiceClient;
-import com.box.l10n.mojito.cli.apiclient.model.AICheckRequest;
-import com.box.l10n.mojito.cli.apiclient.model.AICheckResponse;
-import com.box.l10n.mojito.cli.apiclient.model.AICheckResult;
+import com.box.l10n.mojito.apiclient.AIServiceClient;
+import com.box.l10n.mojito.apiclient.model.AICheckRequest;
+import com.box.l10n.mojito.apiclient.model.AICheckResponse;
+import com.box.l10n.mojito.apiclient.model.AICheckResult;
 import com.box.l10n.mojito.cli.command.CommandException;
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
@@ -57,13 +57,13 @@ public class AIChecker extends AbstractCliChecker {
           "Repository name must be provided in checker options when using OpenAI checks.");
     }
 
-    List<com.box.l10n.mojito.cli.apiclient.model.AssetExtractorTextUnit> assetExtractorTextUnits =
+    List<com.box.l10n.mojito.apiclient.model.AssetExtractorTextUnit> assetExtractorTextUnits =
         textUnits.stream()
             .map(
                 textUnit -> {
-                  com.box.l10n.mojito.cli.apiclient.model.AssetExtractorTextUnit
+                  com.box.l10n.mojito.apiclient.model.AssetExtractorTextUnit
                       assetExtractorTextUnit =
-                          new com.box.l10n.mojito.cli.apiclient.model.AssetExtractorTextUnit();
+                          new com.box.l10n.mojito.apiclient.model.AssetExtractorTextUnit();
                   assetExtractorTextUnit.setName(textUnit.getName());
                   assetExtractorTextUnit.setSource(textUnit.getSource());
                   assetExtractorTextUnit.setComments(textUnit.getComments());

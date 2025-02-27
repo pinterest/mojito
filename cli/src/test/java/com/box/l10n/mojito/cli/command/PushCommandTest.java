@@ -2,9 +2,9 @@ package com.box.l10n.mojito.cli.command;
 
 import static org.junit.Assert.*;
 
+import com.box.l10n.mojito.apiclient.AssetClient;
+import com.box.l10n.mojito.apiclient.model.AssetAssetSummary;
 import com.box.l10n.mojito.cli.CLITestBase;
-import com.box.l10n.mojito.cli.apiclient.AssetClient;
-import com.box.l10n.mojito.cli.apiclient.model.AssetAssetSummary;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.entity.Commit;
 import com.box.l10n.mojito.entity.Locale;

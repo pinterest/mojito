@@ -3,12 +3,12 @@ package com.box.l10n.mojito.cli.command;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import com.box.l10n.mojito.apiclient.AssetClient;
+import com.box.l10n.mojito.apiclient.RepositoryClient;
+import com.box.l10n.mojito.apiclient.model.AssetAssetSummary;
+import com.box.l10n.mojito.apiclient.model.RepositoryRepository;
+import com.box.l10n.mojito.apiclient.model.RepositoryStatisticRepository;
 import com.box.l10n.mojito.cli.CLITestBase;
-import com.box.l10n.mojito.cli.apiclient.AssetClient;
-import com.box.l10n.mojito.cli.apiclient.RepositoryClient;
-import com.box.l10n.mojito.cli.apiclient.model.AssetAssetSummary;
-import com.box.l10n.mojito.cli.apiclient.model.RepositoryRepository;
-import com.box.l10n.mojito.cli.apiclient.model.RepositoryStatisticRepository;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.PullRun;
 import com.box.l10n.mojito.entity.PushRun;

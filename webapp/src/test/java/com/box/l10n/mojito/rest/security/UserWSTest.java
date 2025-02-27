@@ -5,13 +5,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.box.l10n.mojito.apiclient.UserClient;
+import com.box.l10n.mojito.apiclient.exception.ResourceNotCreatedException;
+import com.box.l10n.mojito.apiclient.exception.ResourceNotFoundException;
+import com.box.l10n.mojito.apiclient.model.Authority;
+import com.box.l10n.mojito.apiclient.model.Role;
+import com.box.l10n.mojito.apiclient.model.User;
 import com.box.l10n.mojito.bootstrap.BootstrapConfig;
-import com.box.l10n.mojito.cli.apiclient.model.Authority;
-import com.box.l10n.mojito.cli.apiclient.model.User;
 import com.box.l10n.mojito.rest.WSTestBase;
-import com.box.l10n.mojito.rest.client.exception.ResourceNotCreatedException;
-import com.box.l10n.mojito.rest.client.exception.ResourceNotFoundException;
-import com.box.l10n.mojito.rest.entity.Role;
 import com.box.l10n.mojito.test.TestIdWatcher;
 import java.util.ArrayList;
 import java.util.List;

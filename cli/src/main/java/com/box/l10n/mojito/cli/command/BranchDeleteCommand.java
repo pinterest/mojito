@@ -16,10 +16,10 @@ import static java.util.Optional.ofNullable;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.box.l10n.mojito.cli.apiclient.RepositoryClient;
-import com.box.l10n.mojito.cli.apiclient.model.BranchBranchSummary;
-import com.box.l10n.mojito.cli.apiclient.model.PollableTask;
-import com.box.l10n.mojito.cli.apiclient.model.RepositoryRepository;
+import com.box.l10n.mojito.apiclient.RepositoryClient;
+import com.box.l10n.mojito.apiclient.model.BranchBranchSummary;
+import com.box.l10n.mojito.apiclient.model.PollableTask;
+import com.box.l10n.mojito.apiclient.model.RepositoryRepository;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import java.time.ZonedDateTime;

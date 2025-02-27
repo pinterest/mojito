@@ -9,9 +9,9 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
+import com.box.l10n.mojito.apiclient.model.GitBlameGitBlameWithUsage;
+import com.box.l10n.mojito.apiclient.model.GitBlameWithUsageGitBlameWithUsage;
 import com.box.l10n.mojito.cli.CLITestBase;
-import com.box.l10n.mojito.cli.apiclient.model.GitBlameGitBlameWithUsage;
-import com.box.l10n.mojito.cli.apiclient.model.GitBlameWithUsageGitBlameWithUsage;
 import com.box.l10n.mojito.cli.filefinder.file.AndroidStringsFileType;
 import com.box.l10n.mojito.cli.filefinder.file.ChromeExtensionJSONFileType;
 import com.box.l10n.mojito.cli.filefinder.file.FileType;

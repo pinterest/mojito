@@ -8,12 +8,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.box.l10n.mojito.apiclient.AssetClient;
+import com.box.l10n.mojito.apiclient.RepositoryClient;
+import com.box.l10n.mojito.apiclient.model.AssetAssetSummary;
 import com.box.l10n.mojito.boxsdk.BoxSDKService;
 import com.box.l10n.mojito.boxsdk.BoxSDKServiceException;
 import com.box.l10n.mojito.cli.CLITestBase;
-import com.box.l10n.mojito.cli.apiclient.AssetClient;
-import com.box.l10n.mojito.cli.apiclient.RepositoryClient;
-import com.box.l10n.mojito.cli.apiclient.model.AssetAssetSummary;
 import com.box.l10n.mojito.cli.console.Console;
 import com.box.l10n.mojito.entity.Drop;
 import com.box.l10n.mojito.entity.Repository;

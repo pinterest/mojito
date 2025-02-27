@@ -2,8 +2,8 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.box.l10n.mojito.cli.apiclient.AIServiceClient;
-import com.box.l10n.mojito.cli.apiclient.model.AITranslationLocalePromptOverridesRequest;
+import com.box.l10n.mojito.apiclient.AIServiceClient;
+import com.box.l10n.mojito.apiclient.model.AITranslationLocalePromptOverridesRequest;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

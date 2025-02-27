@@ -1,14 +1,14 @@
 package com.box.l10n.mojito.rest;
 
 import com.box.l10n.mojito.Application;
+import com.box.l10n.mojito.apiclient.ApiClient;
 import com.box.l10n.mojito.apiclient.LocaleClient;
-import com.box.l10n.mojito.cli.apiclient.ApiClient;
-import com.box.l10n.mojito.cli.apiclient.model.RepositoryLocale;
+import com.box.l10n.mojito.apiclient.exception.LocaleNotFoundException;
+import com.box.l10n.mojito.apiclient.model.RepositoryLocale;
 import com.box.l10n.mojito.factory.XliffDataFactory;
 import com.box.l10n.mojito.rest.annotation.WithDefaultTestUser;
-import com.box.l10n.mojito.rest.client.exception.LocaleNotFoundException;
-import com.box.l10n.mojito.rest.resttemplate.AuthenticatedRestTemplate;
-import com.box.l10n.mojito.rest.resttemplate.ResttemplateConfig;
+import com.box.l10n.mojito.resttemplate.AuthenticatedRestTemplate;
+import com.box.l10n.mojito.resttemplate.ResttemplateConfig;
 import com.box.l10n.mojito.xml.XmlParsingConfiguration;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;

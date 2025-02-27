@@ -2,12 +2,12 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.box.l10n.mojito.cli.apiclient.DropWsApi;
-import com.box.l10n.mojito.cli.apiclient.model.DropDropSummary;
-import com.box.l10n.mojito.cli.apiclient.model.ImportDropConfig;
-import com.box.l10n.mojito.cli.apiclient.model.Pageable;
-import com.box.l10n.mojito.cli.apiclient.model.PollableTask;
-import com.box.l10n.mojito.cli.apiclient.model.RepositoryRepository;
+import com.box.l10n.mojito.apiclient.DropWsApi;
+import com.box.l10n.mojito.apiclient.model.DropDropSummary;
+import com.box.l10n.mojito.apiclient.model.ImportDropConfig;
+import com.box.l10n.mojito.apiclient.model.Pageable;
+import com.box.l10n.mojito.apiclient.model.PollableTask;
+import com.box.l10n.mojito.apiclient.model.RepositoryRepository;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.Console;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
