@@ -297,7 +297,11 @@ docker run -v $(pwd):/mnt/mojito -it aurambaj/mojito-dev mvn install -DskipTests
 
 ## Adding/updating API endpoints
 
-After adding or updating API endpoints and before building the project, you need to run the following command in the **webapp** module:
+When building the project after adding or updating API endpoints, the build fails with the following error message:
+
+`The OpenAPI specification has changed! Please rebuild the whole project to make sure that new clients and models are generated`
+
+The next time you build the project, this error will disappear.
 
 ```sh
 mvn clean install -Dupdate-openapi-checksum
