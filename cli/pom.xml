@@ -210,4 +210,43 @@
 
     </build>
 
+    <profiles>
+        <profile>
+            <id>verify-openapi-checksum</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.8</version>
+                        <executions>
+                            <execution>
+                                <id>verify-openapi-checksum</id>
+                                <phase>pre-clean</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <checksum file="../webapp/src/main/resources/openapi.yaml" property="generated.checksum" algorithm="SHA-256"/>
+                                        <loadfile srcFile="../webapp/src/main/resources/openapi-checksum.txt" property="existing.checksum"/>
+                                        <echo message="Generated checksum: ${generated.checksum}"/>
+                                        <echo message="Existing checksum: ${existing.checksum}"/>
+                                        <condition property="checksums.match">
+                                            <equals arg1="${generated.checksum}" arg2="${existing.checksum}"/>
+                                        </condition>
+                                        <fail unless="checksums.match" message="The OpenAPI specification has changed! Please rebuild the whole project to make sure that new clients and models are generated"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 </project>

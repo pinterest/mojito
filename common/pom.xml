@@ -535,9 +535,9 @@
     <profiles>
         <profile>
             <id>update-openapi-checksum</id>
-            <properties>
-                <skipTests>true</skipTests>
-            </properties>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <build>
                 <plugins>
                     <plugin>
