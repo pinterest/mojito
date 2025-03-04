@@ -655,7 +655,7 @@ public class TMService {
               currentTmTextUnitVariant,
               TMTextUnitVariantComment.Type.AI_TRANSLATION,
               TMTextUnitVariantComment.Severity.INFO,
-              "AI translation review completed with no updates.");
+              "AI translation review complete. Translation accepted.");
         } else {
           logger.debug(
               "The current text unit variant has different content, comment or needs review. Add entities");
