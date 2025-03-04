@@ -8,7 +8,6 @@ import com.box.l10n.mojito.entity.TMTextUnitVariantComment;
 import com.box.l10n.mojito.entity.TmTextUnitPendingMT;
 import com.box.l10n.mojito.service.ai.RepositoryLocaleAIPromptRepository;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
-import com.box.l10n.mojito.service.tm.TMTextUnitVariantCommentService;
 import com.box.l10n.mojito.service.tm.TMTextUnitVariantRepository;
 import com.google.common.collect.Lists;
 import jakarta.transaction.Transactional;
@@ -45,8 +44,6 @@ public class AITranslationService {
   @Autowired RepositoryRepository repositoryRepository;
 
   @Autowired JdbcTemplate jdbcTemplate;
-
-  @Autowired TMTextUnitVariantCommentService tmTextUnitVariantCommentService;
 
   @Value("${l10n.ai.translation.pendingMT.batchSize:1000}")
   int batchSize;
