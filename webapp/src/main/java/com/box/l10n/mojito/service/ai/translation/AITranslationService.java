@@ -4,9 +4,11 @@ import static com.box.l10n.mojito.entity.TMTextUnitVariant.Status.MT_REVIEW_NEED
 
 import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.PromptType;
+import com.box.l10n.mojito.entity.TMTextUnitVariantComment;
 import com.box.l10n.mojito.entity.TmTextUnitPendingMT;
 import com.box.l10n.mojito.service.ai.RepositoryLocaleAIPromptRepository;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
+import com.box.l10n.mojito.service.tm.TMTextUnitVariantCommentService;
 import com.box.l10n.mojito.service.tm.TMTextUnitVariantRepository;
 import com.google.common.collect.Lists;
 import jakarta.transaction.Transactional;
@@ -44,6 +46,8 @@ public class AITranslationService {
 
   @Autowired JdbcTemplate jdbcTemplate;
 
+  @Autowired TMTextUnitVariantCommentService tmTextUnitVariantCommentService;
+
   @Value("${l10n.ai.translation.pendingMT.batchSize:1000}")
   int batchSize;
 
@@ -79,6 +83,7 @@ public class AITranslationService {
       int end = Math.min(i + batchSize, currentVariantIds.size());
       List<Long> updateBatch = currentVariantIds.subList(i, end);
       executeVariantStatusUpdatesToMTReview(updateBatch);
+      addVariantComments(updateBatch);
     }
   }
 
@@ -105,6 +110,27 @@ public class AITranslationService {
             return updateBatch.size();
           }
         });
+  }
+
+  private void addVariantComments(List<Long> updateBatch) {
+    String sql =
+        "INSERT INTO tm_text_unit_variant_comment (tm_text_unit_variant_id, severity, type, content, created_date, last_modified_date)  VALUES (?, ?, ?, ?, ?, ?)";
+
+    List<Object[]> batchArgs =
+        updateBatch.stream()
+            .map(
+                variantId ->
+                    new Object[] {
+                      variantId,
+                      TMTextUnitVariantComment.Severity.INFO.toString(),
+                      TMTextUnitVariantComment.Type.AI_TRANSLATION.toString(),
+                      "AI translation sent for human review",
+                      Timestamp.from(JSR310Migration.newDateTimeEmptyCtor().toInstant()),
+                      Timestamp.from(JSR310Migration.newDateTimeEmptyCtor().toInstant())
+                    })
+            .collect(Collectors.toList());
+
+    jdbcTemplate.batchUpdate(sql, batchArgs);
   }
 
   private void createPendingMTEntitiesInBatches(Set<Long> tmTextUnitIds) {
