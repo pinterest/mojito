@@ -1,6 +1,7 @@
 package com.box.l10n.mojito.pagerduty;
 
 import java.net.http.HttpClient;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -22,8 +23,8 @@ public class PagerDutyIntegrationService {
   private Map<String, PagerDutyClient> pagerDutyClients;
   private final PagerDutyIncidentRepository pagerDutyIncidentRepository;
 
-  @Value("${l10n.pagerduty.triggerTimeThreshold:30}")
-  Long triggerTimeThreshold = 30L;
+  @Value("${l10n.pagerduty.triggerTimeThreshold:30m}")
+  Duration triggerTimeThreshold = Duration.ofMinutes(30);
 
   @Autowired
   public PagerDutyIntegrationService(

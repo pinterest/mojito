@@ -32,7 +32,7 @@ public class PagerDutyClient {
   private final PagerDutyRetryConfiguration retryConfiguration;
   private final String clientName;
   private final PagerDutyIncidentRepository pagerDutyIncidentRepository;
-  private final Long triggerTimeThreshold;
+  private final Duration triggerTimeThreshold;
 
   public PagerDutyClient(
       String integrationKey,
@@ -40,7 +40,7 @@ public class PagerDutyClient {
       PagerDutyRetryConfiguration retryConfiguration,
       String clientName,
       PagerDutyIncidentRepository pagerDutyIncidentRepository,
-      Long triggerTimeThreshold) {
+      Duration triggerTimeThreshold) {
     if (integrationKey == null || integrationKey.isEmpty())
       throw new IllegalArgumentException("Pager Duty integration key is null or empty.");
     this.integrationKey = integrationKey;
@@ -62,8 +62,7 @@ public class PagerDutyClient {
         pagerDutyIncidentRepository.findOpenIncident(clientName, dedupKey);
     if (incidentOpt.isPresent()) {
       PagerDutyIncident incident = incidentOpt.get();
-      ZonedDateTime beforeNow =
-          ZonedDateTime.now().minus(Duration.ofMinutes(this.triggerTimeThreshold));
+      ZonedDateTime beforeNow = ZonedDateTime.now().minus(this.triggerTimeThreshold);
       if (!incident.getTriggeredAt().isBefore(beforeNow)) {
         // The incident was triggered within the last trigger threshold minutes, don't send another
         // request

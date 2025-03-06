@@ -42,7 +42,12 @@ public class PagerDutyClientTest {
 
     pagerDutyClient =
         new PagerDutyClient(
-            "xxxyyyzzz", httpClient, retryConfiguration, "test", pagerDutyIncidentRepository, 30L);
+            "xxxyyyzzz",
+            httpClient,
+            retryConfiguration,
+            "test",
+            pagerDutyIncidentRepository,
+            Duration.ofMinutes(30));
 
     Map<String, String> customDetails = new HashMap<>();
     customDetails.put("Example Custom Details", "Example Value");
@@ -173,12 +178,22 @@ public class PagerDutyClientTest {
         IllegalArgumentException.class,
         () ->
             new PagerDutyClient(
-                null, httpClient, retryConfiguration, "test", pagerDutyIncidentRepository, 30L));
+                null,
+                httpClient,
+                retryConfiguration,
+                "test",
+                pagerDutyIncidentRepository,
+                Duration.ofMinutes(30)));
     assertThrows(
         IllegalArgumentException.class,
         () ->
             new PagerDutyClient(
-                "", httpClient, retryConfiguration, "test", pagerDutyIncidentRepository, 30L));
+                "",
+                httpClient,
+                retryConfiguration,
+                "test",
+                pagerDutyIncidentRepository,
+                Duration.ofMinutes(30)));
   }
 
   @Test
