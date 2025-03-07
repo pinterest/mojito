@@ -661,7 +661,7 @@ let SearchResults = createReactClass({
                                 gap: "15px",
                             }}
                         >
-                            <div>Total text units: { filteredItemCount }</div>
+                            {filteredItemCount && <div>Total text units: { filteredItemCount }</div>}
                             <AltContainer store={ViewModeStore}>
                                 <ViewModeDropdown
                                     onModeSelected={(mode) =>
