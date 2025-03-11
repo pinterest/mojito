@@ -573,7 +573,7 @@ let SearchResults = createReactClass({
         }
 
         if (isCountRequestPending) {
-            return <div>Total text units: &nbsp; <DelayedSpinner /></div>;
+            return <div>Total text units: <DelayedSpinner className='mlxs' /></div>;
         }
 
         return <div>Total text units: { filteredItemCount }</div>;
