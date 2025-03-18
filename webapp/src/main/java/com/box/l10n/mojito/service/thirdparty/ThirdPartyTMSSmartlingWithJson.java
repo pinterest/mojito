@@ -9,6 +9,7 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.iterators.PageFetcherOffsetAndLimitSplitIterator;
 import com.box.l10n.mojito.iterators.Spliterators;
+import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.service.ai.translation.AITranslationConfiguration;
 import com.box.l10n.mojito.service.ai.translation.AITranslationService;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingJsonConverter;
@@ -648,9 +649,13 @@ public class ThirdPartyTMSSmartlingWithJson {
   String getLocalizedFileContent(
       String projectId, File file, String smartlingLocale, boolean includeOriginalStrings) {
     return Mono.fromCallable(
-            () ->
-                smartlingClient.downloadPublishedFile(
-                    projectId, smartlingLocale, file.getFileUri(), includeOriginalStrings))
+            () -> {
+              String content =
+                  smartlingClient.downloadPublishedFile(
+                      projectId, smartlingLocale, file.getFileUri(), includeOriginalStrings);
+              new ObjectMapper().readTree(content);
+              return content;
+            })
         .retryWhen(
             smartlingClient
                 .getRetryConfiguration()
@@ -665,7 +670,7 @@ public class ThirdPartyTMSSmartlingWithJson {
             e -> {
               String msg =
                   String.format(
-                      "Error downloading published file for locale %s, file %s in project %s",
+                      "Error downloading / parsing published file for locale %s, file %s in project %s",
                       smartlingLocale, file.getFileUri(), projectId);
               logger.error(msg, e);
               throw new SmartlingClientException(msg, e);
@@ -674,7 +679,7 @@ public class ThirdPartyTMSSmartlingWithJson {
         .orElseThrow(
             () ->
                 new SmartlingClientException(
-                    "Error downloading published file from Smartling, file content is not present"));
+                    "Error downloading / parsing published file from Smartling, file content is not present"));
   }
 
   /**
