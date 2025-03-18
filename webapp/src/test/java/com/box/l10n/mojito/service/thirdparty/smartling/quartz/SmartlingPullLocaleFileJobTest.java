@@ -3,6 +3,7 @@ package com.box.l10n.mojito.service.thirdparty.smartling.quartz;
 import static com.box.l10n.mojito.quartz.QuartzSchedulerManager.DEFAULT_SCHEDULER_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.groups.Tuple.tuple;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -29,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,6 +38,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.stubbing.Answer;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpServerErrorException;
 import reactor.util.retry.Retry;
@@ -415,5 +418,91 @@ public class SmartlingPullLocaleFileJobTest {
         .importTextUnits(textUnitListCaptor.capture(), eq(false), eq(true));
 
     verify(thirdPartyFileChecksumRepositoryMock, times(1)).save(any(ThirdPartyFileChecksum.class));
+  }
+
+  @Test
+  public void testPullParseFails() throws Exception {
+    Repository testRepo = new Repository();
+    testRepo.setId(1L);
+    testRepo.setName("testRepo");
+
+    Locale frCA = new Locale();
+    frCA.setBcp47Tag("fr-CA");
+    frCA.setId(1L);
+
+    when(repositoryRepositoryMock.findByName(isA(String.class))).thenReturn(testRepo);
+    when(localeRepositoryMock.findByBcp47Tag(isA(String.class))).thenReturn(frCA);
+    smartlingPullLocaleFileJobInput.setDeltaPull(false);
+
+    String pullResponse =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>\n"
+            + "<!--comment 1-->\n"
+            + "<string name=\"src/main/res/values/strings.xml#@#hello\" tmTextUnitId=\"1\">Hello in fr-CA</string\n"
+            + "<!--comment 2-->\n"
+            + "<string name=\"src/main/res/values/strings.xml#@#bye\" tmTextUnitId=\"2\">Bye in fr-CA</string>\n"
+            + "</resources>\n";
+
+    doReturn(pullResponse)
+        .when(smartlingClientMock)
+        .downloadPublishedFile(eq("testProjectId"), eq("fr-CA"), eq("testFile"), eq(false));
+
+    assertThrows(
+        SmartlingClientException.class,
+        () -> smartlingPullLocaleFileJob.call(smartlingPullLocaleFileJobInput));
+
+    verify(textUnitBatchImporterServiceMock, times(0))
+        .importTextUnits(textUnitListCaptor.capture(), eq(false), eq(true));
+  }
+
+  @Test
+  public void testPullRecoversFromParseFails() throws Exception {
+    Repository testRepo = new Repository();
+    testRepo.setId(1L);
+    testRepo.setName("testRepo");
+
+    Locale frCA = new Locale();
+    frCA.setBcp47Tag("fr-CA");
+    frCA.setId(1L);
+
+    when(repositoryRepositoryMock.findByName(isA(String.class))).thenReturn(testRepo);
+    when(localeRepositoryMock.findByBcp47Tag(isA(String.class))).thenReturn(frCA);
+    smartlingPullLocaleFileJobInput.setDeltaPull(false);
+
+    String pullResponseBad =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>\n"
+            + "<!--comment 1-->\n"
+            + "<string name=\"src/main/res/values/strings.xml#@#hello\" tmTextUnitId=\"1\">Hello in fr-CA</string\n"
+            + "<!--comment 2-->\n"
+            + "<string name=\"src/main/res/values/strings.xml#@#bye\" tmTextUnitId=\"2\">Bye in fr-CA</string>\n"
+            + "</resources>\n";
+
+    String pullResponseGood =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>\n"
+            + "<!--comment 1-->\n"
+            + "<string name=\"src/main/res/values/strings.xml#@#hello\" tmTextUnitId=\"1\">Hello in fr-CA</string>\n"
+            + "<!--comment 2-->\n"
+            + "<string name=\"src/main/res/values/strings.xml#@#bye\" tmTextUnitId=\"2\">Bye in fr-CA</string>\n"
+            + "</resources>\n";
+
+    AtomicInteger callCount = new AtomicInteger(0);
+    when(smartlingClientMock.downloadPublishedFile(
+            eq("testProjectId"), eq("fr-CA"), eq("testFile"), eq(false)))
+        .thenAnswer(
+            (Answer<String>)
+                i -> {
+                  if (callCount.getAndIncrement() < 4) {
+                    return pullResponseBad;
+                  } else {
+                    return pullResponseGood;
+                  }
+                });
+
+    smartlingPullLocaleFileJob.call(smartlingPullLocaleFileJobInput);
+
+    verify(smartlingClientMock, times(5))
+        .downloadPublishedFile(eq("testProjectId"), eq("fr-CA"), eq("testFile"), eq(false));
+
+    verify(textUnitBatchImporterServiceMock, times(1))
+        .importTextUnits(textUnitListCaptor.capture(), eq(false), eq(true));
   }
 }
