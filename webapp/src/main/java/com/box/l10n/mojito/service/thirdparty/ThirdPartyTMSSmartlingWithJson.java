@@ -9,11 +9,11 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.iterators.PageFetcherOffsetAndLimitSplitIterator;
 import com.box.l10n.mojito.iterators.Spliterators;
-import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.service.ai.translation.AITranslationConfiguration;
 import com.box.l10n.mojito.service.ai.translation.AITranslationService;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingJsonConverter;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingOptions;
+import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingParsedFileResponse;
 import com.box.l10n.mojito.service.tm.importer.TextUnitBatchImporterService;
 import com.box.l10n.mojito.service.tm.search.StatusFilter;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
@@ -217,7 +217,7 @@ public class ThirdPartyTMSSmartlingWithJson {
               .forEach(
                   repositoryLocale -> {
                     String smartlingLocale = getSmartlingLocale(localeMapping, repositoryLocale);
-                    String localizedFileContent =
+                    SmartlingParsedFileResponse<ImmutableList<TextUnitDTO>> parsedFile =
                         getLocalizedFileContent(projectId, file, smartlingLocale, false);
 
                     if (isDeltaPull
@@ -226,7 +226,7 @@ public class ThirdPartyTMSSmartlingWithJson {
                             repository,
                             repositoryLocale.getLocale(),
                             file.getFileUri(),
-                            localizedFileContent,
+                            parsedFile.fileContent(),
                             meterRegistry)) {
                       logger.info(
                           "Checksum match for "
@@ -237,9 +237,7 @@ public class ThirdPartyTMSSmartlingWithJson {
                       return;
                     }
 
-                    ImmutableList<TextUnitDTO> textUnitDTOS =
-                        smartlingJsonConverter.jsonStringToTextUnitDTOs(
-                            localizedFileContent, TextUnitDTO::setTarget);
+                    ImmutableList<TextUnitDTO> textUnitDTOS = parsedFile.data();
 
                     // When returning translations from Smartling in JSON format with
                     // includeOriginalStrings set to
@@ -250,11 +248,9 @@ public class ThirdPartyTMSSmartlingWithJson {
                     // call to Smartling with includeOriginalStrings set to true and compare the
                     // results.
                     if (hasEmptyTranslations(textUnitDTOS)) {
-                      localizedFileContent =
-                          getLocalizedFileContent(projectId, file, smartlingLocale, true);
+                      parsedFile = getLocalizedFileContent(projectId, file, smartlingLocale, true);
                       ImmutableList<TextUnitDTO> textUnitDTOSWithOriginalStrings =
-                          smartlingJsonConverter.jsonStringToTextUnitDTOs(
-                              localizedFileContent, TextUnitDTO::setTarget);
+                          parsedFile.data();
                       textUnitDTOS =
                           getTranslatedUnits(textUnitDTOS, textUnitDTOSWithOriginalStrings);
                     }
@@ -646,15 +642,16 @@ public class ThirdPartyTMSSmartlingWithJson {
     return textUnitDTOS.stream().anyMatch(TextUnitDTO::hasEmptyTranslation);
   }
 
-  String getLocalizedFileContent(
+  SmartlingParsedFileResponse<ImmutableList<TextUnitDTO>> getLocalizedFileContent(
       String projectId, File file, String smartlingLocale, boolean includeOriginalStrings) {
     return Mono.fromCallable(
             () -> {
               String content =
                   smartlingClient.downloadPublishedFile(
                       projectId, smartlingLocale, file.getFileUri(), includeOriginalStrings);
-              new ObjectMapper().readTree(content);
-              return content;
+              ImmutableList<TextUnitDTO> textUnitDTOS =
+                  smartlingJsonConverter.jsonStringToTextUnitDTOs(content, TextUnitDTO::setTarget);
+              return new SmartlingParsedFileResponse<>(content, textUnitDTOS);
             })
         .retryWhen(
             smartlingClient

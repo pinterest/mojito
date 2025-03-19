@@ -385,10 +385,19 @@ public class ThirdPartyTMSSmartlingWithJsonTest extends ServiceTestBase {
         textUnitBatchImporterServiceMock;
     thirdPartyTMSSmartlingWithJsonMock.thirdPartyFileChecksumRepository =
         thirdPartyFileChecksumRepositoryMock;
+    thirdPartyTMSSmartlingWithJsonMock.smartlingClient = smartlingClient;
 
     Mockito.when(
             thirdPartyTMSSmartlingWithJsonMock.getLocalizedFileContent(
-                projectId, smartlingFile, smartlingLocale, false))
+                any(), any(), any(), anyBoolean()))
+        .thenCallRealMethod();
+
+    when(smartlingClient.getRetryConfiguration())
+        .thenReturn(Retry.backoff(10, Duration.ofMillis(1)).maxBackoff(Duration.ofMillis(10)));
+
+    Mockito.when(
+            smartlingClient.downloadPublishedFile(
+                projectId, smartlingLocale, smartlingFile.getFileUri(), false))
         .thenReturn(smartlingJsonResponseWithOriginalString);
 
     Mockito.when(
@@ -412,13 +421,15 @@ public class ThirdPartyTMSSmartlingWithJsonTest extends ServiceTestBase {
     Mockito.when(
             thirdPartyTMSSmartlingWithJsonMock.getRepositoryLocaleWithoutRootStream(repository))
         .thenReturn(Stream.of(repositoryLocaleFrFR));
+
     Mockito.when(
-            thirdPartyTMSSmartlingWithJsonMock.getLocalizedFileContent(
-                projectId, smartlingFile, smartlingLocale, false))
+            smartlingClient.downloadPublishedFile(
+                projectId, smartlingLocale, smartlingFile.getFileUri(), false))
         .thenReturn(smartlingJsonResponse);
+
     Mockito.when(
-            thirdPartyTMSSmartlingWithJsonMock.getLocalizedFileContent(
-                projectId, smartlingFile, smartlingLocale, true))
+            smartlingClient.downloadPublishedFile(
+                projectId, smartlingLocale, smartlingFile.getFileUri(), true))
         .thenReturn(smartlingJsonResponseWithOriginalString);
 
     thirdPartyTMSSmartlingWithJsonMock.pull(repository, projectId, localeMapping, false);
@@ -453,6 +464,7 @@ public class ThirdPartyTMSSmartlingWithJsonTest extends ServiceTestBase {
 
   @Test
   public void testRetriesParseFails() {
+    Mockito.reset(smartlingClient);
     String exampleJSONGood =
         ""
             + "{\n"
@@ -516,6 +528,8 @@ public class ThirdPartyTMSSmartlingWithJsonTest extends ServiceTestBase {
             thirdPartyTMSSmartlingWithJsonMock.getLocalizedFileContent(
                 any(), any(), any(), anyBoolean()))
         .thenCallRealMethod();
+
+    thirdPartyTMSSmartlingWithJsonMock.smartlingJsonConverter = smartlingJsonConverter;
     thirdPartyTMSSmartlingWithJsonMock.smartlingClient = smartlingClient;
 
     thirdPartyTMSSmartlingWithJsonMock.getLocalizedFileContent("test", new File(), "fr-FR", false);
