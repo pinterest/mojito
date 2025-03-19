@@ -64,7 +64,7 @@ public class SmartlingPullLocaleFileJob
           localeTag,
           smartlingLocale);
 
-      SmartlingParsedFileResponse<AndroidStringDocument> response =
+      SmartlingParsedFileResponse<AndroidStringDocument> parsedFile =
           Mono.fromCallable(
                   () -> {
                     String content =
@@ -98,7 +98,8 @@ public class SmartlingPullLocaleFileJob
                           "Error with downloading / parsing from Smartling, file content string is not present."));
 
       if (input.isDeltaPull()
-          && matchesChecksumFromPreviousSync(input, localeTag, fileName, response.fileContent())) {
+          && matchesChecksumFromPreviousSync(
+              input, localeTag, fileName, parsedFile.fileContent())) {
         logger.info(
             "Checksum match for "
                 + fileName
@@ -108,7 +109,7 @@ public class SmartlingPullLocaleFileJob
         return null;
       }
 
-      List<TextUnitDTO> textUnits = mapper.mapToTextUnits(response.data());
+      List<TextUnitDTO> textUnits = mapper.mapToTextUnits(parsedFile.data());
 
       if (!textUnits.isEmpty()
           && input.getSmartlingFilePrefix().equalsIgnoreCase("plural")
