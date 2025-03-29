@@ -6,17 +6,38 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties("l10n.evolve")
 public class EvolveConfigurationProperties {
+  private String repositoryName;
 
-  String token;
+  private String apiUid;
 
-  String url;
+  private String privateKey;
 
-  public String getToken() {
-    return token;
+  private String url;
+
+  private String apiPath;
+
+  public String getRepositoryName() {
+    return repositoryName;
   }
 
-  public void setToken(String token) {
-    this.token = token;
+  public void setRepositoryName(String repositoryName) {
+    this.repositoryName = repositoryName;
+  }
+
+  public String getApiUid() {
+    return apiUid;
+  }
+
+  public void setApiUid(String apiUid) {
+    this.apiUid = apiUid;
+  }
+
+  public String getPrivateKey() {
+    return privateKey;
+  }
+
+  public void setPrivateKey(String privateKey) {
+    this.privateKey = privateKey;
   }
 
   public String getUrl() {
@@ -25,5 +46,13 @@ public class EvolveConfigurationProperties {
 
   public void setUrl(String url) {
     this.url = url;
+  }
+
+  public String getApiPath() {
+    return apiPath;
+  }
+
+  public void setApiPath(String apiPath) {
+    this.apiPath = apiPath;
   }
 }

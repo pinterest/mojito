@@ -12,8 +12,8 @@ import com.box.l10n.mojito.apiclient.model.RepositoryRepository;
 import com.box.l10n.mojito.apiclient.model.SourceAsset;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import com.box.l10n.mojito.evolve.Course;
-import com.box.l10n.mojito.evolve.Evolve;
+import com.box.l10n.mojito.evolve.CourseDTO;
+import com.box.l10n.mojito.evolve.EvolveClient;
 import com.box.l10n.mojito.io.Files;
 import com.google.common.base.Preconditions;
 import com.ibm.icu.util.ULocale;
@@ -65,7 +65,7 @@ public class EvolveCommand extends Command {
       names = {"--state", "-s"},
       arity = 1,
       required = false,
-      description = "Course status to be synced")
+      description = "CourseDTO status to be synced")
   String state = "inTranslation";
 
   @Parameter(
@@ -77,7 +77,7 @@ public class EvolveCommand extends Command {
   String writeJsonTo = null;
 
   @Autowired(required = false)
-  Evolve evolve;
+  EvolveClient evolveClient;
 
   @Autowired RepositoryClient repositoryClient;
 
@@ -98,7 +98,7 @@ public class EvolveCommand extends Command {
 
     consoleWriter
         .newLine()
-        .a("Synchronize Evolve courses with status: ")
+        .a("Synchronize EvolveClient courses with status: ")
         .fg(Ansi.Color.CYAN)
         .a(state)
         .reset()
@@ -109,25 +109,25 @@ public class EvolveCommand extends Command {
 
     RepositoryRepository repository = commandHelper.findRepositoryByName(repositoryParam);
 
-    evolve
+    evolveClient
         .getCourses()
-        .filter(course -> course.getState().equals(state))
+        .filter(course -> course.getTranslationStatus().equals(state))
         .forEach(
             course -> {
               translateCourse(repository, course);
             });
   }
 
-  void translateCourse(RepositoryRepository repository, Course course) {
+  void translateCourse(RepositoryRepository repository, CourseDTO courseDTO) {
 
     consoleWriter
-        .a("Get translations for course: ")
+        .a("Get translations for courseDTO: ")
         .fg(Ansi.Color.CYAN)
-        .a(course.getId())
+        .a(courseDTO.getId())
         .println();
-    String translationsByCourseId = evolve.getTranslationsByCourseId(course.getId());
+    String translationsByCourseId = evolveClient.getTranslationsByCourseId(courseDTO.getId());
 
-    SourceAsset sourceAsset = sendSource(repository, course.getId(), translationsByCourseId);
+    SourceAsset sourceAsset = sendSource(repository, courseDTO.getId(), translationsByCourseId);
 
     repository.getRepositoryLocales().stream()
         .filter(repositoryLocale -> repositoryLocale.getParentLocale() != null)
@@ -135,7 +135,7 @@ public class EvolveCommand extends Command {
         .forEach(
             locale -> {
               consoleWriter
-                  .a("Get localized course: ")
+                  .a("Get localized courseDTO: ")
                   .fg(Ansi.Color.CYAN)
                   .a(locale.getBcp47Tag())
                   .println();
@@ -145,11 +145,11 @@ public class EvolveCommand extends Command {
               localizedCourse = removeBOMIfExists(localizedCourse);
 
               if (writeJsonTo != null) {
-                writeJsonToFile(repository, course, locale, localizedCourse);
+                writeJsonToFile(repository, courseDTO, locale, localizedCourse);
               }
 
-              evolve.createCourseTranslationsById(
-                  course.getId(),
+              evolveClient.createCourseTranslationsById(
+                  courseDTO.getId(),
                   localizedCourse,
                   locale.getBcp47Tag(),
                   isRightToLeft(locale.getBcp47Tag()));
@@ -158,19 +158,22 @@ public class EvolveCommand extends Command {
 
   void writeJsonToFile(
       RepositoryRepository repository,
-      Course course,
+      CourseDTO courseDTO,
       LocaleRepository locale,
       String localizedCourse) {
     Preconditions.checkNotNull(writeJsonTo);
     Path path =
         Paths.get(
-            writeJsonTo, repository.getName(), course.getId(), locale.getBcp47Tag() + ".json");
+            writeJsonTo,
+            repository.getName(),
+            String.valueOf(courseDTO.getId()),
+            locale.getBcp47Tag() + ".json");
     Files.createDirectories(path.getParent());
     Files.write(path, localizedCourse);
   }
 
   SourceAsset sendSource(
-      RepositoryRepository repository, String courseId, String translationsByCourseId) {
+      RepositoryRepository repository, int courseId, String translationsByCourseId) {
     consoleWriter.a("Sending source course to Mojito").println();
     SourceAsset sourceAsset = new SourceAsset();
     sourceAsset.setRepositoryId(repository.getId());
@@ -212,7 +215,7 @@ public class EvolveCommand extends Command {
   }
 
   void checkEvolveConfiguration() throws CommandException {
-    if (evolve == null) {
+    if (evolveClient == null) {
       throw new CommandException(
           "Evolve must be configured with: \"l10n.evolve.url\" and \"l10n.evolve.token\"");
     }
