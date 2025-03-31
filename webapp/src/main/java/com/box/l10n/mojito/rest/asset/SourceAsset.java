@@ -19,6 +19,7 @@ public class SourceAsset {
   private String content;
   private String branch;
   private String branchCreatedByUsername;
+  private boolean branchTargetsMain;
 
   private Set<String> branchNotifiers;
   private Long addedAssetId;
@@ -84,6 +85,14 @@ public class SourceAsset {
 
   public void setBranchCreatedByUsername(String branchCreatedByUsername) {
     this.branchCreatedByUsername = branchCreatedByUsername;
+  }
+
+  public boolean isBranchTargetsMain() {
+    return branchTargetsMain;
+  }
+
+  public void setBranchTargetsMain(boolean branchTargetsMain) {
+    this.branchTargetsMain = branchTargetsMain;
   }
 
   public Set<String> getBranchNotifiers() {

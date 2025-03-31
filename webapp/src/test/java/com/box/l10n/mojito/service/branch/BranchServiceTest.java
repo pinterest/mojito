@@ -47,7 +47,8 @@ public class BranchServiceTest extends ServiceTestBase {
     Branch before = branchRepository.findByNameAndRepository("master", repository);
     assertNull(before);
 
-    Branch create = branchService.getUndeletedOrCreateBranch(repository, "master", null, null);
+    Branch create =
+        branchService.getUndeletedOrCreateBranch(repository, "master", null, null, null);
     assertEquals("master", create.getName());
     assertEquals(repository.getId(), create.getRepository().getId());
 
@@ -55,7 +56,7 @@ public class BranchServiceTest extends ServiceTestBase {
     assertEquals("master", fromFind.getName());
     assertEquals(repository.getId(), fromFind.getRepository().getId());
 
-    Branch get = branchService.getUndeletedOrCreateBranch(repository, "master", null, null);
+    Branch get = branchService.getUndeletedOrCreateBranch(repository, "master", null, null, null);
     assertEquals(create.getId(), get.getId());
   }
 
@@ -69,7 +70,8 @@ public class BranchServiceTest extends ServiceTestBase {
     Branch before = branchRepository.findByNameAndRepository(branchName, repository);
     assertNull(before);
 
-    Branch create = branchService.getUndeletedOrCreateBranch(repository, branchName, null, null);
+    Branch create =
+        branchService.getUndeletedOrCreateBranch(repository, branchName, null, null, null);
     assertEquals(branchName, create.getName());
     assertEquals(repository.getId(), create.getRepository().getId());
 
@@ -77,7 +79,7 @@ public class BranchServiceTest extends ServiceTestBase {
     assertEquals(branchName, fromFind.getName());
     assertEquals(repository.getId(), fromFind.getRepository().getId());
 
-    Branch get = branchService.getUndeletedOrCreateBranch(repository, branchName, null, null);
+    Branch get = branchService.getUndeletedOrCreateBranch(repository, branchName, null, null, null);
     assertEquals(create.getId(), get.getId());
   }
 }

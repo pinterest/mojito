@@ -63,7 +63,11 @@ public class BranchService {
   }
 
   public Branch getUndeletedOrCreateBranch(
-      Repository repository, String branchName, User createdByUser, Set<String> branchNotifierIds) {
+      Repository repository,
+      String branchName,
+      User createdByUser,
+      Set<String> branchNotifierIds,
+      Boolean branchTargetsMain) {
 
     logger.debug(
         "getUndeletedOrCreateBranch, name: {}, repository id: {}", branchName, repository.getId());
@@ -75,6 +79,8 @@ public class BranchService {
     } else if (branch.getDeleted()) {
       undeleteBranch(branch);
     }
+
+    logger.info("Setting branch '{}' merge target to '{}'", branchName, branchTargetsMain);
 
     return branch;
   }
