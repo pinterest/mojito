@@ -578,7 +578,7 @@ let TextUnit = createReactClass({
             let trailingWhitespacesSymbol = "";
 
             let noTranslation = false;
-            let targetClassName = "pts pls pbs textunit-string break-word-ltr-flex";
+            let targetClassName = "pts pls pbs textunit-string break-word-text-direction-safe-flex";
             if (AuthorityService.canEditTranslations()) {
                 targetClassName += " textunit-target"
             }
@@ -1066,7 +1066,7 @@ let TextUnit = createReactClass({
                             <div style={{gridArea: "name"}}>
                                 {this.renderName()}
                             </div>
-                            <div style={{gridArea: "source"}} className="break-word-ltr-safe">
+                            <div style={{gridArea: "source"}} className="break-word-text-direction-safe">
                                 {this.renderSource()}
                             </div>
                             <div style={{gridArea: "comment"}}>

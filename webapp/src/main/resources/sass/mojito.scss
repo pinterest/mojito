@@ -1175,12 +1175,12 @@ label.current-pageNumber {
     word-break: break-word;
 }
 
-.break-word-ltr-safe {
+.break-word-text-direction-safe {
     word-break: keep-all;
     overflow-wrap: break-word;
 }
 
-.break-word-ltr-flex {
+.break-word-text-direction-safe-flex {
     word-break: break-word;
     overflow-wrap: anywhere;
 }
