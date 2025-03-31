@@ -80,7 +80,9 @@ public class BranchService {
       undeleteBranch(branch);
     }
 
-    logger.info("Setting branch '{}' merge target to '{}'", branchName, branchTargetsMain);
+    if (branchTargetsMain != null) {
+      logger.debug("Setting branch '{}' merge target to '{}'", branchName, branchTargetsMain);
+    }
 
     return branch;
   }

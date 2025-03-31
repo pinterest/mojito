@@ -176,7 +176,7 @@ public class ExtractionDiffCommand extends Command {
       required = false,
       description =
           "Optional boolean that specifies if the branch is merging to the main branch or another dev branch")
-  Boolean pushToBranchTargetsMain;
+  Boolean pushToBranchTargetsMain = null;
 
   @Parameter(
       names = {"--push-to-branch-notifiers", "-pbn"},

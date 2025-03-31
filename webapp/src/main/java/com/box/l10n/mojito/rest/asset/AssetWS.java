@@ -160,7 +160,7 @@ public class AssetWS {
             pushRun != null ? pushRun.getId() : null,
             sourceAsset.getFilterConfigIdOverride(),
             sourceAsset.getFilterOptions(),
-            sourceAsset.isBranchTargetsMain());
+            sourceAsset.getBranchTargetsMain());
 
     try {
       sourceAsset.setAddedAssetId(assetFuture.get().getId());
