@@ -1,7 +1,9 @@
 package com.box.l10n.mojito.service.branch;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.box.l10n.mojito.entity.Branch;
@@ -27,6 +29,8 @@ public class BranchServiceTest extends ServiceTestBase {
   @Autowired BranchService branchService;
 
   @Autowired RepositoryService repositoryService;
+
+  @Autowired BranchMergeTargetRepository branchMergeTargetRepository;
 
   @Test
   public void createBranch() throws RepositoryNameAlreadyUsedException {
@@ -81,5 +85,31 @@ public class BranchServiceTest extends ServiceTestBase {
 
     Branch get = branchService.getUndeletedOrCreateBranch(repository, branchName, null, null, null);
     assertEquals(create.getId(), get.getId());
+  }
+
+  @Test
+  public void branchMergeTarget() throws RepositoryNameAlreadyUsedException {
+    Repository repository =
+        repositoryService.createRepository(testIdWatcher.getEntityName("repository"));
+
+    // Null branch name, don't even attempt it
+    Branch branch = branchService.getUndeletedOrCreateBranch(repository, null, null, null, true);
+    assertTrue(branchMergeTargetRepository.findByBranch(branch).isEmpty());
+
+    // No branchTarget set
+    branch = branchService.getUndeletedOrCreateBranch(repository, "b1", null, null, null);
+    assertTrue(branchMergeTargetRepository.findByBranch(branch).isEmpty());
+
+    // Branch target should be true
+    branch = branchService.getUndeletedOrCreateBranch(repository, "b2", null, null, true);
+    assertTrue(branchMergeTargetRepository.findByBranch(branch).get().isTargetsMain());
+
+    // Branch target should be false
+    branch = branchService.getUndeletedOrCreateBranch(repository, "b3", null, null, false);
+    assertFalse(branchMergeTargetRepository.findByBranch(branch).get().isTargetsMain());
+
+    // Duplicate but change the merge target - shouldn't change the branch target.
+    branch = branchService.getUndeletedOrCreateBranch(repository, "b3", null, null, true);
+    assertFalse(branchMergeTargetRepository.findByBranch(branch).get().isTargetsMain());
   }
 }
