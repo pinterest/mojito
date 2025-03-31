@@ -4,6 +4,7 @@ import static com.box.l10n.mojito.quartz.QuartzSchedulerManager.DEFAULT_SCHEDULE
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.box.l10n.mojito.entity.Branch;
+import com.box.l10n.mojito.entity.BranchMergeTarget;
 import com.box.l10n.mojito.entity.BranchSource;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.security.user.User;
@@ -41,6 +42,8 @@ public class BranchService {
   @Autowired BranchSourceRepository branchSourceRepository;
 
   @Autowired BranchSourceConfig branchSourceConfig;
+
+  @Autowired BranchMergeTargetRepository branchMergeTargetRepository;
 
   @Value("${l10n.branchService.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   String schedulerName;
@@ -80,8 +83,14 @@ public class BranchService {
       undeleteBranch(branch);
     }
 
-    if (branchTargetsMain != null) {
-      logger.debug("Setting branch '{}' merge target to '{}'", branchName, branchTargetsMain);
+    if (branch.getName() != null
+        && branchTargetsMain != null
+        && branchMergeTargetRepository.findByBranch(branch).isEmpty()) {
+      logger.debug("Setting merge target of branch '{}' to '{}'.", branchName, branchTargetsMain);
+      BranchMergeTarget mergeTarget = new BranchMergeTarget();
+      mergeTarget.setBranch(branch);
+      mergeTarget.setTargetsMain(branchTargetsMain);
+      branchMergeTargetRepository.save(mergeTarget);
     }
 
     return branch;
