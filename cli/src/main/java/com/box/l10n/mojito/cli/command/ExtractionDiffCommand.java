@@ -175,7 +175,7 @@ public class ExtractionDiffCommand extends Command {
       arity = 1,
       required = false,
       description =
-          "Optional boolean that specifies if the branch is merging to the main branch or another dev branch")
+          "Boolean that specifies if the branch is merging to the main branch, used for the Safe I18N process to know which branches to append to the source asset when translations are ready")
   Boolean pushToBranchTargetsMain = null;
 
   @Parameter(

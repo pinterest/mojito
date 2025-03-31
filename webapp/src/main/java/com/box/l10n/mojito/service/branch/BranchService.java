@@ -83,11 +83,10 @@ public class BranchService {
       undeleteBranch(branch);
     }
 
-    if (branch.getName() != null
-        && branchTargetsMain != null
-        && branchMergeTargetRepository.findByBranch(branch).isEmpty()) {
+    if (branch.getName() != null && branchTargetsMain != null) {
       logger.debug("Setting merge target of branch '{}' to '{}'.", branchName, branchTargetsMain);
-      BranchMergeTarget mergeTarget = new BranchMergeTarget();
+      BranchMergeTarget mergeTarget =
+          branchMergeTargetRepository.findByBranch(branch).orElse(new BranchMergeTarget());
       mergeTarget.setBranch(branch);
       mergeTarget.setTargetsMain(branchTargetsMain);
       branchMergeTargetRepository.save(mergeTarget);

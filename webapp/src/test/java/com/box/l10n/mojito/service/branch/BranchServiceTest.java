@@ -108,8 +108,8 @@ public class BranchServiceTest extends ServiceTestBase {
     branch = branchService.getUndeletedOrCreateBranch(repository, "b3", null, null, false);
     assertFalse(branchMergeTargetRepository.findByBranch(branch).get().isTargetsMain());
 
-    // Duplicate but change the merge target - shouldn't change the branch target.
+    // Duplicate but change the merge target - should change the branch target.
     branch = branchService.getUndeletedOrCreateBranch(repository, "b3", null, null, true);
-    assertFalse(branchMergeTargetRepository.findByBranch(branch).get().isTargetsMain());
+    assertTrue(branchMergeTargetRepository.findByBranch(branch).get().isTargetsMain());
   }
 }
