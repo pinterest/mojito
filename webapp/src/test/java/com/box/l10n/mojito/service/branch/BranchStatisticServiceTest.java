@@ -361,7 +361,7 @@ public class BranchStatisticServiceTest extends ServiceTestBase {
 
     // Wait for the branch stats to kick in
     waitForCondition(
-        "Branch1 didn't have its statistics set",
+        "Branch1 statistics must be set",
         () -> branchStatisticRepository.findByBranch(branchTestData.getBranch1()) != null);
 
     BranchStatistic branchStatistic =
@@ -392,7 +392,7 @@ public class BranchStatisticServiceTest extends ServiceTestBase {
             });
 
     waitForCondition(
-        "Branch1 didn't have its translated date set",
+        "Branch1 must have the translated date set",
         () ->
             branchStatisticRepository.findByBranch(branchTestData.getBranch1()).getTranslatedDate()
                 != null);
@@ -413,7 +413,7 @@ public class BranchStatisticServiceTest extends ServiceTestBase {
     assetExtractionService.processAssetAsync(assetContent.getId(), null, null, null, null).get();
 
     waitForCondition(
-        "Branch1 didn't have its translated date set back to null",
+        "Branch1 must have the translated date set back to null",
         () ->
             branchStatisticRepository.findByBranch(branchTestData.getBranch1()).getTranslatedDate()
                 == null);
