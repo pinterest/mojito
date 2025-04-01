@@ -21,6 +21,9 @@ public enum TranslationStatusType {
 
   @JsonCreator
   public static TranslationStatusType fromName(String name) {
+    if (name.isBlank()) {
+      return null;
+    }
     for (TranslationStatusType translationStatusType : TranslationStatusType.values()) {
       if (translationStatusType.getName().equals(name)) {
         return translationStatusType;

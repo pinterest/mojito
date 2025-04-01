@@ -108,14 +108,6 @@ public class EvolveCommand extends Command {
         .println(2);
 
     RepositoryRepository repository = commandHelper.findRepositoryByName(repositoryParam);
-
-    evolveClient
-        .getCourses()
-        .filter(course -> course.getTranslationStatus().equals(state))
-        .forEach(
-            course -> {
-              translateCourse(repository, course);
-            });
   }
 
   void translateCourse(RepositoryRepository repository, CourseDTO courseDTO) {
@@ -125,7 +117,7 @@ public class EvolveCommand extends Command {
         .fg(Ansi.Color.CYAN)
         .a(courseDTO.getId())
         .println();
-    String translationsByCourseId = evolveClient.getTranslationsByCourseId(courseDTO.getId());
+    String translationsByCourseId = "";
 
     SourceAsset sourceAsset = sendSource(repository, courseDTO.getId(), translationsByCourseId);
 
@@ -147,12 +139,6 @@ public class EvolveCommand extends Command {
               if (writeJsonTo != null) {
                 writeJsonToFile(repository, courseDTO, locale, localizedCourse);
               }
-
-              evolveClient.createCourseTranslationsById(
-                  courseDTO.getId(),
-                  localizedCourse,
-                  locale.getBcp47Tag(),
-                  isRightToLeft(locale.getBcp47Tag()));
             });
   }
 

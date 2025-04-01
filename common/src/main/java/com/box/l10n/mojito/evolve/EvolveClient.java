@@ -2,9 +2,6 @@ package com.box.l10n.mojito.evolve;
 
 import com.box.l10n.mojito.iterators.ListWithLastPage;
 import com.box.l10n.mojito.iterators.PageFetcherCurrentAndTotalPagesSplitIterator;
-import com.box.l10n.mojito.json.ObjectMapper;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -34,67 +31,6 @@ public class EvolveClient {
 
   private String getFullEndpointPath(String endpointPath) {
     return this.apiPath + endpointPath;
-  }
-
-  public Stream<CourseDTO> getCourses() {
-
-    PageFetcherCurrentAndTotalPagesSplitIterator<CourseDTO> iterator =
-        new PageFetcherCurrentAndTotalPagesSplitIterator<>(
-            pageToFetch -> {
-              CoursesDTO coursesDTO =
-                  restTemplate.getForObject(
-                      "courses?currentPage={currentPage}", CoursesDTO.class, pageToFetch);
-              ListWithLastPage<CourseDTO> courseListWithLastPage = new ListWithLastPage<>();
-              courseListWithLastPage.setList(coursesDTO.getCourses());
-              courseListWithLastPage.setLastPage(coursesDTO.getPagination().getTotalPages());
-              return courseListWithLastPage;
-            },
-            1);
-
-    return StreamSupport.stream(iterator, false);
-  }
-
-  /**
-   * Gets the subset of the course needed for translation
-   *
-   * @param courseId
-   * @return
-   */
-  public String getTranslationsByCourseId(int courseId) {
-    return restTemplate.getForObject("translate/{courseId}", String.class, courseId);
-  }
-
-  /**
-   * Create a translated course.
-   *
-   * @param courseId
-   * @param translatedCourse
-   * @param locale
-   * @param isRTL
-   */
-  public void createCourseTranslationsById(
-      int courseId, String translatedCourse, String locale, boolean isRTL) {
-    translatedCourse = addVersionAndRtlAttributeToTranslations(translatedCourse, locale, isRTL);
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    HttpEntity<String> httpEntity = new HttpEntity<>(translatedCourse, headers);
-    String response =
-        this.restTemplate.postForObject("translate/{courseId}", httpEntity, String.class, courseId);
-    logger.debug("course created: {}", response);
-  }
-
-  String addVersionAndRtlAttributeToTranslations(
-      String translatedCourse, String locale, boolean isRTL) {
-    ObjectMapper objectMapper = new ObjectMapper();
-    JsonNode jsonNode = objectMapper.readTreeUnchecked(translatedCourse);
-    JsonNode translations = jsonNode.get("_translations");
-    if (jsonNode == null || !jsonNode.isObject()) {
-      throw new RuntimeException("there must be a _translations object node");
-    }
-    ObjectNode translationsObjectNode = (ObjectNode) translations;
-    translationsObjectNode.put("_version", locale);
-    translationsObjectNode.put("_rtl", isRTL);
-    return objectMapper.writeValueAsStringUnchecked(jsonNode);
   }
 
   public Stream<CourseDTO> getCourses(CoursesGetRequest request) {
@@ -143,7 +79,7 @@ public class EvolveClient {
     String response =
         this.restTemplate.postForObject(
             builder.buildAndExpand(courseId).toUriString(), httpEntity, String.class);
-    logger.debug("course created: {}", response);
+    logger.debug("course created: {}, for locales: {}, {}", courseId, targetLocale, additionalLocales);
     return response;
   }
 
@@ -160,6 +96,7 @@ public class EvolveClient {
         this.getFullEndpointPath("courses/{courseId}"),
         new HttpEntity<>(courseBody, headers),
         courseId);
+    logger.debug("Updated course: {}", courseId);
   }
 
   public void updateCourseTranslation(int courseId, String translatedCourse) {
@@ -169,5 +106,6 @@ public class EvolveClient {
         this.getFullEndpointPath("course_translations/{courseId}"),
         new HttpEntity<>(translatedCourse, headers),
         courseId);
+    logger.debug("Updated translations of course: {}", courseId);
   }
 }
