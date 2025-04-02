@@ -7,7 +7,7 @@ import joptsimple.internal.Strings;
 import org.springframework.stereotype.Component;
 
 @Component
-public class GettextConverter implements TextUnitDTOStringConverter {
+public class TextUnitConverterGettext implements TextUnitConverter {
 
   private final String COMMENT_SKELETON = "#. ${##}\n";
   private final String CONTEXT_SKELETON = "msgctxt \"${##}\"";
