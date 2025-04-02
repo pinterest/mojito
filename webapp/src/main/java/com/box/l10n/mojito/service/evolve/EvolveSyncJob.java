@@ -27,41 +27,29 @@ public class EvolveSyncJob extends QuartzPollableJob<Void, Void> {
   /** logger */
   static Logger logger = LoggerFactory.getLogger(EvolveSyncJob.class);
 
-  @Autowired
-  private EvolveConfigurationProperties evolveConfigurationProperties;
+  @Autowired private EvolveConfigurationProperties evolveConfigurationProperties;
 
-  @Autowired
-  private RepositoryService repositoryService;
+  @Autowired private RepositoryService repositoryService;
 
-  @Autowired
-  private EvolveClient evolveClient;
+  @Autowired private EvolveClient evolveClient;
 
-  @Autowired
-  private AssetService assetService;
+  @Autowired private AssetService assetService;
 
-  @Autowired
-  private PollableTaskService pollableTaskService;
+  @Autowired private PollableTaskService pollableTaskService;
 
-  @Autowired
-  private XliffUtils xliffUtils;
+  @Autowired private XliffUtils xliffUtils;
 
-  @Autowired
-  private BranchStatisticRepository branchStatisticRepository;
+  @Autowired private BranchStatisticRepository branchStatisticRepository;
 
-  @Autowired
-  private BranchRepository branchRepository;
+  @Autowired private BranchRepository branchRepository;
 
-  @Autowired
-  private AssetExtractionByBranchRepository assetExtractionByBranchRepository;
+  @Autowired private AssetExtractionByBranchRepository assetExtractionByBranchRepository;
 
-  @Autowired
-  private AssetContentRepository assetContentRepository;
+  @Autowired private AssetContentRepository assetContentRepository;
 
-  @Autowired
-  private TMService tmService;
+  @Autowired private TMService tmService;
 
-  @Autowired
-  private BranchService branchService;
+  @Autowired private BranchService branchService;
 
   @Override
   public Void call(Void input) {

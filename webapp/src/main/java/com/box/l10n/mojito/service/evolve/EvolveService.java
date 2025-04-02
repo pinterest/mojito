@@ -35,11 +35,11 @@ import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.xliff.XliffUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public class EvolveService {
@@ -136,20 +136,21 @@ public class EvolveService {
     String normalizedContent = NormalizationUtils.normalize(sourceAsset.getContent());
     PollableFuture<Asset> assetFuture;
     try {
-      assetFuture = this.assetService.addOrUpdateAssetAndProcessIfNeeded(
-          sourceAsset.getRepositoryId(),
-          sourceAsset.getPath(),
-          normalizedContent,
-          sourceAsset.isExtractedContent(),
-          sourceAsset.getBranch(),
-          sourceAsset.getBranchCreatedByUsername(),
-          sourceAsset.getBranchNotifiers(),
-          null,
-          sourceAsset.getFilterConfigIdOverride(),
-          sourceAsset.getFilterOptions());
-    sourceAsset.setAddedAssetId(assetFuture.get().getId());
+      assetFuture =
+          this.assetService.addOrUpdateAssetAndProcessIfNeeded(
+              sourceAsset.getRepositoryId(),
+              sourceAsset.getPath(),
+              normalizedContent,
+              sourceAsset.isExtractedContent(),
+              sourceAsset.getBranch(),
+              sourceAsset.getBranchCreatedByUsername(),
+              sourceAsset.getBranchNotifiers(),
+              null,
+              sourceAsset.getFilterConfigIdOverride(),
+              sourceAsset.getFilterOptions());
+      sourceAsset.setAddedAssetId(assetFuture.get().getId());
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException(e.getMessage(), e);
     }
 
     sourceAsset.setPollableTask(assetFuture.getPollableTask());
@@ -197,7 +198,8 @@ public class EvolveService {
     sourceAsset.setBranchCreatedByUsername(SYSTEM_USERNAME);
     sourceAsset.setContent(assetContent.getContent());
     try {
-      this.pollableTaskService.waitForPollableTask(this.importSourceAsset(sourceAsset).getPollableTask().getId());
+      this.pollableTaskService.waitForPollableTask(
+          this.importSourceAsset(sourceAsset).getPollableTask().getId());
     } catch (Throwable e) {
       throw new RuntimeException(e.getMessage(), e);
     }
@@ -205,26 +207,25 @@ public class EvolveService {
 
   private void updateCourseTranslations(int courseId, Asset asset, AssetContent assetContent) {
     String normalizedContent = NormalizationUtils.normalize(assetContent.getContent());
-    this.targetRepositoryLocales
-        .forEach(
-            repositoryLocale -> {
-              try {
-                String generateLocalized =
-                    tmService.generateLocalized(
-                        asset,
-                        normalizedContent,
-                        repositoryLocale,
-                        repositoryLocale.getLocale().getBcp47Tag(),
-                        null,
-                        List.of(),
-                        Status.ACCEPTED,
-                        InheritanceMode.USE_PARENT,
-                        null);
-                this.evolveClient.updateCourseTranslation(courseId, generateLocalized);
-              } catch (UnsupportedAssetFilterTypeException e) {
-                throw new RuntimeException(e);
-              }
-            });
+    this.targetRepositoryLocales.forEach(
+        repositoryLocale -> {
+          try {
+            String generateLocalized =
+                tmService.generateLocalized(
+                    asset,
+                    normalizedContent,
+                    repositoryLocale,
+                    repositoryLocale.getLocale().getBcp47Tag(),
+                    null,
+                    List.of(),
+                    Status.ACCEPTED,
+                    InheritanceMode.USE_PARENT,
+                    null);
+            this.evolveClient.updateCourseTranslation(courseId, generateLocalized);
+          } catch (UnsupportedAssetFilterTypeException e) {
+            throw new RuntimeException(e);
+          }
+        });
   }
 
   private void deleteBranch(long branchId) {
@@ -238,8 +239,7 @@ public class EvolveService {
   }
 
   private void setCurrentEarliestUpdatedOn(ZonedDateTime updatedOn) {
-    if (this.currentEarliestUpdatedOn == null
-        || this.currentEarliestUpdatedOn.isAfter(updatedOn)) {
+    if (this.currentEarliestUpdatedOn == null || this.currentEarliestUpdatedOn.isAfter(updatedOn)) {
       this.currentEarliestUpdatedOn = updatedOn;
     }
   }
@@ -250,25 +250,56 @@ public class EvolveService {
     return assetExtractionByBranch.getAssetExtraction().getContentMd5();
   }
 
-  private void syncInTranslationCourses(CourseDTO courseDTO, Branch branch, ZonedDateTime startDateTime) {
+  private void syncTranslated(CourseDTO courseDTO, Branch branch, ZonedDateTime startDateTime) {
     Asset asset =
         this.assetService
-            .findAll(this.repository.getId(), this.getAssetPath(courseDTO.getId()), false, false, branch.getId())
+            .findAll(
+                this.repository.getId(),
+                this.getAssetPath(courseDTO.getId()),
+                false,
+                false,
+                branch.getId())
             .getFirst();
     List<AssetContent> assetContents =
         this.assetContentRepository.findByAssetRepositoryIdAndBranchName(
             this.repository.getId(), this.getBranchName(courseDTO.getId()));
-    AssetContent assetContent =
+    Optional<AssetContent> assetContent =
         assetContents.stream()
             .filter(content -> content.getContentMd5().equals(this.getContentMd5(asset, branch)))
-            .findFirst()
-            .orElse(null);
+            .findFirst();
+    if (assetContent.isPresent()) {
+      this.updateCourseTranslations(courseDTO.getId(), asset, assetContent.get());
+      this.importSourceAssetToMaster(courseDTO, assetContent.get());
+      this.deleteBranch(branch.getId());
+      courseDTO.setTranslationStatus(TRANSLATED);
+      this.updateCourse(courseDTO, startDateTime);
+    } else {
+      throw new RuntimeException(
+          "Couldn't find asset content for course with id: " + courseDTO.getId());
+    }
+  }
 
-    this.updateCourseTranslations(courseDTO.getId(), asset, assetContent);
-    this.importSourceAssetToMaster(courseDTO, assetContent);
-    this.deleteBranch(branch.getId());
-    courseDTO.setTranslationStatus(TRANSLATED);
+  private void syncReadyForTranslation(CourseDTO courseDTO, ZonedDateTime startDateTime) {
+    this.startCourseTranslations(courseDTO.getId());
+    courseDTO.setTranslationStatus(IN_TRANSLATION);
     this.updateCourse(courseDTO, startDateTime);
+    this.setCurrentEarliestUpdatedOn(courseDTO.getUpdatedOn());
+  }
+
+  private void syncInTranslation(CourseDTO courseDTO, ZonedDateTime startDateTime) {
+    Branch branch =
+        this.branchRepository.findByNameAndRepository(
+            this.getBranchName(courseDTO.getId()), this.repository);
+    BranchStatistic branchStatistic = this.branchStatisticRepository.findByBranch(branch);
+    if (branchStatistic.getTotalCount() > 0) {
+      if (branchStatistic.getForTranslationCount() == 0) {
+        this.syncTranslated(courseDTO, branch, startDateTime);
+      } else {
+        this.setCurrentEarliestUpdatedOn(courseDTO.getUpdatedOn());
+      }
+    } else {
+      this.deleteBranch(branch.getId());
+    }
   }
 
   public void sync() {
@@ -277,12 +308,11 @@ public class EvolveService {
             this.evolveConfigurationProperties.getRepositoryName());
     if (repositories.isEmpty()) {
       throw new RuntimeException(
-          "No repositories found for name: "
+          "No repository found with name: "
               + this.evolveConfigurationProperties.getRepositoryName());
     }
     this.repository = repositories.getFirst();
     this.setLocaleBcp47Tags();
-
     ZonedDateTime startDateTime = ZonedDateTime.now();
     CoursesGetRequest request =
         new CoursesGetRequest(this.sourceLocaleBcp47Tag, this.earliestUpdatedOn, startDateTime);
@@ -291,29 +321,12 @@ public class EvolveService {
         .forEach(
             courseDTO -> {
               if (courseDTO.getTranslationStatus() == READY_FOR_TRANSLATION) {
-                this.startCourseTranslations(courseDTO.getId());
-                courseDTO.setTranslationStatus(IN_TRANSLATION);
-                this.updateCourse(courseDTO, startDateTime);
-                this.setCurrentEarliestUpdatedOn(courseDTO.getUpdatedOn());
+                this.syncReadyForTranslation(courseDTO, startDateTime);
               } else if (courseDTO.getTranslationStatus() == IN_TRANSLATION) {
-                Branch branch =
-                    this.branchRepository.findByNameAndRepository(
-                        this.getBranchName(courseDTO.getId()), this.repository);
-                BranchStatistic branchStatistic =
-                    this.branchStatisticRepository.findByBranch(branch);
-                if (branchStatistic.getTotalCount() > 0) {
-                  if (branchStatistic.getForTranslationCount() == 0) {
-                    this.syncInTranslationCourses(courseDTO, branch, startDateTime);
-                  } else {
-                    this.setCurrentEarliestUpdatedOn(courseDTO.getUpdatedOn());
-                  }
-                } else {
-                  this.deleteBranch(branch.getId());
-                }
+                this.syncInTranslation(courseDTO, startDateTime);
               }
             });
-    this.earliestUpdatedOn =
-        ofNullable(this.currentEarliestUpdatedOn).orElse(startDateTime);
+    this.earliestUpdatedOn = ofNullable(this.currentEarliestUpdatedOn).orElse(startDateTime);
   }
 
   @VisibleForTesting
