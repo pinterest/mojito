@@ -33,7 +33,6 @@ import com.box.l10n.mojito.service.pollableTask.PollableTaskService;
 import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.xliff.XliffUtils;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -43,13 +42,13 @@ import java.util.Optional;
 import java.util.Set;
 
 public class EvolveService {
+  private List<RepositoryLocale> targetRepositoryLocales;
+
   private String sourceLocaleBcp47Tag;
 
   private String targetLocaleBcp47Tag;
 
   private Set<String> additionalTargetLocaleBcp47Tags;
-
-  private List<RepositoryLocale> targetRepositoryLocales;
 
   private ZonedDateTime earliestUpdatedOn;
 
@@ -110,7 +109,7 @@ public class EvolveService {
     this.assetExtractionByBranchRepository = assetExtractionByBranchRepository;
   }
 
-  private void setLocaleBcp47Tags() {
+  private void setLocales() {
     Preconditions.checkNotNull(this.repository);
 
     this.targetRepositoryLocales = new ArrayList<>();
@@ -199,7 +198,7 @@ public class EvolveService {
     sourceAsset.setContent(assetContent.getContent());
     try {
       this.pollableTaskService.waitForPollableTask(
-          this.importSourceAsset(sourceAsset).getPollableTask().getId());
+          this.importSourceAsset(sourceAsset).getPollableTask().getId(), timeout * 1000, 10000);
     } catch (Throwable e) {
       throw new RuntimeException(e.getMessage(), e);
     }
@@ -232,7 +231,8 @@ public class EvolveService {
     PollableFuture<Void> pollableFuture =
         this.branchService.asyncDeleteBranch(this.repository.getId(), branchId);
     try {
-      this.pollableTaskService.waitForPollableTask(pollableFuture.getPollableTask().getId());
+      this.pollableTaskService.waitForPollableTask(
+          pollableFuture.getPollableTask().getId(), timeout * 1000, 10000);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
@@ -312,7 +312,7 @@ public class EvolveService {
               + this.evolveConfigurationProperties.getRepositoryName());
     }
     this.repository = repositories.getFirst();
-    this.setLocaleBcp47Tags();
+    this.setLocales();
     ZonedDateTime startDateTime = ZonedDateTime.now();
     CoursesGetRequest request =
         new CoursesGetRequest(this.sourceLocaleBcp47Tag, this.earliestUpdatedOn, startDateTime);
@@ -329,8 +329,23 @@ public class EvolveService {
     this.earliestUpdatedOn = ofNullable(this.currentEarliestUpdatedOn).orElse(startDateTime);
   }
 
-  @VisibleForTesting
   public ZonedDateTime getEarliestUpdatedOn() {
     return earliestUpdatedOn;
+  }
+
+  public List<RepositoryLocale> getRepositoryLocales() {
+    return this.targetRepositoryLocales;
+  }
+
+  public String getSourceLocaleBcp47Tag() {
+    return this.sourceLocaleBcp47Tag;
+  }
+
+  public String getTargetLocaleBcp47Tag() {
+    return this.targetLocaleBcp47Tag;
+  }
+
+  public Set<String> getAdditionalTargetLocaleBcp47Tags() {
+    return this.additionalTargetLocaleBcp47Tags;
   }
 }
