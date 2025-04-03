@@ -2,16 +2,14 @@ package com.box.l10n.mojito.evolve;
 
 import com.box.l10n.mojito.iterators.ListWithLastPage;
 import com.box.l10n.mojito.iterators.PageFetcherCurrentAndTotalPagesSplitIterator;
+import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -21,8 +19,6 @@ import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
 public class EvolveClient {
-  static Logger logger = LoggerFactory.getLogger(EvolveClient.class);
-
   private final String apiPath;
 
   private final RestTemplate restTemplate;
@@ -78,7 +74,6 @@ public class EvolveClient {
                           .maxBackoff(this.retryMaxBackoff))
                   .doOnError(
                       e -> {
-                        logger.error("Error while retrieving courses", e);
                         throw new RuntimeException(e.getMessage(), e);
                       })
                   .block();
@@ -103,11 +98,6 @@ public class EvolveClient {
     String response =
         this.restTemplate.postForObject(
             builder.buildAndExpand(courseId).toUriString(), httpEntity, String.class);
-    logger.debug(
-        "Created a course translation with ID: {}, target locale: {} and additional locales: {}",
-        courseId,
-        targetLocale,
-        additionalLocales);
     return response;
   }
 
@@ -116,15 +106,12 @@ public class EvolveClient {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     headers.setIfModifiedSince(ifUnmodifiedSince);
-    Map<String, String> course = new HashMap<>();
-    course.put("custom_j", translationStatus.getName());
-    Map<String, Map<String, String>> courseBody = new HashMap<>();
-    courseBody.put("course", course);
+    Map<String, String> course = ImmutableMap.of("custom_j", translationStatus.getName());
+    Map<String, Map<String, String>> courseBody = ImmutableMap.of("course", course);
     this.restTemplate.put(
         this.getFullEndpointPath("courses/{courseId}"),
         new HttpEntity<>(courseBody, headers),
         courseId);
-    logger.debug("Updated the course with ID: {}", courseId);
   }
 
   public void updateCourseTranslation(int courseId, String translatedCourse) {
@@ -134,7 +121,6 @@ public class EvolveClient {
         this.getFullEndpointPath("course_translations/{courseId}"),
         new HttpEntity<>(translatedCourse, headers),
         courseId);
-    logger.debug("Updated the translations of the course with ID: {}", courseId);
   }
 
   public void setMaxRetries(int maxRetries) {

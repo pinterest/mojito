@@ -13,6 +13,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -71,14 +72,14 @@ public class EvolveClientTest {
     courseDTO4.setTranslationStatus(null);
 
     CoursesDTO coursesDTO1 = new CoursesDTO();
-    coursesDTO1.setCourses(List.of(courseDTO1, courseDTO2, courseDTO3));
+    coursesDTO1.setCourses(ImmutableList.of(courseDTO1, courseDTO2, courseDTO3));
     Pagination pagination1 = new Pagination();
     pagination1.setCurrentPage(1);
     pagination1.setTotalPages(2);
     coursesDTO1.setPagination(pagination1);
 
     CoursesDTO coursesDTO2 = new CoursesDTO();
-    coursesDTO2.setCourses(List.of(courseDTO4));
+    coursesDTO2.setCourses(ImmutableList.of(courseDTO4));
     Pagination pagination2 = new Pagination();
     pagination2.setCurrentPage(2);
     pagination2.setTotalPages(2);
@@ -122,7 +123,7 @@ public class EvolveClientTest {
   private void initEmptyData() {
     reset(this.mockRestTemplate);
     CoursesDTO coursesDTO = new CoursesDTO();
-    coursesDTO.setCourses(List.of());
+    coursesDTO.setCourses(ImmutableList.of());
     Pagination pagination1 = new Pagination();
     pagination1.setCurrentPage(1);
     pagination1.setTotalPages(1);
@@ -188,7 +189,7 @@ public class EvolveClientTest {
   @Test
   public void testGetCoursesWithZeroPages() {
     CoursesDTO coursesDTO = new CoursesDTO();
-    coursesDTO.setCourses(List.of());
+    coursesDTO.setCourses(ImmutableList.of());
     Pagination pagination1 = new Pagination();
     pagination1.setCurrentPage(1);
     pagination1.setTotalPages(0);
@@ -225,7 +226,7 @@ public class EvolveClientTest {
     courseDTO.setUpdatedOn(ZonedDateTime.now());
     courseDTO.setTranslationStatus(READY_FOR_TRANSLATION);
     CoursesDTO coursesDTO = new CoursesDTO();
-    coursesDTO.setCourses(List.of(courseDTO));
+    coursesDTO.setCourses(ImmutableList.of(courseDTO));
     Pagination pagination1 = new Pagination();
     pagination1.setCurrentPage(1);
     pagination1.setTotalPages(1);
