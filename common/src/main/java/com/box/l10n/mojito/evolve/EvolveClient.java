@@ -79,7 +79,7 @@ public class EvolveClient {
                   .doOnError(
                       e -> {
                         logger.error("Error while retrieving courses", e);
-                        throw new RuntimeException("Error while retrieving courses", e);
+                        throw new RuntimeException(e.getMessage(), e);
                       })
                   .block();
             },
