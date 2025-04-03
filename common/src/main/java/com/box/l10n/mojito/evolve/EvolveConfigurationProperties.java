@@ -16,6 +16,12 @@ public class EvolveConfigurationProperties {
 
   private String apiPath;
 
+  private int maxRetries;
+
+  private int retryMinBackoffSecs;
+
+  private int retryMaxBackoffSecs;
+
   public String getRepositoryName() {
     return repositoryName;
   }
@@ -54,5 +60,29 @@ public class EvolveConfigurationProperties {
 
   public void setApiPath(String apiPath) {
     this.apiPath = apiPath;
+  }
+
+  public int getMaxRetries() {
+    return maxRetries;
+  }
+
+  public void setMaxRetries(int maxRetries) {
+    this.maxRetries = maxRetries;
+  }
+
+  public int getRetryMinBackoffSecs() {
+    return retryMinBackoffSecs;
+  }
+
+  public void setRetryMinBackoffSecs(int retryMinBackoffSecs) {
+    this.retryMinBackoffSecs = retryMinBackoffSecs;
+  }
+
+  public int getRetryMaxBackoffSecs() {
+    return retryMaxBackoffSecs;
+  }
+
+  public void setRetryMaxBackoffSecs(int retryMaxBackoffSecs) {
+    this.retryMaxBackoffSecs = retryMaxBackoffSecs;
   }
 }

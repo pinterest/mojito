@@ -4,6 +4,7 @@ import static com.box.l10n.mojito.evolve.TranslationStatusType.IN_TRANSLATION;
 import static com.box.l10n.mojito.evolve.TranslationStatusType.READY_FOR_TRANSLATION;
 import static com.box.l10n.mojito.evolve.TranslationStatusType.TRANSLATED;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Sets;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -25,8 +27,10 @@ import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -45,7 +49,7 @@ public class EvolveClientTest {
 
   @Captor ArgumentCaptor<Integer> courseIdCaptor;
 
-  private void initData() {
+  private void initFullData() {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
     courseDTO1.setUpdatedOn(ZonedDateTime.now());
@@ -86,8 +90,8 @@ public class EvolveClientTest {
   }
 
   @Test
-  public void testGetCourses() {
-    this.initData();
+  public void testGetCoursesWithFullData() {
+    this.initFullData();
     CoursesGetRequest coursesGetRequest = new CoursesGetRequest("en", null, null);
 
     List<CourseDTO> courses = this.evolveClient.getCourses(coursesGetRequest).toList();
@@ -128,7 +132,7 @@ public class EvolveClientTest {
   }
 
   @Test
-  public void testGetCoursesWithUpdatedOnToAndUpdatedOnFrom() {
+  public void testGetCoursesWithUpdatedOnValues() {
     this.initEmptyData();
 
     ZonedDateTime updatedOnTo = ZonedDateTime.now();
@@ -197,6 +201,54 @@ public class EvolveClientTest {
     long count = this.evolveClient.getCourses(coursesGetRequest).count();
 
     assertEquals(0, count);
+  }
+
+  @Test
+  public void testGetCoursesWithFailure() {
+    when(this.mockRestTemplate.getForObject(anyString(), any()))
+        .thenThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)));
+
+    this.evolveClient = new EvolveClient(this.mockRestTemplate, this.apiPath);
+    this.evolveClient.setRetryMinBackoff(Duration.ofSeconds(1));
+    this.evolveClient.setRetryMaxBackoff(Duration.ofSeconds(1));
+
+    CoursesGetRequest coursesGetRequest = new CoursesGetRequest("en", null, null);
+
+    assertThrows(
+        RuntimeException.class, () -> this.evolveClient.getCourses(coursesGetRequest).count());
+  }
+
+  private void initDataWithInitialFailure() {
+    reset(this.mockRestTemplate);
+    CourseDTO courseDTO = new CourseDTO();
+    courseDTO.setId(1);
+    courseDTO.setUpdatedOn(ZonedDateTime.now());
+    courseDTO.setTranslationStatus(READY_FOR_TRANSLATION);
+    CoursesDTO coursesDTO = new CoursesDTO();
+    coursesDTO.setCourses(List.of(courseDTO));
+    Pagination pagination1 = new Pagination();
+    pagination1.setCurrentPage(1);
+    pagination1.setTotalPages(1);
+    coursesDTO.setPagination(pagination1);
+    when(this.mockRestTemplate.getForObject(anyString(), any()))
+        .thenThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)))
+        .thenReturn(coursesDTO);
+    this.evolveClient = new EvolveClient(this.mockRestTemplate, this.apiPath);
+  }
+
+  @Test
+  public void testGetCoursesWithInitialFailure() {
+    this.initDataWithInitialFailure();
+
+    this.evolveClient = new EvolveClient(this.mockRestTemplate, this.apiPath);
+    this.evolveClient.setRetryMinBackoff(Duration.ofSeconds(1));
+    this.evolveClient.setRetryMaxBackoff(Duration.ofSeconds(1));
+
+    CoursesGetRequest coursesGetRequest = new CoursesGetRequest("en", null, null);
+    long count = this.evolveClient.getCourses(coursesGetRequest).count();
+
+    assertEquals(1, count);
+    verify(this.mockRestTemplate, times(2)).getForObject(anyString(), any());
   }
 
   private void initDataForCourseTranslation() {

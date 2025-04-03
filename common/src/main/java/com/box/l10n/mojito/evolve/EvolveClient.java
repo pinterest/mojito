@@ -2,6 +2,7 @@ package com.box.l10n.mojito.evolve;
 
 import com.box.l10n.mojito.iterators.ListWithLastPage;
 import com.box.l10n.mojito.iterators.PageFetcherCurrentAndTotalPagesSplitIterator;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +17,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
 public class EvolveClient {
   static Logger logger = LoggerFactory.getLogger(EvolveClient.class);
@@ -24,13 +27,33 @@ public class EvolveClient {
 
   private final RestTemplate restTemplate;
 
+  private int maxRetries;
+
+  private Duration retryMinBackoff;
+
+  private Duration retryMaxBackoff;
+
   public EvolveClient(RestTemplate restTemplate, String apiPath) {
     this.restTemplate = restTemplate;
     this.apiPath = apiPath;
+    this.maxRetries = 2;
+    this.retryMinBackoff = Duration.ofSeconds(5);
+    this.retryMaxBackoff = Duration.ofSeconds(30);
   }
 
   private String getFullEndpointPath(String endpointPath) {
     return this.apiPath + endpointPath;
+  }
+
+  private ListWithLastPage<CourseDTO> getCourses(String url) {
+    CoursesDTO coursesDTO = this.restTemplate.getForObject(url, CoursesDTO.class);
+    if (coursesDTO == null) {
+      throw new RuntimeException("Empty response");
+    }
+    ListWithLastPage<CourseDTO> courseListWithLastPage = new ListWithLastPage<>();
+    courseListWithLastPage.setList(coursesDTO.getCourses());
+    courseListWithLastPage.setLastPage(coursesDTO.getPagination().getTotalPages());
+    return courseListWithLastPage;
   }
 
   public Stream<CourseDTO> getCourses(CoursesGetRequest request) {
@@ -49,15 +72,16 @@ public class EvolveClient {
             pageToFetch -> {
               UriComponentsBuilder builderWithPage =
                   builder.cloneBuilder().queryParam("page", pageToFetch);
-              CoursesDTO coursesDTO =
-                  this.restTemplate.getForObject(builderWithPage.toUriString(), CoursesDTO.class);
-              if (coursesDTO == null) {
-                throw new RuntimeException("Empty response");
-              }
-              ListWithLastPage<CourseDTO> courseListWithLastPage = new ListWithLastPage<>();
-              courseListWithLastPage.setList(coursesDTO.getCourses());
-              courseListWithLastPage.setLastPage(coursesDTO.getPagination().getTotalPages());
-              return courseListWithLastPage;
+              return Mono.fromCallable(() -> this.getCourses(builderWithPage.toUriString()))
+                  .retryWhen(
+                      Retry.backoff(this.maxRetries, this.retryMinBackoff)
+                          .maxBackoff(this.retryMaxBackoff))
+                  .doOnError(
+                      e -> {
+                        logger.error("Error while retrieving courses", e);
+                        throw new RuntimeException("Error while retrieving courses", e);
+                      })
+                  .block();
             },
             1);
 
@@ -79,7 +103,11 @@ public class EvolveClient {
     String response =
         this.restTemplate.postForObject(
             builder.buildAndExpand(courseId).toUriString(), httpEntity, String.class);
-    logger.debug("course created: {}, for locales: {}, {}", courseId, targetLocale, additionalLocales);
+    logger.debug(
+        "Created a course translation with ID: {}, target locale: {} and additional locales: {}",
+        courseId,
+        targetLocale,
+        additionalLocales);
     return response;
   }
 
@@ -96,7 +124,7 @@ public class EvolveClient {
         this.getFullEndpointPath("courses/{courseId}"),
         new HttpEntity<>(courseBody, headers),
         courseId);
-    logger.debug("Updated course: {}", courseId);
+    logger.debug("Updated the course with ID: {}", courseId);
   }
 
   public void updateCourseTranslation(int courseId, String translatedCourse) {
@@ -106,6 +134,18 @@ public class EvolveClient {
         this.getFullEndpointPath("course_translations/{courseId}"),
         new HttpEntity<>(translatedCourse, headers),
         courseId);
-    logger.debug("Updated translations of course: {}", courseId);
+    logger.debug("Updated the translations of the course with ID: {}", courseId);
+  }
+
+  public void setMaxRetries(int maxRetries) {
+    this.maxRetries = maxRetries;
+  }
+
+  public void setRetryMinBackoff(Duration retryMinBackoff) {
+    this.retryMinBackoff = retryMinBackoff;
+  }
+
+  public void setRetryMaxBackoff(Duration retryMaxBackoff) {
+    this.retryMaxBackoff = retryMaxBackoff;
   }
 }
