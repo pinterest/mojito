@@ -1,8 +1,8 @@
-package com.box.l10n.mojito.evolve;
+package com.box.l10n.mojito.service.evolve;
 
-import static com.box.l10n.mojito.evolve.TranslationStatusType.IN_TRANSLATION;
-import static com.box.l10n.mojito.evolve.TranslationStatusType.READY_FOR_TRANSLATION;
-import static com.box.l10n.mojito.evolve.TranslationStatusType.TRANSLATED;
+import static com.box.l10n.mojito.service.evolve.dto.TranslationStatusType.IN_TRANSLATION;
+import static com.box.l10n.mojito.service.evolve.dto.TranslationStatusType.READY_FOR_TRANSLATION;
+import static com.box.l10n.mojito.service.evolve.dto.TranslationStatusType.TRANSLATED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -13,6 +13,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.box.l10n.mojito.service.evolve.dto.CourseDTO;
+import com.box.l10n.mojito.service.evolve.dto.CoursesDTO;
+import com.box.l10n.mojito.service.evolve.dto.PaginationDTO;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import java.time.Duration;
@@ -73,14 +76,14 @@ public class EvolveClientTest {
 
     CoursesDTO coursesDTO1 = new CoursesDTO();
     coursesDTO1.setCourses(ImmutableList.of(courseDTO1, courseDTO2, courseDTO3));
-    Pagination pagination1 = new Pagination();
+    PaginationDTO pagination1 = new PaginationDTO();
     pagination1.setCurrentPage(1);
     pagination1.setTotalPages(2);
     coursesDTO1.setPagination(pagination1);
 
     CoursesDTO coursesDTO2 = new CoursesDTO();
     coursesDTO2.setCourses(ImmutableList.of(courseDTO4));
-    Pagination pagination2 = new Pagination();
+    PaginationDTO pagination2 = new PaginationDTO();
     pagination2.setCurrentPage(2);
     pagination2.setTotalPages(2);
     coursesDTO2.setPagination(pagination2);
@@ -124,7 +127,7 @@ public class EvolveClientTest {
     reset(this.mockRestTemplate);
     CoursesDTO coursesDTO = new CoursesDTO();
     coursesDTO.setCourses(ImmutableList.of());
-    Pagination pagination1 = new Pagination();
+    PaginationDTO pagination1 = new PaginationDTO();
     pagination1.setCurrentPage(1);
     pagination1.setTotalPages(1);
     coursesDTO.setPagination(pagination1);
@@ -190,7 +193,7 @@ public class EvolveClientTest {
   public void testGetCoursesWithZeroPages() {
     CoursesDTO coursesDTO = new CoursesDTO();
     coursesDTO.setCourses(ImmutableList.of());
-    Pagination pagination1 = new Pagination();
+    PaginationDTO pagination1 = new PaginationDTO();
     pagination1.setCurrentPage(1);
     pagination1.setTotalPages(0);
     coursesDTO.setPagination(pagination1);
@@ -227,7 +230,7 @@ public class EvolveClientTest {
     courseDTO.setTranslationStatus(READY_FOR_TRANSLATION);
     CoursesDTO coursesDTO = new CoursesDTO();
     coursesDTO.setCourses(ImmutableList.of(courseDTO));
-    Pagination pagination1 = new Pagination();
+    PaginationDTO pagination1 = new PaginationDTO();
     pagination1.setCurrentPage(1);
     pagination1.setTotalPages(1);
     coursesDTO.setPagination(pagination1);

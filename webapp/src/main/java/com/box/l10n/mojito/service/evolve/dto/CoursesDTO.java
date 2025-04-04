@@ -1,18 +1,18 @@
-package com.box.l10n.mojito.evolve;
+package com.box.l10n.mojito.service.evolve.dto;
 
 import java.util.List;
 
 public class CoursesDTO {
 
-  private Pagination pagination;
+  private PaginationDTO pagination;
 
   private List<CourseDTO> courses;
 
-  public Pagination getPagination() {
+  public PaginationDTO getPagination() {
     return pagination;
   }
 
-  public void setPagination(Pagination pagination) {
+  public void setPagination(PaginationDTO pagination) {
     this.pagination = pagination;
   }
 

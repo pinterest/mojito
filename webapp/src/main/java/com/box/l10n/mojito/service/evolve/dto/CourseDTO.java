@@ -1,4 +1,4 @@
-package com.box.l10n.mojito.evolve;
+package com.box.l10n.mojito.service.evolve.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.ZonedDateTime;

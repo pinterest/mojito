@@ -1,7 +1,10 @@
-package com.box.l10n.mojito.evolve;
+package com.box.l10n.mojito.service.evolve;
 
 import com.box.l10n.mojito.iterators.ListWithLastPage;
 import com.box.l10n.mojito.iterators.PageFetcherCurrentAndTotalPagesSplitIterator;
+import com.box.l10n.mojito.service.evolve.dto.CourseDTO;
+import com.box.l10n.mojito.service.evolve.dto.CoursesDTO;
+import com.box.l10n.mojito.service.evolve.dto.TranslationStatusType;
 import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.time.ZonedDateTime;

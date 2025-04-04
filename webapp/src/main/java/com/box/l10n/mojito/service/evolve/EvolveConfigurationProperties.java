@@ -1,4 +1,4 @@
-package com.box.l10n.mojito.evolve;
+package com.box.l10n.mojito.service.evolve;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -16,11 +16,11 @@ public class EvolveConfigurationProperties {
 
   private String apiPath;
 
-  private int maxRetries;
+  private Integer maxRetries;
 
-  private int retryMinBackoffSecs;
+  private Integer retryMinBackoffSecs;
 
-  private int retryMaxBackoffSecs;
+  private Integer retryMaxBackoffSecs;
 
   public String getRepositoryName() {
     return repositoryName;
@@ -62,27 +62,27 @@ public class EvolveConfigurationProperties {
     this.apiPath = apiPath;
   }
 
-  public int getMaxRetries() {
+  public Integer getMaxRetries() {
     return maxRetries;
   }
 
-  public void setMaxRetries(int maxRetries) {
+  public void setMaxRetries(Integer maxRetries) {
     this.maxRetries = maxRetries;
   }
 
-  public int getRetryMinBackoffSecs() {
+  public Integer getRetryMinBackoffSecs() {
     return retryMinBackoffSecs;
   }
 
-  public void setRetryMinBackoffSecs(int retryMinBackoffSecs) {
+  public void setRetryMinBackoffSecs(Integer retryMinBackoffSecs) {
     this.retryMinBackoffSecs = retryMinBackoffSecs;
   }
 
-  public int getRetryMaxBackoffSecs() {
+  public Integer getRetryMaxBackoffSecs() {
     return retryMaxBackoffSecs;
   }
 
-  public void setRetryMaxBackoffSecs(int retryMaxBackoffSecs) {
+  public void setRetryMaxBackoffSecs(Integer retryMaxBackoffSecs) {
     this.retryMaxBackoffSecs = retryMaxBackoffSecs;
   }
 }

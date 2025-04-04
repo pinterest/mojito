@@ -1,5 +1,6 @@
-package com.box.l10n.mojito.evolve;
+package com.box.l10n.mojito.service.evolve;
 
+import com.box.l10n.mojito.service.evolve.dto.TokenResponseDTO;
 import com.google.common.base.Preconditions;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
