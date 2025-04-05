@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+            <file additional-languages="fr" code="evolve-course-en" course-type="CourseEvolve" datatype="plaintext" evolve-draft-id="123abc" evolve-locale-id="" original="course[1]" rtl="false" source-language="en">
+                <body>
+                    <trans-unit datatype="plaintext" exceed-preview-link="https://www.pinterestacademy.com/student/enrollments/create_enrollment_from_token/8784da9d8339ece99c12d65c" id="course[2504103].name">
+                        <source>Media Planner Practice Exam</source>
+                        <target/>
+                        <note>The name of the course</note>
+                    </trans-unit>
+                    <trans-unit datatype="html" exceed-preview-link="https://www.pinterestacademy.com/student/enrollments/create_enrollment_from_token/8784da9d8339ece99c12d65c" id="course[2504103].instructions">
+                        <source>&lt;style&gt;&#13;
+                .instructionspanel__photo {&#13;
+                  border-radius: .8em;&#13;
+                }&#13;
+              &lt;/style&gt;</source>
+                        <target/>
+                        <note>Description shown in the catalog and at the top of the activity page</note>
+                    </trans-unit>
+                    <bin-unit exceed-preview-link="https://www.pinterestacademy.com/student/enrollments/create_enrollment_from_token/8784da9d8339ece99c12d65c" id="course[2504103].picture.target_url" mime-type="image/png" restype="uri">
+                        <bin-source>
+                            <external-file href="https://cdn.exceedlms.com/uploads/resource_course_pictures/targets/6658131/original/screenshot-2025-03-04-at-4-03-36-pm.png?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9jZG4uZXhjZWVkbG1zLmNvbS91cGxvYWRzL3Jlc291cmNlX2NvdXJzZV9waWN0dXJlcy90YXJnZXRzLzY2NTgxMzEvb3JpZ2luYWwvc2NyZWVuc2hvdC0yMDI1LTAzLTA0LWF0LTQtMDMtMzYtcG0ucG5nIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzQyOTI0MjE5fX19XX0_&amp;Signature=XvdkmMkmXtIqIyN6xQUJC7I5L7cCefGzmcg18bTV8SxqgX6i1QgJ-vnKWLZDTAxff8f-U2bTMo8EqljtjQyCyLBPJ40Fgpaf4TLGGgQsLrh4M~XD~5~ousow~~Y43Ui0K6MpriOCPXbzV5MycQ2Ngjp29QVkiwIcWNiaqhJ284OHwnTuv1tynClB8fhWVj1fX8ehLCVypaeVb8EFSFG2HG~W5p68h5Dk8la4NRV0ukfoZqEgiKecY3vF87sW6KWZU7KTnizeYOcX2IGCJmoYQpkoQMkkkgC1Q0nolw9JMNaCr~0o3XVaHiViKDqRnEr35yLRiKeL7nHh1wF~2g59zw__&amp;Key-Pair-Id=APKAJINUZDMKZJI5I6DA"/>
+                        </bin-source>
+                        <bin-target>
+                            <external-file href=""/>
+                        </bin-target>
+                        <note>The course cover art</note>
+                    </bin-unit>
+        <trans-unit evolve-path="_videos.gifPlayButtonAriaLabel" evolve-preview-link="https://pinterestacademy.evolveauthoring.com/courses/67aa74c0fc16ab8fd188d3cd/preview/index.html?isShared=true&amp;contentId=67901d791b22e91f45a711c9" evolve-ref-id="67901d791b22e91f45a711c9" evolve-translation-type="String" evolve-type="course" id="335">
+                        <source>start animation</source>
+                        <target/>
+                    </trans-unit>
+                    <trans-unit evolve-path="_videos.gifStopButtonAriaLabel" evolve-preview-link="https://pinterestacademy.evolveauthoring.com/courses/67aa74c0fc16ab8fd188d3cd/preview/index.html?isShared=true&amp;contentId=67901d791b22e91f45a711c9" evolve-ref-id="67901d791b22e91f45a711c9" evolve-translation-type="String" evolve-type="course" id="336">
+                        <source>stop animation</source>
+                        <target/>
+                    </trans-unit>
+                </body>
+            </file>
+        </xliff>

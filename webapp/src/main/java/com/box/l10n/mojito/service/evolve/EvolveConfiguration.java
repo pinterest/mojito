@@ -1,9 +1,11 @@
 package com.box.l10n.mojito.service.evolve;
 
+import com.box.l10n.mojito.service.blobstorage.s3.S3BlobStorage;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -63,5 +65,28 @@ public class EvolveConfiguration {
         });
 
     return restTemplate;
+  }
+
+  @Configuration
+  @ConditionalOnProperty(name = "l10n.evolve.sync-date.type", havingValue = "s3")
+  static class S3SyncDateServiceConfiguration {
+    @Autowired private S3BlobStorage s3BlobStorage;
+
+    @Value("${l10n.evolve.sync-date.s3.file-path:}")
+    private String s3FilePath;
+
+    @Bean
+    public SyncDateService s3SyncDateService() {
+      return new S3SyncDateService(this.s3BlobStorage, this.s3FilePath);
+    }
+  }
+
+  @Bean
+  @ConditionalOnProperty(
+      name = "l10n.evolve.sync-date.type",
+      havingValue = "inMemory",
+      matchIfMissing = true)
+  public SyncDateService inMemorySyncDateService() {
+    return new InMemorySyncDateService();
   }
 }

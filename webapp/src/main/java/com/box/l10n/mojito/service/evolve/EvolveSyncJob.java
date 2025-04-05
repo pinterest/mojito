@@ -1,7 +1,5 @@
 package com.box.l10n.mojito.service.evolve;
 
-import com.box.l10n.mojito.evolve.EvolveClient;
-import com.box.l10n.mojito.evolve.EvolveConfigurationProperties;
 import com.box.l10n.mojito.quartz.QuartzPollableJob;
 import com.box.l10n.mojito.service.asset.AssetService;
 import com.box.l10n.mojito.service.assetExtraction.AssetExtractionByBranchRepository;
@@ -51,6 +49,8 @@ public class EvolveSyncJob extends QuartzPollableJob<Void, Void> {
 
   @Autowired private BranchService branchService;
 
+  @Autowired private SyncDateService syncDateService;
+
   @Override
   public Void call(Void input) {
     logger.debug("Run EvolveSyncJob");
@@ -66,7 +66,8 @@ public class EvolveSyncJob extends QuartzPollableJob<Void, Void> {
             this.assetContentRepository,
             this.tmService,
             this.branchService,
-            this.assetExtractionByBranchRepository)
+            this.assetExtractionByBranchRepository,
+            this.syncDateService)
         .sync();
     return null;
   }
