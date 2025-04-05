@@ -148,8 +148,7 @@ public class EvolveServiceTest extends ServiceTestBase {
         Path.of(Resources.getResource("com/box/l10n/mojito/service/evolve/" + fileName).getPath()));
   }
 
-  private void initReadyForTranslationData(ZonedDateTime updatedOn)
-      throws IOException {
+  private void initReadyForTranslationData(ZonedDateTime updatedOn) throws IOException {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
     courseDTO1.setTranslationStatus(READY_FOR_TRANSLATION);
@@ -199,7 +198,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             any(ZonedDateTime.class));
     assertEquals(1, (int) this.integerCaptor.getValue());
     assertEquals(IN_TRANSLATION, this.translationStatusTypeCaptor.getValue());
-    assertTrue(this.syncDateService.getDate().isEqual(now) || this.syncDateService.getDate().isAfter(now));
+    assertTrue(
+        this.syncDateService.getDate().isEqual(now) || this.syncDateService.getDate().isAfter(now));
 
     Branch branch =
         this.branchRepository.findByNameAndRepository(
@@ -233,7 +233,8 @@ public class EvolveServiceTest extends ServiceTestBase {
 
     this.evolveService.sync();
 
-    assertTrue(this.syncDateService.getDate().isEqual(now) || this.syncDateService.getDate().isAfter(now));
+    assertTrue(
+        this.syncDateService.getDate().isEqual(now) || this.syncDateService.getDate().isAfter(now));
   }
 
   private void initInTranslationData(ZonedDateTime updatedOn) {
@@ -415,10 +416,11 @@ public class EvolveServiceTest extends ServiceTestBase {
   @Test
   public void testSyncForBranchStatisticsNotComputed()
       throws RepositoryNameAlreadyUsedException,
-      RepositoryLocaleCreationException,
-      UnsupportedAssetFilterTypeException,
-      ExecutionException,
-      InterruptedException, IOException {
+          RepositoryLocaleCreationException,
+          UnsupportedAssetFilterTypeException,
+          ExecutionException,
+          InterruptedException,
+          IOException {
     ZonedDateTime updatedOn = ZonedDateTime.now().minusDays(1);
     final int courseId = 1;
     this.initInTranslationData(updatedOn);
@@ -460,13 +462,17 @@ public class EvolveServiceTest extends ServiceTestBase {
 
     this.pollableTaskService.waitForPollableTask(sourceAsset.getPollableTask().getId());
 
-    Branch branch = this.branchRepository.findByNameAndRepository(this.evolveService.getBranchName(courseId), repository);
+    Branch branch =
+        this.branchRepository.findByNameAndRepository(
+            this.evolveService.getBranchName(courseId), repository);
     assertNotNull(branch);
     assertFalse(branch.getDeleted());
 
     this.evolveService.sync();
 
-    branch = this.branchRepository.findByNameAndRepository(this.evolveService.getBranchName(courseId), repository);
+    branch =
+        this.branchRepository.findByNameAndRepository(
+            this.evolveService.getBranchName(courseId), repository);
     assertFalse(branch.getDeleted());
 
     verify(this.evolveClientMock, times(0)).updateCourseTranslation(anyInt(), anyString());
@@ -477,7 +483,8 @@ public class EvolveServiceTest extends ServiceTestBase {
     assertEquals(updatedOn, this.syncDateService.getDate());
   }
 
-  private void initTwoCoursesData(ZonedDateTime updatedOn1, ZonedDateTime updatedOn2) throws IOException {
+  private void initTwoCoursesData(ZonedDateTime updatedOn1, ZonedDateTime updatedOn2)
+      throws IOException {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
     courseDTO1.setTranslationStatus(READY_FOR_TRANSLATION);
@@ -557,15 +564,10 @@ public class EvolveServiceTest extends ServiceTestBase {
 
     this.evolveService.sync();
 
+    verify(this.evolveClientMock, times(1)).startCourseTranslation(anyInt(), anyString(), anySet());
     verify(this.evolveClientMock, times(1))
-        .startCourseTranslation(anyInt(), anyString(), anySet());
-    verify(this.evolveClientMock, times(1))
-        .updateCourse(
-            anyInt(),
-            any(TranslationStatusType.class),
-            any(ZonedDateTime.class));
-    verify(this.evolveClientMock, times(0))
-        .updateCourseTranslation(anyInt(), anyString());
+        .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
+    verify(this.evolveClientMock, times(0)).updateCourseTranslation(anyInt(), anyString());
     assertEquals(updatedOn2, this.syncDateService.getDate());
 
     branch =
@@ -577,11 +579,11 @@ public class EvolveServiceTest extends ServiceTestBase {
   @Test
   public void testSyncForTwoCoursesAndOneIsFullyTranslated()
       throws RepositoryNameAlreadyUsedException,
-      RepositoryLocaleCreationException,
-      UnsupportedAssetFilterTypeException,
-      ExecutionException,
-      InterruptedException,
-      IOException {
+          RepositoryLocaleCreationException,
+          UnsupportedAssetFilterTypeException,
+          ExecutionException,
+          InterruptedException,
+          IOException {
     ZonedDateTime now = ZonedDateTime.now();
     ZonedDateTime updatedOn1 = now.minusDays(1);
     ZonedDateTime updatedOn2 = updatedOn1.minusDays(1);
@@ -646,16 +648,12 @@ public class EvolveServiceTest extends ServiceTestBase {
 
     this.evolveService.sync();
 
-    verify(this.evolveClientMock, times(1))
-        .startCourseTranslation(anyInt(), anyString(), anySet());
+    verify(this.evolveClientMock, times(1)).startCourseTranslation(anyInt(), anyString(), anySet());
     verify(this.evolveClientMock, times(2))
-        .updateCourse(
-            anyInt(),
-            any(TranslationStatusType.class),
-            any(ZonedDateTime.class));
-    verify(this.evolveClientMock, times(1))
-        .updateCourseTranslation(anyInt(), anyString());
-    assertTrue(this.syncDateService.getDate().isEqual(now) || this.syncDateService.getDate().isAfter(now));
+        .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
+    verify(this.evolveClientMock, times(1)).updateCourseTranslation(anyInt(), anyString());
+    assertTrue(
+        this.syncDateService.getDate().isEqual(now) || this.syncDateService.getDate().isAfter(now));
 
     branch =
         this.branchRepository.findByNameAndRepository(
@@ -715,7 +713,113 @@ public class EvolveServiceTest extends ServiceTestBase {
   }
 
   @Test
-  public void testSyncForGetCoursesWithException() throws RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException {
+  public void testSyncForFullyTranslatedCourseAndMultipleLocales()
+      throws RepositoryNameAlreadyUsedException,
+          RepositoryLocaleCreationException,
+          IOException,
+          UnsupportedAssetFilterTypeException,
+          ExecutionException,
+          InterruptedException {
+    ZonedDateTime updatedOn = ZonedDateTime.now().minusDays(1);
+    final int courseId = 1;
+    this.initInTranslationData(updatedOn);
+
+    Locale esLocale = this.localeService.findByBcp47Tag("es");
+    RepositoryLocale esRepositoryLocale = new RepositoryLocale();
+    esRepositoryLocale.setLocale(esLocale);
+    Locale frLocale = this.localeService.findByBcp47Tag("fr");
+    RepositoryLocale frRepositoryLocale = new RepositoryLocale();
+    frRepositoryLocale.setLocale(frLocale);
+    Locale ptLocale = this.localeService.findByBcp47Tag("pt");
+    RepositoryLocale ptRepositoryLocale = new RepositoryLocale();
+    ptRepositoryLocale.setLocale(ptLocale);
+    Repository repository =
+        repositoryService.createRepository(
+            testIdWatcher.getEntityName("test"),
+            "",
+            this.localeService.getDefaultLocale(),
+            false,
+            Sets.newHashSet(),
+            Sets.newHashSet(esRepositoryLocale, frRepositoryLocale, ptRepositoryLocale));
+
+    SourceAsset sourceAsset = new SourceAsset();
+    sourceAsset.setBranch(this.evolveService.getBranchName(courseId));
+    sourceAsset.setRepositoryId(repository.getId());
+    sourceAsset.setPath(this.evolveService.getAssetPath(courseId));
+    sourceAsset.setContent(this.getXliffContent("course.xliff"));
+
+    String normalizedContent = NormalizationUtils.normalize(sourceAsset.getContent());
+    PollableFuture<Asset> assetFuture =
+        this.assetService.addOrUpdateAssetAndProcessIfNeeded(
+            sourceAsset.getRepositoryId(),
+            sourceAsset.getPath(),
+            normalizedContent,
+            sourceAsset.isExtractedContent(),
+            sourceAsset.getBranch(),
+            sourceAsset.getBranchCreatedByUsername(),
+            sourceAsset.getBranchNotifiers(),
+            null,
+            sourceAsset.getFilterConfigIdOverride(),
+            sourceAsset.getFilterOptions());
+
+    sourceAsset.setAddedAssetId(assetFuture.get().getId());
+
+    sourceAsset.setPollableTask(assetFuture.getPollableTask());
+
+    this.pollableTaskService.waitForPollableTask(sourceAsset.getPollableTask().getId());
+
+    TextUnitSearcherParameters textUnitSearcherParameters =
+        new TextUnitSearcherParameters.Builder().repositoryId(repository.getId()).build();
+    List<TextUnitDTO> textUnits = this.textUnitSearcher.search(textUnitSearcherParameters);
+
+    textUnits.forEach(
+        textUnitDTO ->
+            tmService.addTMTextUnitCurrentVariant(
+                textUnitDTO.getTmTextUnitId(),
+                esLocale.getId(),
+                "Text",
+                textUnitDTO.getTargetComment(),
+                TMTextUnitVariant.Status.APPROVED,
+                true));
+
+    textUnits.forEach(
+        textUnitDTO ->
+            tmService.addTMTextUnitCurrentVariant(
+                textUnitDTO.getTmTextUnitId(),
+                frLocale.getId(),
+                "Text",
+                textUnitDTO.getTargetComment(),
+                TMTextUnitVariant.Status.APPROVED,
+                true));
+
+    textUnits.forEach(
+        textUnitDTO ->
+            tmService.addTMTextUnitCurrentVariant(
+                textUnitDTO.getTmTextUnitId(),
+                ptLocale.getId(),
+                "Text",
+                textUnitDTO.getTargetComment(),
+                TMTextUnitVariant.Status.APPROVED,
+                true));
+
+    Branch branch =
+        this.branchRepository.findByNameAndRepository(
+            this.evolveService.getBranchName(courseId), repository);
+    assertNotNull(branch);
+    assertFalse(branch.getDeleted());
+
+    this.branchStatisticService.computeAndSaveBranchStatistics(branch);
+
+    this.evolveService.sync();
+
+    verify(this.evolveClientMock, times(3)).updateCourseTranslation(anyInt(), anyString());
+    verify(this.evolveClientMock, times(1))
+        .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
+  }
+
+  @Test
+  public void testSyncForGetCoursesWithException()
+      throws RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException {
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
         .thenThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)));
     this.initEvolveService();
@@ -732,9 +836,14 @@ public class EvolveServiceTest extends ServiceTestBase {
 
     assertThrows(HttpClientErrorException.class, () -> this.evolveService.sync());
     assertNull(this.syncDateService.getDate());
+
+    ZonedDateTime syncDate = ZonedDateTime.now().minusDays(2);
+    this.syncDateService.setDate(syncDate);
+    assertThrows(RuntimeException.class, () -> this.evolveService.sync());
+    assertEquals(syncDate, this.syncDateService.getDate());
   }
 
-  private void initStartCourseTranslationExceptionData(ZonedDateTime syncDate) {
+  private void initStartCourseTranslationExceptionData() {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
     courseDTO1.setTranslationStatus(READY_FOR_TRANSLATION);
@@ -745,15 +854,13 @@ public class EvolveServiceTest extends ServiceTestBase {
     when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
         .thenThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)));
 
-    //this.syncDateService.setDate(syncDate);
     this.initEvolveService();
   }
 
   @Test
   public void testSyncForStartCourseTranslationWithException()
       throws RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException {
-    ZonedDateTime syncDate = ZonedDateTime.now().minusDays(2);
-    this.initStartCourseTranslationExceptionData(syncDate);
+    this.initStartCourseTranslationExceptionData();
 
     Locale esLocale = this.localeService.findByBcp47Tag("es");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
@@ -768,6 +875,11 @@ public class EvolveServiceTest extends ServiceTestBase {
 
     assertThrows(RuntimeException.class, () -> this.evolveService.sync());
     assertNull(this.syncDateService.getDate());
+
+    ZonedDateTime syncDate = ZonedDateTime.now().minusDays(2);
+    this.syncDateService.setDate(syncDate);
+    assertThrows(RuntimeException.class, () -> this.evolveService.sync());
+    assertEquals(syncDate, this.syncDateService.getDate());
   }
 
   private void initUpdateCourseExceptionData(ZonedDateTime updatedOn) throws IOException {
@@ -806,13 +918,18 @@ public class EvolveServiceTest extends ServiceTestBase {
     assertThrows(RuntimeException.class, () -> this.evolveService.sync());
     verify(this.evolveClientMock).startCourseTranslation(anyInt(), anyString(), anySet());
     assertNull(this.syncDateService.getDate());
+
+    ZonedDateTime syncDate = ZonedDateTime.now().minusDays(2);
+    this.syncDateService.setDate(syncDate);
+    assertThrows(RuntimeException.class, () -> this.evolveService.sync());
+    assertEquals(syncDate, this.syncDateService.getDate());
   }
 
-  private void initUpdateTranslationException() {
+  private void initUpdateTranslationException(ZonedDateTime updatedOn) {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
     courseDTO1.setTranslationStatus(IN_TRANSLATION);
-    courseDTO1.setUpdatedOn(ZonedDateTime.now().minusDays(1));
+    courseDTO1.setUpdatedOn(updatedOn);
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
         .thenReturn(Stream.of(courseDTO1));
@@ -823,16 +940,17 @@ public class EvolveServiceTest extends ServiceTestBase {
     this.initEvolveService();
   }
 
-  //////
   @Test
   public void testSyncForUpdateTranslationWithException()
       throws RepositoryNameAlreadyUsedException,
           RepositoryLocaleCreationException,
           UnsupportedAssetFilterTypeException,
           ExecutionException,
-          InterruptedException {
+          InterruptedException,
+          IOException {
     final int courseId = 1;
-    this.initUpdateTranslationException();
+    ZonedDateTime updatedOn = ZonedDateTime.now().minusDays(1);
+    this.initUpdateTranslationException(updatedOn);
     Locale esLocale = this.localeService.findByBcp47Tag("es");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
     esRepositoryLocale.setLocale(esLocale);
@@ -846,50 +964,10 @@ public class EvolveServiceTest extends ServiceTestBase {
             Sets.newHashSet(esRepositoryLocale));
 
     SourceAsset sourceAsset = new SourceAsset();
-    sourceAsset.setBranch("course_" + 1);
+    sourceAsset.setBranch(this.evolveService.getBranchName(courseId));
     sourceAsset.setRepositoryId(repository.getId());
-    sourceAsset.setPath(1 + ".xliff");
-    sourceAsset.setContent(
-        """
-        <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-        <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
-            <file additional-languages="fr" code="evolve-course-en" course-type="CourseEvolve" datatype="plaintext" evolve-draft-id="123abc" evolve-locale-id="" original="course[1]" rtl="false" source-language="en">
-                <body>
-                    <trans-unit datatype="plaintext" exceed-preview-link="https://www.pinterestacademy.com/student/enrollments/create_enrollment_from_token/8784da9d8339ece99c12d65c" id="course[2504103].name">
-                        <source>Media Planner Practice Exam</source>
-                        <target/>
-                        <note>The name of the course</note>
-                    </trans-unit>
-                    <trans-unit datatype="html" exceed-preview-link="https://www.pinterestacademy.com/student/enrollments/create_enrollment_from_token/8784da9d8339ece99c12d65c" id="course[2504103].instructions">
-                        <source>&lt;style&gt;&#13;
-                .instructionspanel__photo {&#13;
-                  border-radius: .8em;&#13;
-                }&#13;
-              &lt;/style&gt;</source>
-                        <target/>
-                        <note>Description shown in the catalog and at the top of the activity page</note>
-                    </trans-unit>
-                    <bin-unit exceed-preview-link="https://www.pinterestacademy.com/student/enrollments/create_enrollment_from_token/8784da9d8339ece99c12d65c" id="course[2504103].picture.target_url" mime-type="image/png" restype="uri">
-                        <bin-source>
-                            <external-file href="https://cdn.exceedlms.com/uploads/resource_course_pictures/targets/6658131/original/screenshot-2025-03-04-at-4-03-36-pm.png?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9jZG4uZXhjZWVkbG1zLmNvbS91cGxvYWRzL3Jlc291cmNlX2NvdXJzZV9waWN0dXJlcy90YXJnZXRzLzY2NTgxMzEvb3JpZ2luYWwvc2NyZWVuc2hvdC0yMDI1LTAzLTA0LWF0LTQtMDMtMzYtcG0ucG5nIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzQyOTI0MjE5fX19XX0_&amp;Signature=XvdkmMkmXtIqIyN6xQUJC7I5L7cCefGzmcg18bTV8SxqgX6i1QgJ-vnKWLZDTAxff8f-U2bTMo8EqljtjQyCyLBPJ40Fgpaf4TLGGgQsLrh4M~XD~5~ousow~~Y43Ui0K6MpriOCPXbzV5MycQ2Ngjp29QVkiwIcWNiaqhJ284OHwnTuv1tynClB8fhWVj1fX8ehLCVypaeVb8EFSFG2HG~W5p68h5Dk8la4NRV0ukfoZqEgiKecY3vF87sW6KWZU7KTnizeYOcX2IGCJmoYQpkoQMkkkgC1Q0nolw9JMNaCr~0o3XVaHiViKDqRnEr35yLRiKeL7nHh1wF~2g59zw__&amp;Key-Pair-Id=APKAJINUZDMKZJI5I6DA"/>
-                        </bin-source>
-                        <bin-target>
-                            <external-file href=""/>
-                        </bin-target>
-                        <note>The course cover art</note>
-                    </bin-unit>
-        <trans-unit evolve-path="_videos.gifPlayButtonAriaLabel" evolve-preview-link="https://pinterestacademy.evolveauthoring.com/courses/67aa74c0fc16ab8fd188d3cd/preview/index.html?isShared=true&amp;contentId=67901d791b22e91f45a711c9" evolve-ref-id="67901d791b22e91f45a711c9" evolve-translation-type="String" evolve-type="course" id="335">
-                        <source>start animation</source>
-                        <target/>
-                    </trans-unit>
-                    <trans-unit evolve-path="_videos.gifStopButtonAriaLabel" evolve-preview-link="https://pinterestacademy.evolveauthoring.com/courses/67aa74c0fc16ab8fd188d3cd/preview/index.html?isShared=true&amp;contentId=67901d791b22e91f45a711c9" evolve-ref-id="67901d791b22e91f45a711c9" evolve-translation-type="String" evolve-type="course" id="336">
-                        <source>stop animation</source>
-                        <target/>
-                    </trans-unit>
-                </body>
-            </file>
-        </xliff>
-        """);
+    sourceAsset.setPath(this.evolveService.getAssetPath(courseId));
+    sourceAsset.setContent(this.getXliffContent("course.xliff"));
 
     String normalizedContent = NormalizationUtils.normalize(sourceAsset.getContent());
     PollableFuture<Asset> assetFuture =
@@ -925,7 +1003,9 @@ public class EvolveServiceTest extends ServiceTestBase {
                 TMTextUnitVariant.Status.APPROVED,
                 true));
 
-    Branch branch = this.branchRepository.findByNameAndRepository("course_1", repository);
+    Branch branch =
+        this.branchRepository.findByNameAndRepository(
+            this.evolveService.getBranchName(courseId), repository);
     assertNotNull(branch);
     assertFalse(branch.getDeleted());
 
@@ -935,17 +1015,22 @@ public class EvolveServiceTest extends ServiceTestBase {
 
     verify(this.evolveClientMock, times(0))
         .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
+    assertNull(this.syncDateService.getDate());
+
+    ZonedDateTime syncDate = ZonedDateTime.now().minusDays(2);
+    this.syncDateService.setDate(syncDate);
+    assertThrows(RuntimeException.class, () -> this.evolveService.sync());
+    assertEquals(syncDate, this.syncDateService.getDate());
   }
 
-  private void initData9(ZonedDateTime updatedOn) {
+  private void initUpdateCourseInTranslationWithExceptionData(ZonedDateTime updatedOn) {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
     courseDTO1.setTranslationStatus(IN_TRANSLATION);
     courseDTO1.setUpdatedOn(updatedOn);
-    CourseDTO courseDTO2 = new CourseDTO();
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
-        .thenReturn(Stream.of(courseDTO1, courseDTO2));
+        .thenReturn(Stream.of(courseDTO1));
     doThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)))
         .when(this.evolveClientMock)
         .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
@@ -953,16 +1038,17 @@ public class EvolveServiceTest extends ServiceTestBase {
     this.initEvolveService();
   }
 
-  /*
   @Test
-  public void testSyncForUpdateCourseWithException()
+  public void testSyncForUpdateCourseInTranslationWithException()
       throws RepositoryNameAlreadyUsedException,
           RepositoryLocaleCreationException,
           UnsupportedAssetFilterTypeException,
           ExecutionException,
-          InterruptedException {
+          InterruptedException,
+          IOException {
     ZonedDateTime updatedOn = ZonedDateTime.now().minusDays(1);
-    this.initData9(updatedOn);
+    final int courseId = 1;
+    this.initUpdateCourseInTranslationWithExceptionData(updatedOn);
 
     Locale esLocale = this.localeService.findByBcp47Tag("es");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
@@ -977,50 +1063,10 @@ public class EvolveServiceTest extends ServiceTestBase {
             Sets.newHashSet(esRepositoryLocale));
 
     SourceAsset sourceAsset = new SourceAsset();
-    sourceAsset.setBranch("course_" + 1);
+    sourceAsset.setBranch(this.evolveService.getBranchName(courseId));
     sourceAsset.setRepositoryId(repository.getId());
-    sourceAsset.setPath(1 + ".xliff");
-    sourceAsset.setContent(
-        """
-        <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-        <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
-            <file additional-languages="fr" code="evolve-course-en" course-type="CourseEvolve" datatype="plaintext" evolve-draft-id="123abc" evolve-locale-id="" original="course[1]" rtl="false" source-language="en">
-                <body>
-                    <trans-unit datatype="plaintext" exceed-preview-link="https://www.pinterestacademy.com/student/enrollments/create_enrollment_from_token/8784da9d8339ece99c12d65c" id="course[2504103].name">
-                        <source>Media Planner Practice Exam</source>
-                        <target/>
-                        <note>The name of the course</note>
-                    </trans-unit>
-                    <trans-unit datatype="html" exceed-preview-link="https://www.pinterestacademy.com/student/enrollments/create_enrollment_from_token/8784da9d8339ece99c12d65c" id="course[2504103].instructions">
-                        <source>&lt;style&gt;&#13;
-                .instructionspanel__photo {&#13;
-                  border-radius: .8em;&#13;
-                }&#13;
-              &lt;/style&gt;</source>
-                        <target/>
-                        <note>Description shown in the catalog and at the top of the activity page</note>
-                    </trans-unit>
-                    <bin-unit exceed-preview-link="https://www.pinterestacademy.com/student/enrollments/create_enrollment_from_token/8784da9d8339ece99c12d65c" id="course[2504103].picture.target_url" mime-type="image/png" restype="uri">
-                        <bin-source>
-                            <external-file href="https://cdn.exceedlms.com/uploads/resource_course_pictures/targets/6658131/original/screenshot-2025-03-04-at-4-03-36-pm.png?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9jZG4uZXhjZWVkbG1zLmNvbS91cGxvYWRzL3Jlc291cmNlX2NvdXJzZV9waWN0dXJlcy90YXJnZXRzLzY2NTgxMzEvb3JpZ2luYWwvc2NyZWVuc2hvdC0yMDI1LTAzLTA0LWF0LTQtMDMtMzYtcG0ucG5nIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzQyOTI0MjE5fX19XX0_&amp;Signature=XvdkmMkmXtIqIyN6xQUJC7I5L7cCefGzmcg18bTV8SxqgX6i1QgJ-vnKWLZDTAxff8f-U2bTMo8EqljtjQyCyLBPJ40Fgpaf4TLGGgQsLrh4M~XD~5~ousow~~Y43Ui0K6MpriOCPXbzV5MycQ2Ngjp29QVkiwIcWNiaqhJ284OHwnTuv1tynClB8fhWVj1fX8ehLCVypaeVb8EFSFG2HG~W5p68h5Dk8la4NRV0ukfoZqEgiKecY3vF87sW6KWZU7KTnizeYOcX2IGCJmoYQpkoQMkkkgC1Q0nolw9JMNaCr~0o3XVaHiViKDqRnEr35yLRiKeL7nHh1wF~2g59zw__&amp;Key-Pair-Id=APKAJINUZDMKZJI5I6DA"/>
-                        </bin-source>
-                        <bin-target>
-                            <external-file href=""/>
-                        </bin-target>
-                        <note>The course cover art</note>
-                    </bin-unit>
-        <trans-unit evolve-path="_videos.gifPlayButtonAriaLabel" evolve-preview-link="https://pinterestacademy.evolveauthoring.com/courses/67aa74c0fc16ab8fd188d3cd/preview/index.html?isShared=true&amp;contentId=67901d791b22e91f45a711c9" evolve-ref-id="67901d791b22e91f45a711c9" evolve-translation-type="String" evolve-type="course" id="335">
-                        <source>start animation</source>
-                        <target/>
-                    </trans-unit>
-                    <trans-unit evolve-path="_videos.gifStopButtonAriaLabel" evolve-preview-link="https://pinterestacademy.evolveauthoring.com/courses/67aa74c0fc16ab8fd188d3cd/preview/index.html?isShared=true&amp;contentId=67901d791b22e91f45a711c9" evolve-ref-id="67901d791b22e91f45a711c9" evolve-translation-type="String" evolve-type="course" id="336">
-                        <source>stop animation</source>
-                        <target/>
-                    </trans-unit>
-                </body>
-            </file>
-        </xliff>
-        """);
+    sourceAsset.setPath(this.evolveService.getAssetPath(courseId));
+    sourceAsset.setContent(this.getXliffContent("course.xliff"));
 
     String normalizedContent = NormalizationUtils.normalize(sourceAsset.getContent());
     PollableFuture<Asset> assetFuture =
@@ -1056,7 +1102,9 @@ public class EvolveServiceTest extends ServiceTestBase {
                 TMTextUnitVariant.Status.APPROVED,
                 true));
 
-    Branch branch = this.branchRepository.findByNameAndRepository("course_1", repository);
+    Branch branch =
+        this.branchRepository.findByNameAndRepository(
+            this.evolveService.getBranchName(courseId), repository);
     assertNotNull(branch);
     assertFalse(branch.getDeleted());
 
@@ -1065,5 +1113,11 @@ public class EvolveServiceTest extends ServiceTestBase {
     assertThrows(RuntimeException.class, () -> this.evolveService.sync());
 
     verify(this.evolveClientMock, times(1)).updateCourseTranslation(anyInt(), anyString());
-  }*/
+    assertNull(this.syncDateService.getDate());
+
+    ZonedDateTime syncDate = ZonedDateTime.now().minusDays(2);
+    this.syncDateService.setDate(syncDate);
+    assertThrows(RuntimeException.class, () -> this.evolveService.sync());
+    assertEquals(syncDate, this.syncDateService.getDate());
+  }
 }
