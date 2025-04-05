@@ -298,8 +298,10 @@ public class EvolveService {
         pollableFuture.getPollableTask().getId(), timeout * 1000, 10000);
   }
 
-  private void setCurrentEarliestUpdatedOn(ZonedDateTime updatedOn) {
-    if (this.earliestUpdatedOn == null || this.earliestUpdatedOn.isAfter(updatedOn)) {
+  private void setEarliestUpdatedOn(ZonedDateTime updatedOn) {
+    if (updatedOn == null) {
+      this.earliestUpdatedOn = null;
+    } else if (this.earliestUpdatedOn == null || this.earliestUpdatedOn.isAfter(updatedOn)) {
       this.earliestUpdatedOn = updatedOn;
     }
   }
@@ -341,6 +343,7 @@ public class EvolveService {
       this.deleteBranch(branch.getId());
       courseDTO.setTranslationStatus(TRANSLATED);
       this.updateCourse(courseDTO, startDateTime);
+      this.setEarliestUpdatedOn(startDateTime);
     } else {
       throw new RuntimeException(
           "Couldn't find asset content for course with id: " + courseDTO.getId());
@@ -359,7 +362,7 @@ public class EvolveService {
     this.startCourseTranslations(courseDTO.getId());
     courseDTO.setTranslationStatus(IN_TRANSLATION);
     this.updateCourse(courseDTO, startDateTime);
-    this.setCurrentEarliestUpdatedOn(startDateTime);
+    this.setEarliestUpdatedOn(startDateTime);
   }
 
   private void syncInTranslation(CourseDTO courseDTO, ZonedDateTime startDateTime)
@@ -369,12 +372,12 @@ public class EvolveService {
             this.getBranchName(courseDTO.getId()), this.repository);
     BranchStatistic branchStatistic = this.branchStatisticRepository.findByBranch(branch);
     if (branchStatistic == null || branchStatistic.getTotalCount() == 0) {
-      this.setCurrentEarliestUpdatedOn(courseDTO.getUpdatedOn());
+      this.setEarliestUpdatedOn(courseDTO.getUpdatedOn());
     } else if (branchStatistic.getTotalCount() > 0) {
       if (branchStatistic.getForTranslationCount() == 0) {
         this.syncTranslated(courseDTO, branch, startDateTime);
       } else {
-        this.setCurrentEarliestUpdatedOn(courseDTO.getUpdatedOn());
+        this.setEarliestUpdatedOn(courseDTO.getUpdatedOn());
       }
     }
   }
@@ -405,6 +408,7 @@ public class EvolveService {
                   this.syncInTranslation(courseDTO, startDateTime);
                 }
               } catch (Exception e) {
+                this.setEarliestUpdatedOn(this.syncDateService.getDate());
                 throw new RuntimeException(e.getMessage(), e);
               }
             });
