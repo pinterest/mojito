@@ -83,8 +83,6 @@ public class EvolveService {
 
   private final BranchService branchService;
 
-  private final Long timeout = 3600L;
-
   private final AssetExtractionByBranchRepository assetExtractionByBranchRepository;
 
   private final SyncDateService syncDateService;
@@ -186,7 +184,9 @@ public class EvolveService {
     sourceAsset.setContent(
         this.xliffUtils.removeAttribute(localizedAssetContent, "target-language"));
     this.pollableTaskService.waitForPollableTask(
-        this.importSourceAsset(sourceAsset).getPollableTask().getId(), timeout * 1000, 10000);
+        this.importSourceAsset(sourceAsset).getPollableTask().getId(),
+        this.evolveConfigurationProperties.getTimeout() * 1000,
+        10000);
   }
 
   private int getMaxRetries() {
@@ -255,7 +255,9 @@ public class EvolveService {
     sourceAsset.setBranchCreatedByUsername(SYSTEM_USERNAME);
     sourceAsset.setContent(assetContent.getContent());
     this.pollableTaskService.waitForPollableTask(
-        this.importSourceAsset(sourceAsset).getPollableTask().getId(), timeout * 1000, 10000);
+        this.importSourceAsset(sourceAsset).getPollableTask().getId(),
+        this.evolveConfigurationProperties.getTimeout() * 1000,
+        10000);
   }
 
   private void updateCourseTranslations(int courseId, Asset asset, AssetContent assetContent) {
@@ -295,7 +297,9 @@ public class EvolveService {
     PollableFuture<Void> pollableFuture =
         this.branchService.asyncDeleteBranch(this.repository.getId(), branchId);
     this.pollableTaskService.waitForPollableTask(
-        pollableFuture.getPollableTask().getId(), timeout * 1000, 10000);
+        pollableFuture.getPollableTask().getId(),
+        this.evolveConfigurationProperties.getTimeout() * 1000,
+        10000);
   }
 
   private void setEarliestUpdatedOn(ZonedDateTime updatedOn) {
