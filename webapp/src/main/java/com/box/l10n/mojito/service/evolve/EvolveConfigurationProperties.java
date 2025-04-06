@@ -22,7 +22,7 @@ public class EvolveConfigurationProperties {
 
   private Integer retryMaxBackoffSecs;
 
-  private Long timeout = 3600L;
+  private Long taskTimeout = 3600L;
 
   public String getRepositoryName() {
     return repositoryName;
@@ -88,11 +88,11 @@ public class EvolveConfigurationProperties {
     this.retryMaxBackoffSecs = retryMaxBackoffSecs;
   }
 
-  public Long getTimeout() {
-    return timeout;
+  public Long getTaskTimeout() {
+    return taskTimeout;
   }
 
-  public void setTimeout(Long timeout) {
-    this.timeout = timeout;
+  public void setTaskTimeout(Long taskTimeout) {
+    this.taskTimeout = taskTimeout;
   }
 }

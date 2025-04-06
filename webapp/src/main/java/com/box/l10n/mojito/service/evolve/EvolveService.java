@@ -185,7 +185,7 @@ public class EvolveService {
         this.xliffUtils.removeAttribute(localizedAssetContent, "target-language"));
     this.pollableTaskService.waitForPollableTask(
         this.importSourceAsset(sourceAsset).getPollableTask().getId(),
-        this.evolveConfigurationProperties.getTimeout() * 1000,
+        this.evolveConfigurationProperties.getTaskTimeout() * 1000,
         10000);
   }
 
@@ -256,7 +256,7 @@ public class EvolveService {
     sourceAsset.setContent(assetContent.getContent());
     this.pollableTaskService.waitForPollableTask(
         this.importSourceAsset(sourceAsset).getPollableTask().getId(),
-        this.evolveConfigurationProperties.getTimeout() * 1000,
+        this.evolveConfigurationProperties.getTaskTimeout() * 1000,
         10000);
   }
 
@@ -298,7 +298,7 @@ public class EvolveService {
         this.branchService.asyncDeleteBranch(this.repository.getId(), branchId);
     this.pollableTaskService.waitForPollableTask(
         pollableFuture.getPollableTask().getId(),
-        this.evolveConfigurationProperties.getTimeout() * 1000,
+        this.evolveConfigurationProperties.getTaskTimeout() * 1000,
         10000);
   }
 
