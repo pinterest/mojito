@@ -53,7 +53,7 @@ public class EvolveClientTest {
 
   @Captor ArgumentCaptor<Integer> courseIdCaptor;
 
-  private void initFullData() {
+  private void initDataWithAllCourseTypes() {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
     courseDTO1.setUpdatedOn(ZonedDateTime.now());
@@ -94,8 +94,8 @@ public class EvolveClientTest {
   }
 
   @Test
-  public void testGetCoursesWithFullData() {
-    this.initFullData();
+  public void testGetCoursesWithAllCourseTypes() {
+    this.initDataWithAllCourseTypes();
     CoursesGetRequest coursesGetRequest = new CoursesGetRequest("en", null, null);
 
     List<CourseDTO> courses = this.evolveClient.getCourses(coursesGetRequest).toList();
@@ -123,7 +123,7 @@ public class EvolveClientTest {
     }
   }
 
-  private void initEmptyData() {
+  private void initEmptyCoursesData() {
     reset(this.mockRestTemplate);
     CoursesDTO coursesDTO = new CoursesDTO();
     coursesDTO.setCourses(ImmutableList.of());
@@ -136,8 +136,8 @@ public class EvolveClientTest {
   }
 
   @Test
-  public void testGetCoursesWithUpdatedOnValues() {
-    this.initEmptyData();
+  public void testGetCoursesWithUpdatedOnDates() {
+    this.initEmptyCoursesData();
 
     ZonedDateTime updatedOnTo = ZonedDateTime.now();
     ZonedDateTime updatedOnFrom = updatedOnTo.minusDays(1);
@@ -155,7 +155,7 @@ public class EvolveClientTest {
                 UriComponentsBuilder.fromPath(updatedOnFrom.toString()).toUriString()),
         urlCaptor.getValue());
 
-    this.initEmptyData();
+    this.initEmptyCoursesData();
 
     coursesGetRequest = new CoursesGetRequest("en", null, updatedOnTo);
     count = this.evolveClient.getCourses(coursesGetRequest).count();
@@ -171,7 +171,7 @@ public class EvolveClientTest {
                 UriComponentsBuilder.fromPath(updatedOnTo.toString()).toUriString()),
         urlCaptor.getValue());
 
-    this.initEmptyData();
+    this.initEmptyCoursesData();
 
     coursesGetRequest = new CoursesGetRequest("en", updatedOnFrom, updatedOnTo);
     count = this.evolveClient.getCourses(coursesGetRequest).count();
@@ -190,7 +190,7 @@ public class EvolveClientTest {
   }
 
   @Test
-  public void testGetCoursesWithZeroPages() {
+  public void testGetCoursesWithZeroTotalPages() {
     CoursesDTO coursesDTO = new CoursesDTO();
     coursesDTO.setCourses(ImmutableList.of());
     PaginationDTO pagination1 = new PaginationDTO();
@@ -208,7 +208,7 @@ public class EvolveClientTest {
   }
 
   @Test
-  public void testGetCoursesWithFailure() {
+  public void testGetCoursesWhenThrowingException() {
     when(this.mockRestTemplate.getForObject(anyString(), any()))
         .thenThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)));
 
@@ -241,7 +241,7 @@ public class EvolveClientTest {
   }
 
   @Test
-  public void testGetCoursesWithInitialFailure() {
+  public void testGetCoursesSucceedsAfterRetry() {
     this.initDataWithInitialFailure();
 
     this.evolveClient = new EvolveClient(this.mockRestTemplate, this.apiPath);
@@ -255,7 +255,7 @@ public class EvolveClientTest {
     verify(this.mockRestTemplate, times(2)).getForObject(anyString(), any());
   }
 
-  private void initDataForCourseTranslation() {
+  private void initCourseTranslationData() {
     Mockito.reset(this.mockRestTemplate);
     when(this.mockRestTemplate.postForObject(anyString(), any(), any())).thenReturn("content");
     this.evolveClient = new EvolveClient(this.mockRestTemplate, this.apiPath);
@@ -263,7 +263,7 @@ public class EvolveClientTest {
 
   @Test
   public void testStartCourseTranslation() {
-    this.initDataForCourseTranslation();
+    this.initCourseTranslationData();
 
     String response = this.evolveClient.startCourseTranslation(1, "es", Sets.newHashSet());
 
@@ -275,7 +275,7 @@ public class EvolveClientTest {
     assertTrue(httpEntity.getHeaders().getAccept().contains(MediaType.APPLICATION_XML));
     assertEquals("content", response);
 
-    this.initDataForCourseTranslation();
+    this.initCourseTranslationData();
 
     this.evolveClient.startCourseTranslation(1, "es", Sets.newHashSet("fr", "it"));
 
