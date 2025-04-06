@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 @ConditionalOnProperty("l10n.evolve.url")
-@DisallowConcurrentExecution
 public class EvolveSyncJob extends QuartzPollableJob<Void, Void> {
   /** logger */
   static Logger logger = LoggerFactory.getLogger(EvolveSyncJob.class);

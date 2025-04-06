@@ -1,6 +1,6 @@
 package com.box.l10n.mojito.service.scheduledjob;
 
-public abstract class ScheduledJobProperties {
+public class ScheduledJobProperties {
   private int version = 1;
 
   public int getVersion() {

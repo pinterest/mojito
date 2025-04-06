@@ -24,6 +24,12 @@ public class EvolveConfigurationProperties {
 
   private Long taskTimeout = 3600L;
 
+  private String jobFailureNotificationTitle = "MOJITO | Evolve sync failed";
+
+  private String jobUuid;
+
+  private String jobCron;
+
   public String getRepositoryName() {
     return repositoryName;
   }
@@ -94,5 +100,29 @@ public class EvolveConfigurationProperties {
 
   public void setTaskTimeout(Long taskTimeout) {
     this.taskTimeout = taskTimeout;
+  }
+
+  public String getJobFailureNotificationTitle() {
+    return jobFailureNotificationTitle;
+  }
+
+  public void setJobFailureNotificationTitle(String jobFailureNotificationTitle) {
+    this.jobFailureNotificationTitle = jobFailureNotificationTitle;
+  }
+
+  public String getJobUuid() {
+    return jobUuid;
+  }
+
+  public void setJobUuid(String jobUuid) {
+    this.jobUuid = jobUuid;
+  }
+
+  public String getJobCron() {
+    return jobCron;
+  }
+
+  public void setJobCron(String jobCron) {
+    this.jobCron = jobCron;
   }
 }
