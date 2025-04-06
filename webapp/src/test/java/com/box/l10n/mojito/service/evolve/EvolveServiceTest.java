@@ -211,32 +211,6 @@ public class EvolveServiceTest extends ServiceTestBase {
     assertEquals(4, branchStatistic.getTotalCount());
   }
 
-  @Test
-  public void testSyncForReadyForTranslationCourseAndInitialSyncDate()
-      throws RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException, IOException {
-    ZonedDateTime now = ZonedDateTime.now();
-    ZonedDateTime updatedOn = now.minusDays(1);
-    this.syncDateService.setDate(updatedOn.minusDays(1));
-    final int courseId = 1;
-    this.initReadyForTranslationData(updatedOn);
-    Locale esLocale = this.localeService.findByBcp47Tag("es");
-    RepositoryLocale esRepositoryLocale = new RepositoryLocale();
-    esRepositoryLocale.setLocale(esLocale);
-    Repository repository =
-        repositoryService.createRepository(
-            testIdWatcher.getEntityName("test"),
-            "",
-            this.localeService.getDefaultLocale(),
-            false,
-            Sets.newHashSet(),
-            Sets.newHashSet(esRepositoryLocale));
-
-    this.evolveService.sync();
-
-    assertTrue(
-        this.syncDateService.getDate().isEqual(now) || this.syncDateService.getDate().isAfter(now));
-  }
-
   private void initInTranslationData(ZonedDateTime updatedOn) {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
@@ -1039,7 +1013,7 @@ public class EvolveServiceTest extends ServiceTestBase {
   }
 
   @Test
-  public void testSyncForUpdateCourseInTranslationWithException()
+  public void testSyncWhenUpdateCourseThrowsAnException()
       throws RepositoryNameAlreadyUsedException,
           RepositoryLocaleCreationException,
           UnsupportedAssetFilterTypeException,
@@ -1113,6 +1087,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     assertThrows(RuntimeException.class, () -> this.evolveService.sync());
 
     verify(this.evolveClientMock, times(1)).updateCourseTranslation(anyInt(), anyString());
+    verify(this.evolveClientMock, times(3)).updateCourse(anyInt(), any(), any());
     assertNull(this.syncDateService.getDate());
 
     ZonedDateTime syncDate = ZonedDateTime.now().minusDays(2);
