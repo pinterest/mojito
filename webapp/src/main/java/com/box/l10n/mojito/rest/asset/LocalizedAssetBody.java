@@ -50,6 +50,8 @@ public class LocalizedAssetBody {
 
   Status status = Status.ALL;
 
+  String appendBranchTextUnitsId;
+
   public LocalizedAssetBody() {}
 
   public LocalizedAssetBody(String bcp47Tag, String content) {
@@ -135,5 +137,13 @@ public class LocalizedAssetBody {
 
   public void setPullRunName(String pullRunName) {
     this.pullRunName = pullRunName;
+  }
+
+  public String getAppendBranchTextUnitsId() {
+    return appendBranchTextUnitsId;
+  }
+
+  public void setAppendBranchTextUnitsId(String appendBranchTextUnitsId) {
+    this.appendBranchTextUnitsId = appendBranchTextUnitsId;
   }
 }
