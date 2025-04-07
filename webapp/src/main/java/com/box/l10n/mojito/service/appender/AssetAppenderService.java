@@ -1,6 +1,7 @@
 package com.box.l10n.mojito.service.appender;
 
 import com.box.l10n.mojito.entity.Asset;
+import com.box.l10n.mojito.entity.BaseEntity;
 import com.box.l10n.mojito.entity.Branch;
 import com.box.l10n.mojito.rest.asset.LocalizedAssetBody;
 import com.box.l10n.mojito.service.branch.BranchRepository;
@@ -22,13 +23,27 @@ public class AssetAppenderService {
 
   static Logger logger = LoggerFactory.getLogger(AssetAppenderService.class);
 
-  @Autowired AssetAppenderFactory assetAppenderFactory;
-  @Autowired private BranchRepository branchRepository;
+  private final int HARD_TEXT_UNIT_LIMIT = 5;
 
-  @Autowired BranchStatisticService branchStatisticService;
+  private final AssetAppenderFactory assetAppenderFactory;
+  private final BranchRepository branchRepository;
+  private final BranchStatisticService branchStatisticService;
+  private final PushRunRepository pushRunRepository;
+  private final AppendedAssetBlobStorage appendedAssetBlobStorage;
 
-  private final int HARD_LIMIT = 5;
-  @Autowired private PushRunRepository pushRunRepository;
+  @Autowired
+  public AssetAppenderService(
+      AssetAppenderFactory assetAppenderFactory,
+      BranchRepository branchRepository,
+      BranchStatisticService branchStatisticService,
+      PushRunRepository pushRunRepository,
+      AppendedAssetBlobStorage appendedAssetBlobStorage) {
+    this.assetAppenderFactory = assetAppenderFactory;
+    this.branchRepository = branchRepository;
+    this.branchStatisticService = branchStatisticService;
+    this.pushRunRepository = pushRunRepository;
+    this.appendedAssetBlobStorage = appendedAssetBlobStorage;
+  }
 
   /**
    * Fetches text units under qualifying branches for appending, passes them through the equivalent
@@ -67,7 +82,7 @@ public class AssetAppenderService {
     int currentAppendCount = 0;
     for (Branch branch : branchesToAppend) {
       List<TextUnitDTO> textUnitsToAppend = branchStatisticService.getTextUnitDTOsForBranch(branch);
-      if (currentAppendCount + textUnitsToAppend.size() > HARD_LIMIT) {
+      if (currentAppendCount + textUnitsToAppend.size() > HARD_TEXT_UNIT_LIMIT) {
         logger.error("TODO: Log errors, emit metrics");
         break;
       }
@@ -87,8 +102,15 @@ public class AssetAppenderService {
           logger.info("Appended branch {}", b.getName());
         });
 
-    // TODO: Artifact to S3
+    String appendedAssetContent = appender.getAssetContent();
 
-    return appender.getAssetContent();
+    appendedAssetBlobStorage.saveAppendedSource(
+        localizedAssetBody.getAppendBranchTextUnitsId(), appendedAssetContent);
+
+    appendedAssetBlobStorage.saveAppendedBranches(
+        localizedAssetBody.getAppendBranchTextUnitsId(),
+        appendedBranches.stream().map(BaseEntity::getId).toList());
+
+    return appendedAssetContent;
   }
 }
