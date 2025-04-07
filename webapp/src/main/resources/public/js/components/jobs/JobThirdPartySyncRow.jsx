@@ -10,7 +10,8 @@ import PropTypes from "prop-types";
 class JobThirdPartySyncRow extends React.Component {
 
     static propTypes = {
-        "job": PropTypes.object.isRequired
+        "job": PropTypes.object.isRequired,
+        "hideThirdPartyLink": PropTypes.bool,
     }
 
     constructor(props) {
@@ -100,7 +101,7 @@ class JobThirdPartySyncRow extends React.Component {
                             </h1>
                             <JobStatusLabel status={job.enabled ? job.status : "DISABLED"} />
                         </div>
-                        <div>{job.repository} - {this.getThirdPartyLink(job)}</div>
+                        <div>{job.repository}{!this.props.hideThirdPartyLink && ` - ${this.getThirdPartyLink(job)}`}</div>
                     </div>
                     <div className="job-timings">
                         <div>Started @ {job.startDate && this.convertUnixToDate(job.startDate)}</div>
