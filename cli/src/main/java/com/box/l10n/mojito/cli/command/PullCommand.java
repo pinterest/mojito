@@ -172,6 +172,13 @@ public class PullCommand extends Command {
           "Indicates that the pull should use parallel execution. This is run as an asynchronous request, if --async-ws is also specified it will be ignored.")
   Boolean isParallel = false;
 
+  @Parameter(
+      names = {"--append-branch-text-units", "-abtu"},
+      required = false,
+      description =
+          "Appends text units from fully translated branches, must pass in a unique identifier that the commit-create step will use e.g -abtu <uuid>")
+  String appendBranchTextUnits;
+
   @Autowired AssetClient assetClient;
 
   @Autowired CommandHelper commandHelper;
@@ -328,6 +335,7 @@ public class PullCommand extends Command {
       LocalizedAssetBody localizedAsset =
           getLocalizedAsset(
               repository, sourceFileMatch, repositoryLocale, outputBcp47tag, filterOptions);
+      localizedAsset.setAppendBranchTextUnitsId(appendBranchTextUnits);
       writeLocalizedAssetToTargetDirectory(localizedAsset, sourceFileMatch);
     } else {
       consoleWriter
@@ -494,6 +502,7 @@ public class PullCommand extends Command {
     localizedAssetBody.setInheritanceMode(inheritanceMode);
     localizedAssetBody.setStatus(status);
     localizedAssetBody.setPullRunName(pullRunName);
+    localizedAssetBody.setAppendBranchTextUnitsId(appendBranchTextUnits);
     return localizedAssetBody;
   }
 
