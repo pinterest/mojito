@@ -5,7 +5,12 @@ import static com.box.l10n.mojito.quartz.QuartzSchedulerManager.DEFAULT_SCHEDULE
 import com.box.l10n.mojito.entity.ScheduledJob;
 import com.box.l10n.mojito.quartz.QuartzSchedulerManager;
 import com.box.l10n.mojito.retry.DeadLockLoserExceptionRetryTemplate;
+import com.box.l10n.mojito.service.evolve.EvolveConfigurationProperties;
+import com.box.l10n.mojito.service.locale.LocaleService;
+import com.box.l10n.mojito.service.repository.RepositoryLocaleCreationException;
+import com.box.l10n.mojito.service.repository.RepositoryNameAlreadyUsedException;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
+import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.service.scheduledjob.jobs.ScheduledThirdPartySyncProperties;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobConfig;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobsConfig;
@@ -56,6 +61,9 @@ public class ScheduledJobManager {
   private final ScheduledJobTypeRepository scheduledJobTypeRepository;
   private final RepositoryRepository repositoryRepository;
   private final DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate;
+  private final EvolveConfigurationProperties evolveConfigurationProperties;
+  private final RepositoryService repositoryService;
+  private final LocaleService localeService;
 
   /* Quartz scheduler dedicated to scheduled jobs using in memory data source.
    * The value is also set using equals as this is not managed by Spring Boot in the tests. */
@@ -74,7 +82,10 @@ public class ScheduledJobManager {
       ScheduledJobStatusRepository scheduledJobStatusRepository,
       ScheduledJobTypeRepository scheduledJobTypeRepository,
       RepositoryRepository repositoryRepository,
-      DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate) {
+      DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate,
+      EvolveConfigurationProperties evolveConfigurationProperties,
+      LocaleService localeService,
+      RepositoryService repositoryService) {
     this.thirdPartySyncJobsConfig = thirdPartySyncJobConfig;
     this.schedulerManager = schedulerManager;
     this.scheduledJobRepository = scheduledJobRepository;
@@ -82,10 +93,17 @@ public class ScheduledJobManager {
     this.scheduledJobTypeRepository = scheduledJobTypeRepository;
     this.repositoryRepository = repositoryRepository;
     this.deadlockRetryTemplate = deadlockRetryTemplate;
+    this.evolveConfigurationProperties = evolveConfigurationProperties;
+    this.localeService = localeService;
+    this.repositoryService = repositoryService;
   }
 
   @PostConstruct
-  public void init() throws ClassNotFoundException, SchedulerException {
+  public void init()
+      throws ClassNotFoundException,
+          SchedulerException,
+          RepositoryNameAlreadyUsedException,
+          RepositoryLocaleCreationException {
     logger.info("Scheduled Job Manager started.");
     // Add Job Listener
     getScheduler()
@@ -99,6 +117,7 @@ public class ScheduledJobManager {
         .addTriggerListener(new ScheduledJobTriggerListener(scheduledJobRepository));
 
     pushJobsToDB();
+    pushEvolveJobToDB();
     cleanQuartzJobs();
     scheduleAllJobs();
   }
@@ -133,6 +152,43 @@ public class ScheduledJobManager {
     }
   }
 
+  private void pushJobToDB(
+      String uuid,
+      String cron,
+      String repositoryName,
+      ScheduledJobType scheduledJobType,
+      ScheduledJobProperties scheduledJobProperties) {
+    if (uuidPool.contains(uuid)) {
+      throw new RuntimeException(
+          "Duplicate UUID found for scheduled job: "
+              + uuid
+              + " please change this UUID to be unique.");
+    }
+
+    uuidPool.add(uuid);
+
+    Optional<ScheduledJob> optScheduledJob = scheduledJobRepository.findByUuid(uuid);
+    ScheduledJob scheduledJob = optScheduledJob.orElseGet(ScheduledJob::new);
+
+    scheduledJob.setUuid(uuid);
+    scheduledJob.setCron(cron);
+    scheduledJob.setRepository(repositoryRepository.findByName(repositoryName));
+    scheduledJob.setJobType(scheduledJobTypeRepository.findByEnum(scheduledJobType));
+    scheduledJob.setProperties(scheduledJobProperties);
+
+    if (scheduledJob.getJobStatus() == null) {
+      scheduledJob.setJobStatus(
+          scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SCHEDULED));
+    }
+
+    try {
+      scheduledJobRepository.save(scheduledJob);
+    } catch (DataIntegrityViolationException e) {
+      // Attempted to insert another scheduled job into the table with the same repo and job type,
+      // this can happen in a clustered quartz environment, don't need to display the error.
+    }
+  }
+
   /** Push the jobs defined in the application.properties to the jobs table. */
   public void pushJobsToDB() {
     for (ThirdPartySyncJobConfig syncJobConfig :
@@ -145,37 +201,26 @@ public class ScheduledJobManager {
         continue;
       }
 
-      if (uuidPool.contains(syncJobConfig.getUuid())) {
-        throw new RuntimeException(
-            "Duplicate UUID found for scheduled job: "
-                + syncJobConfig.getUuid()
-                + " please change this UUID to be unique.");
-      }
+      pushJobToDB(
+          syncJobConfig.getUuid(),
+          syncJobConfig.getCron(),
+          syncJobConfig.getRepository(),
+          ScheduledJobType.THIRD_PARTY_SYNC,
+          getScheduledThirdPartySyncProperties(syncJobConfig));
+    }
+  }
 
-      uuidPool.add(syncJobConfig.getUuid());
-
-      Optional<ScheduledJob> optScheduledJob =
-          scheduledJobRepository.findByUuid(syncJobConfig.getUuid());
-      ScheduledJob scheduledJob = optScheduledJob.orElseGet(ScheduledJob::new);
-
-      scheduledJob.setUuid(syncJobConfig.getUuid());
-      scheduledJob.setCron(syncJobConfig.getCron());
-      scheduledJob.setRepository(repositoryRepository.findByName(syncJobConfig.getRepository()));
-      scheduledJob.setJobType(
-          scheduledJobTypeRepository.findByEnum(ScheduledJobType.THIRD_PARTY_SYNC));
-      scheduledJob.setProperties(getScheduledThirdPartySyncProperties(syncJobConfig));
-
-      if (scheduledJob.getJobStatus() == null) {
-        scheduledJob.setJobStatus(
-            scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SCHEDULED));
-      }
-
-      try {
-        scheduledJobRepository.save(scheduledJob);
-      } catch (DataIntegrityViolationException e) {
-        // Attempted to insert another scheduled job into the table with the same repo and job type,
-        // this can happen in a clustered quartz environment, don't need to display the error.
-      }
+  public void pushEvolveJobToDB() {
+    if (!Strings.isNullOrEmpty(evolveConfigurationProperties.getJobUuid())
+        && !Strings.isNullOrEmpty(evolveConfigurationProperties.getJobCron())) {
+      pushJobToDB(
+          evolveConfigurationProperties.getJobUuid(),
+          evolveConfigurationProperties.getJobCron(),
+          evolveConfigurationProperties.getRepositoryName(),
+          ScheduledJobType.EVOLVE_SYNC,
+          new ScheduledJobProperties());
+    } else {
+      logger.info("UUID or cron expression not defined for Evolve synchronization, skipping it.");
     }
   }
 

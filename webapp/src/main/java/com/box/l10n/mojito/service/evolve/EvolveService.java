@@ -6,6 +6,7 @@ import static com.box.l10n.mojito.service.evolve.dto.TranslationStatusType.TRANS
 import static com.box.l10n.mojito.service.security.user.UserService.SYSTEM_USERNAME;
 import static java.util.Optional.ofNullable;
 
+import com.box.l10n.mojito.LocaleMappingHelper;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.AssetContent;
 import com.box.l10n.mojito.entity.AssetExtractionByBranch;
@@ -32,12 +33,14 @@ import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.xliff.XliffUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -56,6 +59,8 @@ public class EvolveService {
   private String targetLocaleBcp47Tag;
 
   private Set<String> additionalTargetLocaleBcp47Tags;
+
+  private Map<String, String> localeMappings;
 
   private ZonedDateTime earliestUpdatedOn;
 
@@ -87,6 +92,8 @@ public class EvolveService {
 
   private final SyncDateService syncDateService;
 
+  private final LocaleMappingHelper localeMappingHelper;
+
   public EvolveService(
       EvolveConfigurationProperties evolveConfigurationProperties,
       RepositoryService repositoryService,
@@ -100,7 +107,8 @@ public class EvolveService {
       TMService tmService,
       BranchService branchService,
       AssetExtractionByBranchRepository assetExtractionByBranchRepository,
-      SyncDateService syncDateService) {
+      SyncDateService syncDateService,
+      LocaleMappingHelper localeMappingHelper) {
     this.evolveConfigurationProperties = evolveConfigurationProperties;
     this.repositoryService = repositoryService;
     this.evolveClient = evolveClient;
@@ -114,15 +122,23 @@ public class EvolveService {
     this.branchService = branchService;
     this.assetExtractionByBranchRepository = assetExtractionByBranchRepository;
     this.syncDateService = syncDateService;
+    this.localeMappingHelper = localeMappingHelper;
   }
 
   private void setLocales() {
     Preconditions.checkNotNull(this.repository);
 
+    this.localeMappings =
+        ofNullable(
+                this.localeMappingHelper.getLocaleMapping(
+                    evolveConfigurationProperties.getLocaleMapping()))
+            .orElse(ImmutableMap.of());
     this.targetRepositoryLocales = new ArrayList<>();
     this.additionalTargetLocaleBcp47Tags = new HashSet<>();
     for (RepositoryLocale repositoryLocale : this.repository.getRepositoryLocales()) {
-      String localeBcp47Tag = repositoryLocale.getLocale().getBcp47Tag();
+      String repositoryLocaleBcp47Tag = repositoryLocale.getLocale().getBcp47Tag();
+      String localeBcp47Tag =
+          this.localeMappings.getOrDefault(repositoryLocaleBcp47Tag, repositoryLocaleBcp47Tag);
       if (repositoryLocale.getParentLocale() == null) {
         this.sourceLocaleBcp47Tag = localeBcp47Tag;
       } else {
@@ -264,6 +280,7 @@ public class EvolveService {
     String normalizedContent = NormalizationUtils.normalize(assetContent.getContent());
     this.targetRepositoryLocales.forEach(
         repositoryLocale -> {
+          String localeBcp47Tag = repositoryLocale.getLocale().getBcp47Tag();
           String generateLocalized;
           try {
             generateLocalized =
@@ -271,7 +288,7 @@ public class EvolveService {
                     asset,
                     normalizedContent,
                     repositoryLocale,
-                    repositoryLocale.getLocale().getBcp47Tag(),
+                    this.localeMappings.getOrDefault(localeBcp47Tag, localeBcp47Tag),
                     null,
                     ImmutableList.of(),
                     Status.ACCEPTED,

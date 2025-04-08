@@ -30,6 +30,8 @@ public class EvolveConfigurationProperties {
 
   private String jobCron;
 
+  private String localeMapping;
+
   public String getRepositoryName() {
     return repositoryName;
   }
@@ -124,5 +126,13 @@ public class EvolveConfigurationProperties {
 
   public void setJobCron(String jobCron) {
     this.jobCron = jobCron;
+  }
+
+  public String getLocaleMapping() {
+    return localeMapping;
+  }
+
+  public void setLocaleMapping(String localeMapping) {
+    this.localeMapping = localeMapping;
   }
 }

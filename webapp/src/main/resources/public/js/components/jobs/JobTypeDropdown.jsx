@@ -20,6 +20,10 @@ let JobTypeDropDown = createReactClass({
         this.props.onJobTypeChange(jobType);
     },
 
+    getJobName(jobType) {
+        return jobType.toLowerCase().split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+    },
+
     displayName: 'JobTypeDropDown',
 
     forceDropdownOpen: false,
@@ -30,12 +34,12 @@ let JobTypeDropDown = createReactClass({
     render() {
         return (
                 <span className="mlm">
-                    <DropdownButton id="JobTypeDropdown" disabled={false} title={this.state.jobType}>
+                    <DropdownButton id="JobTypeDropdown" disabled={false} title={this.getJobName(this.state.jobType)}>
                         {Object.values(JobType).map(jobType => (
                             <MenuItem eventKey={jobType}
                                       key={jobType} active={jobType === this.state.jobType}
                                       onSelect={(selectedJobType, _) => this.onJobTypeChange(selectedJobType)}>
-                                {jobType}
+                                {this.getJobName(jobType)}
                             </MenuItem>
                         ))}
                     </DropdownButton>

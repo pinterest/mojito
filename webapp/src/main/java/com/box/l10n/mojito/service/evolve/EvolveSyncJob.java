@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.evolve;
 
+import com.box.l10n.mojito.LocaleMappingHelper;
 import com.box.l10n.mojito.quartz.QuartzPollableJob;
 import com.box.l10n.mojito.service.asset.AssetService;
 import com.box.l10n.mojito.service.assetExtraction.AssetExtractionByBranchRepository;
@@ -49,6 +50,8 @@ public class EvolveSyncJob extends QuartzPollableJob<Void, Void> {
 
   @Autowired private SyncDateService syncDateService;
 
+  @Autowired private LocaleMappingHelper localeMappingHelper;
+
   @Override
   public Void call(Void input) {
     logger.debug("Run EvolveSyncJob");
@@ -65,7 +68,8 @@ public class EvolveSyncJob extends QuartzPollableJob<Void, Void> {
             this.tmService,
             this.branchService,
             this.assetExtractionByBranchRepository,
-            this.syncDateService)
+            this.syncDateService,
+            this.localeMappingHelper)
         .sync();
     return null;
   }

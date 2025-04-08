@@ -19,6 +19,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.box.l10n.mojito.LocaleMappingHelper;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.Branch;
 import com.box.l10n.mojito.entity.BranchStatistic;
@@ -100,6 +101,8 @@ public class EvolveServiceTest extends ServiceTestBase {
 
   @Autowired AssetExtractionByBranchRepository assetExtractionByBranchRepository;
 
+  @Autowired LocaleMappingHelper localeMappingHelper;
+
   @Rule public TestIdWatcher testIdWatcher = new TestIdWatcher();
 
   @Mock EvolveClient evolveClientMock;
@@ -122,6 +125,9 @@ public class EvolveServiceTest extends ServiceTestBase {
   public void before() {
     this.evolveConfigurationProperties = new EvolveConfigurationProperties();
     this.evolveConfigurationProperties.setRepositoryName(this.testIdWatcher.getEntityName("test"));
+    this.evolveConfigurationProperties.setMaxRetries(2);
+    this.evolveConfigurationProperties.setRetryMinBackoffSecs(1);
+    this.evolveConfigurationProperties.setRetryMaxBackoffSecs(1);
     this.syncDateService = new InMemorySyncDateService();
   }
 
@@ -140,12 +146,15 @@ public class EvolveServiceTest extends ServiceTestBase {
             this.tmService,
             this.branchService,
             this.assetExtractionByBranchRepository,
-            this.syncDateService);
+            this.syncDateService,
+            this.localeMappingHelper);
   }
 
-  private String getXliffContent(String fileName) throws IOException {
+  private String getXliffContent() throws IOException {
     return Files.readString(
-        Path.of(Resources.getResource("com/box/l10n/mojito/service/evolve/" + fileName).getPath()));
+        Path.of(
+            Resources.getResource("com/box/l10n/mojito/service/evolve/" + "course.xliff")
+                .getPath()));
   }
 
   private void initReadyForTranslationData(ZonedDateTime updatedOn) throws IOException {
@@ -157,7 +166,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
         .thenReturn(Stream.of(courseDTO1));
     when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
-        .thenReturn(this.getXliffContent("course.xliff"));
+        .thenReturn(this.getXliffContent());
 
     this.initEvolveService();
   }
@@ -249,7 +258,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     sourceAsset.setBranch(this.evolveService.getBranchName(courseId));
     sourceAsset.setRepositoryId(repository.getId());
     sourceAsset.setPath(this.evolveService.getAssetPath(courseId));
-    sourceAsset.setContent(this.getXliffContent("course.xliff"));
+    sourceAsset.setContent(this.getXliffContent());
 
     String normalizedContent = NormalizationUtils.normalize(sourceAsset.getContent());
     PollableFuture<Asset> assetFuture =
@@ -342,7 +351,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     sourceAsset.setBranch(this.evolveService.getBranchName(courseId));
     sourceAsset.setRepositoryId(repository.getId());
     sourceAsset.setPath(this.evolveService.getAssetPath(courseId));
-    sourceAsset.setContent(this.getXliffContent("course.xliff"));
+    sourceAsset.setContent(this.getXliffContent());
 
     String normalizedContent = NormalizationUtils.normalize(sourceAsset.getContent());
     PollableFuture<Asset> assetFuture =
@@ -414,7 +423,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     sourceAsset.setBranch(this.evolveService.getBranchName(courseId));
     sourceAsset.setRepositoryId(repository.getId());
     sourceAsset.setPath(this.evolveService.getAssetPath(courseId));
-    sourceAsset.setContent(this.getXliffContent("course.xliff"));
+    sourceAsset.setContent(this.getXliffContent());
 
     String normalizedContent = NormalizationUtils.normalize(sourceAsset.getContent());
     PollableFuture<Asset> assetFuture =
@@ -472,7 +481,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
         .thenReturn(Stream.of(courseDTO1, courseDTO2));
     when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
-        .thenReturn(this.getXliffContent("course.xliff"));
+        .thenReturn(this.getXliffContent());
 
     this.initEvolveService();
   }
@@ -506,7 +515,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     sourceAsset.setBranch(this.evolveService.getBranchName(inTranslationCourseId));
     sourceAsset.setRepositoryId(repository.getId());
     sourceAsset.setPath(this.evolveService.getAssetPath(inTranslationCourseId));
-    sourceAsset.setContent(this.getXliffContent("course.xliff"));
+    sourceAsset.setContent(this.getXliffContent());
 
     String normalizedContent = NormalizationUtils.normalize(sourceAsset.getContent());
     PollableFuture<Asset> assetFuture =
@@ -578,7 +587,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     sourceAsset.setBranch(this.evolveService.getBranchName(inTranslationCourseId));
     sourceAsset.setRepositoryId(repository.getId());
     sourceAsset.setPath(this.evolveService.getAssetPath(inTranslationCourseId));
-    sourceAsset.setContent(this.getXliffContent("course.xliff"));
+    sourceAsset.setContent(this.getXliffContent());
 
     String normalizedContent = NormalizationUtils.normalize(sourceAsset.getContent());
     PollableFuture<Asset> assetFuture =
@@ -720,7 +729,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     sourceAsset.setBranch(this.evolveService.getBranchName(courseId));
     sourceAsset.setRepositoryId(repository.getId());
     sourceAsset.setPath(this.evolveService.getAssetPath(courseId));
-    sourceAsset.setContent(this.getXliffContent("course.xliff"));
+    sourceAsset.setContent(this.getXliffContent());
 
     String normalizedContent = NormalizationUtils.normalize(sourceAsset.getContent());
     PollableFuture<Asset> assetFuture =
@@ -865,7 +874,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
         .thenReturn(Stream.of(courseDTO1));
     when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
-        .thenReturn(this.getXliffContent("course.xliff"));
+        .thenReturn(this.getXliffContent());
     doThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)))
         .when(this.evolveClientMock)
         .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
@@ -941,7 +950,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     sourceAsset.setBranch(this.evolveService.getBranchName(courseId));
     sourceAsset.setRepositoryId(repository.getId());
     sourceAsset.setPath(this.evolveService.getAssetPath(courseId));
-    sourceAsset.setContent(this.getXliffContent("course.xliff"));
+    sourceAsset.setContent(this.getXliffContent());
 
     String normalizedContent = NormalizationUtils.normalize(sourceAsset.getContent());
     PollableFuture<Asset> assetFuture =
@@ -1040,7 +1049,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     sourceAsset.setBranch(this.evolveService.getBranchName(courseId));
     sourceAsset.setRepositoryId(repository.getId());
     sourceAsset.setPath(this.evolveService.getAssetPath(courseId));
-    sourceAsset.setContent(this.getXliffContent("course.xliff"));
+    sourceAsset.setContent(this.getXliffContent());
 
     String normalizedContent = NormalizationUtils.normalize(sourceAsset.getContent());
     PollableFuture<Asset> assetFuture =
@@ -1094,5 +1103,105 @@ public class EvolveServiceTest extends ServiceTestBase {
     this.syncDateService.setDate(syncDate);
     assertThrows(RuntimeException.class, () -> this.evolveService.sync());
     assertEquals(syncDate, this.syncDateService.getDate());
+  }
+
+  @Test
+  public void testSyncForReadyForTranslationCourseWithLocaleMappings()
+      throws RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException, IOException {
+    final int courseId = 1;
+    this.evolveConfigurationProperties.setLocaleMapping("es-MX:es-419");
+    this.initReadyForTranslationData(ZonedDateTime.now().minusDays(1));
+    Locale esLocale = this.localeService.findByBcp47Tag("es-MX");
+    RepositoryLocale esRepositoryLocale = new RepositoryLocale();
+    esRepositoryLocale.setLocale(esLocale);
+    Repository repository =
+        repositoryService.createRepository(
+            testIdWatcher.getEntityName("test"),
+            "",
+            this.localeService.getDefaultLocale(),
+            false,
+            Sets.newHashSet(),
+            Sets.newHashSet(esRepositoryLocale));
+
+    this.evolveService.sync();
+
+    verify(this.evolveClientMock)
+        .startCourseTranslation(
+            this.integerCaptor.capture(),
+            this.stringCaptor.capture(),
+            this.additionalLocalesCaptor.capture());
+    assertEquals(courseId, (int) this.integerCaptor.getValue());
+    assertEquals("es-419", this.stringCaptor.getValue());
+    assertTrue(this.additionalLocalesCaptor.getValue().isEmpty());
+  }
+
+  @Test
+  public void testSyncForFullyTranslatedCourseWithLocaleMappings() throws RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException, IOException, UnsupportedAssetFilterTypeException, ExecutionException, InterruptedException {
+    final int courseId = 1;
+    this.evolveConfigurationProperties.setLocaleMapping("es-MX:es-419");
+    this.initInTranslationData(ZonedDateTime.now().minusDays(1));
+    Locale esLocale = this.localeService.findByBcp47Tag("es-MX");
+    RepositoryLocale esRepositoryLocale = new RepositoryLocale();
+    esRepositoryLocale.setLocale(esLocale);
+    Repository repository =
+        repositoryService.createRepository(
+            testIdWatcher.getEntityName("test"),
+            "",
+            this.localeService.getDefaultLocale(),
+            false,
+            Sets.newHashSet(),
+            Sets.newHashSet(esRepositoryLocale));
+    SourceAsset sourceAsset = new SourceAsset();
+    sourceAsset.setBranch(this.evolveService.getBranchName(courseId));
+    sourceAsset.setRepositoryId(repository.getId());
+    sourceAsset.setPath(this.evolveService.getAssetPath(courseId));
+    sourceAsset.setContent(this.getXliffContent());
+
+    String normalizedContent = NormalizationUtils.normalize(sourceAsset.getContent());
+    PollableFuture<Asset> assetFuture =
+        this.assetService.addOrUpdateAssetAndProcessIfNeeded(
+            sourceAsset.getRepositoryId(),
+            sourceAsset.getPath(),
+            normalizedContent,
+            sourceAsset.isExtractedContent(),
+            sourceAsset.getBranch(),
+            sourceAsset.getBranchCreatedByUsername(),
+            sourceAsset.getBranchNotifiers(),
+            null,
+            sourceAsset.getFilterConfigIdOverride(),
+            sourceAsset.getFilterOptions());
+
+    sourceAsset.setAddedAssetId(assetFuture.get().getId());
+    sourceAsset.setPollableTask(assetFuture.getPollableTask());
+    this.pollableTaskService.waitForPollableTask(sourceAsset.getPollableTask().getId());
+
+    TextUnitSearcherParameters textUnitSearcherParameters =
+        new TextUnitSearcherParameters.Builder().repositoryId(repository.getId()).build();
+    List<TextUnitDTO> textUnits = this.textUnitSearcher.search(textUnitSearcherParameters);
+
+    textUnits.forEach(
+        textUnitDTO ->
+            tmService.addTMTextUnitCurrentVariant(
+                textUnitDTO.getTmTextUnitId(),
+                esLocale.getId(),
+                "Text",
+                textUnitDTO.getTargetComment(),
+                TMTextUnitVariant.Status.APPROVED,
+                true));
+
+    Branch branch =
+        this.branchRepository.findByNameAndRepository(
+            this.evolveService.getBranchName(courseId), repository);
+    assertNotNull(branch);
+    assertFalse(branch.getDeleted());
+
+    this.branchStatisticService.computeAndSaveBranchStatistics(branch);
+
+    this.evolveService.sync();
+
+    verify(this.evolveClientMock)
+        .updateCourseTranslation(integerCaptor.capture(), stringCaptor.capture());
+    assertEquals(courseId, (int) integerCaptor.getValue());
+    assertTrue(stringCaptor.getValue().contains("target-language=\"es-419\""));
   }
 }

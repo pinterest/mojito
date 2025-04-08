@@ -11,6 +11,8 @@ import com.box.l10n.mojito.entity.ScheduledJob;
 import com.box.l10n.mojito.quartz.QuartzSchedulerManager;
 import com.box.l10n.mojito.retry.DeadLockLoserExceptionRetryTemplate;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
+import com.box.l10n.mojito.service.evolve.EvolveConfigurationProperties;
+import com.box.l10n.mojito.service.locale.LocaleService;
 import com.box.l10n.mojito.service.repository.RepositoryLocaleCreationException;
 import com.box.l10n.mojito.service.repository.RepositoryNameAlreadyUsedException;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
@@ -50,6 +52,8 @@ public class ScheduledJobManagerTest extends ServiceTestBase {
   @Autowired ScheduledJobTypeRepository scheduledJobTypeRepository;
   @Autowired RepositoryRepository repositoryRepository;
   @Autowired DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate;
+  @Autowired EvolveConfigurationProperties evolveConfigurationProperties;
+  @Autowired LocaleService localeService;
   @Rule public TestIdWatcher testIdWatcher = new TestIdWatcher();
 
   private static final int MAX_RETRIES = 10;
@@ -110,7 +114,10 @@ public class ScheduledJobManagerTest extends ServiceTestBase {
                 scheduledJobStatusRepository,
                 scheduledJobTypeRepository,
                 repositoryRepository,
-                deadlockRetryTemplate));
+                deadlockRetryTemplate,
+                evolveConfigurationProperties,
+                localeService,
+                repositoryService));
 
     Mockito.doReturn(NoOpScheduledJobTest.class).when(scheduledJobManager).loadJobClass(any());
 
