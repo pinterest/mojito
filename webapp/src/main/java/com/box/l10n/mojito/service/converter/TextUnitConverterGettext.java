@@ -4,17 +4,21 @@ import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import joptsimple.internal.Strings;
-import org.springframework.stereotype.Component;
 
-@Component
 public class TextUnitConverterGettext implements TextUnitConverter {
 
-  private final String COMMENT_SKELETON = "#. ${##}\n";
+  private final String COMMENT_SKELETON = "#. ${##}";
   private final String CONTEXT_SKELETON = "msgctxt \"${##}\"";
   private final String MSGID_SKELETON = "msgid \"${##}\"";
   private final String MSGID_PLURAL = "msgid_plural \"${##}\"";
   private final String MSGSTR = "msgstr \"\"";
   private final String CONTEXT_SEPARATOR = " --- ";
+
+  private final String lineBreak;
+
+  public TextUnitConverterGettext(String lineBreak) {
+    this.lineBreak = lineBreak;
+  }
 
   @Override
   public String convert(TextUnitDTO textUnitDTO) {
@@ -23,7 +27,7 @@ public class TextUnitConverterGettext implements TextUnitConverter {
     StringBuilder sb = new StringBuilder();
 
     if (!Strings.isNullOrEmpty(textUnitDTO.getComment())) sb.append(getComment(textUnitDTO));
-    if (hasContext) sb.append(getContext(textUnitDTO)).append("\n");
+    if (hasContext) sb.append(getContext(textUnitDTO)).append(lineBreak);
 
     if (textUnitDTO.getPluralForm() != null && textUnitDTO.getPluralForm().equals("other")) {
       String singular = textUnitDTO.getName().split(" _other")[0];
@@ -33,14 +37,15 @@ public class TextUnitConverterGettext implements TextUnitConverter {
         singular = singular.split(CONTEXT_SEPARATOR)[0];
       }
 
-      sb.append(replace(MSGID_SKELETON, singular, false)).append("\n");
-      sb.append(replace(MSGID_PLURAL, plural, true)).append("\n");
-      // TODO: Extend this for other parent locales, only supports en right now
-      sb.append("msgstr[0] \"\"").append("\n");
-      sb.append("msgstr[1] \"\"").append("\n\n");
+      singular = escape(singular);
+
+      sb.append(replace(MSGID_SKELETON, singular, false)).append(lineBreak);
+      sb.append(replace(MSGID_PLURAL, plural, true)).append(lineBreak);
+      sb.append("msgstr[0] \"\"").append(lineBreak);
+      sb.append("msgstr[1] \"\"").append(lineBreak + lineBreak);
     } else {
-      sb.append(getMsgId(textUnitDTO)).append("\n");
-      sb.append(MSGSTR).append("\n\n");
+      sb.append(getMsgId(textUnitDTO)).append(lineBreak);
+      sb.append(MSGSTR).append(lineBreak + lineBreak);
     }
 
     return sb.toString();
@@ -48,10 +53,11 @@ public class TextUnitConverterGettext implements TextUnitConverter {
 
   private String getComment(TextUnitDTO textUnitDTO) {
     // Break down comment by new line, make sure each line starts with #.
-    String[] comments = textUnitDTO.getComment().split("\n");
+    String[] comments = textUnitDTO.getComment().split(lineBreak);
     return Arrays.stream(comments)
-        .map(comment -> replace(COMMENT_SKELETON, comment, false))
-        .collect(Collectors.joining());
+            .map(comment -> replace(COMMENT_SKELETON, comment, false))
+            .collect(Collectors.joining(lineBreak))
+        + lineBreak;
   }
 
   private String getContext(TextUnitDTO textUnitDTO) {
@@ -72,6 +78,10 @@ public class TextUnitConverterGettext implements TextUnitConverter {
   }
 
   private String escape(String toEscape) {
-    return toEscape.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
+    return toEscape
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+        .replace("\r", "\\r")
+        .replace("\n", "\\n");
   }
 }

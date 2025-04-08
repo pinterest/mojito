@@ -3,6 +3,7 @@ package com.box.l10n.mojito.service.appender;
 import com.box.l10n.mojito.service.converter.TextUnitConverter;
 import com.box.l10n.mojito.service.converter.TextUnitConverterGettext;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
+import com.box.l10n.mojito.utils.AssetContentUtils;
 import java.util.function.Predicate;
 
 /**
@@ -11,11 +12,13 @@ import java.util.function.Predicate;
  * @author mattwilshire
  */
 public class POTAssetAppender extends AbstractAssetAppender {
-  private final TextUnitConverterGettext converter = new TextUnitConverterGettext();
+  private final TextUnitConverterGettext converter;
 
   public POTAssetAppender(String content) {
+    String lineBreak = AssetContentUtils.determineLineSeparator(content);
+    converter = new TextUnitConverterGettext(lineBreak);
     append(content);
-    append("\n\n");
+    append(lineBreak + lineBreak);
   }
 
   @Override
