@@ -37,8 +37,6 @@ public class TextUnitConverterGettext implements TextUnitConverter {
         singular = singular.split(CONTEXT_SEPARATOR)[0];
       }
 
-      singular = escape(singular);
-
       sb.append(replace(MSGID_SKELETON, singular, false)).append(lineBreak);
       sb.append(replace(MSGID_PLURAL, plural, true)).append(lineBreak);
       sb.append("msgstr[0] \"\"").append(lineBreak);

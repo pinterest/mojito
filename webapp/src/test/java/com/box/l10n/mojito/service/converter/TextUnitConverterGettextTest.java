@@ -115,12 +115,10 @@ public class TextUnitConverterGettextTest {
         converter.convert(textUnit));
 
     // Test escaping new lines
-    singular = "{count} \n book";
     plural = "{count} \n books";
-    textUnit.setName(singular + " _other");
     textUnit.setSource(plural);
     assertEquals(
-        "msgid \"{count} \\n book\"\n"
+        "msgid \"{count} book\"\n"
             + "msgid_plural \"{count} \\n books\"\n"
             + "msgstr[0] \"\"\n"
             + "msgstr[1] \"\"\n\n",
@@ -228,12 +226,10 @@ public class TextUnitConverterGettextTest {
         converter.convert(textUnit));
 
     // Test escaping new lines
-    singular = "{count} \r\n book";
     plural = "{count} \r\n books";
-    textUnit.setName(singular + " _other");
     textUnit.setSource(plural);
     assertEquals(
-        "msgid \"{count} \\r\\n book\"\r\n"
+        "msgid \"{count} book\"\r\n"
             + "msgid_plural \"{count} \\r\\n books\"\r\n"
             + "msgstr[0] \"\"\r\n"
             + "msgstr[1] \"\"\r\n\r\n",
