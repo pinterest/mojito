@@ -276,7 +276,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             sourceAsset.getBranchNotifiers(),
             null,
             sourceAsset.getFilterConfigIdOverride(),
-            sourceAsset.getFilterOptions());
+            sourceAsset.getFilterOptions(),
+            true);
 
     sourceAsset.setAddedAssetId(assetFuture.get().getId());
     sourceAsset.setPollableTask(assetFuture.getPollableTask());
@@ -369,7 +370,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             sourceAsset.getBranchNotifiers(),
             null,
             sourceAsset.getFilterConfigIdOverride(),
-            sourceAsset.getFilterOptions());
+            sourceAsset.getFilterOptions(),
+            true);
 
     sourceAsset.setAddedAssetId(assetFuture.get().getId());
 
@@ -441,7 +443,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             sourceAsset.getBranchNotifiers(),
             null,
             sourceAsset.getFilterConfigIdOverride(),
-            sourceAsset.getFilterOptions());
+            sourceAsset.getFilterOptions(),
+            true);
 
     sourceAsset.setAddedAssetId(assetFuture.get().getId());
 
@@ -533,7 +536,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             sourceAsset.getBranchNotifiers(),
             null,
             sourceAsset.getFilterConfigIdOverride(),
-            sourceAsset.getFilterOptions());
+            sourceAsset.getFilterOptions(),
+            true);
 
     sourceAsset.setAddedAssetId(assetFuture.get().getId());
 
@@ -606,7 +610,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             sourceAsset.getBranchNotifiers(),
             null,
             sourceAsset.getFilterConfigIdOverride(),
-            sourceAsset.getFilterOptions());
+            sourceAsset.getFilterOptions(),
+            true);
 
     sourceAsset.setAddedAssetId(assetFuture.get().getId());
     sourceAsset.setPollableTask(assetFuture.getPollableTask());
@@ -749,7 +754,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             sourceAsset.getBranchNotifiers(),
             null,
             sourceAsset.getFilterConfigIdOverride(),
-            sourceAsset.getFilterOptions());
+            sourceAsset.getFilterOptions(),
+            true);
 
     sourceAsset.setAddedAssetId(assetFuture.get().getId());
 
@@ -971,7 +977,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             sourceAsset.getBranchNotifiers(),
             null,
             sourceAsset.getFilterConfigIdOverride(),
-            sourceAsset.getFilterOptions());
+            sourceAsset.getFilterOptions(),
+            true);
 
     sourceAsset.setAddedAssetId(assetFuture.get().getId());
 
@@ -1070,7 +1077,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             sourceAsset.getBranchNotifiers(),
             null,
             sourceAsset.getFilterConfigIdOverride(),
-            sourceAsset.getFilterOptions());
+            sourceAsset.getFilterOptions(),
+            true);
 
     sourceAsset.setAddedAssetId(assetFuture.get().getId());
 
@@ -1121,14 +1129,13 @@ public class EvolveServiceTest extends ServiceTestBase {
     Locale esLocale = this.localeService.findByBcp47Tag("es-MX");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
     esRepositoryLocale.setLocale(esLocale);
-    Repository repository =
-        repositoryService.createRepository(
-            testIdWatcher.getEntityName("test"),
-            "",
-            this.localeService.getDefaultLocale(),
-            false,
-            Sets.newHashSet(),
-            Sets.newHashSet(esRepositoryLocale));
+    repositoryService.createRepository(
+        testIdWatcher.getEntityName("test"),
+        "",
+        this.localeService.getDefaultLocale(),
+        false,
+        Sets.newHashSet(),
+        Sets.newHashSet(esRepositoryLocale));
 
     this.evolveService.sync();
 
@@ -1183,7 +1190,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             sourceAsset.getBranchNotifiers(),
             null,
             sourceAsset.getFilterConfigIdOverride(),
-            sourceAsset.getFilterOptions());
+            sourceAsset.getFilterOptions(),
+            true);
 
     sourceAsset.setAddedAssetId(assetFuture.get().getId());
     sourceAsset.setPollableTask(assetFuture.getPollableTask());
