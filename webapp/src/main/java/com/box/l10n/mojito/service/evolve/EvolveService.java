@@ -189,7 +189,8 @@ public class EvolveService {
             sourceAsset.getBranchNotifiers(),
             null,
             sourceAsset.getFilterConfigIdOverride(),
-            sourceAsset.getFilterOptions());
+            sourceAsset.getFilterOptions(),
+            true);
     sourceAsset.setAddedAssetId(assetFuture.get().getId());
     sourceAsset.setPollableTask(assetFuture.getPollableTask());
     return sourceAsset;
