@@ -47,11 +47,16 @@ import java.util.concurrent.ExecutionException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPathExpressionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.client.HttpClientErrorException;
 import org.xml.sax.SAXException;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
 public class EvolveService {
+  private static final Logger log = LoggerFactory.getLogger(EvolveService.class);
+
   private List<RepositoryLocale> targetRepositoryLocales;
 
   private String sourceLocaleBcp47Tag;
@@ -123,6 +128,21 @@ public class EvolveService {
     this.assetExtractionByBranchRepository = assetExtractionByBranchRepository;
     this.syncDateService = syncDateService;
     this.localeMappingHelper = localeMappingHelper;
+    this.updateEvolveClient();
+  }
+
+  private void updateEvolveClient() {
+    this.evolveClient.setMaxRetries(
+        ofNullable(this.evolveConfigurationProperties.getMaxRetries())
+            .orElse(this.evolveClient.getMaxRetries()));
+    this.evolveClient.setRetryMinBackoff(
+        ofNullable(this.evolveConfigurationProperties.getRetryMinBackoffSecs())
+            .map(Duration::ofSeconds)
+            .orElse(this.evolveClient.getRetryMinBackoff()));
+    this.evolveClient.setRetryMaxBackoff(
+        ofNullable(this.evolveConfigurationProperties.getRetryMaxBackoffSecs())
+            .map(Duration::ofSeconds)
+            .orElse(this.evolveClient.getRetryMaxBackoff()));
   }
 
   private void setLocales() {
@@ -221,6 +241,18 @@ public class EvolveService {
         .orElse(Duration.ofSeconds(30));
   }
 
+  private void syncEvolve(int courseId) {
+    try {
+      Map<?, ?> response = this.evolveClient.syncEvolve(courseId);
+      if (!response.containsKey("status") || !response.get("status").equals("ready")) {
+        throw new RuntimeException(
+            "Update Evolve cloud translations for course: " + courseId + " is not complete");
+      }
+    } catch (Exception e) {
+      log.error("Update Evolve cloud translations is not complete", e);
+    }
+  }
+
   private void startCourseTranslations(int courseId)
       throws XPathExpressionException,
           UnsupportedAssetFilterTypeException,
@@ -232,9 +264,20 @@ public class EvolveService {
           SAXException {
     String localizedAssetContent =
         Mono.fromCallable(
-                () ->
-                    this.evolveClient.startCourseTranslation(
-                        courseId, this.targetLocaleBcp47Tag, this.additionalTargetLocaleBcp47Tags))
+                () -> {
+                  try {
+                    return this.evolveClient.startCourseTranslation(
+                        courseId, this.targetLocaleBcp47Tag, this.additionalTargetLocaleBcp47Tags);
+                  } catch (Exception e) {
+                    if (e instanceof HttpClientErrorException httpClientErrorException) {
+                      if (httpClientErrorException.getStatusCode().value() == 422
+                          && httpClientErrorException.getMessage().contains("evolve_sync")) {
+                        this.syncEvolve(courseId);
+                      }
+                    }
+                    throw e;
+                  }
+                })
             .retryWhen(
                 Retry.backoff(this.getMaxRetries(), this.getRetryMinBackoff())
                     .maxBackoff(this.getRetryMaxBackoff()))

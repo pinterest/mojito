@@ -58,7 +58,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -207,6 +209,7 @@ public class EvolveServiceTest extends ServiceTestBase {
             any(ZonedDateTime.class));
     assertEquals(1, (int) this.integerCaptor.getValue());
     assertEquals(IN_TRANSLATION, this.translationStatusTypeCaptor.getValue());
+    verify(this.evolveClientMock, times(0)).syncEvolve(anyInt());
     assertTrue(
         this.syncDateService.getDate().isEqual(now) || this.syncDateService.getDate().isAfter(now));
 
@@ -215,6 +218,7 @@ public class EvolveServiceTest extends ServiceTestBase {
             this.evolveService.getBranchName(courseId), repository);
     assertNotNull(branch);
 
+    this.branchStatisticService.computeAndSaveBranchStatistics(branch);
     BranchStatistic branchStatistic = this.branchStatisticRepository.findByBranch(branch);
 
     assertEquals(4, branchStatistic.getTotalCount());
@@ -551,6 +555,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     verify(this.evolveClientMock, times(1))
         .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
     verify(this.evolveClientMock, times(0)).updateCourseTranslation(anyInt(), anyString());
+    verify(this.evolveClientMock, times(0)).syncEvolve(anyInt());
     assertEquals(updatedOn2, this.syncDateService.getDate());
 
     branch =
@@ -635,6 +640,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     verify(this.evolveClientMock, times(2))
         .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
     verify(this.evolveClientMock, times(1)).updateCourseTranslation(anyInt(), anyString());
+    verify(this.evolveClientMock, times(0)).syncEvolve(anyInt());
     assertTrue(
         this.syncDateService.getDate().isEqual(now) || this.syncDateService.getDate().isAfter(now));
 
@@ -900,6 +906,7 @@ public class EvolveServiceTest extends ServiceTestBase {
 
     assertThrows(RuntimeException.class, () -> this.evolveService.sync());
     verify(this.evolveClientMock).startCourseTranslation(anyInt(), anyString(), anySet());
+    verify(this.evolveClientMock, times(0)).syncEvolve(anyInt());
     assertNull(this.syncDateService.getDate());
 
     ZonedDateTime syncDate = ZonedDateTime.now().minusDays(2);
@@ -1133,10 +1140,17 @@ public class EvolveServiceTest extends ServiceTestBase {
     assertEquals(courseId, (int) this.integerCaptor.getValue());
     assertEquals("es-419", this.stringCaptor.getValue());
     assertTrue(this.additionalLocalesCaptor.getValue().isEmpty());
+    verify(this.evolveClientMock, times(0)).syncEvolve(anyInt());
   }
 
   @Test
-  public void testSyncForFullyTranslatedCourseWithLocaleMappings() throws RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException, IOException, UnsupportedAssetFilterTypeException, ExecutionException, InterruptedException {
+  public void testSyncForFullyTranslatedCourseWithLocaleMappings()
+      throws RepositoryNameAlreadyUsedException,
+          RepositoryLocaleCreationException,
+          IOException,
+          UnsupportedAssetFilterTypeException,
+          ExecutionException,
+          InterruptedException {
     final int courseId = 1;
     this.evolveConfigurationProperties.setLocaleMapping("es-MX:es-419");
     this.initInTranslationData(ZonedDateTime.now().minusDays(1));
@@ -1203,5 +1217,126 @@ public class EvolveServiceTest extends ServiceTestBase {
         .updateCourseTranslation(integerCaptor.capture(), stringCaptor.capture());
     assertEquals(courseId, (int) integerCaptor.getValue());
     assertTrue(stringCaptor.getValue().contains("target-language=\"es-419\""));
+  }
+
+  private void initEvolveSyncRequestData() throws IOException {
+    CourseDTO courseDTO1 = new CourseDTO();
+    courseDTO1.setId(1);
+    courseDTO1.setTranslationStatus(READY_FOR_TRANSLATION);
+    courseDTO1.setUpdatedOn(ZonedDateTime.now().minusDays(1));
+
+    when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
+        .thenReturn(Stream.of(courseDTO1));
+    when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
+        .thenThrow(
+            new HttpClientErrorException(
+                HttpStatusCode.valueOf(422),
+                " Missing Evolve translation fields: you must poll `POST /api/v3/course_translations/1/evolve_sync"))
+        .thenReturn(this.getXliffContent());
+    Map response = new HashMap();
+    response.put("status", "ready");
+    when(this.evolveClientMock.syncEvolve(anyInt())).thenReturn(response);
+
+    this.initEvolveService();
+  }
+
+  @Test
+  public void testSyncForEvolveSyncRequest()
+      throws IOException, RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException {
+    final int courseId = 1;
+    final ZonedDateTime now = ZonedDateTime.now();
+    this.initEvolveSyncRequestData();
+    Locale esLocale = this.localeService.findByBcp47Tag("es");
+    RepositoryLocale esRepositoryLocale = new RepositoryLocale();
+    esRepositoryLocale.setLocale(esLocale);
+    repositoryService.createRepository(
+        testIdWatcher.getEntityName("test"),
+        "",
+        this.localeService.getDefaultLocale(),
+        false,
+        Sets.newHashSet(),
+        Sets.newHashSet(esRepositoryLocale));
+
+    this.evolveService.sync();
+
+    verify(this.evolveClientMock, times(2))
+        .startCourseTranslation(
+            this.integerCaptor.capture(),
+            this.stringCaptor.capture(),
+            this.additionalLocalesCaptor.capture());
+    assertEquals(courseId, (int) this.integerCaptor.getValue());
+    assertEquals("es", this.stringCaptor.getValue());
+    assertTrue(this.additionalLocalesCaptor.getValue().isEmpty());
+    verify(this.evolveClientMock).syncEvolve(this.integerCaptor.capture());
+    assertEquals(courseId, (int) this.integerCaptor.getValue());
+    verify(this.evolveClientMock)
+        .updateCourse(
+            this.integerCaptor.capture(),
+            this.translationStatusTypeCaptor.capture(),
+            any(ZonedDateTime.class));
+    assertEquals(1, (int) this.integerCaptor.getValue());
+    assertEquals(IN_TRANSLATION, this.translationStatusTypeCaptor.getValue());
+    assertTrue(
+        this.syncDateService.getDate().isEqual(now) || this.syncDateService.getDate().isAfter(now));
+  }
+
+  private void initEvolveSyncRequestWithExceptionData() {
+    CourseDTO courseDTO1 = new CourseDTO();
+    courseDTO1.setId(1);
+    courseDTO1.setTranslationStatus(READY_FOR_TRANSLATION);
+    courseDTO1.setUpdatedOn(ZonedDateTime.now().minusDays(1));
+
+    when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
+        .thenReturn(Stream.of(courseDTO1));
+    when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
+        .thenThrow(
+            new HttpClientErrorException(
+                HttpStatusCode.valueOf(422),
+                " Missing Evolve translation fields: you must poll `POST /api/v3/course_translations/1/evolve_sync"));
+    Map response = new HashMap();
+    response.put("status", "not ready");
+    when(this.evolveClientMock.syncEvolve(anyInt()))
+        .thenReturn(response)
+        .thenThrow(new HttpClientErrorException(HttpStatusCode.valueOf(500)));
+
+    this.initEvolveService();
+  }
+
+  @Test
+  public void testSyncForEvolveSyncRequestWhenThrowingAnException()
+      throws RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException {
+    final int courseId = 1;
+    this.initEvolveSyncRequestWithExceptionData();
+    Locale esLocale = this.localeService.findByBcp47Tag("es");
+    RepositoryLocale esRepositoryLocale = new RepositoryLocale();
+    esRepositoryLocale.setLocale(esLocale);
+    repositoryService.createRepository(
+        testIdWatcher.getEntityName("test"),
+        "",
+        this.localeService.getDefaultLocale(),
+        false,
+        Sets.newHashSet(),
+        Sets.newHashSet(esRepositoryLocale));
+
+    assertThrows(RuntimeException.class, () -> this.evolveService.sync());
+
+    verify(this.evolveClientMock, times(3))
+        .startCourseTranslation(
+            this.integerCaptor.capture(),
+            this.stringCaptor.capture(),
+            this.additionalLocalesCaptor.capture());
+    assertEquals(courseId, (int) this.integerCaptor.getValue());
+    assertEquals("es", this.stringCaptor.getValue());
+    assertTrue(this.additionalLocalesCaptor.getValue().isEmpty());
+    verify(this.evolveClientMock, times(3)).syncEvolve(this.integerCaptor.capture());
+    assertEquals(courseId, (int) this.integerCaptor.getValue());
+    verify(this.evolveClientMock, times(0))
+        .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
+    assertNull(this.syncDateService.getDate());
+
+    ZonedDateTime syncDate = ZonedDateTime.now().minusDays(2);
+    this.syncDateService.setDate(syncDate);
+    assertThrows(RuntimeException.class, () -> this.evolveService.sync());
+    assertEquals(syncDate, this.syncDateService.getDate());
   }
 }

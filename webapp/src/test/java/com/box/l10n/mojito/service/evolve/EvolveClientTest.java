@@ -7,6 +7,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -17,6 +18,7 @@ import com.box.l10n.mojito.service.evolve.dto.CourseDTO;
 import com.box.l10n.mojito.service.evolve.dto.CoursesDTO;
 import com.box.l10n.mojito.service.evolve.dto.PaginationDTO;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -330,5 +332,24 @@ public class EvolveClientTest {
     assertEquals(MediaType.APPLICATION_XML, httpEntity.getHeaders().getContentType());
     assertEquals("content", httpEntity.getBody());
     assertEquals(1, (int) courseIdCaptor.getValue());
+  }
+
+  @Test
+  public void testSyncEvolve() {
+    Map<String, String> params = ImmutableMap.of("status", "ready");
+    when(this.mockRestTemplate.postForObject(anyString(), any(), any(), anyInt()))
+        .thenReturn(params);
+    this.evolveClient = new EvolveClient(this.mockRestTemplate, this.apiPath);
+
+    Map<?, ?> response = this.evolveClient.syncEvolve(1);
+
+    verify(this.mockRestTemplate)
+        .postForObject(this.urlCaptor.capture(), any(), any(), this.courseIdCaptor.capture());
+
+    assertEquals(
+        this.apiPath + "course_translations/{courseId}/evolve_sync", this.urlCaptor.getValue());
+    assertEquals(1, (int) courseIdCaptor.getValue());
+    assertTrue(response.containsKey("status"));
+    assertEquals("ready", response.get("status"));
   }
 }

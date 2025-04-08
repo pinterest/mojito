@@ -86,6 +86,16 @@ public class EvolveClient {
     return StreamSupport.stream(iterator, false);
   }
 
+  public Map<?, ?> syncEvolve(int courseId) {
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    return this.restTemplate.postForObject(
+        this.getFullEndpointPath("course_translations/{courseId}/evolve_sync"),
+        headers,
+        Map.class,
+        courseId);
+  }
+
   public String startCourseTranslation(
       int courseId, String targetLocale, Set<String> additionalLocales) {
     HttpHeaders headers = new HttpHeaders();
@@ -98,10 +108,8 @@ public class EvolveClient {
     }
 
     HttpEntity<String> httpEntity = new HttpEntity<>(headers);
-    String response =
-        this.restTemplate.postForObject(
-            builder.buildAndExpand(courseId).toUriString(), httpEntity, String.class);
-    return response;
+    return this.restTemplate.postForObject(
+        builder.buildAndExpand(courseId).toUriString(), httpEntity, String.class);
   }
 
   public void updateCourse(
@@ -126,12 +134,24 @@ public class EvolveClient {
         courseId);
   }
 
+  public int getMaxRetries() {
+    return maxRetries;
+  }
+
   public void setMaxRetries(int maxRetries) {
     this.maxRetries = maxRetries;
   }
 
+  public Duration getRetryMinBackoff() {
+    return retryMinBackoff;
+  }
+
   public void setRetryMinBackoff(Duration retryMinBackoff) {
     this.retryMinBackoff = retryMinBackoff;
+  }
+
+  public Duration getRetryMaxBackoff() {
+    return retryMaxBackoff;
   }
 
   public void setRetryMaxBackoff(Duration retryMaxBackoff) {
