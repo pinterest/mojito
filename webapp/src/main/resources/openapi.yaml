@@ -2870,6 +2870,10 @@ components:
         totalCount:
           type: integer
           format: int64
+        translatedDate:
+          type: integer
+          format: int64
+          example: 1715699917000
     BranchStatistic_BranchStatistic:
       type: object
       properties:
@@ -4613,6 +4617,8 @@ components:
           items:
             type: string
           uniqueItems: true
+        branchTargetsMain:
+          type: boolean
         commitHash:
           type: string
         content:
@@ -4792,6 +4798,7 @@ components:
           - LEVERAGING
           - INTEGRITY_CHECK
           - QUALITY_CHECK
+          - AI_TRANSLATION
     TMTextUnitVariantComment_TranslationHistorySummary:
       type: object
       properties:
@@ -4816,6 +4823,7 @@ components:
           - LEVERAGING
           - INTEGRITY_CHECK
           - QUALITY_CHECK
+          - AI_TRANSLATION
     TMTextUnitVariant_Screenshots:
       type: object
       properties:

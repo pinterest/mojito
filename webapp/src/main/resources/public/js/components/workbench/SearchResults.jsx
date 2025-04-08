@@ -94,6 +94,12 @@ let SearchResults = createReactClass({
 
             /** @type {TextUnit}   the text unit currently in edit mode if any*/
             textUnitInEditMode: null,
+
+            /** @type {Number} The number of textunits according to the filter */
+            filteredItemCount: SearchResultsStore.getState().filteredItemCount,
+
+            /** @type {Boolean} if the count request is still pending */
+            isCountRequestPending: SearchResultsStore.getState().isCountRequestPending,
         };
     },
 
@@ -366,6 +372,8 @@ let SearchResults = createReactClass({
             isErrorOccurred: resultsStoreState.isErrorOccurred,
             errorObject: resultsStoreState.errorObject,
             textUnitInEditMode: this.state.textUnitInEditMode,
+            filteredItemCount: resultsStoreState.filteredItemCount,
+            isCountRequestPending: resultsStoreState.isCountRequestPending
         });
     },
 
@@ -559,25 +567,39 @@ let SearchResults = createReactClass({
         );
     },
 
+    getTextUnitCount(filteredItemCount, isCountRequestPending) {
+        if (!filteredItemCount) {
+            return null
+        }
+
+        if (isCountRequestPending) {
+            return <div>Total text units: <DelayedSpinner className='mlxs' /></div>;
+        }
+
+        return <div>Total text units: { filteredItemCount }</div>;
+    },
+
     /**
      * @returns {JSX} Depending on the state of the component, this function returns the JSX for the
      * workbench toolbar.
      */
     getTextUnitToolbarUI() {
         //TODO: create a WorkbenchToolbar component. The SearchResults component should delegate toolbar rendering and actions to the WorkbenchToolbar
-        let ui = "";
-        let isSearching = this.state.isSearching;
-        let noMoreResults = this.state.noMoreResults;
-        let isFirstPage = this.state.currentPageNumber <= 1;
-        let selectedTextUnits = this.getSelectedTextUnits();
-        let numberOfSelectedTextUnits = selectedTextUnits.length;
-        let isAtLeastOneTextUnitSelected = numberOfSelectedTextUnits >= 1;
+        let ui = null;
+        const isSearching = this.state.isSearching;
+        const noMoreResults = this.state.noMoreResults;
+        const filteredItemCount = this.state.filteredItemCount;
+        const isCountRequestPending = this.state.isCountRequestPending;
+        const isFirstPage = this.state.currentPageNumber <= 1;
+        const selectedTextUnits = this.getSelectedTextUnits();
+        const numberOfSelectedTextUnits = selectedTextUnits.length;
+        const isAtLeastOneTextUnitSelected = numberOfSelectedTextUnits >= 1;
 
-        let selectorCheckBoxDisabled = !AuthorityService.canEditTranslations();
+        const selectorCheckBoxDisabled = !AuthorityService.canEditTranslations();
         const canEditTranslations = AuthorityService.canEditTranslations();
-        let actionButtonsDisabled = isSearching || !isAtLeastOneTextUnitSelected || !canEditTranslations;
-        let nextPageButtonDisabled = isSearching || noMoreResults;
-        let previousPageButtonDisabled = isSearching || isFirstPage;
+        const actionButtonsDisabled = isSearching || !isAtLeastOneTextUnitSelected || !canEditTranslations;
+        const nextPageButtonDisabled = isSearching || noMoreResults;
+        const previousPageButtonDisabled = isSearching || isFirstPage;
 
         let pageSizes = [];
         for (let i of [10, 25, 50, 100]) {
@@ -656,6 +678,7 @@ let SearchResults = createReactClass({
                                 gap: "15px",
                             }}
                         >
+                            {this.getTextUnitCount(filteredItemCount, isCountRequestPending)}
                             <AltContainer store={ViewModeStore}>
                                 <ViewModeDropdown
                                     onModeSelected={(mode) =>
@@ -743,7 +766,7 @@ let SearchResults = createReactClass({
     },
 
     /**
-     * @returns {JSX} The progress spinner if server action is pending. Otherwise, return the currentPageNumber.
+     * @returns {JSX} Return the currentPageNumber.
      */
     displayCurrentPageNumber() {
         return this.state.currentPageNumber;
@@ -788,7 +811,7 @@ let SearchResults = createReactClass({
     render() {
         if (this.state.isSearching) {
             return (
-                <div class="branch-spinner mtl mbl">
+                <div className="branch-spinner mtl mbl">
                     <DelayedSpinner />
                 </div>
             );

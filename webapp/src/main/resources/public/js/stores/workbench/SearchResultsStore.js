@@ -7,6 +7,7 @@ import WorkbenchActions from "../../actions/workbench/WorkbenchActions";
 import RepositoryActions from "../../actions/RepositoryActions";
 import textUnitStore from "./TextUnitStore";
 import ShareSearchParamsModalStore from "./ShareSearchParamsModalStore";
+import SearchCountDataSource from "../../actions/workbench/SearchCountDataSource";
 
 class SearchResultsStore {
 
@@ -19,6 +20,8 @@ class SearchResultsStore {
         this.isErrorOccurred = false;
         this.errorObject = null;
         this.errorResponse = null;
+        this.filteredItemCount = null;
+        this.isCountRequestPending = false;
 
         /**
          * this map contains ids of all selected textunits
@@ -35,6 +38,7 @@ class SearchResultsStore {
         this.bindActions(RepositoryActions);
 
         this.registerAsync(SearchDataSource);
+        this.registerAsync(SearchCountDataSource);
     }
 
     /**
@@ -49,14 +53,16 @@ class SearchResultsStore {
 
         if (SearchParamsStore.isReadyForSearching(searchParamsStoreState)) {
             const newState = {
-                "noMoreResults": false,
-                "isSearching": true,
-                "searchHadNoResults": false
+                noMoreResults: false,
+                isSearching: true,
+                searchHadNoResults: false
             };
 
             if (searchParamsStoreState.changedParam !== SearchConstants.NEXT_PAGE_REQUESTED &&
                 searchParamsStoreState.changedParam !== SearchConstants.PREVIOUS_PAGE_REQUESTED) {
                 newState.selectedTextUnitsMap = {};
+                newState.isCountRequestPending = true;
+                this.getInstance().getCount(searchParamsStoreState);
             }
 
             this.setState(newState);
@@ -66,9 +72,31 @@ class SearchResultsStore {
             this.setState({
                 "searchResults": [],
                 "isSearching": false,
+                "isCountRequestPending": false,
+                "filteredItemCount": null,
                 "selectedTextUnitsMap": {}
             });
         }
+    }
+
+    /**
+     * @param {object} -- The response sent when the count query is successful.
+     */
+    onSearchCountReceivedSuccess(response) {
+        console.log("SearchResultsStore::onSearchCountReceivedSuccess", response);
+        this.setState({
+            filteredItemCount: response.totalCount,
+            isCountRequestPending: false
+        })
+    }
+
+    /**
+     * @param {object} -- The response sent when the count query fails.
+     */
+    onSearchCountReceivedError(errorResponse) {
+        console.error("SearchResultsStore::onSearchCountReceivedError", errorResponse);
+        this.filteredItemCount = null;
+        this.isCountRequestPending = false;
     }
 
     /**
@@ -100,7 +128,6 @@ class SearchResultsStore {
      * @param textUnit - The textunit
      */
     onTextUnitSelection(textUnit) {
-
         for (const textUnitInStore of this.searchResults) {
             if (textUnitInStore.equals(textUnit)) {
                 const textUnitInStoreId = textUnitInStore.getTextUnitKey();
@@ -118,7 +145,6 @@ class SearchResultsStore {
      * @param {TextUnit[]} textUnits
      */
     onDeleteTextUnits(textUnits) {
-
         this.waitFor(textUnitStore.dispatchToken);
 
         textUnits.forEach(textUnit => {
