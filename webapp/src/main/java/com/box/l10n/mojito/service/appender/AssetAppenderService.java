@@ -19,6 +19,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -26,7 +27,8 @@ public class AssetAppenderService {
 
   static Logger logger = LoggerFactory.getLogger(AssetAppenderService.class);
 
-  private final int HARD_TEXT_UNIT_LIMIT = 5;
+  @Value("${l10n.asset-appender.default.limit:1000}")
+  private final int DEFAULT_APPEND_LIMIT = 1000;
 
   private final AssetAppenderFactory assetAppenderFactory;
   private final BranchRepository branchRepository;
@@ -35,6 +37,7 @@ public class AssetAppenderService {
   private final AppendedAssetBlobStorage appendedAssetBlobStorage;
   private final ObjectMapper objectMapper;
   private final MeterRegistry meterRegistry;
+  private final AssetAppenderConfig assetAppenderConfig;
 
   @Autowired
   public AssetAppenderService(
@@ -44,7 +47,8 @@ public class AssetAppenderService {
       PushRunRepository pushRunRepository,
       AppendedAssetBlobStorage appendedAssetBlobStorage,
       ObjectMapper objectMapper,
-      MeterRegistry meterRegistry) {
+      MeterRegistry meterRegistry,
+      AssetAppenderConfig assetAppenderConfig) {
     this.assetAppenderFactory = assetAppenderFactory;
     this.branchRepository = branchRepository;
     this.branchStatisticService = branchStatisticService;
@@ -52,6 +56,7 @@ public class AssetAppenderService {
     this.appendedAssetBlobStorage = appendedAssetBlobStorage;
     this.objectMapper = objectMapper;
     this.meterRegistry = meterRegistry;
+    this.assetAppenderConfig = assetAppenderConfig;
   }
 
   /**
@@ -89,11 +94,19 @@ public class AssetAppenderService {
         branchRepository.findBranchesForAppending(asset.getRepository());
 
     List<Branch> appendedBranches = new ArrayList<>();
+
+    int appendLimit = DEFAULT_APPEND_LIMIT;
+
+    // Retrieve the repo configured append limit if it exists
+    if (assetAppenderConfig.getAssetAppender().containsKey(asset.getRepository().getName()))
+      appendLimit =
+          assetAppenderConfig.getAssetAppender().get(asset.getRepository().getName()).getLimit();
+
     int appendedCount = 0;
     for (Branch branch : branchesToAppend) {
       List<TextUnitDTO> textUnitsToAppend = branchStatisticService.getTextUnitDTOsForBranch(branch);
       // Are we going to go over the hard limit ? If yes emit metrics and break out.
-      if (appendedCount + textUnitsToAppend.size() > HARD_TEXT_UNIT_LIMIT) {
+      if (appendedCount + textUnitsToAppend.size() > appendLimit) {
         int countFailedToAppend =
             branchesToAppend.stream()
                 .skip(appendedBranches.size())
