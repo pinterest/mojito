@@ -42,10 +42,7 @@ public interface BranchRepository
         AND bmt.targetsMain = true
         AND b.repository = :repository
         AND b.deleted = false
-        AND b.name <> :ignoreBranchName
         ORDER BY bs.translatedDate ASC
         """)
-  List<Branch> findBranchesForAppending(
-      @Param("repository") Repository repository,
-      @Param("ignoreBranchName") String ignoreBranchName);
+  List<Branch> findBranchesForAppending(@Param("repository") Repository repository);
 }

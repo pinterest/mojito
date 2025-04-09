@@ -3,11 +3,14 @@ package com.box.l10n.mojito.service.appender;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.BaseEntity;
 import com.box.l10n.mojito.entity.Branch;
+import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.rest.asset.LocalizedAssetBody;
 import com.box.l10n.mojito.service.branch.BranchRepository;
 import com.box.l10n.mojito.service.branch.BranchStatisticService;
 import com.box.l10n.mojito.service.pushrun.PushRunRepository;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -30,6 +33,8 @@ public class AssetAppenderService {
   private final BranchStatisticService branchStatisticService;
   private final PushRunRepository pushRunRepository;
   private final AppendedAssetBlobStorage appendedAssetBlobStorage;
+  private final ObjectMapper objectMapper;
+  private final MeterRegistry meterRegistry;
 
   @Autowired
   public AssetAppenderService(
@@ -37,12 +42,16 @@ public class AssetAppenderService {
       BranchRepository branchRepository,
       BranchStatisticService branchStatisticService,
       PushRunRepository pushRunRepository,
-      AppendedAssetBlobStorage appendedAssetBlobStorage) {
+      AppendedAssetBlobStorage appendedAssetBlobStorage,
+      ObjectMapper objectMapper,
+      MeterRegistry meterRegistry) {
     this.assetAppenderFactory = assetAppenderFactory;
     this.branchRepository = branchRepository;
     this.branchStatisticService = branchStatisticService;
     this.pushRunRepository = pushRunRepository;
     this.appendedAssetBlobStorage = appendedAssetBlobStorage;
+    this.objectMapper = objectMapper;
+    this.meterRegistry = meterRegistry;
   }
 
   /**
@@ -63,54 +72,101 @@ public class AssetAppenderService {
 
     if (assetAppender.isEmpty()) {
       logger.error(
-          "Attempted to append branch text units to a source asset with an extension that did not map to a valid asset appender. Returning the original source content instead.");
+          "Attempted to append branch text units to a source asset with an extension that did not map to a valid asset appender. No appending has taken place, returning original source asset.");
       return sourceContent;
     }
 
     AbstractAssetAppender appender = assetAppender.get();
 
-    HashSet<Long> lastPushedTextUnits =
+    HashSet<Long> lastPushRunTextUnits =
         new HashSet<>(
             pushRunRepository.getAllTextUnitIdsFromLastPushRunByRepositoryId(
                 asset.getRepository().getId()));
 
+    // Fetch all branches to be appended, sorted by translated date in ascending order to ensure
+    // older translated branches make it in
     List<Branch> branchesToAppend =
-        branchRepository.findBranchesForAppending(asset.getRepository(), "master");
+        branchRepository.findBranchesForAppending(asset.getRepository());
 
     List<Branch> appendedBranches = new ArrayList<>();
-
-    int currentAppendCount = 0;
+    int appendedCount = 0;
     for (Branch branch : branchesToAppend) {
       List<TextUnitDTO> textUnitsToAppend = branchStatisticService.getTextUnitDTOsForBranch(branch);
-      if (currentAppendCount + textUnitsToAppend.size() > HARD_TEXT_UNIT_LIMIT) {
-        logger.error("TODO: Log errors, emit metrics");
+      // Are we going to go over the hard limit ? If yes emit metrics and break out.
+      if (appendedCount + textUnitsToAppend.size() > HARD_TEXT_UNIT_LIMIT) {
+        int countFailedToAppend =
+            branchesToAppend.stream()
+                .skip(appendedBranches.size())
+                .map(b -> branchStatisticService.getTextUnitDTOsForBranch(b).size())
+                .mapToInt(Integer::intValue)
+                .sum();
+
+        logger.warn(
+            "Asset text unit appending limit reached for asset '{}' in repository '{}'. A total of {}/{} branches were appended to the asset. '{}' text units were appended to the asset successfully, whilst '{}' text units were not appended. All branch ids to be appended: {}",
+            asset.getPath(),
+            asset.getRepository().getName(),
+            appendedBranches.size(),
+            branchesToAppend.size(),
+            appendedCount,
+            countFailedToAppend,
+            objectMapper.writeValueAsStringUnchecked(
+                branchesToAppend.stream().map(BaseEntity::getId).toList()));
+
+        // Log the amount of text units we missed
+        meterRegistry
+            .counter(
+                "AssetAppenderService.appendBranchTextUnitsToSource.exceededAppendLimitCount",
+                Tags.of(
+                    "repository",
+                    asset.getRepository().getName(),
+                    "asset",
+                    asset.getPath(),
+                    "jobId",
+                    localizedAssetBody.getAppendBranchTextUnitsId()))
+            .increment(countFailedToAppend);
         break;
       }
 
+      // Filter the text units to remove the ones in the last push run
       textUnitsToAppend =
           textUnitsToAppend.stream()
-              .filter(tu -> !lastPushedTextUnits.contains(tu.getTmTextUnitId()))
+              .filter(tu -> !lastPushRunTextUnits.contains(tu.getTmTextUnitId()))
               .toList();
 
+      // Append the text units
       appender.appendTextUnits(textUnitsToAppend);
-      currentAppendCount += textUnitsToAppend.size();
+
+      appendedCount += textUnitsToAppend.size();
       appendedBranches.add(branch);
     }
 
-    appendedBranches.forEach(
-        b -> {
-          logger.info("Appended branch {}", b.getName());
-        });
-
     String appendedAssetContent = appender.getAssetContent();
 
-    appendedAssetBlobStorage.saveAppendedSource(
-        localizedAssetBody.getAppendBranchTextUnitsId(), appendedAssetContent);
+    saveResults(
+        localizedAssetBody.getAppendBranchTextUnitsId(), appendedAssetContent, appendedBranches);
 
-    appendedAssetBlobStorage.saveAppendedBranches(
-        localizedAssetBody.getAppendBranchTextUnitsId(),
-        appendedBranches.stream().map(BaseEntity::getId).toList());
+    meterRegistry
+        .counter(
+            "AssetAppenderService.appendBranchTextUnitsToSource.appendCount",
+            Tags.of(
+                "repository",
+                asset.getRepository().getName(),
+                "asset",
+                asset.getPath(),
+                "jobId",
+                localizedAssetBody.getAppendBranchTextUnitsId()))
+        .increment(appendedCount);
 
     return appendedAssetContent;
+  }
+
+  private void saveResults(
+      String appendJobId, String appendedSourceContent, List<Branch> appendedBranches) {
+    // Save the source content to blob storage
+    appendedAssetBlobStorage.saveAppendedSource(appendJobId, appendedSourceContent);
+
+    // Save branches to blob storage, will be serialized to a JSON string
+    appendedAssetBlobStorage.saveAppendedBranches(
+        appendJobId, appendedBranches.stream().map(BaseEntity::getId).toList());
   }
 }
