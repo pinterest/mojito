@@ -614,6 +614,7 @@ public class PullCommand extends Command {
             .map(statusEnum -> MultiLocalizedAssetBody.StatusEnum.fromValue(statusEnum.name()))
             .orElse(null));
     multiLocalizedAssetBody.setPullRunName(pullRunName);
+    multiLocalizedAssetBody.setAppendTextUnitsId(appendBranchTextUnits);
     return assetClient.getLocalizedAssetForContentParallel(
         multiLocalizedAssetBody, assetByPathAndRepositoryId.getId());
   }
