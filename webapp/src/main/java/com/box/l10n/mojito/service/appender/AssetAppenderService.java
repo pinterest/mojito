@@ -22,13 +22,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service to append text units from translated branches under the assets repository to the source
+ * asset if the --append-branch-text-units <uuid> flag is applied to the pull step. Text units in
+ * the last push run are not appended as they already exist in the asset. Default append limit of
+ * 1000 exists to protect against any significant memory increases, this can be configured in the
+ * application.properties.
+ *
+ * @author mattwilshire
+ */
 @Service
 public class AssetAppenderService {
 
   static Logger logger = LoggerFactory.getLogger(AssetAppenderService.class);
 
   @Value("${l10n.asset-appender.default.limit:1000}")
-  private final int DEFAULT_APPEND_LIMIT = 1000;
+  private int DEFAULT_APPEND_LIMIT;
 
   private final AssetAppenderFactory assetAppenderFactory;
   private final BranchRepository branchRepository;
@@ -115,7 +124,7 @@ public class AssetAppenderService {
                 .sum();
 
         logger.warn(
-            "Asset text unit appending limit reached for asset '{}' in repository '{}'. A total of {}/{} branches were appended to the asset. '{}' text units were appended to the asset successfully, whilst '{}' text units were not appended. All branch ids to be appended: {}",
+            "Asset text unit appending limit reached for asset '{}' in repository '{}'. A total of {}/{} branches were appended to the asset. '{}' text units were appended to the asset successfully, whilst '{}' text units were not appended. All branch ids that were to be appended: {}",
             asset.getPath(),
             asset.getRepository().getName(),
             appendedBranches.size(),
@@ -140,7 +149,7 @@ public class AssetAppenderService {
         break;
       }
 
-      // Filter the text units to remove the ones in the last push run
+      // Filter text units by removing ones in the last push run
       textUnitsToAppend =
           textUnitsToAppend.stream()
               .filter(tu -> !lastPushRunTextUnits.contains(tu.getTmTextUnitId()))
@@ -173,6 +182,14 @@ public class AssetAppenderService {
     return appendedAssetContent;
   }
 
+  /**
+   * Save results to block storage : S3 / DB. The branches will be used in the commit step to link
+   * the branch to the commit that landed the appended text units.
+   *
+   * @param appendJobId Job id supplied by the -abtu param at the pull step.
+   * @param appendedSourceContent Source content with appended text units.
+   * @param appendedBranches The branches that were appended.
+   */
   private void saveResults(
       String appendJobId, String appendedSourceContent, List<Branch> appendedBranches) {
     // Save the source content to blob storage

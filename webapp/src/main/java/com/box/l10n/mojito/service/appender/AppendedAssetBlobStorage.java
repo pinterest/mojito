@@ -8,6 +8,12 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+/**
+ * Component to store branches and appended source to blob storage (s3 / db) under the path
+ * appended_asset/<uuid>/
+ *
+ * @author mattwilshire
+ */
 @Component
 public class AppendedAssetBlobStorage {
 
