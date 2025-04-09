@@ -180,7 +180,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     ZonedDateTime updatedOn = now.minusDays(1);
     final int courseId = 1;
     this.initReadyForTranslationData(updatedOn);
-    Locale esLocale = this.localeService.findByBcp47Tag("es");
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
     esRepositoryLocale.setLocale(esLocale);
     Repository repository =
@@ -200,7 +200,7 @@ public class EvolveServiceTest extends ServiceTestBase {
             this.stringCaptor.capture(),
             this.additionalLocalesCaptor.capture());
     assertEquals(courseId, (int) this.integerCaptor.getValue());
-    assertEquals("es", this.stringCaptor.getValue());
+    assertEquals("es-ES", this.stringCaptor.getValue());
     assertTrue(this.additionalLocalesCaptor.getValue().isEmpty());
     verify(this.evolveClientMock)
         .updateCourse(
@@ -247,7 +247,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     ZonedDateTime updatedOn = ZonedDateTime.now().minusDays(1);
     final int courseId = 1;
     this.initInTranslationData(updatedOn);
-    Locale esLocale = this.localeService.findByBcp47Tag("es");
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
     esRepositoryLocale.setLocale(esLocale);
     Repository repository =
@@ -340,7 +340,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     ZonedDateTime updatedOn = ZonedDateTime.now().minusDays(1);
     final int courseId = 1;
     this.initInTranslationData(updatedOn);
-    Locale esLocale = this.localeService.findByBcp47Tag("es");
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
     esRepositoryLocale.setLocale(esLocale);
     Repository repository =
@@ -413,7 +413,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     ZonedDateTime updatedOn = ZonedDateTime.now().minusDays(1);
     final int courseId = 1;
     this.initInTranslationData(updatedOn);
-    Locale esLocale = this.localeService.findByBcp47Tag("es");
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
     esRepositoryLocale.setLocale(esLocale);
     Repository repository =
@@ -506,7 +506,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     ZonedDateTime updatedOn2 = updatedOn1.minusDays(1);
     final int inTranslationCourseId = 2;
     this.initTwoCoursesData(updatedOn1, updatedOn2);
-    Locale esLocale = this.localeService.findByBcp47Tag("es");
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
     esRepositoryLocale.setLocale(esLocale);
     Repository repository =
@@ -581,7 +581,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     ZonedDateTime updatedOn2 = updatedOn1.minusDays(1);
     final int inTranslationCourseId = 2;
     this.initTwoCoursesData(updatedOn1, updatedOn2);
-    Locale esLocale = this.localeService.findByBcp47Tag("es");
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
     esRepositoryLocale.setLocale(esLocale);
     Repository repository =
@@ -669,13 +669,13 @@ public class EvolveServiceTest extends ServiceTestBase {
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class))).thenReturn(Stream.of());
     this.initEvolveService();
 
-    Locale esLocale = this.localeService.findByBcp47Tag("es");
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
     esRepositoryLocale.setLocale(esLocale);
-    Locale frLocale = this.localeService.findByBcp47Tag("fr");
+    Locale frLocale = this.localeService.findByBcp47Tag("fr-FR");
     RepositoryLocale frRepositoryLocale = new RepositoryLocale();
     frRepositoryLocale.setLocale(frLocale);
-    Locale ptLocale = this.localeService.findByBcp47Tag("pt");
+    Locale ptLocale = this.localeService.findByBcp47Tag("pt-BR");
     RepositoryLocale ptRepositoryLocale = new RepositoryLocale();
     ptRepositoryLocale.setLocale(ptLocale);
     repositoryService.createRepository(
@@ -688,7 +688,7 @@ public class EvolveServiceTest extends ServiceTestBase {
 
     this.evolveService.sync();
 
-    Set<String> targetLocaleBcp47Tags = Sets.newHashSet("es", "fr", "pt");
+    Set<String> targetLocaleBcp47Tags = Sets.newHashSet("es-ES", "fr-FR", "pt-BR");
 
     assertEquals(3, this.evolveService.getRepositoryLocales().size());
     assertEquals("en", this.evolveService.getSourceLocaleBcp47Tag());
@@ -718,13 +718,13 @@ public class EvolveServiceTest extends ServiceTestBase {
     final int courseId = 1;
     this.initInTranslationData(updatedOn);
 
-    Locale esLocale = this.localeService.findByBcp47Tag("es");
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
     esRepositoryLocale.setLocale(esLocale);
-    Locale frLocale = this.localeService.findByBcp47Tag("fr");
+    Locale frLocale = this.localeService.findByBcp47Tag("fr-FR");
     RepositoryLocale frRepositoryLocale = new RepositoryLocale();
     frRepositoryLocale.setLocale(frLocale);
-    Locale ptLocale = this.localeService.findByBcp47Tag("pt");
+    Locale ptLocale = this.localeService.findByBcp47Tag("pt-BR");
     RepositoryLocale ptRepositoryLocale = new RepositoryLocale();
     ptRepositoryLocale.setLocale(ptLocale);
     Repository repository =
@@ -818,7 +818,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
         .thenThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)));
     this.initEvolveService();
-    Locale esLocale = this.localeService.findByBcp47Tag("es");
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
     esRepositoryLocale.setLocale(esLocale);
     repositoryService.createRepository(
@@ -857,7 +857,7 @@ public class EvolveServiceTest extends ServiceTestBase {
       throws RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException {
     this.initStartCourseTranslationExceptionData();
 
-    Locale esLocale = this.localeService.findByBcp47Tag("es");
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
     esRepositoryLocale.setLocale(esLocale);
     repositoryService.createRepository(
@@ -899,7 +899,7 @@ public class EvolveServiceTest extends ServiceTestBase {
       throws RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException, IOException {
     this.initUpdateCourseExceptionData(ZonedDateTime.now());
 
-    Locale esLocale = this.localeService.findByBcp47Tag("es");
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
     esRepositoryLocale.setLocale(esLocale);
     repositoryService.createRepository(
@@ -947,7 +947,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     final int courseId = 1;
     ZonedDateTime updatedOn = ZonedDateTime.now().minusDays(1);
     this.initUpdateTranslationException(updatedOn);
-    Locale esLocale = this.localeService.findByBcp47Tag("es");
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
     esRepositoryLocale.setLocale(esLocale);
     Repository repository =
@@ -1047,7 +1047,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     final int courseId = 1;
     this.initUpdateCourseInTranslationWithExceptionData(updatedOn);
 
-    Locale esLocale = this.localeService.findByBcp47Tag("es");
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
     esRepositoryLocale.setLocale(esLocale);
     Repository repository =
@@ -1254,7 +1254,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     final int courseId = 1;
     final ZonedDateTime now = ZonedDateTime.now();
     this.initEvolveSyncRequestData();
-    Locale esLocale = this.localeService.findByBcp47Tag("es");
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
     esRepositoryLocale.setLocale(esLocale);
     repositoryService.createRepository(
@@ -1273,7 +1273,7 @@ public class EvolveServiceTest extends ServiceTestBase {
             this.stringCaptor.capture(),
             this.additionalLocalesCaptor.capture());
     assertEquals(courseId, (int) this.integerCaptor.getValue());
-    assertEquals("es", this.stringCaptor.getValue());
+    assertEquals("es-ES", this.stringCaptor.getValue());
     assertTrue(this.additionalLocalesCaptor.getValue().isEmpty());
     verify(this.evolveClientMock).syncEvolve(this.integerCaptor.capture());
     assertEquals(courseId, (int) this.integerCaptor.getValue());
@@ -1315,7 +1315,7 @@ public class EvolveServiceTest extends ServiceTestBase {
       throws RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException {
     final int courseId = 1;
     this.initEvolveSyncRequestWithExceptionData();
-    Locale esLocale = this.localeService.findByBcp47Tag("es");
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
     esRepositoryLocale.setLocale(esLocale);
     repositoryService.createRepository(
@@ -1328,13 +1328,13 @@ public class EvolveServiceTest extends ServiceTestBase {
 
     assertThrows(RuntimeException.class, () -> this.evolveService.sync());
 
-    verify(this.evolveClientMock, times(3))
+    verify(this.evolveClientMock, times(1))
         .startCourseTranslation(
             this.integerCaptor.capture(),
             this.stringCaptor.capture(),
             this.additionalLocalesCaptor.capture());
     assertEquals(courseId, (int) this.integerCaptor.getValue());
-    assertEquals("es", this.stringCaptor.getValue());
+    assertEquals("es-ES", this.stringCaptor.getValue());
     assertTrue(this.additionalLocalesCaptor.getValue().isEmpty());
     verify(this.evolveClientMock, times(3)).syncEvolve(this.integerCaptor.capture());
     assertEquals(courseId, (int) this.integerCaptor.getValue());
