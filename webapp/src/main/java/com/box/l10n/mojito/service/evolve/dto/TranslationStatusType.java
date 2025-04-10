@@ -8,7 +8,7 @@ public enum TranslationStatusType {
   IN_TRANSLATION("In Translation"),
   TRANSLATED("Translated");
 
-  private String name;
+  private final String name;
 
   TranslationStatusType(String name) {
     this.name = name;

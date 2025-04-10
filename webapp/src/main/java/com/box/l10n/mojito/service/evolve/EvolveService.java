@@ -12,6 +12,7 @@ import com.box.l10n.mojito.entity.AssetContent;
 import com.box.l10n.mojito.entity.AssetExtractionByBranch;
 import com.box.l10n.mojito.entity.Branch;
 import com.box.l10n.mojito.entity.BranchStatistic;
+import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.okapi.InheritanceMode;
@@ -34,45 +35,34 @@ import com.box.l10n.mojito.xliff.XliffUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPathExpressionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
 import org.xml.sax.SAXException;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
+@Component
+@ConditionalOnProperty("l10n.evolve.url")
 public class EvolveService {
   private static final Logger log = LoggerFactory.getLogger(EvolveService.class);
 
-  private final Long repositoryId;
-
-  private final String localeMapping;
-
-  private List<RepositoryLocale> targetRepositoryLocales;
-
-  private String sourceLocaleBcp47Tag;
-
-  private String targetLocaleBcp47Tag;
-
-  private Set<String> additionalTargetLocaleBcp47Tags;
-
-  private Map<String, String> localeMappings;
-
   private ZonedDateTime earliestUpdatedOn;
-
-  private Repository repository;
 
   private final RepositoryRepository repositoryRepository;
 
@@ -102,9 +92,8 @@ public class EvolveService {
 
   private final LocaleMappingHelper localeMappingHelper;
 
+  @Autowired
   public EvolveService(
-      Long repositoryId,
-      String localeMapping,
       EvolveConfigurationProperties evolveConfigurationProperties,
       RepositoryRepository repositoryRepository,
       EvolveClient evolveClient,
@@ -119,8 +108,6 @@ public class EvolveService {
       AssetExtractionByBranchRepository assetExtractionByBranchRepository,
       SyncDateService syncDateService,
       LocaleMappingHelper localeMappingHelper) {
-    this.repositoryId = repositoryId;
-    this.localeMapping = localeMapping;
     this.evolveConfigurationProperties = evolveConfigurationProperties;
     this.repositoryRepository = repositoryRepository;
     this.evolveClient = evolveClient;
@@ -135,10 +122,10 @@ public class EvolveService {
     this.assetExtractionByBranchRepository = assetExtractionByBranchRepository;
     this.syncDateService = syncDateService;
     this.localeMappingHelper = localeMappingHelper;
-    this.updateEvolveClient();
+    this.configureEvolveRetryPolicy();
   }
 
-  private void updateEvolveClient() {
+  private void configureEvolveRetryPolicy() {
     this.evolveClient.setMaxRetries(
         ofNullable(this.evolveConfigurationProperties.getMaxRetries())
             .orElse(this.evolveClient.getMaxRetries()));
@@ -150,31 +137,6 @@ public class EvolveService {
         ofNullable(this.evolveConfigurationProperties.getRetryMaxBackoffSecs())
             .map(Duration::ofSeconds)
             .orElse(this.evolveClient.getRetryMaxBackoff()));
-  }
-
-  private void setLocales() {
-    Preconditions.checkNotNull(this.repository);
-
-    this.localeMappings =
-        ofNullable(this.localeMappingHelper.getLocaleMapping(this.localeMapping))
-            .orElse(ImmutableMap.of());
-    this.targetRepositoryLocales = new ArrayList<>();
-    this.additionalTargetLocaleBcp47Tags = new HashSet<>();
-    for (RepositoryLocale repositoryLocale : this.repository.getRepositoryLocales()) {
-      String repositoryLocaleBcp47Tag = repositoryLocale.getLocale().getBcp47Tag();
-      String localeBcp47Tag =
-          this.localeMappings.getOrDefault(repositoryLocaleBcp47Tag, repositoryLocaleBcp47Tag);
-      if (repositoryLocale.getParentLocale() == null) {
-        this.sourceLocaleBcp47Tag = localeBcp47Tag;
-      } else {
-        this.targetRepositoryLocales.add(repositoryLocale);
-        if (this.targetLocaleBcp47Tag == null) {
-          this.targetLocaleBcp47Tag = localeBcp47Tag;
-        } else {
-          this.additionalTargetLocaleBcp47Tags.add(localeBcp47Tag);
-        }
-      }
-    }
   }
 
   private SourceAsset importSourceAsset(SourceAsset sourceAsset)
@@ -209,7 +171,7 @@ public class EvolveService {
     return String.format("%d.xliff", courseId);
   }
 
-  private void importSourceAsset(int courseId, String localizedAssetContent)
+  private void importSourceAsset(int courseId, String localizedAssetContent, long repositoryId)
       throws XPathExpressionException,
           ParserConfigurationException,
           IOException,
@@ -220,7 +182,7 @@ public class EvolveService {
           InterruptedException {
     SourceAsset sourceAsset = new SourceAsset();
     sourceAsset.setBranch(this.getBranchName(courseId));
-    sourceAsset.setRepositoryId(this.repository.getId());
+    sourceAsset.setRepositoryId(repositoryId);
     sourceAsset.setPath(this.getAssetPath(courseId));
     sourceAsset.setBranchCreatedByUsername(SYSTEM_USERNAME);
     sourceAsset.setContent(
@@ -266,7 +228,12 @@ public class EvolveService {
         .block();
   }
 
-  private void startCourseTranslations(int courseId, String courseType)
+  private void startCourseTranslations(
+      int courseId,
+      String courseType,
+      long repositoryId,
+      String targetLocaleBcp47Tag,
+      Set<String> additionalTargetLocaleBcp47Tags)
       throws XPathExpressionException,
           UnsupportedAssetFilterTypeException,
           ParserConfigurationException,
@@ -284,13 +251,13 @@ public class EvolveService {
         Mono.fromCallable(
                 () ->
                     this.evolveClient.startCourseTranslation(
-                        courseId, this.targetLocaleBcp47Tag, this.additionalTargetLocaleBcp47Tags))
+                        courseId, targetLocaleBcp47Tag, additionalTargetLocaleBcp47Tags))
             .retryWhen(
                 Retry.backoff(this.getMaxRetries(), this.getRetryMinBackoff())
                     .maxBackoff(this.getRetryMaxBackoff()))
             .doOnError(e -> log.error("Error while starting a course translation", e))
             .block();
-    this.importSourceAsset(courseId, localizedAssetContent);
+    this.importSourceAsset(courseId, localizedAssetContent, repositoryId);
   }
 
   private void updateCourse(CourseDTO courseDTO, ZonedDateTime currentDateTime) {
@@ -307,11 +274,12 @@ public class EvolveService {
         .block();
   }
 
-  private void importSourceAssetToPrimaryBranch(CourseDTO courseDTO, AssetContent assetContent)
+  private void importSourceAssetToPrimaryBranch(
+      int courseId, AssetContent assetContent, long repositoryId)
       throws UnsupportedAssetFilterTypeException, ExecutionException, InterruptedException {
     SourceAsset sourceAsset = new SourceAsset();
-    sourceAsset.setRepositoryId(this.repository.getId());
-    sourceAsset.setPath(this.getAssetPath(courseDTO.getId()));
+    sourceAsset.setRepositoryId(repositoryId);
+    sourceAsset.setPath(this.getAssetPath(courseId));
     sourceAsset.setBranchCreatedByUsername(SYSTEM_USERNAME);
     sourceAsset.setContent(assetContent.getContent());
     this.pollableTaskService.waitForPollableTask(
@@ -320,9 +288,14 @@ public class EvolveService {
         10000);
   }
 
-  private void updateCourseTranslations(int courseId, Asset asset, AssetContent assetContent) {
+  private void updateCourseTranslations(
+      int courseId,
+      Asset asset,
+      AssetContent assetContent,
+      Map<String, String> localeMappings,
+      List<RepositoryLocale> targetRepositoryLocales) {
     String normalizedContent = NormalizationUtils.normalize(assetContent.getContent());
-    this.targetRepositoryLocales.forEach(
+    targetRepositoryLocales.forEach(
         repositoryLocale -> {
           String localeBcp47Tag = repositoryLocale.getLocale().getBcp47Tag();
           String generateLocalized;
@@ -332,7 +305,7 @@ public class EvolveService {
                     asset,
                     normalizedContent,
                     repositoryLocale,
-                    this.localeMappings.getOrDefault(localeBcp47Tag, localeBcp47Tag),
+                    localeMappings.getOrDefault(localeBcp47Tag, localeBcp47Tag),
                     null,
                     ImmutableList.of(),
                     Status.ACCEPTED,
@@ -351,9 +324,9 @@ public class EvolveService {
         });
   }
 
-  private void deleteBranch(long branchId) throws InterruptedException {
+  private void deleteBranch(long repositoryId, long branchId) throws InterruptedException {
     PollableFuture<Void> pollableFuture =
-        this.branchService.asyncDeleteBranch(this.repository.getId(), branchId);
+        this.branchService.asyncDeleteBranch(repositoryId, branchId);
     this.pollableTaskService.waitForPollableTask(
         pollableFuture.getPollableTask().getId(),
         this.evolveConfigurationProperties.getTaskTimeout() * 1000,
@@ -381,28 +354,31 @@ public class EvolveService {
     }
   }
 
-  private void syncTranslated(CourseDTO courseDTO, Branch branch, ZonedDateTime startDateTime)
+  private void syncTranslated(
+      CourseDTO courseDTO,
+      Branch branch,
+      ZonedDateTime startDateTime,
+      long repositoryId,
+      Map<String, String> localeMappings,
+      List<RepositoryLocale> targetRepositoryLocales)
       throws UnsupportedAssetFilterTypeException, ExecutionException, InterruptedException {
     Asset asset =
         this.assetService
             .findAll(
-                this.repository.getId(),
-                this.getAssetPath(courseDTO.getId()),
-                false,
-                false,
-                branch.getId())
+                repositoryId, this.getAssetPath(courseDTO.getId()), false, false, branch.getId())
             .getFirst();
     List<AssetContent> assetContents =
         this.assetContentRepository.findByAssetRepositoryIdAndBranchName(
-            this.repository.getId(), this.getBranchName(courseDTO.getId()));
+            repositoryId, this.getBranchName(courseDTO.getId()));
     Optional<AssetContent> assetContent =
         assetContents.stream()
             .filter(content -> content.getContentMd5().equals(this.getContentMd5(asset, branch)))
             .findFirst();
     if (assetContent.isPresent()) {
-      this.updateCourseTranslations(courseDTO.getId(), asset, assetContent.get());
-      this.importSourceAssetToPrimaryBranch(courseDTO, assetContent.get());
-      this.deleteBranch(branch.getId());
+      this.updateCourseTranslations(
+          courseDTO.getId(), asset, assetContent.get(), localeMappings, targetRepositoryLocales);
+      this.importSourceAssetToPrimaryBranch(courseDTO.getId(), assetContent.get(), repositoryId);
+      this.deleteBranch(repositoryId, branch.getId());
       courseDTO.setTranslationStatus(TRANSLATED);
       this.updateCourse(courseDTO, startDateTime);
       this.setEarliestUpdatedOn(startDateTime);
@@ -412,7 +388,12 @@ public class EvolveService {
     }
   }
 
-  private void syncReadyForTranslation(CourseDTO courseDTO, ZonedDateTime startDateTime)
+  private void syncReadyForTranslation(
+      CourseDTO courseDTO,
+      ZonedDateTime startDateTime,
+      long repositoryId,
+      String targetLocaleBcp47Tag,
+      Set<String> additionalTargetLocaleBcp47Tags)
       throws XPathExpressionException,
           UnsupportedAssetFilterTypeException,
           ParserConfigurationException,
@@ -421,49 +402,118 @@ public class EvolveService {
           InterruptedException,
           TransformerException,
           SAXException {
-    this.startCourseTranslations(courseDTO.getId(), courseDTO.getType());
+    this.startCourseTranslations(
+        courseDTO.getId(),
+        courseDTO.getType(),
+        repositoryId,
+        targetLocaleBcp47Tag,
+        additionalTargetLocaleBcp47Tags);
     courseDTO.setTranslationStatus(IN_TRANSLATION);
     this.updateCourse(courseDTO, startDateTime);
     this.setEarliestUpdatedOn(startDateTime);
   }
 
-  private void syncInTranslation(CourseDTO courseDTO, ZonedDateTime startDateTime)
+  private void syncInTranslation(
+      CourseDTO courseDTO,
+      ZonedDateTime startDateTime,
+      Repository repository,
+      Map<String, String> localeMappings,
+      List<RepositoryLocale> targetRepositoryLocales)
       throws UnsupportedAssetFilterTypeException, ExecutionException, InterruptedException {
     Branch branch =
         this.branchRepository.findByNameAndRepository(
-            this.getBranchName(courseDTO.getId()), this.repository);
+            this.getBranchName(courseDTO.getId()), repository);
     BranchStatistic branchStatistic = this.branchStatisticRepository.findByBranch(branch);
     if (branchStatistic == null || branchStatistic.getTotalCount() == 0) {
       this.setEarliestUpdatedOn(courseDTO.getUpdatedOn());
     } else if (branchStatistic.getTotalCount() > 0) {
       if (branchStatistic.getForTranslationCount() == 0) {
-        this.syncTranslated(courseDTO, branch, startDateTime);
+        this.syncTranslated(
+            courseDTO,
+            branch,
+            startDateTime,
+            repository.getId(),
+            localeMappings,
+            targetRepositoryLocales);
       } else {
         this.setEarliestUpdatedOn(courseDTO.getUpdatedOn());
       }
     }
   }
 
-  public void sync() {
-    Optional<Repository> repository = this.repositoryRepository.findById(this.repositoryId);
-    if (repository.isEmpty()) {
-      throw new EvolveSyncException("No repository found with ID: " + this.repository.getId());
+  private String getSourceLocaleBcp47Tag(Set<RepositoryLocale> repositoryLocales) {
+    Optional<RepositoryLocale> sourceLocaleBcp47Tag =
+        repositoryLocales.stream()
+            .filter(repositoryLocale -> repositoryLocale.getParentLocale() == null)
+            .findFirst();
+    if (sourceLocaleBcp47Tag.isPresent()) {
+      return sourceLocaleBcp47Tag.get().getLocale().getBcp47Tag();
     }
-    this.repository = repository.get();
-    this.setLocales();
+    throw new EvolveSyncException("The repository does not have a source locale");
+  }
+
+  private String getTargetLocaleBcp47Tag(
+      Map<String, String> localeMappings, List<RepositoryLocale> targetRepositoryLocales) {
+    if (!targetRepositoryLocales.isEmpty()) {
+      String firstLocaleBcp47Tag = targetRepositoryLocales.getFirst().getLocale().getBcp47Tag();
+      return localeMappings.getOrDefault(firstLocaleBcp47Tag, firstLocaleBcp47Tag);
+    }
+    throw new EvolveSyncException("The repository does not have a target locale");
+  }
+
+  private Set<String> getAdditionalTargetLocaleBcp47Tags(
+      Map<String, String> localeMappings, List<RepositoryLocale> targetRepositoryLocales) {
+    if (targetRepositoryLocales.size() > 1) {
+      return targetRepositoryLocales.subList(1, targetRepositoryLocales.size()).stream()
+          .map(RepositoryLocale::getLocale)
+          .map(Locale::getBcp47Tag)
+          .map(bcp47Tag -> localeMappings.getOrDefault(bcp47Tag, bcp47Tag))
+          .collect(Collectors.toSet());
+    } else {
+      return ImmutableSet.of();
+    }
+  }
+
+  public void sync(Long repositoryId, String localeMapping) {
+    Optional<Repository> repositoryOptional = this.repositoryRepository.findById(repositoryId);
+    if (repositoryOptional.isEmpty()) {
+      throw new EvolveSyncException("No repository found with ID: " + repositoryId);
+    }
+    Repository repository = repositoryOptional.get();
+    Map<String, String> localeMappings =
+        ofNullable(this.localeMappingHelper.getLocaleMapping(localeMapping))
+            .orElse(ImmutableMap.of());
+    String sourceLocaleBcp47Tag = this.getSourceLocaleBcp47Tag(repository.getRepositoryLocales());
+    List<RepositoryLocale> targetRepositoryLocales =
+        repository.getRepositoryLocales().stream()
+            .filter(repositoryLocale -> repositoryLocale.getParentLocale() != null)
+            .toList();
+    String targetLocaleBcp47Tag =
+        this.getTargetLocaleBcp47Tag(localeMappings, targetRepositoryLocales);
+    Set<String> additionalTargetLocaleBcp47Tags =
+        this.getAdditionalTargetLocaleBcp47Tags(localeMappings, targetRepositoryLocales);
     ZonedDateTime startDateTime = ZonedDateTime.now();
     CoursesGetRequest request =
-        new CoursesGetRequest(
-            this.sourceLocaleBcp47Tag, this.syncDateService.getDate(), startDateTime);
+        new CoursesGetRequest(sourceLocaleBcp47Tag, this.syncDateService.getDate(), startDateTime);
     this.evolveClient
         .getCourses(request)
         .forEach(
             courseDTO -> {
               try {
                 if (courseDTO.getTranslationStatus() == READY_FOR_TRANSLATION) {
-                  this.syncReadyForTranslation(courseDTO, startDateTime);
+                  this.syncReadyForTranslation(
+                      courseDTO,
+                      startDateTime,
+                      repository.getId(),
+                      targetLocaleBcp47Tag,
+                      additionalTargetLocaleBcp47Tags);
                 } else if (courseDTO.getTranslationStatus() == IN_TRANSLATION) {
-                  this.syncInTranslation(courseDTO, startDateTime);
+                  this.syncInTranslation(
+                      courseDTO,
+                      startDateTime,
+                      repository,
+                      localeMappings,
+                      targetRepositoryLocales);
                 }
               } catch (Exception e) {
                 this.setEarliestUpdatedOn(this.syncDateService.getDate());
@@ -471,21 +521,5 @@ public class EvolveService {
               }
             });
     this.syncDateService.setDate(ofNullable(this.earliestUpdatedOn).orElse(startDateTime));
-  }
-
-  public List<RepositoryLocale> getRepositoryLocales() {
-    return this.targetRepositoryLocales;
-  }
-
-  public String getSourceLocaleBcp47Tag() {
-    return this.sourceLocaleBcp47Tag;
-  }
-
-  public String getTargetLocaleBcp47Tag() {
-    return this.targetLocaleBcp47Tag;
-  }
-
-  public Set<String> getAdditionalTargetLocaleBcp47Tags() {
-    return this.additionalTargetLocaleBcp47Tags;
   }
 }
