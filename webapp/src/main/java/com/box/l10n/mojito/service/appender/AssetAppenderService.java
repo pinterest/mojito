@@ -37,7 +37,7 @@ public class AssetAppenderService {
   static Logger logger = LoggerFactory.getLogger(AssetAppenderService.class);
 
   @Value("${l10n.asset-appender.default.limit:1000}")
-  private int DEFAULT_APPEND_LIMIT;
+  protected int DEFAULT_APPEND_LIMIT;
 
   private final AssetAppenderFactory assetAppenderFactory;
   private final BranchRepository branchRepository;
