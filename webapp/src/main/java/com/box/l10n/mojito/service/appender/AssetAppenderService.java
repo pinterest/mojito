@@ -80,6 +80,12 @@ public class AssetAppenderService {
   public String appendBranchTextUnitsToSource(
       Asset asset, LocalizedAssetBody localizedAssetBody, String sourceContent) {
 
+    if (localizedAssetBody.getAppendBranchTextUnitsId() == null) {
+      logger.error(
+          "Attempted to append branch text units with no append text unit job id supplied, returning asset source content.");
+      return sourceContent;
+    }
+
     String extension = FilenameUtils.getExtension(asset.getPath()).toLowerCase();
     Optional<AbstractAssetAppender> assetAppender =
         assetAppenderFactory.fromExtension(extension, sourceContent);
