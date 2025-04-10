@@ -60,21 +60,25 @@ public class EvolveClientTest {
     courseDTO1.setId(1);
     courseDTO1.setUpdatedOn(ZonedDateTime.now());
     courseDTO1.setTranslationStatus(READY_FOR_TRANSLATION);
+    courseDTO1.setType("CourseEvolve");
 
     CourseDTO courseDTO2 = new CourseDTO();
     courseDTO2.setId(2);
     courseDTO2.setUpdatedOn(ZonedDateTime.now());
     courseDTO2.setTranslationStatus(IN_TRANSLATION);
+    courseDTO2.setType("CourseCurriculum");
 
     CourseDTO courseDTO3 = new CourseDTO();
     courseDTO3.setId(3);
     courseDTO3.setUpdatedOn(ZonedDateTime.now());
     courseDTO3.setTranslationStatus(TRANSLATED);
+    courseDTO1.setType("CourseCurriculum");
 
     CourseDTO courseDTO4 = new CourseDTO();
     courseDTO4.setId(4);
     courseDTO4.setUpdatedOn(ZonedDateTime.now());
     courseDTO4.setTranslationStatus(null);
+    courseDTO1.setType("CourseCurriculum");
 
     CoursesDTO coursesDTO1 = new CoursesDTO();
     coursesDTO1.setCourses(ImmutableList.of(courseDTO1, courseDTO2, courseDTO3));
@@ -220,8 +224,11 @@ public class EvolveClientTest {
 
     CoursesGetRequest coursesGetRequest = new CoursesGetRequest("en", null, null);
 
-    assertThrows(
-        RuntimeException.class, () -> this.evolveClient.getCourses(coursesGetRequest).count());
+    IllegalStateException exception =
+        assertThrows(
+            IllegalStateException.class,
+            () -> this.evolveClient.getCourses(coursesGetRequest).count());
+    assertTrue(exception.getCause() instanceof HttpClientErrorException);
   }
 
   private void initDataWithInitialFailure() {
@@ -230,6 +237,8 @@ public class EvolveClientTest {
     courseDTO.setId(1);
     courseDTO.setUpdatedOn(ZonedDateTime.now());
     courseDTO.setTranslationStatus(READY_FOR_TRANSLATION);
+    courseDTO.setType("CourseEvolve");
+
     CoursesDTO coursesDTO = new CoursesDTO();
     coursesDTO.setCourses(ImmutableList.of(courseDTO));
     PaginationDTO pagination1 = new PaginationDTO();

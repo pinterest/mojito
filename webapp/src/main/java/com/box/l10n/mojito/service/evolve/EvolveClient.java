@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -22,6 +24,8 @@ import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
 public class EvolveClient {
+  static Logger logger = LoggerFactory.getLogger(EvolveClient.class);
+
   private final String apiPath;
 
   private final RestTemplate restTemplate;
@@ -47,7 +51,8 @@ public class EvolveClient {
   private ListWithLastPage<CourseDTO> getCourses(String url) {
     CoursesDTO coursesDTO = this.restTemplate.getForObject(url, CoursesDTO.class);
     if (coursesDTO == null) {
-      throw new RuntimeException("Empty response");
+      logger.error("Get Courses response is empty");
+      throw new EvolveSyncException("Empty response");
     }
     ListWithLastPage<CourseDTO> courseListWithLastPage = new ListWithLastPage<>();
     courseListWithLastPage.setList(coursesDTO.getCourses());
@@ -75,10 +80,7 @@ public class EvolveClient {
                   .retryWhen(
                       Retry.backoff(this.maxRetries, this.retryMinBackoff)
                           .maxBackoff(this.retryMaxBackoff))
-                  .doOnError(
-                      e -> {
-                        throw new RuntimeException(e.getMessage(), e);
-                      })
+                  .doOnError(e -> logger.info("Unable to fetch courses", e))
                   .block();
             },
             1);

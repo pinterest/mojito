@@ -13,6 +13,9 @@ public class CourseDTO {
   @JsonProperty("custom_j")
   private TranslationStatusType translationStatus;
 
+  @JsonProperty("type")
+  private String type;
+
   public int getId() {
     return id;
   }
@@ -35,5 +38,13 @@ public class CourseDTO {
 
   public void setTranslationStatus(TranslationStatusType translationStatus) {
     this.translationStatus = translationStatus;
+  }
+
+  public String getType() {
+    return type;
+  }
+
+  public void setType(String type) {
+    this.type = type;
   }
 }
