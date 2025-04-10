@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Component to store branches and appended source to blob storage (s3 / db) under the path
- * appended_asset/<uuid>/
+ * appended_asset/<appendBranchTextUnitsId>/
  *
  * @author mattwilshire
  */
