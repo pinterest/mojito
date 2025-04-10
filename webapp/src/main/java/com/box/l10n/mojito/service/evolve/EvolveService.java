@@ -28,7 +28,7 @@ import com.box.l10n.mojito.service.branch.BranchStatisticRepository;
 import com.box.l10n.mojito.service.evolve.dto.CourseDTO;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.pollableTask.PollableTaskService;
-import com.box.l10n.mojito.service.repository.RepositoryService;
+import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.xliff.XliffUtils;
 import com.google.common.base.Preconditions;
@@ -49,13 +49,16 @@ import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPathExpressionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.client.HttpClientErrorException;
 import org.xml.sax.SAXException;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
 public class EvolveService {
   private static final Logger log = LoggerFactory.getLogger(EvolveService.class);
+
+  private final Long repositoryId;
+
+  private final String localeMapping;
 
   private List<RepositoryLocale> targetRepositoryLocales;
 
@@ -71,7 +74,7 @@ public class EvolveService {
 
   private Repository repository;
 
-  private final RepositoryService repositoryService;
+  private final RepositoryRepository repositoryRepository;
 
   private final EvolveConfigurationProperties evolveConfigurationProperties;
 
@@ -100,8 +103,10 @@ public class EvolveService {
   private final LocaleMappingHelper localeMappingHelper;
 
   public EvolveService(
+      Long repositoryId,
+      String localeMapping,
       EvolveConfigurationProperties evolveConfigurationProperties,
-      RepositoryService repositoryService,
+      RepositoryRepository repositoryRepository,
       EvolveClient evolveClient,
       AssetService assetService,
       PollableTaskService pollableTaskService,
@@ -114,8 +119,10 @@ public class EvolveService {
       AssetExtractionByBranchRepository assetExtractionByBranchRepository,
       SyncDateService syncDateService,
       LocaleMappingHelper localeMappingHelper) {
+    this.repositoryId = repositoryId;
+    this.localeMapping = localeMapping;
     this.evolveConfigurationProperties = evolveConfigurationProperties;
-    this.repositoryService = repositoryService;
+    this.repositoryRepository = repositoryRepository;
     this.evolveClient = evolveClient;
     this.assetService = assetService;
     this.pollableTaskService = pollableTaskService;
@@ -149,9 +156,7 @@ public class EvolveService {
     Preconditions.checkNotNull(this.repository);
 
     this.localeMappings =
-        ofNullable(
-                this.localeMappingHelper.getLocaleMapping(
-                    evolveConfigurationProperties.getLocaleMapping()))
+        ofNullable(this.localeMappingHelper.getLocaleMapping(this.localeMapping))
             .orElse(ImmutableMap.of());
     this.targetRepositoryLocales = new ArrayList<>();
     this.additionalTargetLocaleBcp47Tags = new HashSet<>();
@@ -243,18 +248,25 @@ public class EvolveService {
   }
 
   private void syncEvolve(int courseId) {
-    try {
-      Map<?, ?> response = this.evolveClient.syncEvolve(courseId);
-      if (!response.containsKey("status") || !response.get("status").equals("ready")) {
-        throw new RuntimeException(
-            "Update Evolve cloud translations for course: " + courseId + " is not complete");
-      }
-    } catch (Exception e) {
-      log.error("Update Evolve cloud translations is not complete", e);
-    }
+    Mono.fromRunnable(
+            () -> {
+              Map<?, ?> response = this.evolveClient.syncEvolve(courseId);
+              if (!response.containsKey("status")
+                  || !response.get("status").toString().equalsIgnoreCase("ready")) {
+                throw new EvolveSyncException(
+                    "Update Evolve cloud translations for course: "
+                        + courseId
+                        + " is not complete");
+              }
+            })
+        .retryWhen(
+            Retry.backoff(this.getMaxRetries(), this.getRetryMinBackoff())
+                .maxBackoff(this.getRetryMaxBackoff()))
+        .doOnError(e -> log.error("Update Evolve cloud translations is not complete", e))
+        .block();
   }
 
-  private void startCourseTranslations(int courseId)
+  private void startCourseTranslations(int courseId, String courseType)
       throws XPathExpressionException,
           UnsupportedAssetFilterTypeException,
           ParserConfigurationException,
@@ -263,29 +275,20 @@ public class EvolveService {
           InterruptedException,
           TransformerException,
           SAXException {
+    Preconditions.checkNotNull(courseType);
+
+    if (courseType.equalsIgnoreCase(this.evolveConfigurationProperties.getCourseEvolveType())) {
+      this.syncEvolve(courseId);
+    }
     String localizedAssetContent =
         Mono.fromCallable(
-                () -> {
-                  try {
-                    return this.evolveClient.startCourseTranslation(
-                        courseId, this.targetLocaleBcp47Tag, this.additionalTargetLocaleBcp47Tags);
-                  } catch (Exception e) {
-                    if (e instanceof HttpClientErrorException httpClientErrorException) {
-                      if (httpClientErrorException.getStatusCode().value() == 422
-                          && httpClientErrorException.getMessage().contains("evolve_sync")) {
-                        this.syncEvolve(courseId);
-                      }
-                    }
-                    throw e;
-                  }
-                })
+                () ->
+                    this.evolveClient.startCourseTranslation(
+                        courseId, this.targetLocaleBcp47Tag, this.additionalTargetLocaleBcp47Tags))
             .retryWhen(
                 Retry.backoff(this.getMaxRetries(), this.getRetryMinBackoff())
                     .maxBackoff(this.getRetryMaxBackoff()))
-            .doOnError(
-                e -> {
-                  throw new RuntimeException("Error while starting a course translation", e);
-                })
+            .doOnError(e -> log.error("Error while starting a course translation", e))
             .block();
     this.importSourceAsset(courseId, localizedAssetContent);
   }
@@ -300,14 +303,11 @@ public class EvolveService {
         .retryWhen(
             Retry.backoff(this.getMaxRetries(), this.getRetryMinBackoff())
                 .maxBackoff(this.getRetryMaxBackoff()))
-        .doOnError(
-            e -> {
-              throw new RuntimeException("Error while updating a course", e);
-            })
+        .doOnError(e -> log.error("Error while updating a course", e))
         .block();
   }
 
-  private void importSourceAssetToMaster(CourseDTO courseDTO, AssetContent assetContent)
+  private void importSourceAssetToPrimaryBranch(CourseDTO courseDTO, AssetContent assetContent)
       throws UnsupportedAssetFilterTypeException, ExecutionException, InterruptedException {
     SourceAsset sourceAsset = new SourceAsset();
     sourceAsset.setRepositoryId(this.repository.getId());
@@ -339,17 +339,14 @@ public class EvolveService {
                     InheritanceMode.USE_PARENT,
                     null);
           } catch (UnsupportedAssetFilterTypeException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new EvolveSyncException(e.getMessage(), e);
           }
           Mono.fromRunnable(
                   () -> this.evolveClient.updateCourseTranslation(courseId, generateLocalized))
               .retryWhen(
                   Retry.backoff(this.getMaxRetries(), this.getRetryMinBackoff())
                       .maxBackoff(this.getRetryMaxBackoff()))
-              .doOnError(
-                  e -> {
-                    throw new RuntimeException("Error while updating course translation", e);
-                  })
+              .doOnError(e -> log.error("Error while updating course translation", e))
               .block();
         });
   }
@@ -377,7 +374,7 @@ public class EvolveService {
     if (assetExtractionByBranch.isPresent()) {
       return assetExtractionByBranch.get().getAssetExtraction().getContentMd5();
     } else {
-      throw new RuntimeException(
+      throw new EvolveSyncException(
           String.format(
               "Asset Extraction not found for asset ID: %d and branch: %s",
               asset.getId(), branch.getName()));
@@ -404,13 +401,13 @@ public class EvolveService {
             .findFirst();
     if (assetContent.isPresent()) {
       this.updateCourseTranslations(courseDTO.getId(), asset, assetContent.get());
-      this.importSourceAssetToMaster(courseDTO, assetContent.get());
+      this.importSourceAssetToPrimaryBranch(courseDTO, assetContent.get());
       this.deleteBranch(branch.getId());
       courseDTO.setTranslationStatus(TRANSLATED);
       this.updateCourse(courseDTO, startDateTime);
       this.setEarliestUpdatedOn(startDateTime);
     } else {
-      throw new RuntimeException(
+      throw new EvolveSyncException(
           "Couldn't find asset content for course with id: " + courseDTO.getId());
     }
   }
@@ -424,7 +421,7 @@ public class EvolveService {
           InterruptedException,
           TransformerException,
           SAXException {
-    this.startCourseTranslations(courseDTO.getId());
+    this.startCourseTranslations(courseDTO.getId(), courseDTO.getType());
     courseDTO.setTranslationStatus(IN_TRANSLATION);
     this.updateCourse(courseDTO, startDateTime);
     this.setEarliestUpdatedOn(startDateTime);
@@ -448,15 +445,11 @@ public class EvolveService {
   }
 
   public void sync() {
-    List<Repository> repositories =
-        this.repositoryService.findRepositoriesIsNotDeletedOrderByName(
-            this.evolveConfigurationProperties.getRepositoryName());
-    if (repositories.isEmpty()) {
-      throw new RuntimeException(
-          "No repository found with name: "
-              + this.evolveConfigurationProperties.getRepositoryName());
+    Optional<Repository> repository = this.repositoryRepository.findById(this.repositoryId);
+    if (repository.isEmpty()) {
+      throw new EvolveSyncException("No repository found with ID: " + this.repository.getId());
     }
-    this.repository = repositories.getFirst();
+    this.repository = repository.get();
     this.setLocales();
     ZonedDateTime startDateTime = ZonedDateTime.now();
     CoursesGetRequest request =
@@ -474,7 +467,7 @@ public class EvolveService {
                 }
               } catch (Exception e) {
                 this.setEarliestUpdatedOn(this.syncDateService.getDate());
-                throw new RuntimeException(e.getMessage(), e);
+                throw new EvolveSyncException(e.getMessage(), e);
               }
             });
     this.syncDateService.setDate(ofNullable(this.earliestUpdatedOn).orElse(startDateTime));

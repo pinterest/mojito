@@ -12,6 +12,7 @@ import com.box.l10n.mojito.service.pollableTask.PollableTaskService;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.xliff.XliffUtils;
+import org.quartz.DisallowConcurrentExecution;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @ConditionalOnProperty("l10n.evolve.url")
+@DisallowConcurrentExecution
 public class EvolveSyncJob extends QuartzPollableJob<EvolveSyncJobInput, Void> {
   /** logger */
   static Logger logger = LoggerFactory.getLogger(EvolveSyncJob.class);
