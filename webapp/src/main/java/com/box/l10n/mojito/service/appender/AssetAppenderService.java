@@ -24,9 +24,9 @@ import org.springframework.stereotype.Service;
 
 /**
  * Service to append text units from translated branches under the assets repository to the source
- * asset if the --append-branch-text-units <uuid> flag is applied to the pull step. Text units in
- * the last push run are not appended as they already exist in the asset. Default append limit of
- * 1000 exists to protect against any significant memory increases, this can be configured in the
+ * asset if the --append-branch-text-units <id> flag is applied to the pull step. Text units in the
+ * last push run are not appended as they already exist in the asset. Default append limit of 1000
+ * exists to protect against any significant memory increases, this can be configured in the
  * application.properties.
  *
  * @author mattwilshire
@@ -144,13 +144,7 @@ public class AssetAppenderService {
         meterRegistry
             .counter(
                 "AssetAppenderService.appendBranchTextUnitsToSource.exceededAppendLimitCount",
-                Tags.of(
-                    "repository",
-                    asset.getRepository().getName(),
-                    "asset",
-                    asset.getPath(),
-                    "jobId",
-                    localizedAssetBody.getAppendBranchTextUnitsId()))
+                Tags.of("repository", asset.getRepository().getName(), "asset", asset.getPath()))
             .increment(countTextUnitsFailedToAppend);
         break;
       }
@@ -184,13 +178,7 @@ public class AssetAppenderService {
     meterRegistry
         .counter(
             "AssetAppenderService.appendBranchTextUnitsToSource.appendCount",
-            Tags.of(
-                "repository",
-                asset.getRepository().getName(),
-                "asset",
-                asset.getPath(),
-                "jobId",
-                localizedAssetBody.getAppendBranchTextUnitsId()))
+            Tags.of("repository", asset.getRepository().getName(), "asset", asset.getPath()))
         .increment(appendedCount);
 
     return appendedAssetContent;

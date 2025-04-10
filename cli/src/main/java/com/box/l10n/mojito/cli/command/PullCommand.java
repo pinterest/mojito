@@ -176,7 +176,8 @@ public class PullCommand extends Command {
       names = {"--append-branch-text-units", "-abtu"},
       required = false,
       description =
-          "Appends text units from fully translated branches, must pass in a unique identifier that the commit-create step will use e.g -abtu <uuid>")
+          "Appends text units from fully translated branches if set, must set aa a unique identifier that is used to store the branches in blob storage. "
+              + "The identifier can be used later on in the commit-create command to link the appended branches to the commit that landed them.")
   String appendBranchTextUnits;
 
   @Autowired AssetClient assetClient;
