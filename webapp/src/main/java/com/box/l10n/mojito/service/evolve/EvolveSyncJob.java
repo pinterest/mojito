@@ -9,7 +9,7 @@ import com.box.l10n.mojito.service.branch.BranchRepository;
 import com.box.l10n.mojito.service.branch.BranchService;
 import com.box.l10n.mojito.service.branch.BranchStatisticRepository;
 import com.box.l10n.mojito.service.pollableTask.PollableTaskService;
-import com.box.l10n.mojito.service.repository.RepositoryService;
+import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.xliff.XliffUtils;
 import org.slf4j.Logger;
@@ -20,13 +20,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 @ConditionalOnProperty("l10n.evolve.url")
-public class EvolveSyncJob extends QuartzPollableJob<Void, Void> {
+public class EvolveSyncJob extends QuartzPollableJob<EvolveSyncJobInput, Void> {
   /** logger */
   static Logger logger = LoggerFactory.getLogger(EvolveSyncJob.class);
 
   @Autowired private EvolveConfigurationProperties evolveConfigurationProperties;
 
-  @Autowired private RepositoryService repositoryService;
+  @Autowired private RepositoryRepository repositoryRepository;
 
   @Autowired private EvolveClient evolveClient;
 
@@ -53,11 +53,13 @@ public class EvolveSyncJob extends QuartzPollableJob<Void, Void> {
   @Autowired private LocaleMappingHelper localeMappingHelper;
 
   @Override
-  public Void call(Void input) {
+  public Void call(EvolveSyncJobInput input) {
     logger.debug("Run EvolveSyncJob");
     new EvolveService(
+            input.getRepositoryId(),
+            input.getLocaleMapping(),
             this.evolveConfigurationProperties,
-            this.repositoryService,
+            this.repositoryRepository,
             this.evolveClient,
             this.assetService,
             this.pollableTaskService,

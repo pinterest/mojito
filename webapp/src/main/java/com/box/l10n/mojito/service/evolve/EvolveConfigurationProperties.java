@@ -6,8 +6,6 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties("l10n.evolve")
 public class EvolveConfigurationProperties {
-  private String repositoryName;
-
   private String apiUid;
 
   private String privateKey;
@@ -24,21 +22,7 @@ public class EvolveConfigurationProperties {
 
   private Long taskTimeout = 3600L;
 
-  private String jobFailureNotificationTitle = "MOJITO | Evolve sync failed";
-
-  private String jobUuid;
-
-  private String jobCron;
-
-  private String localeMapping;
-
-  public String getRepositoryName() {
-    return repositoryName;
-  }
-
-  public void setRepositoryName(String repositoryName) {
-    this.repositoryName = repositoryName;
-  }
+  private String courseEvolveType;
 
   public String getApiUid() {
     return apiUid;
@@ -104,35 +88,11 @@ public class EvolveConfigurationProperties {
     this.taskTimeout = taskTimeout;
   }
 
-  public String getJobFailureNotificationTitle() {
-    return jobFailureNotificationTitle;
+  public String getCourseEvolveType() {
+    return courseEvolveType;
   }
 
-  public void setJobFailureNotificationTitle(String jobFailureNotificationTitle) {
-    this.jobFailureNotificationTitle = jobFailureNotificationTitle;
-  }
-
-  public String getJobUuid() {
-    return jobUuid;
-  }
-
-  public void setJobUuid(String jobUuid) {
-    this.jobUuid = jobUuid;
-  }
-
-  public String getJobCron() {
-    return jobCron;
-  }
-
-  public void setJobCron(String jobCron) {
-    this.jobCron = jobCron;
-  }
-
-  public String getLocaleMapping() {
-    return localeMapping;
-  }
-
-  public void setLocaleMapping(String localeMapping) {
-    this.localeMapping = localeMapping;
+  public void setCourseEvolveType(String courseEvolveType) {
+    this.courseEvolveType = courseEvolveType;
   }
 }

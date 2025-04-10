@@ -5,8 +5,8 @@ import com.box.l10n.mojito.pagerduty.PagerDutyException;
 import com.box.l10n.mojito.pagerduty.PagerDutyIntegrationService;
 import com.box.l10n.mojito.pagerduty.PagerDutyPayload;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
-import com.box.l10n.mojito.service.evolve.EvolveConfigurationProperties;
 import com.box.l10n.mojito.service.evolve.EvolveSyncJob;
+import com.box.l10n.mojito.service.evolve.EvolveSyncJobInput;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.pollableTask.PollableTaskService;
 import com.box.l10n.mojito.service.scheduledjob.IScheduledJob;
@@ -20,6 +20,7 @@ import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -38,11 +39,16 @@ public class ScheduledEvolveSync implements IScheduledJob {
 
   @Autowired private ServerConfig serverConfig;
 
-  @Autowired private EvolveConfigurationProperties evolveConfigurationProperties;
-
   private ScheduledJob scheduledJob;
 
   private Long pollableTaskId;
+
+  @Value(
+      "${l10n.scheduledJobs.thirdPartySync.evolve.notifications.title:MOJITO | Evolve sync failed}")
+  private String notificationTitle;
+
+  @Value("${l10n.scheduledJobs.thirdPartySync.timeout:3600}")
+  private Long timeout = 3600L;
 
   @Override
   public void onSuccess(JobExecutionContext context) {
@@ -54,9 +60,7 @@ public class ScheduledEvolveSync implements IScheduledJob {
                 pd.resolveIncident(scheduledJob.getUuid());
               } catch (PagerDutyException e) {
                 logger.error(
-                    "Couldn't send resolve PagerDuty notification for successful third party sync of repository: '{}' -",
-                    scheduledJob.getRepository().getName(),
-                    e);
+                    "Couldn't send resolve PagerDuty notification for successful Evolve sync", e);
               }
             });
   }
@@ -81,7 +85,7 @@ public class ScheduledEvolveSync implements IScheduledJob {
 
               String title =
                   StrSubstitutor.replace(
-                      this.evolveConfigurationProperties.getJobFailureNotificationTitle(),
+                      this.notificationTitle,
                       ImmutableMap.of("repository", scheduledJob.getRepository().getName()),
                       "{",
                       "}");
@@ -109,17 +113,18 @@ public class ScheduledEvolveSync implements IScheduledJob {
   @Override
   public void execute(JobExecutionContext context) throws JobExecutionException {
     scheduledJob = scheduledJobRepository.findByJobKey(context.getJobDetail().getKey());
+    ScheduledThirdPartySyncProperties scheduledJobProperties =
+        (ScheduledThirdPartySyncProperties) scheduledJob.getProperties();
+    logger.info("Evolve sync has started.");
+    EvolveSyncJobInput input =
+        new EvolveSyncJobInput(
+            scheduledJob.getRepository().getId(), scheduledJobProperties.getLocaleMapping());
     try {
       PollableFuture<Void> task =
           quartzPollableTaskScheduler.scheduleJobWithCustomTimeout(
-              EvolveSyncJob.class,
-              null,
-              "evolveSync",
-              evolveConfigurationProperties.getTaskTimeout());
+              EvolveSyncJob.class, input, "evolveSync", this.timeout);
       pollableTaskId = task.getPollableTask().getId();
-      // Wait for sync to complete
-      pollableTaskService.waitForPollableTask(
-          pollableTaskId, evolveConfigurationProperties.getTaskTimeout() * 1000, 10000);
+      pollableTaskService.waitForPollableTask(pollableTaskId, this.timeout * 1000, 10000);
     } catch (Exception e) {
       throw new JobExecutionException(e);
     }
