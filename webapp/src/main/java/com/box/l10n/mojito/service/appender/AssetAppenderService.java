@@ -122,7 +122,7 @@ public class AssetAppenderService {
       List<TextUnitDTO> textUnitsToAppend = branchStatisticService.getTextUnitDTOsForBranch(branch);
       // Are we going to go over the hard limit ? If yes emit metrics and break out.
       if (appendedCount + textUnitsToAppend.size() > appendLimit) {
-        int countFailedToAppend =
+        int countTextUnitsFailedToAppend =
             branchesToAppend.stream()
                 .skip(appendedBranches.size())
                 .map(b -> branchStatisticService.getTextUnitDTOsForBranch(b).size())
@@ -136,7 +136,7 @@ public class AssetAppenderService {
             appendedBranches.size(),
             branchesToAppend.size(),
             appendedCount,
-            countFailedToAppend,
+            countTextUnitsFailedToAppend,
             objectMapper.writeValueAsStringUnchecked(
                 branchesToAppend.stream().map(BaseEntity::getId).toList()));
 
@@ -151,7 +151,7 @@ public class AssetAppenderService {
                     asset.getPath(),
                     "jobId",
                     localizedAssetBody.getAppendBranchTextUnitsId()))
-            .increment(countFailedToAppend);
+            .increment(countTextUnitsFailedToAppend);
         break;
       }
 
@@ -169,6 +169,14 @@ public class AssetAppenderService {
     }
 
     String appendedAssetContent = appender.getAssetContent();
+
+    logger.info(
+        "Appended '{}' branches ('{}' text units) to asset '{}' for repository '{}' with append job id of '{}'.",
+        appendedBranches.size(),
+        appendedCount,
+        asset.getPath(),
+        asset.getRepository().getName(),
+        localizedAssetBody.getAppendBranchTextUnitsId());
 
     saveResults(
         localizedAssetBody.getAppendBranchTextUnitsId(), appendedAssetContent, appendedBranches);
