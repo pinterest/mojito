@@ -156,11 +156,10 @@ public class EvolveServiceTest extends ServiceTestBase {
                 .getPath()));
   }
 
-  private void initReadyForTranslationData(ZonedDateTime updatedOn) throws IOException {
+  private void initReadyForTranslationData() throws IOException {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
     courseDTO1.setTranslationStatus(READY_FOR_TRANSLATION);
-    courseDTO1.setUpdatedOn(updatedOn);
     courseDTO1.setType("CourseCurriculum");
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
@@ -185,10 +184,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             false,
             Sets.newHashSet(),
             Sets.newHashSet(esRepositoryLocale));
-    ZonedDateTime now = ZonedDateTime.now();
-    ZonedDateTime updatedOn = now.minusDays(1);
     final int courseId = 1;
-    this.initReadyForTranslationData(updatedOn);
+    this.initReadyForTranslationData();
 
     this.evolveService.sync(repository.getId(), null);
 
@@ -220,11 +217,10 @@ public class EvolveServiceTest extends ServiceTestBase {
     assertEquals(4, branchStatistic.getTotalCount());
   }
 
-  private void initInTranslationData(ZonedDateTime updatedOn) {
+  private void initInTranslationData() {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
     courseDTO1.setTranslationStatus(IN_TRANSLATION);
-    courseDTO1.setUpdatedOn(updatedOn);
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
         .thenReturn(Stream.of(courseDTO1));
@@ -251,9 +247,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             false,
             Sets.newHashSet(),
             Sets.newHashSet(esRepositoryLocale));
-    ZonedDateTime updatedOn = ZonedDateTime.now().minusDays(1);
     final int courseId = 1;
-    this.initInTranslationData(updatedOn);
+    this.initInTranslationData();
     SourceAsset sourceAsset = new SourceAsset();
     sourceAsset.setBranch(this.evolveService.getBranchName(courseId));
     sourceAsset.setRepositoryId(repository.getId());
@@ -343,9 +338,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             false,
             Sets.newHashSet(),
             Sets.newHashSet(esRepositoryLocale));
-    ZonedDateTime updatedOn = ZonedDateTime.now().minusDays(1);
     final int courseId = 1;
-    this.initInTranslationData(updatedOn);
+    this.initInTranslationData();
 
     SourceAsset sourceAsset = new SourceAsset();
     sourceAsset.setBranch(this.evolveService.getBranchName(courseId));
@@ -414,9 +408,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             false,
             Sets.newHashSet(),
             Sets.newHashSet(esRepositoryLocale));
-    ZonedDateTime updatedOn = ZonedDateTime.now().minusDays(1);
     final int courseId = 1;
-    this.initInTranslationData(updatedOn);
+    this.initInTranslationData();
 
     SourceAsset sourceAsset = new SourceAsset();
     sourceAsset.setBranch(this.evolveService.getBranchName(courseId));
@@ -464,18 +457,15 @@ public class EvolveServiceTest extends ServiceTestBase {
         .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
   }
 
-  private void initTwoCoursesData(ZonedDateTime updatedOn1, ZonedDateTime updatedOn2)
-      throws IOException {
+  private void initTwoCoursesData() throws IOException {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
     courseDTO1.setTranslationStatus(READY_FOR_TRANSLATION);
-    courseDTO1.setUpdatedOn(updatedOn1);
     courseDTO1.setType("CourseCurriculum");
 
     CourseDTO courseDTO2 = new CourseDTO();
     courseDTO2.setId(2);
     courseDTO2.setTranslationStatus(IN_TRANSLATION);
-    courseDTO2.setUpdatedOn(updatedOn2);
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
         .thenReturn(Stream.of(courseDTO1, courseDTO2));
@@ -504,11 +494,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             false,
             Sets.newHashSet(),
             Sets.newHashSet(esRepositoryLocale));
-    ZonedDateTime now = ZonedDateTime.now();
-    ZonedDateTime updatedOn1 = now.minusDays(1);
-    ZonedDateTime updatedOn2 = updatedOn1.minusDays(1);
     final int inTranslationCourseId = 2;
-    this.initTwoCoursesData(updatedOn1, updatedOn2);
+    this.initTwoCoursesData();
 
     SourceAsset sourceAsset = new SourceAsset();
     sourceAsset.setBranch(this.evolveService.getBranchName(inTranslationCourseId));
@@ -578,11 +565,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             false,
             Sets.newHashSet(),
             Sets.newHashSet(esRepositoryLocale));
-    ZonedDateTime now = ZonedDateTime.now();
-    ZonedDateTime updatedOn1 = now.minusDays(1);
-    ZonedDateTime updatedOn2 = updatedOn1.minusDays(1);
     final int inTranslationCourseId = 2;
-    this.initTwoCoursesData(updatedOn1, updatedOn2);
+    this.initTwoCoursesData();
 
     SourceAsset sourceAsset = new SourceAsset();
     sourceAsset.setBranch(this.evolveService.getBranchName(inTranslationCourseId));
@@ -656,7 +640,7 @@ public class EvolveServiceTest extends ServiceTestBase {
   @Test
   public void testSyncForMultipleLocales()
       throws RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException, IOException {
-    this.initReadyForTranslationData(ZonedDateTime.now().minusDays(1));
+    this.initReadyForTranslationData();
 
     Repository repository =
         repositoryService.createRepository(
@@ -713,9 +697,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             false,
             Sets.newHashSet(),
             Sets.newHashSet(esRepositoryLocale, frRepositoryLocale, ptRepositoryLocale));
-    ZonedDateTime updatedOn = ZonedDateTime.now().minusDays(1);
     final int courseId = 1;
-    this.initInTranslationData(updatedOn);
+    this.initInTranslationData();
 
     SourceAsset sourceAsset = new SourceAsset();
     sourceAsset.setBranch(this.evolveService.getBranchName(courseId));
@@ -820,7 +803,6 @@ public class EvolveServiceTest extends ServiceTestBase {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
     courseDTO1.setTranslationStatus(READY_FOR_TRANSLATION);
-    courseDTO1.setUpdatedOn(ZonedDateTime.now().minusDays(1));
     courseDTO1.setType("CourseCurriculum");
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
@@ -856,11 +838,10 @@ public class EvolveServiceTest extends ServiceTestBase {
     assertTrue(secondCauseException instanceof HttpClientErrorException);
   }
 
-  private void initUpdateCourseExceptionData(ZonedDateTime updatedOn) throws IOException {
+  private void initUpdateCourseExceptionData() throws IOException {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
     courseDTO1.setTranslationStatus(READY_FOR_TRANSLATION);
-    courseDTO1.setUpdatedOn(updatedOn);
     courseDTO1.setType("CourseCurriculum");
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
@@ -888,18 +869,17 @@ public class EvolveServiceTest extends ServiceTestBase {
             false,
             Sets.newHashSet(),
             Sets.newHashSet(esRepositoryLocale));
-    this.initUpdateCourseExceptionData(ZonedDateTime.now());
+    this.initUpdateCourseExceptionData();
 
     assertThrows(RuntimeException.class, () -> this.evolveService.sync(repository.getId(), null));
     verify(this.evolveClientMock).startCourseTranslation(anyInt(), anyString(), anySet());
     verify(this.evolveClientMock, times(0)).syncEvolve(anyInt());
   }
 
-  private void initUpdateTranslationException(ZonedDateTime updatedOn) {
+  private void initUpdateTranslationException() {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
     courseDTO1.setTranslationStatus(IN_TRANSLATION);
-    courseDTO1.setUpdatedOn(updatedOn);
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
         .thenReturn(Stream.of(courseDTO1));
@@ -930,8 +910,7 @@ public class EvolveServiceTest extends ServiceTestBase {
             Sets.newHashSet(),
             Sets.newHashSet(esRepositoryLocale));
     final int courseId = 1;
-    ZonedDateTime updatedOn = ZonedDateTime.now().minusDays(1);
-    this.initUpdateTranslationException(updatedOn);
+    this.initUpdateTranslationException();
 
     SourceAsset sourceAsset = new SourceAsset();
     sourceAsset.setBranch(this.evolveService.getBranchName(courseId));
@@ -988,11 +967,10 @@ public class EvolveServiceTest extends ServiceTestBase {
         .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
   }
 
-  private void initUpdateCourseInTranslationWithExceptionData(ZonedDateTime updatedOn) {
+  private void initUpdateCourseInTranslationWithExceptionData() {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
     courseDTO1.setTranslationStatus(IN_TRANSLATION);
-    courseDTO1.setUpdatedOn(updatedOn);
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
         .thenReturn(Stream.of(courseDTO1));
@@ -1022,9 +1000,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             false,
             Sets.newHashSet(),
             Sets.newHashSet(esRepositoryLocale));
-    ZonedDateTime updatedOn = ZonedDateTime.now().minusDays(1);
     final int courseId = 1;
-    this.initUpdateCourseInTranslationWithExceptionData(updatedOn);
+    this.initUpdateCourseInTranslationWithExceptionData();
 
     SourceAsset sourceAsset = new SourceAsset();
     sourceAsset.setBranch(this.evolveService.getBranchName(courseId));
@@ -1096,7 +1073,7 @@ public class EvolveServiceTest extends ServiceTestBase {
             Sets.newHashSet(),
             Sets.newHashSet(esRepositoryLocale));
     final int courseId = 1;
-    this.initReadyForTranslationData(ZonedDateTime.now().minusDays(1));
+    this.initReadyForTranslationData();
 
     this.evolveService.sync(repository.getId(), "es-MX:es-419");
 
@@ -1131,7 +1108,7 @@ public class EvolveServiceTest extends ServiceTestBase {
             Sets.newHashSet(),
             Sets.newHashSet(esRepositoryLocale));
     final int courseId = 1;
-    this.initInTranslationData(ZonedDateTime.now().minusDays(1));
+    this.initInTranslationData();
 
     SourceAsset sourceAsset = new SourceAsset();
     sourceAsset.setBranch(this.evolveService.getBranchName(courseId));
@@ -1192,7 +1169,6 @@ public class EvolveServiceTest extends ServiceTestBase {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
     courseDTO1.setTranslationStatus(READY_FOR_TRANSLATION);
-    courseDTO1.setUpdatedOn(ZonedDateTime.now().minusDays(1));
     courseDTO1.setType("CourseEvolve");
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
@@ -1252,7 +1228,6 @@ public class EvolveServiceTest extends ServiceTestBase {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
     courseDTO1.setTranslationStatus(READY_FOR_TRANSLATION);
-    courseDTO1.setUpdatedOn(ZonedDateTime.now().minusDays(1));
     courseDTO1.setType("CourseEvolve");
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))

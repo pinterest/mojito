@@ -58,25 +58,21 @@ public class EvolveClientTest {
   private void initDataWithAllCourseTypes() {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
-    courseDTO1.setUpdatedOn(ZonedDateTime.now());
     courseDTO1.setTranslationStatus(READY_FOR_TRANSLATION);
     courseDTO1.setType("CourseEvolve");
 
     CourseDTO courseDTO2 = new CourseDTO();
     courseDTO2.setId(2);
-    courseDTO2.setUpdatedOn(ZonedDateTime.now());
     courseDTO2.setTranslationStatus(IN_TRANSLATION);
     courseDTO2.setType("CourseCurriculum");
 
     CourseDTO courseDTO3 = new CourseDTO();
     courseDTO3.setId(3);
-    courseDTO3.setUpdatedOn(ZonedDateTime.now());
     courseDTO3.setTranslationStatus(TRANSLATED);
     courseDTO1.setType("CourseCurriculum");
 
     CourseDTO courseDTO4 = new CourseDTO();
     courseDTO4.setId(4);
-    courseDTO4.setUpdatedOn(ZonedDateTime.now());
     courseDTO4.setTranslationStatus(null);
     courseDTO1.setType("CourseCurriculum");
 
@@ -200,7 +196,6 @@ public class EvolveClientTest {
     reset(this.mockRestTemplate);
     CourseDTO courseDTO = new CourseDTO();
     courseDTO.setId(1);
-    courseDTO.setUpdatedOn(ZonedDateTime.now());
     courseDTO.setTranslationStatus(READY_FOR_TRANSLATION);
     courseDTO.setType("CourseEvolve");
 
