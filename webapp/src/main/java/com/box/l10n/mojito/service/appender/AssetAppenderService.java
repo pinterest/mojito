@@ -140,12 +140,18 @@ public class AssetAppenderService {
             objectMapper.writeValueAsStringUnchecked(
                 branchesToAppend.stream().map(BaseEntity::getId).toList()));
 
-        // Log the amount of text units we missed
+        // Log the amount of text units & branches we missed
         meterRegistry
             .counter(
-                "AssetAppenderService.appendBranchTextUnitsToSource.exceededAppendLimitCount",
+                "AssetAppenderService.appendBranchTextUnitsToSource.exceededAppendLimitTextUnitCount",
                 Tags.of("repository", asset.getRepository().getName(), "asset", asset.getPath()))
             .increment(countTextUnitsFailedToAppend);
+
+        meterRegistry
+            .counter(
+                "AssetAppenderService.appendBranchTextUnitsToSource.exceededAppendLimitBranchCount",
+                Tags.of("repository", asset.getRepository().getName(), "asset", asset.getPath()))
+            .increment(branchesToAppend.size() - appendedBranches.size());
         break;
       }
 
@@ -177,9 +183,15 @@ public class AssetAppenderService {
 
     meterRegistry
         .counter(
-            "AssetAppenderService.appendBranchTextUnitsToSource.appendCount",
+            "AssetAppenderService.appendBranchTextUnitsToSource.appendedTextUnitCount",
             Tags.of("repository", asset.getRepository().getName(), "asset", asset.getPath()))
         .increment(appendedCount);
+
+    meterRegistry
+        .counter(
+            "AssetAppenderService.appendBranchTextUnitsToSource.appendedBranchCount",
+            Tags.of("repository", asset.getRepository().getName(), "asset", asset.getPath()))
+        .increment(appendedBranches.size());
 
     return appendedAssetContent;
   }

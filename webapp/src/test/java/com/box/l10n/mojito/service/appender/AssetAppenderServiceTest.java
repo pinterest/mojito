@@ -46,7 +46,9 @@ public class AssetAppenderServiceTest {
   String content = "Test source";
 
   Counter appendCountCounterMock;
+  Counter appendBranchCountCounterMock;
   Counter exceedCountCounterMock;
+  Counter exceedBranchCountCounterMock;
 
   @BeforeEach
   public void setup() {
@@ -71,15 +73,28 @@ public class AssetAppenderServiceTest {
 
     appendCountCounterMock = Mockito.mock(Counter.class);
     when(meterRegistryMock.counter(
-            eq("AssetAppenderService.appendBranchTextUnitsToSource.appendCount"),
+            eq("AssetAppenderService.appendBranchTextUnitsToSource.appendedTextUnitCount"),
             isA(Iterable.class)))
         .thenReturn(appendCountCounterMock);
 
+    appendBranchCountCounterMock = Mockito.mock(Counter.class);
+    when(meterRegistryMock.counter(
+            eq("AssetAppenderService.appendBranchTextUnitsToSource.appendedBranchCount"),
+            isA(Iterable.class)))
+        .thenReturn(appendBranchCountCounterMock);
+
     exceedCountCounterMock = Mockito.mock(Counter.class);
     when(meterRegistryMock.counter(
-            eq("AssetAppenderService.appendBranchTextUnitsToSource.exceededAppendLimitCount"),
+            eq(
+                "AssetAppenderService.appendBranchTextUnitsToSource.exceededAppendLimitTextUnitCount"),
             isA(Iterable.class)))
         .thenReturn(exceedCountCounterMock);
+
+    exceedBranchCountCounterMock = Mockito.mock(Counter.class);
+    when(meterRegistryMock.counter(
+            eq("AssetAppenderService.appendBranchTextUnitsToSource.exceededAppendLimitBranchCount"),
+            isA(Iterable.class)))
+        .thenReturn(exceedBranchCountCounterMock);
 
     localizedAssetBody.setAppendBranchTextUnitsId("ba30d2a7-ec14-4d18-9372-5b8072094bbe");
     asset.setPath("strings.pot");
@@ -133,8 +148,9 @@ public class AssetAppenderServiceTest {
     assetAppenderService.appendBranchTextUnitsToSource(asset, localizedAssetBody, content);
 
     verify(potAssetAppenderMock, times(3)).appendTextUnits(any());
-    verify(meterRegistryMock, times(1)).counter(Mockito.anyString(), isA(Iterable.class));
+    verify(meterRegistryMock, times(2)).counter(Mockito.anyString(), isA(Iterable.class));
     verify(appendCountCounterMock, times(1)).increment(6);
+    verify(appendBranchCountCounterMock, times(1)).increment(3);
   }
 
   @Test
@@ -175,8 +191,9 @@ public class AssetAppenderServiceTest {
     verify(potAssetAppenderMock, times(5)).appendTextUnits(any());
 
     // Verify metrics were emitted
-    verify(meterRegistryMock, times(2)).counter(Mockito.anyString(), isA(Iterable.class));
+    verify(meterRegistryMock, times(4)).counter(Mockito.anyString(), isA(Iterable.class));
     verify(appendCountCounterMock, times(1)).increment(10);
     verify(exceedCountCounterMock, times(1)).increment(14);
+    verify(exceedBranchCountCounterMock, times(1)).increment(7);
   }
 }
