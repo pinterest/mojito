@@ -255,6 +255,7 @@ public class ThirdPartyTMSSmartlingGlossary {
     }
     return glossarySourceTerms.stream()
         .filter(glossarySourceTerm -> !Strings.isNullOrEmpty(glossarySourceTerm.getTermText()))
+        .filter(glossarySourceTerm -> !glossarySourceTerm.isArchived())
         .map(this::mapGlossaryTermToVirtualAssetTextUnit)
         .collect(Collectors.toList());
   }
@@ -320,7 +321,40 @@ public class ThirdPartyTMSSmartlingGlossary {
         conceptEntry.getEntries(LocaleId.fromString(locale)) != null
             ? conceptEntry.getEntries(LocaleId.fromString(locale)).getTerm(0).getText()
             : null);
+    glossarySourceTerm.setVariations(extractTermVariations(locale, conceptEntry));
+    glossarySourceTerm.setCaseSensitive(
+        conceptEntry.getProperty("caseSensitive") != null
+            && Boolean.parseBoolean(conceptEntry.getProperty("caseSensitive").getValue()));
+    glossarySourceTerm.setExactMatch(
+        conceptEntry.getProperty("exactMatch") != null
+            && Boolean.parseBoolean(conceptEntry.getProperty("exactMatch").getValue()));
+    glossarySourceTerm.setDoNotTranslate(
+        conceptEntry.getProperty("doNotTranslate") != null
+            && Boolean.parseBoolean(conceptEntry.getProperty("doNotTranslate").getValue()));
+    glossarySourceTerm.setArchived(
+        conceptEntry.getProperty("archived") != null
+            && Boolean.parseBoolean(conceptEntry.getProperty("archived").getValue()));
     return glossarySourceTerm;
+  }
+
+  private List<String> extractTermVariations(String locale, ConceptEntry conceptEntry) {
+    List<String> termVariations = new ArrayList<>();
+    if (conceptEntry.getEntries(LocaleId.fromString(locale)) != null) {
+      // Okapi LangEntry class does not provide a way to get the count of terms so keep incrementing
+      // until we run out of variations
+      int i = 1;
+      try {
+        while (conceptEntry.getEntries(LocaleId.fromString(locale)).getTerm(i) != null) {
+          termVariations.add(
+              conceptEntry.getEntries(LocaleId.fromString(locale)).getTerm(i).getText());
+          i++;
+        }
+      } catch (IndexOutOfBoundsException e) {
+        logger.debug("No more term variations for glossary term id: {}", conceptEntry.getId());
+      }
+    }
+
+    return termVariations;
   }
 
   private List<VirtualAssetTextUnit> getTranslatedTextUnits(
@@ -413,15 +447,27 @@ public class ThirdPartyTMSSmartlingGlossary {
   }
 
   private String getTextUnitComment(GlossarySourceTerm glossarySourceTerm) {
-    String comment = glossarySourceTerm.getDefinition();
+    StringBuilder commentBuilder = new StringBuilder();
+    commentBuilder.append(glossarySourceTerm.getDefinition());
     if (isPartOfSpeechAvailable(glossarySourceTerm)) {
-      comment =
-          glossarySourceTerm.getDefinition()
-              + " --- POS: "
-              + glossarySourceTerm.getPartOfSpeechCode();
+      commentBuilder.append(" --- POS: ").append(glossarySourceTerm.getPartOfSpeechCode());
+    }
+    if (glossarySourceTerm.getVariations() != null
+        && !glossarySourceTerm.getVariations().isEmpty()) {
+      commentBuilder.append(" --- Variations: ");
+      for (String variation : glossarySourceTerm.getVariations()) {
+        commentBuilder.append(variation).append(", ");
+      }
+      commentBuilder.delete(commentBuilder.length() - 2, commentBuilder.length());
     }
 
-    return comment;
+    commentBuilder.append(" --- Case Sensitive: ").append(glossarySourceTerm.isCaseSensitive());
+
+    commentBuilder.append(" --- Exact Match: ").append(glossarySourceTerm.isExactMatch());
+
+    commentBuilder.append(" --- Do Not Translate: ").append(glossarySourceTerm.isDoNotTranslate());
+
+    return commentBuilder.toString();
   }
 
   private String getTextUnitName(GlossarySourceTerm glossarySourceTerm) {
