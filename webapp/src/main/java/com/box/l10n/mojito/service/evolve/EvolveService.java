@@ -62,8 +62,6 @@ import reactor.util.retry.Retry;
 public class EvolveService {
   private static final Logger log = LoggerFactory.getLogger(EvolveService.class);
 
-  private ZonedDateTime earliestUpdatedOn;
-
   private final RepositoryRepository repositoryRepository;
 
   private final EvolveConfigurationProperties evolveConfigurationProperties;
@@ -88,8 +86,6 @@ public class EvolveService {
 
   private final AssetExtractionByBranchRepository assetExtractionByBranchRepository;
 
-  private final SyncDateService syncDateService;
-
   private final LocaleMappingHelper localeMappingHelper;
 
   @Autowired
@@ -106,7 +102,6 @@ public class EvolveService {
       TMService tmService,
       BranchService branchService,
       AssetExtractionByBranchRepository assetExtractionByBranchRepository,
-      SyncDateService syncDateService,
       LocaleMappingHelper localeMappingHelper) {
     this.evolveConfigurationProperties = evolveConfigurationProperties;
     this.repositoryRepository = repositoryRepository;
@@ -120,7 +115,6 @@ public class EvolveService {
     this.tmService = tmService;
     this.branchService = branchService;
     this.assetExtractionByBranchRepository = assetExtractionByBranchRepository;
-    this.syncDateService = syncDateService;
     this.localeMappingHelper = localeMappingHelper;
     this.configureEvolveRetryPolicy();
   }
@@ -333,14 +327,6 @@ public class EvolveService {
         10000);
   }
 
-  private void setEarliestUpdatedOn(ZonedDateTime updatedOn) {
-    if (updatedOn == null) {
-      this.earliestUpdatedOn = null;
-    } else if (this.earliestUpdatedOn == null || this.earliestUpdatedOn.isAfter(updatedOn)) {
-      this.earliestUpdatedOn = updatedOn;
-    }
-  }
-
   private String getContentMd5(Asset asset, Branch branch) {
     Optional<AssetExtractionByBranch> assetExtractionByBranch =
         assetExtractionByBranchRepository.findByAssetAndBranch(asset, branch);
@@ -381,7 +367,6 @@ public class EvolveService {
       this.deleteBranch(repositoryId, branch.getId());
       courseDTO.setTranslationStatus(TRANSLATED);
       this.updateCourse(courseDTO, startDateTime);
-      this.setEarliestUpdatedOn(startDateTime);
     } else {
       throw new EvolveSyncException(
           "Couldn't find asset content for course with id: " + courseDTO.getId());
@@ -410,7 +395,6 @@ public class EvolveService {
         additionalTargetLocaleBcp47Tags);
     courseDTO.setTranslationStatus(IN_TRANSLATION);
     this.updateCourse(courseDTO, startDateTime);
-    this.setEarliestUpdatedOn(startDateTime);
   }
 
   private void syncInTranslation(
@@ -424,20 +408,16 @@ public class EvolveService {
         this.branchRepository.findByNameAndRepository(
             this.getBranchName(courseDTO.getId()), repository);
     BranchStatistic branchStatistic = this.branchStatisticRepository.findByBranch(branch);
-    if (branchStatistic == null || branchStatistic.getTotalCount() == 0) {
-      this.setEarliestUpdatedOn(courseDTO.getUpdatedOn());
-    } else if (branchStatistic.getTotalCount() > 0) {
-      if (branchStatistic.getForTranslationCount() == 0) {
-        this.syncTranslated(
-            courseDTO,
-            branch,
-            startDateTime,
-            repository.getId(),
-            localeMappings,
-            targetRepositoryLocales);
-      } else {
-        this.setEarliestUpdatedOn(courseDTO.getUpdatedOn());
-      }
+    if (branchStatistic != null
+        && branchStatistic.getTotalCount() > 0
+        && branchStatistic.getForTranslationCount() == 0) {
+      this.syncTranslated(
+          courseDTO,
+          branch,
+          startDateTime,
+          repository.getId(),
+          localeMappings,
+          targetRepositoryLocales);
     }
   }
 
@@ -493,8 +473,7 @@ public class EvolveService {
     Set<String> additionalTargetLocaleBcp47Tags =
         this.getAdditionalTargetLocaleBcp47Tags(localeMappings, targetRepositoryLocales);
     ZonedDateTime startDateTime = ZonedDateTime.now();
-    CoursesGetRequest request =
-        new CoursesGetRequest(sourceLocaleBcp47Tag, this.syncDateService.getDate(), startDateTime);
+    CoursesGetRequest request = new CoursesGetRequest(sourceLocaleBcp47Tag, startDateTime);
     this.evolveClient
         .getCourses(request)
         .forEach(
@@ -516,10 +495,8 @@ public class EvolveService {
                       targetRepositoryLocales);
                 }
               } catch (Exception e) {
-                this.setEarliestUpdatedOn(this.syncDateService.getDate());
                 throw new EvolveSyncException(e.getMessage(), e);
               }
             });
-    this.syncDateService.setDate(ofNullable(this.earliestUpdatedOn).orElse(startDateTime));
   }
 }

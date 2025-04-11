@@ -102,7 +102,7 @@ public class EvolveClientTest {
   @Test
   public void testGetCoursesWithAllCourseTypes() {
     this.initDataWithAllCourseTypes();
-    CoursesGetRequest coursesGetRequest = new CoursesGetRequest("en", null, null);
+    CoursesGetRequest coursesGetRequest = new CoursesGetRequest("en", null);
 
     List<CourseDTO> courses = this.evolveClient.getCourses(coursesGetRequest).toList();
 
@@ -130,7 +130,6 @@ public class EvolveClientTest {
   }
 
   private void initEmptyCoursesData() {
-    reset(this.mockRestTemplate);
     CoursesDTO coursesDTO = new CoursesDTO();
     coursesDTO.setCourses(ImmutableList.of());
     PaginationDTO pagination1 = new PaginationDTO();
@@ -142,12 +141,11 @@ public class EvolveClientTest {
   }
 
   @Test
-  public void testGetCoursesWithUpdatedOnDates() {
+  public void testGetCoursesWithUpdatedOnToDate() {
     this.initEmptyCoursesData();
 
     ZonedDateTime updatedOnTo = ZonedDateTime.now();
-    ZonedDateTime updatedOnFrom = updatedOnTo.minusDays(1);
-    CoursesGetRequest coursesGetRequest = new CoursesGetRequest("en", updatedOnFrom, null);
+    CoursesGetRequest coursesGetRequest = new CoursesGetRequest("en", updatedOnTo);
     long count = this.evolveClient.getCourses(coursesGetRequest).count();
 
     assertEquals(0, count);
@@ -157,40 +155,7 @@ public class EvolveClientTest {
     assertEquals(
         this.apiPath
             + String.format(
-                "courses?locale=en&is_active=true&updated_on_from=%s&page=1",
-                UriComponentsBuilder.fromPath(updatedOnFrom.toString()).toUriString()),
-        urlCaptor.getValue());
-
-    this.initEmptyCoursesData();
-
-    coursesGetRequest = new CoursesGetRequest("en", null, updatedOnTo);
-    count = this.evolveClient.getCourses(coursesGetRequest).count();
-
-    assertEquals(0, count);
-
-    verify(this.mockRestTemplate, times(1)).getForObject(urlCaptor.capture(), any());
-
-    assertEquals(
-        this.apiPath
-            + String.format(
                 "courses?locale=en&is_active=true&updated_on_to=%s&page=1",
-                UriComponentsBuilder.fromPath(updatedOnTo.toString()).toUriString()),
-        urlCaptor.getValue());
-
-    this.initEmptyCoursesData();
-
-    coursesGetRequest = new CoursesGetRequest("en", updatedOnFrom, updatedOnTo);
-    count = this.evolveClient.getCourses(coursesGetRequest).count();
-
-    assertEquals(0, count);
-
-    verify(this.mockRestTemplate, times(1)).getForObject(urlCaptor.capture(), any());
-
-    assertEquals(
-        this.apiPath
-            + String.format(
-                "courses?locale=en&is_active=true&updated_on_from=%s&updated_on_to=%s&page=1",
-                UriComponentsBuilder.fromPath(updatedOnFrom.toString()).toUriString(),
                 UriComponentsBuilder.fromPath(updatedOnTo.toString()).toUriString()),
         urlCaptor.getValue());
   }
@@ -206,7 +171,7 @@ public class EvolveClientTest {
     when(this.mockRestTemplate.getForObject(anyString(), any())).thenReturn(coursesDTO);
     this.evolveClient = new EvolveClient(this.mockRestTemplate, this.apiPath);
 
-    CoursesGetRequest coursesGetRequest = new CoursesGetRequest("en", null, null);
+    CoursesGetRequest coursesGetRequest = new CoursesGetRequest("en", null);
 
     long count = this.evolveClient.getCourses(coursesGetRequest).count();
 
@@ -222,7 +187,7 @@ public class EvolveClientTest {
     this.evolveClient.setRetryMinBackoff(Duration.ofSeconds(1));
     this.evolveClient.setRetryMaxBackoff(Duration.ofSeconds(1));
 
-    CoursesGetRequest coursesGetRequest = new CoursesGetRequest("en", null, null);
+    CoursesGetRequest coursesGetRequest = new CoursesGetRequest("en", null);
 
     IllegalStateException exception =
         assertThrows(
@@ -259,7 +224,7 @@ public class EvolveClientTest {
     this.evolveClient.setRetryMinBackoff(Duration.ofSeconds(1));
     this.evolveClient.setRetryMaxBackoff(Duration.ofSeconds(1));
 
-    CoursesGetRequest coursesGetRequest = new CoursesGetRequest("en", null, null);
+    CoursesGetRequest coursesGetRequest = new CoursesGetRequest("en", null);
     long count = this.evolveClient.getCourses(coursesGetRequest).count();
 
     assertEquals(1, count);
