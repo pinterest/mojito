@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import net.sf.okapi.common.LocaleId;
 import net.sf.okapi.lib.terminology.ConceptEntry;
@@ -93,12 +94,15 @@ public class ThirdPartyTMSSmartlingGlossary {
     String glossaryFile = downloadGlossaryFile(glossaryId);
     SmartlingTBXReader tbxReader = new SmartlingTBXReader();
     tbxReader.open(new ByteArrayInputStream(glossaryFile.getBytes(StandardCharsets.UTF_8)));
-    List<ThirdPartyTextUnit> thirdPartyTextUnits = new ArrayList<>();
+    List<Optional<ThirdPartyTextUnit>> thirdPartyTextUnits = new ArrayList<>();
     while (tbxReader.hasNext()) {
       thirdPartyTextUnits.add(mapConceptEntryToThirdPartyTextUnit(glossaryName, tbxReader.next()));
     }
 
-    return thirdPartyTextUnits;
+    return thirdPartyTextUnits.stream()
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(Collectors.toList());
   }
 
   private void deleteExistingTextUnits(VirtualAsset virtualAsset) {
@@ -296,13 +300,17 @@ public class ThirdPartyTMSSmartlingGlossary {
     }
   }
 
-  private ThirdPartyTextUnit mapConceptEntryToThirdPartyTextUnit(
+  private Optional<ThirdPartyTextUnit> mapConceptEntryToThirdPartyTextUnit(
       String glossaryName, ConceptEntry conceptEntry) {
+    if (conceptEntry.getProperty("archived") != null
+        && Boolean.parseBoolean(conceptEntry.getProperty("archived").getValue())) {
+      return Optional.empty();
+    }
     ThirdPartyTextUnit thirdPartyTextUnit = new ThirdPartyTextUnit();
     thirdPartyTextUnit.setId(conceptEntry.getId());
     thirdPartyTextUnit.setName(conceptEntry.getId());
     thirdPartyTextUnit.setAssetPath(glossaryName);
-    return thirdPartyTextUnit;
+    return Optional.of(thirdPartyTextUnit);
   }
 
   private GlossarySourceTerm mapConceptEntryToGlossarySourceTerm(
@@ -372,6 +380,7 @@ public class ThirdPartyTMSSmartlingGlossary {
             glossaryTargetTerm ->
                 !Strings.isNullOrEmpty(glossaryTargetTerm.getTermText())
                     && glossaryTargetTerm.getGlossaryTermTranslation() != null)
+        .filter(glossaryTargetTerm -> !glossaryTargetTerm.isArchived())
         .map(this::getTranslatedVirtualAssetTextUnit)
         .collect(Collectors.toList());
   }
@@ -432,6 +441,9 @@ public class ThirdPartyTMSSmartlingGlossary {
       TermEntry termEntry = targetEntry.getTerm(0);
       glossaryTermTranslation.setTranslatedTerm(termEntry.getText());
       glossaryTargetTerm.setGlossaryTermTranslation(glossaryTermTranslation);
+      glossaryTargetTerm.setArchived(
+          conceptEntry.getProperty("archived") != null
+              && Boolean.parseBoolean(conceptEntry.getProperty("archived").getValue()));
     }
 
     return glossaryTargetTerm;
