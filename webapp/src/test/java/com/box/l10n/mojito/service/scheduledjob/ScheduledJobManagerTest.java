@@ -1,6 +1,7 @@
 package com.box.l10n.mojito.service.scheduledjob;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -154,9 +155,18 @@ public class ScheduledJobManagerTest extends ServiceTestBase {
     scheduledJob.setEnabled(false);
     scheduledJob.setEndDate(null);
     scheduledJobRepository.save(scheduledJob);
-    ZonedDateTime start = getTestJob().getStartDate();
-    // Let the job run
+
     Thread.sleep(JOB_WAIT_TIME_MS);
+    // Set the end date as null again, the job could have been running when we set it to disabled
+    // above
+    scheduledJob = getTestJob();
+    scheduledJob.setEndDate(null);
+    scheduledJobRepository.save(scheduledJob);
+    ZonedDateTime start = getTestJob().getStartDate();
+    // Give enough time for the job to run, make sure end date is not set and the start date doesn't
+    // change
+    Thread.sleep(JOB_WAIT_TIME_MS);
+    assertNull(scheduledJob.getEndDate());
     assertEquals(start, getTestJob().getStartDate());
 
     // Enable the job and ensure the end date is present
