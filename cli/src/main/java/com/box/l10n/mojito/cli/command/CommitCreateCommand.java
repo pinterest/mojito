@@ -86,6 +86,13 @@ public class CommitCreateCommand extends Command {
               + " the first commit from 'git log' is used.")
   boolean readInfoFromGit = false;
 
+  @Parameter(
+      names = {"--append-branch-text-units", "-abtu"},
+      required = false,
+      description =
+          "This should include the append branch text units id supplied during the pull step, branches appended during the pull will be linked to the commit hash (-c) provided.")
+  String appendBranchTextUnitsId;
+
   @Override
   protected void execute() throws CommandException {
     consoleWriter
@@ -110,6 +117,7 @@ public class CommitCreateCommand extends Command {
     commitBody.setRepositoryId(repository.getId());
     commitBody.setAuthorName(commitInfo.authorName);
     commitBody.setAuthorEmail(commitInfo.authorEmail);
+    commitBody.setAppendBranchTextUnitsId(appendBranchTextUnitsId);
     Long creationDateMilliSeconds =
         ofNullable(commitInfo.creationDate).map(JSR310Migration::getMillis).orElse(null);
     commitBody.setSourceCreationDate(creationDateMilliSeconds);

@@ -1,0 +1,5 @@
+ALTER TABLE branch_merge_target
+ADD COLUMN commit BIGINT;
+
+ALTER TABLE branch_merge_target
+ADD CONSTRAINT FK__BRANCH_MERGE_TARGET__COMMIT FOREIGN KEY (commit) REFERENCES commit(id);

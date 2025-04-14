@@ -24,6 +24,12 @@ public class CommitBody {
 
   String sourceCreationDate2;
 
+  /**
+   * The identifier of the appended branches for this pull run, used to link the appended branches
+   * to the commit it landed in.
+   */
+  String appendBranchTextUnitsId;
+
   public Long getRepositoryId() {
     return repositoryId;
   }
@@ -70,5 +76,13 @@ public class CommitBody {
 
   public void setSourceCreationDate2(String sourceCreationDate2) {
     this.sourceCreationDate2 = sourceCreationDate2;
+  }
+
+  public String getAppendBranchTextUnitsId() {
+    return appendBranchTextUnitsId;
+  }
+
+  public void setAppendBranchTextUnitsId(String appendBranchTextUnitsId) {
+    this.appendBranchTextUnitsId = appendBranchTextUnitsId;
   }
 }

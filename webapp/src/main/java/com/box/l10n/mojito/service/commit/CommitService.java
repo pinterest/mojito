@@ -5,6 +5,7 @@ import static com.box.l10n.mojito.specification.Specifications.distinct;
 import static com.box.l10n.mojito.specification.Specifications.ifParamNotNull;
 
 import com.box.l10n.mojito.JSR310Migration;
+import com.box.l10n.mojito.entity.BranchMergeTarget;
 import com.box.l10n.mojito.entity.Commit;
 import com.box.l10n.mojito.entity.CommitToPullRun;
 import com.box.l10n.mojito.entity.CommitToPushRun;
@@ -14,6 +15,9 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.rest.View;
 import com.box.l10n.mojito.rest.commit.CommitWithNameNotFoundException;
 import com.box.l10n.mojito.rest.repository.RepositoryWithIdNotFoundException;
+import com.box.l10n.mojito.service.appender.AppendedAssetBlobStorage;
+import com.box.l10n.mojito.service.branch.BranchMergeTargetRepository;
+import com.box.l10n.mojito.service.branch.BranchRepository;
 import com.box.l10n.mojito.service.pullrun.PullRunRepository;
 import com.box.l10n.mojito.service.pullrun.PullRunWithNameNotFoundException;
 import com.box.l10n.mojito.service.pushrun.PushRunRepository;
@@ -47,8 +51,10 @@ public class CommitService {
   final CommitToPullRunRepository commitToPullRunRepository;
   final PushRunRepository pushRunRepository;
   final PullRunRepository pullRunRepository;
-
   final RepositoryRepository repositoryRepository;
+  final AppendedAssetBlobStorage appendedAssetBlobStorage;
+  private final BranchRepository branchRepository;
+  private final BranchMergeTargetRepository branchMergeTargetRepository;
 
   public CommitService(
       CommitRepository commitRepository,
@@ -56,13 +62,19 @@ public class CommitService {
       CommitToPullRunRepository commitToPullRunRepository,
       PushRunRepository pushRunRepository,
       PullRunRepository pullRunRepository,
-      RepositoryRepository repositoryRepository) {
+      RepositoryRepository repositoryRepository,
+      AppendedAssetBlobStorage appendedAssetBlobStorage,
+      BranchRepository branchRepository,
+      BranchMergeTargetRepository branchMergeTargetRepository) {
     this.commitRepository = commitRepository;
     this.commitToPushRunRepository = commitToPushRunRepository;
     this.commitToPullRunRepository = commitToPullRunRepository;
     this.pushRunRepository = pushRunRepository;
     this.pullRunRepository = pullRunRepository;
     this.repositoryRepository = repositoryRepository;
+    this.appendedAssetBlobStorage = appendedAssetBlobStorage;
+    this.branchRepository = branchRepository;
+    this.branchMergeTargetRepository = branchMergeTargetRepository;
   }
 
   /**
@@ -283,5 +295,34 @@ public class CommitService {
     commitToPullRun.setPullRun(pullRun);
 
     commitToPullRunRepository.save(commitToPullRun);
+  }
+
+  public void associateAppendedBranchesToCommit(String appendBranchTextUnitId, Commit commit) {
+    List<Long> branchIds = appendedAssetBlobStorage.getAppendedBranches(appendBranchTextUnitId);
+    branchIds.forEach(
+        branchId -> {
+          branchRepository
+              .findById(branchId)
+              .ifPresent(
+                  branch -> {
+                    Optional<BranchMergeTarget> bmtOpt =
+                        branchMergeTargetRepository.findByBranch(branch);
+                    if (bmtOpt.isEmpty()) {
+                      logger.error(
+                          "Branch merge target couldn't be found for branch '{}' even though it was appended in append job id '{}'.",
+                          branch.getName(),
+                          appendBranchTextUnitId);
+                    } else {
+                      BranchMergeTarget branchMergeTarget = bmtOpt.get();
+                      if (branchMergeTarget.getCommit() == null) {
+                        branchMergeTarget.setCommit(commit);
+                      } else {
+                        logger.debug(
+                            "Branch '{}' already had a commit associated, no need to override.",
+                            branch.getName());
+                      }
+                    }
+                  });
+        });
   }
 }
