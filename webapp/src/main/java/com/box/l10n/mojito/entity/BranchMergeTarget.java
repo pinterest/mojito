@@ -25,7 +25,7 @@ public class BranchMergeTarget extends BaseEntity {
   private boolean targetsMain;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "commit")
+  @JoinColumn(name = "commit_id")
   private Commit commit;
 
   public Branch getBranch() {

@@ -312,9 +312,9 @@ public class CommitService {
               String placeholders =
                   branchIdsPartition.stream().map(branchId -> "?").collect(Collectors.joining(","));
               String sql =
-                  "UPDATE branch_merge_target SET commit = ? WHERE branch_id IN ("
+                  "UPDATE branch_merge_target SET commit_id = ? WHERE branch_id IN ("
                       + placeholders
-                      + ") AND commit IS NULL;";
+                      + ") AND commit_id IS NULL;";
 
               List<Object> params = new ArrayList<>();
               params.add(commit.getId());
