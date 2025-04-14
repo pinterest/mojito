@@ -157,14 +157,18 @@ public class ScheduledJobManagerTest extends ServiceTestBase {
     scheduledJobRepository.save(scheduledJob);
 
     Thread.sleep(JOB_WAIT_TIME_MS);
-    // Set the end date as null again, the job could have been running when we set it to disabled
+    // Set the end date as null again, the job could've been running when we set it to disabled
     // above
     scheduledJob = getTestJob();
     scheduledJob.setEndDate(null);
     scheduledJobRepository.save(scheduledJob);
+
+    // Safe to now get the start time, it wasn't safe to retrieve it right after setting the job to
+    // disabled as there was a window for it to start before the enabled status was fully updated.
     ZonedDateTime start = getTestJob().getStartDate();
-    // Give enough time for the job to run, make sure end date is not set and the start date doesn't
-    // change
+
+    // Wait for the job to run, make sure the end date is still null and the start date hasn't
+    // changed
     Thread.sleep(JOB_WAIT_TIME_MS);
     assertNull(scheduledJob.getEndDate());
     assertEquals(start, getTestJob().getStartDate());
