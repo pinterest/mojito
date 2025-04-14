@@ -117,11 +117,11 @@ public class AssetAppenderService {
       appendLimit =
           assetAppenderConfig.getAssetAppender().get(asset.getRepository().getName()).getLimit();
 
-    int appendedCount = 0;
+    int appendedTextUnitCount = 0;
     for (Branch branch : branchesToAppend) {
       List<TextUnitDTO> textUnitsToAppend = branchStatisticService.getTextUnitDTOsForBranch(branch);
       // Are we going to go over the hard limit ? If yes emit metrics and break out.
-      if (appendedCount + textUnitsToAppend.size() > appendLimit) {
+      if (appendedTextUnitCount + textUnitsToAppend.size() > appendLimit) {
         int countTextUnitsFailedToAppend =
             branchesToAppend.stream()
                 .skip(appendedBranches.size())
@@ -136,7 +136,7 @@ public class AssetAppenderService {
             localizedAssetBody.getAppendBranchTextUnitsId(),
             appendedBranches.size(),
             branchesToAppend.size(),
-            appendedCount,
+            appendedTextUnitCount,
             countTextUnitsFailedToAppend);
 
         // Log the amount of text units & branches we missed
@@ -163,7 +163,7 @@ public class AssetAppenderService {
       // Append the text units
       appender.appendTextUnits(textUnitsToAppend);
 
-      appendedCount += textUnitsToAppend.size();
+      appendedTextUnitCount += textUnitsToAppend.size();
       appendedBranches.add(branch);
     }
 
@@ -172,7 +172,7 @@ public class AssetAppenderService {
     logger.info(
         "Appended '{}' branches ('{}' text units) to asset '{}' for repository '{}' with append job id of '{}'.",
         appendedBranches.size(),
-        appendedCount,
+        appendedTextUnitCount,
         asset.getPath(),
         asset.getRepository().getName(),
         localizedAssetBody.getAppendBranchTextUnitsId());
@@ -184,7 +184,7 @@ public class AssetAppenderService {
         .counter(
             "AssetAppenderService.appendBranchTextUnitsToSource.appendedTextUnitCount",
             Tags.of("repository", asset.getRepository().getName(), "asset", asset.getPath()))
-        .increment(appendedCount);
+        .increment(appendedTextUnitCount);
 
     meterRegistry
         .counter(
