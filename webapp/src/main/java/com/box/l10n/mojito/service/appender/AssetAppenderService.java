@@ -130,15 +130,14 @@ public class AssetAppenderService {
                 .sum();
 
         logger.warn(
-            "Asset text unit appending limit reached for asset '{}' in repository '{}'. A total of {}/{} branches were appended to the asset. '{}' text units were appended to the asset successfully, whilst '{}' text units were not appended. All branch ids that were to be appended: {}",
+            "Asset text unit appending limit reached for asset '{}' in repository '{}' with job id '{}'. A total of {}/{} branches were appended to the asset. '{}' text units were appended to the asset successfully, whilst '{}' text units were not appended.",
             asset.getPath(),
             asset.getRepository().getName(),
+            localizedAssetBody.getAppendBranchTextUnitsId(),
             appendedBranches.size(),
             branchesToAppend.size(),
             appendedCount,
-            countTextUnitsFailedToAppend,
-            objectMapper.writeValueAsStringUnchecked(
-                branchesToAppend.stream().map(BaseEntity::getId).toList()));
+            countTextUnitsFailedToAppend);
 
         // Log the amount of text units & branches we missed
         meterRegistry

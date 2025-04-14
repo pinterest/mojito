@@ -32,7 +32,7 @@ public class AppendedAssetBlobStorage {
         StructuredBlobStorage.Prefix.APPENDED_ASSET,
         getBranchesName(jobId),
         objectMapper.writeValueAsStringUnchecked(branchIds),
-        Retention.MIN_1_DAY);
+        Retention.PERMANENT);
   }
 
   public List<Long> getAppendedBranches(String jobId) {
