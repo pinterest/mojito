@@ -15,8 +15,6 @@ import com.box.l10n.mojito.rest.View;
 import com.box.l10n.mojito.rest.commit.CommitWithNameNotFoundException;
 import com.box.l10n.mojito.rest.repository.RepositoryWithIdNotFoundException;
 import com.box.l10n.mojito.service.appender.AppendedAssetBlobStorage;
-import com.box.l10n.mojito.service.branch.BranchMergeTargetRepository;
-import com.box.l10n.mojito.service.branch.BranchRepository;
 import com.box.l10n.mojito.service.pullrun.PullRunRepository;
 import com.box.l10n.mojito.service.pullrun.PullRunWithNameNotFoundException;
 import com.box.l10n.mojito.service.pushrun.PushRunRepository;
@@ -57,11 +55,9 @@ public class CommitService {
   final PullRunRepository pullRunRepository;
   final RepositoryRepository repositoryRepository;
   final AppendedAssetBlobStorage appendedAssetBlobStorage;
-  private final BranchRepository branchRepository;
-  private final BranchMergeTargetRepository branchMergeTargetRepository;
   private final JdbcTemplate jdbcTemplate;
 
-  @Value("${l10n.commit.branchAppend.batchSize:2}")
+  @Value("${l10n.commit.branchAppend.batchSize:100}")
   int batchSize;
 
   public CommitService(
@@ -72,8 +68,6 @@ public class CommitService {
       PullRunRepository pullRunRepository,
       RepositoryRepository repositoryRepository,
       AppendedAssetBlobStorage appendedAssetBlobStorage,
-      BranchRepository branchRepository,
-      BranchMergeTargetRepository branchMergeTargetRepository,
       JdbcTemplate jdbcTemplate) {
     this.commitRepository = commitRepository;
     this.commitToPushRunRepository = commitToPushRunRepository;
@@ -82,8 +76,6 @@ public class CommitService {
     this.pullRunRepository = pullRunRepository;
     this.repositoryRepository = repositoryRepository;
     this.appendedAssetBlobStorage = appendedAssetBlobStorage;
-    this.branchRepository = branchRepository;
-    this.branchMergeTargetRepository = branchMergeTargetRepository;
     this.jdbcTemplate = jdbcTemplate;
   }
 
