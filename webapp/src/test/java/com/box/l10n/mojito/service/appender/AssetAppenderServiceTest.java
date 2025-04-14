@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.Branch;
 import com.box.l10n.mojito.entity.Repository;
-import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.rest.asset.LocalizedAssetBody;
 import com.box.l10n.mojito.service.branch.BranchRepository;
 import com.box.l10n.mojito.service.branch.BranchStatisticService;
@@ -38,7 +37,6 @@ public class AssetAppenderServiceTest {
   BranchStatisticService branchStatisticServiceMock;
   PushRunRepository pushRunRepositoryMock;
   AppendedAssetBlobStorage appendedAssetBlobStorageMock;
-  ObjectMapper objectMapper;
   MeterRegistry meterRegistryMock;
   AssetAppenderConfig assetAppenderConfigMock;
 
@@ -57,7 +55,6 @@ public class AssetAppenderServiceTest {
     branchStatisticServiceMock = mock(BranchStatisticService.class);
     pushRunRepositoryMock = mock(PushRunRepository.class);
     appendedAssetBlobStorageMock = mock(AppendedAssetBlobStorage.class);
-    objectMapper = new ObjectMapper();
     meterRegistryMock = mock(MeterRegistry.class);
     assetAppenderConfigMock = mock(AssetAppenderConfig.class);
     assetAppenderService =
@@ -67,7 +64,6 @@ public class AssetAppenderServiceTest {
             branchStatisticServiceMock,
             pushRunRepositoryMock,
             appendedAssetBlobStorageMock,
-            objectMapper,
             meterRegistryMock,
             assetAppenderConfigMock);
 

@@ -3,7 +3,6 @@ package com.box.l10n.mojito.service.appender;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.BaseEntity;
 import com.box.l10n.mojito.entity.Branch;
-import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.rest.asset.LocalizedAssetBody;
 import com.box.l10n.mojito.service.branch.BranchRepository;
 import com.box.l10n.mojito.service.branch.BranchStatisticService;
@@ -15,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import joptsimple.internal.Strings;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +44,6 @@ public class AssetAppenderService {
   private final BranchStatisticService branchStatisticService;
   private final PushRunRepository pushRunRepository;
   private final AppendedAssetBlobStorage appendedAssetBlobStorage;
-  private final ObjectMapper objectMapper;
   private final MeterRegistry meterRegistry;
   private final AssetAppenderConfig assetAppenderConfig;
 
@@ -55,7 +54,6 @@ public class AssetAppenderService {
       BranchStatisticService branchStatisticService,
       PushRunRepository pushRunRepository,
       AppendedAssetBlobStorage appendedAssetBlobStorage,
-      ObjectMapper objectMapper,
       MeterRegistry meterRegistry,
       AssetAppenderConfig assetAppenderConfig) {
     this.assetAppenderFactory = assetAppenderFactory;
@@ -63,7 +61,6 @@ public class AssetAppenderService {
     this.branchStatisticService = branchStatisticService;
     this.pushRunRepository = pushRunRepository;
     this.appendedAssetBlobStorage = appendedAssetBlobStorage;
-    this.objectMapper = objectMapper;
     this.meterRegistry = meterRegistry;
     this.assetAppenderConfig = assetAppenderConfig;
   }
@@ -80,7 +77,9 @@ public class AssetAppenderService {
   public String appendBranchTextUnitsToSource(
       Asset asset, LocalizedAssetBody localizedAssetBody, String sourceContent) {
 
-    if (localizedAssetBody.getAppendBranchTextUnitsId() == null) {
+    String appendJobId = localizedAssetBody.getAppendBranchTextUnitsId();
+
+    if (Strings.isNullOrEmpty(appendJobId)) {
       logger.error(
           "Attempted to append branch text units with no append text unit job id supplied, returning asset source content.");
       return sourceContent;
@@ -110,18 +109,18 @@ public class AssetAppenderService {
 
     List<Branch> appendedBranches = new ArrayList<>();
 
-    int appendLimit = DEFAULT_APPEND_LIMIT;
+    int appendTextUnitLimit = DEFAULT_APPEND_LIMIT;
 
     // Retrieve the repo configured append limit if it exists
     if (assetAppenderConfig.getAssetAppender().containsKey(asset.getRepository().getName()))
-      appendLimit =
+      appendTextUnitLimit =
           assetAppenderConfig.getAssetAppender().get(asset.getRepository().getName()).getLimit();
 
     int appendedTextUnitCount = 0;
     for (Branch branch : branchesToAppend) {
       List<TextUnitDTO> textUnitsToAppend = branchStatisticService.getTextUnitDTOsForBranch(branch);
       // Are we going to go over the hard limit ? If yes emit metrics and break out.
-      if (appendedTextUnitCount + textUnitsToAppend.size() > appendLimit) {
+      if (appendedTextUnitCount + textUnitsToAppend.size() > appendTextUnitLimit) {
         int countTextUnitsFailedToAppend =
             branchesToAppend.stream()
                 .skip(appendedBranches.size())
@@ -133,7 +132,7 @@ public class AssetAppenderService {
             "Asset text unit appending limit reached for asset '{}' in repository '{}' with job id '{}'. A total of {}/{} branches were appended to the asset. '{}' text units were appended to the asset successfully, whilst '{}' text units were not appended.",
             asset.getPath(),
             asset.getRepository().getName(),
-            localizedAssetBody.getAppendBranchTextUnitsId(),
+            appendJobId,
             appendedBranches.size(),
             branchesToAppend.size(),
             appendedTextUnitCount,
@@ -175,10 +174,9 @@ public class AssetAppenderService {
         appendedTextUnitCount,
         asset.getPath(),
         asset.getRepository().getName(),
-        localizedAssetBody.getAppendBranchTextUnitsId());
+        appendJobId);
 
-    saveResults(
-        localizedAssetBody.getAppendBranchTextUnitsId(), appendedAssetContent, appendedBranches);
+    saveResults(appendJobId, appendedAssetContent, appendedBranches);
 
     meterRegistry
         .counter(
