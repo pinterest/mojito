@@ -5,7 +5,6 @@ import static com.box.l10n.mojito.specification.Specifications.distinct;
 import static com.box.l10n.mojito.specification.Specifications.ifParamNotNull;
 
 import com.box.l10n.mojito.JSR310Migration;
-import com.box.l10n.mojito.entity.BranchMergeTarget;
 import com.box.l10n.mojito.entity.Commit;
 import com.box.l10n.mojito.entity.CommitToPullRun;
 import com.box.l10n.mojito.entity.CommitToPushRun;
@@ -23,15 +22,20 @@ import com.box.l10n.mojito.service.pullrun.PullRunWithNameNotFoundException;
 import com.box.l10n.mojito.service.pushrun.PushRunRepository;
 import com.box.l10n.mojito.service.pushrun.PushRunWithNameNotFoundException;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
+import com.google.common.collect.Lists;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,6 +59,10 @@ public class CommitService {
   final AppendedAssetBlobStorage appendedAssetBlobStorage;
   private final BranchRepository branchRepository;
   private final BranchMergeTargetRepository branchMergeTargetRepository;
+  private final JdbcTemplate jdbcTemplate;
+
+  @Value("${l10n.commit.branchAppend.batchSize:2}")
+  int batchSize;
 
   public CommitService(
       CommitRepository commitRepository,
@@ -65,7 +73,8 @@ public class CommitService {
       RepositoryRepository repositoryRepository,
       AppendedAssetBlobStorage appendedAssetBlobStorage,
       BranchRepository branchRepository,
-      BranchMergeTargetRepository branchMergeTargetRepository) {
+      BranchMergeTargetRepository branchMergeTargetRepository,
+      JdbcTemplate jdbcTemplate) {
     this.commitRepository = commitRepository;
     this.commitToPushRunRepository = commitToPushRunRepository;
     this.commitToPullRunRepository = commitToPullRunRepository;
@@ -75,6 +84,7 @@ public class CommitService {
     this.appendedAssetBlobStorage = appendedAssetBlobStorage;
     this.branchRepository = branchRepository;
     this.branchMergeTargetRepository = branchMergeTargetRepository;
+    this.jdbcTemplate = jdbcTemplate;
   }
 
   /**
@@ -297,32 +307,31 @@ public class CommitService {
     commitToPullRunRepository.save(commitToPullRun);
   }
 
+  /**
+   * Associates the appended branches, identified by the given `appendBranchTextUnitId`, to the
+   * specified `commit` by updating the commit field for each branch in the `branch_merge_target`
+   * table. The commit is only assigned if it hasn't been set previously.
+   *
+   * <p>This method directly uses JDBC to perform batch updates to optimize the process by avoiding
+   * JPA limitations.
+   */
   public void associateAppendedBranchesToCommit(String appendBranchTextUnitId, Commit commit) {
     List<Long> branchIds = appendedAssetBlobStorage.getAppendedBranches(appendBranchTextUnitId);
-    branchIds.forEach(
-        branchId -> {
-          branchRepository
-              .findById(branchId)
-              .ifPresent(
-                  branch -> {
-                    Optional<BranchMergeTarget> bmtOpt =
-                        branchMergeTargetRepository.findByBranch(branch);
-                    if (bmtOpt.isEmpty()) {
-                      logger.error(
-                          "Branch merge target couldn't be found for branch '{}' even though it was appended in append job id '{}'.",
-                          branch.getName(),
-                          appendBranchTextUnitId);
-                    } else {
-                      BranchMergeTarget branchMergeTarget = bmtOpt.get();
-                      if (branchMergeTarget.getCommit() == null) {
-                        branchMergeTarget.setCommit(commit);
-                      } else {
-                        logger.debug(
-                            "Branch '{}' already had a commit associated, no need to override.",
-                            branch.getName());
-                      }
-                    }
-                  });
-        });
+    Lists.partition(branchIds, batchSize)
+        .forEach(
+            branchIdsPartition -> {
+              String placeholders =
+                  branchIdsPartition.stream().map(branchId -> "?").collect(Collectors.joining(","));
+              String sql =
+                  "UPDATE branch_merge_target SET commit = ? WHERE branch_id IN ("
+                      + placeholders
+                      + ") AND commit IS NULL;";
+
+              List<Object> params = new ArrayList<>();
+              params.add(commit.getId());
+              params.addAll(branchIdsPartition);
+
+              jdbcTemplate.update(sql, params.toArray());
+            });
   }
 }
