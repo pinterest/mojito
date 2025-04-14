@@ -303,9 +303,6 @@ public class CommitService {
    * Associates the appended branches, identified by the given `appendBranchTextUnitId`, to the
    * specified `commit` by updating the commit field for each branch in the `branch_merge_target`
    * table. The commit is only assigned if it hasn't been set previously.
-   *
-   * <p>This method directly uses JDBC to perform batch updates to optimize the process by avoiding
-   * JPA limitations.
    */
   public void associateAppendedBranchesToCommit(String appendBranchTextUnitId, Commit commit) {
     List<Long> branchIds = appendedAssetBlobStorage.getAppendedBranches(appendBranchTextUnitId);

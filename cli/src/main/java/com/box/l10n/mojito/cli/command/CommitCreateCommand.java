@@ -90,7 +90,8 @@ public class CommitCreateCommand extends Command {
       names = {"--append-branch-text-units", "-abtu"},
       required = false,
       description =
-          "This should include the append branch text units id supplied during the pull step, branches appended during the pull will be linked to the commit hash (-c) provided.")
+          "The append text units id supplied during the pull step, using the id in this step will link the appended branches to the supplied commit. "
+              + "This is used to know the translated assets were checked in for the appended branches.")
   String appendBranchTextUnitsId;
 
   @Override

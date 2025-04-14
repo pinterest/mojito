@@ -25,8 +25,8 @@ public class CommitBody {
   String sourceCreationDate2;
 
   /**
-   * The identifier of the appended branches for this pull run, used to link the appended branches
-   * to the commit it landed in.
+   * The identifier of the appended branches used in the pull step. This is used to link the
+   * appended branches to the commit its translations landed in.
    */
   String appendBranchTextUnitsId;
 
