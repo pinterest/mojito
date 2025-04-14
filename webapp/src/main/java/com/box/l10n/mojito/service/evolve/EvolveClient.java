@@ -64,8 +64,7 @@ public class EvolveClient {
     UriComponentsBuilder builder =
         UriComponentsBuilder.fromPath(this.getFullEndpointPath("courses"))
             .queryParam("locale", request.locale())
-            .queryParam("is_active", request.active())
-            .queryParam("code", "pinterestmediaplannercertification-practiceexam-en");
+            .queryParam("is_active", request.active());
     if (request.updatedOnTo() != null) {
       builder.queryParam("updated_on_to", request.updatedOnTo());
     }
