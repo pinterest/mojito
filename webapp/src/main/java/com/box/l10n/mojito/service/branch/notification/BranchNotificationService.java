@@ -23,6 +23,7 @@ import com.box.l10n.mojito.utils.DateTimeUtils;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -60,6 +61,15 @@ public class BranchNotificationService {
   @Autowired QuartzPollableTaskScheduler quartzPollableTaskScheduler;
 
   @Autowired BranchMergeTargetRepository branchMergeTargetRepository;
+
+  @Autowired MeterRegistry meterRegistry;
+
+  // The amount of hours a branch marked for safe I18N can be translated for whilst not being
+  // checked into the main branch.
+  // If the duration goes over this, the old notification fallback is used, to ensure the branch is
+  // unblocked.
+  @Value("${l10n.branchNotification.branchCheckinWindowHours:9}")
+  int branchCheckinWindowHours;
 
   @Value("${l10n.branchNotification.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   String schedulerName;
@@ -207,11 +217,19 @@ public class BranchNotificationService {
     if (branchMergeTarget.getCommit() == null
         && branchStatistic.getTranslatedDate() != null
         && Duration.between(branchStatistic.getTranslatedDate(), ZonedDateTime.now()).toHours()
-            > 8) {
-      // Branch has been translated for 8 hours and has not been checked into the repo, use old flow
+            > branchCheckinWindowHours) {
+      // Branch has been translated for x hours and has not been checked into the repo, use old flow
       // to unblock
 
       // TODO: Emit metric, log warnings, remove magic number 8 here and use configuration
+      meterRegistry
+          .counter(
+              "BranchNotificationService.handleSendBranchTranslatedMessage.branchExceededCheckInWindow")
+          .increment();
+
+      logger.warn(
+          "Branch '{}' has exceeded the safe I18N check in window. Falling back to the old notification flow to unblock.",
+          branch.getName());
       sendTranslatedMessage(branchNotificationMessageSender, branch, branchNotification, null);
       return;
     }

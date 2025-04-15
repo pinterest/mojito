@@ -153,8 +153,7 @@ public class BranchNotificationMessageBuilderSlack {
       messageParamMap.put("githubRepository", branchDetails.getRepository());
       messageParamMap.put("owner", branchDetails.getOwner());
     }
-
-    if (safeI18NCommit != null) messageParamMap.put("commit", safeI18NCommit);
+    messageParamMap.put("commit", safeI18NCommit != null ? safeI18NCommit : "");
 
     MessageFormat messageFormat =
         new MessageFormat(safeI18NCommit != null ? safeTranslationsReadyMsg : translationsReadyMsg);
