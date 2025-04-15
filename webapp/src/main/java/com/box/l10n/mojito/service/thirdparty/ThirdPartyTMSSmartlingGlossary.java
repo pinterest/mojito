@@ -467,10 +467,7 @@ public class ThirdPartyTMSSmartlingGlossary {
     if (glossarySourceTerm.getVariations() != null
         && !glossarySourceTerm.getVariations().isEmpty()) {
       commentBuilder.append(" --- Variations: ");
-      for (String variation : glossarySourceTerm.getVariations()) {
-        commentBuilder.append(variation).append(", ");
-      }
-      commentBuilder.delete(commentBuilder.length() - 2, commentBuilder.length());
+      commentBuilder.append(String.join(", ", glossarySourceTerm.getVariations()));
     }
 
     commentBuilder.append(" --- Case Sensitive: ").append(glossarySourceTerm.isCaseSensitive());
