@@ -20,7 +20,7 @@ public class EvolveConfigurationProperties {
 
   private Integer retryMaxBackoffSecs;
 
-  private Long taskTimeout = 3600L;
+  private Long taskTimeoutInSeconds = 3600L;
 
   private String courseEvolveType;
 
@@ -80,12 +80,12 @@ public class EvolveConfigurationProperties {
     this.retryMaxBackoffSecs = retryMaxBackoffSecs;
   }
 
-  public Long getTaskTimeout() {
-    return taskTimeout;
+  public Long getTaskTimeoutInSeconds() {
+    return taskTimeoutInSeconds;
   }
 
-  public void setTaskTimeout(Long taskTimeout) {
-    this.taskTimeout = taskTimeout;
+  public void setTaskTimeoutInSeconds(Long taskTimeoutInSeconds) {
+    this.taskTimeoutInSeconds = taskTimeoutInSeconds;
   }
 
   public String getCourseEvolveType() {

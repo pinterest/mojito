@@ -62,6 +62,8 @@ import reactor.util.retry.Retry;
 public class EvolveService {
   private static final Logger log = LoggerFactory.getLogger(EvolveService.class);
 
+  private static final long TEN_SECONDS = 10000;
+
   private final RepositoryRepository repositoryRepository;
 
   private final EvolveConfigurationProperties evolveConfigurationProperties;
@@ -183,8 +185,8 @@ public class EvolveService {
         this.xliffUtils.removeAttribute(localizedAssetContent, "target-language"));
     this.pollableTaskService.waitForPollableTask(
         this.importSourceAsset(sourceAsset).getPollableTask().getId(),
-        this.evolveConfigurationProperties.getTaskTimeout() * 1000,
-        10000);
+        this.evolveConfigurationProperties.getTaskTimeoutInSeconds() * 1000,
+        TEN_SECONDS);
   }
 
   private int getMaxRetries() {
@@ -278,8 +280,8 @@ public class EvolveService {
     sourceAsset.setContent(assetContent.getContent());
     this.pollableTaskService.waitForPollableTask(
         this.importSourceAsset(sourceAsset).getPollableTask().getId(),
-        this.evolveConfigurationProperties.getTaskTimeout() * 1000,
-        10000);
+        this.evolveConfigurationProperties.getTaskTimeoutInSeconds() * 1000,
+        TEN_SECONDS);
   }
 
   private void updateCourseTranslations(
@@ -323,8 +325,8 @@ public class EvolveService {
         this.branchService.asyncDeleteBranch(repositoryId, branchId);
     this.pollableTaskService.waitForPollableTask(
         pollableFuture.getPollableTask().getId(),
-        this.evolveConfigurationProperties.getTaskTimeout() * 1000,
-        10000);
+        this.evolveConfigurationProperties.getTaskTimeoutInSeconds() * 1000,
+        TEN_SECONDS);
   }
 
   private String getContentMd5(Asset asset, Branch branch) {

@@ -29,6 +29,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class ScheduledEvolveSync implements IScheduledJob {
   static Logger logger = LoggerFactory.getLogger(ScheduledThirdPartySync.class);
 
+  private static final long TEN_SECONDS = 10000;
+
   @Autowired private PollableTaskService pollableTaskService;
 
   @Autowired private QuartzPollableTaskScheduler quartzPollableTaskScheduler;
@@ -124,7 +126,7 @@ public class ScheduledEvolveSync implements IScheduledJob {
           quartzPollableTaskScheduler.scheduleJobWithCustomTimeout(
               EvolveSyncJob.class, input, "evolveSync", this.timeout);
       pollableTaskId = task.getPollableTask().getId();
-      pollableTaskService.waitForPollableTask(pollableTaskId, this.timeout * 1000, 10000);
+      pollableTaskService.waitForPollableTask(pollableTaskId, this.timeout * 1000, TEN_SECONDS);
     } catch (Exception e) {
       throw new JobExecutionException(e);
     }
