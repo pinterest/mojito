@@ -5,11 +5,13 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.Branch;
+import com.box.l10n.mojito.entity.BranchMergeTarget;
 import com.box.l10n.mojito.entity.BranchNotification;
 import com.box.l10n.mojito.entity.BranchStatistic;
 import com.box.l10n.mojito.entity.Screenshot;
 import com.box.l10n.mojito.quartz.QuartzJobInfo;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
+import com.box.l10n.mojito.service.branch.BranchMergeTargetRepository;
 import com.box.l10n.mojito.service.branch.BranchRepository;
 import com.box.l10n.mojito.service.branch.BranchStatisticRepository;
 import com.box.l10n.mojito.service.branch.BranchStatisticService;
@@ -21,11 +23,13 @@ import com.box.l10n.mojito.utils.DateTimeUtils;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
@@ -54,6 +58,8 @@ public class BranchNotificationService {
   @Autowired DateTimeUtils dateTimeUtils;
 
   @Autowired QuartzPollableTaskScheduler quartzPollableTaskScheduler;
+
+  @Autowired BranchMergeTargetRepository branchMergeTargetRepository;
 
   @Value("${l10n.branchNotification.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   String schedulerName;
@@ -173,8 +179,43 @@ public class BranchNotificationService {
       scheduleMissingScreenshotNotificationsForBranch(branch, notifierId);
     }
 
-    if (shouldSendTranslatedMessage(branch, branchNotification)) {
-      sendTranslatedMessage(branchNotificationMessageSender, branch, branchNotification);
+    handleSendBranchTranslatedMessage(branchNotificationMessageSender, branch, branchNotification);
+  }
+
+  private void handleSendBranchTranslatedMessage(
+      BranchNotificationMessageSender branchNotificationMessageSender,
+      Branch branch,
+      BranchNotification branchNotification) {
+
+    if (!shouldSendTranslatedMessage(branch, branchNotification)) {
+      // Already sent a notification or the branch is not translated yet, exit early
+      return;
+    }
+
+    Optional<BranchMergeTarget> branchMergeTargetOptional =
+        branchMergeTargetRepository.findByBranch(branch);
+    BranchStatistic branchStatistic = branchStatisticRepository.findByBranch(branch);
+
+    if (branchMergeTargetOptional.isEmpty()
+        || !branchMergeTargetOptional.get().isTargetsMain()
+        || (branchMergeTargetOptional.get().getCommit() == null
+            && Duration.between(branchStatistic.getTranslatedDate(), ZonedDateTime.now()).toHours()
+                > 8)) {
+      // Not tracked for safe i18n, send old notification
+      sendTranslatedMessage(branchNotificationMessageSender, branch, branchNotification, null);
+      return;
+    }
+
+    BranchMergeTarget branchMergeTarget = branchMergeTargetOptional.get();
+
+    if (branchMergeTarget.getCommit() != null) {
+      // Branch is targeting main and is checked in,  safe to tell the user / PR the
+      // translations have arrived
+      sendTranslatedMessage(
+          branchNotificationMessageSender,
+          branch,
+          branchNotification,
+          branchMergeTarget.getCommit().getName());
     }
   }
 
@@ -269,12 +310,13 @@ public class BranchNotificationService {
   void sendTranslatedMessage(
       BranchNotificationMessageSender branchNotificationMessageSender,
       Branch branch,
-      BranchNotification branchNotification) {
+      BranchNotification branchNotification,
+      String safeI18NCommit) {
     logger.debug("sendTranslatedMessage for: {}", branch.getName());
 
     try {
       branchNotificationMessageSender.sendTranslatedMessage(
-          branch.getName(), getUsername(branch), branchNotification.getMessageId());
+          branch.getName(), getUsername(branch), branchNotification.getMessageId(), safeI18NCommit);
 
       branchNotification.setTranslatedMsgSentAt(dateTimeUtils.now());
       branchNotificationRepository.save(branchNotification);

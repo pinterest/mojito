@@ -122,7 +122,8 @@ public class BranchNotificationServiceTest extends ServiceTestBase {
           }
 
           @Override
-          public void sendTranslatedMessage(String branchName, String username, String messageId)
+          public void sendTranslatedMessage(
+              String branchName, String username, String messageId, String safeI18NCommit)
               throws BranchNotificationMessageSenderException {
             throw new BranchNotificationMessageSenderException(exceptionMessage);
           }
