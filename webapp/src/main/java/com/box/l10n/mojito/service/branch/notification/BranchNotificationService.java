@@ -196,17 +196,25 @@ public class BranchNotificationService {
         branchMergeTargetRepository.findByBranch(branch);
     BranchStatistic branchStatistic = branchStatisticRepository.findByBranch(branch);
 
-    if (branchMergeTargetOptional.isEmpty()
-        || !branchMergeTargetOptional.get().isTargetsMain()
-        || (branchMergeTargetOptional.get().getCommit() == null
-            && Duration.between(branchStatistic.getTranslatedDate(), ZonedDateTime.now()).toHours()
-                > 8)) {
+    if (branchMergeTargetOptional.isEmpty() || !branchMergeTargetOptional.get().isTargetsMain()) {
       // Not tracked for safe i18n, send old notification
       sendTranslatedMessage(branchNotificationMessageSender, branch, branchNotification, null);
       return;
     }
 
     BranchMergeTarget branchMergeTarget = branchMergeTargetOptional.get();
+
+    if (branchMergeTarget.getCommit() == null
+        && branchStatistic.getTranslatedDate() != null
+        && Duration.between(branchStatistic.getTranslatedDate(), ZonedDateTime.now()).toHours()
+            > 8) {
+      // Branch has been translated for 8 hours and has not been checked into the repo, use old flow
+      // to unblock
+
+      // TODO: Emit metric, log warnings, remove magic number 8 here and use configuration
+      sendTranslatedMessage(branchNotificationMessageSender, branch, branchNotification, null);
+      return;
+    }
 
     if (branchMergeTarget.getCommit() != null) {
       // Branch is targeting main and is checked in,  safe to tell the user / PR the
