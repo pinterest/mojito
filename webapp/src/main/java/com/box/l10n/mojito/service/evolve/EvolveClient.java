@@ -30,18 +30,23 @@ public class EvolveClient {
 
   private final RestTemplate restTemplate;
 
-  private int maxRetries;
+  private final int maxRetries;
 
-  private Duration retryMinBackoff;
+  private final Duration retryMinBackoff;
 
-  private Duration retryMaxBackoff;
+  private final Duration retryMaxBackoff;
 
-  public EvolveClient(RestTemplate restTemplate, String apiPath) {
+  public EvolveClient(
+      RestTemplate restTemplate,
+      String apiPath,
+      int maxRetries,
+      long retryMinBackoffSecs,
+      long retryMaxBackoffSecs) {
     this.restTemplate = restTemplate;
     this.apiPath = apiPath;
-    this.maxRetries = 2;
-    this.retryMinBackoff = Duration.ofSeconds(5);
-    this.retryMaxBackoff = Duration.ofSeconds(30);
+    this.maxRetries = maxRetries;
+    this.retryMinBackoff = Duration.ofSeconds(retryMinBackoffSecs);
+    this.retryMaxBackoff = Duration.ofSeconds(retryMaxBackoffSecs);
   }
 
   private String getFullEndpointPath(String endpointPath) {
@@ -138,29 +143,5 @@ public class EvolveClient {
         this.getFullEndpointPath("course_translations/{courseId}"),
         new HttpEntity<>(translatedCourse, headers),
         courseId);
-  }
-
-  public int getMaxRetries() {
-    return maxRetries;
-  }
-
-  public void setMaxRetries(int maxRetries) {
-    this.maxRetries = maxRetries;
-  }
-
-  public Duration getRetryMinBackoff() {
-    return retryMinBackoff;
-  }
-
-  public void setRetryMinBackoff(Duration retryMinBackoff) {
-    this.retryMinBackoff = retryMinBackoff;
-  }
-
-  public Duration getRetryMaxBackoff() {
-    return retryMaxBackoff;
-  }
-
-  public void setRetryMaxBackoff(Duration retryMaxBackoff) {
-    this.retryMaxBackoff = retryMaxBackoff;
   }
 }

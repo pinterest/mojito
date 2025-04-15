@@ -20,7 +20,6 @@ import com.box.l10n.mojito.service.evolve.dto.PaginationDTO;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +43,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 @SpringBootTest(classes = {EvolveClientTest.class})
 public class EvolveClientTest {
   final String apiPath = "api/v3/";
+
+  final int maxRetries = 2;
+
+  final long retryMinBackoffSecs = 1;
+
+  final long retryMaxBackoffSecs = 1;
 
   @Mock RestTemplate mockRestTemplate;
 
@@ -92,7 +97,13 @@ public class EvolveClientTest {
     when(this.mockRestTemplate.getForObject(anyString(), any()))
         .thenReturn(coursesDTO1)
         .thenReturn(coursesDTO2);
-    this.evolveClient = new EvolveClient(this.mockRestTemplate, this.apiPath);
+    this.evolveClient =
+        new EvolveClient(
+            this.mockRestTemplate,
+            this.apiPath,
+            this.maxRetries,
+            this.retryMinBackoffSecs,
+            this.retryMaxBackoffSecs);
   }
 
   @Test
@@ -133,7 +144,13 @@ public class EvolveClientTest {
     pagination1.setTotalPages(1);
     coursesDTO.setPagination(pagination1);
     when(this.mockRestTemplate.getForObject(anyString(), any())).thenReturn(coursesDTO);
-    this.evolveClient = new EvolveClient(this.mockRestTemplate, this.apiPath);
+    this.evolveClient =
+        new EvolveClient(
+            this.mockRestTemplate,
+            this.apiPath,
+            this.maxRetries,
+            this.retryMinBackoffSecs,
+            this.retryMaxBackoffSecs);
   }
 
   @Test
@@ -165,7 +182,13 @@ public class EvolveClientTest {
     pagination1.setTotalPages(0);
     coursesDTO.setPagination(pagination1);
     when(this.mockRestTemplate.getForObject(anyString(), any())).thenReturn(coursesDTO);
-    this.evolveClient = new EvolveClient(this.mockRestTemplate, this.apiPath);
+    this.evolveClient =
+        new EvolveClient(
+            this.mockRestTemplate,
+            this.apiPath,
+            this.maxRetries,
+            this.retryMinBackoffSecs,
+            this.retryMaxBackoffSecs);
 
     CoursesGetRequest coursesGetRequest = new CoursesGetRequest("en", null);
 
@@ -179,9 +202,13 @@ public class EvolveClientTest {
     when(this.mockRestTemplate.getForObject(anyString(), any()))
         .thenThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)));
 
-    this.evolveClient = new EvolveClient(this.mockRestTemplate, this.apiPath);
-    this.evolveClient.setRetryMinBackoff(Duration.ofSeconds(1));
-    this.evolveClient.setRetryMaxBackoff(Duration.ofSeconds(1));
+    this.evolveClient =
+        new EvolveClient(
+            this.mockRestTemplate,
+            this.apiPath,
+            this.maxRetries,
+            this.retryMinBackoffSecs,
+            this.retryMaxBackoffSecs);
 
     CoursesGetRequest coursesGetRequest = new CoursesGetRequest("en", null);
 
@@ -208,16 +235,26 @@ public class EvolveClientTest {
     when(this.mockRestTemplate.getForObject(anyString(), any()))
         .thenThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)))
         .thenReturn(coursesDTO);
-    this.evolveClient = new EvolveClient(this.mockRestTemplate, this.apiPath);
+    this.evolveClient =
+        new EvolveClient(
+            this.mockRestTemplate,
+            this.apiPath,
+            this.maxRetries,
+            this.retryMinBackoffSecs,
+            this.retryMaxBackoffSecs);
   }
 
   @Test
   public void testGetCoursesSucceedsAfterRetry() {
     this.initDataWithInitialFailure();
 
-    this.evolveClient = new EvolveClient(this.mockRestTemplate, this.apiPath);
-    this.evolveClient.setRetryMinBackoff(Duration.ofSeconds(1));
-    this.evolveClient.setRetryMaxBackoff(Duration.ofSeconds(1));
+    this.evolveClient =
+        new EvolveClient(
+            this.mockRestTemplate,
+            this.apiPath,
+            this.maxRetries,
+            this.retryMinBackoffSecs,
+            this.retryMaxBackoffSecs);
 
     CoursesGetRequest coursesGetRequest = new CoursesGetRequest("en", null);
     long count = this.evolveClient.getCourses(coursesGetRequest).count();
@@ -229,7 +266,13 @@ public class EvolveClientTest {
   private void initCourseTranslationData() {
     Mockito.reset(this.mockRestTemplate);
     when(this.mockRestTemplate.postForObject(anyString(), any(), any())).thenReturn("content");
-    this.evolveClient = new EvolveClient(this.mockRestTemplate, this.apiPath);
+    this.evolveClient =
+        new EvolveClient(
+            this.mockRestTemplate,
+            this.apiPath,
+            this.maxRetries,
+            this.retryMinBackoffSecs,
+            this.retryMaxBackoffSecs);
   }
 
   @Test
@@ -261,7 +304,13 @@ public class EvolveClientTest {
 
   @Test
   public void testUpdateCourse() {
-    this.evolveClient = new EvolveClient(this.mockRestTemplate, this.apiPath);
+    this.evolveClient =
+        new EvolveClient(
+            this.mockRestTemplate,
+            this.apiPath,
+            this.maxRetries,
+            this.retryMinBackoffSecs,
+            this.retryMaxBackoffSecs);
 
     ZonedDateTime modifiedSince = ZonedDateTime.now();
     this.evolveClient.updateCourse(1, IN_TRANSLATION, modifiedSince);
@@ -286,7 +335,13 @@ public class EvolveClientTest {
 
   @Test
   public void testUpdateCourseTranslation() {
-    this.evolveClient = new EvolveClient(this.mockRestTemplate, this.apiPath);
+    this.evolveClient =
+        new EvolveClient(
+            this.mockRestTemplate,
+            this.apiPath,
+            this.maxRetries,
+            this.retryMinBackoffSecs,
+            this.retryMaxBackoffSecs);
 
     this.evolveClient.updateCourseTranslation(1, "content");
 
@@ -308,7 +363,13 @@ public class EvolveClientTest {
     Map<String, String> params = ImmutableMap.of("status", "ready");
     when(this.mockRestTemplate.postForObject(anyString(), any(), any(), anyInt()))
         .thenReturn(params);
-    this.evolveClient = new EvolveClient(this.mockRestTemplate, this.apiPath);
+    this.evolveClient =
+        new EvolveClient(
+            this.mockRestTemplate,
+            this.apiPath,
+            this.maxRetries,
+            this.retryMinBackoffSecs,
+            this.retryMaxBackoffSecs);
 
     Map<?, ?> response = this.evolveClient.syncEvolve(1);
 

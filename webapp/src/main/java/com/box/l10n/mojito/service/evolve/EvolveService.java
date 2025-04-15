@@ -118,21 +118,6 @@ public class EvolveService {
     this.branchService = branchService;
     this.assetExtractionByBranchRepository = assetExtractionByBranchRepository;
     this.localeMappingHelper = localeMappingHelper;
-    this.configureEvolveRetryPolicy();
-  }
-
-  private void configureEvolveRetryPolicy() {
-    this.evolveClient.setMaxRetries(
-        ofNullable(this.evolveConfigurationProperties.getMaxRetries())
-            .orElse(this.evolveClient.getMaxRetries()));
-    this.evolveClient.setRetryMinBackoff(
-        ofNullable(this.evolveConfigurationProperties.getRetryMinBackoffSecs())
-            .map(Duration::ofSeconds)
-            .orElse(this.evolveClient.getRetryMinBackoff()));
-    this.evolveClient.setRetryMaxBackoff(
-        ofNullable(this.evolveConfigurationProperties.getRetryMaxBackoffSecs())
-            .map(Duration::ofSeconds)
-            .orElse(this.evolveClient.getRetryMaxBackoff()));
   }
 
   private SourceAsset importSourceAsset(SourceAsset sourceAsset)

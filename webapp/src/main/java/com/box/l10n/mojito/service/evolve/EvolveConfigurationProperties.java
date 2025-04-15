@@ -14,11 +14,11 @@ public class EvolveConfigurationProperties {
 
   private String apiPath;
 
-  private Integer maxRetries;
+  private Integer maxRetries = 2;
 
-  private Integer retryMinBackoffSecs;
+  private Integer retryMinBackoffSecs = 5;
 
-  private Integer retryMaxBackoffSecs;
+  private Integer retryMaxBackoffSecs = 30;
 
   private Long taskTimeoutInSeconds = 3600L;
 

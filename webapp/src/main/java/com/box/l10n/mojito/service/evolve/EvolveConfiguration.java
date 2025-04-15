@@ -28,7 +28,12 @@ public class EvolveConfiguration {
 
   @Bean
   EvolveClient evolveClient() {
-    return new EvolveClient(evolveRestTemplate(), this.evolveConfigurationProperties.getApiPath());
+    return new EvolveClient(
+        evolveRestTemplate(),
+        this.evolveConfigurationProperties.getApiPath(),
+        this.evolveConfigurationProperties.getMaxRetries(),
+        this.evolveConfigurationProperties.getRetryMinBackoffSecs(),
+        this.evolveConfigurationProperties.getRetryMaxBackoffSecs());
   }
 
   RestTemplate evolveRestTemplate() {
