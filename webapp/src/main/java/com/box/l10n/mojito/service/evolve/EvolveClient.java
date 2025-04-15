@@ -85,6 +85,13 @@ public class EvolveClient {
     return StreamSupport.stream(iterator, false);
   }
 
+  /**
+   * Update stored translations for Evolve cloud courses so that subsequent translation requests can
+   * be made. This is called when starting translation for 'CourseEvolve'-type courses.
+   *
+   * @param courseId The ID of the course
+   * @return The status of the request
+   */
   public Map<?, ?> syncEvolve(int courseId) {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
