@@ -25,7 +25,7 @@ public enum TranslationStatusType {
       return null;
     }
     for (TranslationStatusType translationStatusType : TranslationStatusType.values()) {
-      if (translationStatusType.getName().equals(name)) {
+      if (translationStatusType.getName().equalsIgnoreCase(name)) {
         return translationStatusType;
       }
     }
