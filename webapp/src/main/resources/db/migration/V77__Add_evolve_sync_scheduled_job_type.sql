@@ -1,1 +1,0 @@
-INSERT INTO scheduled_job_type(id, name) VALUES(2, 'EVOLVE_SYNC');
