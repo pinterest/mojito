@@ -65,7 +65,7 @@ public class BranchNotificationService {
 
   @Autowired MeterRegistry meterRegistry;
 
-  // If a branch that is tracked for safe i18n has been translated for this amount of hours then it
+  // If a branch that is tracked for safe i18n has been translated for this duration then it
   // will fall back to using the old notification flow & message to unblock the branch.
   @Value("${l10n.branchNotification.notificationFallbackTimeout:8h}")
   protected Duration notificationFallbackTimeout;
