@@ -24,6 +24,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -64,12 +65,10 @@ public class BranchNotificationService {
 
   @Autowired MeterRegistry meterRegistry;
 
-  // The amount of hours a branch marked for safe I18N can be translated for whilst not being
-  // checked into the main branch.
-  // If the duration goes over this, the old notification fallback is used, to ensure the branch is
-  // unblocked.
-  @Value("${l10n.branchNotification.branchCheckinWindowHours:9}")
-  int branchCheckinWindowHours;
+  // If a branch that is tracked for safe i18n has been translated for this amount of hours then it
+  // will fall back to using the old notification flow & message to unblock the branch.
+  @Value("${l10n.branchNotification.notificationFallbackTimeout:8h}")
+  protected Duration notificationFallbackTimeout;
 
   @Value("${l10n.branchNotification.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   String schedulerName;
@@ -206,35 +205,32 @@ public class BranchNotificationService {
         branchMergeTargetRepository.findByBranch(branch);
     BranchStatistic branchStatistic = branchStatisticRepository.findByBranch(branch);
 
-    if (branchMergeTargetOptional.isEmpty() || !branchMergeTargetOptional.get().isTargetsMain()) {
+    if (isNotTargetingMainBranch(branchMergeTargetOptional)) {
       // Not tracked for safe i18n, send old notification
       sendTranslatedMessage(branchNotificationMessageSender, branch, branchNotification, null);
       return;
     }
 
-    BranchMergeTarget branchMergeTarget = branchMergeTargetOptional.get();
+    BranchMergeTarget branchMergeTarget = branchMergeTargetOptional.orElseThrow();
 
-    if (branchMergeTarget.getCommit() == null
-        && branchStatistic.getTranslatedDate() != null
-        && Duration.between(branchStatistic.getTranslatedDate(), ZonedDateTime.now()).toHours()
-            >= branchCheckinWindowHours) {
-      // Branch has been translated for x hours and has not been checked into the repo, use old flow
-      // to unblock
-
-      // TODO: Emit metric, log warnings, remove magic number 8 here and use configuration
+    if (hasExceededSafeTranslationNotificationTimeout(branchMergeTarget, branchStatistic)) {
+      // Branch has been translated for the configured amount of hours and has not been checked into
+      // the repo, use old flow to unblock
       meterRegistry
           .counter(
-              "BranchNotificationService.handleSendBranchTranslatedMessage.branchExceededCheckInWindow")
+              "BranchNotificationService.handleSendBranchTranslatedMessage.branchExceededSafeTranslationNotificationWindow",
+              Tags.of("repository", branch.getRepository().getName()))
           .increment();
 
       logger.warn(
           "Branch '{}' has exceeded the safe I18N check in window. Falling back to the old notification flow to unblock.",
           branch.getName());
+
       sendTranslatedMessage(branchNotificationMessageSender, branch, branchNotification, null);
       return;
     }
 
-    if (branchMergeTarget.getCommit() != null) {
+    if (isCheckedInToTargetBranch(branchMergeTarget)) {
       // Branch is targeting main and is checked in,  safe to tell the user / PR the
       // translations have arrived
       sendTranslatedMessage(
@@ -468,5 +464,22 @@ public class BranchNotificationService {
       branchNotification = branchNotificationRepository.save(branchNotification);
     }
     return branchNotification;
+  }
+
+  private boolean isNotTargetingMainBranch(Optional<BranchMergeTarget> branchMergeTargetOptional) {
+    return branchMergeTargetOptional.isEmpty() || !branchMergeTargetOptional.get().isTargetsMain();
+  }
+
+  private boolean hasExceededSafeTranslationNotificationTimeout(
+      BranchMergeTarget branchMergeTarget, BranchStatistic branchStatistic) {
+    Duration translatedDuration =
+        Duration.between(branchStatistic.getTranslatedDate(), ZonedDateTime.now());
+    return branchMergeTarget.getCommit() == null
+        && branchStatistic.getTranslatedDate() != null
+        && translatedDuration.compareTo(notificationFallbackTimeout) > 0;
+  }
+
+  private boolean isCheckedInToTargetBranch(BranchMergeTarget branchMergeTarget) {
+    return branchMergeTarget.getCommit() != null;
   }
 }

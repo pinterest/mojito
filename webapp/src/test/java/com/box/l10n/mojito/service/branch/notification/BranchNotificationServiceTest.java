@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import org.hibernate.Hibernate;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -250,6 +251,10 @@ public class BranchNotificationServiceTest extends ServiceTestBase {
     BranchTestData branchTestData = new BranchTestData(testIdWatcher);
     String branch2ContentUpdated = "# string1 description\nstring1=content1\n";
 
+    // Force hibernate to fetch the repository for the branch otherwise the test will fail as the
+    // meterRegistry counter will not be able to retrieve the repository name
+    Hibernate.initialize(branchTestData.getBranch2().getRepository());
+
     AssetContent assetContentBranch2 =
         assetContentService.createAssetContent(
             branchTestData.getAsset(), branch2ContentUpdated, false, branchTestData.getBranch2());
@@ -347,7 +352,7 @@ public class BranchNotificationServiceTest extends ServiceTestBase {
     BranchStatistic branchStatistic =
         branchStatisticRepository.findByBranch(branchTestData.getBranch2());
     branchStatistic.setTranslatedDate(
-        ZonedDateTime.now().minusHours(branchNotificationService.branchCheckinWindowHours));
+        ZonedDateTime.now().minus(branchNotificationService.notificationFallbackTimeout));
     branchStatisticRepository.save(branchStatistic);
     branchStatisticRepository.flush();
 
