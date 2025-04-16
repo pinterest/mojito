@@ -211,11 +211,12 @@ public class BranchNotificationService {
       return;
     }
 
+    // Safe to use orElseThrow here as negating isNotTargetingMainBranch ensures it exists
     BranchMergeTarget branchMergeTarget = branchMergeTargetOptional.orElseThrow();
 
     if (hasExceededSafeTranslationNotificationTimeout(branchMergeTarget, branchStatistic)) {
-      // Branch has been translated for the configured amount of hours and has not been checked into
-      // the repo, use old flow to unblock
+      // Branch has been translated for the configured amount of time and has not been checked into
+      // the repo, use the old flow to unblock
       meterRegistry
           .counter(
               "BranchNotificationService.handleSendBranchTranslatedMessage.branchExceededSafeTranslationNotificationWindow",
@@ -231,8 +232,8 @@ public class BranchNotificationService {
     }
 
     if (isCheckedInToTargetBranch(branchMergeTarget)) {
-      // Branch is targeting main and is checked in,  safe to tell the user / PR the
-      // translations have arrived
+      // Branch is targeting main and is checked in, safe to notify the user / PR the
+      // translations have arrived safely
       sendTranslatedMessage(
           branchNotificationMessageSender,
           branch,
