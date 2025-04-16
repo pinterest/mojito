@@ -10,8 +10,6 @@ import com.box.l10n.mojito.entity.BranchMergeTarget;
 import com.box.l10n.mojito.entity.BranchNotification;
 import com.box.l10n.mojito.entity.BranchStatistic;
 import com.box.l10n.mojito.entity.Commit;
-import com.box.l10n.mojito.entity.Repository;
-import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
 import com.box.l10n.mojito.rest.textunit.ImportTextUnitsBatch;
 import com.box.l10n.mojito.service.assetExtraction.AssetExtractionService;
 import com.box.l10n.mojito.service.assetExtraction.AssetTextUnitToTMTextUnitRepository;
@@ -28,9 +26,7 @@ import com.box.l10n.mojito.service.tm.search.StatusFilter;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.box.l10n.mojito.service.tm.search.TextUnitSearcher;
 import com.box.l10n.mojito.service.tm.search.TextUnitSearcherParameters;
-import com.box.l10n.mojito.service.tm.textunitdtocache.UpdateType;
 import com.box.l10n.mojito.test.TestIdWatcher;
-import jakarta.persistence.EntityManager;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -58,15 +54,11 @@ public class BranchNotificationServiceTest extends ServiceTestBase {
 
   @Autowired AssetTextUnitToTMTextUnitRepository assetTextUnitToTMTextUnitRepository;
 
-  @Autowired QuartzPollableTaskScheduler quartzPollableTaskScheduler;
-
   @Autowired BranchMergeTargetRepository branchMergeTargetRepository;
 
   @Autowired CommitRepository commitRepository;
 
   @Autowired BranchStatisticRepository branchStatisticRepository;
-
-  @Autowired EntityManager entityManager;
 
   @Rule public TestIdWatcher testIdWatcher = new TestIdWatcher();
 
@@ -254,9 +246,8 @@ public class BranchNotificationServiceTest extends ServiceTestBase {
   }
 
   @Test
-  public void safeTranslationNotification() throws Exception {
+  public void safeTranslationNotificationSendsWithCommit() throws Exception {
     BranchTestData branchTestData = new BranchTestData(testIdWatcher);
-
     String branch2ContentUpdated = "# string1 description\nstring1=content1\n";
 
     AssetContent assetContentBranch2 =
@@ -285,7 +276,7 @@ public class BranchNotificationServiceTest extends ServiceTestBase {
     translateBranch(branchTestData.getBranch2());
 
     // Wait for branch stats to run
-    Thread.sleep(1000);
+    branchNotificationService.sendNotificationsForBranch(branchTestData.getBranch2());
 
     // Make sure no translation message was sent out as the commit doesn't exist
     assertNull(
@@ -304,10 +295,7 @@ public class BranchNotificationServiceTest extends ServiceTestBase {
     branchMergeTarget.setCommit(commit);
     branchMergeTargetRepository.save(branchMergeTarget);
 
-    Repository repository = branchTestData.getBranch2().getRepository();
-    // Re-trigger branch stats to trigger notification job again
-    branchStatisticService.computeAndSaveBranchStatistics(
-        repository.getId(), repository.getName(), UpdateType.NEVER);
+    branchNotificationService.sendNotificationsForBranch(branchTestData.getBranch2());
 
     // Translated message should send as the commit exists - it is checked in
     waitForCondition(
@@ -317,36 +305,55 @@ public class BranchNotificationServiceTest extends ServiceTestBase {
                     .findByBranchAndNotifierId(branchTestData.getBranch2(), branchNotifierId)
                     .getTranslatedMsgSentAt()
                 != null);
+  }
 
-    // Remove the commit to test the translated date window
-    branchMergeTarget.setCommit(null);
+  @Test
+  public void safeTranslationNotificationSendsAfterExceedsTranslatedWindow() throws Exception {
+    BranchTestData branchTestData = new BranchTestData(testIdWatcher);
+    String branch2ContentUpdated = "# string1 description\nstring1=content1\n";
+
+    AssetContent assetContentBranch2 =
+        assetContentService.createAssetContent(
+            branchTestData.getAsset(), branch2ContentUpdated, false, branchTestData.getBranch2());
+    assetExtractionService
+        .processAssetAsync(assetContentBranch2.getId(), null, null, null, null)
+        .get();
+
+    waitForCondition(
+        "Branch2 new notification must be sent",
+        () ->
+            branchNotificationRepository
+                    .findByBranchAndNotifierId(branchTestData.getBranch2(), branchNotifierId)
+                    .getNewMsgSentAt()
+                != null);
+
+    // Track branch for safe i18n
+    BranchMergeTarget branchMergeTarget = new BranchMergeTarget();
+    branchMergeTarget.setBranch(branchTestData.getBranch2());
+    branchMergeTarget.setTargetsMain(true);
     branchMergeTargetRepository.save(branchMergeTarget);
-    BranchNotification branchNotification =
-        branchNotificationRepository.findByBranchAndNotifierId(
-            branchTestData.getBranch2(), branchNotifierId);
-    branchNotification.setTranslatedMsgSentAt(null);
-    branchNotificationRepository.save(branchNotification);
 
-    branchStatisticService.computeAndSaveBranchStatistics(
-        repository.getId(), repository.getName(), UpdateType.NEVER);
+    translateBranch(branchTestData.getBranch2());
 
-    Thread.sleep(1000);
+    branchNotificationService.sendNotificationsForBranch(branchTestData.getBranch2());
 
-    // Make sure the translated message date sent doesn't exist anymore
+    // Make sure no translation message was sent out as the commit doesn't exist
     assertNull(
         branchNotificationRepository
             .findByBranchAndNotifierId(branchTestData.getBranch2(), branchNotifierId)
             .getTranslatedMsgSentAt());
 
+    // Set the translated date to an older date that is outside the translated window
     BranchStatistic branchStatistic =
         branchStatisticRepository.findByBranch(branchTestData.getBranch2());
-    branchStatistic.setTranslatedDate(ZonedDateTime.now().minusHours(10));
+    branchStatistic.setTranslatedDate(
+        ZonedDateTime.now().minusHours(branchNotificationService.branchCheckinWindowHours));
     branchStatisticRepository.save(branchStatistic);
+    branchStatisticRepository.flush();
 
-    Thread.sleep(1000);
-    // Branch should use old notification logic as it has been translated for 10 hours
-    branchStatisticService.computeAndSaveBranchStatistics(
-        repository.getId(), repository.getName(), UpdateType.NEVER);
+    // Branch should use old notification flow as it has been translated for longer than x amount of
+    // hours
+    branchNotificationService.sendNotificationsForBranch(branchTestData.getBranch2());
 
     waitForCondition(
         "Branch2 translated notification must be sent",

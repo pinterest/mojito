@@ -217,7 +217,7 @@ public class BranchNotificationService {
     if (branchMergeTarget.getCommit() == null
         && branchStatistic.getTranslatedDate() != null
         && Duration.between(branchStatistic.getTranslatedDate(), ZonedDateTime.now()).toHours()
-            > branchCheckinWindowHours) {
+            >= branchCheckinWindowHours) {
       // Branch has been translated for x hours and has not been checked into the repo, use old flow
       // to unblock
 
