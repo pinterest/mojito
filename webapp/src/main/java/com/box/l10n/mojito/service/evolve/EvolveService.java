@@ -296,7 +296,17 @@ public class EvolveService {
             throw new EvolveSyncException(e.getMessage(), e);
           }
           Mono.fromRunnable(
-                  () -> this.evolveClient.updateCourseTranslation(courseId, generateLocalized))
+                  () -> {
+                    try {
+                      this.evolveClient.updateCourseTranslation(
+                          courseId, this.xliffUtils.removeElement(generateLocalized, "bin-unit"));
+                    } catch (ParserConfigurationException
+                        | IOException
+                        | SAXException
+                        | TransformerException e) {
+                      throw new EvolveSyncException(e.getMessage(), e);
+                    }
+                  })
               .retryWhen(
                   Retry.backoff(this.getMaxRetries(), this.getRetryMinBackoff())
                       .maxBackoff(this.getRetryMaxBackoff()))

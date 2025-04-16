@@ -138,7 +138,8 @@ public class EvolveClient {
 
   public void updateCourseTranslation(int courseId, String translatedCourse) {
     HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_XML);
+    headers.setContentType(MediaType.valueOf("application/xml;charset=UTF-8"));
+    headers.setAccept(List.of(MediaType.APPLICATION_XML));
     this.restTemplate.put(
         this.getFullEndpointPath("course_translations/{courseId}"),
         new HttpEntity<>(translatedCourse, headers),

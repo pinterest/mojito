@@ -105,4 +105,29 @@ public class XliffUtils {
     transformer.transform(new DOMSource(doc), new StreamResult(writer));
     return writer.toString();
   }
+
+  public String removeElement(String xmlContent, String elementName)
+      throws ParserConfigurationException, IOException, SAXException, TransformerException {
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    factory.setNamespaceAware(true);
+    DocumentBuilder builder = factory.newDocumentBuilder();
+    Document document = builder.parse(new InputSource(new StringReader(xmlContent)));
+    document.getDocumentElement().normalize();
+    NodeList elements = document.getElementsByTagName(elementName);
+
+    while (elements.getLength() > 0) {
+      Node binUnit = elements.item(0);
+      binUnit.getParentNode().removeChild(binUnit);
+    }
+
+    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+    Transformer transformer = transformerFactory.newTransformer();
+    transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+    transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
+    transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+
+    StringWriter writer = new StringWriter();
+    transformer.transform(new DOMSource(document), new StreamResult(writer));
+    return writer.toString();
+  }
 }
