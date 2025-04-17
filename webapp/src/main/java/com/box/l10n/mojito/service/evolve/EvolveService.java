@@ -492,7 +492,7 @@ public class EvolveService {
                       targetRepositoryLocales);
                 }
               } catch (Exception e) {
-                throw new EvolveSyncException(e.getMessage(), e);
+                throw new EvolveSyncException("Course sync failed: " + courseDTO.getId(), e);
               }
             });
   }
