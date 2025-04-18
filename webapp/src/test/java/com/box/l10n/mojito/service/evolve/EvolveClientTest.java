@@ -353,7 +353,9 @@ public class EvolveClientTest {
 
     assertEquals(this.apiPath + "course_translations/{courseId}", this.urlCaptor.getValue());
     HttpEntity<Object> httpEntity = this.httpEntityCaptor.getValue();
-    assertEquals(MediaType.APPLICATION_XML, httpEntity.getHeaders().getContentType());
+    assertEquals(
+        MediaType.valueOf("application/xml;charset=UTF-8"),
+        httpEntity.getHeaders().getContentType());
     assertEquals("content", httpEntity.getBody());
     assertEquals(1, (int) courseIdCaptor.getValue());
   }
