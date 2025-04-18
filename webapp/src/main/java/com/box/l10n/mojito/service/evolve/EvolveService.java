@@ -23,6 +23,7 @@ import com.box.l10n.mojito.service.NormalizationUtils;
 import com.box.l10n.mojito.service.asset.AssetService;
 import com.box.l10n.mojito.service.assetExtraction.AssetExtractionByBranchRepository;
 import com.box.l10n.mojito.service.assetcontent.AssetContentRepository;
+import com.box.l10n.mojito.service.assetcontent.ContentService;
 import com.box.l10n.mojito.service.branch.BranchRepository;
 import com.box.l10n.mojito.service.branch.BranchService;
 import com.box.l10n.mojito.service.branch.BranchStatisticRepository;
@@ -90,6 +91,8 @@ public class EvolveService {
 
   private final LocaleMappingHelper localeMappingHelper;
 
+  private final Optional<ContentService> contentService;
+
   @Autowired
   public EvolveService(
       EvolveConfigurationProperties evolveConfigurationProperties,
@@ -104,7 +107,8 @@ public class EvolveService {
       TMService tmService,
       BranchService branchService,
       AssetExtractionByBranchRepository assetExtractionByBranchRepository,
-      LocaleMappingHelper localeMappingHelper) {
+      LocaleMappingHelper localeMappingHelper,
+      @Autowired(required = false) ContentService contentService) {
     this.evolveConfigurationProperties = evolveConfigurationProperties;
     this.repositoryRepository = repositoryRepository;
     this.evolveClient = evolveClient;
@@ -118,6 +122,7 @@ public class EvolveService {
     this.branchService = branchService;
     this.assetExtractionByBranchRepository = assetExtractionByBranchRepository;
     this.localeMappingHelper = localeMappingHelper;
+    this.contentService = ofNullable(contentService);
   }
 
   private SourceAsset importSourceAsset(SourceAsset sourceAsset)
@@ -255,14 +260,13 @@ public class EvolveService {
         .block();
   }
 
-  private void importSourceAssetToPrimaryBranch(
-      int courseId, AssetContent assetContent, long repositoryId)
+  private void importSourceAssetToPrimaryBranch(int courseId, String content, long repositoryId)
       throws UnsupportedAssetFilterTypeException, ExecutionException, InterruptedException {
     SourceAsset sourceAsset = new SourceAsset();
     sourceAsset.setRepositoryId(repositoryId);
     sourceAsset.setPath(this.getAssetPath(courseId));
     sourceAsset.setBranchCreatedByUsername(SYSTEM_USERNAME);
-    sourceAsset.setContent(assetContent.getContent());
+    sourceAsset.setContent(content);
     this.pollableTaskService.waitForPollableTask(
         this.importSourceAsset(sourceAsset).getPollableTask().getId(),
         this.evolveConfigurationProperties.getTaskTimeoutInSeconds() * 1000,
@@ -272,16 +276,15 @@ public class EvolveService {
   private void updateCourseTranslations(
       int courseId,
       Asset asset,
-      AssetContent assetContent,
+      String content,
       Map<String, String> localeMappings,
       List<RepositoryLocale> targetRepositoryLocales) {
-    String normalizedContent = NormalizationUtils.normalize(assetContent.getContent());
+    String normalizedContent = NormalizationUtils.normalize(content);
     targetRepositoryLocales.forEach(
         repositoryLocale -> {
           String localeBcp47Tag = repositoryLocale.getLocale().getBcp47Tag();
           String generateLocalized;
           try {
-            log.info("normalized content: " + normalizedContent);
             generateLocalized =
                 tmService.generateLocalized(
                     asset,
@@ -354,14 +357,19 @@ public class EvolveService {
     List<AssetContent> assetContents =
         this.assetContentRepository.findByAssetRepositoryIdAndBranchName(
             repositoryId, this.getBranchName(courseDTO.getId()));
-    Optional<AssetContent> assetContent =
+    Optional<AssetContent> assetContentOptional =
         assetContents.stream()
             .filter(content -> content.getContentMd5().equals(this.getContentMd5(asset, branch)))
             .findFirst();
-    if (assetContent.isPresent()) {
+    if (assetContentOptional.isPresent()) {
+      AssetContent assetContent = assetContentOptional.get();
+      String content =
+          this.contentService
+              .map(service -> service.getContent(assetContent).orElseThrow())
+              .orElse(assetContent.getContent());
       this.updateCourseTranslations(
-          courseDTO.getId(), asset, assetContent.get(), localeMappings, targetRepositoryLocales);
-      this.importSourceAssetToPrimaryBranch(courseDTO.getId(), assetContent.get(), repositoryId);
+          courseDTO.getId(), asset, content, localeMappings, targetRepositoryLocales);
+      this.importSourceAssetToPrimaryBranch(courseDTO.getId(), content, repositoryId);
       this.deleteBranch(repositoryId, branch.getId());
       courseDTO.setTranslationStatus(TRANSLATED);
       this.updateCourse(courseDTO, startDateTime);
@@ -493,7 +501,7 @@ public class EvolveService {
                       targetRepositoryLocales);
                 }
               } catch (Exception e) {
-                log.info("Course sync failed: " + courseDTO.getId());
+                log.error("Course sync failed: " + courseDTO.getId(), e);
                 throw new EvolveSyncException(e.getMessage(), e);
               }
             });

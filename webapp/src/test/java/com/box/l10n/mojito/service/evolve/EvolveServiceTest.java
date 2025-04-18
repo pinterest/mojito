@@ -146,7 +146,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             this.tmService,
             this.branchService,
             this.assetExtractionByBranchRepository,
-            this.localeMappingHelper);
+            this.localeMappingHelper,
+            null);
   }
 
   private String getXliffContent() throws IOException {
