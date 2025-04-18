@@ -20,6 +20,12 @@ public class EvolveConfigurationProperties {
 
   private Integer retryMaxBackoffSecs = 30;
 
+  private Integer evolveSyncMaxRetries = 6;
+
+  private Integer evolveSyncRetryMinBackoffSecs = 15;
+
+  private Integer evolveSyncRetryMaxBackoffSecs = 90;
+
   private Long taskTimeoutInSeconds = 3600L;
 
   private String courseEvolveType;
@@ -94,5 +100,29 @@ public class EvolveConfigurationProperties {
 
   public void setCourseEvolveType(String courseEvolveType) {
     this.courseEvolveType = courseEvolveType;
+  }
+
+  public Integer getEvolveSyncMaxRetries() {
+    return evolveSyncMaxRetries;
+  }
+
+  public void setEvolveSyncMaxRetries(Integer evolveSyncMaxRetries) {
+    this.evolveSyncMaxRetries = evolveSyncMaxRetries;
+  }
+
+  public Integer getEvolveSyncRetryMinBackoffSecs() {
+    return evolveSyncRetryMinBackoffSecs;
+  }
+
+  public void setEvolveSyncRetryMinBackoffSecs(Integer evolveSyncRetryMinBackoffSecs) {
+    this.evolveSyncRetryMinBackoffSecs = evolveSyncRetryMinBackoffSecs;
+  }
+
+  public Integer getEvolveSyncRetryMaxBackoffSecs() {
+    return evolveSyncRetryMaxBackoffSecs;
+  }
+
+  public void setEvolveSyncRetryMaxBackoffSecs(Integer evolveSyncRetryMaxBackoffSecs) {
+    this.evolveSyncRetryMaxBackoffSecs = evolveSyncRetryMaxBackoffSecs;
   }
 }

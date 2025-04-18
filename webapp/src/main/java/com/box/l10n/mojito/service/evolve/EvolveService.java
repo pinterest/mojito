@@ -93,6 +93,14 @@ public class EvolveService {
 
   private final Optional<ContentService> contentService;
 
+  private final Duration retryMinBackoff;
+
+  private final Duration retryMaxBackoff;
+
+  private final Duration evolveSyncRetryMinBackoff;
+
+  private final Duration evolveSyncRetryMaxBackoff;
+
   @Autowired
   public EvolveService(
       EvolveConfigurationProperties evolveConfigurationProperties,
@@ -123,6 +131,14 @@ public class EvolveService {
     this.assetExtractionByBranchRepository = assetExtractionByBranchRepository;
     this.localeMappingHelper = localeMappingHelper;
     this.contentService = ofNullable(contentService);
+    this.retryMinBackoff =
+        Duration.ofSeconds(evolveConfigurationProperties.getRetryMinBackoffSecs());
+    this.retryMaxBackoff =
+        Duration.ofSeconds(evolveConfigurationProperties.getRetryMaxBackoffSecs());
+    this.evolveSyncRetryMinBackoff =
+        Duration.ofSeconds(evolveConfigurationProperties.getEvolveSyncRetryMinBackoffSecs());
+    this.evolveSyncRetryMaxBackoff =
+        Duration.ofSeconds(evolveConfigurationProperties.getEvolveSyncRetryMaxBackoffSecs());
   }
 
   private SourceAsset importSourceAsset(SourceAsset sourceAsset)
@@ -179,22 +195,6 @@ public class EvolveService {
         TEN_SECONDS);
   }
 
-  private int getMaxRetries() {
-    return ofNullable(this.evolveConfigurationProperties.getMaxRetries()).orElse(2);
-  }
-
-  private Duration getRetryMinBackoff() {
-    return ofNullable(this.evolveConfigurationProperties.getRetryMinBackoffSecs())
-        .map(Duration::ofSeconds)
-        .orElse(Duration.ofSeconds(2));
-  }
-
-  private Duration getRetryMaxBackoff() {
-    return ofNullable(this.evolveConfigurationProperties.getRetryMaxBackoffSecs())
-        .map(Duration::ofSeconds)
-        .orElse(Duration.ofSeconds(30));
-  }
-
   private void syncEvolve(int courseId) {
     Mono.fromRunnable(
             () -> {
@@ -208,8 +208,10 @@ public class EvolveService {
               }
             })
         .retryWhen(
-            Retry.backoff(this.getMaxRetries(), this.getRetryMinBackoff())
-                .maxBackoff(this.getRetryMaxBackoff()))
+            Retry.backoff(
+                    this.evolveConfigurationProperties.getEvolveSyncMaxRetries(),
+                    this.evolveSyncRetryMinBackoff)
+                .maxBackoff(this.evolveSyncRetryMaxBackoff))
         .doOnError(e -> log.error("Update Evolve cloud translations is not complete", e))
         .block();
   }
@@ -239,8 +241,9 @@ public class EvolveService {
                     this.evolveClient.startCourseTranslation(
                         courseId, targetLocaleBcp47Tag, additionalTargetLocaleBcp47Tags))
             .retryWhen(
-                Retry.backoff(this.getMaxRetries(), this.getRetryMinBackoff())
-                    .maxBackoff(this.getRetryMaxBackoff()))
+                Retry.backoff(
+                        this.evolveConfigurationProperties.getMaxRetries(), this.retryMinBackoff)
+                    .maxBackoff(this.retryMaxBackoff))
             .doOnError(e -> log.error("Error while starting a course translation", e))
             .block();
     this.importSourceAsset(courseId, localizedAssetContent, repositoryId);
@@ -254,8 +257,8 @@ public class EvolveService {
                 this.evolveClient.updateCourse(
                     courseDTO.getId(), courseDTO.getTranslationStatus(), currentDateTime))
         .retryWhen(
-            Retry.backoff(this.getMaxRetries(), this.getRetryMinBackoff())
-                .maxBackoff(this.getRetryMaxBackoff()))
+            Retry.backoff(this.evolveConfigurationProperties.getMaxRetries(), this.retryMinBackoff)
+                .maxBackoff(this.retryMaxBackoff))
         .doOnError(e -> log.error("Error while updating a course", e))
         .block();
   }
@@ -312,8 +315,9 @@ public class EvolveService {
                     }
                   })
               .retryWhen(
-                  Retry.backoff(this.getMaxRetries(), this.getRetryMinBackoff())
-                      .maxBackoff(this.getRetryMaxBackoff()))
+                  Retry.backoff(
+                          this.evolveConfigurationProperties.getMaxRetries(), this.retryMinBackoff)
+                      .maxBackoff(this.retryMaxBackoff))
               .doOnError(e -> log.error("Error while updating course translation", e))
               .block();
         });

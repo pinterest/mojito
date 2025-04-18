@@ -128,6 +128,9 @@ public class EvolveServiceTest extends ServiceTestBase {
     this.evolveConfigurationProperties.setMaxRetries(2);
     this.evolveConfigurationProperties.setRetryMinBackoffSecs(1);
     this.evolveConfigurationProperties.setRetryMaxBackoffSecs(1);
+    this.evolveConfigurationProperties.setEvolveSyncMaxRetries(2);
+    this.evolveConfigurationProperties.setEvolveSyncRetryMinBackoffSecs(1);
+    this.evolveConfigurationProperties.setEvolveSyncRetryMaxBackoffSecs(1);
     this.evolveConfigurationProperties.setCourseEvolveType("CourseEvolve");
   }
 
