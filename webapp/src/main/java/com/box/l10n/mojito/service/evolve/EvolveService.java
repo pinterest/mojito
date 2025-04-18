@@ -281,6 +281,7 @@ public class EvolveService {
           String localeBcp47Tag = repositoryLocale.getLocale().getBcp47Tag();
           String generateLocalized;
           try {
+            log.info("normalized content: " + normalizedContent);
             generateLocalized =
                 tmService.generateLocalized(
                     asset,
@@ -492,7 +493,8 @@ public class EvolveService {
                       targetRepositoryLocales);
                 }
               } catch (Exception e) {
-                throw new EvolveSyncException("Course sync failed: " + courseDTO.getId(), e);
+                log.info("Course sync failed: " + courseDTO.getId());
+                throw new EvolveSyncException(e.getMessage(), e);
               }
             });
   }
