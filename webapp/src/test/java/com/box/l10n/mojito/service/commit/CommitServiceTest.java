@@ -1,7 +1,5 @@
 package com.box.l10n.mojito.service.commit;
 
-import static org.mockito.ArgumentMatchers.any;
-
 import com.box.l10n.mojito.entity.Branch;
 import com.box.l10n.mojito.entity.BranchMergeTarget;
 import com.box.l10n.mojito.entity.Commit;
@@ -11,7 +9,6 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.service.appender.AppendedAssetBlobStorage;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
 import com.box.l10n.mojito.service.branch.BranchMergeTargetRepository;
-import com.box.l10n.mojito.service.branch.BranchRepository;
 import com.box.l10n.mojito.service.branch.BranchTestData;
 import com.box.l10n.mojito.service.pullrun.PullRunRepository;
 import com.box.l10n.mojito.service.pushrun.PushRunRepository;
@@ -25,9 +22,7 @@ import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 /**
  * @author garion
@@ -50,9 +45,7 @@ public class CommitServiceTest extends ServiceTestBase {
 
   @Autowired BranchMergeTargetRepository branchMergeTargetRepository;
 
-  @MockBean AppendedAssetBlobStorage appendedAssetBlobStorage;
-
-  @Autowired BranchRepository branchRepository;
+  @Autowired AppendedAssetBlobStorage appendedAssetBlobStorage;
 
   @Test
   public void testGetCommitWithNameAndRepository() throws Exception {
@@ -492,7 +485,7 @@ public class CommitServiceTest extends ServiceTestBase {
 
   @Test
   public void testAssociateAppendedBranchesToCommit() throws Exception {
-    String appendTextUnitId = "sample-id";
+    String appendTextUnitId = testIdWatcher.getTestId();
 
     BranchTestData branchTestData = new BranchTestData(testIdWatcher);
 
@@ -518,8 +511,7 @@ public class CommitServiceTest extends ServiceTestBase {
         commitService.getOrCreateCommit(
             branch1.getRepository(), commitName, authorEmail, authorName, sourceCreationTime);
 
-    Mockito.when(appendedAssetBlobStorage.getAppendedBranches(any()))
-        .thenReturn(List.of(branch1.getId()));
+    appendedAssetBlobStorage.saveAppendedBranches(appendTextUnitId, List.of(branch1.getId()));
 
     commitService.associateAppendedBranchesToCommit(appendTextUnitId, createdCommit);
 
@@ -533,8 +525,8 @@ public class CommitServiceTest extends ServiceTestBase {
         commitService.getOrCreateCommit(
             branch1.getRepository(), commitName, authorEmail, authorName, sourceCreationTime);
 
-    Mockito.when(appendedAssetBlobStorage.getAppendedBranches(any()))
-        .thenReturn(List.of(branch1.getId(), branch2.getId()));
+    appendedAssetBlobStorage.saveAppendedBranches(
+        appendTextUnitId, List.of(branch1.getId(), branch2.getId()));
 
     commitService.associateAppendedBranchesToCommit(appendTextUnitId, newCommit);
 
