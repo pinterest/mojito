@@ -1,22 +1,33 @@
 package com.box.l10n.mojito.service.commit;
 
+import static org.mockito.ArgumentMatchers.any;
+
+import com.box.l10n.mojito.entity.Branch;
+import com.box.l10n.mojito.entity.BranchMergeTarget;
 import com.box.l10n.mojito.entity.Commit;
 import com.box.l10n.mojito.entity.PullRun;
 import com.box.l10n.mojito.entity.PushRun;
 import com.box.l10n.mojito.entity.Repository;
+import com.box.l10n.mojito.service.appender.AppendedAssetBlobStorage;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
+import com.box.l10n.mojito.service.branch.BranchMergeTargetRepository;
+import com.box.l10n.mojito.service.branch.BranchRepository;
+import com.box.l10n.mojito.service.branch.BranchTestData;
 import com.box.l10n.mojito.service.pullrun.PullRunRepository;
 import com.box.l10n.mojito.service.pushrun.PushRunRepository;
 import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.test.TestIdWatcher;
 import com.google.common.collect.ImmutableList;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 /**
  * @author garion
@@ -36,6 +47,12 @@ public class CommitServiceTest extends ServiceTestBase {
   @Autowired PullRunRepository pullRunRepository;
 
   @Autowired RepositoryService repositoryService;
+
+  @Autowired BranchMergeTargetRepository branchMergeTargetRepository;
+
+  @MockBean AppendedAssetBlobStorage appendedAssetBlobStorage;
+
+  @Autowired BranchRepository branchRepository;
 
   @Test
   public void testGetCommitWithNameAndRepository() throws Exception {
@@ -471,5 +488,63 @@ public class CommitServiceTest extends ServiceTestBase {
     Optional<PullRun> retrievedPullRun = commitService.getPullRunForCommitId(createdCommit.getId());
     Assert.assertTrue(retrievedPullRun.isPresent());
     Assert.assertEquals(pullRun.getId(), retrievedPullRun.get().getId());
+  }
+
+  @Test
+  public void testAssociateAppendedBranchesToCommit() throws Exception {
+    String appendTextUnitId = "sample-id";
+
+    BranchTestData branchTestData = new BranchTestData(testIdWatcher);
+
+    Branch branch1 = branchTestData.getBranch1();
+    Branch branch2 = branchTestData.getBranch2();
+
+    BranchMergeTarget branchMergeTargetBranch1 = new BranchMergeTarget();
+    branchMergeTargetBranch1.setBranch(branch1);
+    branchMergeTargetBranch1.setTargetsMain(true);
+    branchMergeTargetRepository.save(branchMergeTargetBranch1);
+
+    BranchMergeTarget branchMergeTargetBranch2 = new BranchMergeTarget();
+    branchMergeTargetBranch2.setBranch(branch2);
+    branchMergeTargetBranch2.setTargetsMain(true);
+    branchMergeTargetRepository.save(branchMergeTargetBranch2);
+
+    String commitName = "commitName";
+    String authorEmail = "authorEmail";
+    String authorName = "authorName";
+    ZonedDateTime sourceCreationTime = ZonedDateTime.now();
+
+    Commit createdCommit =
+        commitService.getOrCreateCommit(
+            branch1.getRepository(), commitName, authorEmail, authorName, sourceCreationTime);
+
+    Mockito.when(appendedAssetBlobStorage.getAppendedBranches(any()))
+        .thenReturn(List.of(branch1.getId()));
+
+    commitService.associateAppendedBranchesToCommit(appendTextUnitId, createdCommit);
+
+    Assert.assertEquals(
+        branchMergeTargetRepository.findByBranch(branch1).get().getCommit().getName(), commitName);
+    Assert.assertNull(branchMergeTargetRepository.findByBranch(branch2).get().getCommit());
+
+    commitName = "newCommitName";
+    sourceCreationTime = ZonedDateTime.now();
+    Commit newCommit =
+        commitService.getOrCreateCommit(
+            branch1.getRepository(), commitName, authorEmail, authorName, sourceCreationTime);
+
+    Mockito.when(appendedAssetBlobStorage.getAppendedBranches(any()))
+        .thenReturn(List.of(branch1.getId(), branch2.getId()));
+
+    commitService.associateAppendedBranchesToCommit(appendTextUnitId, newCommit);
+
+    // The old commit should still be linked to branch1, not the new commit
+    Assert.assertEquals(
+        branchMergeTargetRepository.findByBranch(branch1).get().getCommit().getId(),
+        createdCommit.getId());
+
+    Assert.assertEquals(
+        branchMergeTargetRepository.findByBranch(branch2).get().getCommit().getId(),
+        newCommit.getId());
   }
 }
