@@ -482,6 +482,8 @@ public class BranchStatisticServiceTest extends ServiceTestBase {
         .processAssetAsync(assetContentBranch.getId(), null, null, null, null)
         .get();
 
+    branchStatisticService.computeAndSaveBranchStatistics(branch);
+
     // Adding a text unit should wipe the commit as it's not safe anymore
     assertNull(branchMergeTargetRepository.findByBranch(branch).get().getCommit());
   }
