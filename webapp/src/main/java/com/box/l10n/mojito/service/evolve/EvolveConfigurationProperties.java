@@ -22,9 +22,9 @@ public class EvolveConfigurationProperties {
 
   private Integer evolveSyncMaxRetries = 6;
 
-  private Integer evolveSyncRetryMinBackoffSecs = 15;
+  private Integer evolveSyncRetryMinBackoffSecs = 5;
 
-  private Integer evolveSyncRetryMaxBackoffSecs = 90;
+  private Integer evolveSyncRetryMaxBackoffSecs = 30;
 
   private Long taskTimeoutInSeconds = 3600L;
 
