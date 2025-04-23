@@ -51,16 +51,13 @@ public class GlossaryCacheBuilder {
         return;
       }
       GlossaryCache glossaryCache = buildGlossaryCache();
-      logger.info(
-          "Glossary Cache build completed with {} terms", glossaryCache.getGlossaryCache().size());
+      logger.info("Glossary Cache build completed with {} terms", glossaryCache.getCache().size());
       blobStorage.putGlossaryCache(glossaryCache);
     }
   }
 
   private GlossaryCache buildGlossaryCache() {
     GlossaryCache glossaryCache = new GlossaryCache();
-    glossaryCache.setMaxNGramSize(0);
-    glossaryCache.setGlossaryCache(new HashMap<>());
 
     List<GlossaryTerm> glossaryTerms = retrieveTranslationsForGlossaryTerms(getSourceTerms());
 

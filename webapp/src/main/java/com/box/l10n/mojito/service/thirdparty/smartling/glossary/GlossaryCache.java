@@ -1,6 +1,7 @@
 package com.box.l10n.mojito.service.thirdparty.smartling.glossary;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +10,7 @@ public class GlossaryCache implements Serializable {
 
   private int maxNGramSize = 1;
 
-  private Map<String, List<GlossaryTerm>> glossaryCache = new HashMap<>();
+  private Map<String, List<GlossaryTerm>> cache = new HashMap<>();
 
   public int getMaxNGramSize() {
     return maxNGramSize;
@@ -19,19 +20,21 @@ public class GlossaryCache implements Serializable {
     this.maxNGramSize = maxNGramSize;
   }
 
-  public Map<String, List<GlossaryTerm>> getGlossaryCache() {
-    return glossaryCache;
+  public Map<String, List<GlossaryTerm>> getCache() {
+    return cache;
   }
 
-  public void setGlossaryCache(Map<String, List<GlossaryTerm>> glossaryCache) {
-    this.glossaryCache = glossaryCache;
+  public void setCache(Map<String, List<GlossaryTerm>> cache) {
+    this.cache = cache;
   }
 
-  public void addToGlossaryCache(String key, GlossaryTerm glossaryTerms) {
-    if (glossaryCache.containsKey(key)) {
-      glossaryCache.get(key).add(glossaryTerms);
+  public void addToGlossaryCache(String key, GlossaryTerm glossaryTerm) {
+    if (cache.containsKey(key)) {
+      cache.get(key).add(glossaryTerm);
     } else {
-      glossaryCache.put(key, List.of(glossaryTerms));
+      List<GlossaryTerm> terms = new ArrayList<>();
+      terms.add(glossaryTerm);
+      cache.put(key, terms);
     }
   }
 }
