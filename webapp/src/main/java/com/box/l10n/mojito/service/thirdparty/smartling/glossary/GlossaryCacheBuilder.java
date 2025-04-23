@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+// TODO: (mallen) convert this to be run by a Quartz job that disallows concurrent execution
 @Component
 @ConditionalOnProperty(value = "l10n.glossary.cache.enabled", havingValue = "true")
 public class GlossaryCacheBuilder {
@@ -74,7 +75,7 @@ public class GlossaryCacheBuilder {
       glossaryCache.setMaxNGramSize(termWordCount);
     }
     logger.debug("Adding term to glossary cache: {}", glossaryTerm.getTerm());
-    glossaryCache.addToGlossaryCache(stemmer.stem(glossaryTerm.getTerm()), glossaryTerm);
+    glossaryCache.add(stemmer.stem(glossaryTerm.getTerm()), glossaryTerm);
   }
 
   private List<GlossaryTerm> retrieveTranslationsForGlossaryTerms(

@@ -1,16 +1,19 @@
 package com.box.l10n.mojito.service.thirdparty.smartling.glossary;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GlossaryTerm {
+public class GlossaryTerm implements Serializable {
 
-  private final Long tmTextUnitId;
-  private final String term;
-  private final Map<String, String> translations;
-  private final boolean isExactMatch;
-  private final boolean isCaseSensitive;
-  private final boolean isDoNotTranslate;
+  private Long tmTextUnitId;
+  private String term;
+  private Map<String, String> translations;
+  private boolean isExactMatch;
+  private boolean isCaseSensitive;
+  private boolean isDoNotTranslate;
+
+  public GlossaryTerm() {}
 
   public GlossaryTerm(
       String term,
@@ -56,5 +59,29 @@ public class GlossaryTerm {
 
   public boolean isDoNotTranslate() {
     return isDoNotTranslate;
+  }
+
+  public void setTmTextUnitId(Long tmTextUnitId) {
+    this.tmTextUnitId = tmTextUnitId;
+  }
+
+  public void setTerm(String term) {
+    this.term = term;
+  }
+
+  public void setTranslations(Map<String, String> translations) {
+    this.translations = translations;
+  }
+
+  public void setExactMatch(boolean exactMatch) {
+    isExactMatch = exactMatch;
+  }
+
+  public void setCaseSensitive(boolean caseSensitive) {
+    isCaseSensitive = caseSensitive;
+  }
+
+  public void setDoNotTranslate(boolean doNotTranslate) {
+    isDoNotTranslate = doNotTranslate;
   }
 }

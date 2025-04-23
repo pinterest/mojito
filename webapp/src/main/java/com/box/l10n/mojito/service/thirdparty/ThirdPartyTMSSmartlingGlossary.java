@@ -15,6 +15,8 @@ import com.box.l10n.mojito.service.asset.VirtualAssetTextUnit;
 import com.box.l10n.mojito.service.asset.VirutalAssetMissingTextUnitException;
 import com.box.l10n.mojito.service.assetTextUnit.AssetTextUnitRepository;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingTBXReader;
+import com.box.l10n.mojito.service.thirdparty.smartling.glossary.GlossaryCacheConfiguration;
+import com.box.l10n.mojito.service.thirdparty.smartling.glossary.GlossaryCacheService;
 import com.box.l10n.mojito.smartling.SmartlingClient;
 import com.box.l10n.mojito.smartling.SmartlingClientException;
 import com.box.l10n.mojito.smartling.response.GlossarySourceTerm;
@@ -59,6 +61,12 @@ public class ThirdPartyTMSSmartlingGlossary {
 
   @Autowired AssetTextUnitRepository assetTextUnitRepository;
 
+  @Autowired(required = false)
+  GlossaryCacheService glossaryCacheService;
+
+  @Autowired(required = false)
+  GlossaryCacheConfiguration glossaryCacheConfiguration;
+
   @Value("${l10n.smartling.accountId:}")
   String accountId;
 
@@ -87,6 +95,14 @@ public class ThirdPartyTMSSmartlingGlossary {
                   getTranslatedTextUnits(glossaryUID, smartlingLocale, sourceLocale);
               importLocalizedTextUnits(virtualAsset, repositoryLocale, translatedTextUnits);
             });
+    if (glossaryCacheConfiguration != null
+        && glossaryCacheConfiguration.getEnabled()
+        && glossaryCacheConfiguration.getRepositories().contains(repository.getName())) {
+      logger.debug(
+          "Glossary cache is enabled and repository {} is configured for glossary cache, updating the cache",
+          repository.getName());
+      glossaryCacheService.buildGlossaryCache();
+    }
   }
 
   public List<ThirdPartyTextUnit> getThirdPartyTextUnits(String glossaryId) {

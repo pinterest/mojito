@@ -28,7 +28,7 @@ public class GlossaryCache implements Serializable {
     this.cache = cache;
   }
 
-  public void addToGlossaryCache(String key, GlossaryTerm glossaryTerm) {
+  public void add(String key, GlossaryTerm glossaryTerm) {
     if (cache.containsKey(key)) {
       cache.get(key).add(glossaryTerm);
     } else {
@@ -36,5 +36,19 @@ public class GlossaryCache implements Serializable {
       terms.add(glossaryTerm);
       cache.put(key, terms);
     }
+  }
+
+  /**
+   * Get the list of glossary terms for a given .
+   *
+   * @param key
+   * @return
+   */
+  public List<GlossaryTerm> get(String key) {
+    return cache.getOrDefault(key, new ArrayList<>());
+  }
+
+  public int size() {
+    return cache.size();
   }
 }
