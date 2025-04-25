@@ -1,11 +1,14 @@
 package com.box.l10n.mojito.service.thirdparty;
 
+import static com.box.l10n.mojito.quartz.QuartzSchedulerManager.DEFAULT_SCHEDULER_NAME;
 import static com.box.l10n.mojito.service.thirdparty.ThirdPartyTMSSmartling.getSmartlingLocale;
 
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.AssetTextUnit;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
+import com.box.l10n.mojito.quartz.QuartzJobInfo;
+import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
 import com.box.l10n.mojito.service.asset.AssetRepository;
 import com.box.l10n.mojito.service.asset.VirtualAsset;
 import com.box.l10n.mojito.service.asset.VirtualAssetBadRequestException;
@@ -15,8 +18,10 @@ import com.box.l10n.mojito.service.asset.VirtualAssetTextUnit;
 import com.box.l10n.mojito.service.asset.VirutalAssetMissingTextUnitException;
 import com.box.l10n.mojito.service.assetTextUnit.AssetTextUnitRepository;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingTBXReader;
+import com.box.l10n.mojito.service.thirdparty.smartling.glossary.BuildGlossaryCacheJob;
 import com.box.l10n.mojito.service.thirdparty.smartling.glossary.GlossaryCacheConfiguration;
 import com.box.l10n.mojito.service.thirdparty.smartling.glossary.GlossaryCacheService;
+import com.box.l10n.mojito.service.thirdparty.smartling.glossary.SmartlingGlossaryConfigParameter;
 import com.box.l10n.mojito.smartling.SmartlingClient;
 import com.box.l10n.mojito.smartling.SmartlingClientException;
 import com.box.l10n.mojito.smartling.response.GlossarySourceTerm;
@@ -67,6 +72,8 @@ public class ThirdPartyTMSSmartlingGlossary {
   @Autowired(required = false)
   GlossaryCacheConfiguration glossaryCacheConfiguration;
 
+  @Autowired QuartzPollableTaskScheduler quartzPollableTaskScheduler;
+
   @Value("${l10n.smartling.accountId:}")
   String accountId;
 
@@ -101,7 +108,13 @@ public class ThirdPartyTMSSmartlingGlossary {
       logger.debug(
           "Glossary cache is enabled and repository {} is configured for glossary cache, updating the cache",
           repository.getName());
-      glossaryCacheService.buildGlossaryCache();
+      QuartzJobInfo<Void, Void> quartzJobInfo =
+          QuartzJobInfo.newBuilder(BuildGlossaryCacheJob.class)
+              .withInlineInput(false)
+              .withInput(null)
+              .withScheduler(DEFAULT_SCHEDULER_NAME)
+              .build();
+      quartzPollableTaskScheduler.scheduleJob(quartzJobInfo);
     }
   }
 
@@ -482,15 +495,22 @@ public class ThirdPartyTMSSmartlingGlossary {
     }
     if (glossarySourceTerm.getVariations() != null
         && !glossarySourceTerm.getVariations().isEmpty()) {
-      commentBuilder.append(" --- Variations: ");
+      commentBuilder.append(
+          String.format(" --- %s: ", SmartlingGlossaryConfigParameter.VARIATIONS));
       commentBuilder.append(String.join(", ", glossarySourceTerm.getVariations()));
     }
 
-    commentBuilder.append(" --- Case Sensitive: ").append(glossarySourceTerm.isCaseSensitive());
+    commentBuilder
+        .append(String.format(" --- %s: ", SmartlingGlossaryConfigParameter.CASE_SENSITIVE))
+        .append(glossarySourceTerm.isCaseSensitive());
 
-    commentBuilder.append(" --- Exact Match: ").append(glossarySourceTerm.isExactMatch());
+    commentBuilder
+        .append(String.format(" --- %s: ", SmartlingGlossaryConfigParameter.EXACT_MATCH))
+        .append(glossarySourceTerm.isExactMatch());
 
-    commentBuilder.append(" --- Do Not Translate: ").append(glossarySourceTerm.isDoNotTranslate());
+    commentBuilder
+        .append(String.format(" --- %s: ", SmartlingGlossaryConfigParameter.DO_NOT_TRANSLATE))
+        .append(glossarySourceTerm.isDoNotTranslate());
 
     return commentBuilder.toString();
   }

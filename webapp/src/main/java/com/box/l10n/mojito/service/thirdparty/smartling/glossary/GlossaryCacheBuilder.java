@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-// TODO: (mallen) convert this to be run by a Quartz job that disallows concurrent execution
 @Component
 @ConditionalOnProperty(value = "l10n.glossary.cache.enabled", havingValue = "true")
 public class GlossaryCacheBuilder {
@@ -37,11 +36,8 @@ public class GlossaryCacheBuilder {
 
   @Autowired StemmerService stemmer;
 
-  private static final Map<String, Pattern> CONFIG_PATTERNS = new HashMap<>();
-
-  // TODO(mallen): Standardize this so that same value is used here and in pull glossary sync
-  private List<String> smartlingConfigParameters =
-      List.of("Variations", "Exact Match", "Do Not Translate", "Case Sensitive");
+  private static final Map<SmartlingGlossaryConfigParameter, Pattern> CONFIG_PATTERNS =
+      new HashMap<>();
 
   public void buildCache() {
     if (glossaryCacheConfiguration.getEnabled()) {
@@ -57,7 +53,7 @@ public class GlossaryCacheBuilder {
     }
   }
 
-  private GlossaryCache buildGlossaryCache() {
+  GlossaryCache buildGlossaryCache() {
     GlossaryCache glossaryCache = new GlossaryCache();
 
     List<GlossaryTerm> glossaryTerms = retrieveTranslationsForGlossaryTerms(getSourceTerms());
@@ -68,7 +64,7 @@ public class GlossaryCacheBuilder {
     return glossaryCache;
   }
 
-  private void processTerm(GlossaryTerm glossaryTerm, GlossaryCache glossaryCache) {
+  protected void processTerm(GlossaryTerm glossaryTerm, GlossaryCache glossaryCache) {
     int termWordCount = wordCountService.getEnglishWordCount(glossaryTerm.getTerm());
     if (termWordCount > glossaryCache.getMaxNGramSize()) {
       logger.debug("Setting glossary cache max ngram size to {}", termWordCount);
@@ -78,7 +74,7 @@ public class GlossaryCacheBuilder {
     glossaryCache.add(stemmer.stem(glossaryTerm.getTerm()), glossaryTerm);
   }
 
-  private List<GlossaryTerm> retrieveTranslationsForGlossaryTerms(
+  List<GlossaryTerm> retrieveTranslationsForGlossaryTerms(
       Map<Long, List<GlossaryTerm>> glossaryTermMap) {
     TextUnitSearcherParameters textUnitSearcherParameters;
     List<TextUnitDTO> textUnitDTOs;
@@ -104,7 +100,7 @@ public class GlossaryCacheBuilder {
     return glossaryTermMap.values().stream().flatMap(List::stream).collect(Collectors.toList());
   }
 
-  private Map<Long, List<GlossaryTerm>> getSourceTerms() {
+  protected Map<Long, List<GlossaryTerm>> getSourceTerms() {
     TextUnitSearcherParameters textUnitSearcherParameters = new TextUnitSearcherParameters();
     textUnitSearcherParameters.setRepositoryNames(glossaryCacheConfiguration.getRepositories());
     textUnitSearcherParameters.setUsedFilter(UsedFilter.USED);
@@ -124,7 +120,7 @@ public class GlossaryCacheBuilder {
    * @param textUnitDTO
    * @return list of GlossaryTerm objects
    */
-  private List<GlossaryTerm> mapTextUnitDTOToGlossaryTerms(TextUnitDTO textUnitDTO) {
+  protected List<GlossaryTerm> mapTextUnitDTOToGlossaryTerms(TextUnitDTO textUnitDTO) {
     List<GlossaryTerm> glossaryTerms = new ArrayList<>();
     String comment = textUnitDTO.getComment();
     boolean caseSensitive = getSmartlingTermCaseSensitive(comment);
@@ -152,26 +148,33 @@ public class GlossaryCacheBuilder {
   }
 
   private Boolean getSmartlingTermCaseSensitive(String comment) {
-    return Boolean.parseBoolean(extractProperty(comment, CONFIG_PATTERNS.get("Case Sensitive")));
+    return Boolean.parseBoolean(
+        extractProperty(
+            comment, CONFIG_PATTERNS.get(SmartlingGlossaryConfigParameter.CASE_SENSITIVE)));
   }
 
   private Boolean getSmartlingTermDoNotTranslate(String comment) {
-    return Boolean.parseBoolean(extractProperty(comment, CONFIG_PATTERNS.get("Do Not Translate")));
+    return Boolean.parseBoolean(
+        extractProperty(
+            comment, CONFIG_PATTERNS.get(SmartlingGlossaryConfigParameter.DO_NOT_TRANSLATE)));
   }
 
   private Boolean getSmartlingTermExactMatch(String comment) {
-    return Boolean.parseBoolean(extractProperty(comment, CONFIG_PATTERNS.get("Exact Match")));
+    return Boolean.parseBoolean(
+        extractProperty(
+            comment, CONFIG_PATTERNS.get(SmartlingGlossaryConfigParameter.EXACT_MATCH)));
   }
 
   private List<String> getSmartlingTermVariations(String comment) {
-    String variations = extractProperty(comment, CONFIG_PATTERNS.get("Variations"));
+    String variations =
+        extractProperty(comment, CONFIG_PATTERNS.get(SmartlingGlossaryConfigParameter.VARIATIONS));
     if (variations != null) {
       return Arrays.asList(variations.split("\\s*,\\s*"));
     }
     return Collections.emptyList();
   }
 
-  public String extractProperty(String input, Pattern pattern) {
+  private String extractProperty(String input, Pattern pattern) {
     Matcher matcher = pattern.matcher(input);
     if (matcher.find()) {
       return matcher.group(1).trim();
@@ -179,19 +182,10 @@ public class GlossaryCacheBuilder {
     return null;
   }
 
-  public List<String> extractVariations(String comment) {
-    String variations = extractProperty(comment, CONFIG_PATTERNS.get("Variations"));
-    if (variations != null) {
-      return Arrays.asList(variations.split("\\s*,\\s*"));
-    }
-    return Collections.emptyList();
-  }
-
   @PostConstruct
-  public void init() {
-    // Initialize the regex patterns for each smartling config parameter
-    for (String param : smartlingConfigParameters) {
-      CONFIG_PATTERNS.put(param, Pattern.compile(" --- " + param + ":\\s*([^---]*)"));
+  protected void init() {
+    for (SmartlingGlossaryConfigParameter param : SmartlingGlossaryConfigParameter.values()) {
+      CONFIG_PATTERNS.put(param, Pattern.compile("--- " + param + ":\\s*([^---]*)"));
     }
   }
 }

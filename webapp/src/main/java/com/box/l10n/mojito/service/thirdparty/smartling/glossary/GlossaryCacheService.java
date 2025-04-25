@@ -1,6 +1,5 @@
 package com.box.l10n.mojito.service.thirdparty.smartling.glossary;
 
-import java.util.Arrays;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +30,8 @@ public class GlossaryCacheService {
       loadGlossaryCache();
     }
 
-    // TODO (mallen): Need to handle multiple matches, case sensitive, exact match checking here
+    // TODO (mallen): Need to handle multiple matches, case sensitive, exact match checking here in
+    // a follow-up PR
     return glossaryCache.get(stemmerService.stem(text));
   }
 
@@ -42,14 +42,6 @@ public class GlossaryCacheService {
 
   public void loadGlossaryCache() {
     glossaryCache = glossaryCacheBlobStorage.getGlossaryCache().orElseGet(GlossaryCache::new);
-  }
-
-  private String stemTerms(String terms) {
-    return String.join(
-        " ",
-        Arrays.stream(terms.toLowerCase().split("\\s+"))
-            .map(stemmerService::stem)
-            .toArray(String[]::new));
   }
 
   @PostConstruct
