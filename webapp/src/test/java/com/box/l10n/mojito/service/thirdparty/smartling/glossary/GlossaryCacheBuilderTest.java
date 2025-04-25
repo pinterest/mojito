@@ -38,13 +38,14 @@ class GlossaryCacheBuilderTest {
   @BeforeEach
   public void setup() {
     MockitoAnnotations.openMocks(this);
-    glossaryCacheBuilder = spy(new GlossaryCacheBuilder());
-    glossaryCacheBuilder.glossaryCacheConfiguration = glossaryCacheConfiguration;
-    glossaryCacheBuilder.blobStorage = blobStorage;
-    glossaryCacheBuilder.textUnitSearcher = textUnitSearcher;
-    glossaryCacheBuilder.wordCountService = wordCountService;
-    glossaryCacheBuilder.stemmer = stemmer;
-    glossaryCacheBuilder.init();
+    glossaryCacheBuilder =
+        spy(
+            new GlossaryCacheBuilder(
+                glossaryCacheConfiguration,
+                blobStorage,
+                textUnitSearcher,
+                wordCountService,
+                stemmer));
   }
 
   @Test

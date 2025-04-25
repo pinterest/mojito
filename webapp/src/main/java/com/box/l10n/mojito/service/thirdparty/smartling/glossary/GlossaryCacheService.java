@@ -1,8 +1,6 @@
 package com.box.l10n.mojito.service.thirdparty.smartling.glossary;
 
 import java.util.List;
-import javax.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -10,13 +8,23 @@ import org.springframework.stereotype.Service;
 @ConditionalOnProperty(value = "l10n.glossary.cache.enabled", havingValue = "true")
 public class GlossaryCacheService {
 
-  @Autowired GlossaryCacheBlobStorage glossaryCacheBlobStorage;
+  private final GlossaryCacheBlobStorage glossaryCacheBlobStorage;
 
-  @Autowired GlossaryCacheBuilder glossaryCacheBuilder;
+  private final GlossaryCacheBuilder glossaryCacheBuilder;
 
-  @Autowired StemmerService stemmerService;
+  private final StemmerService stemmerService;
 
   private GlossaryCache glossaryCache;
+
+  public GlossaryCacheService(
+      GlossaryCacheBlobStorage blobStorage,
+      GlossaryCacheBuilder glossaryCacheBuilder,
+      StemmerService stemmerService) {
+    this.glossaryCacheBlobStorage = blobStorage;
+    this.glossaryCacheBuilder = glossaryCacheBuilder;
+    this.stemmerService = stemmerService;
+    loadGlossaryCache();
+  }
 
   /**
    * Get the list of glossary terms matches for the provided text.
@@ -42,10 +50,5 @@ public class GlossaryCacheService {
 
   public void loadGlossaryCache() {
     glossaryCache = glossaryCacheBlobStorage.getGlossaryCache().orElseGet(GlossaryCache::new);
-  }
-
-  @PostConstruct
-  private void init() {
-    loadGlossaryCache();
   }
 }

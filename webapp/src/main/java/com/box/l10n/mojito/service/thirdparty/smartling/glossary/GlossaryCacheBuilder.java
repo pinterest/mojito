@@ -14,10 +14,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -26,18 +24,34 @@ import org.springframework.stereotype.Component;
 public class GlossaryCacheBuilder {
 
   static Logger logger = LoggerFactory.getLogger(GlossaryCacheBuilder.class);
-  @Autowired GlossaryCacheConfiguration glossaryCacheConfiguration;
+  private final GlossaryCacheConfiguration glossaryCacheConfiguration;
 
-  @Autowired GlossaryCacheBlobStorage blobStorage;
+  private final GlossaryCacheBlobStorage blobStorage;
 
-  @Autowired TextUnitSearcher textUnitSearcher;
+  private final TextUnitSearcher textUnitSearcher;
 
-  @Autowired WordCountService wordCountService;
+  private final WordCountService wordCountService;
 
-  @Autowired StemmerService stemmer;
+  private final StemmerService stemmer;
 
   private static final Map<SmartlingGlossaryConfigParameter, Pattern> CONFIG_PATTERNS =
       new HashMap<>();
+
+  public GlossaryCacheBuilder(
+      GlossaryCacheConfiguration glossaryCacheConfiguration,
+      GlossaryCacheBlobStorage blobStorage,
+      TextUnitSearcher textUnitSearcher,
+      WordCountService wordCountService,
+      StemmerService stemmer) {
+    this.glossaryCacheConfiguration = glossaryCacheConfiguration;
+    this.blobStorage = blobStorage;
+    this.textUnitSearcher = textUnitSearcher;
+    this.wordCountService = wordCountService;
+    this.stemmer = stemmer;
+    for (SmartlingGlossaryConfigParameter param : SmartlingGlossaryConfigParameter.values()) {
+      CONFIG_PATTERNS.put(param, Pattern.compile("--- " + param + ":\\s*([^---]*)"));
+    }
+  }
 
   public void buildCache() {
     if (glossaryCacheConfiguration.getEnabled()) {
@@ -180,12 +194,5 @@ public class GlossaryCacheBuilder {
       return matcher.group(1).trim();
     }
     return null;
-  }
-
-  @PostConstruct
-  protected void init() {
-    for (SmartlingGlossaryConfigParameter param : SmartlingGlossaryConfigParameter.values()) {
-      CONFIG_PATTERNS.put(param, Pattern.compile("--- " + param + ":\\s*([^---]*)"));
-    }
   }
 }
