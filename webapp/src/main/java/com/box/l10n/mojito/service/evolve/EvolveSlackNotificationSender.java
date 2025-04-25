@@ -62,6 +62,8 @@ public class EvolveSlackNotificationSender {
           .doOnTerminate(latch::countDown)
           .subscribe();
       return latch;
+    } else {
+      LOG.error("Slack client is null");
     }
     return null;
   }
