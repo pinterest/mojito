@@ -19,7 +19,7 @@ public class GlossaryCacheService {
   private GlossaryCache glossaryCache;
 
   /**
-   * Get the list of glossary terms matches the for provided text.
+   * Get the list of glossary terms matches for the provided text.
    *
    * @param text
    * @return

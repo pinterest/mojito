@@ -24,5 +24,4 @@ public class BuildGlossaryCacheJob extends QuartzPollableJob<Void, Void> {
     logger.debug("Finished BuildGlossaryCacheJob");
     return null;
   }
-
 }
