@@ -30,6 +30,12 @@ public class EvolveConfigurationProperties {
 
   private String courseEvolveType;
 
+  private String usagesKeyRegexp;
+
+  private String slackChannel;
+
+  private String courseUrlTemplate;
+
   public String getApiUid() {
     return apiUid;
   }
@@ -124,5 +130,29 @@ public class EvolveConfigurationProperties {
 
   public void setEvolveSyncRetryMaxBackoffSecs(Integer evolveSyncRetryMaxBackoffSecs) {
     this.evolveSyncRetryMaxBackoffSecs = evolveSyncRetryMaxBackoffSecs;
+  }
+
+  public String getUsagesKeyRegexp() {
+    return usagesKeyRegexp;
+  }
+
+  public void setUsagesKeyRegexp(String usagesKeyRegexp) {
+    this.usagesKeyRegexp = usagesKeyRegexp;
+  }
+
+  public String getSlackChannel() {
+    return slackChannel;
+  }
+
+  public void setSlackChannel(String slackChannel) {
+    this.slackChannel = slackChannel;
+  }
+
+  public String getCourseUrlTemplate() {
+    return courseUrlTemplate;
+  }
+
+  public void setCourseUrlTemplate(String courseUrlTemplate) {
+    this.courseUrlTemplate = courseUrlTemplate;
   }
 }

@@ -12,6 +12,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -38,6 +39,8 @@ import com.box.l10n.mojito.service.branch.BranchStatisticRepository;
 import com.box.l10n.mojito.service.branch.BranchStatisticService;
 import com.box.l10n.mojito.service.evolve.dto.CourseDTO;
 import com.box.l10n.mojito.service.evolve.dto.TranslationStatusType;
+import com.box.l10n.mojito.service.gitblame.GitBlameService;
+import com.box.l10n.mojito.service.gitblame.GitBlameWithUsage;
 import com.box.l10n.mojito.service.locale.LocaleService;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.pollableTask.PollableTaskService;
@@ -58,11 +61,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.Before;
 import org.junit.Rule;
@@ -70,9 +75,11 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.client.HttpClientErrorException;
+import reactor.util.retry.Retry;
 
 public class EvolveServiceTest extends ServiceTestBase {
 
@@ -106,9 +113,13 @@ public class EvolveServiceTest extends ServiceTestBase {
 
   @Autowired LocaleMappingHelper localeMappingHelper;
 
+  @Autowired GitBlameService gitBlameService;
+
   @Rule public TestIdWatcher testIdWatcher = new TestIdWatcher();
 
   @Mock EvolveClient evolveClientMock;
+
+  @Mock EvolveSlackNotificationSender evolveSlackNotificationSenderMock;
 
   @Captor ArgumentCaptor<Integer> integerCaptor;
 
@@ -150,7 +161,8 @@ public class EvolveServiceTest extends ServiceTestBase {
             this.branchService,
             this.assetExtractionByBranchRepository,
             this.localeMappingHelper,
-            null);
+            null,
+            this.evolveSlackNotificationSenderMock);
   }
 
   private String getXliffContent() throws IOException {
@@ -318,6 +330,9 @@ public class EvolveServiceTest extends ServiceTestBase {
             any(ZonedDateTime.class));
     assertEquals(courseId, (int) this.integerCaptor.getValue());
     assertEquals(TRANSLATED, this.translationStatusTypeCaptor.getValue());
+
+    verify(this.evolveSlackNotificationSenderMock, times(0))
+        .notifyFullyTranslatedCourse(anyInt(), anyString(), anyString(), any(Retry.class));
 
     branch = this.branchRepository.findByNameAndRepository(null, repository);
     assertNotNull(branch);
@@ -627,6 +642,9 @@ public class EvolveServiceTest extends ServiceTestBase {
     verify(this.evolveClientMock, times(1)).updateCourseTranslation(anyInt(), anyString());
     verify(this.evolveClientMock, times(0)).syncEvolve(anyInt());
 
+    verify(this.evolveSlackNotificationSenderMock, times(0))
+        .notifyFullyTranslatedCourse(anyInt(), anyString(), anyString(), any(Retry.class));
+
     branch =
         this.branchRepository.findByNameAndRepository(
             this.evolveService.getBranchName(inTranslationCourseId), repository);
@@ -778,6 +796,9 @@ public class EvolveServiceTest extends ServiceTestBase {
     verify(this.evolveClientMock, times(3)).updateCourseTranslation(anyInt(), anyString());
     verify(this.evolveClientMock, times(1))
         .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
+
+    verify(this.evolveSlackNotificationSenderMock, times(0))
+        .notifyFullyTranslatedCourse(anyInt(), anyString(), anyString(), any(Retry.class));
   }
 
   @Test
@@ -1274,5 +1295,159 @@ public class EvolveServiceTest extends ServiceTestBase {
     assertEquals(courseId, (int) this.integerCaptor.getValue());
     verify(this.evolveClientMock, times(0))
         .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
+  }
+
+  @Test
+  public void testSyncWithUsages()
+      throws RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException, IOException {
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
+    RepositoryLocale esRepositoryLocale = new RepositoryLocale();
+    esRepositoryLocale.setLocale(esLocale);
+    Repository repository =
+        repositoryService.createRepository(
+            testIdWatcher.getEntityName("test"),
+            "",
+            this.localeService.getDefaultLocale(),
+            false,
+            Sets.newHashSet(),
+            Sets.newHashSet(esRepositoryLocale));
+    this.initReadyForTranslationData();
+
+    this.evolveService.sync(repository.getId(), null);
+
+    TextUnitSearcherParameters textUnitSearcherParameters =
+        new TextUnitSearcherParameters.Builder().repositoryId(repository.getId()).build();
+    List<TextUnitDTO> textUnits = this.textUnitSearcher.search(textUnitSearcherParameters);
+
+    textUnitSearcherParameters = new TextUnitSearcherParameters();
+    textUnitSearcherParameters.setTmTextUnitIds(
+        textUnits.stream().map(TextUnitDTO::getTmTextUnitId).toList());
+
+    textUnitSearcherParameters.setForRootLocale(true);
+    textUnitSearcherParameters.setPluralFormsFiltered(false);
+    textUnitSearcherParameters.setLimit(10);
+    textUnitSearcherParameters.setOffset(0);
+
+    List<GitBlameWithUsage> gitBlameWithUsages =
+        gitBlameService.getGitBlameWithUsages(textUnitSearcherParameters);
+    Set<String> currentUsages =
+        gitBlameWithUsages.stream()
+            .map(GitBlameWithUsage::getUsages)
+            .flatMap(Collection::stream)
+            .collect(Collectors.toSet());
+    assertEquals(0, currentUsages.size());
+
+    Mockito.reset(this.evolveClientMock);
+    this.initReadyForTranslationData();
+    this.evolveConfigurationProperties.setUsagesKeyRegexp(
+        "(exceed-preview-link|evolve-preview-link)");
+    this.evolveService.sync(repository.getId(), null);
+
+    textUnitSearcherParameters =
+        new TextUnitSearcherParameters.Builder().repositoryId(repository.getId()).build();
+    textUnits = this.textUnitSearcher.search(textUnitSearcherParameters);
+
+    textUnitSearcherParameters = new TextUnitSearcherParameters();
+    textUnitSearcherParameters.setTmTextUnitIds(
+        textUnits.stream().map(TextUnitDTO::getTmTextUnitId).toList());
+
+    textUnitSearcherParameters.setForRootLocale(true);
+    textUnitSearcherParameters.setPluralFormsFiltered(false);
+    textUnitSearcherParameters.setLimit(10);
+    textUnitSearcherParameters.setOffset(0);
+
+    gitBlameWithUsages = gitBlameService.getGitBlameWithUsages(textUnitSearcherParameters);
+    Set<String> usages =
+        ImmutableSet.of(
+            "https://www.test.com/student/enrollments/create_enrollment_from_token/7654da9d8440ece99c33f63d",
+            "https://evolve.test.com/courses/56rt56c0fc16ac5fd210c4cd/preview/index.html");
+    currentUsages =
+        gitBlameWithUsages.stream()
+            .map(GitBlameWithUsage::getUsages)
+            .flatMap(Collection::stream)
+            .collect(Collectors.toSet());
+    assertEquals(2, currentUsages.size());
+    currentUsages.forEach(currentUsage -> assertTrue(usages.contains(currentUsage)));
+  }
+
+  @Test
+  public void testSyncWhenSendingSlackNotification()
+      throws RepositoryNameAlreadyUsedException,
+          RepositoryLocaleCreationException,
+          IOException,
+          UnsupportedAssetFilterTypeException,
+          ExecutionException,
+          InterruptedException {
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
+    RepositoryLocale esRepositoryLocale = new RepositoryLocale();
+    esRepositoryLocale.setLocale(esLocale);
+    Repository repository =
+        repositoryService.createRepository(
+            testIdWatcher.getEntityName("test"),
+            "",
+            this.localeService.getDefaultLocale(),
+            false,
+            Sets.newHashSet(),
+            Sets.newHashSet(esRepositoryLocale));
+    final int courseId = 1;
+    this.evolveConfigurationProperties.setSlackChannel("@user");
+    this.evolveConfigurationProperties.setCourseUrlTemplate(
+        "https://www.test.com/courses/{courseId,number,#}/content");
+    this.initInTranslationData();
+    SourceAsset sourceAsset = new SourceAsset();
+    sourceAsset.setBranch(this.evolveService.getBranchName(courseId));
+    sourceAsset.setRepositoryId(repository.getId());
+    sourceAsset.setPath(this.evolveService.getAssetPath(courseId));
+    sourceAsset.setContent(this.getXliffContent());
+
+    String normalizedContent = NormalizationUtils.normalize(sourceAsset.getContent());
+    PollableFuture<Asset> assetFuture =
+        this.assetService.addOrUpdateAssetAndProcessIfNeeded(
+            sourceAsset.getRepositoryId(),
+            sourceAsset.getPath(),
+            normalizedContent,
+            sourceAsset.isExtractedContent(),
+            sourceAsset.getBranch(),
+            sourceAsset.getBranchCreatedByUsername(),
+            sourceAsset.getBranchNotifiers(),
+            null,
+            sourceAsset.getFilterConfigIdOverride(),
+            sourceAsset.getFilterOptions(),
+            true);
+
+    sourceAsset.setAddedAssetId(assetFuture.get().getId());
+    sourceAsset.setPollableTask(assetFuture.getPollableTask());
+    this.pollableTaskService.waitForPollableTask(sourceAsset.getPollableTask().getId());
+
+    TextUnitSearcherParameters textUnitSearcherParameters =
+        new TextUnitSearcherParameters.Builder().repositoryId(repository.getId()).build();
+    List<TextUnitDTO> textUnits = this.textUnitSearcher.search(textUnitSearcherParameters);
+
+    textUnits.forEach(
+        textUnitDTO ->
+            tmService.addTMTextUnitCurrentVariant(
+                textUnitDTO.getTmTextUnitId(),
+                esLocale.getId(),
+                "Text",
+                textUnitDTO.getTargetComment(),
+                TMTextUnitVariant.Status.APPROVED,
+                true));
+
+    Branch branch =
+        this.branchRepository.findByNameAndRepository(
+            this.evolveService.getBranchName(courseId), repository);
+    assertNotNull(branch);
+    assertFalse(branch.getDeleted());
+
+    this.branchStatisticService.computeAndSaveBranchStatistics(branch);
+
+    this.evolveService.sync(repository.getId(), null);
+
+    verify(this.evolveSlackNotificationSenderMock, times(1))
+        .notifyFullyTranslatedCourse(
+            eq(courseId),
+            eq(this.evolveConfigurationProperties.getSlackChannel()),
+            eq(this.evolveConfigurationProperties.getCourseUrlTemplate()),
+            any(Retry.class));
   }
 }
