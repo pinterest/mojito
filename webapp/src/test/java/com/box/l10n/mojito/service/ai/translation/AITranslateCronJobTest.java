@@ -46,6 +46,7 @@ import io.micrometer.core.instrument.Tags;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -596,6 +597,94 @@ public class AITranslateCronJobTest {
     aITranslationConfiguration.setRepositorySettings(repositorySettingsMap);
     aiTranslateCronJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
     verify(glossaryCacheService, times(3)).getGlossaryTermsInText(tmTextUnit.getContent());
+    verify(llmService, times(3))
+        .translate(
+            isA(TMTextUnit.class),
+            isA(String.class),
+            isA(String.class),
+            isA(AIPrompt.class),
+            isA(List.class));
+    verify(tmService, times(3))
+        .addTMTextUnitCurrentVariantWithResult(
+            anyLong(),
+            anyLong(),
+            anyString(),
+            anyString(),
+            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
+            eq(false),
+            isA(ZonedDateTime.class));
+    verify(tmTextUnitVariantCommentService, times(3))
+        .addComment(
+            anyLong(),
+            any(TMTextUnitVariantComment.Type.class),
+            any(TMTextUnitVariantComment.Severity.class),
+            eq("Translated via AI translation job."));
+  }
+
+  @Test
+  public void testGlossaryMatchesWithNoRelevantTranslationFilteredOut() {
+    AITranslationConfiguration.RepositorySettings repositorySettings =
+        new AITranslationConfiguration.RepositorySettings();
+    repositorySettings.setReuseSourceOnLanguageMatch(false);
+    repositorySettings.setInjectGlossaryMatches(true);
+    Map<String, AITranslationConfiguration.RepositorySettings> repositorySettingsMap =
+        Collections.singletonMap("testRepo", repositorySettings);
+    GlossaryTerm glossaryTerm = new GlossaryTerm();
+    glossaryTerm.setTmTextUnitId(1L);
+    glossaryTerm.setText("Test text");
+    Map<String, String> translations = new HashMap<>();
+    translations.put("fr-FR", "Test text in French");
+    translations.put("de-DE", null);
+    translations.put("en-IE", null);
+    glossaryTerm.setTranslations(translations);
+
+    GlossaryTerm glossaryTerm2 = new GlossaryTerm();
+    glossaryTerm2.setTmTextUnitId(2L);
+    glossaryTerm2.setText("More Test text");
+    Map<String, String> translations2 = new HashMap<>();
+    translations2.put("fr-FR", null);
+    translations2.put("de-DE", null);
+    translations2.put("en-IE", null);
+    glossaryTerm2.setTranslations(translations2);
+    // Do Not Translate matches should not be filtered out if translation is null
+    glossaryTerm2.setDoNotTranslate(true);
+    List<GlossaryTerm> glossaryTerms = List.of(glossaryTerm, glossaryTerm2);
+    when(glossaryCacheService.getGlossaryTermsInText(isA(String.class))).thenReturn(glossaryTerms);
+    aITranslationConfiguration.setRepositorySettings(repositorySettingsMap);
+    aiTranslateCronJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
+
+    verify(llmService)
+        .translate(
+            isA(TMTextUnit.class),
+            eq("en-GB"),
+            eq("fr-FR"),
+            isA(AIPrompt.class),
+            argThat(
+                terms ->
+                    terms.size() == 2
+                        && terms.getFirst().getLocaleTranslation("fr-FR") != null
+                        && terms.get(1).getLocaleTranslation("fr-FR") == null));
+
+    verify(llmService)
+        .translate(
+            isA(TMTextUnit.class),
+            eq("en-GB"),
+            eq("de-DE"),
+            isA(AIPrompt.class),
+            argThat(
+                terms ->
+                    terms.size() == 1 && terms.getFirst().getLocaleTranslation("de-DE") == null));
+
+    verify(llmService)
+        .translate(
+            isA(TMTextUnit.class),
+            eq("en-GB"),
+            eq("en-IE"),
+            isA(AIPrompt.class),
+            argThat(
+                terms ->
+                    terms.size() == 1 && terms.getFirst().getLocaleTranslation("en-IE") == null));
+
     verify(llmService, times(3))
         .translate(
             isA(TMTextUnit.class),

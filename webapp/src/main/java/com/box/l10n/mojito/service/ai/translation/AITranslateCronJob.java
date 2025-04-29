@@ -210,7 +210,14 @@ public class AITranslateCronJob implements Job {
                         repository,
                         targetLocale,
                         repositoryLocaleAIPrompt,
-                        glossaryCacheService.getGlossaryTermsInText(tmTextUnit.getContent())));
+                        glossaryCacheService
+                            .getGlossaryTermsInText(tmTextUnit.getContent())
+                            .stream()
+                            .filter(
+                                term ->
+                                    term.getLocaleTranslation(targetLocale.getBcp47Tag()) != null
+                                        || term.isDoNotTranslate())
+                            .collect(Collectors.toList())));
               } else {
                 aiTranslations.add(
                     executeTranslationPrompt(

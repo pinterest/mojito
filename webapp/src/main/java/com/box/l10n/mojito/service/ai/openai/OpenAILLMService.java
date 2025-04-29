@@ -502,7 +502,7 @@ public class OpenAILLMService implements LLMService {
         + ", \"translation\": \""
         + (glossaryTerm.isDoNotTranslate()
             ? glossaryTerm.getText()
-            : glossaryTerm.getTranslations().get(targetBcp47Tag))
+            : glossaryTerm.getLocaleTranslation(targetBcp47Tag))
         + "\""
         + "}";
   }

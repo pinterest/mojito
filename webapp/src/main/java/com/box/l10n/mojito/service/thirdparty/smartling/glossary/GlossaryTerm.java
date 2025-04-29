@@ -37,8 +37,8 @@ public class GlossaryTerm implements Serializable {
     translations.put(bcp47Tag, translation);
   }
 
-  public void getLocaleTranslation(String bcp47Tag) {
-    translations.get(bcp47Tag);
+  public String getLocaleTranslation(String bcp47Tag) {
+    return translations.get(bcp47Tag);
   }
 
   public String getText() {
