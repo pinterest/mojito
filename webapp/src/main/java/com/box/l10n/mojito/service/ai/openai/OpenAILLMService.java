@@ -500,7 +500,9 @@ public class OpenAILLMService implements LLMService {
         + ", \"isDoNotTranslate\": "
         + glossaryTerm.isDoNotTranslate()
         + ", \"translation\": \""
-        + glossaryTerm.getTranslations().get(targetBcp47Tag)
+        + (glossaryTerm.isDoNotTranslate()
+            ? glossaryTerm.getText()
+            : glossaryTerm.getTranslations().get(targetBcp47Tag))
         + "\""
         + "}";
   }

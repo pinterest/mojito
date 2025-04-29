@@ -849,6 +849,39 @@ class OpenAILLMServiceTest {
   }
 
   @Test
+  void testPromptTemplatingJsonInPromptGlossaryMatchesDNT() {
+    String promptText =
+        """
+           Translate the following source string from [mojito_source_locale] to [mojito_target_locale]:
+           Source string: [mojito_source_string]
+           {{{optional: "comment": "[mojito_comment_string]",}} {{optional: "context": "[mojito_context_string]",}} {{optional: "plural_form": "[mojito_plural_form]"}}}
+           {{optional: The glossary matches are: [mojito_glossary_term_matches]. }}
+           """;
+
+    PluralForm one = new PluralForm();
+    one.setName("one");
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setId(1L);
+    tmTextUnit.setContent("Hello");
+    tmTextUnit.setComment("A friendly greeting");
+    tmTextUnit.setPluralForm(one);
+    GlossaryTerm glossaryTerm = new GlossaryTerm();
+    glossaryTerm.setText("Hello");
+    glossaryTerm.setDoNotTranslate(true);
+    glossaryTerm.setTranslations(Collections.singletonMap("fr", null));
+    String prompt =
+        openAILLMService.getTranslationFormattedPrompt(
+            promptText, tmTextUnit, "en", "fr", Collections.singletonList(glossaryTerm));
+    assertEquals(
+        """
+                         Translate the following source string from en to fr:
+                         Source string: Hello
+                         {"comment": "A friendly greeting", "plural_form": "one"}
+                         The glossary matches are: [{"text": "Hello", "isExactMatch": false, "isCaseSensitive": false, "isDoNotTranslate": true, "translation": "Hello"}].""",
+        prompt);
+  }
+
+  @Test
   void testPromptTemplatingInlineSentence() {
     String promptText =
         """
