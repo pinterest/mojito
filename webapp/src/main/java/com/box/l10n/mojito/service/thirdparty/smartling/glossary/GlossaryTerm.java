@@ -84,4 +84,22 @@ public class GlossaryTerm implements Serializable {
   public void setDoNotTranslate(boolean doNotTranslate) {
     isDoNotTranslate = doNotTranslate;
   }
+
+  public String toString() {
+    return "GlossaryTerm{"
+        + "tmTextUnitId="
+        + tmTextUnitId
+        + ", text='"
+        + text
+        + '\''
+        + ", translations="
+        + translations
+        + ", isExactMatch="
+        + isExactMatch
+        + ", isCaseSensitive="
+        + isCaseSensitive
+        + ", isDoNotTranslate="
+        + isDoNotTranslate
+        + '}';
+  }
 }

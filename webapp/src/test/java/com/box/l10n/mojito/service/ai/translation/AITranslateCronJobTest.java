@@ -29,6 +29,8 @@ import com.box.l10n.mojito.entity.TmTextUnitPendingMT;
 import com.box.l10n.mojito.service.ai.LLMService;
 import com.box.l10n.mojito.service.ai.RepositoryLocaleAIPromptRepository;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
+import com.box.l10n.mojito.service.thirdparty.smartling.glossary.GlossaryCacheService;
+import com.box.l10n.mojito.service.thirdparty.smartling.glossary.GlossaryTerm;
 import com.box.l10n.mojito.service.tm.AddTMTextUnitCurrentVariantResult;
 import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
@@ -87,6 +89,8 @@ public class AITranslateCronJobTest {
 
   @Mock TMTextUnitVariantCommentService tmTextUnitVariantCommentService;
 
+  @Mock GlossaryCacheService glossaryCacheService;
+
   AITranslateCronJob aiTranslateCronJob;
 
   TMTextUnit tmTextUnit;
@@ -111,6 +115,7 @@ public class AITranslateCronJobTest {
     aiTranslateCronJob.tmTextUnitVariantRepository = tmTextUnitVariantRepository;
     aiTranslateCronJob.aiTranslationService = aiTranslationService;
     aiTranslateCronJob.textUnitSearcher = textUnitSearcher;
+    aiTranslateCronJob.glossaryCacheService = glossaryCacheService;
     aiTranslateCronJob.tmTextUnitVariantCommentService = tmTextUnitVariantCommentService;
     aITranslationConfiguration = new AITranslationConfiguration();
     aITranslationConfiguration.setEnabled(true);
@@ -198,6 +203,13 @@ public class AITranslateCronJobTest {
     when(llmService.translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class)))
         .thenReturn("translated");
+    when(llmService.translate(
+            isA(TMTextUnit.class),
+            isA(String.class),
+            isA(String.class),
+            isA(AIPrompt.class),
+            isA(List.class)))
+        .thenReturn("translated with glossary terms");
     TMTextUnitCurrentVariant tmTextUnitCurrentVariant = new TMTextUnitCurrentVariant();
     tmTextUnitCurrentVariant.setLocale(english);
     tmTextUnitCurrentVariant.setId(1L);
@@ -230,6 +242,13 @@ public class AITranslateCronJobTest {
             anyBoolean(),
             isA(ZonedDateTime.class)))
         .thenReturn(new AddTMTextUnitCurrentVariantResult(false, tmTextUnitCurrentVariant));
+    GlossaryTerm glossaryTerm = new GlossaryTerm();
+    glossaryTerm.setTmTextUnitId(1L);
+    glossaryTerm.setText("Test text");
+    glossaryTerm.setTranslations(
+        Map.of("fr-FR", "Test text in French", "de-DE", "Test text in German"));
+    List<GlossaryTerm> glossaryTerms = List.of(glossaryTerm);
+    when(glossaryCacheService.getGlossaryTermsInText(isA(String.class))).thenReturn(glossaryTerms);
   }
 
   @Test
@@ -564,5 +583,40 @@ public class AITranslateCronJobTest {
             eq("Translated via AI translation job."));
     verify(aiTranslationService, times(3)).deleteBatch(isA(Queue.class));
     verify(aiTranslationService, times(2)).deleteBatch(argThat(q -> !q.isEmpty()));
+  }
+
+  @Test
+  public void testInjectGlossaryTermsEnabled() {
+    AITranslationConfiguration.RepositorySettings repositorySettings =
+        new AITranslationConfiguration.RepositorySettings();
+    repositorySettings.setReuseSourceOnLanguageMatch(false);
+    repositorySettings.setInjectGlossaryMatches(true);
+    Map<String, AITranslationConfiguration.RepositorySettings> repositorySettingsMap =
+        Collections.singletonMap("testRepo", repositorySettings);
+    aITranslationConfiguration.setRepositorySettings(repositorySettingsMap);
+    aiTranslateCronJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
+    verify(glossaryCacheService, times(3)).getGlossaryTermsInText(tmTextUnit.getContent());
+    verify(llmService, times(3))
+        .translate(
+            isA(TMTextUnit.class),
+            isA(String.class),
+            isA(String.class),
+            isA(AIPrompt.class),
+            isA(List.class));
+    verify(tmService, times(3))
+        .addTMTextUnitCurrentVariantWithResult(
+            anyLong(),
+            anyLong(),
+            anyString(),
+            anyString(),
+            eq(TMTextUnitVariant.Status.MT_TRANSLATED),
+            eq(false),
+            isA(ZonedDateTime.class));
+    verify(tmTextUnitVariantCommentService, times(3))
+        .addComment(
+            anyLong(),
+            any(TMTextUnitVariantComment.Type.class),
+            any(TMTextUnitVariantComment.Severity.class),
+            eq("Translated via AI translation job."));
   }
 }
