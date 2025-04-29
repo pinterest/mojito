@@ -117,5 +117,55 @@ public class GlossaryCacheServiceTest {
     Assertions.assertNotNull(glossaryCacheService.getGlossaryTermsInText(""));
   }
 
-  // TODO(mallen): Test whitespace matching, emojis etc
+  @Test
+  void testOverlappedTermAlsoSeparatelyMatchedInText() {
+    GlossaryCache glossaryCache = glossaryCacheBlobStorage.getGlossaryCache().get();
+    glossaryCache.add(
+        stemmerService.stem("longer match"),
+        new GlossaryTerm("longer match", false, false, false, 7L));
+    glossaryCache.add(
+        stemmerService.stem("match"), new GlossaryTerm("match", false, false, false, 8L));
+
+    List<GlossaryTerm> result =
+        glossaryCacheService.getGlossaryTermsInText("longer match is a match");
+    Assertions.assertEquals(2, result.size());
+    Assertions.assertEquals("longer match", result.getFirst().getText());
+    Assertions.assertEquals("match", result.getLast().getText());
+  }
+
+  @Test
+  void testMultipleSpacesBetweenTerms() {
+    List<GlossaryTerm> result = glossaryCacheService.getGlossaryTermsInText("  term   match  ");
+
+    Assertions.assertEquals(1, result.size());
+    Assertions.assertEquals(termMatch, result.getFirst().getText());
+  }
+
+  @Test
+  void testEmojisInBetweenTerm() {
+    List<GlossaryTerm> result = glossaryCacheService.getGlossaryTermsInText("term 😊 match");
+
+    Assertions.assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void testEmptyStringReturnsNoMatches() {
+    List<GlossaryTerm> result = glossaryCacheService.getGlossaryTermsInText("");
+
+    Assertions.assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void testOnlyWhitespaceReturnsNoMatches() {
+    List<GlossaryTerm> result = glossaryCacheService.getGlossaryTermsInText("   ");
+
+    Assertions.assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void textWithOnlyEmojisReturnsNoMatches() {
+    List<GlossaryTerm> result = glossaryCacheService.getGlossaryTermsInText("😊😊");
+
+    Assertions.assertTrue(result.isEmpty());
+  }
 }

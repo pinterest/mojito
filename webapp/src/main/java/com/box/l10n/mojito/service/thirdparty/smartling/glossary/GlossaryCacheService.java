@@ -99,7 +99,8 @@ public class GlossaryCacheService {
   }
 
   /**
-   * Resolve overlapping matches by prioritizing longer, more specific phrases.
+   * Resolve overlapping matches by prioritizing longer, more specific phrases that fully overlap
+   * other matching terms.
    *
    * @param matches
    * @return list of {@link Match} objects with overlaps resolved
@@ -120,6 +121,8 @@ public class GlossaryCacheService {
       }
 
       if (!fullyOverlaps) {
+        // This match is not fully covered by a previous larger match so it can be added to the
+        // final matches
         finalMatches.add(match);
         for (int i = match.start; i < match.end; i++) {
           coveredIndices.add(i);
