@@ -44,7 +44,7 @@ public class GlossaryCacheService {
 
     List<String> tokens = List.of(stemmerService.stem(text).split(" "));
 
-    List<Match> matches = findGlossaryMatches(tokens);
+    List<Match> matches = findGlossaryMatches(tokens, text);
     matches = resolveOverlaps(matches);
 
     matches.removeIf(
@@ -62,7 +62,7 @@ public class GlossaryCacheService {
    * @param tokens
    * @return list of {@link Match} objects representing the matches found
    */
-  private List<Match> findGlossaryMatches(List<String> tokens) {
+  private List<Match> findGlossaryMatches(List<String> tokens, String originalText) {
     List<Match> matches = new ArrayList<>();
     for (int length = 1; length <= glossaryCache.getMaxNGramSize(); length++) {
       for (int start = 0; start <= tokens.size() - length; start++) {
@@ -71,7 +71,7 @@ public class GlossaryCacheService {
           List<GlossaryTerm> hits = glossaryCache.get(nGram);
           if (!hits.isEmpty()) {
             if (hits.size() > 1) {
-              matches.add(handleMatchCollision(hits, nGram, start, length));
+              matches.add(handleMatchCollision(hits, originalText, start, length));
             } else {
               matches.add(new Match(start, start + length, hits.getFirst()));
             }
@@ -89,9 +89,9 @@ public class GlossaryCacheService {
    *
    * <p>If no direct match is found, return the first stemmed match.
    */
-  private Match handleMatchCollision(List<GlossaryTerm> hits, String nGram, int start, int length) {
+  private Match handleMatchCollision(List<GlossaryTerm> hits, String text, int start, int length) {
     for (GlossaryTerm hit : hits) {
-      if (hit.getText().equalsIgnoreCase(nGram)) {
+      if (text.toLowerCase().contains(hit.getText().toLowerCase())) {
         return new Match(start, start + length, hit);
       }
     }
