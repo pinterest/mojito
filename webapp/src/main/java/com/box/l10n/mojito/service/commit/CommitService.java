@@ -58,7 +58,7 @@ public class CommitService {
   final RepositoryRepository repositoryRepository;
   final AppendedAssetBlobStorage appendedAssetBlobStorage;
   private final JdbcTemplate jdbcTemplate;
-  private final BranchStatisticService branchStatisticService;
+  protected BranchStatisticService branchStatisticService;
   private final BranchRepository branchRepository;
 
   @Value("${l10n.commit.branchAppend.batchSize:100}")

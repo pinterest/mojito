@@ -27,7 +27,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 /**
  * @author garion
@@ -51,8 +50,6 @@ public class CommitServiceTest extends ServiceTestBase {
   @Autowired BranchMergeTargetRepository branchMergeTargetRepository;
 
   @Autowired AppendedAssetBlobStorage appendedAssetBlobStorage;
-
-  @MockBean BranchStatisticService branchStatisticServiceMock;
 
   @Test
   public void testGetCommitWithNameAndRepository() throws Exception {
@@ -494,6 +491,10 @@ public class CommitServiceTest extends ServiceTestBase {
   public void testAssociateAppendedBranchesToCommit() throws Exception {
     String appendTextUnitId = testIdWatcher.getTestId();
 
+    BranchStatisticService mockBranchStatisticService = Mockito.mock(BranchStatisticService.class);
+    BranchStatisticService oldBranchStatisticService = commitService.branchStatisticService;
+    commitService.branchStatisticService = mockBranchStatisticService;
+
     BranchTestData branchTestData = new BranchTestData(testIdWatcher);
 
     Branch branch1 = branchTestData.getBranch1();
@@ -536,7 +537,7 @@ public class CommitServiceTest extends ServiceTestBase {
         appendTextUnitId, List.of(branch1.getId(), branch2.getId()));
 
     commitService.associateAppendedBranchesToCommit(appendTextUnitId, newCommit);
-    Mockito.verify(branchStatisticServiceMock, Mockito.times(3)).scheduleBranchNotification(any());
+    Mockito.verify(mockBranchStatisticService, Mockito.times(3)).scheduleBranchNotification(any());
 
     // The old commit should still be linked to branch1, not the new commit
     Assert.assertEquals(
@@ -546,5 +547,8 @@ public class CommitServiceTest extends ServiceTestBase {
     Assert.assertEquals(
         branchMergeTargetRepository.findByBranch(branch2).get().getCommit().getId(),
         newCommit.getId());
+
+    // Clean up mock
+    commitService.branchStatisticService = oldBranchStatisticService;
   }
 }
