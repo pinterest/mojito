@@ -1,5 +1,7 @@
 package com.box.l10n.mojito.service.commit;
 
+import static org.mockito.ArgumentMatchers.any;
+
 import com.box.l10n.mojito.entity.Branch;
 import com.box.l10n.mojito.entity.BranchMergeTarget;
 import com.box.l10n.mojito.entity.Commit;
@@ -9,6 +11,7 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.service.appender.AppendedAssetBlobStorage;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
 import com.box.l10n.mojito.service.branch.BranchMergeTargetRepository;
+import com.box.l10n.mojito.service.branch.BranchStatisticService;
 import com.box.l10n.mojito.service.branch.BranchTestData;
 import com.box.l10n.mojito.service.pullrun.PullRunRepository;
 import com.box.l10n.mojito.service.pushrun.PushRunRepository;
@@ -22,7 +25,9 @@ import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 /**
  * @author garion
@@ -46,6 +51,8 @@ public class CommitServiceTest extends ServiceTestBase {
   @Autowired BranchMergeTargetRepository branchMergeTargetRepository;
 
   @Autowired AppendedAssetBlobStorage appendedAssetBlobStorage;
+
+  @MockBean BranchStatisticService branchStatisticServiceMock;
 
   @Test
   public void testGetCommitWithNameAndRepository() throws Exception {
@@ -529,6 +536,7 @@ public class CommitServiceTest extends ServiceTestBase {
         appendTextUnitId, List.of(branch1.getId(), branch2.getId()));
 
     commitService.associateAppendedBranchesToCommit(appendTextUnitId, newCommit);
+    Mockito.verify(branchStatisticServiceMock, Mockito.times(3)).scheduleBranchNotification(any());
 
     // The old commit should still be linked to branch1, not the new commit
     Assert.assertEquals(
