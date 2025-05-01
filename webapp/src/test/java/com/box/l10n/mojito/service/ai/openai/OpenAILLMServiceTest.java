@@ -844,7 +844,7 @@ class OpenAILLMServiceTest {
                      Translate the following source string from en to fr:
                      Source string: Hello
                      {"comment": "A friendly greeting", "plural_form": "one"}
-                     The glossary matches are: [{"text": "Hello", "isExactMatch": false, "isCaseSensitive": false, "isDoNotTranslate": false, "translation": "Bonjour"}].""",
+                     The glossary matches are: [{"text":"Hello","isExactMatch":false,"isCaseSensitive":false,"isDoNotTranslate":false,"translation":"Bonjour"}].""",
         prompt);
   }
 
@@ -877,7 +877,7 @@ class OpenAILLMServiceTest {
                          Translate the following source string from en to fr:
                          Source string: Hello
                          {"comment": "A friendly greeting", "plural_form": "one"}
-                         The glossary matches are: [{"text": "Hello", "isExactMatch": false, "isCaseSensitive": false, "isDoNotTranslate": true, "translation": "Hello"}].""",
+                         The glossary matches are: [{"text":"Hello","isExactMatch":false,"isCaseSensitive":false,"isDoNotTranslate":true,"translation":"Hello"}].""",
         prompt);
   }
 
@@ -937,7 +937,7 @@ class OpenAILLMServiceTest {
         """
                 Translate the following source string from en to fr:
                 Source string: Hello
-                The glossary matches are: [{"text": "Hello", "isExactMatch": false, "isCaseSensitive": false, "isDoNotTranslate": false, "translation": "Bonjour"}].""",
+                The glossary matches are: [{"text":"Hello","isExactMatch":false,"isCaseSensitive":false,"isDoNotTranslate":false,"translation":"Bonjour"}].""",
         prompt);
   }
 
@@ -973,7 +973,7 @@ class OpenAILLMServiceTest {
         """
                     Translate the following source string from en to fr:
                     Source string: Hello
-                    The glossary matches are: [{"text": "Hello", "isExactMatch": false, "isCaseSensitive": false, "isDoNotTranslate": false, "translation": "Bonjour"}, {"text": "Another term", "isExactMatch": false, "isCaseSensitive": true, "isDoNotTranslate": false, "translation": "Another term translation"}].""",
+                    The glossary matches are: [{"text":"Hello","isExactMatch":false,"isCaseSensitive":false,"isDoNotTranslate":false,"translation":"Bonjour"},{"text":"Another term","isExactMatch":false,"isCaseSensitive":true,"isDoNotTranslate":false,"translation":"Another term translation"}].""",
         prompt);
   }
 

@@ -480,32 +480,32 @@ public class OpenAILLMService implements LLMService {
   private String mapGlossaryTermsToJsonList(
       List<GlossaryTerm> glossaryTerms, String targetBcp47Tag) {
 
-    return "["
-        + glossaryTerms.stream()
-            .map(term -> mapGlossaryTermToJsonObject(term, targetBcp47Tag))
-            .collect(Collectors.joining(", "))
-        + "]";
+    try {
+      return objectMapper.writeValueAsString(
+          glossaryTerms.stream().map(term -> mapGlossaryTermToJSON(term, targetBcp47Tag)).toList());
+    } catch (JsonProcessingException e) {
+      logger.error("Error mapping glossary terms to JSON list", e);
+      throw new AIException("Error mapping glossary terms to JSON list", e);
+    }
   }
 
-  private String mapGlossaryTermToJsonObject(GlossaryTerm glossaryTerm, String targetBcp47Tag) {
-
-    return "{"
-        + "\"text\": \""
-        + glossaryTerm.getText()
-        + "\""
-        + ", \"isExactMatch\": "
-        + glossaryTerm.isExactMatch()
-        + ", \"isCaseSensitive\": "
-        + glossaryTerm.isCaseSensitive()
-        + ", \"isDoNotTranslate\": "
-        + glossaryTerm.isDoNotTranslate()
-        + ", \"translation\": \""
-        + (glossaryTerm.isDoNotTranslate()
+  private GlossaryTermJson mapGlossaryTermToJSON(GlossaryTerm glossaryTerm, String targetBcp47Tag) {
+    return new GlossaryTermJson(
+        glossaryTerm.getText(),
+        glossaryTerm.isExactMatch(),
+        glossaryTerm.isCaseSensitive(),
+        glossaryTerm.isDoNotTranslate(),
+        glossaryTerm.isDoNotTranslate()
             ? glossaryTerm.getText()
-            : glossaryTerm.getLocaleTranslation(targetBcp47Tag))
-        + "\""
-        + "}";
+            : glossaryTerm.getLocaleTranslation(targetBcp47Tag));
   }
+
+  private record GlossaryTermJson(
+      String text,
+      boolean isExactMatch,
+      boolean isCaseSensitive,
+      boolean isDoNotTranslate,
+      String translation) {}
 
   private String processOptionalPlaceholderText(
       String promptText, String placeholder, String placeholderValue) {
