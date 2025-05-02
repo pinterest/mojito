@@ -104,6 +104,9 @@ public class AssetAppenderService {
 
     AbstractAssetAppender appender = assetAppender.get();
 
+    // Used to check if a text unit already exists in the pushed up asset - if it is we don't
+    // append it. Having duplicate source text units causes the compilation step from po to mo to
+    // fail.
     HashSet<Long> lastPushRunTextUnits =
         new HashSet<>(
             pushRunRepository.getAllTextUnitIdsFromLastPushRunByRepositoryId(
@@ -172,6 +175,9 @@ public class AssetAppenderService {
 
       appendedTextUnitCount += textUnitsToAppend.size();
       appendedBranches.add(branch);
+      // Avoids appending duplicate text units if multiple branches add the same text unit
+      lastPushRunTextUnits.addAll(
+          textUnitsToAppend.stream().map(TextUnitDTO::getTmTextUnitId).toList());
     }
 
     String appendedAssetContent = appender.getAssetContent();
