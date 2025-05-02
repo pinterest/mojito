@@ -198,7 +198,6 @@ public class AssetAppenderServiceTest {
 
     assetAppenderService.DEFAULT_APPEND_LIMIT = 10;
 
-    //    when(branchStatisticServiceMock.getTextUnitDTOsForBranch(any())).thenReturn(textUnits);
     when(branchRepositoryMock.findBranchesForAppending(any())).thenReturn(branches);
 
     assetAppenderService.appendBranchTextUnitsToSource(
