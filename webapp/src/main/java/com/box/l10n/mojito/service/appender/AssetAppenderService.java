@@ -6,6 +6,7 @@ import com.box.l10n.mojito.entity.Branch;
 import com.box.l10n.mojito.service.branch.BranchRepository;
 import com.box.l10n.mojito.service.branch.BranchStatisticService;
 import com.box.l10n.mojito.service.pushrun.PushRunRepository;
+import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
@@ -45,6 +46,7 @@ public class AssetAppenderService {
   private final AppendedAssetBlobStorage appendedAssetBlobStorage;
   private final MeterRegistry meterRegistry;
   private final AssetAppenderConfig assetAppenderConfig;
+  private final TMTextUnitRepository tmTextUnitRepository;
 
   @Autowired
   public AssetAppenderService(
@@ -54,7 +56,8 @@ public class AssetAppenderService {
       PushRunRepository pushRunRepository,
       AppendedAssetBlobStorage appendedAssetBlobStorage,
       MeterRegistry meterRegistry,
-      AssetAppenderConfig assetAppenderConfig) {
+      AssetAppenderConfig assetAppenderConfig,
+      TMTextUnitRepository tmTextUnitRepository) {
     this.assetAppenderFactory = assetAppenderFactory;
     this.branchRepository = branchRepository;
     this.branchStatisticService = branchStatisticService;
@@ -62,6 +65,7 @@ public class AssetAppenderService {
     this.appendedAssetBlobStorage = appendedAssetBlobStorage;
     this.meterRegistry = meterRegistry;
     this.assetAppenderConfig = assetAppenderConfig;
+    this.tmTextUnitRepository = tmTextUnitRepository;
   }
 
   /**
@@ -104,13 +108,22 @@ public class AssetAppenderService {
 
     AbstractAssetAppender appender = assetAppender.get();
 
-    // Checks if a text unit already exists in the uploaded asset; if it does, we avoid appending
-    // it. Duplicate text units in the translated asset can cause the po-to-mo compilation process
-    // to fail.
-    HashSet<Long> textUnitIdsInSourceAsset =
-        new HashSet<>(
-            pushRunRepository.getAllTextUnitIdsFromLastPushRunByRepositoryId(
-                asset.getRepository().getId()));
+    List<Long> textUnitIdsInLastPushRun =
+        pushRunRepository.getAllTextUnitIdsFromLastPushRunByRepositoryId(
+            asset.getRepository().getId());
+
+    // The text unit name (formatted as "source --- context") is used to detect duplicates, since PO
+    // files treat the combination of msgid and context as unique identifiers for text units.
+    // Mojito generates a new text unit if the comment differs or is present. This prevents
+    // scenarios where appending a text unit with a different comment could cause po-to-mo
+    // compilation failures. This also makes sure text units that already exist in the source aren't
+    // being appended again.
+    HashSet<String> textUnitNamesInSourceAsset = new HashSet<>();
+
+    // Put all text units in the last push run into the source asset set
+    tmTextUnitRepository
+        .findAllById(textUnitIdsInLastPushRun)
+        .forEach(tmTextUnit -> textUnitNamesInSourceAsset.add(tmTextUnit.getName()));
 
     // Fetch all branches to be appended, sorted by translated date in ascending order to ensure
     // older translated branches make it in
@@ -133,7 +146,7 @@ public class AssetAppenderService {
       // Filter text units by removing ones in the last push run
       textUnitsToAppend =
           textUnitsToAppend.stream()
-              .filter(tu -> !textUnitIdsInSourceAsset.contains(tu.getTmTextUnitId()))
+              .filter(tu -> !textUnitNamesInSourceAsset.contains(tu.getName()))
               .toList();
 
       // Are we going to go over the hard limit ? If yes emit metrics and break out.
@@ -176,8 +189,8 @@ public class AssetAppenderService {
       appendedTextUnitCount += textUnitsToAppend.size();
       appendedBranches.add(branch);
       // Avoids appending duplicate text units if multiple branches add the same text unit
-      textUnitIdsInSourceAsset.addAll(
-          textUnitsToAppend.stream().map(TextUnitDTO::getTmTextUnitId).toList());
+      textUnitNamesInSourceAsset.addAll(
+          textUnitsToAppend.stream().map(TextUnitDTO::getName).toList());
     }
 
     String appendedAssetContent = appender.getAssetContent();
