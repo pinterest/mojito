@@ -120,7 +120,7 @@ public class AssetAppenderService {
     // being appended again.
     HashSet<String> textUnitNamesInSourceAsset = new HashSet<>();
 
-    // Put all text units in the last push run into the source asset set
+    // Put all text unit names in the last push run into the source asset set
     tmTextUnitRepository
         .findAllById(textUnitIdsInLastPushRun)
         .forEach(tmTextUnit -> textUnitNamesInSourceAsset.add(tmTextUnit.getName()));
