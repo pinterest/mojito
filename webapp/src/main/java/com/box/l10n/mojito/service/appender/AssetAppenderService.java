@@ -3,6 +3,7 @@ package com.box.l10n.mojito.service.appender;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.BaseEntity;
 import com.box.l10n.mojito.entity.Branch;
+import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.service.branch.BranchRepository;
 import com.box.l10n.mojito.service.branch.BranchStatisticService;
 import com.box.l10n.mojito.service.pushrun.PushRunRepository;
@@ -11,9 +12,10 @@ import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import joptsimple.internal.Strings;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -118,12 +120,10 @@ public class AssetAppenderService {
     // scenarios where appending a text unit with a different comment could cause po-to-mo
     // compilation failures. This also makes sure text units that already exist in the source aren't
     // being appended again.
-    HashSet<String> textUnitNamesInSourceAsset = new HashSet<>();
-
-    // Put all text unit names in the last push run into the source asset set
-    tmTextUnitRepository
-        .findAllById(textUnitIdsInLastPushRun)
-        .forEach(tmTextUnit -> textUnitNamesInSourceAsset.add(tmTextUnit.getName()));
+    Set<String> textUnitNamesInSourceAsset =
+        tmTextUnitRepository.findAllById(textUnitIdsInLastPushRun).stream()
+            .map(TMTextUnit::getName)
+            .collect(Collectors.toSet());
 
     // Fetch all branches to be appended, sorted by translated date in ascending order to ensure
     // older translated branches make it in
