@@ -4,12 +4,17 @@ public class PhysicalLocation {
   public ArtifactLocation artifactLocation;
   public Region region;
 
-  PhysicalLocation(String uri, int startLine) {
+  PhysicalLocation(String uri) {
+    artifactLocation = new ArtifactLocation(uri);
+    region = new Region();
+  }
+
+  PhysicalLocation(String uri, Integer startLine) {
     artifactLocation = new ArtifactLocation(uri);
     region = new Region(startLine);
   }
 
-  PhysicalLocation(String uri, int startLine, int endLine) {
+  PhysicalLocation(String uri, Integer startLine, Integer endLine) {
     artifactLocation = new ArtifactLocation(uri);
     region = new Region(startLine, endLine);
   }

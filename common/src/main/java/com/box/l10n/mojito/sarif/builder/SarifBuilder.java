@@ -24,20 +24,15 @@ public class SarifBuilder {
   }
 
   public SarifBuilder addResultWithLocation(
-      String ruleId, ResultLevel level, String message, String fileUri, int startLine) {
-    return this.addResultWithLocation(ruleId, level, message, fileUri, startLine, Optional.empty());
-  }
-
-  public SarifBuilder addResultWithLocation(
       String ruleId,
       ResultLevel level,
       String message,
       String fileUri,
-      int startLine,
-      Optional<Integer> endLine) {
+      Integer startLine,
+      Integer endLine) {
     Result result = new Result(ruleId, message, level);
     Location location =
-        endLine
+        Optional.ofNullable(endLine)
             .map(integer -> new Location(fileUri, startLine, integer))
             .orElseGet(() -> new Location(fileUri, startLine));
     result.addLocation(location);

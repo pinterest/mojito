@@ -3,11 +3,11 @@ package com.box.l10n.mojito.sarif.model;
 public class Location {
   public PhysicalLocation physicalLocation;
 
-  public Location(String uri, int startLine) {
+  public Location(String uri, Integer startLine) {
     physicalLocation = new PhysicalLocation(uri, startLine);
   }
 
-  public Location(String uri, int startLine, int endLine) {
+  public Location(String uri, Integer startLine, Integer endLine) {
     physicalLocation = new PhysicalLocation(uri, startLine, endLine);
   }
 
