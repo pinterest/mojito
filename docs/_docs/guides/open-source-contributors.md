@@ -102,7 +102,7 @@ max_allowed_packet = 256M
 default-time-zone = '+00:00'
 ```
 
-Note, to check which type of Mac you have, run `uname -m` in the termninal. If the output is `arm64`, you have an Apple Silicon Mac, and if the output is `x86_64`, you have an Intel Mac.
+Note: to check which type of Mac you have, run `uname -m` in the terminal. If the output is `arm64`, you have an Apple Silicon Mac, and if the output is `x86_64`, you have an Intel Mac.
 
 The server needs to be started/restarted. 
 ```sh
@@ -207,7 +207,7 @@ cd ${PROJECT_DIR}/webapp
 npm run start-dev
 ```
 
-{{ site.mojito_green }} should be running on [http://localhost:8080/login](http://localhost:8080/login).  
+{{ site.mojito_green }} should be running on <http://localhost:8080/login>.  
 
 You can login with username: `admin` and password: `ChangeMe`.
 
