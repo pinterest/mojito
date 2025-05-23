@@ -1,35 +1,38 @@
 package com.box.l10n.mojito.sarif.model;
 
-import java.util.Optional;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 public class Region {
-  public int startLine;
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public Integer startLine;
 
-  public Optional<Integer> endLine;
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public Integer endLine;
 
-  public Region(int startLine) {
+  public Region() {}
+
+  public Region(Integer startLine) {
     this.startLine = startLine;
-    this.endLine = Optional.empty();
   }
 
-  public Region(int startLine, int endLine) {
+  public Region(Integer startLine, Integer endLine) {
     this.startLine = startLine;
-    this.endLine = Optional.of(endLine);
+    this.endLine = endLine;
   }
 
-  public int getStartLine() {
+  public Integer getStartLine() {
     return startLine;
   }
 
-  public void setStartLine(int startLine) {
+  public void setStartLine(Integer startLine) {
     this.startLine = startLine;
   }
 
-  public Optional<Integer> getEndLine() {
+  public Integer getEndLine() {
     return endLine;
   }
 
-  public void setEndLine(Optional<Integer> endLine) {
+  public void setEndLine(Integer endLine) {
     this.endLine = endLine;
   }
 }

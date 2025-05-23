@@ -8,7 +8,6 @@ import com.box.l10n.mojito.sarif.model.Result;
 import com.box.l10n.mojito.sarif.model.ResultLevel;
 import com.box.l10n.mojito.sarif.model.Run;
 import com.box.l10n.mojito.sarif.model.Sarif;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class SarifBuilderTest {
@@ -32,7 +31,7 @@ class SarifBuilderTest {
         new SarifBuilder()
             .addRun("MyTool", "https://tool.example")
             .addResultWithLocation(
-                "RULE_A", ResultLevel.ERROR, "Critical error detected", "src/Main.java", 101)
+                "RULE_A", ResultLevel.ERROR, "Critical error detected", "src/Main.java", 101, null)
             .build();
 
     Run run = sarif.runs.get(0);
@@ -47,7 +46,7 @@ class SarifBuilderTest {
     Location location = result.getLocations().get(0);
     assertEquals("src/Main.java", location.physicalLocation.artifactLocation.uri);
     assertEquals(101, location.physicalLocation.region.startLine);
-    assertFalse(location.physicalLocation.region.endLine.isPresent());
+    assertNull(location.physicalLocation.region.endLine);
   }
 
   @Test
@@ -56,12 +55,7 @@ class SarifBuilderTest {
         new SarifBuilder()
             .addRun("MyTool", "https://tool.example")
             .addResultWithLocation(
-                "RULE_B",
-                ResultLevel.WARNING,
-                "Check multi-line block",
-                "src/Main.java",
-                120,
-                Optional.of(125))
+                "RULE_B", ResultLevel.WARNING, "Check multi-line block", "src/Main.java", 120, 125)
             .build();
 
     Run run = sarif.runs.get(0);
@@ -76,8 +70,8 @@ class SarifBuilderTest {
     Location location = result.getLocations().get(0);
     assertEquals("src/Main.java", location.physicalLocation.artifactLocation.uri);
     assertEquals(120, location.physicalLocation.region.startLine);
-    assertTrue(location.physicalLocation.region.endLine.isPresent());
-    assertEquals(125, location.physicalLocation.region.endLine.get().intValue());
+    assertNotNull(location.physicalLocation.region.endLine);
+    assertEquals(125, location.physicalLocation.region.endLine);
   }
 
   @Test
@@ -85,8 +79,8 @@ class SarifBuilderTest {
     SarifBuilder builder =
         new SarifBuilder()
             .addRun("Tool1", "uri1")
-            .addResultWithLocation("RULE_1", ResultLevel.NOTE, "Info", "file1", 1)
-            .addResultWithLocation("RULE_2", ResultLevel.ERROR, "Err", "file1", 2, Optional.of(5));
+            .addResultWithLocation("RULE_1", ResultLevel.NOTE, "Info", "file1", 1, null)
+            .addResultWithLocation("RULE_2", ResultLevel.ERROR, "Err", "file1", 2, 5);
     // Build and verify
     Sarif sarif = builder.build();
     assertEquals(1, sarif.runs.size());
@@ -99,7 +93,7 @@ class SarifBuilderTest {
     SarifBuilder builder2 =
         new SarifBuilder()
             .addRun("Tool2", "uri2")
-            .addResultWithLocation("RULE_X", ResultLevel.WARNING, "Warn", "x.java", 10);
+            .addResultWithLocation("RULE_X", ResultLevel.WARNING, "Warn", "x.java", 10, null);
     Sarif sarif2 = builder2.build();
     assertEquals(1, sarif2.runs.size());
     assertEquals("Tool2", sarif2.runs.get(0).getTool().getDriver().getName());

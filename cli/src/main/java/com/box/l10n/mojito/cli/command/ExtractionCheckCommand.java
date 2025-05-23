@@ -26,12 +26,20 @@ import com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckThirdParty
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.github.GithubClients;
 import com.box.l10n.mojito.github.GithubException;
+import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.regex.PlaceholderRegularExpressions;
+import com.box.l10n.mojito.sarif.builder.SarifBuilder;
+import com.box.l10n.mojito.sarif.model.ResultLevel;
+import com.box.l10n.mojito.sarif.model.Sarif;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.ibm.icu.text.MessageFormat;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -273,6 +281,14 @@ public class ExtractionCheckCommand extends Command {
       description = "Full git commit sha, used for setting a status on a commit in Github.")
   String commitSha;
 
+  @Parameter(
+      names = {"--generate-sarif-file", "-gsf"},
+      arity = 1,
+      description = "generates a SARIF file in the working directory")
+  Boolean shouldGenerateSarifFile = false;
+
+  @Autowired ObjectMapper objectMapper;
+
   RestTemplate restTemplate;
 
   List<ExtractionCheckNotificationSender> extractionCheckNotificationSenders = new ArrayList<>();
@@ -284,6 +300,8 @@ public class ExtractionCheckCommand extends Command {
   @Override
   protected void execute() throws CommandException {
 
+    System.out.println("EXECUTE");
+    consoleWriter.fg(Ansi.Color.YELLOW).newLine().a("CONSOLE WRITER DEBUG?").println();
     initNotificationSenders();
 
     if (areChecksSkipped) {
@@ -317,6 +335,10 @@ public class ExtractionCheckCommand extends Command {
               executeChecks(cliCheckerExecutor, assetExtractionDiffs);
           List<CliCheckResult> cliCheckerFailures =
               getCheckerFailures(cliCheckerResults).collect(Collectors.toList());
+
+          if (shouldGenerateSarifFile) {
+            generateSarifFile(cliCheckerFailures, assetExtractionDiffs);
+          }
           reportStatistics(cliCheckerResults);
           checkForHardFail(cliCheckerFailures);
           if (!cliCheckerFailures.isEmpty()) {
@@ -334,6 +356,65 @@ public class ExtractionCheckCommand extends Command {
             "Can't compute extraction diffs", missingExtractionDirectoryException);
       }
       consoleWriter.fg(Ansi.Color.GREEN).newLine().a("Checks completed").println(2);
+    }
+  }
+
+  private void generateSarifFile(
+      List<CliCheckResult> cliCheckerFailures, List<AssetExtractionDiff> assetExtractionDiffs) {
+    SarifBuilder sarifBuilder = new SarifBuilder();
+    for (CliCheckResult checkFailure : cliCheckerFailures) {
+      sarifBuilder.addRun(checkFailure.getCheckName(), "");
+      int ruleCounter = 1;
+      for (AssetExtractionDiff assetExtraction : assetExtractionDiffs) {
+        ResultLevel resultLevel =
+            checkFailure.isHardFail() ? ResultLevel.ERROR : ResultLevel.WARNING;
+        for (AssetExtractorTextUnit assetExtractorTextUnit : assetExtraction.getAddedTextunits()) {
+
+          if (assetExtractorTextUnit.getUsages() == null) {
+            sarifBuilder.addResultWithLocation(
+                "rule" + ruleCounter,
+                resultLevel,
+                checkFailure.getNotificationText(),
+                "",
+                null,
+                null);
+          } else {
+            for (String usage : assetExtractorTextUnit.getUsages()) {
+              int colonIndex = usage.lastIndexOf(':');
+              String fileUri = usage.substring(0, colonIndex);
+              Integer startLineNumber = null;
+              try {
+                startLineNumber = Integer.parseInt(usage.substring(colonIndex + 1));
+              } catch (NumberFormatException e) {
+                logger.debug(
+                    "SARIF Building - Could not parse line number: "
+                        + usage.substring(colonIndex + 1));
+              }
+
+              sarifBuilder.addResultWithLocation(
+                  "rule" + ruleCounter,
+                  resultLevel,
+                  checkFailure.getNotificationText(),
+                  fileUri,
+                  startLineNumber,
+                  null);
+              ruleCounter++;
+            }
+          }
+
+          ruleCounter++;
+        }
+      }
+    }
+
+    Sarif sarifContent = sarifBuilder.build();
+    String fileName = "i18n-checks.sarif.json";
+    try {
+      Path filePath = Paths.get(".", fileName);
+      String sarifThing = objectMapper.writeValueAsString(sarifContent);
+      Files.writeString(filePath, sarifThing);
+    } catch (IOException e) {
+      throw new CommandException("Failed to write sarif file: " + fileName, e);
     }
   }
 

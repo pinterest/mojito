@@ -17,7 +17,7 @@ public enum ResultLevel {
 
   @Override
   public String toString() {
-    return value;
+    return value.toLowerCase();
   }
 
   public static ResultLevel fromString(String value) {
