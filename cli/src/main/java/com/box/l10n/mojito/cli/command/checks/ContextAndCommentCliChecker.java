@@ -8,6 +8,7 @@ import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.google.common.base.Strings;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -59,6 +60,14 @@ public class ContextAndCommentCliChecker extends AbstractCliChecker {
     CliCheckResult cliCheckResult = createCliCheckerResult();
     List<ContextAndCommentCliCheckerResult> results = runChecks(assetExtractionDiffs);
     if (results.stream().anyMatch(ContextAndCommentCliCheckerResult::isFailed)) {
+      Map<String, String> featureFailureMap =
+          results.stream()
+              .filter(ContextAndCommentCliCheckerResult::isFailed)
+              .collect(
+                  Collectors.toMap(
+                      ContextAndCommentCliCheckerResult::getSourceString,
+                      ContextAndCommentCliCheckerResult::getFailureMessage));
+      cliCheckResult.appendToFieldFailuresMap(featureFailureMap);
       cliCheckResult.setSuccessful(false);
       cliCheckResult.setNotificationText(
           "Context and comment check found failures:"
