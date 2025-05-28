@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.net.http.HttpResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -1131,5 +1132,21 @@ class OpenAILLMServiceTest {
     verify(aiStringCheckRepository, times(2)).save(any());
     verify(meterRegistry, times(2))
         .counter("OpenAILLMService.checks.result", "success", "true", "repository", "testRepo");
+  }
+
+  @Test
+  void testGetChatCompletionsWithMeterRegistry() {
+    OpenAIClient.ChatCompletionsRequest mockChatCompletionsRequest = mock(OpenAIClient.ChatCompletionsRequest.class);
+    HttpResponse<String> mockhHttpResponse = mock(HttpResponse.class);
+    when(mockhHttpResponse.statusCode()).thenReturn(404);
+
+    when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
+        .thenReturn(CompletableFuture.failedFuture(
+            openAIClient.new OpenAIClientResponseException("Not Found", mockhHttpResponse)));
+
+    AIException thrown = assertThrows(AIException.class, () -> {
+      openAILLMService.getChatCompletionsWithMeterRegistry(mockChatCompletionsRequest);
+    });
+    assertTrue(thrown.getMessage().contains("Error getting chat completions"));
   }
 }

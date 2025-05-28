@@ -577,7 +577,7 @@ public class OpenAILLMService implements LLMService {
     return messages;
   }
 
-  private OpenAIClient.ChatCompletionsResponse getChatCompletionsWithMeterRegistry(OpenAIClient.ChatCompletionsRequest chatCompletionsRequest) {
+  public OpenAIClient.ChatCompletionsResponse getChatCompletionsWithMeterRegistry(OpenAIClient.ChatCompletionsRequest chatCompletionsRequest) {
     OpenAIClient.ChatCompletionsResponse chatCompletionsResponse;
 
     try {
