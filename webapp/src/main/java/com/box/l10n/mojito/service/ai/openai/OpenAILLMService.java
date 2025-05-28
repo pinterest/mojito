@@ -264,7 +264,8 @@ public class OpenAILLMService implements LLMService {
       AIPrompt prompt,
       OpenAIClient.ChatCompletionsRequest chatCompletionsRequest) {
 
-    OpenAIClient.ChatCompletionsResponse chatCompletionsResponse = getChatCompletionsWithMeterRegistry(chatCompletionsRequest);
+    OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
+        getChatCompletionsWithMeterRegistry(chatCompletionsRequest);
 
     if (chatCompletionsResponse.choices().size() > 1) {
       logger.error(
@@ -368,7 +369,8 @@ public class OpenAILLMService implements LLMService {
           buildChatCompletionsRequest(
               prompt, systemPrompt, userPrompt, prompt.getContextMessages(), true);
 
-      OpenAIClient.ChatCompletionsResponse chatCompletionsResponse = getChatCompletionsWithMeterRegistry(chatCompletionsRequest);
+      OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
+          getChatCompletionsWithMeterRegistry(chatCompletionsRequest);
 
       if (persistResults) {
         persistCheckResult(
@@ -577,18 +579,21 @@ public class OpenAILLMService implements LLMService {
     return messages;
   }
 
-  public OpenAIClient.ChatCompletionsResponse getChatCompletionsWithMeterRegistry(OpenAIClient.ChatCompletionsRequest chatCompletionsRequest) {
+  public OpenAIClient.ChatCompletionsResponse getChatCompletionsWithMeterRegistry(
+      OpenAIClient.ChatCompletionsRequest chatCompletionsRequest) {
     OpenAIClient.ChatCompletionsResponse chatCompletionsResponse;
 
     try {
-        chatCompletionsResponse = openAIClient.getChatCompletions(chatCompletionsRequest).join();
+      chatCompletionsResponse = openAIClient.getChatCompletions(chatCompletionsRequest).join();
     } catch (OpenAIClient.OpenAIClientResponseException e) {
-        logger.error("Error getting chat completions", e);
-        int statusCode = e.httpResponse.statusCode();
-        meterRegistry
-            .counter("OpenAILLMService.chatCompletions.error", Tags.of("statusCode", String.valueOf(statusCode)))
-            .increment();
-        throw new AIException("Error getting chat completions", e);
+      logger.error("Error getting chat completions", e);
+      int statusCode = e.httpResponse.statusCode();
+      meterRegistry
+          .counter(
+              "OpenAILLMService.chatCompletions.error",
+              Tags.of("statusCode", String.valueOf(statusCode)))
+          .increment();
+      throw new AIException("Error getting chat completions", e);
     }
 
     return chatCompletionsResponse;
