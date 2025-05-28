@@ -34,6 +34,11 @@ public class PlaceholderCommentChecker extends AbstractCliChecker {
     if (!failureMap.isEmpty()) {
       cliCheckResult.setSuccessful(false);
       cliCheckResult.setNotificationText(buildNotificationText(failureMap).toString());
+      cliCheckResult.appendToFieldFailuresMap(
+          failureMap.entrySet().stream()
+              .collect(
+                  Collectors.toMap(
+                      Map.Entry::getKey, (entry) -> String.join(", ", entry.getValue()))));
     }
     return cliCheckResult;
   }
@@ -77,9 +82,7 @@ public class PlaceholderCommentChecker extends AbstractCliChecker {
 
   private List<AbstractPlaceholderDescriptionCheck> getPlaceholderCommentChecks() {
     return cliCheckerOptions.getParameterRegexSet().stream()
-        .map(
-            placeholderRegularExpressions ->
-                getPlaceholderDescriptionCheck(placeholderRegularExpressions))
+        .map(this::getPlaceholderDescriptionCheck)
         .collect(Collectors.toList());
   }
 
