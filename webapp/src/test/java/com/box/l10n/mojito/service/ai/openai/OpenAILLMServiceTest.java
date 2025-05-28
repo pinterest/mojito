@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
+import io.micrometer.core.instrument.Tags;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -1138,13 +1140,12 @@ class OpenAILLMServiceTest {
   void testGetChatCompletionsWithMeterRegistry() {
     OpenAIClient.ChatCompletionsRequest mockChatCompletionsRequest =
         mock(OpenAIClient.ChatCompletionsRequest.class);
+
     HttpResponse<String> mockhHttpResponse = mock(HttpResponse.class);
     when(mockhHttpResponse.statusCode()).thenReturn(404);
 
     when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
-        .thenReturn(
-            CompletableFuture.failedFuture(
-                openAIClient.new OpenAIClientResponseException("Not Found", mockhHttpResponse)));
+        .thenThrow(openAIClient.new OpenAIClientResponseException("Not Found", mockhHttpResponse));
 
     AIException thrown =
         assertThrows(
@@ -1153,5 +1154,8 @@ class OpenAILLMServiceTest {
               openAILLMService.getChatCompletionsWithMeterRegistry(mockChatCompletionsRequest);
             });
     assertTrue(thrown.getMessage().contains("Error getting chat completions"));
+
+    verify(meterRegistry, times(1))
+        .counter(eq("OpenAILLMService.chatCompletions.error"), eq(Tags.of("statusCode", "404")));
   }
 }
