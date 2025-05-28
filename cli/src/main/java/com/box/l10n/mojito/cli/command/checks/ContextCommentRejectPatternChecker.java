@@ -6,6 +6,7 @@ import com.box.l10n.mojito.cli.command.CommandException;
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
@@ -26,11 +27,14 @@ public class ContextCommentRejectPatternChecker extends AbstractCliChecker {
       throw new CommandException(
           "Context comment reject pattern must be provided when using REJECT_PATTERN_CHECKER.");
     }
-    return getCliCheckResult(runChecks(assetExtractionDiffs));
+    Map<String, String> failedFeatureMap = runChecks(assetExtractionDiffs);
+    return getCliCheckResult(failedFeatureMap);
   }
 
-  private CliCheckResult getCliCheckResult(String failures) {
+  private CliCheckResult getCliCheckResult(Map<String, String> failedFeatureMap) {
     CliCheckResult cliCheckResult = createCliCheckerResult();
+    cliCheckResult.appendToFieldFailuresMap(failedFeatureMap);
+    String failures = getFailureText(failedFeatureMap);
     if (StringUtils.isNotBlank(failures)) {
       StringBuilder notificationTextBuilder = new StringBuilder();
       notificationTextBuilder.append(
@@ -46,16 +50,15 @@ public class ContextCommentRejectPatternChecker extends AbstractCliChecker {
     return cliCheckResult;
   }
 
-  private String runChecks(List<AssetExtractionDiff> assetExtractionDiffs) {
+  private Map<String, String> runChecks(List<AssetExtractionDiff> assetExtractionDiffs) {
     Pattern pattern = Pattern.compile(cliCheckerOptions.getContextCommentRejectPattern());
-    return getFailureText(assetExtractionDiffs, pattern);
-  }
-
-  private String getFailureText(List<AssetExtractionDiff> assetExtractionDiffs, Pattern pattern) {
     return getAddedTextUnitsExcludingInconsistentComments(assetExtractionDiffs).stream()
         .filter(textUnit -> isInvalidContextOrComment(pattern, textUnit))
-        .map(textUnit -> buildFailureText(textUnit))
-        .collect(Collectors.joining(System.lineSeparator()));
+        .collect(Collectors.toMap(AssetExtractorTextUnit::getSource, this::buildFailureText));
+  }
+
+  private String getFailureText(Map<String, String> failedFeatureMap) {
+    return failedFeatureMap.values().stream().collect(Collectors.joining(System.lineSeparator()));
   }
 
   private boolean isInvalidContextOrComment(Pattern pattern, AssetExtractorTextUnit textUnit) {

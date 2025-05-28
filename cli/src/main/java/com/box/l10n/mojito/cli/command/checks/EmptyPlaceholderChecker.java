@@ -3,8 +3,11 @@ package com.box.l10n.mojito.cli.command.checks;
 import static com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificationSender.QUOTE_MARKER;
 
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
+import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.regex.PlaceholderRegularExpressions;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,13 +28,20 @@ public class EmptyPlaceholderChecker extends AbstractCliChecker {
 
   static Logger logger = LoggerFactory.getLogger(EmptyPlaceholderChecker.class);
 
-  private Pattern wordPattern = Pattern.compile("\\w+");
+  private final Pattern wordPattern = Pattern.compile("\\w+");
 
   @Override
   public CliCheckResult run(List<AssetExtractionDiff> assetExtractionDiffs) {
     CliCheckResult cliCheckResult = createCliCheckerResult();
     Set<String> failures = checkForEmptyPlaceholders(assetExtractionDiffs);
     if (!failures.isEmpty()) {
+      Map<String, String> failedFeatureMap = new HashMap<>();
+      failures.forEach(
+          (textUnit) ->
+              failedFeatureMap.put(
+                  textUnit,
+                  "Empty placeholder(s) detected, please remove or update the placeholder(s) to contain a descriptive name"));
+      cliCheckResult.appendToFieldFailuresMap(failedFeatureMap);
       cliCheckResult.setSuccessful(false);
       cliCheckResult.setNotificationText(buildNotificationText(failures).toString());
     }
@@ -41,11 +51,11 @@ public class EmptyPlaceholderChecker extends AbstractCliChecker {
 
   private Set<String> checkForEmptyPlaceholders(List<AssetExtractionDiff> assetExtractionDiffs) {
     return cliCheckerOptions.getParameterRegexSet().stream()
-        .filter(regex -> isEmptyPlaceholderRegex(regex))
+        .filter(this::isEmptyPlaceholderRegex)
         .flatMap(
             placeholderRegularExpressions ->
                 getAddedTextUnitsExcludingInconsistentComments(assetExtractionDiffs).stream()
-                    .map(assetExtractorTextUnit -> assetExtractorTextUnit.getSource())
+                    .map(AssetExtractorTextUnit::getSource)
                     .filter(
                         source ->
                             isSourceStringWithEmptyPlaceholders(

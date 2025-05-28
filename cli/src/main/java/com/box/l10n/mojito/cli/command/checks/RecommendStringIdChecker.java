@@ -11,6 +11,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
@@ -27,47 +28,49 @@ public class RecommendStringIdChecker extends AbstractCliChecker {
   @Override
   public CliCheckResult run(List<AssetExtractionDiff> assetExtractionDiffs) {
     CliCheckResult result = createCliCheckerResult();
-    List<String> recommendations = getRecommendedIdPrefixUpdates(assetExtractionDiffs);
+    Map<String, String> recommendations = getRecommendedIdPrefixUpdates(assetExtractionDiffs);
     if (!recommendations.isEmpty()) {
       result.setSuccessful(false);
       result.setNotificationText(buildNotificationText(recommendations));
+      result.appendToFieldFailuresMap(recommendations);
     }
     return result;
   }
 
-  private String buildNotificationText(List<String> recommendations) {
+  private String buildNotificationText(Map<String, String> recommendations) {
     StringBuilder sb = new StringBuilder();
     sb.append("Recommended id updates for the following strings:");
     sb.append(System.lineSeparator());
     sb.append(
-        recommendations.stream()
+        recommendations.values().stream()
             .map(recommendation -> BULLET_POINT + recommendation)
             .collect(Collectors.joining(System.lineSeparator())));
     sb.append(System.lineSeparator());
     return sb.toString();
   }
 
-  private List<String> getRecommendedIdPrefixUpdates(
+  private Map<String, String> getRecommendedIdPrefixUpdates(
       List<AssetExtractionDiff> assetExtractionDiffs) {
     return getAddedTextUnitsExcludingInconsistentComments(assetExtractionDiffs).stream()
-        .map(textUnit -> getRecommendStringIdCheckResult(textUnit))
-        .filter(recommendation -> recommendation.isRecommendedUpdate())
-        .map(
-            recommendation ->
-                String.format(
-                    "Please update id "
-                        + QUOTE_MARKER
-                        + "%s"
-                        + QUOTE_MARKER
-                        + " for string "
-                        + QUOTE_MARKER
-                        + "%s"
-                        + QUOTE_MARKER
-                        + " to be prefixed with '%s'",
-                    recommendation.getStringId(),
-                    recommendation.getSource(),
-                    recommendation.getRecommendedIdPrefix()))
-        .collect(Collectors.toList());
+        .map(this::getRecommendStringIdCheckResult)
+        .filter(RecommendStringIdCheckResult::isRecommendedUpdate)
+        .collect(
+            Collectors.toMap(
+                RecommendStringIdCheckResult::getSource,
+                recommendation ->
+                    String.format(
+                        "Please update id "
+                            + QUOTE_MARKER
+                            + "%s"
+                            + QUOTE_MARKER
+                            + " for string "
+                            + QUOTE_MARKER
+                            + "%s"
+                            + QUOTE_MARKER
+                            + " to be prefixed with '%s'",
+                        recommendation.getStringId(),
+                        recommendation.getSource(),
+                        recommendation.getRecommendedIdPrefix())));
   }
 
   private RecommendStringIdCheckResult getRecommendStringIdCheckResult(
