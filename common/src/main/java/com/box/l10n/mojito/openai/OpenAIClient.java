@@ -22,7 +22,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import io.micrometer.core.instrument.MeterRegistry;
 
 public class OpenAIClient {
 
@@ -156,15 +155,7 @@ public class OpenAIClient {
             .sendAsync(request, HttpResponse.BodyHandlers.ofString())
             .thenApply(
                 httpResponse -> {
-                  if (httpResponse.statusCode() == 404) {
-                    meterRegistry
-                      .counter(
-                          "OpenAIClient.responseCode.404",
-                          Tags.of("OpenAIClient", httpResponse.body()))
-                      .increment();
-                    throw new OpenAIClientResponseException("ChatCompletion not found", httpResponse);
-                  }
-                  else if (httpResponse.statusCode() != 200) {
+                  if (httpResponse.statusCode() != 200) {
                     throw new OpenAIClientResponseException("ChatCompletion failed", httpResponse);
                   } else {
                     try {
