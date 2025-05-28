@@ -30,7 +30,7 @@ public class SimpleRegexPlaceholderDescriptionChecker extends AbstractPlaceholde
     Matcher placeHolderMatcher = pattern.matcher(source);
     return getPlaceholderNames(source, placeHolderMatcher).stream()
         .filter(placeholder -> isPlaceholderDescriptionMissingInComment(comment, placeholder))
-        .map(placeholder -> getFailureText(placeholder))
+        .map(this::getFailureText)
         .filter(Optional::isPresent)
         .map(Optional::get)
         .collect(Collectors.toSet());
