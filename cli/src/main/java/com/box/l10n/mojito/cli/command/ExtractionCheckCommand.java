@@ -23,11 +23,13 @@ import com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificati
 import com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificationSenderPhabricator;
 import com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificationSenderSlack;
 import com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckThirdPartyNotificationService;
+import com.box.l10n.mojito.cli.command.utils.SarifFileGenerator;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.github.GithubClients;
 import com.box.l10n.mojito.github.GithubException;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.regex.PlaceholderRegularExpressions;
+import com.box.l10n.mojito.sarif.model.Sarif;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
@@ -273,6 +275,16 @@ public class ExtractionCheckCommand extends Command {
       description = "Full git commit sha, used for setting a status on a commit in Github.")
   String commitSha;
 
+  @Parameter(
+      names = {"--generate-sarif-file", "-gsf"},
+      arity = 1,
+      description = "generates a SARIF file in the working directory")
+  Boolean shouldGenerateSarifFile = false;
+
+  @Autowired SarifFileGenerator sarifFileGenerator;
+
+  @Autowired ObjectMapper objectMapper;
+
   RestTemplate restTemplate;
 
   List<ExtractionCheckNotificationSender> extractionCheckNotificationSenders = new ArrayList<>();
@@ -283,7 +295,6 @@ public class ExtractionCheckCommand extends Command {
 
   @Override
   protected void execute() throws CommandException {
-
     initNotificationSenders();
 
     if (areChecksSkipped) {
@@ -307,7 +318,6 @@ public class ExtractionCheckCommand extends Command {
               .build();
 
       List<AssetExtractionDiff> assetExtractionDiffs;
-
       try {
         if (extractionDiffService.hasAddedTextUnits(extractionDiffPaths)) {
           assetExtractionDiffs =
@@ -317,6 +327,19 @@ public class ExtractionCheckCommand extends Command {
               executeChecks(cliCheckerExecutor, assetExtractionDiffs);
           List<CliCheckResult> cliCheckerFailures =
               getCheckerFailures(cliCheckerResults).collect(Collectors.toList());
+
+          if (shouldGenerateSarifFile) {
+            Sarif sarif =
+                sarifFileGenerator.generateSarifFile(cliCheckerFailures, assetExtractionDiffs);
+            String fileName = "i18n-checks.sarif.json";
+            try {
+              Path filePath = Paths.get(".", fileName);
+              String sarifThing = objectMapper.writeValueAsString(sarif);
+              Files.writeString(filePath, sarifThing);
+            } catch (IOException e) {
+              throw new CommandException("Failed to write sarif file: " + fileName, e);
+            }
+          }
           reportStatistics(cliCheckerResults);
           checkForHardFail(cliCheckerFailures);
           if (!cliCheckerFailures.isEmpty()) {

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class GlossaryCaseChecker extends AbstractCliChecker {
@@ -21,9 +22,16 @@ public class GlossaryCaseChecker extends AbstractCliChecker {
       List<GlossaryCaseCheckerSearchResult> failures =
           getGlossarySearchResults(glossaryTermCaseCheckerTrie, assetExtractionDiffs);
       if (!failures.isEmpty()) {
-        if (failures.stream().anyMatch(result -> result.isMajorFailure())) {
+        if (failures.stream().anyMatch(GlossaryCaseCheckerSearchResult::isMajorFailure)) {
           cliCheckResult.setSuccessful(false);
         }
+        Map<String, String> failedFeatureMap =
+            failures.stream()
+                .collect(
+                    Collectors.toMap(
+                        GlossaryCaseCheckerSearchResult::getSource,
+                        searchResult -> String.join(", ", searchResult.getFailures())));
+        cliCheckResult.appendToFieldFailuresMap(failedFeatureMap);
         cliCheckResult.setNotificationText(buildNotificationText(failures).toString());
       }
     } catch (IOException e) {
@@ -66,17 +74,17 @@ public class GlossaryCaseChecker extends AbstractCliChecker {
     builder.append(System.lineSeparator());
     builder.append(
         failures.stream()
-            .map(failure -> getFailureText(builder, failure))
+            .map(this::getFailureText)
             .collect(Collectors.joining(System.lineSeparator())));
     return builder;
   }
 
-  private String getFailureText(StringBuilder builder, GlossaryCaseCheckerSearchResult failure) {
+  private String getFailureText(GlossaryCaseCheckerSearchResult failure) {
     StringBuilder sb = new StringBuilder();
     sb.append(System.lineSeparator());
     for (String failureText : failure.getFailures()) {
-      builder.append(BULLET_POINT).append(failureText);
-      builder.append(System.lineSeparator());
+      sb.append(BULLET_POINT).append(failureText);
+      sb.append(System.lineSeparator());
     }
     return sb.toString();
   }
