@@ -263,8 +263,9 @@ public class OpenAILLMService implements LLMService {
       String targetBcp47Tag,
       AIPrompt prompt,
       OpenAIClient.ChatCompletionsRequest chatCompletionsRequest) {
-    OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
-        openAIClient.getChatCompletions(chatCompletionsRequest).join();
+
+    OpenAIClient.ChatCompletionsResponse chatCompletionsResponse = getChatCompletionsWithMeterRegistry(chatCompletionsRequest);
+
     if (chatCompletionsResponse.choices().size() > 1) {
       logger.error(
           "Multiple choices returned for text unit {}, expected only one", tmTextUnit.getId());
@@ -367,8 +368,8 @@ public class OpenAILLMService implements LLMService {
           buildChatCompletionsRequest(
               prompt, systemPrompt, userPrompt, prompt.getContextMessages(), true);
 
-      OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
-          openAIClient.getChatCompletions(chatCompletionsRequest).join();
+      OpenAIClient.ChatCompletionsResponse chatCompletionsResponse = getChatCompletionsWithMeterRegistry(chatCompletionsRequest);
+
       if (persistResults) {
         persistCheckResult(
             textUnit,
@@ -574,6 +575,23 @@ public class OpenAILLMService implements LLMService {
     }
 
     return messages;
+  }
+
+  private OpenAIClient.ChatCompletionsResponse getChatCompletionsWithMeterRegistry(OpenAIClient.ChatCompletionsRequest chatCompletionsRequest) {
+    OpenAIClient.ChatCompletionsResponse chatCompletionsResponse;
+
+    try {
+        chatCompletionsResponse = openAIClient.getChatCompletions(chatCompletionsRequest).join();
+    } catch (OpenAIClient.OpenAIClientResponseException e) {
+        logger.error("Error getting chat completions", e);
+        int statusCode = e.httpResponse.statusCode();
+        meterRegistry
+            .counter("OpenAILLMService.chatCompletions.error", Tags.of("statusCode", String.valueOf(statusCode)))
+            .increment();
+        throw new AIException("Error getting chat completions", e);
+    }
+
+    return chatCompletionsResponse;
   }
 
   @PostConstruct

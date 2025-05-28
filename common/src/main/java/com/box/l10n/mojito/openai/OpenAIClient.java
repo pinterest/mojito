@@ -575,7 +575,7 @@ public class OpenAIClient {
   }
 
   public class OpenAIClientResponseException extends RuntimeException {
-    HttpResponse httpResponse;
+    public HttpResponse httpResponse;
 
     public OpenAIClientResponseException(String message, HttpResponse httpResponse) {
       super(message);
