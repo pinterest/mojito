@@ -587,11 +587,10 @@ public class OpenAILLMService implements LLMService {
       chatCompletionsResponse = openAIClient.getChatCompletions(chatCompletionsRequest).join();
     } catch (OpenAIClient.OpenAIClientResponseException e) {
       logger.error("Error getting chat completions", e);
-      int statusCode = e.httpResponse.statusCode();
       meterRegistry
           .counter(
               "OpenAILLMService.chatCompletions.error",
-              Tags.of("statusCode", String.valueOf(statusCode)))
+              Tags.of("statusCode", String.valueOf(e.getHttpResponse().statusCode())))
           .increment();
       throw new AIException("Error getting chat completions", e);
     }

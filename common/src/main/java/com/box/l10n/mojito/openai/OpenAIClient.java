@@ -575,7 +575,7 @@ public class OpenAIClient {
   }
 
   public class OpenAIClientResponseException extends RuntimeException {
-    public HttpResponse httpResponse;
+    HttpResponse httpResponse;
 
     public OpenAIClientResponseException(String message, HttpResponse httpResponse) {
       super(message);
@@ -585,6 +585,10 @@ public class OpenAIClient {
     public OpenAIClientResponseException(String message, Exception e, HttpResponse httpResponse) {
       super(message, e);
       this.httpResponse = Objects.requireNonNull(httpResponse);
+    }
+
+    public HttpResponse getHttpResponse() {
+      return httpResponse;
     }
 
     @Override
