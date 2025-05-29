@@ -1155,6 +1155,6 @@ class OpenAILLMServiceTest {
     assertTrue(thrown.getMessage().contains("Error getting chat completions"));
 
     verify(meterRegistry, times(1))
-        .counter(eq("OpenAILLMService.chatCompletions.error"), eq(Tags.of("statusCode", "404")));
+        .counter(eq("OpenAILLMService.translate.result"), eq(Tags.of("success", "false", "statusCode", "404")));
   }
 }

@@ -589,8 +589,8 @@ public class OpenAILLMService implements LLMService {
       logger.error("Error getting chat completions", e);
       meterRegistry
           .counter(
-              "OpenAILLMService.chatCompletions.error",
-              Tags.of("statusCode", String.valueOf(e.getHttpResponse().statusCode())))
+              "OpenAILLMService.translate.result",
+              Tags.of("success", "false", "statusCode", String.valueOf(e.getHttpResponse().statusCode())))
           .increment();
       throw new AIException("Error getting chat completions", e);
     }
