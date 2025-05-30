@@ -1136,9 +1136,19 @@ class OpenAILLMServiceTest {
   }
 
   @Test
-  void testGetChatCompletionsWithMeterRegistry() {
-    OpenAIClient.ChatCompletionsRequest mockChatCompletionsRequest =
-        mock(OpenAIClient.ChatCompletionsRequest.class);
+  void testTranslateResultMetric404Error() {
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setId(1L);
+    tmTextUnit.setContent("Hello");
+    tmTextUnit.setComment("Greeting");
+
+    AIPrompt prompt = new AIPrompt();
+    prompt.setId(1L);
+    prompt.setSystemPrompt("Translate the following text:");
+    prompt.setUserPrompt("Translate this text to French:");
+    prompt.setModelName("gtp-3.5-turbo");
+    prompt.setPromptTemperature(0.0F);
+    prompt.setContextMessages(new ArrayList<>());
 
     HttpResponse<String> mockhHttpResponse = mock(HttpResponse.class);
     when(mockhHttpResponse.statusCode()).thenReturn(404);
@@ -1146,17 +1156,39 @@ class OpenAILLMServiceTest {
     when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
         .thenThrow(openAIClient.new OpenAIClientResponseException("Not Found", mockhHttpResponse));
 
-    AIException thrown =
-        assertThrows(
-            AIException.class,
-            () -> {
-              openAILLMService.getChatCompletionsWithMeterRegistry(mockChatCompletionsRequest);
-            });
-    assertTrue(thrown.getMessage().contains("Error getting chat completions"));
-
-    verify(meterRegistry, times(1))
+    assertThrows(
+        AIException.class, () -> openAILLMService.translate(tmTextUnit, "en", "fr", prompt));
+    verify(meterRegistry, times(2))
         .counter(
             eq("OpenAILLMService.translate.result"),
-            eq(Tags.of("success", "false", "statusCode", "404")));
+            eq(Tags.of("success", "false", "retryable", "true", "statusCode", "404")));
+  }
+
+  @Test
+  void testTranslateResultMetricNullError() {
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setId(1L);
+    tmTextUnit.setContent("Hello");
+    tmTextUnit.setComment("Greeting");
+
+    AIPrompt prompt = new AIPrompt();
+    prompt.setId(1L);
+    prompt.setSystemPrompt("Translate the following text:");
+    prompt.setUserPrompt("Translate this text to French:");
+    prompt.setModelName("gtp-3.5-turbo");
+    prompt.setPromptTemperature(0.0F);
+    prompt.setContextMessages(new ArrayList<>());
+
+    HttpResponse<String> mockhHttpResponse = mock(HttpResponse.class);
+    when(mockhHttpResponse.statusCode()).thenReturn(404);
+
+    when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
+        .thenThrow(new RuntimeException("OpenAI service error"));
+
+    assertThrows(Exception.class, () -> openAILLMService.translate(tmTextUnit, "en", "fr", prompt));
+    verify(meterRegistry, times(2))
+        .counter(
+            eq("OpenAILLMService.translate.result"),
+            eq(Tags.of("success", "false", "retryable", "true", "statusCode", "null")));
   }
 }

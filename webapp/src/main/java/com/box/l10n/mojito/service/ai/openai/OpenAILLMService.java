@@ -29,11 +29,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import jakarta.annotation.PostConstruct;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
@@ -230,23 +226,37 @@ public class OpenAILLMService implements LLMService {
                     tmTextUnit, sourceBcp47Tag, targetBcp47Tag, prompt, chatCompletionsRequest))
         .doOnError(
             e -> {
+              Optional<Integer> statusCode = resolveStatusCode(e);
               logger.error(
                   "Error translating text unit {} to {}", tmTextUnit.getId(), targetBcp47Tag, e);
               meterRegistry
                   .counter(
                       "OpenAILLMService.translate.result",
-                      Tags.of("success", "false", "retryable", "true"))
+                      Tags.of(
+                          "success",
+                          "false",
+                          "retryable",
+                          "true",
+                          "statusCode",
+                          statusCode.isPresent() ? String.valueOf(statusCode.get()) : "null"))
                   .increment();
             })
         .retryWhen(llmTranslateRetryConfig)
         .doOnError(
             e -> {
+              Optional<Integer> statusCode = resolveStatusCode(e);
               logger.error(
                   "Error translating text unit {} to {}", tmTextUnit.getId(), targetBcp47Tag, e);
               meterRegistry
                   .counter(
                       "OpenAILLMService.translate.result",
-                      Tags.of("success", "false", "retryable", "false"))
+                      Tags.of(
+                          "success",
+                          "false",
+                          "retryable",
+                          "false",
+                          "statusCode",
+                          statusCode.isPresent() ? String.valueOf(statusCode.get()) : "null"))
                   .increment();
             })
         .blockOptional()
@@ -264,8 +274,13 @@ public class OpenAILLMService implements LLMService {
       AIPrompt prompt,
       OpenAIClient.ChatCompletionsRequest chatCompletionsRequest) {
 
-    OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
-        getChatCompletionsWithMeterRegistry(chatCompletionsRequest);
+    OpenAIClient.ChatCompletionsResponse chatCompletionsResponse;
+
+    try {
+      chatCompletionsResponse = openAIClient.getChatCompletions(chatCompletionsRequest).join();
+    } catch (OpenAIClient.OpenAIClientResponseException e) {
+      throw new AIException("Error getting chat completions", e, e.getHttpResponse());
+    }
 
     if (chatCompletionsResponse.choices().size() > 1) {
       logger.error(
@@ -309,6 +324,12 @@ public class OpenAILLMService implements LLMService {
             chatCompletionsResponse.choices().getFirst().finishReason());
     logger.error(message);
     throw new AIException(message);
+  }
+
+  private Optional<Integer> resolveStatusCode(Throwable e) {
+    return (e instanceof AIException exception) && exception.getHttpResponse() != null
+        ? Optional.of(exception.getHttpResponse().statusCode())
+        : Optional.empty();
   }
 
   @Timed("OpenAILLMService.checkString")
@@ -370,7 +391,7 @@ public class OpenAILLMService implements LLMService {
               prompt, systemPrompt, userPrompt, prompt.getContextMessages(), true);
 
       OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
-          getChatCompletionsWithMeterRegistry(chatCompletionsRequest);
+          openAIClient.getChatCompletions(chatCompletionsRequest).join();
 
       if (persistResults) {
         persistCheckResult(
@@ -577,29 +598,6 @@ public class OpenAILLMService implements LLMService {
     }
 
     return messages;
-  }
-
-  public OpenAIClient.ChatCompletionsResponse getChatCompletionsWithMeterRegistry(
-      OpenAIClient.ChatCompletionsRequest chatCompletionsRequest) {
-    OpenAIClient.ChatCompletionsResponse chatCompletionsResponse;
-
-    try {
-      chatCompletionsResponse = openAIClient.getChatCompletions(chatCompletionsRequest).join();
-    } catch (OpenAIClient.OpenAIClientResponseException e) {
-      logger.error("Error getting chat completions", e);
-      meterRegistry
-          .counter(
-              "OpenAILLMService.translate.result",
-              Tags.of(
-                  "success",
-                  "false",
-                  "statusCode",
-                  String.valueOf(e.getHttpResponse().statusCode())))
-          .increment();
-      throw new AIException("Error getting chat completions", e);
-    }
-
-    return chatCompletionsResponse;
   }
 
   @PostConstruct
