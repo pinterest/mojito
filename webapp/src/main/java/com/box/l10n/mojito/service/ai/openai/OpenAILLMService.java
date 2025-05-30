@@ -274,13 +274,8 @@ public class OpenAILLMService implements LLMService {
       AIPrompt prompt,
       OpenAIClient.ChatCompletionsRequest chatCompletionsRequest) {
 
-    OpenAIClient.ChatCompletionsResponse chatCompletionsResponse;
-
-    try {
-      chatCompletionsResponse = openAIClient.getChatCompletions(chatCompletionsRequest).join();
-    } catch (OpenAIClient.OpenAIClientResponseException e) {
-      throw new AIException("Error getting chat completions", e, e.getHttpResponse());
-    }
+    OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
+        openAIClient.getChatCompletions(chatCompletionsRequest).join();
 
     if (chatCompletionsResponse.choices().size() > 1) {
       logger.error(
@@ -327,7 +322,8 @@ public class OpenAILLMService implements LLMService {
   }
 
   private Optional<Integer> resolveStatusCode(Throwable e) {
-    return (e instanceof AIException exception) && exception.getHttpResponse() != null
+    return (e instanceof OpenAIClient.OpenAIClientResponseException exception)
+            && exception.getHttpResponse() != null
         ? Optional.of(exception.getHttpResponse().statusCode())
         : Optional.empty();
   }

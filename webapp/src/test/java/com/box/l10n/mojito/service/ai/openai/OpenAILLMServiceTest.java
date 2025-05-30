@@ -1150,11 +1150,12 @@ class OpenAILLMServiceTest {
     prompt.setPromptTemperature(0.0F);
     prompt.setContextMessages(new ArrayList<>());
 
-    HttpResponse<String> mockhHttpResponse = mock(HttpResponse.class);
-    when(mockhHttpResponse.statusCode()).thenReturn(404);
+    HttpResponse<String> mockHttpResponse = mock(HttpResponse.class);
+    when(mockHttpResponse.statusCode()).thenReturn(404);
+    when(mockHttpResponse.body()).thenReturn("Model not found");
 
     when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
-        .thenThrow(openAIClient.new OpenAIClientResponseException("Not Found", mockhHttpResponse));
+        .thenThrow(openAIClient.new OpenAIClientResponseException("Not Found", mockHttpResponse));
 
     assertThrows(
         AIException.class, () -> openAILLMService.translate(tmTextUnit, "en", "fr", prompt));
@@ -1178,9 +1179,6 @@ class OpenAILLMServiceTest {
     prompt.setModelName("gtp-3.5-turbo");
     prompt.setPromptTemperature(0.0F);
     prompt.setContextMessages(new ArrayList<>());
-
-    HttpResponse<String> mockhHttpResponse = mock(HttpResponse.class);
-    when(mockhHttpResponse.statusCode()).thenReturn(404);
 
     when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
         .thenThrow(new RuntimeException("OpenAI service error"));
