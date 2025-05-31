@@ -34,4 +34,6 @@ public interface BlobStorage {
   default void put(String name, byte[] content) {
     put(name, content, Retention.PERMANENT);
   }
+
+  Optional<Retention> getRetention(String name);
 }
