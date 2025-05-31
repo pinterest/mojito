@@ -1,0 +1,151 @@
+package com.box.l10n.mojito.service.blobstorage;
+
+import static com.box.l10n.mojito.service.blobstorage.Retention.MIN_1_DAY;
+import static com.box.l10n.mojito.service.blobstorage.Retention.PERMANENT;
+import static java.util.Optional.of;
+import static java.util.Optional.ofNullable;
+
+import com.box.l10n.mojito.service.blobstorage.redis.RedisPoolManager;
+import com.google.common.annotations.VisibleForTesting;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import redis.clients.jedis.Jedis;
+
+@Component
+public class BlobStorageProxy {
+  @VisibleForTesting static final int ONE_DAY_IN_SECONDS = 24 * 60 * 60;
+
+  private final BlobStorage blobStorage;
+
+  private final Optional<RedisPoolManager> redisPoolManager;
+
+  private final ExecutorService executorService;
+
+  public BlobStorageProxy(
+      BlobStorage blobStorage,
+      @Autowired(required = false) RedisPoolManager redisPoolManager,
+      @Value("${l10n.redis.redundancy-thread-pool.num-threads:4}") int numberOfThreads) {
+    this.blobStorage = blobStorage;
+    this.redisPoolManager = ofNullable(redisPoolManager);
+    this.executorService = Executors.newFixedThreadPool(numberOfThreads);
+  }
+
+  private String getKey(StructuredBlobStorage.Prefix prefix, String name) {
+    return prefix.toString().toLowerCase() + "/" + name;
+  }
+
+  private Retention getRetention(Jedis redisClient, String key) {
+    return redisClient.ttl(key) >= 0 ? MIN_1_DAY : PERMANENT;
+  }
+
+  public Optional<String> getString(StructuredBlobStorage.Prefix prefix, String name) {
+    String key = this.getKey(prefix, name);
+    try (Jedis redisClient = this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
+      if (redisClient != null && redisClient.exists(key)) {
+        String value = redisClient.get(key);
+        Retention retention = this.getRetention(redisClient, key);
+        CompletableFuture.runAsync(
+            () -> this.blobStorage.put(key, value, retention), this.executorService);
+        return of(value);
+      } else {
+        Optional<String> result = this.blobStorage.getString(key);
+        if (result.isPresent() && redisClient != null) {
+          Optional<Retention> retention = this.blobStorage.getRetention(key);
+          CompletableFuture.runAsync(
+              () -> {
+                if (retention.isPresent() && retention.get() != PERMANENT) {
+                  redisClient.setex(key, ONE_DAY_IN_SECONDS, result.get());
+                } else {
+                  redisClient.set(key, result.get());
+                }
+              },
+              this.executorService);
+        }
+        return result;
+      }
+    }
+  }
+
+  public void put(
+      StructuredBlobStorage.Prefix prefix, String name, String content, Retention retention) {
+    String key = this.getKey(prefix, name);
+    try (Jedis redisClient = this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
+      if (redisClient != null) {
+        if (retention == PERMANENT) {
+          redisClient.set(key, content);
+        } else {
+          redisClient.setex(key, ONE_DAY_IN_SECONDS, content);
+        }
+        CompletableFuture.runAsync(
+            () -> this.blobStorage.put(key, content, retention), this.executorService);
+      } else {
+        this.blobStorage.put(key, content, retention);
+      }
+    }
+  }
+
+  public void delete(StructuredBlobStorage.Prefix prefix, String name) {
+    String key = this.getKey(prefix, name);
+    try (Jedis redisClient = this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
+      if (redisClient != null) {
+        redisClient.del(key);
+        CompletableFuture.runAsync(() -> this.blobStorage.delete(key), this.executorService);
+      } else {
+        this.blobStorage.delete(key);
+      }
+    }
+  }
+
+  public Optional<byte[]> getBytes(StructuredBlobStorage.Prefix prefix, String name) {
+    String key = this.getKey(prefix, name);
+    try (Jedis redisClient = this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
+      if (redisClient != null && redisClient.exists(key)) {
+        byte[] value = redisClient.get((key.getBytes(StandardCharsets.UTF_8)));
+        Retention retention = this.getRetention(redisClient, key);
+        CompletableFuture.runAsync(
+            () -> this.blobStorage.put(key, value, retention), this.executorService);
+        return of(value);
+      } else {
+        Optional<byte[]> result = this.blobStorage.getBytes(key);
+        if (result.isPresent() && redisClient != null) {
+          Optional<Retention> retention = this.blobStorage.getRetention(key);
+          CompletableFuture.runAsync(
+              () -> {
+                if (retention.isPresent() && retention.get() != PERMANENT) {
+                  redisClient.setex(
+                      key.getBytes(StandardCharsets.UTF_8), ONE_DAY_IN_SECONDS, result.get());
+                } else {
+                  redisClient.set(key.getBytes(StandardCharsets.UTF_8), result.get());
+                }
+              },
+              this.executorService);
+        }
+        return result;
+      }
+    }
+  }
+
+  public void putBytes(
+      StructuredBlobStorage.Prefix prefix, String name, byte[] content, Retention retention) {
+    String key = this.getKey(prefix, name);
+    try (Jedis redisClient = this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
+      if (redisClient != null) {
+        if (retention == PERMANENT) {
+          redisClient.set(key.getBytes(StandardCharsets.UTF_8), content);
+        } else {
+          redisClient.setex(key.getBytes(StandardCharsets.UTF_8), ONE_DAY_IN_SECONDS, content);
+        }
+        CompletableFuture.runAsync(
+            () -> this.blobStorage.put(key, content, retention), this.executorService);
+      } else {
+        this.blobStorage.put(key, content, retention);
+      }
+    }
+  }
+}

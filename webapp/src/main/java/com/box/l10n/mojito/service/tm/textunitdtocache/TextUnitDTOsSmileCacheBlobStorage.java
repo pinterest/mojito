@@ -26,7 +26,7 @@ public class TextUnitDTOsSmileCacheBlobStorage extends TextUnitDTOsCacheBlobStor
 
   Optional<ImmutableList<TextUnitDTO>> getTextUnitsFromCache(Long assetId, Long localeId) {
     Optional<byte[]> bytes =
-        structuredBlobStorage.getBytes(TEXT_UNIT_DTOS_CACHE, getName(assetId, localeId));
+        blobStorageProxy.getBytes(TEXT_UNIT_DTOS_CACHE, getName(assetId, localeId));
     return bytes.map(this::convertToListOrEmptyList);
   }
 
@@ -35,7 +35,7 @@ public class TextUnitDTOsSmileCacheBlobStorage extends TextUnitDTOsCacheBlobStor
       Long localeId,
       TextUnitDTOsCacheBlobStorageJson textUnitDTOsCacheBlobStorageJson) {
     byte[] bytes = objectMapper.writeValueAsBytes(textUnitDTOsCacheBlobStorageJson);
-    structuredBlobStorage.putBytes(
+    blobStorageProxy.putBytes(
         TEXT_UNIT_DTOS_CACHE, getName(assetId, localeId), bytes, Retention.PERMANENT);
   }
 
