@@ -1,13 +1,11 @@
 package com.box.l10n.mojito.service.blobstorage.redis;
 
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
-@Configuration
+@Component
+@ConfigurationProperties("l10n.redis.client-pool")
 public class RedisPoolConfigurationProperties {
-  private int scheduledThreadPoolSize = 1;
-
-  private int scheduledThreadPeriodInSeconds = 10;
-
   private int redisPoolMaxTotal = 10;
 
   private int redisPoolMaxIdle = 5;
@@ -15,22 +13,6 @@ public class RedisPoolConfigurationProperties {
   private int redisPoolMinIdle = 1;
 
   private int redisTimeoutMillis = 2000;
-
-  public int getScheduledThreadPoolSize() {
-    return scheduledThreadPoolSize;
-  }
-
-  public void setScheduledThreadPoolSize(int scheduledThreadPoolSize) {
-    this.scheduledThreadPoolSize = scheduledThreadPoolSize;
-  }
-
-  public int getScheduledThreadPeriodInSeconds() {
-    return scheduledThreadPeriodInSeconds;
-  }
-
-  public void setScheduledThreadPeriodInSeconds(int scheduledThreadPeriodInSeconds) {
-    this.scheduledThreadPeriodInSeconds = scheduledThreadPeriodInSeconds;
-  }
 
   public int getRedisPoolMaxTotal() {
     return redisPoolMaxTotal;

@@ -48,7 +48,11 @@ public class RedisPoolManagerTest {
     try (MockedStatic<Executors> mocked = mockStatic(Executors.class)) {
       mocked.when(() -> Executors.newScheduledThreadPool(anyInt())).thenReturn(this.scheduler);
       redisPoolManager =
-          spy(new RedisPoolManager(this.redisProps, new RedisPoolConfigurationProperties()));
+          spy(
+              new RedisPoolManager(
+                  this.redisProps,
+                  new RedisPoolConfigurationProperties(),
+                  new ScheduledThreadPoolConfigProperties()));
     }
   }
 

@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties("l10n.redis")
+@ConfigurationProperties("l10n.redis.connection")
 public class RedisConfigurationProperties {
   private String redisEndpoint;
 
