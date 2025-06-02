@@ -6,43 +6,43 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties("l10n.redis.client-pool")
 public class RedisPoolConfigurationProperties {
-  private int redisPoolMaxTotal = 10;
+  private int maxTotal = 10;
 
-  private int redisPoolMaxIdle = 5;
+  private int maxIdle = 5;
 
-  private int redisPoolMinIdle = 1;
+  private int minIdle = 1;
 
-  private int redisTimeoutMillis = 2000;
+  private int timeoutMillis = 2000;
 
-  public int getRedisPoolMaxTotal() {
-    return redisPoolMaxTotal;
+  public int getMaxTotal() {
+    return maxTotal;
   }
 
-  public void setRedisPoolMaxTotal(int redisPoolMaxTotal) {
-    this.redisPoolMaxTotal = redisPoolMaxTotal;
+  public void setMaxTotal(int maxTotal) {
+    this.maxTotal = maxTotal;
   }
 
-  public int getRedisPoolMaxIdle() {
-    return redisPoolMaxIdle;
+  public int getMaxIdle() {
+    return maxIdle;
   }
 
-  public void setRedisPoolMaxIdle(int redisPoolMaxIdle) {
-    this.redisPoolMaxIdle = redisPoolMaxIdle;
+  public void setMaxIdle(int maxIdle) {
+    this.maxIdle = maxIdle;
   }
 
-  public int getRedisPoolMinIdle() {
-    return redisPoolMinIdle;
+  public int getMinIdle() {
+    return minIdle;
   }
 
-  public void setRedisPoolMinIdle(int redisPoolMinIdle) {
-    this.redisPoolMinIdle = redisPoolMinIdle;
+  public void setMinIdle(int minIdle) {
+    this.minIdle = minIdle;
   }
 
-  public int getRedisTimeoutMillis() {
-    return redisTimeoutMillis;
+  public int getTimeoutMillis() {
+    return timeoutMillis;
   }
 
-  public void setRedisTimeoutMillis(int redisTimeoutMillis) {
-    this.redisTimeoutMillis = redisTimeoutMillis;
+  public void setTimeoutMillis(int timeoutMillis) {
+    this.timeoutMillis = timeoutMillis;
   }
 }

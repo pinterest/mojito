@@ -6,23 +6,23 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties("l10n.redis.client-refresher-pool")
 public class ScheduledThreadPoolConfigProperties {
-  private int scheduledThreadPoolSize = 1;
+  private int poolSize = 1;
 
-  private int scheduledThreadPeriodInSeconds = 10;
+  private int periodInSeconds = 10;
 
-  public int getScheduledThreadPoolSize() {
-    return scheduledThreadPoolSize;
+  public int getPoolSize() {
+    return poolSize;
   }
 
-  public void setScheduledThreadPoolSize(int scheduledThreadPoolSize) {
-    this.scheduledThreadPoolSize = scheduledThreadPoolSize;
+  public void setPoolSize(int poolSize) {
+    this.poolSize = poolSize;
   }
 
-  public int getScheduledThreadPeriodInSeconds() {
-    return scheduledThreadPeriodInSeconds;
+  public int getPeriodInSeconds() {
+    return periodInSeconds;
   }
 
-  public void setScheduledThreadPeriodInSeconds(int scheduledThreadPeriodInSeconds) {
-    this.scheduledThreadPeriodInSeconds = scheduledThreadPeriodInSeconds;
+  public void setPeriodInSeconds(int periodInSeconds) {
+    this.periodInSeconds = periodInSeconds;
   }
 }

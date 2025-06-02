@@ -41,10 +41,10 @@ public class RedisPoolManagerTest {
     redisProps.setSecretKey("secret");
     environmentVariables.set("AWS_ACCESS_KEY_ID", "env-access-key");
     environmentVariables.set("AWS_SECRET_ACCESS_KEY", "env-secret-key");
-    redisProps.setRedisUserId("user");
+    redisProps.setUserId("user");
     redisProps.setReplicationGroupId("group");
     redisProps.setRegion("region");
-    redisProps.setRedisEndpoint("localhost");
+    redisProps.setEndpoint("localhost");
     try (MockedStatic<Executors> mocked = mockStatic(Executors.class)) {
       mocked.when(() -> Executors.newScheduledThreadPool(anyInt())).thenReturn(this.scheduler);
       redisPoolManager =

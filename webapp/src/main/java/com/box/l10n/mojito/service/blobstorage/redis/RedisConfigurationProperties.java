@@ -6,9 +6,9 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties("l10n.redis.connection")
 public class RedisConfigurationProperties {
-  private String redisEndpoint;
+  private String endpoint;
 
-  private int redisPort = 6379;
+  private int port = 6379;
 
   private String accessKey;
 
@@ -16,24 +16,24 @@ public class RedisConfigurationProperties {
 
   private String region;
 
-  private String redisUserId;
+  private String userId;
 
   private String replicationGroupId;
 
-  public String getRedisEndpoint() {
-    return redisEndpoint;
+  public String getEndpoint() {
+    return endpoint;
   }
 
-  public void setRedisEndpoint(String redisEndpoint) {
-    this.redisEndpoint = redisEndpoint;
+  public void setEndpoint(String endpoint) {
+    this.endpoint = endpoint;
   }
 
-  public int getRedisPort() {
-    return redisPort;
+  public int getPort() {
+    return port;
   }
 
-  public void setRedisPort(int redisPort) {
-    this.redisPort = redisPort;
+  public void setPort(int port) {
+    this.port = port;
   }
 
   public String getAccessKey() {
@@ -60,12 +60,12 @@ public class RedisConfigurationProperties {
     this.region = region;
   }
 
-  public String getRedisUserId() {
-    return redisUserId;
+  public String getUserId() {
+    return userId;
   }
 
-  public void setRedisUserId(String redisUserId) {
-    this.redisUserId = redisUserId;
+  public void setUserId(String userId) {
+    this.userId = userId;
   }
 
   public String getReplicationGroupId() {

@@ -20,7 +20,7 @@ import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 
 @Component
-@ConditionalOnProperty("l10n.redis.connection.redisEndpoint")
+@ConditionalOnProperty("l10n.redis.connection.endpoint")
 public class RedisPoolManager {
   private static final Logger LOG = LoggerFactory.getLogger(RedisPoolManager.class);
 
@@ -42,8 +42,7 @@ public class RedisPoolManager {
     this.redisPoolConfigurationProperties = redisPoolConfigurationProperties;
     this.scheduledThreadPoolConfigProperties = scheduledThreadPoolConfigProperties;
     this.scheduler =
-        Executors.newScheduledThreadPool(
-            this.scheduledThreadPoolConfigProperties.getScheduledThreadPoolSize());
+        Executors.newScheduledThreadPool(this.scheduledThreadPoolConfigProperties.getPoolSize());
   }
 
   @VisibleForTesting
@@ -64,57 +63,62 @@ public class RedisPoolManager {
 
   @VisibleForTesting
   void refreshJedisPool() {
+    LOG.info("Refreshing JedisPool");
     if (this.jedisPool != null) {
       this.jedisPool.close();
     }
     IAMAuthTokenRequest iamAuthTokenRequest =
         new IAMAuthTokenRequest(
-            this.redisConfigurationProperties.getRedisUserId(),
+            this.redisConfigurationProperties.getUserId(),
             this.redisConfigurationProperties.getReplicationGroupId(),
             this.redisConfigurationProperties.getRegion());
     String authToken = iamAuthTokenRequest.toSignedRequestUri(this.getAwsCredentials());
     JedisPoolConfig poolConfig = new JedisPoolConfig();
-    poolConfig.setMaxTotal(this.redisPoolConfigurationProperties.getRedisPoolMaxTotal());
-    poolConfig.setMaxIdle(this.redisPoolConfigurationProperties.getRedisPoolMaxIdle());
-    poolConfig.setMinIdle(this.redisPoolConfigurationProperties.getRedisPoolMinIdle());
+    poolConfig.setMaxTotal(this.redisPoolConfigurationProperties.getMaxTotal());
+    poolConfig.setMaxIdle(this.redisPoolConfigurationProperties.getMaxIdle());
+    poolConfig.setMinIdle(this.redisPoolConfigurationProperties.getMinIdle());
     DefaultJedisClientConfig clientConfig =
         DefaultJedisClientConfig.builder()
-            .user(this.redisConfigurationProperties.getRedisUserId())
+            .user(this.redisConfigurationProperties.getUserId())
             .password(authToken)
             .ssl(true)
-            .timeoutMillis(this.redisPoolConfigurationProperties.getRedisTimeoutMillis())
+            .timeoutMillis(this.redisPoolConfigurationProperties.getTimeoutMillis())
             .build();
     this.jedisPool =
         new JedisPool(
             poolConfig,
             new HostAndPort(
-                this.redisConfigurationProperties.getRedisEndpoint(),
-                this.redisConfigurationProperties.getRedisPort()),
+                this.redisConfigurationProperties.getEndpoint(),
+                this.redisConfigurationProperties.getPort()),
             clientConfig);
   }
 
   @PostConstruct
   public void init() {
+    LOG.info("Initializing RedisPoolManager");
     this.refreshJedisPool();
     this.scheduler.scheduleAtFixedRate(
         this::refreshJedisPool,
-        this.scheduledThreadPoolConfigProperties.getScheduledThreadPeriodInSeconds(),
-        this.scheduledThreadPoolConfigProperties.getScheduledThreadPeriodInSeconds(),
+        this.scheduledThreadPoolConfigProperties.getPeriodInSeconds(),
+        this.scheduledThreadPoolConfigProperties.getPeriodInSeconds(),
         TimeUnit.MINUTES);
   }
 
   public Jedis getJedis() {
+    LOG.info("Getting Jedis");
     return this.jedisPool.getResource();
   }
 
   @PreDestroy
   public void shutdown() {
+    LOG.info("Shutting down RedisPoolManager");
     if (this.jedisPool != null) {
       this.jedisPool.close();
     }
     this.scheduler.shutdown();
   }
 
+  @VisibleForTesting
   JedisPool getJedisPool() {
     return this.jedisPool;
   }

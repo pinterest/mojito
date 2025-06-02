@@ -12,6 +12,8 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -19,6 +21,8 @@ import redis.clients.jedis.Jedis;
 
 @Component
 public class BlobStorageProxy {
+  private static final Logger LOGGER = LoggerFactory.getLogger(BlobStorageProxy.class);
+
   @VisibleForTesting static final int ONE_DAY_IN_SECONDS = 24 * 60 * 60;
 
   private final BlobStorage blobStorage;
@@ -48,12 +52,14 @@ public class BlobStorageProxy {
     String key = this.getKey(prefix, name);
     try (Jedis redisClient = this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
       if (redisClient != null && redisClient.exists(key)) {
+        LOGGER.info("BlobStorageProxy: Retrieve string from Redis for key: {}", key);
         String value = redisClient.get(key);
         Retention retention = this.getRetention(redisClient, key);
         CompletableFuture.runAsync(
             () -> this.blobStorage.put(key, value, retention), this.executorService);
         return of(value);
       } else {
+        LOGGER.info("BlobStorageProxy: Retrieve string from BlobStorage for key: {}", key);
         Optional<String> result = this.blobStorage.getString(key);
         if (result.isPresent() && redisClient != null) {
           Optional<Retention> retention = this.blobStorage.getRetention(key);
@@ -77,6 +83,7 @@ public class BlobStorageProxy {
     String key = this.getKey(prefix, name);
     try (Jedis redisClient = this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
       if (redisClient != null) {
+        LOGGER.info("BlobStorageProxy: Store string in Redis for key: {}", key);
         if (retention == PERMANENT) {
           redisClient.set(key, content);
         } else {
@@ -85,6 +92,8 @@ public class BlobStorageProxy {
         CompletableFuture.runAsync(
             () -> this.blobStorage.put(key, content, retention), this.executorService);
       } else {
+        LOGGER.info(
+            "BlobStorageProxy: Store string in BlobStorage with retention for key: {}", key);
         this.blobStorage.put(key, content, retention);
       }
     }
@@ -92,6 +101,7 @@ public class BlobStorageProxy {
 
   public void delete(StructuredBlobStorage.Prefix prefix, String name) {
     String key = this.getKey(prefix, name);
+    LOGGER.info("BlobStorageProxy: Deleting string from BlobStorage for key: {}", key);
     try (Jedis redisClient = this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
       if (redisClient != null) {
         redisClient.del(key);
@@ -106,12 +116,14 @@ public class BlobStorageProxy {
     String key = this.getKey(prefix, name);
     try (Jedis redisClient = this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
       if (redisClient != null && redisClient.exists(key)) {
+        LOGGER.info("BlobStorageProxy: Retrieve binary object from Redis for key: {}", key);
         byte[] value = redisClient.get((key.getBytes(StandardCharsets.UTF_8)));
         Retention retention = this.getRetention(redisClient, key);
         CompletableFuture.runAsync(
             () -> this.blobStorage.put(key, value, retention), this.executorService);
         return of(value);
       } else {
+        LOGGER.info("BlobStorageProxy: Retrieve binary object from BlobStorage for key: {}", key);
         Optional<byte[]> result = this.blobStorage.getBytes(key);
         if (result.isPresent() && redisClient != null) {
           Optional<Retention> retention = this.blobStorage.getRetention(key);
@@ -136,6 +148,7 @@ public class BlobStorageProxy {
     String key = this.getKey(prefix, name);
     try (Jedis redisClient = this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
       if (redisClient != null) {
+        LOGGER.info("BlobStorageProxy: Store binary object in Redis for key: {}", key);
         if (retention == PERMANENT) {
           redisClient.set(key.getBytes(StandardCharsets.UTF_8), content);
         } else {
@@ -144,6 +157,7 @@ public class BlobStorageProxy {
         CompletableFuture.runAsync(
             () -> this.blobStorage.put(key, content, retention), this.executorService);
       } else {
+        LOGGER.info("BlobStorageProxy: Store binary object in BlobStorage for key: {}", key);
         this.blobStorage.put(key, content, retention);
       }
     }
