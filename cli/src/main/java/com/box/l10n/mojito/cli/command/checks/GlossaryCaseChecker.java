@@ -25,12 +25,15 @@ public class GlossaryCaseChecker extends AbstractCliChecker {
         if (failures.stream().anyMatch(GlossaryCaseCheckerSearchResult::isMajorFailure)) {
           cliCheckResult.setSuccessful(false);
         }
-        Map<String, String> failedFeatureMap =
+        Map<String, CliCheckResult.CheckFailure> failedFeatureMap =
             failures.stream()
                 .collect(
                     Collectors.toMap(
                         GlossaryCaseCheckerSearchResult::getSource,
-                        searchResult -> String.join(", ", searchResult.getFailures())));
+                        searchResult ->
+                            new CliCheckResult.CheckFailure(
+                                "AGGREGATE_GLOSSARY_CASE_CHECKER_RESULTS",
+                                String.join("\n ", searchResult.getFailures()))));
         cliCheckResult.appendToFieldFailuresMap(failedFeatureMap);
         cliCheckResult.setNotificationText(buildNotificationText(failures).toString());
       }
@@ -47,15 +50,13 @@ public class GlossaryCaseChecker extends AbstractCliChecker {
   private List<GlossaryCaseCheckerSearchResult> getGlossarySearchResults(
       GlossaryTermCaseCheckerTrie glossaryTermCaseCheckerTrie,
       List<AssetExtractionDiff> assetExtractionDiffs) {
-    List<GlossaryCaseCheckerSearchResult> failures =
-        getAddedTextUnitsExcludingInconsistentComments(assetExtractionDiffs).stream()
-            .map(
-                assetExtractorTextUnit ->
-                    glossaryTermCaseCheckerTrie.runGlossaryCaseCheck(
-                        assetExtractorTextUnit.getSource()))
-            .filter(result -> !result.isSuccess())
-            .collect(Collectors.toList());
-    return failures;
+    return getAddedTextUnitsExcludingInconsistentComments(assetExtractionDiffs).stream()
+        .map(
+            assetExtractorTextUnit ->
+                glossaryTermCaseCheckerTrie.runGlossaryCaseCheck(
+                    assetExtractorTextUnit.getSource()))
+        .filter(result -> !result.isSuccess())
+        .collect(Collectors.toList());
   }
 
   private GlossaryTermCaseCheckerTrie getGlossaryTermTrie() throws IOException {
@@ -63,9 +64,7 @@ public class GlossaryCaseChecker extends AbstractCliChecker {
         Arrays.asList(
             objectMapper.readValue(
                 Paths.get(cliCheckerOptions.getGlossaryFilePath()).toFile(), GlossaryTerm[].class));
-    GlossaryTermCaseCheckerTrie glossaryTermCaseCheckerTrie =
-        new GlossaryTermCaseCheckerTrie(terms);
-    return glossaryTermCaseCheckerTrie;
+    return new GlossaryTermCaseCheckerTrie(terms);
   }
 
   private StringBuilder buildNotificationText(List<GlossaryCaseCheckerSearchResult> failures) {
@@ -81,11 +80,10 @@ public class GlossaryCaseChecker extends AbstractCliChecker {
 
   private String getFailureText(GlossaryCaseCheckerSearchResult failure) {
     StringBuilder sb = new StringBuilder();
-    sb.append(System.lineSeparator());
-    for (String failureText : failure.getFailures()) {
-      sb.append(BULLET_POINT).append(failureText);
-      sb.append(System.lineSeparator());
-    }
+    sb.append(
+        failure.getFailures().stream()
+            .map(failureText -> BULLET_POINT + failureText)
+            .collect(Collectors.joining(System.lineSeparator())));
     return sb.toString();
   }
 }

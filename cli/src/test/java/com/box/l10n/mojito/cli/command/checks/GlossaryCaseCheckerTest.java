@@ -107,9 +107,7 @@ public class GlossaryCaseCheckerTest {
             + QUOTE_MARKER
             + "A source string with company and ads Manager in it."
             + QUOTE_MARKER
-            + " contains glossary term 'Ads Manager' but does not exactly match the glossary term."
-            + System.lineSeparator()
-            + System.lineSeparator(),
+            + " contains glossary term 'Ads Manager' but does not exactly match the glossary term.",
         result.getNotificationText());
   }
 
@@ -131,9 +129,7 @@ public class GlossaryCaseCheckerTest {
             + QUOTE_MARKER
             + "A source string with ads                Manager in it."
             + QUOTE_MARKER
-            + " contains glossary term 'Ads Manager' but does not exactly match the glossary term."
-            + System.lineSeparator()
-            + System.lineSeparator(),
+            + " contains glossary term 'Ads Manager' but does not exactly match the glossary term.",
         result.getNotificationText());
   }
 
@@ -173,9 +169,7 @@ public class GlossaryCaseCheckerTest {
             + QUOTE_MARKER
             + "A source string with ads Manager in it."
             + QUOTE_MARKER
-            + " contains glossary term 'Ads Manager' but does not exactly match the glossary term."
-            + System.lineSeparator()
-            + System.lineSeparator(),
+            + " contains glossary term 'Ads Manager' but does not exactly match the glossary term.",
         result.getNotificationText());
   }
 
@@ -200,9 +194,7 @@ public class GlossaryCaseCheckerTest {
             + QUOTE_MARKER
             + "A source string with Ads-Manager in it."
             + QUOTE_MARKER
-            + " contains glossary term 'Ads Manager' but does not exactly match the glossary term."
-            + System.lineSeparator()
-            + System.lineSeparator(),
+            + " contains glossary term 'Ads Manager' but does not exactly match the glossary term.",
         result.getNotificationText());
   }
 
@@ -241,9 +233,7 @@ public class GlossaryCaseCheckerTest {
             + QUOTE_MARKER
             + "A source string with event Manager in it."
             + QUOTE_MARKER
-            + " contains glossary terms 'Event Manager' or 'Event manager' but does not exactly match one of the terms."
-            + System.lineSeparator()
-            + System.lineSeparator(),
+            + " contains glossary terms 'Event Manager' or 'Event manager' but does not exactly match one of the terms.",
         result.getNotificationText());
   }
 }
