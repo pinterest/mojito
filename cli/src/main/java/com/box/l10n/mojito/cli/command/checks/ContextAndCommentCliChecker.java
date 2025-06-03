@@ -155,7 +155,7 @@ public class ContextAndCommentCliChecker extends AbstractCliChecker {
       context = splitNameArray[1];
     }
     String comment = assetExtractorTextUnit.getComments();
-    String ruleId = "UNKNOWN";
+    String ruleId = null;
 
     if (!isBlank(context) && !isBlank(comment)) {
       if (context.trim().equalsIgnoreCase(comment.trim())) {
@@ -173,7 +173,7 @@ public class ContextAndCommentCliChecker extends AbstractCliChecker {
       failureText = "Comment string is empty.";
     }
 
-    if (ruleId.equals("UNKNOWN")) {
+    if (ruleId == null) {
       return null;
     }
 
