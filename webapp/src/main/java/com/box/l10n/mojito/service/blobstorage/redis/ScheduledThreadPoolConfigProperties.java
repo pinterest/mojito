@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 public class ScheduledThreadPoolConfigProperties {
   private int poolSize = 1;
 
-  private int periodInSeconds = 10;
+  private int periodInMinutes = 10;
 
   public int getPoolSize() {
     return poolSize;
@@ -18,11 +18,11 @@ public class ScheduledThreadPoolConfigProperties {
     this.poolSize = poolSize;
   }
 
-  public int getPeriodInSeconds() {
-    return periodInSeconds;
+  public int getPeriodInMinutes() {
+    return periodInMinutes;
   }
 
-  public void setPeriodInSeconds(int periodInSeconds) {
-    this.periodInSeconds = periodInSeconds;
+  public void setPeriodInMinutes(int periodInMinutes) {
+    this.periodInMinutes = periodInMinutes;
   }
 }

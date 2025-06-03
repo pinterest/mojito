@@ -1,6 +1,5 @@
 package com.box.l10n.mojito.service.blobstorage;
 
-import static com.box.l10n.mojito.service.blobstorage.Retention.MIN_1_DAY;
 import static com.box.l10n.mojito.service.blobstorage.Retention.PERMANENT;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
@@ -44,20 +43,12 @@ public class BlobStorageProxy {
     return prefix.toString().toLowerCase() + "/" + name;
   }
 
-  private Retention getRetention(Jedis redisClient, String key) {
-    return redisClient.ttl(key) >= 0 ? MIN_1_DAY : PERMANENT;
-  }
-
   public Optional<String> getString(StructuredBlobStorage.Prefix prefix, String name) {
     String key = this.getKey(prefix, name);
     try (Jedis redisClient = this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
       if (redisClient != null && redisClient.exists(key)) {
         LOGGER.info("BlobStorageProxy: Retrieve string from Redis for key: {}", key);
-        String value = redisClient.get(key);
-        Retention retention = this.getRetention(redisClient, key);
-        CompletableFuture.runAsync(
-            () -> this.blobStorage.put(key, value, retention), this.executorService);
-        return of(value);
+        return of(redisClient.get(key));
       } else {
         LOGGER.info("BlobStorageProxy: Retrieve string from BlobStorage for key: {}", key);
         Optional<String> result = this.blobStorage.getString(key);
@@ -117,11 +108,7 @@ public class BlobStorageProxy {
     try (Jedis redisClient = this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
       if (redisClient != null && redisClient.exists(key)) {
         LOGGER.info("BlobStorageProxy: Retrieve binary object from Redis for key: {}", key);
-        byte[] value = redisClient.get((key.getBytes(StandardCharsets.UTF_8)));
-        Retention retention = this.getRetention(redisClient, key);
-        CompletableFuture.runAsync(
-            () -> this.blobStorage.put(key, value, retention), this.executorService);
-        return of(value);
+        return of(redisClient.get(key.getBytes(StandardCharsets.UTF_8)));
       } else {
         LOGGER.info("BlobStorageProxy: Retrieve binary object from BlobStorage for key: {}", key);
         Optional<byte[]> result = this.blobStorage.getBytes(key);

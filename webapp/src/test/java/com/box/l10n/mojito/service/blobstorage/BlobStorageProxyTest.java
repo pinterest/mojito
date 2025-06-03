@@ -64,14 +64,13 @@ public class BlobStorageProxyTest {
   }
 
   @Test
-  public void testGetString_GetsValueFromRedisPoolManagerFor1DayRetention() {
+  public void testGetString_GetsValueFromRedisPoolManager() {
     try (MockedStatic<CompletableFuture> mocked = mockStatic(CompletableFuture.class)) {
       final String content = "redisContent";
       this.blobStorageMock = mock(BlobStorage.class);
       Jedis jedis = mock(Jedis.class);
       when(jedis.get(anyString())).thenReturn(content);
       when(jedis.exists(anyString())).thenReturn(true);
-      when(jedis.ttl(anyString())).thenReturn(1L);
       when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis);
       BlobStorageProxy blobStorageProxy =
           new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
@@ -81,43 +80,9 @@ public class BlobStorageProxyTest {
       assertTrue(result.isPresent());
       assertEquals(content, result.get());
       verify(jedis, times(1)).close();
-      verify(jedis).ttl(eq(KEY));
       mocked.verify(
-          () ->
-              CompletableFuture.runAsync(
-                  this.runnableArgumentCaptorCaptor.capture(), any(ExecutorService.class)),
-          times(1));
-      this.runnableArgumentCaptorCaptor.getValue().run();
-      verify(this.blobStorageMock, times(1)).put(eq(KEY), eq(content), eq(Retention.MIN_1_DAY));
-    }
-  }
-
-  @Test
-  public void testGetString_GetsValueFromRedisPoolManagerForPermanentRetention() {
-    try (MockedStatic<CompletableFuture> mocked = mockStatic(CompletableFuture.class)) {
-      final String content = "redisContent";
-      this.blobStorageMock = mock(BlobStorage.class);
-      Jedis jedis = mock(Jedis.class);
-      when(jedis.get(anyString())).thenReturn(content);
-      when(jedis.exists(anyString())).thenReturn(true);
-      when(jedis.ttl(anyString())).thenReturn(-1L);
-      when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis);
-      BlobStorageProxy blobStorageProxy =
-          new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
-
-      Optional<String> result = blobStorageProxy.getString(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
-
-      assertTrue(result.isPresent());
-      assertEquals(content, result.get());
-      verify(jedis, times(1)).close();
-      verify(jedis).ttl(eq(KEY));
-      mocked.verify(
-          () ->
-              CompletableFuture.runAsync(
-                  this.runnableArgumentCaptorCaptor.capture(), any(ExecutorService.class)),
-          times(1));
-      this.runnableArgumentCaptorCaptor.getValue().run();
-      verify(this.blobStorageMock, times(1)).put(eq(KEY), eq(content), eq(Retention.PERMANENT));
+          () -> CompletableFuture.runAsync(any(Runnable.class), any(ExecutorService.class)),
+          times(0));
     }
   }
 
@@ -314,14 +279,13 @@ public class BlobStorageProxyTest {
   }
 
   @Test
-  public void testGetBytes_GetsValueFromRedisPoolManagerFor1DayRetention() {
+  public void testGetBytes_GetsValueFromRedisPoolManager() {
     try (MockedStatic<CompletableFuture> mocked = mockStatic(CompletableFuture.class)) {
       byte[] content = "redisContent".getBytes(StandardCharsets.UTF_8);
       this.blobStorageMock = mock(BlobStorage.class);
       Jedis jedis = mock(Jedis.class);
       when(jedis.get(any(byte[].class))).thenReturn(content);
       when(jedis.exists(anyString())).thenReturn(true);
-      when(jedis.ttl(anyString())).thenReturn(1L);
       when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis);
       BlobStorageProxy blobStorageProxy =
           new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
@@ -331,43 +295,9 @@ public class BlobStorageProxyTest {
       assertTrue(result.isPresent());
       assertEquals(content, result.get());
       verify(jedis, times(1)).close();
-      verify(jedis).ttl(eq(KEY));
       mocked.verify(
-          () ->
-              CompletableFuture.runAsync(
-                  this.runnableArgumentCaptorCaptor.capture(), any(ExecutorService.class)),
-          times(1));
-      this.runnableArgumentCaptorCaptor.getValue().run();
-      verify(this.blobStorageMock, times(1)).put(eq(KEY), eq(content), eq(Retention.MIN_1_DAY));
-    }
-  }
-
-  @Test
-  public void testGetBytes_GetsValueFromRedisPoolManagerForPermanentRetention() {
-    try (MockedStatic<CompletableFuture> mocked = mockStatic(CompletableFuture.class)) {
-      byte[] content = "redisContent".getBytes(StandardCharsets.UTF_8);
-      this.blobStorageMock = mock(BlobStorage.class);
-      Jedis jedis = mock(Jedis.class);
-      when(jedis.get(any(byte[].class))).thenReturn(content);
-      when(jedis.exists(anyString())).thenReturn(true);
-      when(jedis.ttl(anyString())).thenReturn(-1L);
-      when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis);
-      BlobStorageProxy blobStorageProxy =
-          new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
-
-      Optional<byte[]> result = blobStorageProxy.getBytes(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
-
-      assertTrue(result.isPresent());
-      assertEquals(content, result.get());
-      verify(jedis, times(1)).close();
-      verify(jedis).ttl(eq(KEY));
-      mocked.verify(
-          () ->
-              CompletableFuture.runAsync(
-                  this.runnableArgumentCaptorCaptor.capture(), any(ExecutorService.class)),
-          times(1));
-      this.runnableArgumentCaptorCaptor.getValue().run();
-      verify(this.blobStorageMock, times(1)).put(eq(KEY), eq(content), eq(Retention.PERMANENT));
+          () -> CompletableFuture.runAsync(any(Runnable.class), any(ExecutorService.class)),
+          times(0));
     }
   }
 

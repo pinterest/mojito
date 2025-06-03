@@ -99,8 +99,8 @@ public class RedisPoolManager {
     this.refreshJedisPool();
     this.scheduler.scheduleAtFixedRate(
         this::refreshJedisPool,
-        this.scheduledThreadPoolConfigProperties.getPeriodInSeconds(),
-        this.scheduledThreadPoolConfigProperties.getPeriodInSeconds(),
+        this.scheduledThreadPoolConfigProperties.getPeriodInMinutes(),
+        this.scheduledThreadPoolConfigProperties.getPeriodInMinutes(),
         TimeUnit.MINUTES);
   }
 
