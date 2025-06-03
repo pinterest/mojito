@@ -158,7 +158,8 @@ public class S3BlobStorage implements BlobStorage {
   @Override
   public Optional<Retention> getRetention(String name) {
     GetObjectTaggingRequest request =
-        new GetObjectTaggingRequest(this.s3BlobStorageConfigurationProperties.getBucket(), name);
+        new GetObjectTaggingRequest(
+            this.s3BlobStorageConfigurationProperties.getBucket(), this.getFullName(name));
     GetObjectTaggingResult result = this.amazonS3.getObjectTagging(request);
     List<Tag> tags = result.getTagSet();
 
