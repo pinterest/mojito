@@ -11,7 +11,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
@@ -26,10 +25,6 @@ public class RecommendStringIdCheckerTest {
   @Before
   public void setup() {
     recommendStringIdChecker = new RecommendStringIdChecker();
-    List<String> modifiedFiles =
-        new ArrayList<>(
-            Arrays.asList(
-                "someDir/someOtherDir/evenDeeperDir/test1.txt", "someDir/someOtherDir/test2.txt"));
     recommendStringIdChecker.setCliCheckerOptions(
         new CliCheckerOptions(
             Sets.newHashSet(SINGLE_BRACE_REGEX),
@@ -298,17 +293,6 @@ public class RecommendStringIdCheckerTest {
             + BULLET_POINT
             + "Please update id "
             + QUOTE_MARKER
-            + "someStringId"
-            + QUOTE_MARKER
-            + " for string "
-            + QUOTE_MARKER
-            + "A source string with no errors."
-            + QUOTE_MARKER
-            + " to be prefixed with 'root.'"
-            + System.lineSeparator()
-            + BULLET_POINT
-            + "Please update id "
-            + QUOTE_MARKER
             + "someOtherStringId"
             + QUOTE_MARKER
             + " for string "
@@ -316,6 +300,17 @@ public class RecommendStringIdCheckerTest {
             + "Another source string with no errors."
             + QUOTE_MARKER
             + " to be prefixed with 'someDir.someSubDir.'"
+            + System.lineSeparator()
+            + BULLET_POINT
+            + "Please update id "
+            + QUOTE_MARKER
+            + "someStringId"
+            + QUOTE_MARKER
+            + " for string "
+            + QUOTE_MARKER
+            + "A source string with no errors."
+            + QUOTE_MARKER
+            + " to be prefixed with 'root.'"
             + System.lineSeparator(),
         result.getNotificationText());
   }
@@ -357,17 +352,6 @@ public class RecommendStringIdCheckerTest {
             + BULLET_POINT
             + "Please update id "
             + QUOTE_MARKER
-            + "someStringId"
-            + QUOTE_MARKER
-            + " for string "
-            + QUOTE_MARKER
-            + "A source string with no errors."
-            + QUOTE_MARKER
-            + " to be prefixed with 'root.'"
-            + System.lineSeparator()
-            + BULLET_POINT
-            + "Please update id "
-            + QUOTE_MARKER
             + "someOtherStringId"
             + QUOTE_MARKER
             + " for string "
@@ -375,6 +359,17 @@ public class RecommendStringIdCheckerTest {
             + "Another source string with no errors."
             + QUOTE_MARKER
             + " to be prefixed with 'someDir.someSubDir.'"
+            + System.lineSeparator()
+            + BULLET_POINT
+            + "Please update id "
+            + QUOTE_MARKER
+            + "someStringId"
+            + QUOTE_MARKER
+            + " for string "
+            + QUOTE_MARKER
+            + "A source string with no errors."
+            + QUOTE_MARKER
+            + " to be prefixed with 'root.'"
             + System.lineSeparator(),
         result.getNotificationText());
   }

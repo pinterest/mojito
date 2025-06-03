@@ -29,13 +29,15 @@ public class ContextAndCommentCliChecker extends AbstractCliChecker {
   static class ContextAndCommentCliCheckerResult {
     String sourceString;
     String failureMessage;
+    String ruleId;
     boolean failed;
 
     public ContextAndCommentCliCheckerResult(
-        boolean failed, String sourceString, String failureMessage) {
+        boolean failed, String sourceString, String failureMessage, String ruleId) {
       this.sourceString = sourceString;
       this.failureMessage = failureMessage;
       this.failed = failed;
+      this.ruleId = ruleId;
     }
 
     public ContextAndCommentCliCheckerResult(boolean failed) {
@@ -50,6 +52,10 @@ public class ContextAndCommentCliChecker extends AbstractCliChecker {
       return failureMessage;
     }
 
+    public String getRuleId() {
+      return ruleId;
+    }
+
     public boolean isFailed() {
       return failed;
     }
@@ -60,13 +66,15 @@ public class ContextAndCommentCliChecker extends AbstractCliChecker {
     CliCheckResult cliCheckResult = createCliCheckerResult();
     List<ContextAndCommentCliCheckerResult> results = runChecks(assetExtractionDiffs);
     if (results.stream().anyMatch(ContextAndCommentCliCheckerResult::isFailed)) {
-      Map<String, String> featureFailureMap =
+      Map<String, CliCheckResult.CheckFailure> featureFailureMap =
           results.stream()
               .filter(ContextAndCommentCliCheckerResult::isFailed)
               .collect(
                   Collectors.toMap(
                       ContextAndCommentCliCheckerResult::getSourceString,
-                      ContextAndCommentCliCheckerResult::getFailureMessage));
+                      result ->
+                          new CliCheckResult.CheckFailure(
+                              result.getRuleId(), result.getFailureMessage())));
       cliCheckResult.appendToFieldFailuresMap(featureFailureMap);
       cliCheckResult.setSuccessful(false);
       cliCheckResult.setNotificationText(
@@ -117,47 +125,59 @@ public class ContextAndCommentCliChecker extends AbstractCliChecker {
   }
 
   private ContextAndCommentCliCheckerResult getContextAndCommentCliCheckerResult(
-      AssetExtractorTextUnit assetExtractorTextUnit, String failureText) {
+      AssetExtractorTextUnit assetExtractorTextUnit, CliCheckResult.CheckFailure checkFailure) {
     ContextAndCommentCliCheckerResult result;
-    if (failureText != null) {
+    if (checkFailure != null) {
       logger.debug(
           "'{}' source string failed check with error: {}",
           assetExtractorTextUnit.getSource(),
-          failureText);
+          checkFailure.failureMessage());
       result =
           new ContextAndCommentCliCheckerResult(
-              true, assetExtractorTextUnit.getSource(), failureText);
+              true,
+              assetExtractorTextUnit.getSource(),
+              checkFailure.failureMessage(),
+              checkFailure.ruleId());
     } else {
       result = new ContextAndCommentCliCheckerResult(false);
     }
     return result;
   }
 
-  private String checkTextUnit(AssetExtractorTextUnit assetExtractorTextUnit) {
+  private CliCheckResult.CheckFailure checkTextUnit(AssetExtractorTextUnit assetExtractorTextUnit) {
     String failureText = null;
     String[] splitNameArray = assetExtractorTextUnit.getName().split("---");
     String context = null;
     if (isPlural(assetExtractorTextUnit) && cliCheckerOptions.getPluralsSkipped()) {
-      return failureText;
+      return null;
     }
     if (splitNameArray.length > 1) {
       context = splitNameArray[1];
     }
     String comment = assetExtractorTextUnit.getComments();
+    String ruleId = "UNKNOWN";
 
     if (!isBlank(context) && !isBlank(comment)) {
       if (context.trim().equalsIgnoreCase(comment.trim())) {
+        ruleId = "EQUAL_CONTEXT_AND_COMMENT_STRINGS";
         failureText = "Context & comment strings should not be identical.";
       }
     } else if (isBlank(context) && isBlank(comment)) {
+      ruleId = "EMPTY_CONTEXT_AND_COMMENT_STRINGS";
       failureText = "Context and comment strings are both empty.";
     } else if (isBlank(context)) {
+      ruleId = "EMPTY_CONTEXT_STRING";
       failureText = "Context string is empty.";
     } else if (isBlank(comment)) {
+      ruleId = "EMPTY_COMMENT_STRING";
       failureText = "Comment string is empty.";
     }
 
-    return failureText;
+    if (ruleId.equals("UNKNOWN")) {
+      return null;
+    }
+
+    return new CliCheckResult.CheckFailure(ruleId, failureText);
   }
 
   private boolean isPlural(AssetExtractorTextUnit assetExtractorTextUnit) {

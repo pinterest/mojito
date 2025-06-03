@@ -40,18 +40,19 @@ public class SarifFileGenerator {
       Map<String, String> noUsagesTextUnitErrorMap =
           new HashMap<>(checkFailure.getFieldFailuresMap().size());
 
-      for (Map.Entry<String, String> entry : checkFailure.getFieldFailuresMap().entrySet()) {
+      for (Map.Entry<String, CliCheckResult.CheckFailure> entry :
+          checkFailure.getFieldFailuresMap().entrySet()) {
         String source = entry.getKey();
-        String failureMessage = entry.getValue();
+        CliCheckResult.CheckFailure resultCheckFailure = entry.getValue();
         AssetExtractorTextUnit assetExtractorTextUnit = sourceToAssetTextUnitMap.get(source);
         if (hasUsages(assetExtractorTextUnit)) {
           sarifBuilder.addResultWithLocations(
-              buildRuleId(source),
+              resultCheckFailure.ruleId(),
               resultLevel,
-              failureMessage,
+              resultCheckFailure.failureMessage(),
               getUsageLocations(assetExtractorTextUnit));
         } else {
-          noUsagesTextUnitErrorMap.put(source, failureMessage);
+          noUsagesTextUnitErrorMap.put(source, resultCheckFailure.failureMessage());
         }
       }
 
