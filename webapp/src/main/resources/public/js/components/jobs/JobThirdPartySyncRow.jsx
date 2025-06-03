@@ -75,9 +75,9 @@ class JobThirdPartySyncRow extends React.Component {
         if(job.repository && job.repository in APP_CONFIG.link) {
             const url = new URL(APP_CONFIG.link[job.repository].thirdParty.url);
             url.search = '';
-            return <span> - <a href={url}>{job.properties.thirdPartyProjectId}</a></span>;
+            return <span> - <a href={url}>{(job.properties && job.properties.thirdPartyProjectId) || ""}</a></span>;
         }
-        return <span> - {job.properties.thirdPartyProjectId}</span>;
+        return <span> - {(job.properties && job.properties.thirdPartyProjectId) || ""}</span>;
     }
 
 
@@ -135,6 +135,12 @@ class JobThirdPartySyncRow extends React.Component {
                         />
                         <JobButton job={job}
                                    type={ job.enabled ? JobButton.TYPES.DISABLE : JobButton.TYPES.ENABLE}
+                        />
+                        <JobButton job={job}
+                                   type={JobButton.TYPES.EDIT} disabled={inProgress}
+                        />
+                        <JobButton job={job}
+                                   type={JobButton.TYPES.DELETE}
                         />
                     </div>
                 </div>

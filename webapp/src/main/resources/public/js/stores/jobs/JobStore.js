@@ -12,6 +12,18 @@ class JobStore {
         this.registerAsync(JobDataSource);
     }
 
+    createJob(job) {
+        this.getInstance().createJob(job);
+    }
+
+    createJobSuccess(job) {
+        this.jobs = [...this.jobs, job];
+    }
+
+    deleteJob(job) {
+        this.getInstance().deleteJob(job);
+    }
+
     getAllJobs() {
         this.getInstance().getAllJobs();
     }

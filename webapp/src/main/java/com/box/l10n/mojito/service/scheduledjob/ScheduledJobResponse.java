@@ -1,16 +1,32 @@
 package com.box.l10n.mojito.service.scheduledjob;
 
+import com.box.l10n.mojito.entity.ScheduledJob;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public class ScheduledJobResponse {
   private Status status;
   private String message;
   private String jobId;
+  private ScheduledJob scheduledJob;
 
   public ScheduledJobResponse(Status status, String message, String jobId) {
     this.status = status;
     this.message = message;
     this.jobId = jobId;
+  }
+
+  public ScheduledJobResponse(Status status, String message, ScheduledJob scheduledJob) {
+    this.status = status;
+    this.message = message;
+    this.scheduledJob = scheduledJob;
+  }
+
+  public ScheduledJob getScheduledJob() {
+    return scheduledJob;
+  }
+
+  public void setScheduledJob(ScheduledJob scheduledJob) {
+    this.scheduledJob = scheduledJob;
   }
 
   public enum Status {

@@ -1,7 +1,7 @@
 import React from "react";
 import JobActions from "../../actions/jobs/JobActions";
 import PropTypes from "prop-types";
-
+import CreateJobModal from "./CreateJobModal";
 
 class JobButton extends React.Component {
 
@@ -15,15 +15,24 @@ class JobButton extends React.Component {
         this.timeout = null;
 
         this.state = {
-            disabled: false
+            disabled: false,
+            showEditModal: false
         }
+    }
+
+    openEditModal = () => {
+        this.setState({ showEditModal: true });
+    }
+
+    closeEditModal = () => {
+        this.setState({ showEditModal: false });
     }
 
     handleClick = (job, type, button) => {
         // Disable the button to avoid register spam clicks
-        this.setState({disabled: true})
+        this.setState({ disabled: true })
 
-        switch(type) {
+        switch (type) {
             case JobButton.TYPES.RUN:
                 JobActions.triggerJob(job);
                 break;
@@ -33,16 +42,21 @@ class JobButton extends React.Component {
             case JobButton.TYPES.ENABLE:
                 JobActions.enableJob(job);
                 break;
+            case JobButton.TYPES.DELETE:
+                JobActions.deleteJob(job);
+                break;
+            case JobButton.TYPES.EDIT:
+                this.setState({ showEditModal: true });
         }
 
         this.timeout = setTimeout(() => {
             // Wait before switching on the button to avoid double clicks
-            this.setState({disabled: false})
+            this.setState({ disabled: false })
         }, 500)
     }
 
     componentWillUnmount() {
-        if(this.timeout) {
+        if (this.timeout) {
             clearTimeout(this.timeout);
         }
     }
@@ -52,13 +66,16 @@ class JobButton extends React.Component {
      */
     render() {
 
-        const {type, disabled, job} = this.props;
+        const { type, disabled, job } = this.props;
 
         return (
-            <button className={`job-button ${disabled || this.state.disabled ? 'disabled' : ''}`} disabled={disabled || this.state.disabled}
+            <div>
+                <CreateJobModal onClose={this.closeEditModal} show={this.state.showEditModal} job={job} />
+                <button className={`job-button ${disabled || this.state.disabled ? 'disabled' : ''}`} disabled={disabled || this.state.disabled}
                     onClick={() => this.handleClick(job, type)} >
-                {type}
-            </button>
+                    {type}
+                </button>
+            </div>
         );
     }
 }
@@ -66,7 +83,9 @@ class JobButton extends React.Component {
 JobButton.TYPES = {
     "RUN": "RUN",
     "DISABLE": "DISABLE",
-    "ENABLE": "ENABLE"
+    "ENABLE": "ENABLE",
+    "DELETE": "DELETE",
+    "EDIT": "EDIT"
 }
 
 export default JobButton;
