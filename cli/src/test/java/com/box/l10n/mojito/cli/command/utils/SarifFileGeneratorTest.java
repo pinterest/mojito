@@ -47,9 +47,9 @@ class SarifFileGeneratorTest {
     diff.setAddedTextunits(List.of(textUnitWithUsage, textUnitNoUsage));
     Map<String, CliCheckResult.CheckFailure> fieldFailures =
         Map.of(
-            "source1", new CliCheckResult.CheckFailure("RuleId", "Failure message 1"),
-            "source2", new CliCheckResult.CheckFailure("RuleId", "Failure message 2"),
-            "source4", new CliCheckResult.CheckFailure("RuleId", "Failure message 1"));
+            "source1", new CliCheckResult.CheckFailure("RuleId1", "Failure message 1"),
+            "source2", new CliCheckResult.CheckFailure("RuleId2", "Failure message 2"),
+            "source4", new CliCheckResult.CheckFailure("RuleId3", "Failure message 3"));
 
     CliCheckResult checkResult = createCliCheckResult(true, "TestCheck", fieldFailures);
 
@@ -70,7 +70,7 @@ class SarifFileGeneratorTest {
     // Check result with usages
     Result resultWithUsage =
         run.getResults().stream()
-            .filter(r -> "rule[source1]".equals(r.getRuleId()))
+            .filter(r -> "RuleId1".equals(r.getRuleId()))
             .findFirst()
             .orElseThrow();
     assertThat(resultWithUsage.getLevel()).isEqualTo(ResultLevel.ERROR);
@@ -84,13 +84,19 @@ class SarifFileGeneratorTest {
                     && loc.getRegion().getStartLine() == 10);
 
     // Check result without usages (aggregate)
-    Result resultNoUsage =
+    List<Result> resultNoUsage =
         run.getResults().stream()
             .filter(r -> r.getLocations() == null || r.getLocations().isEmpty())
-            .findFirst()
-            .orElseThrow();
-    assertThat(resultNoUsage.getRuleId()).contains("rule[source2]");
-    assertThat(resultNoUsage.getMessage().getText()).contains("Failure message 2");
+            .toList();
+    Assertions.assertTrue(
+        resultNoUsage.stream()
+            .allMatch(x -> x.getRuleId().contains("RuleId3") || x.getRuleId().contains("RuleId2")));
+    Assertions.assertTrue(
+        resultNoUsage.stream()
+            .allMatch(
+                x ->
+                    x.getMessage().getText().contains("Failure message 2")
+                        || x.getMessage().getText().contains("Failure message 3")));
   }
 
   @Test
@@ -116,7 +122,7 @@ class SarifFileGeneratorTest {
     assertThat(run.getResults()).hasSize(1);
     Result result = run.getResults().getFirst();
     assertThat(result.getLevel()).isEqualTo(ResultLevel.WARNING);
-    assertThat(result.getRuleId()).isEqualTo("rule[sourceX]");
+    assertThat(result.getRuleId()).isEqualTo("RuleId");
     assertThat(result.getMessage().getText()).isEqualTo("Warn message");
   }
 

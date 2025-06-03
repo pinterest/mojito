@@ -7,7 +7,6 @@ import com.box.l10n.mojito.sarif.builder.SarifBuilder;
 import com.box.l10n.mojito.sarif.model.Location;
 import com.box.l10n.mojito.sarif.model.ResultLevel;
 import com.box.l10n.mojito.sarif.model.Sarif;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -36,10 +35,6 @@ public class SarifFileGenerator {
       ResultLevel resultLevel = checkFailure.isHardFail() ? ResultLevel.ERROR : ResultLevel.WARNING;
       sarifBuilder.addRun(
           checkFailure.getCheckName(), "http://pinch.pinadmin.com/glow-string-checks");
-
-      Map<String, String> noUsagesTextUnitErrorMap =
-          new HashMap<>(checkFailure.getFieldFailuresMap().size());
-
       for (Map.Entry<String, CliCheckResult.CheckFailure> entry :
           checkFailure.getFieldFailuresMap().entrySet()) {
         String source = entry.getKey();
@@ -52,15 +47,9 @@ public class SarifFileGenerator {
               resultCheckFailure.failureMessage(),
               getUsageLocations(assetExtractorTextUnit));
         } else {
-          noUsagesTextUnitErrorMap.put(source, resultCheckFailure.failureMessage());
+          sarifBuilder.addResultWithoutLocation(
+              resultCheckFailure.ruleId(), resultLevel, resultCheckFailure.failureMessage());
         }
-      }
-
-      // Handle text units with no usages
-      if (!noUsagesTextUnitErrorMap.isEmpty()) {
-        String ruleId = buildAggregateRuleId(noUsagesTextUnitErrorMap);
-        String failureMessage = buildAggregateFailureMessage(noUsagesTextUnitErrorMap);
-        sarifBuilder.addResultWithoutLocation(ruleId, resultLevel, failureMessage);
       }
     }
 
