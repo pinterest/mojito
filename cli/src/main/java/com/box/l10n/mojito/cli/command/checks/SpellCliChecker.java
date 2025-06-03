@@ -98,21 +98,25 @@ public class SpellCliChecker extends AbstractCliChecker {
                   Collectors.toMap(
                       Map.Entry::getKey,
                       entrySet -> {
-                        Map<String, List<String>> spellingSuggestionMap = entrySet.getValue();
                         StringBuilder sb = new StringBuilder();
                         sb.append("Spelling errors were detected:");
                         sb.append(System.lineSeparator());
-                        spellingSuggestionMap.forEach(
-                            (misspeltWord, suggestions) -> {
-                              sb.append(BULLET_POINT);
-                              sb.append(QUOTE_MARKER);
-                              sb.append(misspeltWord);
-                              sb.append(QUOTE_MARKER);
-                              sb.append(" is spelt incorrectly. Suggested correct spellings are: ");
-                              sb.append(String.join(", ", suggestions));
-                              sb.append(System.lineSeparator());
-                            });
-                        return sb.toString();
+                        entrySet
+                            .getValue()
+                            .forEach(
+                                (misspeltWord, suggestions) -> {
+                                  sb.append(BULLET_POINT);
+                                  sb.append(QUOTE_MARKER);
+                                  sb.append(misspeltWord);
+                                  sb.append(QUOTE_MARKER);
+                                  sb.append(
+                                      " is spelt incorrectly. Suggested correct spellings are: ");
+                                  sb.append(String.join(", ", suggestions));
+                                  sb.append(System.lineSeparator());
+                                });
+
+                        return new CliCheckResult.CheckFailure(
+                            "AGGREGATE_SPELLING_SUGGESTIONS", sb.toString());
                       })));
     }
 

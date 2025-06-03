@@ -27,11 +27,12 @@ public class ContextCommentRejectPatternChecker extends AbstractCliChecker {
       throw new CommandException(
           "Context comment reject pattern must be provided when using REJECT_PATTERN_CHECKER.");
     }
-    Map<String, String> failedFeatureMap = runChecks(assetExtractionDiffs);
+    Map<String, CliCheckResult.CheckFailure> failedFeatureMap = runChecks(assetExtractionDiffs);
     return getCliCheckResult(failedFeatureMap);
   }
 
-  private CliCheckResult getCliCheckResult(Map<String, String> failedFeatureMap) {
+  private CliCheckResult getCliCheckResult(
+      Map<String, CliCheckResult.CheckFailure> failedFeatureMap) {
     CliCheckResult cliCheckResult = createCliCheckerResult();
     cliCheckResult.appendToFieldFailuresMap(failedFeatureMap);
     String failures = getFailureText(failedFeatureMap);
@@ -50,15 +51,18 @@ public class ContextCommentRejectPatternChecker extends AbstractCliChecker {
     return cliCheckResult;
   }
 
-  private Map<String, String> runChecks(List<AssetExtractionDiff> assetExtractionDiffs) {
+  private Map<String, CliCheckResult.CheckFailure> runChecks(
+      List<AssetExtractionDiff> assetExtractionDiffs) {
     Pattern pattern = Pattern.compile(cliCheckerOptions.getContextCommentRejectPattern());
     return getAddedTextUnitsExcludingInconsistentComments(assetExtractionDiffs).stream()
         .filter(textUnit -> isInvalidContextOrComment(pattern, textUnit))
-        .collect(Collectors.toMap(AssetExtractorTextUnit::getSource, this::buildFailureText));
+        .collect(Collectors.toMap(AssetExtractorTextUnit::getSource, this::buildCheckFailure));
   }
 
-  private String getFailureText(Map<String, String> failedFeatureMap) {
-    return failedFeatureMap.values().stream().collect(Collectors.joining(System.lineSeparator()));
+  private String getFailureText(Map<String, CliCheckResult.CheckFailure> failedFeatureMap) {
+    return failedFeatureMap.values().stream()
+        .map(CliCheckResult.CheckFailure::failureMessage)
+        .collect(Collectors.joining(System.lineSeparator()));
   }
 
   private boolean isInvalidContextOrComment(Pattern pattern, AssetExtractorTextUnit textUnit) {
@@ -75,12 +79,12 @@ public class ContextCommentRejectPatternChecker extends AbstractCliChecker {
     return commentInvalid || contextInvalid;
   }
 
-  private String buildFailureText(AssetExtractorTextUnit textUnit) {
+  private CliCheckResult.CheckFailure buildCheckFailure(AssetExtractorTextUnit textUnit) {
     StringBuilder sb = new StringBuilder();
     sb.append(BULLET_POINT).append("Source string ").append(QUOTE_MARKER);
     sb.append(textUnit.getSource());
     sb.append(QUOTE_MARKER).append(" has an invalid context or comment string.");
-    return sb.toString();
+    return new CliCheckResult.CheckFailure("INVALID_CONTEXT_OR_COMMENT", sb.toString());
   }
 
   private String getContext(AssetExtractorTextUnit textUnit) {
