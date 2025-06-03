@@ -5,9 +5,11 @@ import java.util.Map;
 
 public class CliCheckResult {
 
+  public record CheckFailure(String ruleId, String failureMessage) {}
+
   private final boolean hardFail;
   private final String checkName;
-  private final Map<String, String> fieldFailuresMap = new HashMap<>();
+  private final Map<String, CheckFailure> fieldFailuresMap = new HashMap<>();
   private boolean successful = true;
   private String notificationText = "";
 
@@ -46,11 +48,11 @@ public class CliCheckResult {
     this.notificationText = notificationText;
   }
 
-  public Map<String, String> getFieldFailuresMap() {
+  public Map<String, CheckFailure> getFieldFailuresMap() {
     return fieldFailuresMap;
   }
 
-  public void appendToFieldFailuresMap(Map<String, String> newFailuresMap) {
+  public void appendToFieldFailuresMap(Map<String, CheckFailure> newFailuresMap) {
     fieldFailuresMap.putAll(newFailuresMap);
   }
 }

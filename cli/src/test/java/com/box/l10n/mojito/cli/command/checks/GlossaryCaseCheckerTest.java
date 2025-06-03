@@ -115,14 +115,12 @@ public class GlossaryCaseCheckerTest {
 
   @Test
   public void testGlossaryTermInStringWithAdditionalSpaces() {
-    List<AssetExtractorTextUnit> addedTUs = new ArrayList<>();
     AssetExtractorTextUnit assetExtractorTextUnit = new AssetExtractorTextUnit();
     assetExtractorTextUnit.setSource("A source string with ads                Manager in it.");
-    addedTUs.add(assetExtractorTextUnit);
-    List<AssetExtractionDiff> assetExtractionDiffs = new ArrayList<>();
+    List<AssetExtractorTextUnit> addedTUs = List.of(assetExtractorTextUnit);
     AssetExtractionDiff assetExtractionDiff = new AssetExtractionDiff();
     assetExtractionDiff.setAddedTextunits(addedTUs);
-    assetExtractionDiffs.add(assetExtractionDiff);
+    assetExtractionDiffs = List.of(assetExtractionDiff);
 
     CliCheckResult result = glossaryCaseChecker.run(assetExtractionDiffs);
     Assert.assertEquals(

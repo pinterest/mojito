@@ -3,6 +3,7 @@ package com.box.l10n.mojito.cli.command.checks;
 import static com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificationSender.QUOTE_MARKER;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,18 +20,26 @@ public class SingleBracesPlaceholderDescriptionCheckerTest {
   @Test
   public void testSuccessRun() {
     Set<String> failures =
-        messageFormatPlaceholderCommentChecker.checkCommentForDescriptions(
-            "A source string with a single {placeholder}.",
-            "Test comment placeholder:This is a description of a placeholder");
+        messageFormatPlaceholderCommentChecker
+            .checkCommentForDescriptions(
+                "A source string with a single {placeholder}.",
+                "Test comment placeholder:This is a description of a placeholder")
+            .stream()
+            .map(CliCheckResult.CheckFailure::failureMessage)
+            .collect(Collectors.toSet());
     Assert.assertTrue(failures.isEmpty());
   }
 
   @Test
   public void testMissingPlaceholderDescriptionInComment() {
     Set<String> failures =
-        messageFormatPlaceholderCommentChecker.checkCommentForDescriptions(
-            "A source string with a single {placeholder}.", "Test comment");
-    Assert.assertTrue(failures.size() == 1);
+        messageFormatPlaceholderCommentChecker
+            .checkCommentForDescriptions(
+                "A source string with a single {placeholder}.", "Test comment")
+            .stream()
+            .map(CliCheckResult.CheckFailure::failureMessage)
+            .collect(Collectors.toSet());
+    Assert.assertEquals(1, failures.size());
     Assert.assertTrue(
         failures.contains(
             "Missing description for placeholder with name "
@@ -43,9 +52,12 @@ public class SingleBracesPlaceholderDescriptionCheckerTest {
   @Test
   public void testNullComment() {
     Set<String> failures =
-        messageFormatPlaceholderCommentChecker.checkCommentForDescriptions(
-            "A source string with a single {placeholder}.", null);
-    Assert.assertTrue(failures.size() == 1);
+        messageFormatPlaceholderCommentChecker
+            .checkCommentForDescriptions("A source string with a single {placeholder}.", null)
+            .stream()
+            .map(CliCheckResult.CheckFailure::failureMessage)
+            .collect(Collectors.toSet());
+    Assert.assertEquals(1, failures.size());
     Assert.assertTrue(
         failures.contains(
             "Missing description for placeholder with name "
@@ -58,19 +70,27 @@ public class SingleBracesPlaceholderDescriptionCheckerTest {
   @Test
   public void testMultiplePlaceholderDescriptionsInComment() {
     Set<String> failures =
-        messageFormatPlaceholderCommentChecker.checkCommentForDescriptions(
-            "A source string with a single {placeholder} and {another} and so {more}.",
-            "Test comment placeholder:description 1,another: description 2,more: description 3");
+        messageFormatPlaceholderCommentChecker
+            .checkCommentForDescriptions(
+                "A source string with a single {placeholder} and {another} and so {more}.",
+                "Test comment placeholder:description 1,another: description 2,more: description 3")
+            .stream()
+            .map(CliCheckResult.CheckFailure::failureMessage)
+            .collect(Collectors.toSet());
     Assert.assertTrue(failures.isEmpty());
   }
 
   @Test
   public void testOneOfMultiplePlaceholderDescriptionsMissingInComment() {
     Set<String> failures =
-        messageFormatPlaceholderCommentChecker.checkCommentForDescriptions(
-            "A source string with a single {placeholder} and {another} and some {more}.",
-            "Test comment placeholder:description 1,more: description 3");
-    Assert.assertTrue(failures.size() == 1);
+        messageFormatPlaceholderCommentChecker
+            .checkCommentForDescriptions(
+                "A source string with a single {placeholder} and {another} and some {more}.",
+                "Test comment placeholder:description 1,more: description 3")
+            .stream()
+            .map(CliCheckResult.CheckFailure::failureMessage)
+            .collect(Collectors.toSet());
+    Assert.assertEquals(1, failures.size());
     Assert.assertTrue(
         failures.contains(
             "Missing description for placeholder with name "
@@ -85,8 +105,10 @@ public class SingleBracesPlaceholderDescriptionCheckerTest {
     String source = "{numFiles, plural, one{# There is one file} other{There are # files}}";
     String comment = "Test comment";
     Set<String> failures =
-        messageFormatPlaceholderCommentChecker.checkCommentForDescriptions(source, comment);
-    Assert.assertTrue(failures.size() == 1);
+        messageFormatPlaceholderCommentChecker.checkCommentForDescriptions(source, comment).stream()
+            .map(CliCheckResult.CheckFailure::failureMessage)
+            .collect(Collectors.toSet());
+    Assert.assertEquals(1, failures.size());
     Assert.assertTrue(
         failures.contains(
             "Missing description for placeholder with name "
@@ -102,8 +124,10 @@ public class SingleBracesPlaceholderDescriptionCheckerTest {
     String comment = "Test comment";
 
     Set<String> failures =
-        messageFormatPlaceholderCommentChecker.checkCommentForDescriptions(source, comment);
-    Assert.assertTrue(failures.size() == 1);
+        messageFormatPlaceholderCommentChecker.checkCommentForDescriptions(source, comment).stream()
+            .map(CliCheckResult.CheckFailure::failureMessage)
+            .collect(Collectors.toSet());
+    Assert.assertEquals(1, failures.size());
     Assert.assertTrue(
         failures.contains(
             "Missing description for placeholder number "
@@ -119,7 +143,9 @@ public class SingleBracesPlaceholderDescriptionCheckerTest {
     String comment = "Test comment";
 
     Set<String> failures =
-        messageFormatPlaceholderCommentChecker.checkCommentForDescriptions(source, comment);
-    Assert.assertTrue(failures.size() == 0);
+        messageFormatPlaceholderCommentChecker.checkCommentForDescriptions(source, comment).stream()
+            .map(CliCheckResult.CheckFailure::failureMessage)
+            .collect(Collectors.toSet());
+    Assert.assertEquals(0, failures.size());
   }
 }

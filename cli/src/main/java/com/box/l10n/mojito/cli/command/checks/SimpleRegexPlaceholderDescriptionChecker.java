@@ -26,11 +26,12 @@ public class SimpleRegexPlaceholderDescriptionChecker extends AbstractPlaceholde
   }
 
   @Override
-  public Set<String> checkCommentForDescriptions(String source, String comment) {
+  public Set<CliCheckResult.CheckFailure> checkCommentForDescriptions(
+      String source, String comment) {
     Matcher placeHolderMatcher = pattern.matcher(source);
     return getPlaceholderNames(source, placeHolderMatcher).stream()
         .filter(placeholder -> isPlaceholderDescriptionMissingInComment(comment, placeholder))
-        .map(this::getFailureText)
+        .map(this::getCheckFailure)
         .filter(Optional::isPresent)
         .map(Optional::get)
         .collect(Collectors.toSet());
