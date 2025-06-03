@@ -108,12 +108,14 @@ public class AIChecker extends AbstractCliChecker {
               }
             });
 
-    HashMap<String, String> featureFailureMap = new HashMap<>();
+    HashMap<String, CliCheckResult.CheckFailure> featureFailureMap = new HashMap<>();
     for (Map.Entry<String, List<AICheckResult>> failure : failureMap.entrySet()) {
       List<String> suggestedFixes =
           failure.getValue().stream().map(AICheckResult::getSuggestedFix).toList();
       String suggestFixEntry = String.join(System.lineSeparator(), suggestedFixes);
-      featureFailureMap.put(failure.getKey(), suggestFixEntry);
+      featureFailureMap.put(
+          failure.getKey(),
+          new CliCheckResult.CheckFailure("AI_CHECKER_SUGGESTION", suggestFixEntry));
     }
 
     CliCheckResult cliCheckResult = createCliCheckerResult();

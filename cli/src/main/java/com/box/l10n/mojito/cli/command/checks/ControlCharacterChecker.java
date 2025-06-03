@@ -19,17 +19,23 @@ public class ControlCharacterChecker extends AbstractCliChecker {
 
   @Override
   public CliCheckResult run(List<AssetExtractionDiff> assetExtractionDiffs) {
-    final Map<String, String> failedFeatureMap = new HashMap<>();
+    final Map<String, CliCheckResult.CheckFailure> failedFeatureMap = new HashMap<>();
     getSourceStringsFromDiff(assetExtractionDiffs)
         .forEach(
             textUnit -> {
               ControlCharacterCheckerResult checkerResult =
                   getControlCharacterCheckerResult(textUnit);
               if (!checkerResult.isSuccessful) {
-                failedFeatureMap.put(textUnit, checkerResult.failureText);
+                failedFeatureMap.put(
+                    textUnit,
+                    new CliCheckResult.CheckFailure(
+                        "CONTROL_CHARACTER_DETECTED", checkerResult.failureText));
               }
             });
-    List<String> failures = new ArrayList<>(failedFeatureMap.values());
+    List<String> failures =
+        failedFeatureMap.values().stream()
+            .map(CliCheckResult.CheckFailure::failureMessage)
+            .collect(Collectors.toList());
     CliCheckResult result = createCliCheckerResult();
     result.appendToFieldFailuresMap(failedFeatureMap);
     if (!failures.isEmpty()) {

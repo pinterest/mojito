@@ -35,12 +35,14 @@ public class EmptyPlaceholderChecker extends AbstractCliChecker {
     CliCheckResult cliCheckResult = createCliCheckerResult();
     Set<String> failures = checkForEmptyPlaceholders(assetExtractionDiffs);
     if (!failures.isEmpty()) {
-      Map<String, String> failedFeatureMap = new HashMap<>();
+      Map<String, CliCheckResult.CheckFailure> failedFeatureMap = new HashMap<>();
       failures.forEach(
           (textUnit) ->
               failedFeatureMap.put(
                   textUnit,
-                  "Empty placeholder(s) detected, please remove or update the placeholder(s) to contain a descriptive name"));
+                  new CliCheckResult.CheckFailure(
+                      "PLACEHOLDER_NEEDS_DESCRIPTIVE_NAME",
+                      "Empty placeholder(s) detected, please remove or update the placeholder(s) to contain a descriptive name")));
       cliCheckResult.appendToFieldFailuresMap(failedFeatureMap);
       cliCheckResult.setSuccessful(false);
       cliCheckResult.setNotificationText(buildNotificationText(failures).toString());
