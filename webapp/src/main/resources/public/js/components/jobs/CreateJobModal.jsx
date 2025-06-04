@@ -63,18 +63,16 @@ const CreateJobModal = createReactClass({
 
     getLabelInputTextBox(label, placeholder, inputName) {
         return (
-            <div className="form-group pbs pts">
-                <label className="col-sm-2 control-label">{label}</label>
-                <div className="col-sm-8">
-                    <input
-                        className="form-control"
-                        type="text"
-                        name={inputName}
-                        placeholder={placeholder}
-                        value={this.state[inputName]}
-                        onChange={this.onHandleInputChange}
-                    />
-                </div>
+            <div className="form-group">
+                <label>{label}</label>
+                <input
+                    className="form-control"
+                    type="text"
+                    name={inputName}
+                    placeholder={placeholder}
+                    value={this.state[inputName]}
+                    onChange={this.onHandleInputChange}
+                />
             </div>
         );
     },
@@ -93,17 +91,15 @@ const CreateJobModal = createReactClass({
                         <Modal.Title>Create a Scheduled Job</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <div className="form-group pbs">
-                            <label className="col-sm-2 control-label">Repository</label>
-                            <div className="col-sm-8">
+                        <div className="form-group">
+                            <label>Repository</label>
                             <CreateJobRepositoryDropDown
                                 selected={this.state.selectedRepository}
                                 onSelect={this.handleRepositorySelect}
                             />
-                            </div>
                         </div>
-                        <div className="form-group pbs">
-                            <label className="col-sm-2 control-label">Job Type</label>
+                        <div className="form-group">
+                            <label>Job Type</label>
                             <div>
                                 <JobTypeDropdown onJobTypeChange={this.onJobTypeChange} />
                             </div>

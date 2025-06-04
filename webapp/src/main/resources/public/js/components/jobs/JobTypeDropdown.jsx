@@ -33,17 +33,15 @@ let JobTypeDropDown = createReactClass({
      */
     render() {
         return (
-                <span className="mlm">
-                    <DropdownButton id="JobTypeDropdown" disabled={false} title={this.getJobName(this.state.jobType)}>
-                        {Object.values(JobType).map(jobType => (
-                            <MenuItem eventKey={jobType}
-                                      key={jobType} active={jobType === this.state.jobType}
-                                      onSelect={(selectedJobType, _) => this.onJobTypeChange(selectedJobType)}>
-                                {this.getJobName(jobType)}
-                            </MenuItem>
-                        ))}
-                    </DropdownButton>
-                </span>
+            <DropdownButton id="JobTypeDropdown" disabled={false} title={this.getJobName(this.state.jobType)}>
+                {Object.values(JobType).map(jobType => (
+                    <MenuItem eventKey={jobType}
+                                key={jobType} active={jobType === this.state.jobType}
+                                onSelect={(selectedJobType, _) => this.onJobTypeChange(selectedJobType)}>
+                        {this.getJobName(jobType)}
+                    </MenuItem>
+                ))}
+            </DropdownButton>
         );
 
     },
