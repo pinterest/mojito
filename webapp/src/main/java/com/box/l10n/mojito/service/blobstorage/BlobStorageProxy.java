@@ -56,10 +56,13 @@ public class BlobStorageProxy {
           Optional<Retention> retention = this.blobStorage.getRetention(key);
           CompletableFuture.runAsync(
               () -> {
-                if (retention.isPresent() && retention.get() != PERMANENT) {
-                  redisClient.setex(key, ONE_DAY_IN_SECONDS, result.get());
-                } else {
-                  redisClient.set(key, result.get());
+                try (Jedis asyncRedisClient =
+                    this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
+                  if (retention.isPresent() && retention.get() != PERMANENT) {
+                    asyncRedisClient.setex(key, ONE_DAY_IN_SECONDS, result.get());
+                  } else {
+                    asyncRedisClient.set(key, result.get());
+                  }
                 }
               },
               this.executorService);
@@ -116,11 +119,14 @@ public class BlobStorageProxy {
           Optional<Retention> retention = this.blobStorage.getRetention(key);
           CompletableFuture.runAsync(
               () -> {
-                if (retention.isPresent() && retention.get() != PERMANENT) {
-                  redisClient.setex(
-                      key.getBytes(StandardCharsets.UTF_8), ONE_DAY_IN_SECONDS, result.get());
-                } else {
-                  redisClient.set(key.getBytes(StandardCharsets.UTF_8), result.get());
+                try (Jedis asyncRedisClient =
+                    this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
+                  if (retention.isPresent() && retention.get() != PERMANENT) {
+                    asyncRedisClient.setex(
+                        key.getBytes(StandardCharsets.UTF_8), ONE_DAY_IN_SECONDS, result.get());
+                  } else {
+                    asyncRedisClient.set(key.getBytes(StandardCharsets.UTF_8), result.get());
+                  }
                 }
               },
               this.executorService);

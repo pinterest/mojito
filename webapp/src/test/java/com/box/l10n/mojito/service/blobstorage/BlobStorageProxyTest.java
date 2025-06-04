@@ -92,9 +92,10 @@ public class BlobStorageProxyTest {
       final String content = "s3Content";
       Jedis jedis = mock(Jedis.class);
       when(jedis.exists(anyString())).thenReturn(false);
+      Jedis asyncJedis = mock(Jedis.class);
       when(this.blobStorageMock.getString(anyString())).thenReturn(of(content));
       when(this.blobStorageMock.getRetention(anyString())).thenReturn(of(Retention.MIN_1_DAY));
-      when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis);
+      when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis).thenReturn(asyncJedis);
       BlobStorageProxy blobStorageProxy =
           new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
 
@@ -110,7 +111,8 @@ public class BlobStorageProxyTest {
                   this.runnableArgumentCaptorCaptor.capture(), any(ExecutorService.class)),
           times(1));
       this.runnableArgumentCaptorCaptor.getValue().run();
-      verify(jedis, times(1)).setex(eq(KEY), eq((long) ONE_DAY_IN_SECONDS), eq(content));
+      verify(asyncJedis, times(1)).close();
+      verify(asyncJedis, times(1)).setex(eq(KEY), eq((long) ONE_DAY_IN_SECONDS), eq(content));
     }
   }
 
@@ -121,9 +123,10 @@ public class BlobStorageProxyTest {
       final String content = "s3Content";
       Jedis jedis = mock(Jedis.class);
       when(jedis.exists(anyString())).thenReturn(false);
+      Jedis asyncJedis = mock(Jedis.class);
       when(this.blobStorageMock.getString(anyString())).thenReturn(of(content));
       when(this.blobStorageMock.getRetention(anyString())).thenReturn(of(Retention.PERMANENT));
-      when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis);
+      when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis).thenReturn(asyncJedis);
       BlobStorageProxy blobStorageProxy =
           new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
 
@@ -139,7 +142,8 @@ public class BlobStorageProxyTest {
                   this.runnableArgumentCaptorCaptor.capture(), any(ExecutorService.class)),
           times(1));
       this.runnableArgumentCaptorCaptor.getValue().run();
-      verify(jedis, times(1)).set(eq(KEY), eq(content));
+      verify(asyncJedis, times(1)).close();
+      verify(asyncJedis, times(1)).set(eq(KEY), eq(content));
     }
   }
 
@@ -307,9 +311,10 @@ public class BlobStorageProxyTest {
       byte[] content = "s3Content".getBytes(StandardCharsets.UTF_8);
       Jedis jedis = mock(Jedis.class);
       when(jedis.exists(anyString())).thenReturn(false);
+      Jedis asyncJedis = mock(Jedis.class);
       when(this.blobStorageMock.getBytes(anyString())).thenReturn(of(content));
       when(this.blobStorageMock.getRetention(anyString())).thenReturn(of(Retention.MIN_1_DAY));
-      when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis);
+      when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis).thenReturn(asyncJedis);
       BlobStorageProxy blobStorageProxy =
           new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
 
@@ -325,7 +330,8 @@ public class BlobStorageProxyTest {
                   this.runnableArgumentCaptorCaptor.capture(), any(ExecutorService.class)),
           times(1));
       this.runnableArgumentCaptorCaptor.getValue().run();
-      verify(jedis, times(1)).setex(eq(KEY_BYTES), eq((long) ONE_DAY_IN_SECONDS), eq(content));
+      verify(asyncJedis, times(1)).close();
+      verify(asyncJedis, times(1)).setex(eq(KEY_BYTES), eq((long) ONE_DAY_IN_SECONDS), eq(content));
     }
   }
 
@@ -336,9 +342,10 @@ public class BlobStorageProxyTest {
       byte[] content = "s3Content".getBytes(StandardCharsets.UTF_8);
       Jedis jedis = mock(Jedis.class);
       when(jedis.exists(anyString())).thenReturn(false);
+      Jedis asyncJedis = mock(Jedis.class);
       when(this.blobStorageMock.getBytes(anyString())).thenReturn(of(content));
       when(this.blobStorageMock.getRetention(anyString())).thenReturn(of(Retention.PERMANENT));
-      when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis);
+      when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis).thenReturn(asyncJedis);
       BlobStorageProxy blobStorageProxy =
           new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
 
@@ -354,7 +361,8 @@ public class BlobStorageProxyTest {
                   this.runnableArgumentCaptorCaptor.capture(), any(ExecutorService.class)),
           times(1));
       this.runnableArgumentCaptorCaptor.getValue().run();
-      verify(jedis, times(1)).set(eq(KEY_BYTES), eq(content));
+      verify(asyncJedis, times(1)).close();
+      verify(asyncJedis, times(1)).set(eq(KEY_BYTES), eq(content));
     }
   }
 
