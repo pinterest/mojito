@@ -7,6 +7,7 @@ import com.box.l10n.mojito.service.scheduledjob.ScheduledJobRepository;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobResponse;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobStatus;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobStatusRepository;
+import com.box.l10n.mojito.service.scheduledjob.ScheduledJobTypeRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,15 +37,18 @@ public class ScheduledJobWS {
   private final ScheduledJobRepository scheduledJobRepository;
   private final ScheduledJobManager scheduledJobManager;
   private final ScheduledJobStatusRepository scheduledJobStatusRepository;
+  private final ScheduledJobTypeRepository scheduledJobTypeRepository;
 
   @Autowired
   public ScheduledJobWS(
       ScheduledJobRepository scheduledJobRepository,
       ScheduledJobManager scheduledJobManager,
-      ScheduledJobStatusRepository scheduledJobStatusRepository) {
+      ScheduledJobStatusRepository scheduledJobStatusRepository,
+      ScheduledJobTypeRepository scheduledJobTypeRepository) {
     this.scheduledJobRepository = scheduledJobRepository;
     this.scheduledJobManager = scheduledJobManager;
     this.scheduledJobStatusRepository = scheduledJobStatusRepository;
+    this.scheduledJobTypeRepository = scheduledJobTypeRepository;
   }
 
   private final ResponseEntity<ScheduledJobResponse> notFoundResponse =
@@ -53,7 +57,8 @@ public class ScheduledJobWS {
 
   @RequestMapping(method = RequestMethod.POST, value = "/api/jobs/create")
   @ResponseStatus(HttpStatus.OK)
-  public ResponseEntity<ScheduledJobResponse> createJob(@RequestBody ScheduledJob scheduledJob) {
+  public ResponseEntity<ScheduledJobResponse> createJob(@RequestBody ScheduledJob scheduledJob)
+      throws SchedulerException, ClassNotFoundException {
     if (scheduledJob.getUuid() == null) {
       scheduledJob.setUuid(UUID.randomUUID().toString());
     }
@@ -61,7 +66,25 @@ public class ScheduledJobWS {
       scheduledJob.setJobStatus(
           scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SCHEDULED));
     }
+    if (scheduledJob.getJobType() != null && scheduledJob.getJobType().getId() != null) {
+      scheduledJob.setJobType(
+          scheduledJobTypeRepository
+              .findById(scheduledJob.getJobType().getId())
+              .orElseThrow(
+                  () ->
+                      new ResponseStatusException(
+                          HttpStatus.NOT_FOUND,
+                          "Job type not found with id: " + scheduledJob.getJobType().getId())));
+    } else {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Job type must be provided to create a job");
+    }
+
     scheduledJobRepository.save(scheduledJob);
+    System.out.println("Scheduling job: " + scheduledJob.getUuid());
+    System.out.println("Job type id: " + scheduledJob.getJobType().getId());
+    System.out.println("Job type enum: " + scheduledJob.getJobType().getEnum());
+    scheduledJobManager.scheduleJob(scheduledJob);
     return ResponseEntity.status(HttpStatus.OK)
         .body(
             new ScheduledJobResponse(
@@ -159,9 +182,6 @@ public class ScheduledJobWS {
 
   private ResponseEntity<ScheduledJobResponse> setJobActive(UUID id, boolean active) {
     Optional<ScheduledJob> optScheduledJob = scheduledJobRepository.findByUuid(id.toString());
-
-    System.out.println(id);
-    System.out.println(optScheduledJob);
 
     if (optScheduledJob.isEmpty()) return notFoundResponse;
 
