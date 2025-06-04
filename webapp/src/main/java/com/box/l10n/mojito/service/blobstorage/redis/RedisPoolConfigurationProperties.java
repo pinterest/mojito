@@ -6,11 +6,11 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties("l10n.redis.client-pool")
 public class RedisPoolConfigurationProperties {
-  private int maxTotal = 20;
+  private int maxTotal = 40;
 
-  private int maxIdle = 10;
+  private int maxIdle = 20;
 
-  private int minIdle = 2;
+  private int minIdle = 4;
 
   private int timeoutMillis = 5000;
 
