@@ -36,6 +36,11 @@ const CreateJobModal = createReactClass({
         this.setState({ [name]: value });
     },
 
+    onHandleInputChange(e) {
+        const { name, value } = e.target;
+        this.setState({ [name]: value });
+    },
+
     handleRepositorySelect(selectedRepository) {
         this.setState({ selectedRepository });
     },
