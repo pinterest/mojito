@@ -5,6 +5,9 @@ import com.box.l10n.mojito.service.scheduledjob.ScheduledJobDTO;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobManager;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobRepository;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobResponse;
+import com.box.l10n.mojito.service.scheduledjob.ScheduledJobStatus;
+import com.box.l10n.mojito.service.scheduledjob.ScheduledJobStatusRepository;
+import com.box.l10n.mojito.service.scheduledjob.ScheduledJobTypeRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -35,17 +39,57 @@ public class ScheduledJobWS {
   static Logger logger = LoggerFactory.getLogger(ScheduledJobWS.class);
   private final ScheduledJobRepository scheduledJobRepository;
   private final ScheduledJobManager scheduledJobManager;
+  private final ScheduledJobStatusRepository scheduledJobStatusRepository;
+  private final ScheduledJobTypeRepository scheduledJobTypeRepository;
 
   @Autowired
   public ScheduledJobWS(
-      ScheduledJobRepository scheduledJobRepository, ScheduledJobManager scheduledJobManager) {
+      ScheduledJobRepository scheduledJobRepository,
+      ScheduledJobManager scheduledJobManager,
+      ScheduledJobStatusRepository scheduledJobStatusRepository,
+      ScheduledJobTypeRepository scheduledJobTypeRepository) {
     this.scheduledJobRepository = scheduledJobRepository;
     this.scheduledJobManager = scheduledJobManager;
+    this.scheduledJobStatusRepository = scheduledJobStatusRepository;
+    this.scheduledJobTypeRepository = scheduledJobTypeRepository;
   }
 
   private final ResponseEntity<ScheduledJobResponse> notFoundResponse =
       createResponse(
           HttpStatus.NOT_FOUND, ScheduledJobResponse.Status.FAILURE, "Job doesn't exist", null);
+
+  @RequestMapping(method = RequestMethod.POST, value = "/api/jobs/create")
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<ScheduledJobResponse> createJob(@RequestBody ScheduledJob scheduledJob)
+      throws SchedulerException, ClassNotFoundException {
+    if (scheduledJob.getUuid() == null) {
+      scheduledJob.setUuid(UUID.randomUUID().toString());
+    }
+    if (scheduledJob.getJobStatus() == null) {
+      scheduledJob.setJobStatus(
+          scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SCHEDULED));
+    }
+    if (scheduledJob.getJobType() != null && scheduledJob.getJobType().getId() != null) {
+      scheduledJob.setJobType(
+          scheduledJobTypeRepository
+              .findById(scheduledJob.getJobType().getId())
+              .orElseThrow(
+                  () ->
+                      new ResponseStatusException(
+                          HttpStatus.NOT_FOUND,
+                          "Job type not found with id: " + scheduledJob.getJobType().getId())));
+    } else {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Job type must be provided to create a job");
+    }
+
+    scheduledJobRepository.save(scheduledJob);
+    scheduledJobManager.scheduleJob(scheduledJob);
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(
+            new ScheduledJobResponse(
+                ScheduledJobResponse.Status.SUCCESS, "Job created successfully", scheduledJob));
+  }
 
   @RequestMapping(method = RequestMethod.GET, value = "/api/jobs")
   @ResponseStatus(HttpStatus.OK)
