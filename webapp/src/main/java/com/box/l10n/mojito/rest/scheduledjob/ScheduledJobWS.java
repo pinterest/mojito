@@ -60,35 +60,47 @@ public class ScheduledJobWS {
 
   @RequestMapping(method = RequestMethod.POST, value = "/api/jobs/create")
   @ResponseStatus(HttpStatus.OK)
-  public ResponseEntity<ScheduledJobResponse> createJob(@RequestBody ScheduledJob scheduledJob)
-      throws SchedulerException, ClassNotFoundException {
-    if (scheduledJob.getUuid() == null) {
-      scheduledJob.setUuid(UUID.randomUUID().toString());
+  public ResponseEntity<ScheduledJobResponse> createJob(@RequestBody ScheduledJob scheduledJob) {
+    if (scheduledJob.getRepository() == null) {
+      return createResponse(
+          HttpStatus.BAD_REQUEST,
+          ScheduledJobResponse.Status.FAILURE,
+          "Repository must be provided to create a job",
+          null);
     }
-    if (scheduledJob.getJobStatus() == null) {
-      scheduledJob.setJobStatus(
-          scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SCHEDULED));
-    }
-    if (scheduledJob.getJobType() != null && scheduledJob.getJobType().getId() != null) {
-      scheduledJob.setJobType(
-          scheduledJobTypeRepository
-              .findById(scheduledJob.getJobType().getId())
-              .orElseThrow(
-                  () ->
-                      new ResponseStatusException(
-                          HttpStatus.NOT_FOUND,
-                          "Job type not found with id: " + scheduledJob.getJobType().getId())));
-    } else {
-      throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "Job type must be provided to create a job");
-    }
+    try {
+      if (scheduledJob.getUuid() == null) {
+        scheduledJob.setUuid(UUID.randomUUID().toString());
+      }
+      if (scheduledJob.getJobStatus() == null) {
+        scheduledJob.setJobStatus(
+            scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SCHEDULED));
+      }
+      if (scheduledJob.getJobType() != null && scheduledJob.getJobType().getId() != null) {
+        if (scheduledJobTypeRepository.findById(scheduledJob.getJobType().getId()).isPresent()) {
+          scheduledJob.setJobType(
+              scheduledJobTypeRepository.findById(scheduledJob.getJobType().getId()).get());
+        } else {
+          throw new ResponseStatusException(
+              HttpStatus.BAD_REQUEST,
+              "Job type with id " + scheduledJob.getJobType().getId() + " does not exist");
+        }
+      }
 
-    scheduledJobRepository.save(scheduledJob);
-    scheduledJobManager.scheduleJob(scheduledJob);
-    return ResponseEntity.status(HttpStatus.OK)
-        .body(
-            new ScheduledJobResponse(
-                ScheduledJobResponse.Status.SUCCESS, "Job created successfully", scheduledJob));
+      scheduledJobRepository.save(scheduledJob);
+      scheduledJobManager.scheduleJob(scheduledJob);
+      return ResponseEntity.status(HttpStatus.OK)
+          .body(
+              new ScheduledJobResponse(
+                  ScheduledJobResponse.Status.SUCCESS, "Job created successfully", scheduledJob));
+    } catch (Exception e) {
+      logger.error("Error creating job", e);
+      return createResponse(
+          HttpStatus.BAD_REQUEST,
+          ScheduledJobResponse.Status.FAILURE,
+          "Error creating job: " + e.getMessage(),
+          scheduledJob.getUuid());
+    }
   }
 
   @RequestMapping(method = RequestMethod.GET, value = "/api/jobs")
