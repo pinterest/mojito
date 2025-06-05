@@ -33,7 +33,7 @@ class SarifFileGeneratorTest {
   @Test
   void generateSarifFile_withUsagesAndNoUsages() {
     // Arrange
-    SarifFileGenerator generator = new SarifFileGenerator();
+    SarifFileGenerator generator = new SarifFileGenerator("infoUri");
     AssetExtractorTextUnit textUnitWithUsage =
         createAssetExtractorTextUnit("source1", Set.of("file1.java:10", "file2.java:20"));
     AssetExtractorTextUnit textUnitNoUsage =
@@ -101,7 +101,7 @@ class SarifFileGeneratorTest {
 
   @Test
   void generateSarifFile_warningLevel() {
-    SarifFileGenerator generator = new SarifFileGenerator();
+    SarifFileGenerator generator = new SarifFileGenerator("infoUri");
 
     AssetExtractorTextUnit textUnit =
         createAssetExtractorTextUnit("sourceX", Set.of("fileX.java:42"));
@@ -128,7 +128,7 @@ class SarifFileGeneratorTest {
 
   @Test
   void getUsageLocations_handlesInvalidLineNumber() {
-    SarifFileGenerator generator = new SarifFileGenerator();
+    SarifFileGenerator generator = new SarifFileGenerator("infoUri");
 
     AssetExtractorTextUnit textUnit =
         createAssetExtractorTextUnit(

@@ -13,6 +13,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -20,8 +22,11 @@ public class SarifFileGenerator {
 
   static Logger logger = LoggerFactory.getLogger(SarifFileGenerator.class);
 
-  private String buildRuleId(String source) {
-    return "rule[" + source.trim() + "]";
+  private final String infoUri;
+
+  @Autowired
+  SarifFileGenerator(@Value("${l10n.extraction-check.sarif.infoUri:}") String infoUri) {
+    this.infoUri = infoUri;
   }
 
   public Sarif generateSarifFile(
@@ -33,8 +38,7 @@ public class SarifFileGenerator {
             .collect(Collectors.toMap(AssetExtractorTextUnit::getSource, x -> x));
     for (CliCheckResult checkFailure : cliCheckerFailures) {
       ResultLevel resultLevel = checkFailure.isHardFail() ? ResultLevel.ERROR : ResultLevel.WARNING;
-      sarifBuilder.addRun(
-          checkFailure.getCheckName(), "http://pinch.pinadmin.com/glow-string-checks");
+      sarifBuilder.addRun(checkFailure.getCheckName(), infoUri);
       for (Map.Entry<String, CliCheckResult.CheckFailure> entry :
           checkFailure.getFieldFailuresMap().entrySet()) {
         String source = entry.getKey();
@@ -42,13 +46,15 @@ public class SarifFileGenerator {
         AssetExtractorTextUnit assetExtractorTextUnit = sourceToAssetTextUnitMap.get(source);
         if (hasUsages(assetExtractorTextUnit)) {
           sarifBuilder.addResultWithLocations(
-              resultCheckFailure.ruleId(),
+              resultCheckFailure.ruleId().toString(),
               resultLevel,
               resultCheckFailure.failureMessage(),
               getUsageLocations(assetExtractorTextUnit));
         } else {
           sarifBuilder.addResultWithoutLocation(
-              resultCheckFailure.ruleId(), resultLevel, resultCheckFailure.failureMessage());
+              resultCheckFailure.ruleId().toString(),
+              resultLevel,
+              resultCheckFailure.failureMessage());
         }
       }
     }
@@ -60,17 +66,6 @@ public class SarifFileGenerator {
     return assetExtractorTextUnit != null
         && assetExtractorTextUnit.getUsages() != null
         && !assetExtractorTextUnit.getUsages().isEmpty();
-  }
-
-  private String buildAggregateRuleId(Map<String, String> noUsagesTextUnitErrorMap) {
-    return noUsagesTextUnitErrorMap.keySet().stream()
-        .reduce("", (acc, key) -> acc.isEmpty() ? buildRuleId(key) : acc + "_" + buildRuleId(key));
-  }
-
-  private static String buildAggregateFailureMessage(Map<String, String> noUsagesTextUnitErrorMap) {
-    return noUsagesTextUnitErrorMap.values().stream()
-        .reduce(
-            "", (acc, failure) -> acc.isEmpty() ? failure : acc + System.lineSeparator() + failure);
   }
 
   private static List<Location> getUsageLocations(AssetExtractorTextUnit assetExtractorTextUnit) {
