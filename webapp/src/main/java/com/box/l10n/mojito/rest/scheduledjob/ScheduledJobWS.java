@@ -86,9 +86,6 @@ public class ScheduledJobWS {
     }
 
     scheduledJobRepository.save(scheduledJob);
-    System.out.println("Scheduling job: " + scheduledJob.getUuid());
-    System.out.println("Job type id: " + scheduledJob.getJobType().getId());
-    System.out.println("Job type enum: " + scheduledJob.getJobType().getEnum());
     scheduledJobManager.scheduleJob(scheduledJob);
     return ResponseEntity.status(HttpStatus.OK)
         .body(

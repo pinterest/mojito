@@ -40,8 +40,8 @@ const CreateJobModal = createReactClass({
         this.setState({ selectedRepository });
     },
 
-    handleSubmit() {
-        const jobToSave = {
+    getScheduledJobInput() {
+        return {
             repository: this.state.selectedRepository,
             propertiesString: JSON.stringify({
                 thirdPartyProjectId: this.state.thirdPartyProjectId,
@@ -55,8 +55,13 @@ const CreateJobModal = createReactClass({
             }),
             cron: this.state.cron,
             jobType: { id: JobTypeIds[this.state.jobType] },
-        }
-        JobActions.createJob(jobToSave);
+        };
+    },
+
+    handleSubmit(e) {
+        e.preventDefault();
+        const scheduledJobInput = this.getScheduledJobInput();
+        JobActions.createJob(scheduledJobInput);
         this.setState({ selectedRepository: null });
         this.props.onClose();
     },
@@ -89,10 +94,7 @@ const CreateJobModal = createReactClass({
         return (
             <Modal show={this.props.show} onHide={this.props.onClose}>
                 <Form
-                    onSubmit={e => {
-                        e.preventDefault();
-                        this.handleSubmit();
-                    }}
+                    onSubmit={this.handleSubmit}
                 >
                     <Modal.Header closeButton>
                         <Modal.Title>Create a Scheduled Job</Modal.Title>
