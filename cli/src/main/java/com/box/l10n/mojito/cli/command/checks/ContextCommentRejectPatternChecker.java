@@ -84,7 +84,7 @@ public class ContextCommentRejectPatternChecker extends AbstractCliChecker {
     sb.append(BULLET_POINT).append("Source string ").append(QUOTE_MARKER);
     sb.append(textUnit.getSource());
     sb.append(QUOTE_MARKER).append(" has an invalid context or comment string.");
-    return new CliCheckResult.CheckFailure("INVALID_CONTEXT_OR_COMMENT", sb.toString());
+    return new CliCheckResult.CheckFailure(CheckerRuleId.INVALID_CONTEXT_OR_COMMENT, sb.toString());
   }
 
   private String getContext(AssetExtractorTextUnit textUnit) {

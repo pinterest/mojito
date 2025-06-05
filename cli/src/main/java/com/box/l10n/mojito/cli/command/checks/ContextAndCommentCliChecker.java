@@ -29,11 +29,11 @@ public class ContextAndCommentCliChecker extends AbstractCliChecker {
   static class ContextAndCommentCliCheckerResult {
     String sourceString;
     String failureMessage;
-    String ruleId;
+    CheckerRuleId ruleId;
     boolean failed;
 
     public ContextAndCommentCliCheckerResult(
-        boolean failed, String sourceString, String failureMessage, String ruleId) {
+        boolean failed, String sourceString, String failureMessage, CheckerRuleId ruleId) {
       this.sourceString = sourceString;
       this.failureMessage = failureMessage;
       this.failed = failed;
@@ -52,7 +52,7 @@ public class ContextAndCommentCliChecker extends AbstractCliChecker {
       return failureMessage;
     }
 
-    public String getRuleId() {
+    public CheckerRuleId getRuleId() {
       return ruleId;
     }
 
@@ -155,21 +155,21 @@ public class ContextAndCommentCliChecker extends AbstractCliChecker {
       context = splitNameArray[1];
     }
     String comment = assetExtractorTextUnit.getComments();
-    String ruleId = null;
+    CheckerRuleId ruleId = null;
 
     if (!isBlank(context) && !isBlank(comment)) {
       if (context.trim().equalsIgnoreCase(comment.trim())) {
-        ruleId = "EQUAL_CONTEXT_AND_COMMENT_STRINGS";
+        ruleId = CheckerRuleId.EQUAL_CONTEXT_AND_COMMENT_STRINGS;
         failureText = "Context & comment strings should not be identical.";
       }
     } else if (isBlank(context) && isBlank(comment)) {
-      ruleId = "EMPTY_CONTEXT_AND_COMMENT_STRINGS";
+      ruleId = CheckerRuleId.EMPTY_CONTEXT_AND_COMMENT_STRINGS;
       failureText = "Context and comment strings are both empty.";
     } else if (isBlank(context)) {
-      ruleId = "EMPTY_CONTEXT_STRING";
+      ruleId = CheckerRuleId.EMPTY_CONTEXT_STRING;
       failureText = "Context string is empty.";
     } else if (isBlank(comment)) {
-      ruleId = "EMPTY_COMMENT_STRING";
+      ruleId = CheckerRuleId.EMPTY_COMMENT_STRING;
       failureText = "Comment string is empty.";
     }
 

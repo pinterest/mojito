@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class CliCheckResult {
 
-  public record CheckFailure(String ruleId, String failureMessage) {}
+  public record CheckFailure(CheckerRuleId ruleId, String failureMessage) {}
 
   private final boolean hardFail;
   private final String checkName;
