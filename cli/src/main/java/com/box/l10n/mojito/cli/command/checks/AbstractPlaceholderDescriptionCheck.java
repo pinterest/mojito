@@ -17,7 +17,7 @@ public abstract class AbstractPlaceholderDescriptionCheck {
     if (StringUtils.isNumeric(placeholder)) {
       checkFailure =
           new CliCheckResult.CheckFailure(
-              "MISSING_DESCRIPTION_FOR_NUMERIC_PLACEHOLDER",
+              CheckerRuleId.MISSING_DESCRIPTION_FOR_NUMERIC_PLACEHOLDER,
               "Missing description for placeholder number "
                   + QUOTE_MARKER
                   + placeholder
@@ -30,7 +30,7 @@ public abstract class AbstractPlaceholderDescriptionCheck {
     } else if (!placeholder.trim().isEmpty()) {
       checkFailure =
           new CliCheckResult.CheckFailure(
-              "MISSING_NAMED_PLACEHOLDER_DESCRIPTION",
+              CheckerRuleId.MISSING_NAMED_PLACEHOLDER_DESCRIPTION,
               "Missing description for placeholder with name "
                   + QUOTE_MARKER
                   + placeholder

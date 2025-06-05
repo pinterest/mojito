@@ -41,7 +41,7 @@ public class PlaceholderCommentChecker extends AbstractCliChecker {
                       Map.Entry::getKey,
                       (entry) ->
                           new CliCheckResult.CheckFailure(
-                              "AGGREGATE_PLACEHOLDER_COMMENT_CHECKER_VIOLATION",
+                              CheckerRuleId.AGGREGATE_PLACEHOLDER_COMMENT_CHECKER_VIOLATION,
                               entry.getValue().stream()
                                   .map(CliCheckResult.CheckFailure::failureMessage)
                                   .collect(Collectors.joining("\n"))))));
@@ -79,7 +79,7 @@ public class PlaceholderCommentChecker extends AbstractCliChecker {
               source,
               Lists.newArrayList(
                   new CliCheckResult.CheckFailure(
-                      "EMPTY_PLACEHOLDER_COMMENT", "Comment is empty.")));
+                      CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Comment is empty.")));
     } else {
       List<CliCheckResult.CheckFailure> failures =
           placeholderDescriptionChecks.stream()

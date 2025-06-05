@@ -116,7 +116,7 @@ public class SpellCliChecker extends AbstractCliChecker {
                                 });
 
                         return new CliCheckResult.CheckFailure(
-                            "AGGREGATE_SPELLING_SUGGESTIONS", sb.toString());
+                            CheckerRuleId.AGGREGATE_SPELLING_SUGGESTIONS, sb.toString());
                       })));
     }
 

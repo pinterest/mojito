@@ -32,7 +32,7 @@ public class GlossaryCaseChecker extends AbstractCliChecker {
                         GlossaryCaseCheckerSearchResult::getSource,
                         searchResult ->
                             new CliCheckResult.CheckFailure(
-                                "AGGREGATE_GLOSSARY_CASE_CHECKER_RESULTS",
+                                CheckerRuleId.AGGREGATE_GLOSSARY_CASE_CHECKER_RESULTS,
                                 String.join("\n ", searchResult.getFailures()))));
         cliCheckResult.appendToFieldFailuresMap(failedFeatureMap);
         cliCheckResult.setNotificationText(buildNotificationText(failures).toString());

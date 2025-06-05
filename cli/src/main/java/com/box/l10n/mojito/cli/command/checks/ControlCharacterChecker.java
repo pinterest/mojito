@@ -29,7 +29,7 @@ public class ControlCharacterChecker extends AbstractCliChecker {
                 failedFeatureMap.put(
                     textUnit,
                     new CliCheckResult.CheckFailure(
-                        "CONTROL_CHARACTER_DETECTED", checkerResult.failureText));
+                        CheckerRuleId.CONTROL_CHARACTER_DETECTED, checkerResult.failureText));
               }
             });
     List<String> failures =

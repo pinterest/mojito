@@ -115,7 +115,7 @@ public class AIChecker extends AbstractCliChecker {
       String suggestFixEntry = String.join(System.lineSeparator(), suggestedFixes);
       featureFailureMap.put(
           failure.getKey(),
-          new CliCheckResult.CheckFailure("AI_CHECKER_SUGGESTION", suggestFixEntry));
+          new CliCheckResult.CheckFailure(CheckerRuleId.AI_CHECKER_SUGGESTION, suggestFixEntry));
     }
 
     CliCheckResult cliCheckResult = createCliCheckerResult();
