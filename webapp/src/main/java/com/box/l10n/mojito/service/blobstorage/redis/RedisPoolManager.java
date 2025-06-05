@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.blobstorage.redis;
 
+import com.box.l10n.mojito.aws.elasticache.IAMAuthTokenRequest;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -34,15 +35,19 @@ public class RedisPoolManager {
 
   private final ScheduledExecutorService scheduler;
 
+  private final IAMAuthTokenRequest iamAuthTokenRequest;
+
   public RedisPoolManager(
       RedisConfigurationProperties redisConfigurationProperties,
       RedisPoolConfigurationProperties redisPoolConfigurationProperties,
-      ScheduledThreadPoolConfigProperties scheduledThreadPoolConfigProperties) {
+      ScheduledThreadPoolConfigProperties scheduledThreadPoolConfigProperties,
+      IAMAuthTokenRequest iamAuthTokenRequest) {
     this.redisConfigurationProperties = redisConfigurationProperties;
     this.redisPoolConfigurationProperties = redisPoolConfigurationProperties;
     this.scheduledThreadPoolConfigProperties = scheduledThreadPoolConfigProperties;
     this.scheduler =
         Executors.newScheduledThreadPool(this.scheduledThreadPoolConfigProperties.getPoolSize());
+    this.iamAuthTokenRequest = iamAuthTokenRequest;
   }
 
   @VisibleForTesting
@@ -67,12 +72,12 @@ public class RedisPoolManager {
     if (this.jedisPool != null) {
       this.jedisPool.close();
     }
-    IAMAuthTokenRequest iamAuthTokenRequest =
-        new IAMAuthTokenRequest(
+    String authToken =
+        this.iamAuthTokenRequest.toSignedRequestUri(
             this.redisConfigurationProperties.getUserId(),
             this.redisConfigurationProperties.getReplicationGroupId(),
-            this.redisConfigurationProperties.getRegion());
-    String authToken = iamAuthTokenRequest.toSignedRequestUri(this.getAwsCredentials());
+            this.redisConfigurationProperties.getRegion(),
+            this.getAwsCredentials());
     JedisPoolConfig poolConfig = new JedisPoolConfig();
     poolConfig.setMaxTotal(this.redisPoolConfigurationProperties.getMaxTotal());
     poolConfig.setMaxIdle(this.redisPoolConfigurationProperties.getMaxIdle());
