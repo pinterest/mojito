@@ -105,14 +105,14 @@ public class SpellCliChecker extends AbstractCliChecker {
                             .getValue()
                             .forEach(
                                 (misspeltWord, suggestions) -> {
-                                  sb.append(BULLET_POINT);
-                                  sb.append(QUOTE_MARKER);
-                                  sb.append(misspeltWord);
-                                  sb.append(QUOTE_MARKER);
-                                  sb.append(
-                                      " is spelt incorrectly. Suggested correct spellings are: ");
-                                  sb.append(String.join(", ", suggestions));
-                                  sb.append(System.lineSeparator());
+                                  sb.append(BULLET_POINT)
+                                      .append(QUOTE_MARKER)
+                                      .append(misspeltWord)
+                                      .append(QUOTE_MARKER)
+                                      .append(
+                                          " is spelt incorrectly. Suggested correct spellings are: ")
+                                      .append(String.join(", ", suggestions))
+                                      .append(System.lineSeparator());
                                 });
 
                         return new CliCheckResult.CheckFailure(

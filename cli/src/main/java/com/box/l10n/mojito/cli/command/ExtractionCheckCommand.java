@@ -339,8 +339,8 @@ public class ExtractionCheckCommand extends Command {
             String fileName = "i18n-checks.sarif.json";
             try {
               Path filePath = Paths.get(".", fileName);
-              String sarifThing = objectMapper.writeValueAsString(sarif);
-              Files.writeString(filePath, sarifThing);
+              String sarifString = objectMapper.writeValueAsString(sarif);
+              Files.writeString(filePath, sarifString);
             } catch (IOException e) {
               throw new CommandException("Failed to write sarif file: " + fileName, e);
             }
