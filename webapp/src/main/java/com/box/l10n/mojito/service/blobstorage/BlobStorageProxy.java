@@ -47,10 +47,10 @@ public class BlobStorageProxy {
     String key = this.getKey(prefix, name);
     try (Jedis redisClient = this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
       if (redisClient != null && redisClient.exists(key)) {
-        LOGGER.info("BlobStorageProxy: Retrieve string from Redis for key: {}", key);
+        LOGGER.debug("BlobStorageProxy: Retrieve string from Redis for key: {}", key);
         return of(redisClient.get(key));
       } else {
-        LOGGER.info("BlobStorageProxy: Retrieve string from BlobStorage for key: {}", key);
+        LOGGER.debug("BlobStorageProxy: Retrieve string from BlobStorage for key: {}", key);
         Optional<String> result = this.blobStorage.getString(key);
         if (result.isPresent() && redisClient != null) {
           Optional<Retention> retention = this.blobStorage.getRetention(key);
@@ -77,7 +77,7 @@ public class BlobStorageProxy {
     String key = this.getKey(prefix, name);
     try (Jedis redisClient = this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
       if (redisClient != null) {
-        LOGGER.info("BlobStorageProxy: Store string in Redis for key: {}", key);
+        LOGGER.debug("BlobStorageProxy: Store string in Redis for key: {}", key);
         if (retention == PERMANENT) {
           redisClient.set(key, content);
         } else {
@@ -86,7 +86,7 @@ public class BlobStorageProxy {
         CompletableFuture.runAsync(
             () -> this.blobStorage.put(key, content, retention), this.executorService);
       } else {
-        LOGGER.info(
+        LOGGER.debug(
             "BlobStorageProxy: Store string in BlobStorage with retention for key: {}", key);
         this.blobStorage.put(key, content, retention);
       }
@@ -95,7 +95,7 @@ public class BlobStorageProxy {
 
   public void delete(StructuredBlobStorage.Prefix prefix, String name) {
     String key = this.getKey(prefix, name);
-    LOGGER.info("BlobStorageProxy: Deleting string from BlobStorage for key: {}", key);
+    LOGGER.debug("BlobStorageProxy: Deleting string from BlobStorage for key: {}", key);
     try (Jedis redisClient = this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
       if (redisClient != null) {
         redisClient.del(key);
@@ -110,10 +110,10 @@ public class BlobStorageProxy {
     String key = this.getKey(prefix, name);
     try (Jedis redisClient = this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
       if (redisClient != null && redisClient.exists(key)) {
-        LOGGER.info("BlobStorageProxy: Retrieve binary object from Redis for key: {}", key);
+        LOGGER.debug("BlobStorageProxy: Retrieve binary object from Redis for key: {}", key);
         return of(redisClient.get(key.getBytes(StandardCharsets.UTF_8)));
       } else {
-        LOGGER.info("BlobStorageProxy: Retrieve binary object from BlobStorage for key: {}", key);
+        LOGGER.debug("BlobStorageProxy: Retrieve binary object from BlobStorage for key: {}", key);
         Optional<byte[]> result = this.blobStorage.getBytes(key);
         if (result.isPresent() && redisClient != null) {
           Optional<Retention> retention = this.blobStorage.getRetention(key);
@@ -141,7 +141,7 @@ public class BlobStorageProxy {
     String key = this.getKey(prefix, name);
     try (Jedis redisClient = this.redisPoolManager.map(RedisPoolManager::getJedis).orElse(null)) {
       if (redisClient != null) {
-        LOGGER.info("BlobStorageProxy: Store binary object in Redis for key: {}", key);
+        LOGGER.debug("BlobStorageProxy: Store binary object in Redis for key: {}", key);
         if (retention == PERMANENT) {
           redisClient.set(key.getBytes(StandardCharsets.UTF_8), content);
         } else {
@@ -150,7 +150,7 @@ public class BlobStorageProxy {
         CompletableFuture.runAsync(
             () -> this.blobStorage.put(key, content, retention), this.executorService);
       } else {
-        LOGGER.info("BlobStorageProxy: Store binary object in BlobStorage for key: {}", key);
+        LOGGER.debug("BlobStorageProxy: Store binary object in BlobStorage for key: {}", key);
         this.blobStorage.put(key, content, retention);
       }
     }
