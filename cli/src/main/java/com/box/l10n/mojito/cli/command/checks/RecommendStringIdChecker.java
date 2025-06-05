@@ -61,7 +61,7 @@ public class RecommendStringIdChecker extends AbstractCliChecker {
                 RecommendStringIdCheckResult::getSource,
                 recommendation ->
                     new CliCheckResult.CheckFailure(
-                        "RECOMMENDED_PREFIX_CHECK",
+                        CheckerRuleId.RECOMMENDED_PREFIX_CHECK,
                         String.format(
                             "Please update id "
                                 + QUOTE_MARKER

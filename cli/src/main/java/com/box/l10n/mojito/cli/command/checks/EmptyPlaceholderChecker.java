@@ -41,7 +41,7 @@ public class EmptyPlaceholderChecker extends AbstractCliChecker {
               failedFeatureMap.put(
                   textUnit,
                   new CliCheckResult.CheckFailure(
-                      "PLACEHOLDER_NEEDS_DESCRIPTIVE_NAME",
+                      CheckerRuleId.PLACEHOLDER_NEEDS_DESCRIPTIVE_NAME,
                       "Empty placeholder(s) detected, please remove or update the placeholder(s) to contain a descriptive name")));
       cliCheckResult.appendToFieldFailuresMap(failedFeatureMap);
       cliCheckResult.setSuccessful(false);
