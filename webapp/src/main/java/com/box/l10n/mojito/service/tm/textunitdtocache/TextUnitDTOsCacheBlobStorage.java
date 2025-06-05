@@ -3,7 +3,7 @@ package com.box.l10n.mojito.service.tm.textunitdtocache;
 import static com.box.l10n.mojito.service.blobstorage.StructuredBlobStorage.Prefix.TEXT_UNIT_DTOS_CACHE;
 
 import com.box.l10n.mojito.json.ObjectMapper;
-import com.box.l10n.mojito.service.blobstorage.BlobStorageProxy;
+import com.box.l10n.mojito.service.blobstorage.RedisStructuredBlobStorage;
 import com.box.l10n.mojito.service.blobstorage.Retention;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.google.common.collect.ImmutableList;
@@ -25,7 +25,7 @@ class TextUnitDTOsCacheBlobStorage {
 
   static Logger logger = LoggerFactory.getLogger(TextUnitDTOsCacheBlobStorage.class);
 
-  @Autowired BlobStorageProxy blobStorageProxy;
+  @Autowired RedisStructuredBlobStorage redisStructuredBlobStorage;
 
   @Autowired
   @Qualifier("fail_on_unknown_properties_false")
@@ -82,7 +82,7 @@ class TextUnitDTOsCacheBlobStorage {
 
   Optional<ImmutableList<TextUnitDTO>> getTextUnitsFromCache(Long assetId, Long localeId) {
     Optional<String> asString =
-        blobStorageProxy.getString(TEXT_UNIT_DTOS_CACHE, getName(assetId, localeId));
+        redisStructuredBlobStorage.getString(TEXT_UNIT_DTOS_CACHE, getName(assetId, localeId));
     return asString.map(this::convertToListOrEmptyList);
   }
 
@@ -91,7 +91,7 @@ class TextUnitDTOsCacheBlobStorage {
       Long localeId,
       TextUnitDTOsCacheBlobStorageJson textUnitDTOsCacheBlobStorageJson) {
     String asString = objectMapper.writeValueAsStringUnchecked(textUnitDTOsCacheBlobStorageJson);
-    blobStorageProxy.put(
+    redisStructuredBlobStorage.put(
         TEXT_UNIT_DTOS_CACHE, getName(assetId, localeId), asString, Retention.PERMANENT);
   }
 }

@@ -4,7 +4,7 @@ import static com.box.l10n.mojito.service.blobstorage.StructuredBlobStorage.Pref
 import static org.junit.Assert.assertEquals;
 
 import com.box.l10n.mojito.json.ObjectMapper;
-import com.box.l10n.mojito.service.blobstorage.BlobStorageProxy;
+import com.box.l10n.mojito.service.blobstorage.RedisStructuredBlobStorage;
 import com.box.l10n.mojito.service.blobstorage.Retention;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.google.common.collect.ImmutableList;
@@ -34,10 +34,11 @@ public class TextUnitDTOsSmileCacheBlobStorageTest {
 
   @Test
   public void testBytesWrittenToCache() {
-    BlobStorageProxy structuredBlobStorageMock = Mockito.mock(BlobStorageProxy.class);
+    RedisStructuredBlobStorage structuredBlobStorageMock =
+        Mockito.mock(RedisStructuredBlobStorage.class);
     TextUnitDTOsCacheBlobStorageJson textUnitDTOsCacheBlobStorageJson =
         new TextUnitDTOsCacheBlobStorageJson();
-    textUnitDTOsCacheBlobStorage.blobStorageProxy = structuredBlobStorageMock;
+    textUnitDTOsCacheBlobStorage.redisStructuredBlobStorage = structuredBlobStorageMock;
     byte[] expectedBytes = objectMapper.writeValueAsBytes(textUnitDTOsCacheBlobStorageJson);
     textUnitDTOsCacheBlobStorage.writeTextUnitDTOsToCache(
         1234L, 56L, textUnitDTOsCacheBlobStorageJson);
@@ -48,7 +49,8 @@ public class TextUnitDTOsSmileCacheBlobStorageTest {
 
   @Test
   public void testGetTextUnitDTOS() throws IOException {
-    BlobStorageProxy structuredBlobStorageMock = Mockito.mock(BlobStorageProxy.class);
+    RedisStructuredBlobStorage structuredBlobStorageMock =
+        Mockito.mock(RedisStructuredBlobStorage.class);
     TextUnitDTOsCacheBlobStorageJson textUnitDTOsCacheBlobStorageJson =
         new TextUnitDTOsCacheBlobStorageJson();
     TextUnitDTO textUnitDTO = new TextUnitDTO();
@@ -61,7 +63,7 @@ public class TextUnitDTOsSmileCacheBlobStorageTest {
     Mockito.when(
             structuredBlobStorageMock.getBytes(TEXT_UNIT_DTOS_CACHE, "asset/1234/locale/56.smile"))
         .thenReturn(Optional.of(expectedBytes));
-    textUnitDTOsCacheBlobStorage.blobStorageProxy = structuredBlobStorageMock;
+    textUnitDTOsCacheBlobStorage.redisStructuredBlobStorage = structuredBlobStorageMock;
     Optional<ImmutableList<TextUnitDTO>> textUnitDTOS =
         textUnitDTOsCacheBlobStorage.getTextUnitsFromCache(1234L, 56L);
     Mockito.verify(structuredBlobStorageMock)

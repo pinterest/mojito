@@ -1,6 +1,6 @@
 package com.box.l10n.mojito.service.blobstorage;
 
-import static com.box.l10n.mojito.service.blobstorage.BlobStorageProxy.ONE_DAY_IN_SECONDS;
+import static com.box.l10n.mojito.service.blobstorage.RedisStructuredBlobStorage.ONE_DAY_IN_SECONDS;
 import static com.box.l10n.mojito.service.blobstorage.StructuredBlobStorage.Prefix.TEXT_UNIT_DTOS_CACHE;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
@@ -26,7 +26,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import redis.clients.jedis.Jedis;
 
-public class BlobStorageProxyTest {
+public class RedisStructuredBlobStorageTest {
   static final String FILE_NAME = "file.txt";
 
   static final String KEY = TEXT_UNIT_DTOS_CACHE.toString().toLowerCase() + "/" + FILE_NAME;
@@ -50,9 +50,11 @@ public class BlobStorageProxyTest {
     try (MockedStatic<CompletableFuture> mocked = mockStatic(CompletableFuture.class)) {
       final String content = "s3Content";
       when(this.blobStorageMock.getString(anyString())).thenReturn(of(content));
-      BlobStorageProxy blobStorageProxy = new BlobStorageProxy(this.blobStorageMock, null, 1);
+      RedisStructuredBlobStorage redisStructuredBlobStorage =
+          new RedisStructuredBlobStorage(this.blobStorageMock, null, 1);
 
-      Optional<String> result = blobStorageProxy.getString(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
+      Optional<String> result =
+          redisStructuredBlobStorage.getString(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
 
       assertTrue(result.isPresent());
       assertEquals(content, result.get());
@@ -72,10 +74,11 @@ public class BlobStorageProxyTest {
       when(jedis.get(anyString())).thenReturn(content);
       when(jedis.exists(anyString())).thenReturn(true);
       when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis);
-      BlobStorageProxy blobStorageProxy =
-          new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
+      RedisStructuredBlobStorage redisStructuredBlobStorage =
+          new RedisStructuredBlobStorage(this.blobStorageMock, this.redisPoolManagerMock, 1);
 
-      Optional<String> result = blobStorageProxy.getString(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
+      Optional<String> result =
+          redisStructuredBlobStorage.getString(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
 
       assertTrue(result.isPresent());
       assertEquals(content, result.get());
@@ -96,10 +99,11 @@ public class BlobStorageProxyTest {
       when(this.blobStorageMock.getString(anyString())).thenReturn(of(content));
       when(this.blobStorageMock.getRetention(anyString())).thenReturn(of(Retention.MIN_1_DAY));
       when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis).thenReturn(asyncJedis);
-      BlobStorageProxy blobStorageProxy =
-          new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
+      RedisStructuredBlobStorage redisStructuredBlobStorage =
+          new RedisStructuredBlobStorage(this.blobStorageMock, this.redisPoolManagerMock, 1);
 
-      Optional<String> result = blobStorageProxy.getString(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
+      Optional<String> result =
+          redisStructuredBlobStorage.getString(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
 
       assertTrue(result.isPresent());
       assertEquals(content, result.get());
@@ -127,10 +131,11 @@ public class BlobStorageProxyTest {
       when(this.blobStorageMock.getString(anyString())).thenReturn(of(content));
       when(this.blobStorageMock.getRetention(anyString())).thenReturn(of(Retention.PERMANENT));
       when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis).thenReturn(asyncJedis);
-      BlobStorageProxy blobStorageProxy =
-          new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
+      RedisStructuredBlobStorage redisStructuredBlobStorage =
+          new RedisStructuredBlobStorage(this.blobStorageMock, this.redisPoolManagerMock, 1);
 
-      Optional<String> result = blobStorageProxy.getString(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
+      Optional<String> result =
+          redisStructuredBlobStorage.getString(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
 
       assertTrue(result.isPresent());
       assertEquals(content, result.get());
@@ -154,10 +159,11 @@ public class BlobStorageProxyTest {
       when(jedis.exists(anyString())).thenReturn(false);
       when(this.blobStorageMock.getString(anyString())).thenReturn(empty());
       when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis);
-      BlobStorageProxy blobStorageProxy =
-          new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
+      RedisStructuredBlobStorage redisStructuredBlobStorage =
+          new RedisStructuredBlobStorage(this.blobStorageMock, this.redisPoolManagerMock, 1);
 
-      Optional<String> result = blobStorageProxy.getString(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
+      Optional<String> result =
+          redisStructuredBlobStorage.getString(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
 
       assertTrue(result.isEmpty());
       verify(jedis, times(1)).close();
@@ -171,9 +177,10 @@ public class BlobStorageProxyTest {
   public void testPut_SavesValueToBlobStorage() {
     try (MockedStatic<CompletableFuture> mocked = mockStatic(CompletableFuture.class)) {
       final String content = "s3Content";
-      BlobStorageProxy blobStorageProxy = new BlobStorageProxy(this.blobStorageMock, null, 1);
+      RedisStructuredBlobStorage redisStructuredBlobStorage =
+          new RedisStructuredBlobStorage(this.blobStorageMock, null, 1);
 
-      blobStorageProxy.put(TEXT_UNIT_DTOS_CACHE, FILE_NAME, content, Retention.MIN_1_DAY);
+      redisStructuredBlobStorage.put(TEXT_UNIT_DTOS_CACHE, FILE_NAME, content, Retention.MIN_1_DAY);
 
       verify(this.blobStorageMock).put(eq(KEY), eq(content), eq(Retention.MIN_1_DAY));
       mocked.verify(
@@ -189,10 +196,10 @@ public class BlobStorageProxyTest {
       this.blobStorageMock = mock(BlobStorage.class);
       Jedis jedis = mock(Jedis.class);
       when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis);
-      BlobStorageProxy blobStorageProxy =
-          new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
+      RedisStructuredBlobStorage redisStructuredBlobStorage =
+          new RedisStructuredBlobStorage(this.blobStorageMock, this.redisPoolManagerMock, 1);
 
-      blobStorageProxy.put(TEXT_UNIT_DTOS_CACHE, FILE_NAME, content, Retention.MIN_1_DAY);
+      redisStructuredBlobStorage.put(TEXT_UNIT_DTOS_CACHE, FILE_NAME, content, Retention.MIN_1_DAY);
 
       verify(jedis).setex(eq(KEY), eq((long) ONE_DAY_IN_SECONDS), eq(content));
       mocked.verify(
@@ -212,10 +219,10 @@ public class BlobStorageProxyTest {
       this.blobStorageMock = mock(BlobStorage.class);
       Jedis jedis = mock(Jedis.class);
       when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis);
-      BlobStorageProxy blobStorageProxy =
-          new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
+      RedisStructuredBlobStorage redisStructuredBlobStorage =
+          new RedisStructuredBlobStorage(this.blobStorageMock, this.redisPoolManagerMock, 1);
 
-      blobStorageProxy.put(TEXT_UNIT_DTOS_CACHE, FILE_NAME, content, Retention.PERMANENT);
+      redisStructuredBlobStorage.put(TEXT_UNIT_DTOS_CACHE, FILE_NAME, content, Retention.PERMANENT);
 
       verify(jedis).set(eq(KEY), eq(content));
       mocked.verify(
@@ -231,9 +238,10 @@ public class BlobStorageProxyTest {
   @Test
   public void testDelete_DeletesFromBlobStorage() {
     try (MockedStatic<CompletableFuture> mocked = mockStatic(CompletableFuture.class)) {
-      BlobStorageProxy blobStorageProxy = new BlobStorageProxy(this.blobStorageMock, null, 1);
+      RedisStructuredBlobStorage redisStructuredBlobStorage =
+          new RedisStructuredBlobStorage(this.blobStorageMock, null, 1);
 
-      blobStorageProxy.delete(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
+      redisStructuredBlobStorage.delete(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
 
       verify(this.blobStorageMock).delete(eq(KEY));
       mocked.verify(
@@ -248,10 +256,10 @@ public class BlobStorageProxyTest {
       this.blobStorageMock = mock(BlobStorage.class);
       Jedis jedis = mock(Jedis.class);
       when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis);
-      BlobStorageProxy blobStorageProxy =
-          new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
+      RedisStructuredBlobStorage redisStructuredBlobStorage =
+          new RedisStructuredBlobStorage(this.blobStorageMock, this.redisPoolManagerMock, 1);
 
-      blobStorageProxy.delete(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
+      redisStructuredBlobStorage.delete(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
 
       verify(jedis).del(eq(KEY));
       mocked.verify(
@@ -269,9 +277,11 @@ public class BlobStorageProxyTest {
     try (MockedStatic<CompletableFuture> mocked = mockStatic(CompletableFuture.class)) {
       byte[] content = "s3Content".getBytes(StandardCharsets.UTF_8);
       when(this.blobStorageMock.getBytes(anyString())).thenReturn(of(content));
-      BlobStorageProxy blobStorageProxy = new BlobStorageProxy(this.blobStorageMock, null, 1);
+      RedisStructuredBlobStorage redisStructuredBlobStorage =
+          new RedisStructuredBlobStorage(this.blobStorageMock, null, 1);
 
-      Optional<byte[]> result = blobStorageProxy.getBytes(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
+      Optional<byte[]> result =
+          redisStructuredBlobStorage.getBytes(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
 
       assertTrue(result.isPresent());
       assertEquals(content, result.get());
@@ -291,10 +301,11 @@ public class BlobStorageProxyTest {
       when(jedis.get(any(byte[].class))).thenReturn(content);
       when(jedis.exists(anyString())).thenReturn(true);
       when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis);
-      BlobStorageProxy blobStorageProxy =
-          new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
+      RedisStructuredBlobStorage redisStructuredBlobStorage =
+          new RedisStructuredBlobStorage(this.blobStorageMock, this.redisPoolManagerMock, 1);
 
-      Optional<byte[]> result = blobStorageProxy.getBytes(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
+      Optional<byte[]> result =
+          redisStructuredBlobStorage.getBytes(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
 
       assertTrue(result.isPresent());
       assertEquals(content, result.get());
@@ -315,10 +326,11 @@ public class BlobStorageProxyTest {
       when(this.blobStorageMock.getBytes(anyString())).thenReturn(of(content));
       when(this.blobStorageMock.getRetention(anyString())).thenReturn(of(Retention.MIN_1_DAY));
       when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis).thenReturn(asyncJedis);
-      BlobStorageProxy blobStorageProxy =
-          new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
+      RedisStructuredBlobStorage redisStructuredBlobStorage =
+          new RedisStructuredBlobStorage(this.blobStorageMock, this.redisPoolManagerMock, 1);
 
-      Optional<byte[]> result = blobStorageProxy.getBytes(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
+      Optional<byte[]> result =
+          redisStructuredBlobStorage.getBytes(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
 
       assertTrue(result.isPresent());
       assertEquals(content, result.get());
@@ -346,10 +358,11 @@ public class BlobStorageProxyTest {
       when(this.blobStorageMock.getBytes(anyString())).thenReturn(of(content));
       when(this.blobStorageMock.getRetention(anyString())).thenReturn(of(Retention.PERMANENT));
       when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis).thenReturn(asyncJedis);
-      BlobStorageProxy blobStorageProxy =
-          new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
+      RedisStructuredBlobStorage redisStructuredBlobStorage =
+          new RedisStructuredBlobStorage(this.blobStorageMock, this.redisPoolManagerMock, 1);
 
-      Optional<byte[]> result = blobStorageProxy.getBytes(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
+      Optional<byte[]> result =
+          redisStructuredBlobStorage.getBytes(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
 
       assertTrue(result.isPresent());
       assertEquals(content, result.get());
@@ -373,10 +386,11 @@ public class BlobStorageProxyTest {
       when(jedis.exists(anyString())).thenReturn(false);
       when(this.blobStorageMock.getBytes(anyString())).thenReturn(empty());
       when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis);
-      BlobStorageProxy blobStorageProxy =
-          new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
+      RedisStructuredBlobStorage redisStructuredBlobStorage =
+          new RedisStructuredBlobStorage(this.blobStorageMock, this.redisPoolManagerMock, 1);
 
-      Optional<byte[]> result = blobStorageProxy.getBytes(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
+      Optional<byte[]> result =
+          redisStructuredBlobStorage.getBytes(TEXT_UNIT_DTOS_CACHE, FILE_NAME);
 
       assertTrue(result.isEmpty());
       verify(jedis, times(1)).close();
@@ -390,9 +404,11 @@ public class BlobStorageProxyTest {
   public void testPutBytes_SavesValueToBlobStorage() {
     try (MockedStatic<CompletableFuture> mocked = mockStatic(CompletableFuture.class)) {
       final byte[] content = "s3Content".getBytes(StandardCharsets.UTF_8);
-      BlobStorageProxy blobStorageProxy = new BlobStorageProxy(this.blobStorageMock, null, 1);
+      RedisStructuredBlobStorage redisStructuredBlobStorage =
+          new RedisStructuredBlobStorage(this.blobStorageMock, null, 1);
 
-      blobStorageProxy.putBytes(TEXT_UNIT_DTOS_CACHE, FILE_NAME, content, Retention.MIN_1_DAY);
+      redisStructuredBlobStorage.putBytes(
+          TEXT_UNIT_DTOS_CACHE, FILE_NAME, content, Retention.MIN_1_DAY);
 
       verify(this.blobStorageMock).put(eq(KEY), eq(content), eq(Retention.MIN_1_DAY));
       mocked.verify(
@@ -408,10 +424,11 @@ public class BlobStorageProxyTest {
       this.blobStorageMock = mock(BlobStorage.class);
       Jedis jedis = mock(Jedis.class);
       when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis);
-      BlobStorageProxy blobStorageProxy =
-          new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
+      RedisStructuredBlobStorage redisStructuredBlobStorage =
+          new RedisStructuredBlobStorage(this.blobStorageMock, this.redisPoolManagerMock, 1);
 
-      blobStorageProxy.putBytes(TEXT_UNIT_DTOS_CACHE, FILE_NAME, content, Retention.MIN_1_DAY);
+      redisStructuredBlobStorage.putBytes(
+          TEXT_UNIT_DTOS_CACHE, FILE_NAME, content, Retention.MIN_1_DAY);
 
       verify(jedis).setex(eq(KEY_BYTES), eq((long) ONE_DAY_IN_SECONDS), eq(content));
       mocked.verify(
@@ -431,10 +448,11 @@ public class BlobStorageProxyTest {
       this.blobStorageMock = mock(BlobStorage.class);
       Jedis jedis = mock(Jedis.class);
       when(this.redisPoolManagerMock.getJedis()).thenReturn(jedis);
-      BlobStorageProxy blobStorageProxy =
-          new BlobStorageProxy(this.blobStorageMock, this.redisPoolManagerMock, 1);
+      RedisStructuredBlobStorage redisStructuredBlobStorage =
+          new RedisStructuredBlobStorage(this.blobStorageMock, this.redisPoolManagerMock, 1);
 
-      blobStorageProxy.putBytes(TEXT_UNIT_DTOS_CACHE, FILE_NAME, content, Retention.PERMANENT);
+      redisStructuredBlobStorage.putBytes(
+          TEXT_UNIT_DTOS_CACHE, FILE_NAME, content, Retention.PERMANENT);
 
       verify(jedis).set(eq(KEY_BYTES), eq(content));
       mocked.verify(
