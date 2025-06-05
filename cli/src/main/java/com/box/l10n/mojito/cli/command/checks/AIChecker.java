@@ -15,6 +15,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -110,9 +111,10 @@ public class AIChecker extends AbstractCliChecker {
 
     HashMap<String, CliCheckResult.CheckFailure> featureFailureMap = new HashMap<>();
     for (Map.Entry<String, List<AICheckResult>> failure : failureMap.entrySet()) {
-      List<String> suggestedFixes =
-          failure.getValue().stream().map(AICheckResult::getSuggestedFix).toList();
-      String suggestFixEntry = String.join(System.lineSeparator(), suggestedFixes);
+      String suggestFixEntry =
+          failure.getValue().stream()
+              .map(AICheckResult::getSuggestedFix)
+              .collect(Collectors.joining(System.lineSeparator()));
       featureFailureMap.put(
           failure.getKey(),
           new CliCheckResult.CheckFailure(CheckerRuleId.AI_CHECKER_SUGGESTION, suggestFixEntry));

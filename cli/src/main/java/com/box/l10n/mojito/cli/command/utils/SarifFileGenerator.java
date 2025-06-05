@@ -78,7 +78,7 @@ public class SarifFileGenerator {
                 Integer startLineNumber = Integer.parseInt(usage.substring(colonIndex + 1));
                 return new Location(fileUri, startLineNumber);
               } catch (NumberFormatException e) {
-                logger.info(
+                logger.warn(
                     "SARIF Generation - Unable to parse line number: {}",
                     usage.substring(colonIndex + 1));
                 return null;
