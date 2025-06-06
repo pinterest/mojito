@@ -224,6 +224,18 @@ public class ScheduledJobManager {
     }
   }
 
+  public void deleteJobFromQuartz(ScheduledJob scheduledJob) throws SchedulerException {
+    JobKey jobKey = getJobKey(scheduledJob);
+    TriggerKey triggerKey = getTriggerKey(scheduledJob);
+
+    if (getScheduler().checkExists(jobKey)) {
+      getScheduler().unscheduleJob(triggerKey);
+      getScheduler().deleteJob(jobKey);
+    }
+
+    logger.info("Removed job with id: '{}' from Quartz scheduler.", scheduledJob.getUuid());
+  }
+
   // v1
   private ScheduledThirdPartySyncProperties getScheduledThirdPartySyncProperties(
       ThirdPartySyncJobConfig jobConfig) {
