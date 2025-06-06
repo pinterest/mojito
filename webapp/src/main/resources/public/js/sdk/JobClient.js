@@ -2,7 +2,7 @@ import BaseClient from "./BaseClient";
 
 class JobClient extends BaseClient {
     createJob(job) {
-        return this.post(this.getUrl() + "/create", job);
+        return this.post(this.getUrl(), job);
     }
 
     getJobs() {
