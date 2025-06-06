@@ -6,8 +6,6 @@ import com.box.l10n.mojito.service.scheduledjob.ScheduledJobManager;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobRepository;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobResponse;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobService;
-import com.box.l10n.mojito.service.scheduledjob.ScheduledJobStatusRepository;
-import com.box.l10n.mojito.service.scheduledjob.ScheduledJobTypeRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -39,21 +37,15 @@ public class ScheduledJobWS {
   static Logger logger = LoggerFactory.getLogger(ScheduledJobWS.class);
   private final ScheduledJobRepository scheduledJobRepository;
   private final ScheduledJobManager scheduledJobManager;
-  private final ScheduledJobStatusRepository scheduledJobStatusRepository;
-  private final ScheduledJobTypeRepository scheduledJobTypeRepository;
   private final ScheduledJobService scheduledJobService;
 
   @Autowired
   public ScheduledJobWS(
       ScheduledJobRepository scheduledJobRepository,
       ScheduledJobManager scheduledJobManager,
-      ScheduledJobStatusRepository scheduledJobStatusRepository,
-      ScheduledJobTypeRepository scheduledJobTypeRepository,
       ScheduledJobService scheduledJobService) {
     this.scheduledJobRepository = scheduledJobRepository;
     this.scheduledJobManager = scheduledJobManager;
-    this.scheduledJobStatusRepository = scheduledJobStatusRepository;
-    this.scheduledJobTypeRepository = scheduledJobTypeRepository;
     this.scheduledJobService = scheduledJobService;
   }
 
