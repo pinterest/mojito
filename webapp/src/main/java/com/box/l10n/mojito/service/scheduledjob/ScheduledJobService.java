@@ -91,23 +91,23 @@ public class ScheduledJobService {
     if (optScheduledJob.isEmpty())
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found with id: " + uuid);
 
-    ScheduledJob existingJob = optScheduledJob.get();
+    ScheduledJob updatedJob = optScheduledJob.get();
 
     try {
       if (scheduledJob.getRepository() != null) {
-        existingJob.setRepository(scheduledJob.getRepository());
+        updatedJob.setRepository(scheduledJob.getRepository());
       }
       if (scheduledJob.getCron() != null) {
-        existingJob.setCron(scheduledJob.getCron());
+        updatedJob.setCron(scheduledJob.getCron());
       }
       if (scheduledJob.getJobStatus() != null) {
-        existingJob.setJobStatus(scheduledJob.getJobStatus());
+        updatedJob.setJobStatus(scheduledJob.getJobStatus());
       }
       if (scheduledJob.getPropertiesString() != null) {
-        existingJob.setPropertiesString(scheduledJob.getPropertiesString());
+        updatedJob.setPropertiesString(scheduledJob.getPropertiesString());
       }
       if (scheduledJob.getJobType() != null && scheduledJob.getJobType().getId() != null) {
-        existingJob.setJobType(
+        updatedJob.setJobType(
             scheduledJobTypeRepository
                 .findById(scheduledJob.getJobType().getId())
                 .orElseThrow(
@@ -117,10 +117,11 @@ public class ScheduledJobService {
                             "Job type not found with id: " + scheduledJob.getJobType().getId())));
       }
 
-      scheduledJobRepository.save(existingJob);
+      scheduledJobRepository.save(updatedJob);
+      scheduledJobManager.scheduleJob(updatedJob);
 
       logger.info("Job '{}' was updated.", uuid);
-      return existingJob;
+      return updatedJob;
     } catch (Exception e) {
       logger.error("Error updating job", e);
       throw new ResponseStatusException(
@@ -128,8 +129,9 @@ public class ScheduledJobService {
     }
   }
 
-  public void deleteJob(String uuid) {
-    scheduledJobRepository.deleteByUuid(uuid);
-    logger.debug("Deleted scheduled job with uuid: {}", uuid);
+  public void deleteJob(ScheduledJob scheduledJob) throws SchedulerException {
+    scheduledJobRepository.deleteByUuid(scheduledJob.getUuid());
+    scheduledJobManager.deleteJobFromQuartz(scheduledJob);
+    logger.debug("Deleted scheduled job with uuid: {}", scheduledJob.getUuid());
   }
 }

@@ -5,9 +5,9 @@ import com.box.l10n.mojito.service.scheduledjob.ScheduledJobDTO;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobManager;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobRepository;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobResponse;
+import com.box.l10n.mojito.service.scheduledjob.ScheduledJobService;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobStatusRepository;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobTypeRepository;
-import com.box.l10n.mojito.service.scheduledjob.ScheduledJobService;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -92,8 +92,14 @@ public class ScheduledJobWS {
     if (scheduledJob == null) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found with id: " + id);
     }
-
-    scheduledJobService.deleteJob(id.toString());
+    try {
+      scheduledJobService.deleteJob(scheduledJob);
+    } catch (SchedulerException e) {
+      logger.error("Error deleting job from Quartz with id: {}", id, e);
+      throw new ResponseStatusException(
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          "Job with id: " + id + " could not be deleted from Quartz");
+    }
   }
 
   @RequestMapping(method = RequestMethod.GET, value = "/api/jobs")
