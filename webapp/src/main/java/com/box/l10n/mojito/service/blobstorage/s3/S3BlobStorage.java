@@ -156,7 +156,7 @@ public class S3BlobStorage implements BlobStorage {
   }
 
   @Override
-  public Optional<Retention> getRetention(String name) {
+  public Retention getRetention(String name) {
     GetObjectTaggingRequest request =
         new GetObjectTaggingRequest(
             this.s3BlobStorageConfigurationProperties.getBucket(), this.getFullName(name));
@@ -168,7 +168,8 @@ public class S3BlobStorage implements BlobStorage {
         .map(Tag::getValue)
         .map(Retention::valueOf)
         .findFirst()
-        .or(() -> of(PERMANENT));
+        .or(() -> of(PERMANENT))
+        .get();
   }
 
   public String getS3Url(String name) {

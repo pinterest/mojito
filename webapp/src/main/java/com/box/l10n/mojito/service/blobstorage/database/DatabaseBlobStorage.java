@@ -119,9 +119,9 @@ public class DatabaseBlobStorage implements BlobStorage {
   }
 
   @Override
-  public Optional<Retention> getRetention(String name) {
+  public Retention getRetention(String name) {
     Optional<Long> expireAfterSeconds =
         mBlobRepository.findByName(name).map(MBlob::getExpireAfterSeconds);
-    return expireAfterSeconds.map(time -> time >= 0 ? MIN_1_DAY : PERMANENT);
+    return expireAfterSeconds.map(time -> time >= 0 ? MIN_1_DAY : PERMANENT).orElse(PERMANENT);
   }
 }

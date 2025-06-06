@@ -35,5 +35,5 @@ public interface BlobStorage {
     put(name, content, Retention.PERMANENT);
   }
 
-  Optional<Retention> getRetention(String name);
+  Retention getRetention(String name);
 }
