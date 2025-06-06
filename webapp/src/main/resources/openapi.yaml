@@ -1369,7 +1369,6 @@ paths:
           description: OK
       tags:
       - scheduled-job-ws
-  /api/jobs/create:
     post:
       operationId: createJob
       requestBody:
@@ -1383,11 +1382,25 @@ paths:
           content:
             application/hal+json:
               schema:
-                $ref: "#/components/schemas/ScheduledJobResponse"
+                $ref: "#/components/schemas/ScheduledJob"
           description: OK
       tags:
       - scheduled-job-ws
   /api/jobs/{id}:
+    delete:
+      operationId: deleteJob
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+      tags:
+      - scheduled-job-ws
     get:
       operationId: getJob
       parameters:
@@ -1406,9 +1419,8 @@ paths:
           description: OK
       tags:
       - scheduled-job-ws
-  /api/jobs/{id}/delete:
-    delete:
-      operationId: deleteJob
+    patch:
+      operationId: updateJob
       parameters:
       - in: path
         name: id
@@ -1416,12 +1428,18 @@ paths:
         schema:
           type: string
           format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduledJob"
+        required: true
       responses:
         "200":
           content:
             application/hal+json:
               schema:
-                $ref: "#/components/schemas/ScheduledJobResponse"
+                $ref: "#/components/schemas/ScheduledJob"
           description: OK
       tags:
       - scheduled-job-ws
@@ -1473,31 +1491,6 @@ paths:
         schema:
           type: string
           format: uuid
-      responses:
-        "200":
-          content:
-            application/hal+json:
-              schema:
-                $ref: "#/components/schemas/ScheduledJobResponse"
-          description: OK
-      tags:
-      - scheduled-job-ws
-  /api/jobs/{id}/update:
-    patch:
-      operationId: updateJob
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ScheduledJob"
-        required: true
       responses:
         "200":
           content:
@@ -4750,8 +4743,6 @@ components:
           type: string
         message:
           type: string
-        scheduledJob:
-          $ref: "#/components/schemas/ScheduledJob"
         status:
           type: string
           enum:
