@@ -38,14 +38,14 @@ public class RedisStructuredBlobStorageProxy {
     Optional<String> redisValue =
         this.redisClientOptional.flatMap(
             redisClient -> {
-              LOGGER.debug(
+              LOGGER.info(
                   "RedisStructuredBlobStorageProxy: Retrieve string from Redis for key: {}", key);
               return redisClient.get(key);
             });
     if (redisValue.isPresent()) {
       return redisValue;
     } else {
-      LOGGER.debug(
+      LOGGER.info(
           "RedisStructuredBlobStorageProxy: Retrieve string from BlobStorage for key: {}", key);
       Optional<String> result = this.structuredBlobStorage.getString(prefix, name);
       if (result.isPresent() && this.redisClientOptional.isPresent()) {
@@ -64,14 +64,14 @@ public class RedisStructuredBlobStorageProxy {
       StructuredBlobStorage.Prefix prefix, String name, String value, Retention retention) {
     String key = this.structuredBlobStorage.getFullName(prefix, name);
     if (this.redisClientOptional.isPresent()) {
-      LOGGER.debug("RedisStructuredBlobStorageProxy: Store string in Redis for key: {}", key);
+      LOGGER.info("RedisStructuredBlobStorageProxy: Store string in Redis for key: {}", key);
       RedisClient redisClient = this.redisClientOptional.get();
       redisClient.put(key, value, retention);
       CompletableFuture.runAsync(
           () -> this.structuredBlobStorage.put(prefix, name, value, retention),
           this.executorService);
     } else {
-      LOGGER.debug("RedisStructuredBlobStorageProxy: Store string in BlobStorage for key: {}", key);
+      LOGGER.info("RedisStructuredBlobStorageProxy: Store string in BlobStorage for key: {}", key);
       this.structuredBlobStorage.put(prefix, name, value, retention);
     }
   }
@@ -79,13 +79,13 @@ public class RedisStructuredBlobStorageProxy {
   public void delete(StructuredBlobStorage.Prefix prefix, String name) {
     String key = this.structuredBlobStorage.getFullName(prefix, name);
     if (this.redisClientOptional.isPresent()) {
-      LOGGER.debug("RedisStructuredBlobStorageProxy: Deleting string from Redis for key: {}", key);
+      LOGGER.info("RedisStructuredBlobStorageProxy: Deleting string from Redis for key: {}", key);
       RedisClient redisClient = this.redisClientOptional.get();
       redisClient.delete(key);
       CompletableFuture.runAsync(
           () -> this.structuredBlobStorage.delete(prefix, name), this.executorService);
     } else {
-      LOGGER.debug(
+      LOGGER.info(
           "RedisStructuredBlobStorageProxy: Deleting string from BlobStorage for key: {}", key);
       this.structuredBlobStorage.delete(prefix, name);
     }
@@ -96,7 +96,7 @@ public class RedisStructuredBlobStorageProxy {
     Optional<byte[]> redisValue =
         this.redisClientOptional.flatMap(
             redisClient -> {
-              LOGGER.debug(
+              LOGGER.info(
                   "RedisStructuredBlobStorageProxy: Retrieve binary object from Redis for key: {}",
                   key);
               return redisClient.getBytes(key);
@@ -104,7 +104,7 @@ public class RedisStructuredBlobStorageProxy {
     if (redisValue.isPresent()) {
       return redisValue;
     } else {
-      LOGGER.debug(
+      LOGGER.info(
           "RedisStructuredBlobStorageProxy: Retrieve binary object from BlobStorage for key: {}",
           key);
       Optional<byte[]> result = this.structuredBlobStorage.getBytes(prefix, name);
@@ -124,15 +124,14 @@ public class RedisStructuredBlobStorageProxy {
       StructuredBlobStorage.Prefix prefix, String name, byte[] value, Retention retention) {
     String key = this.structuredBlobStorage.getFullName(prefix, name);
     if (this.redisClientOptional.isPresent()) {
-      LOGGER.debug(
-          "RedisStructuredBlobStorageProxy: Store binary object in Redis for key: {}", key);
+      LOGGER.info("RedisStructuredBlobStorageProxy: Store binary object in Redis for key: {}", key);
       RedisClient redisClient = this.redisClientOptional.get();
       redisClient.put(key, value, retention);
       CompletableFuture.runAsync(
           () -> this.structuredBlobStorage.putBytes(prefix, name, value, retention),
           this.executorService);
     } else {
-      LOGGER.debug(
+      LOGGER.info(
           "RedisStructuredBlobStorageProxy: Store binary object in BlobStorage for key: {}", key);
       this.structuredBlobStorage.putBytes(prefix, name, value, retention);
     }
