@@ -1406,6 +1406,25 @@ paths:
           description: OK
       tags:
       - scheduled-job-ws
+  /api/jobs/{id}/delete:
+    delete:
+      operationId: deleteJob
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: "#/components/schemas/ScheduledJobResponse"
+          description: OK
+      tags:
+      - scheduled-job-ws
   /api/jobs/{id}/disable:
     post:
       operationId: disableJob
@@ -1454,6 +1473,31 @@ paths:
         schema:
           type: string
           format: uuid
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: "#/components/schemas/ScheduledJobResponse"
+          description: OK
+      tags:
+      - scheduled-job-ws
+  /api/jobs/{id}/update:
+    patch:
+      operationId: updateJob
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduledJob"
+        required: true
       responses:
         "200":
           content:
