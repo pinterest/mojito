@@ -118,11 +118,61 @@ public class ScheduledJobWS {
     }
   }
 
+  @RequestMapping(method = RequestMethod.PATCH, value = "/api/jobs/{id}/update")
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<ScheduledJobResponse> updateJob(
+      @PathVariable UUID id, @RequestBody ScheduledJob scheduledJob) {
+    Optional<ScheduledJob> optScheduledJob = scheduledJobRepository.findByUuid(id.toString());
+
+    if (optScheduledJob.isEmpty()) return notFoundResponse;
+
+    ScheduledJob existingJob = optScheduledJob.get();
+
+    try {
+      if (scheduledJob.getRepository() != null) {
+        existingJob.setRepository(scheduledJob.getRepository());
+      }
+      if (scheduledJob.getCron() != null) {
+        existingJob.setCron(scheduledJob.getCron());
+      }
+      if (scheduledJob.getJobStatus() != null) {
+        existingJob.setJobStatus(scheduledJob.getJobStatus());
+      }
+      if (scheduledJob.getPropertiesString() != null) {
+        existingJob.setPropertiesString(scheduledJob.getPropertiesString());
+      }
+      if (scheduledJob.getJobType() != null && scheduledJob.getJobType().getId() != null) {
+        existingJob.setJobType(
+            scheduledJobTypeRepository
+                .findById(scheduledJob.getJobType().getId())
+                .orElseThrow(
+                    () ->
+                        new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "Job type not found with id: " + scheduledJob.getJobType().getId())));
+      }
+
+      scheduledJobRepository.save(existingJob);
+
+      logger.info("Job '{}' was updated.", id);
+      return ResponseEntity.status(HttpStatus.OK)
+          .body(
+              new ScheduledJobResponse(
+                  ScheduledJobResponse.Status.SUCCESS, "Job updated successfully", existingJob));
+    } catch (Exception e) {
+      logger.error("Error updating job", e);
+      return createResponse(
+          HttpStatus.BAD_REQUEST,
+          ScheduledJobResponse.Status.FAILURE,
+          "Error updating job: " + e.getMessage(),
+          id.toString());
+    }
+  }
+
   @RequestMapping(method = RequestMethod.DELETE, value = "/api/jobs/{id}/delete")
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<ScheduledJobResponse> deleteJob(@PathVariable UUID id) {
     Optional<ScheduledJob> optScheduledJob = scheduledJobRepository.findByUuid(id.toString());
-
     if (optScheduledJob.isEmpty()) return notFoundResponse;
 
     try {
