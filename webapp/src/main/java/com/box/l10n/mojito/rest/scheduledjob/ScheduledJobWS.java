@@ -68,6 +68,13 @@ public class ScheduledJobWS {
           "Repository must be provided to create a job",
           null);
     }
+    if (scheduledJob.getCron() == null || scheduledJob.getCron().isEmpty()) {
+      return createResponse(
+          HttpStatus.BAD_REQUEST,
+          ScheduledJobResponse.Status.FAILURE,
+          "Cron expression must be provided to create a job",
+          scheduledJob.getUuid());
+    }
     try {
       if (scheduledJob.getUuid() == null) {
         scheduledJob.setUuid(UUID.randomUUID().toString());
@@ -77,18 +84,26 @@ public class ScheduledJobWS {
             scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SCHEDULED));
       }
       if (scheduledJob.getJobType() != null && scheduledJob.getJobType().getId() != null) {
-        if (scheduledJobTypeRepository.findById(scheduledJob.getJobType().getId()).isPresent()) {
-          scheduledJob.setJobType(
-              scheduledJobTypeRepository.findById(scheduledJob.getJobType().getId()).get());
-        } else {
-          throw new ResponseStatusException(
-              HttpStatus.BAD_REQUEST,
-              "Job type with id " + scheduledJob.getJobType().getId() + " does not exist");
-        }
+        scheduledJob.setJobType(
+            scheduledJobTypeRepository
+                .findById(scheduledJob.getJobType().getId())
+                .orElseThrow(
+                    () ->
+                        new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "Job type not found with id: " + scheduledJob.getJobType().getId())));
+      } else {
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST, "Job type must be provided to create a job");
       }
 
       scheduledJobRepository.save(scheduledJob);
       scheduledJobManager.scheduleJob(scheduledJob);
+
+      logger.info(
+          "Job '{}' for repository '{}' was created.",
+          scheduledJob.getUuid(),
+          scheduledJob.getRepository().getName());
       return ResponseEntity.status(HttpStatus.OK)
           .body(
               new ScheduledJobResponse(
@@ -100,6 +115,30 @@ public class ScheduledJobWS {
           ScheduledJobResponse.Status.FAILURE,
           "Error creating job: " + e.getMessage(),
           scheduledJob.getUuid());
+    }
+  }
+
+  @RequestMapping(method = RequestMethod.DELETE, value = "/api/jobs/{id}/delete")
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<ScheduledJobResponse> deleteJob(@PathVariable UUID id) {
+    Optional<ScheduledJob> optScheduledJob = scheduledJobRepository.findByUuid(id.toString());
+
+    if (optScheduledJob.isEmpty()) return notFoundResponse;
+
+    try {
+      scheduledJobRepository.deleteByUuid(id.toString());
+      logger.info("Job '{}' was deleted.", id);
+      return ResponseEntity.status(HttpStatus.OK)
+          .body(
+              new ScheduledJobResponse(
+                  ScheduledJobResponse.Status.SUCCESS, "Job deleted successfully", id.toString()));
+    } catch (Exception e) {
+      logger.error("Error deleting job with id: {}", id);
+      return createResponse(
+          HttpStatus.BAD_REQUEST,
+          ScheduledJobResponse.Status.FAILURE,
+          "Error deleting job: " + e.getMessage(),
+          id.toString());
     }
   }
 
