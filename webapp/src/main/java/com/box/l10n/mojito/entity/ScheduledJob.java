@@ -1,6 +1,7 @@
 package com.box.l10n.mojito.entity;
 
 import com.box.l10n.mojito.json.ObjectMapper;
+import com.box.l10n.mojito.service.scheduledjob.ScheduledJobException;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobProperties;
 import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
@@ -11,6 +12,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PostLoad;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import java.time.ZonedDateTime;
 import org.hibernate.envers.Audited;
 
@@ -55,6 +58,8 @@ public class ScheduledJob extends BaseEntity {
   @Column(name = "enabled")
   private Boolean enabled = true;
 
+  @PrePersist
+  @PreUpdate
   @PostLoad
   public void deserializeProperties() {
     ObjectMapper objectMapper = new ObjectMapper();
@@ -62,7 +67,7 @@ public class ScheduledJob extends BaseEntity {
       this.properties =
           objectMapper.readValue(propertiesString, jobType.getEnum().getPropertiesClass());
     } catch (Exception e) {
-      throw new RuntimeException(
+      throw new ScheduledJobException(
           "Failed to deserialize properties '"
               + propertiesString
               + "' for class: "
