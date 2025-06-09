@@ -83,9 +83,6 @@ public class ScheduledJobService {
     if (scheduledJob.getJobStatus() != null) {
       updatedJob.setJobStatus(scheduledJob.getJobStatus());
     }
-    if (scheduledJob.getPropertiesString() != null) {
-      updatedJob.setPropertiesString(scheduledJob.getPropertiesString());
-    }
     if (scheduledJob.getJobType() != null && scheduledJob.getJobType().getId() != null) {
       updatedJob.setJobType(
           scheduledJobTypeRepository
@@ -94,6 +91,10 @@ public class ScheduledJobService {
                   () ->
                       new ScheduledJobException(
                           "Job type not found with id: " + scheduledJob.getJobType().getId())));
+    }
+    if (scheduledJob.getPropertiesString() != null) {
+      updatedJob.setPropertiesString(scheduledJob.getPropertiesString());
+      updatedJob.deserializeProperties();
     }
 
     scheduledJobRepository.save(updatedJob);
