@@ -84,11 +84,13 @@ public class ScheduledJobWS {
   @ResponseStatus(HttpStatus.OK)
   public void deleteJob(@PathVariable UUID id) throws SchedulerException {
     logger.info("Deleting scheduled job [{}]", id);
-    ScheduledJob scheduledJob = scheduledJobRepository.findByUuid(id.toString()).orElse(null);
-
-    if (scheduledJob == null) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found with id: " + id);
-    }
+    ScheduledJob scheduledJob =
+        scheduledJobRepository
+            .findByUuid(id.toString())
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Job not found with id: " + id));
 
     scheduledJobService.deleteJob(scheduledJob);
   }

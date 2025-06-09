@@ -10,8 +10,6 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PostLoad;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import java.time.ZonedDateTime;
@@ -58,8 +56,6 @@ public class ScheduledJob extends BaseEntity {
   @Column(name = "enabled")
   private Boolean enabled = true;
 
-  @PrePersist
-  @PreUpdate
   @PostLoad
   public void deserializeProperties() {
     ObjectMapper objectMapper = new ObjectMapper();

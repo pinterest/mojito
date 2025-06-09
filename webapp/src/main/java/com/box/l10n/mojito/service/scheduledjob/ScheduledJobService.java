@@ -1,7 +1,6 @@
 package com.box.l10n.mojito.service.scheduledjob;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
-import java.util.Optional;
 import java.util.UUID;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -67,12 +66,10 @@ public class ScheduledJobService {
 
   public ScheduledJob updateJob(String uuid, ScheduledJob scheduledJob)
       throws ScheduledJobException, SchedulerException, ClassNotFoundException {
-    Optional<ScheduledJob> optScheduledJob = scheduledJobRepository.findByUuid(uuid);
-
-    if (optScheduledJob.isEmpty())
-      throw new ScheduledJobException("Job not found with id: " + uuid);
-
-    ScheduledJob updatedJob = optScheduledJob.get();
+    ScheduledJob updatedJob =
+        scheduledJobRepository
+            .findByUuid(uuid)
+            .orElseThrow(() -> new ScheduledJobException("Job not found with id: " + uuid));
 
     if (scheduledJob.getRepository() != null) {
       updatedJob.setRepository(scheduledJob.getRepository());
