@@ -30,56 +30,43 @@ public class ScheduledJobService {
     this.scheduledJobManager = scheduledJobManager;
   }
 
-  public ScheduledJob createJob(ScheduledJob scheduledJob) {
+  public ScheduledJob createJob(ScheduledJob scheduledJob)
+      throws ScheduledJobException, SchedulerException, ClassNotFoundException {
     if (scheduledJob.getRepository() == null) {
       throw new ScheduledJobException("Repository must be provided to create a job");
     }
     if (scheduledJob.getCron() == null || scheduledJob.getCron().isEmpty()) {
       throw new ScheduledJobException("Cron expression must be provided to create a job");
     }
-    try {
-      if (scheduledJob.getUuid() == null) {
-        scheduledJob.setUuid(UUID.randomUUID().toString());
-      }
-      scheduledJob.setJobStatus(
-          scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SCHEDULED));
-      if (scheduledJob.getJobType() != null && scheduledJob.getJobType().getId() != null) {
-        scheduledJob.setJobType(
-            scheduledJobTypeRepository
-                .findById(scheduledJob.getJobType().getId())
-                .orElseThrow(
-                    () ->
-                        new ScheduledJobException(
-                            "Job type not found with id: " + scheduledJob.getJobType().getId())));
-      } else {
-        throw new ScheduledJobException("Job type must be provided to create a job");
-      }
-
-      scheduledJobRepository.save(scheduledJob);
-      scheduledJobManager.scheduleJob(scheduledJob);
-
-      logger.info(
-          "Job '{}' for repository '{}' was created.",
-          scheduledJob.getUuid(),
-          scheduledJob.getRepository().getName());
-      return scheduledJob;
-    } catch (ScheduledJobException e) {
-      logger.error("Error creating job", e);
-      throw e;
-    } catch (ClassNotFoundException e) {
-      logger.error("Error creating job", e);
-      throw new ScheduledJobException(
-          "Error creating job: Class Not Found Exception from scheduledJobManager.scheduledJob(scheduledJob)",
-          e);
-    } catch (SchedulerException e) {
-      logger.error("Error scheduling job", e);
-      throw new ScheduledJobException(
-          "Error scheduling job: Scheduler Exception from scheduledJobManager.scheduledJob(scheduledJob)",
-          e);
+    if (scheduledJob.getUuid() == null) {
+      scheduledJob.setUuid(UUID.randomUUID().toString());
     }
+    scheduledJob.setJobStatus(
+        scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SCHEDULED));
+    if (scheduledJob.getJobType() != null && scheduledJob.getJobType().getId() != null) {
+      scheduledJob.setJobType(
+          scheduledJobTypeRepository
+              .findById(scheduledJob.getJobType().getId())
+              .orElseThrow(
+                  () ->
+                      new ScheduledJobException(
+                          "Job type not found with id: " + scheduledJob.getJobType().getId())));
+    } else {
+      throw new ScheduledJobException("Job type must be provided to create a job");
+    }
+
+    scheduledJobRepository.save(scheduledJob);
+    scheduledJobManager.scheduleJob(scheduledJob);
+
+    logger.info(
+        "Job '{}' for repository '{}' was created.",
+        scheduledJob.getUuid(),
+        scheduledJob.getRepository().getName());
+    return scheduledJob;
   }
 
-  public ScheduledJob updateJob(String uuid, ScheduledJob scheduledJob) {
+  public ScheduledJob updateJob(String uuid, ScheduledJob scheduledJob)
+      throws ScheduledJobException, SchedulerException, ClassNotFoundException {
     Optional<ScheduledJob> optScheduledJob = scheduledJobRepository.findByUuid(uuid);
 
     if (optScheduledJob.isEmpty())
@@ -87,38 +74,33 @@ public class ScheduledJobService {
 
     ScheduledJob updatedJob = optScheduledJob.get();
 
-    try {
-      if (scheduledJob.getRepository() != null) {
-        updatedJob.setRepository(scheduledJob.getRepository());
-      }
-      if (scheduledJob.getCron() != null) {
-        updatedJob.setCron(scheduledJob.getCron());
-      }
-      if (scheduledJob.getJobStatus() != null) {
-        updatedJob.setJobStatus(scheduledJob.getJobStatus());
-      }
-      if (scheduledJob.getPropertiesString() != null) {
-        updatedJob.setPropertiesString(scheduledJob.getPropertiesString());
-      }
-      if (scheduledJob.getJobType() != null && scheduledJob.getJobType().getId() != null) {
-        updatedJob.setJobType(
-            scheduledJobTypeRepository
-                .findById(scheduledJob.getJobType().getId())
-                .orElseThrow(
-                    () ->
-                        new ScheduledJobException(
-                            "Job type not found with id: " + scheduledJob.getJobType().getId())));
-      }
-
-      scheduledJobRepository.save(updatedJob);
-      scheduledJobManager.scheduleJob(updatedJob);
-
-      logger.info("Job '{}' was updated.", uuid);
-      return updatedJob;
-    } catch (Exception e) {
-      logger.error("Error updating job", e);
-      throw new ScheduledJobException("Error updating job: " + e.getMessage(), e);
+    if (scheduledJob.getRepository() != null) {
+      updatedJob.setRepository(scheduledJob.getRepository());
     }
+    if (scheduledJob.getCron() != null) {
+      updatedJob.setCron(scheduledJob.getCron());
+    }
+    if (scheduledJob.getJobStatus() != null) {
+      updatedJob.setJobStatus(scheduledJob.getJobStatus());
+    }
+    if (scheduledJob.getPropertiesString() != null) {
+      updatedJob.setPropertiesString(scheduledJob.getPropertiesString());
+    }
+    if (scheduledJob.getJobType() != null && scheduledJob.getJobType().getId() != null) {
+      updatedJob.setJobType(
+          scheduledJobTypeRepository
+              .findById(scheduledJob.getJobType().getId())
+              .orElseThrow(
+                  () ->
+                      new ScheduledJobException(
+                          "Job type not found with id: " + scheduledJob.getJobType().getId())));
+    }
+
+    scheduledJobRepository.save(updatedJob);
+    scheduledJobManager.scheduleJob(updatedJob);
+
+    logger.info("Job '{}' was updated.", uuid);
+    return updatedJob;
   }
 
   public void deleteJob(ScheduledJob scheduledJob) throws SchedulerException {

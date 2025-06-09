@@ -1,11 +1,7 @@
 package com.box.l10n.mojito.rest.scheduledjob;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
-import com.box.l10n.mojito.service.scheduledjob.ScheduledJobDTO;
-import com.box.l10n.mojito.service.scheduledjob.ScheduledJobManager;
-import com.box.l10n.mojito.service.scheduledjob.ScheduledJobRepository;
-import com.box.l10n.mojito.service.scheduledjob.ScheduledJobResponse;
-import com.box.l10n.mojito.service.scheduledjob.ScheduledJobService;
+import com.box.l10n.mojito.service.scheduledjob.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -55,43 +51,41 @@ public class ScheduledJobWS {
 
   @RequestMapping(method = RequestMethod.POST, value = "/api/jobs")
   @ResponseStatus(HttpStatus.OK)
-  public ScheduledJob createJob(@RequestBody ScheduledJob scheduledJob) {
+  public ScheduledJob createJob(@RequestBody ScheduledJob scheduledJob)
+      throws SchedulerException, ClassNotFoundException {
     try {
       return scheduledJobService.createJob(scheduledJob);
-    } catch (ResponseStatusException e) {
+    } catch (ScheduledJobException e) {
       logger.error("Error creating job", e);
-      throw e;
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Error creating job: " + e.getMessage(), e);
     }
   }
 
   @RequestMapping(method = RequestMethod.PATCH, value = "/api/jobs/{id}")
   @ResponseStatus(HttpStatus.OK)
-  public ScheduledJob updateJob(@PathVariable UUID id, @RequestBody ScheduledJob scheduledJob) {
+  public ScheduledJob updateJob(@PathVariable UUID id, @RequestBody ScheduledJob scheduledJob)
+      throws SchedulerException, ClassNotFoundException {
     try {
       return scheduledJobService.updateJob(id.toString(), scheduledJob);
-    } catch (ResponseStatusException e) {
+    } catch (ScheduledJobException e) {
       logger.error("Error updating job", e);
-      throw e;
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Error updating job: " + e.getMessage(), e);
     }
   }
 
   @RequestMapping(method = RequestMethod.DELETE, value = "/api/jobs/{id}")
   @ResponseStatus(HttpStatus.OK)
-  public void deleteJob(@PathVariable UUID id) throws ResponseStatusException {
+  public void deleteJob(@PathVariable UUID id) throws SchedulerException {
     logger.info("Deleting scheduled job [{}]", id);
     ScheduledJob scheduledJob = scheduledJobRepository.findByUuid(id.toString()).orElse(null);
 
     if (scheduledJob == null) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found with id: " + id);
     }
-    try {
-      scheduledJobService.deleteJob(scheduledJob);
-    } catch (SchedulerException e) {
-      logger.error("Error deleting job from Quartz with id: {}", id, e);
-      throw new ResponseStatusException(
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "Job with id: " + id + " could not be deleted from Quartz");
-    }
+
+    scheduledJobService.deleteJob(scheduledJob);
   }
 
   @RequestMapping(method = RequestMethod.GET, value = "/api/jobs")
