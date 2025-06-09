@@ -7,9 +7,7 @@ import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ScheduledJobService {
@@ -34,12 +32,10 @@ public class ScheduledJobService {
 
   public ScheduledJob createJob(ScheduledJob scheduledJob) {
     if (scheduledJob.getRepository() == null) {
-      throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "Repository must be provided to create a job");
+      throw new ScheduledJobException("Repository must be provided to create a job");
     }
     if (scheduledJob.getCron() == null || scheduledJob.getCron().isEmpty()) {
-      throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "Cron expression must be provided to create a job");
+      throw new ScheduledJobException("Cron expression must be provided to create a job");
     }
     try {
       if (scheduledJob.getUuid() == null) {
@@ -53,12 +49,10 @@ public class ScheduledJobService {
                 .findById(scheduledJob.getJobType().getId())
                 .orElseThrow(
                     () ->
-                        new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
+                        new ScheduledJobException(
                             "Job type not found with id: " + scheduledJob.getJobType().getId())));
       } else {
-        throw new ResponseStatusException(
-            HttpStatus.BAD_REQUEST, "Job type must be provided to create a job");
+        throw new ScheduledJobException("Job type must be provided to create a job");
       }
 
       scheduledJobRepository.save(scheduledJob);
@@ -69,19 +63,17 @@ public class ScheduledJobService {
           scheduledJob.getUuid(),
           scheduledJob.getRepository().getName());
       return scheduledJob;
-    } catch (ResponseStatusException e) {
+    } catch (ScheduledJobException e) {
       logger.error("Error creating job", e);
       throw e;
     } catch (ClassNotFoundException e) {
       logger.error("Error creating job", e);
-      throw new ResponseStatusException(
-          HttpStatus.INTERNAL_SERVER_ERROR,
+      throw new ScheduledJobException(
           "Error creating job: Class Not Found Exception from scheduledJobManager.scheduledJob(scheduledJob)",
           e);
     } catch (SchedulerException e) {
       logger.error("Error scheduling job", e);
-      throw new ResponseStatusException(
-          HttpStatus.INTERNAL_SERVER_ERROR,
+      throw new ScheduledJobException(
           "Error scheduling job: Scheduler Exception from scheduledJobManager.scheduledJob(scheduledJob)",
           e);
     }
@@ -91,7 +83,7 @@ public class ScheduledJobService {
     Optional<ScheduledJob> optScheduledJob = scheduledJobRepository.findByUuid(uuid);
 
     if (optScheduledJob.isEmpty())
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found with id: " + uuid);
+      throw new ScheduledJobException("Job not found with id: " + uuid);
 
     ScheduledJob updatedJob = optScheduledJob.get();
 
@@ -114,8 +106,7 @@ public class ScheduledJobService {
                 .findById(scheduledJob.getJobType().getId())
                 .orElseThrow(
                     () ->
-                        new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
+                        new ScheduledJobException(
                             "Job type not found with id: " + scheduledJob.getJobType().getId())));
       }
 
@@ -126,8 +117,7 @@ public class ScheduledJobService {
       return updatedJob;
     } catch (Exception e) {
       logger.error("Error updating job", e);
-      throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "Error updating job: " + e.getMessage(), e);
+      throw new ScheduledJobException("Error updating job: " + e.getMessage(), e);
     }
   }
 
