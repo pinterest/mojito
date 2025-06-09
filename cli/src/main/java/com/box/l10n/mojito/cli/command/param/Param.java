@@ -230,4 +230,6 @@ public class Param {
   public static final String MAX_STRINGS_REMOVED_BLOCK_SHORT = "-msrb";
   public static final String MAX_STRINGS_REMOVED_BLOCK_DESCRIPTION =
       "The maximum number of strings to be removed.";
+
+  public static final String INTEGRITY_CHECK_LONG_PARAM = "--integrity-check";
 }
