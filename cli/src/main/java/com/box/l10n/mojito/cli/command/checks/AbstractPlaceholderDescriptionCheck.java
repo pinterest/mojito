@@ -9,34 +9,39 @@ import org.apache.commons.lang3.StringUtils;
 
 public abstract class AbstractPlaceholderDescriptionCheck {
 
-  public abstract Set<String> checkCommentForDescriptions(String source, String comment);
+  public abstract Set<CliCheckResult.CheckFailure> checkCommentForDescriptions(
+      String source, String comment);
 
-  public Optional<String> getFailureText(String placeholder) {
-    String failureText = null;
+  public Optional<CliCheckResult.CheckFailure> getCheckFailure(String placeholder) {
+    CliCheckResult.CheckFailure checkFailure = null;
     if (StringUtils.isNumeric(placeholder)) {
-      failureText =
-          "Missing description for placeholder number "
-              + QUOTE_MARKER
-              + placeholder
-              + QUOTE_MARKER
-              + " in comment. Please add a description in the string comment in the form "
-              + QUOTE_MARKER
-              + placeholder
-              + ":<description>"
-              + QUOTE_MARKER;
+      checkFailure =
+          new CliCheckResult.CheckFailure(
+              CheckerRuleId.MISSING_DESCRIPTION_FOR_NUMERIC_PLACEHOLDER,
+              "Missing description for placeholder number "
+                  + QUOTE_MARKER
+                  + placeholder
+                  + QUOTE_MARKER
+                  + " in comment. Please add a description in the string comment in the form "
+                  + QUOTE_MARKER
+                  + placeholder
+                  + ":<description>"
+                  + QUOTE_MARKER);
     } else if (!placeholder.trim().isEmpty()) {
-      failureText =
-          "Missing description for placeholder with name "
-              + QUOTE_MARKER
-              + placeholder
-              + QUOTE_MARKER
-              + " in comment. Please add a description in the string comment in the form "
-              + QUOTE_MARKER
-              + placeholder
-              + ":<description>"
-              + QUOTE_MARKER;
+      checkFailure =
+          new CliCheckResult.CheckFailure(
+              CheckerRuleId.MISSING_NAMED_PLACEHOLDER_DESCRIPTION,
+              "Missing description for placeholder with name "
+                  + QUOTE_MARKER
+                  + placeholder
+                  + QUOTE_MARKER
+                  + " in comment. Please add a description in the string comment in the form "
+                  + QUOTE_MARKER
+                  + placeholder
+                  + ":<description>"
+                  + QUOTE_MARKER);
     }
-    return Optional.ofNullable(failureText);
+    return Optional.ofNullable(checkFailure);
   }
 
   protected boolean isPlaceholderDescriptionMissingInComment(String comment, String placeholder) {

@@ -1,9 +1,15 @@
 package com.box.l10n.mojito.cli.command.checks;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class CliCheckResult {
+
+  public record CheckFailure(CheckerRuleId ruleId, String failureMessage) {}
 
   private final boolean hardFail;
   private final String checkName;
+  private final Map<String, CheckFailure> fieldFailuresMap = new HashMap<>();
   private boolean successful = true;
   private String notificationText = "";
 
@@ -40,5 +46,13 @@ public class CliCheckResult {
 
   public void setNotificationText(String notificationText) {
     this.notificationText = notificationText;
+  }
+
+  public Map<String, CheckFailure> getFieldFailuresMap() {
+    return fieldFailuresMap;
+  }
+
+  public void appendToFieldFailuresMap(Map<String, CheckFailure> newFailuresMap) {
+    fieldFailuresMap.putAll(newFailuresMap);
   }
 }
