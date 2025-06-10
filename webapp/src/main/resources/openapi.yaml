@@ -1382,7 +1382,7 @@ paths:
           content:
             application/hal+json:
               schema:
-                $ref: "#/components/schemas/ScheduledJob"
+                $ref: "#/components/schemas/ScheduledJobDTO"
           description: OK
       tags:
       - scheduled-job-ws
@@ -1439,7 +1439,7 @@ paths:
           content:
             application/hal+json:
               schema:
-                $ref: "#/components/schemas/ScheduledJob"
+                $ref: "#/components/schemas/ScheduledJobDTO"
           description: OK
       tags:
       - scheduled-job-ws
