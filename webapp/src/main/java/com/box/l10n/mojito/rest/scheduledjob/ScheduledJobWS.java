@@ -56,10 +56,10 @@ public class ScheduledJobWS {
 
   @RequestMapping(method = RequestMethod.POST, value = "/api/jobs")
   @ResponseStatus(HttpStatus.OK)
-  public ScheduledJob createJob(@RequestBody ScheduledJob scheduledJob)
-      throws SchedulerException, ClassNotFoundException {
+  public ScheduledJobDTO createJob(@RequestBody ScheduledJob scheduledJob)
+      throws SchedulerException, ClassNotFoundException, ResponseStatusException {
     try {
-      return scheduledJobService.createJob(scheduledJob);
+      return new ScheduledJobDTO(scheduledJobService.createJob(scheduledJob));
     } catch (ScheduledJobException e) {
       logger.error("Error creating job", e);
       throw new ResponseStatusException(
@@ -69,10 +69,10 @@ public class ScheduledJobWS {
 
   @RequestMapping(method = RequestMethod.PATCH, value = "/api/jobs/{id}")
   @ResponseStatus(HttpStatus.OK)
-  public ScheduledJob updateJob(@PathVariable UUID id, @RequestBody ScheduledJob scheduledJob)
-      throws SchedulerException, ClassNotFoundException {
+  public ScheduledJobDTO updateJob(@PathVariable UUID id, @RequestBody ScheduledJob scheduledJob)
+      throws SchedulerException, ClassNotFoundException, ResponseStatusException {
     try {
-      return scheduledJobService.updateJob(id.toString(), scheduledJob);
+      return new ScheduledJobDTO(scheduledJobService.updateJob(id.toString(), scheduledJob));
     } catch (ScheduledJobException e) {
       logger.error("Error updating job", e);
       throw new ResponseStatusException(
