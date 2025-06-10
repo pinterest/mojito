@@ -140,11 +140,10 @@ public class ScheduledJobService {
 
   private ScheduledJob getScheduledJobFromDTO(ScheduledJobDTO scheduledJobDTO) {
     ScheduledJob scheduledJob = new ScheduledJob();
-    scheduledJob.setRepository(resolveRepositoryFromDTO(scheduledJobDTO));
-    scheduledJob.setJobType(resolveJobTypeFromDTO(scheduledJobDTO));
     scheduledJob.setUuid(scheduledJobDTO.getId());
     scheduledJob.setCron(scheduledJobDTO.getCron());
-    scheduledJob.setProperties(scheduledJobDTO.getProperties());
+    scheduledJob.setRepository(resolveRepositoryFromDTO(scheduledJobDTO));
+    scheduledJob.setJobType(resolveJobTypeFromDTO(scheduledJobDTO));
     scheduledJob.setPropertiesString(scheduledJobDTO.getPropertiesString());
     return scheduledJob;
   }
