@@ -1,6 +1,8 @@
 package com.box.l10n.mojito.service.scheduledjob;
 
+import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.ScheduledJob;
+import com.box.l10n.mojito.entity.ScheduledJobType;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import java.util.UUID;
 import org.quartz.SchedulerException;
@@ -46,7 +48,8 @@ public class ScheduledJobService {
       scheduledJob.setUuid(UUID.randomUUID().toString());
     }
     scheduledJob.setJobStatus(
-        scheduledJobStatusRepository.findByEnum(ScheduledJobStatus.SCHEDULED));
+        scheduledJobStatusRepository.findByEnum(
+            com.box.l10n.mojito.service.scheduledjob.ScheduledJobStatus.SCHEDULED));
     if (scheduledJob.getJobType() != null && scheduledJob.getJobType().getId() != null) {
       scheduledJob.setJobType(
           scheduledJobTypeRepository
@@ -110,18 +113,32 @@ public class ScheduledJobService {
   public void deleteJob(ScheduledJob scheduledJob) throws SchedulerException {
     scheduledJobRepository.deleteByUuid(scheduledJob.getUuid());
     scheduledJobManager.deleteJobFromQuartz(scheduledJob);
-    logger.debug("Deleted scheduled job with uuid: {}", scheduledJob.getUuid());
+    logger.info("Deleted scheduled job with uuid: {}", scheduledJob.getUuid());
   }
 
   public ScheduledJob getScheduledJobFromDTO(ScheduledJobDTO scheduledJobDTO) {
     ScheduledJob scheduledJob = new ScheduledJob();
+
+    if (scheduledJobDTO.getRepository() != null) {
+      Repository repo = repositoryRepository.findByName(scheduledJobDTO.getRepository());
+      if (repo == null) {
+        throw new ScheduledJobException("Repository not found: " + scheduledJobDTO.getRepository());
+      } else {
+        scheduledJob.setRepository(repo);
+      }
+    }
+    if (scheduledJobDTO.getType() != null) {
+      ScheduledJobType jobType = scheduledJobTypeRepository.findByEnum(scheduledJobDTO.getType());
+      if (jobType == null) {
+        throw new ScheduledJobException("Job type not found: " + scheduledJobDTO.getType());
+      }
+      scheduledJob.setJobType(jobType);
+    }
+
     scheduledJob.setUuid(scheduledJobDTO.getId());
-    scheduledJob.setRepository(repositoryRepository.findByName(scheduledJobDTO.getRepository()));
     scheduledJob.setCron(scheduledJobDTO.getCron());
-    scheduledJob.setJobType(scheduledJobTypeRepository.findByEnum(scheduledJobDTO.getType()));
     scheduledJob.setProperties(scheduledJobDTO.getProperties());
     scheduledJob.setPropertiesString(scheduledJobDTO.getPropertiesString());
-    scheduledJob.setJobStatus(scheduledJobStatusRepository.findByEnum(scheduledJobDTO.getStatus()));
     return scheduledJob;
   }
 }

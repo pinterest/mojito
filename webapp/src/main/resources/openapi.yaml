@@ -1375,7 +1375,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ScheduledJob"
+              $ref: "#/components/schemas/ScheduledJobDTO"
         required: true
       responses:
         "200":
@@ -1432,7 +1432,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ScheduledJob"
+              $ref: "#/components/schemas/ScheduledJobDTO"
         required: true
       responses:
         "200":
@@ -4663,36 +4663,6 @@ components:
           $ref: "#/components/schemas/Locale_Repository"
         tm:
           $ref: "#/components/schemas/TM_Repository"
-    ScheduledJob:
-      type: object
-      properties:
-        cron:
-          type: string
-        enabled:
-          type: boolean
-        endDate:
-          type: integer
-          format: int64
-          example: 1715699917000
-        id:
-          type: integer
-          format: int64
-        jobStatus:
-          $ref: "#/components/schemas/ScheduledJobStatus"
-        jobType:
-          $ref: "#/components/schemas/ScheduledJobType"
-        properties:
-          $ref: "#/components/schemas/ScheduledJobProperties"
-        propertiesString:
-          type: string
-        repository:
-          $ref: "#/components/schemas/Repository"
-        startDate:
-          type: integer
-          format: int64
-          example: 1715699917000
-        uuid:
-          type: string
     ScheduledJobDTO:
       type: object
       properties:
@@ -4712,6 +4682,8 @@ components:
           example: 1715699917000
         properties:
           $ref: "#/components/schemas/ScheduledJobProperties"
+        propertiesString:
+          type: string
         repository:
           type: string
         startDate:
@@ -4748,42 +4720,6 @@ components:
           enum:
           - failure
           - success
-    ScheduledJobStatus:
-      type: object
-      properties:
-        enum:
-          type: string
-          enum:
-          - SCHEDULED
-          - IN_PROGRESS
-          - FAILED
-          - SUCCEEDED
-        id:
-          type: integer
-          format: int64
-        jobStatus:
-          type: string
-          enum:
-          - SCHEDULED
-          - IN_PROGRESS
-          - FAILED
-          - SUCCEEDED
-    ScheduledJobType:
-      type: object
-      properties:
-        enum:
-          type: string
-          enum:
-          - THIRD_PARTY_SYNC
-          - EVOLVE_SYNC
-        id:
-          type: integer
-          format: int64
-        jobType:
-          type: string
-          enum:
-          - THIRD_PARTY_SYNC
-          - EVOLVE_SYNC
     Screenshot:
       type: object
       properties:
