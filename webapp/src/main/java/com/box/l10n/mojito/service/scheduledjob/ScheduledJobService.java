@@ -116,25 +116,32 @@ public class ScheduledJobService {
     logger.info("Deleted scheduled job with uuid: {}", scheduledJob.getUuid());
   }
 
-  public ScheduledJob getScheduledJobFromDTO(ScheduledJobDTO scheduledJobDTO) {
+  private Repository resolveRepositoryFromDTO(ScheduledJobDTO scheduledJobDTO) {
+    if (scheduledJobDTO.getRepository() == null) {
+      throw new ScheduledJobException("Repository must be provided");
+    }
+    Repository repository = repositoryRepository.findByName(scheduledJobDTO.getRepository());
+    if (repository == null) {
+      throw new ScheduledJobException("Repository not found: " + scheduledJobDTO.getRepository());
+    }
+    return repository;
+  }
+
+  private ScheduledJobType resolveJobTypeFromDTO(ScheduledJobDTO scheduledJobDTO) {
+    if (scheduledJobDTO.getType() == null) {
+      throw new ScheduledJobException("Job type must be provided");
+    }
+    ScheduledJobType jobType = scheduledJobTypeRepository.findByEnum(scheduledJobDTO.getType());
+    if (jobType == null) {
+      throw new ScheduledJobException("Job type not found: " + scheduledJobDTO.getType());
+    }
+    return jobType;
+  }
+
+  private ScheduledJob getScheduledJobFromDTO(ScheduledJobDTO scheduledJobDTO) {
     ScheduledJob scheduledJob = new ScheduledJob();
-
-    if (scheduledJobDTO.getRepository() != null) {
-      Repository repo = repositoryRepository.findByName(scheduledJobDTO.getRepository());
-      if (repo == null) {
-        throw new ScheduledJobException("Repository not found: " + scheduledJobDTO.getRepository());
-      } else {
-        scheduledJob.setRepository(repo);
-      }
-    }
-    if (scheduledJobDTO.getType() != null) {
-      ScheduledJobType jobType = scheduledJobTypeRepository.findByEnum(scheduledJobDTO.getType());
-      if (jobType == null) {
-        throw new ScheduledJobException("Job type not found: " + scheduledJobDTO.getType());
-      }
-      scheduledJob.setJobType(jobType);
-    }
-
+    scheduledJob.setRepository(resolveRepositoryFromDTO(scheduledJobDTO));
+    scheduledJob.setJobType(resolveJobTypeFromDTO(scheduledJobDTO));
     scheduledJob.setUuid(scheduledJobDTO.getId());
     scheduledJob.setCron(scheduledJobDTO.getCron());
     scheduledJob.setProperties(scheduledJobDTO.getProperties());
