@@ -22,8 +22,7 @@ public class ScheduledJobDTO {
   private ZonedDateTime nextStartDate;
   private Boolean enabled;
 
-  public ScheduledJobDTO() {
-  }
+  public ScheduledJobDTO() {}
 
   public ScheduledJobDTO(ScheduledJob scheduledJob) {
     this.id = scheduledJob.getUuid();

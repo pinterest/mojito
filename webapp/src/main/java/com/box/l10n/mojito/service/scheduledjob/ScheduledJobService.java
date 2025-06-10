@@ -37,7 +37,7 @@ public class ScheduledJobService {
       throws ScheduledJobException, SchedulerException, ClassNotFoundException {
     ScheduledJob scheduledJob = getScheduledJobFromDTO(scheduledJobDTO);
     if (scheduledJob.getRepository() == null) {
-      throw new ScheduledJobException("Repository must be provided to create a job");
+      throw new ScheduledJobException("Valid repository must be provided to create a job");
     }
     if (scheduledJob.getCron() == null || scheduledJob.getCron().isEmpty()) {
       throw new ScheduledJobException("Cron expression must be provided to create a job");
@@ -122,7 +122,6 @@ public class ScheduledJobService {
     scheduledJob.setProperties(scheduledJobDTO.getProperties());
     scheduledJob.setPropertiesString(scheduledJobDTO.getPropertiesString());
     scheduledJob.setJobStatus(scheduledJobStatusRepository.findByEnum(scheduledJobDTO.getStatus()));
-    scheduledJob.setEnabled(scheduledJobDTO.isEnabled());
     return scheduledJob;
   }
 }

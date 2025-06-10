@@ -73,7 +73,8 @@ public class ScheduledJobWS {
 
   @RequestMapping(method = RequestMethod.PATCH, value = "/api/jobs/{id}")
   @ResponseStatus(HttpStatus.OK)
-  public ScheduledJobDTO updateJob(@PathVariable UUID id, @RequestBody ScheduledJobDTO scheduledJobDTO)
+  public ScheduledJobDTO updateJob(
+      @PathVariable UUID id, @RequestBody ScheduledJobDTO scheduledJobDTO)
       throws SchedulerException, ClassNotFoundException, ResponseStatusException {
     try {
       return new ScheduledJobDTO(scheduledJobService.updateJob(id.toString(), scheduledJobDTO));
