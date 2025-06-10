@@ -1,6 +1,7 @@
 package com.box.l10n.mojito.rest.scheduledjob;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
+import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobDTO;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobException;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobManager;
@@ -39,15 +40,18 @@ public class ScheduledJobWS {
   private final ScheduledJobRepository scheduledJobRepository;
   private final ScheduledJobManager scheduledJobManager;
   private final ScheduledJobService scheduledJobService;
+  private final RepositoryRepository repositoryRepository;
 
   @Autowired
   public ScheduledJobWS(
       ScheduledJobRepository scheduledJobRepository,
       ScheduledJobManager scheduledJobManager,
-      ScheduledJobService scheduledJobService) {
+      ScheduledJobService scheduledJobService,
+      RepositoryRepository repositoryRepository) {
     this.scheduledJobRepository = scheduledJobRepository;
     this.scheduledJobManager = scheduledJobManager;
     this.scheduledJobService = scheduledJobService;
+    this.repositoryRepository = repositoryRepository;
   }
 
   private final ResponseEntity<ScheduledJobResponse> notFoundResponse =
@@ -56,10 +60,10 @@ public class ScheduledJobWS {
 
   @RequestMapping(method = RequestMethod.POST, value = "/api/jobs")
   @ResponseStatus(HttpStatus.OK)
-  public ScheduledJobDTO createJob(@RequestBody ScheduledJob scheduledJob)
+  public ScheduledJobDTO createJob(@RequestBody ScheduledJobDTO scheduledJobDTO)
       throws SchedulerException, ClassNotFoundException, ResponseStatusException {
     try {
-      return new ScheduledJobDTO(scheduledJobService.createJob(scheduledJob));
+      return new ScheduledJobDTO(scheduledJobService.createJob(scheduledJobDTO));
     } catch (ScheduledJobException e) {
       logger.error("Error creating job", e);
       throw new ResponseStatusException(
@@ -69,10 +73,10 @@ public class ScheduledJobWS {
 
   @RequestMapping(method = RequestMethod.PATCH, value = "/api/jobs/{id}")
   @ResponseStatus(HttpStatus.OK)
-  public ScheduledJobDTO updateJob(@PathVariable UUID id, @RequestBody ScheduledJob scheduledJob)
+  public ScheduledJobDTO updateJob(@PathVariable UUID id, @RequestBody ScheduledJobDTO scheduledJobDTO)
       throws SchedulerException, ClassNotFoundException, ResponseStatusException {
     try {
-      return new ScheduledJobDTO(scheduledJobService.updateJob(id.toString(), scheduledJob));
+      return new ScheduledJobDTO(scheduledJobService.updateJob(id.toString(), scheduledJobDTO));
     } catch (ScheduledJobException e) {
       logger.error("Error updating job", e);
       throw new ResponseStatusException(

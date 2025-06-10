@@ -1,6 +1,7 @@
 package com.box.l10n.mojito.service.scheduledjob;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
+import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import java.util.UUID;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -16,21 +17,25 @@ public class ScheduledJobService {
   private final ScheduledJobStatusRepository scheduledJobStatusRepository;
   private final ScheduledJobTypeRepository scheduledJobTypeRepository;
   private final ScheduledJobManager scheduledJobManager;
+  private final RepositoryRepository repositoryRepository;
 
   @Autowired
   public ScheduledJobService(
       ScheduledJobRepository scheduledJobRepository,
       ScheduledJobStatusRepository scheduledJobStatusRepository,
       ScheduledJobTypeRepository scheduledJobTypeRepository,
-      ScheduledJobManager scheduledJobManager) {
+      ScheduledJobManager scheduledJobManager,
+      RepositoryRepository repositoryRepository) {
     this.scheduledJobRepository = scheduledJobRepository;
     this.scheduledJobStatusRepository = scheduledJobStatusRepository;
     this.scheduledJobTypeRepository = scheduledJobTypeRepository;
     this.scheduledJobManager = scheduledJobManager;
+    this.repositoryRepository = repositoryRepository;
   }
 
-  public ScheduledJob createJob(ScheduledJob scheduledJob)
+  public ScheduledJob createJob(ScheduledJobDTO scheduledJobDTO)
       throws ScheduledJobException, SchedulerException, ClassNotFoundException {
+    ScheduledJob scheduledJob = getScheduledJobFromDTO(scheduledJobDTO);
     if (scheduledJob.getRepository() == null) {
       throw new ScheduledJobException("Repository must be provided to create a job");
     }
@@ -64,13 +69,14 @@ public class ScheduledJobService {
     return scheduledJob;
   }
 
-  public ScheduledJob updateJob(String uuid, ScheduledJob scheduledJob)
+  public ScheduledJob updateJob(String uuid, ScheduledJobDTO scheduledJobDTO)
       throws ScheduledJobException, SchedulerException, ClassNotFoundException {
     ScheduledJob updatedJob =
         scheduledJobRepository
             .findByUuid(uuid)
             .orElseThrow(() -> new ScheduledJobException("Job not found with id: " + uuid));
 
+    ScheduledJob scheduledJob = getScheduledJobFromDTO(scheduledJobDTO);
     if (scheduledJob.getRepository() != null) {
       updatedJob.setRepository(scheduledJob.getRepository());
     }
@@ -105,5 +111,18 @@ public class ScheduledJobService {
     scheduledJobRepository.deleteByUuid(scheduledJob.getUuid());
     scheduledJobManager.deleteJobFromQuartz(scheduledJob);
     logger.debug("Deleted scheduled job with uuid: {}", scheduledJob.getUuid());
+  }
+
+  public ScheduledJob getScheduledJobFromDTO(ScheduledJobDTO scheduledJobDTO) {
+    ScheduledJob scheduledJob = new ScheduledJob();
+    scheduledJob.setUuid(scheduledJobDTO.getId());
+    scheduledJob.setRepository(repositoryRepository.findByName(scheduledJobDTO.getRepository()));
+    scheduledJob.setCron(scheduledJobDTO.getCron());
+    scheduledJob.setJobType(scheduledJobTypeRepository.findByEnum(scheduledJobDTO.getType()));
+    scheduledJob.setProperties(scheduledJobDTO.getProperties());
+    scheduledJob.setPropertiesString(scheduledJobDTO.getPropertiesString());
+    scheduledJob.setJobStatus(scheduledJobStatusRepository.findByEnum(scheduledJobDTO.getStatus()));
+    scheduledJob.setEnabled(scheduledJobDTO.isEnabled());
+    return scheduledJob;
   }
 }
