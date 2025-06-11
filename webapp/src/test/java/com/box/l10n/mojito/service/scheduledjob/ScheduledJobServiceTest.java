@@ -60,8 +60,8 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
     scheduledJobDTO.setPropertiesString("{\"version\": 1}");
 
     assertThrows(
-            ScheduledJobException.class,
-            () -> scheduledJobDTO.setPropertiesString("invalid properties string"));
+        ScheduledJobException.class,
+        () -> scheduledJobDTO.setPropertiesString("invalid properties string"));
     assertThrows(ScheduledJobException.class, () -> scheduledJobService.createJob(scheduledJobDTO));
   }
 
