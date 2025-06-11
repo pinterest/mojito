@@ -52,25 +52,17 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
   }
 
   @Test
-  public void testCreateScheduledJobInvalidRepository() {
+  public void testCreateScheduledJobFailure() {
     ScheduledJobDTO scheduledJobDTO = new ScheduledJobDTO();
     scheduledJobDTO.setRepository("Invalid Repository");
     scheduledJobDTO.setCron("0 0/1 * * * ?");
     scheduledJobDTO.setType(ScheduledJobType.THIRD_PARTY_SYNC);
     scheduledJobDTO.setPropertiesString("{\"version\": 1}");
 
-    assertThrows(ScheduledJobException.class, () -> scheduledJobService.createJob(scheduledJobDTO));
-  }
-
-  @Test
-  public void testCreateScheduledJobInvalidPropertiesString() {
-    ScheduledJobDTO scheduledJobDTO = new ScheduledJobDTO();
-    scheduledJobDTO.setRepository("Demo");
-    scheduledJobDTO.setCron("0 0/1 * * * ?");
-    scheduledJobDTO.setType(ScheduledJobType.THIRD_PARTY_SYNC);
     assertThrows(
-        ScheduledJobException.class,
-        () -> scheduledJobDTO.setPropertiesString("invalid properties string"));
+            ScheduledJobException.class,
+            () -> scheduledJobDTO.setPropertiesString("invalid properties string"));
+    assertThrows(ScheduledJobException.class, () -> scheduledJobService.createJob(scheduledJobDTO));
   }
 
   @Test
