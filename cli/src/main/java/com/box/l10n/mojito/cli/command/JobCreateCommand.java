@@ -61,7 +61,7 @@ public class JobCreateCommand extends Command {
       scheduledJobDTO.setRepository(repositoryNameParam);
       scheduledJobDTO.setCron(cronParam);
       scheduledJobDTO.setType(ScheduledJobDTO.TypeEnum.valueOf(jobTypeParam));
-      scheduledJobDTO.setPropertiesString(propertiesStringParam);
+      //      scheduledJobDTO.setPropertiesString(propertiesStringParam);
 
       consoleWriter.a(repositoryNameParam).println();
       consoleWriter.a(cronParam).println();

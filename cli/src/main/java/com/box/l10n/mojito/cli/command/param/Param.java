@@ -245,4 +245,8 @@ public class Param {
   public static final String PROPERTIES_STRING_SHORT = "-ps";
   public static final String PROPERTIES_STRING_DESCRIPTION =
       "String containing properties for the job. Format: '{\"key1\":\"value1\", \"key2\":\"value2\"}'";
+
+  public static final String JOB_UUID_LONG = "--job-uuid";
+  public static final String JOB_UUID_SHORT = "-ju";
+  public static final String JOB_UUID_DESCRIPTION = "UUID of the job to be updated or deleted";
 }
