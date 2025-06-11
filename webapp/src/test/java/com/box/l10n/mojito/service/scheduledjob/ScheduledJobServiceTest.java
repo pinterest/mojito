@@ -9,6 +9,7 @@ import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
 import com.box.l10n.mojito.service.repository.RepositoryNameAlreadyUsedException;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.repository.RepositoryService;
+import org.junit.Before;
 import org.junit.Test;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -27,11 +28,18 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
   @Autowired ScheduledJobRepository scheduledJobRepository;
   @Autowired RepositoryRepository repositoryRepository;
 
-  @Test
-  public void testCreateScheduledJobSuccess()
-      throws SchedulerException, ClassNotFoundException, RepositoryNameAlreadyUsedException {
-    repositoryService.createRepository("Demo");
+  @Before
+  public void setup() throws RepositoryNameAlreadyUsedException {
+    if (repositoryRepository.findByName("Demo") == null) {
+      repositoryService.createRepository("Demo");
+    }
+    if (repositoryRepository.findByName("Demo1") == null) {
+      repositoryService.createRepository("Demo1");
+    }
+  }
 
+  @Test
+  public void testCreateScheduledJobSuccess() throws SchedulerException, ClassNotFoundException {
     ScheduledJobDTO scheduledJobDTO = new ScheduledJobDTO();
     scheduledJobDTO.setRepository("Demo");
     scheduledJobDTO.setCron("0 0/1 * * * ?");
@@ -55,6 +63,17 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
   }
 
   @Test
+  public void testCreateScheduledJobInvalidPropertiesString() {
+    ScheduledJobDTO scheduledJobDTO = new ScheduledJobDTO();
+    scheduledJobDTO.setRepository("Demo");
+    scheduledJobDTO.setCron("0 0/1 * * * ?");
+    scheduledJobDTO.setType(ScheduledJobType.THIRD_PARTY_SYNC);
+    assertThrows(
+        ScheduledJobException.class,
+        () -> scheduledJobDTO.setPropertiesString("invalid properties string"));
+  }
+
+  @Test
   public void testUpdateScheduledJobSuccess() throws SchedulerException, ClassNotFoundException {
     ScheduledJobDTO scheduledJobDTO = new ScheduledJobDTO();
     scheduledJobDTO.setRepository("Demo");
@@ -66,7 +85,7 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
     int initialSize = scheduledJobRepository.findAll().size();
 
     ScheduledJobDTO updatedJobDTO = new ScheduledJobDTO();
-    updatedJobDTO.setRepository("Demo");
+    updatedJobDTO.setRepository("Demo1");
     updatedJobDTO.setCron("0 0/2 * * * ?");
     updatedJobDTO.setType(ScheduledJobType.THIRD_PARTY_SYNC);
     scheduledJobService.updateJob(createdJob.getUuid(), updatedJobDTO);
@@ -78,6 +97,7 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
             .orElseThrow(
                 () -> new ScheduledJobException("No job found with UUID: " + createdJob.getUuid()));
     assertEquals("0 0/2 * * * ?", updatedJob.getCron());
+    assertEquals("Demo1", updatedJob.getRepository().getName());
   }
 
   @Test
