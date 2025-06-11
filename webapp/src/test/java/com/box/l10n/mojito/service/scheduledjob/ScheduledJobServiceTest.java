@@ -54,7 +54,7 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
   @Test
   public void testCreateScheduledJobInvalidRepository() {
     ScheduledJobDTO scheduledJobDTO = new ScheduledJobDTO();
-    scheduledJobDTO.setRepository("Demo1");
+    scheduledJobDTO.setRepository("Invalid Repository");
     scheduledJobDTO.setCron("0 0/1 * * * ?");
     scheduledJobDTO.setType(ScheduledJobType.THIRD_PARTY_SYNC);
     scheduledJobDTO.setPropertiesString("{\"version\": 1}");
