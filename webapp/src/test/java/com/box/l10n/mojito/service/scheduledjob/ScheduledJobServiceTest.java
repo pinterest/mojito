@@ -101,7 +101,29 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
   }
 
   @Test
-  public void testDeleteScheduledJobSuccess() throws SchedulerException, ClassNotFoundException {
+  public void testUpdateScheduledJobFailure() throws SchedulerException, ClassNotFoundException {
+    ScheduledJobDTO scheduledJobDTO = new ScheduledJobDTO();
+    scheduledJobDTO.setRepository("Demo");
+    scheduledJobDTO.setCron("0 0/1 * * * ?");
+    scheduledJobDTO.setType(ScheduledJobType.THIRD_PARTY_SYNC);
+    scheduledJobDTO.setPropertiesString("{\"version\": 1}");
+    ScheduledJob createdJob = scheduledJobService.createJob(scheduledJobDTO);
+
+    ScheduledJobDTO updatedJobDTO = new ScheduledJobDTO();
+    updatedJobDTO.setRepository("Invalid Repository");
+    updatedJobDTO.setCron("0 0/2 * * * ?");
+    updatedJobDTO.setType(ScheduledJobType.THIRD_PARTY_SYNC);
+
+    assertThrows(
+        ScheduledJobException.class,
+        () -> updatedJobDTO.setPropertiesString("invalid properties string"));
+    assertThrows(
+        ScheduledJobException.class,
+        () -> scheduledJobService.updateJob(createdJob.getUuid(), updatedJobDTO));
+  }
+
+  @Test
+  public void testDeleteScheduledJob() throws SchedulerException, ClassNotFoundException {
     ScheduledJobDTO scheduledJobDTO = new ScheduledJobDTO();
     scheduledJobDTO.setRepository("Demo");
     scheduledJobDTO.setCron("0 0/1 * * * ?");
