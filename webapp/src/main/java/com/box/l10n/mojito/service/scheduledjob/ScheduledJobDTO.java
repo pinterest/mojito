@@ -82,7 +82,7 @@ public class ScheduledJobDTO {
     return type;
   }
 
-  public void seType(ScheduledJobType type) {
+  public void setType(ScheduledJobType type) {
     this.type = type;
   }
 
