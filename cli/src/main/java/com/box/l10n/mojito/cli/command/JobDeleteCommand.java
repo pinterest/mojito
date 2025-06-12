@@ -2,6 +2,7 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.apiclient.ScheduledJobClient;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import org.slf4j.Logger;
@@ -9,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 /**
  * @author gerryyang
@@ -31,11 +34,13 @@ public class JobDeleteCommand extends Command {
   String uuidParam;
 
   @Autowired ConsoleWriter consoleWriter;
+  @Autowired
+  ScheduledJobClient scheduledJobClient;
 
   @Override
   public void execute() throws CommandException {
     try {
-      consoleWriter.a("Deleting Scheduled Job with UUID: ").a(uuidParam).println();
+      scheduledJobClient.deleteJob(UUID.fromString(uuidParam));
     } catch (Exception ex) {
       throw new CommandException(ex.getMessage(), ex);
     }

@@ -2,6 +2,7 @@ package com.box.l10n.mojito.cli.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.box.l10n.mojito.apiclient.ScheduledJobClient;
 import com.box.l10n.mojito.apiclient.model.ScheduledJobDTO;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
@@ -53,6 +54,7 @@ public class JobCreateCommand extends Command {
   String propertiesStringParam;
 
   @Autowired ConsoleWriter consoleWriter;
+  @Autowired private ScheduledJobClient scheduledJobClient;
 
   @Override
   public void execute() throws CommandException {
@@ -61,12 +63,9 @@ public class JobCreateCommand extends Command {
       scheduledJobDTO.setRepository(repositoryNameParam);
       scheduledJobDTO.setCron(cronParam);
       scheduledJobDTO.setType(ScheduledJobDTO.TypeEnum.valueOf(jobTypeParam));
-      //      scheduledJobDTO.setPropertiesString(propertiesStringParam);
+      scheduledJobDTO.setPropertiesString(propertiesStringParam);
 
-      consoleWriter.a(repositoryNameParam).println();
-      consoleWriter.a(cronParam).println();
-      consoleWriter.a(jobTypeParam).println();
-      consoleWriter.a(propertiesStringParam).println();
+      scheduledJobClient.createJob(scheduledJobDTO);
     } catch (Exception ex) {
       throw new CommandException(ex.getMessage(), ex);
     }
