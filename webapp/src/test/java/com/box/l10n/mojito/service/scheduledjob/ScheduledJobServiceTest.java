@@ -1,7 +1,9 @@
 package com.box.l10n.mojito.service.scheduledjob;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
@@ -9,6 +11,7 @@ import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
 import com.box.l10n.mojito.service.repository.RepositoryNameAlreadyUsedException;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.repository.RepositoryService;
+import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.quartz.SchedulerException;
@@ -46,9 +49,10 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
     scheduledJobDTO.setType(ScheduledJobType.THIRD_PARTY_SYNC);
     scheduledJobDTO.setPropertiesString("{\"version\": 1}");
 
-    int initialSize = scheduledJobRepository.findAll().size();
-    scheduledJobService.createJob(scheduledJobDTO);
-    assertEquals(initialSize + 1, scheduledJobRepository.findAll().size());
+    ScheduledJob scheduledJob = scheduledJobService.createJob(scheduledJobDTO);
+    Optional<ScheduledJob> createdJob = scheduledJobRepository.findByUuid(scheduledJob.getUuid());
+    assertTrue(createdJob.isPresent());
+    assertEquals(ScheduledJob.class, createdJob.get().getClass());
   }
 
   @Test
@@ -123,8 +127,8 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
     scheduledJobDTO.setPropertiesString("{\"version\": 1}");
     ScheduledJob createdJob = scheduledJobService.createJob(scheduledJobDTO);
 
-    int initialSize = scheduledJobRepository.findAll().size();
     scheduledJobService.deleteJob(createdJob);
-    assertEquals(initialSize - 1, scheduledJobRepository.findAll().size());
+    Optional<ScheduledJob> deletedJob = scheduledJobRepository.findByUuid(createdJob.getUuid());
+    assertFalse(deletedJob.isPresent());
   }
 }
