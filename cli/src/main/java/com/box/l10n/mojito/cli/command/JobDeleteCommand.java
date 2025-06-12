@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @Scope("prototype")
 @Parameters(
     commandNames = {"job-delete"},
-    commandDescription = "Updates a scheduled job")
+    commandDescription = "Deletes a scheduled job")
 public class JobDeleteCommand extends Command {
 
   /** logger */
@@ -35,7 +35,7 @@ public class JobDeleteCommand extends Command {
   @Override
   public void execute() throws CommandException {
     try {
-      consoleWriter.a("Updating Scheduled Job with UUID: ").a(uuidParam).println();
+      consoleWriter.a("Deleting Scheduled Job with UUID: ").a(uuidParam).println();
     } catch (Exception ex) {
       throw new CommandException(ex.getMessage(), ex);
     }
