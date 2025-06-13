@@ -86,7 +86,6 @@ public class ScheduledJobService {
       updatedJob.setJobType(resolveJobTypeFromDTO(scheduledJobDTO));
     }
     if (scheduledJobDTO.getCron() != null) {
-      //      scheduledJobDTO.validateCronExpression();
       updatedJob.setCron(scheduledJobDTO.getCron());
     }
     if (scheduledJobDTO.getPropertiesString() != null) {
