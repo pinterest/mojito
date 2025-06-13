@@ -75,7 +75,6 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
     ScheduledJobDTO updatedJobDTO = new ScheduledJobDTO();
     updatedJobDTO.setRepository("Demo1");
     updatedJobDTO.setCron("0 0/2 * * * ?");
-    //    updatedJobDTO.setType(ScheduledJobType.EVOLVE_SYNC);
     scheduledJobService.updateJob(createdJob.getUuid(), updatedJobDTO);
 
     ScheduledJob updatedJob =
@@ -86,7 +85,6 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
 
     assertEquals("Demo1", updatedJob.getRepository().getName());
     assertEquals("0 0/2 * * * ?", updatedJob.getCron());
-    //    assertEquals(ScheduledJobType.EVOLVE_SYNC, updatedJob.getJobType().getEnum());
   }
 
   @Test
