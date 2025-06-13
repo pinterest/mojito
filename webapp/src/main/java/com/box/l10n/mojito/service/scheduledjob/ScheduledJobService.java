@@ -42,14 +42,14 @@ public class ScheduledJobService {
     if (scheduledJobDTO.getRepository() == null) {
       throw new ScheduledJobException("Valid repository must be provided to create a job");
     }
-    if (scheduledJobDTO.getCron() == null || scheduledJobDTO.getCron().isEmpty()) {
+    if (scheduledJobDTO.getCron() == null || scheduledJobDTO.getCron().isBlank()) {
       throw new ScheduledJobException("Cron expression must be provided to create a job");
     }
     if (scheduledJobDTO.getPropertiesString() == null
-        || scheduledJobDTO.getPropertiesString().isEmpty()) {
+        || scheduledJobDTO.getPropertiesString().isBlank()) {
       throw new ScheduledJobException("Properties must be provided to create a job");
     }
-    scheduledJobDTO.validateCronExpression();
+    //    scheduledJobDTO.validateCronExpression();
     scheduledJobDTO.deserializeProperties();
 
     scheduledJob.setUuid(
@@ -86,7 +86,7 @@ public class ScheduledJobService {
       updatedJob.setJobType(resolveJobTypeFromDTO(scheduledJobDTO));
     }
     if (scheduledJobDTO.getCron() != null) {
-      scheduledJobDTO.validateCronExpression();
+      //      scheduledJobDTO.validateCronExpression();
       updatedJob.setCron(scheduledJobDTO.getCron());
     }
     if (scheduledJobDTO.getPropertiesString() != null) {

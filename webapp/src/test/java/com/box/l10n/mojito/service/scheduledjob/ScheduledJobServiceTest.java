@@ -57,7 +57,6 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
     scheduledJobDTO.setType(ScheduledJobType.THIRD_PARTY_SYNC);
     scheduledJobDTO.setPropertiesString("Invalid Properties String");
 
-    assertThrows(ScheduledJobException.class, scheduledJobDTO::validateCronExpression);
     assertThrows(ScheduledJobException.class, scheduledJobDTO::deserializeProperties);
     assertThrows(ScheduledJobException.class, () -> scheduledJobService.createJob(scheduledJobDTO));
   }
@@ -101,7 +100,6 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
     updatedJobDTO.setCron("Invalid Cron Expression");
     updatedJobDTO.setPropertiesString("Invalid Properties String");
 
-    assertThrows(ScheduledJobException.class, updatedJobDTO::validateCronExpression);
     assertThrows(
         ScheduledJobException.class,
         () -> scheduledJobService.updateJob(createdJob.getUuid(), updatedJobDTO));

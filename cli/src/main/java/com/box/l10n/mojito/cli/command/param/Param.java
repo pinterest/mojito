@@ -244,7 +244,16 @@ public class Param {
   public static final String PROPERTIES_STRING_LONG = "--properties-string";
   public static final String PROPERTIES_STRING_SHORT = "-ps";
   public static final String PROPERTIES_STRING_DESCRIPTION =
-      "String containing properties for the job. Format: '{\"key1\":\"value1\", \"key2\":\"value2\"}'";
+      "String containing properties for the job in JSON format. "
+          + "Example: "
+          + "'{\"version\": 1, "
+          + "\"thirdPartyProjectId\":\"xxxxxx\","
+          + " \"actions\":[\"PULL\", \"PUSH\"]}, "
+          + "\"pluralSeparator\":\"|\", "
+          + "\"localeMapping\": \"en:en-US, fr:fr-FR\", "
+          + "\"skipTextUnitsWithPattern\": \"^skip.*\", "
+          + "\"skipAssetsWithPathPattern\": \"^skip/.*\", "
+          + "\"includeTextUnitsWithPattern\": \"^include.*\"}'";
 
   public static final String JOB_UUID_LONG = "--job-uuid";
   public static final String JOB_UUID_SHORT = "-ju";
