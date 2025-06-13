@@ -62,6 +62,14 @@ public class ScheduledJobDTO {
     }
   }
 
+  public void validateCronExpression() {
+    try {
+      new CronExpression(this.cron);
+    } catch (ParseException e) {
+      throw new ScheduledJobException("Invalid cron expression: " + this.cron, e);
+    }
+  }
+
   public String getId() {
     return id;
   }

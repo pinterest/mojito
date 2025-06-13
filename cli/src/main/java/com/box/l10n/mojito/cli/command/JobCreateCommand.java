@@ -6,8 +6,7 @@ import com.box.l10n.mojito.apiclient.ScheduledJobClient;
 import com.box.l10n.mojito.apiclient.model.ScheduledJobDTO;
 import com.box.l10n.mojito.cli.command.param.Param;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.fusesource.jansi.Ansi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -21,10 +20,6 @@ import org.springframework.stereotype.Component;
     commandNames = {"job-create"},
     commandDescription = "Creates a scheduled job")
 public class JobCreateCommand extends Command {
-
-  /** logger */
-  static Logger logger = LoggerFactory.getLogger(JobCreateCommand.class);
-
   @Parameter(
       names = {Param.REPOSITORY_NAME_LONG, Param.REPOSITORY_NAME_SHORT},
       arity = 1,
@@ -54,7 +49,7 @@ public class JobCreateCommand extends Command {
   String propertiesStringParam;
 
   @Autowired ConsoleWriter consoleWriter;
-  @Autowired private ScheduledJobClient scheduledJobClient;
+  @Autowired ScheduledJobClient scheduledJobClient;
 
   @Override
   public void execute() throws CommandException {
@@ -65,7 +60,13 @@ public class JobCreateCommand extends Command {
       scheduledJobDTO.setType(ScheduledJobDTO.TypeEnum.valueOf(jobTypeParam));
       scheduledJobDTO.setPropertiesString(propertiesStringParam);
 
-      scheduledJobClient.createJob(scheduledJobDTO);
+      ScheduledJobDTO createdJob = scheduledJobClient.createJob(scheduledJobDTO);
+
+      consoleWriter
+          .a("created --> scheduled job id: ")
+          .fg(Ansi.Color.MAGENTA)
+          .a(createdJob.getId())
+          .println();
     } catch (Exception ex) {
       throw new CommandException(ex.getMessage(), ex);
     }
