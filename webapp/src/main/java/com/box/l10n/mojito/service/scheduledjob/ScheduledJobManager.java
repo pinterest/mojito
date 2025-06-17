@@ -60,7 +60,7 @@ public class ScheduledJobManager {
   @Value("${l10n.scheduledJobs.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   private String schedulerName = DEFAULT_SCHEDULER_NAME;
 
-  @Value("${l10n.scheduledJobs.useApplicationProperties:false}")
+  @Value("${l10n.scheduledJobs.useApplicationProperties:true}")
   Boolean useApplicationProperties;
 
   public HashSet<String> uuidPool = new HashSet<>();
