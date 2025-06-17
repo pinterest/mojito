@@ -49,7 +49,6 @@ public class ScheduledJobService {
         || scheduledJobDTO.getPropertiesString().isBlank()) {
       throw new ScheduledJobException("Properties must be provided to create a job");
     }
-    //    scheduledJobDTO.validateCronExpression();
     scheduledJobDTO.deserializeProperties();
 
     scheduledJob.setUuid(
@@ -101,7 +100,8 @@ public class ScheduledJobService {
   }
 
   public void deleteJob(ScheduledJob scheduledJob) throws SchedulerException {
-    scheduledJobRepository.deleteByUuid(scheduledJob.getUuid());
+    scheduledJob.setDeleted(true);
+    scheduledJobRepository.save(scheduledJob);
     scheduledJobManager.deleteJobFromQuartz(scheduledJob);
     logger.info("Deleted scheduled job with uuid: {}", scheduledJob.getUuid());
   }

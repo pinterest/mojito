@@ -1,7 +1,6 @@
 package com.box.l10n.mojito.service.scheduledjob;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -116,6 +115,7 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
 
     scheduledJobService.deleteJob(createdJob);
     Optional<ScheduledJob> deletedJob = scheduledJobRepository.findByUuid(createdJob.getUuid());
-    assertFalse(deletedJob.isPresent());
+    assertTrue(deletedJob.isPresent());
+    assertTrue(deletedJob.get().isDeleted());
   }
 }
