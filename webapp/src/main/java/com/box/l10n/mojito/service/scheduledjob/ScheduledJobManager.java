@@ -61,7 +61,7 @@ public class ScheduledJobManager {
   private String schedulerName = DEFAULT_SCHEDULER_NAME;
 
   @Value("${l10n.scheduledJobs.useApplicationProperties:false}")
-  private boolean useApplicationProperties = false;
+  Boolean useApplicationProperties;
 
   public HashSet<String> uuidPool = new HashSet<>();
 
@@ -87,19 +87,18 @@ public class ScheduledJobManager {
 
   @PostConstruct
   public void init() throws ClassNotFoundException, SchedulerException {
+    logger.info("Scheduled Job Manager started.");
+    // Add Job Listener
+    getScheduler()
+        .getListenerManager()
+        .addJobListener(
+            new ScheduledJobListener(
+                scheduledJobRepository, scheduledJobStatusRepository, deadlockRetryTemplate));
+    // Add Trigger Listener
+    getScheduler()
+        .getListenerManager()
+        .addTriggerListener(new ScheduledJobTriggerListener(scheduledJobRepository));
     if (useApplicationProperties) {
-      logger.info("Scheduled Job Manager started.");
-      // Add Job Listener
-      getScheduler()
-          .getListenerManager()
-          .addJobListener(
-              new ScheduledJobListener(
-                  scheduledJobRepository, scheduledJobStatusRepository, deadlockRetryTemplate));
-      // Add Trigger Listener
-      getScheduler()
-          .getListenerManager()
-          .addTriggerListener(new ScheduledJobTriggerListener(scheduledJobRepository));
-
       pushJobsToDB();
       cleanQuartzJobs();
       scheduleAllJobs();
