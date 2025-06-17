@@ -60,6 +60,9 @@ public class ScheduledJobManager {
   @Value("${l10n.scheduledJobs.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   private String schedulerName = DEFAULT_SCHEDULER_NAME;
 
+  @Value("${l10n.scheduledJobs.useApplicationProperties:false}")
+  private boolean useApplicationProperties = false;
+
   public HashSet<String> uuidPool = new HashSet<>();
 
   private static String DEFAULT_PLURAL_SEPARATOR = " _";
@@ -84,21 +87,23 @@ public class ScheduledJobManager {
 
   @PostConstruct
   public void init() throws ClassNotFoundException, SchedulerException {
-    logger.info("Scheduled Job Manager started.");
-    // Add Job Listener
-    getScheduler()
-        .getListenerManager()
-        .addJobListener(
-            new ScheduledJobListener(
-                scheduledJobRepository, scheduledJobStatusRepository, deadlockRetryTemplate));
-    // Add Trigger Listener
-    getScheduler()
-        .getListenerManager()
-        .addTriggerListener(new ScheduledJobTriggerListener(scheduledJobRepository));
+    if (useApplicationProperties) {
+      logger.info("Scheduled Job Manager started.");
+      // Add Job Listener
+      getScheduler()
+          .getListenerManager()
+          .addJobListener(
+              new ScheduledJobListener(
+                  scheduledJobRepository, scheduledJobStatusRepository, deadlockRetryTemplate));
+      // Add Trigger Listener
+      getScheduler()
+          .getListenerManager()
+          .addTriggerListener(new ScheduledJobTriggerListener(scheduledJobRepository));
 
-    pushJobsToDB();
-    cleanQuartzJobs();
-    scheduleAllJobs();
+      pushJobsToDB();
+      cleanQuartzJobs();
+      scheduleAllJobs();
+    }
   }
 
   /** Schedule all the jobs in the scheduled_job table with their cron expression. */
