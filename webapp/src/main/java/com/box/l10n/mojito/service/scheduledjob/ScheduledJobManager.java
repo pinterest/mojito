@@ -61,7 +61,7 @@ public class ScheduledJobManager {
   private String schedulerName = DEFAULT_SCHEDULER_NAME;
 
   @Value("${l10n.scheduledJobs.useApplicationProperties:true}")
-  Boolean useApplicationProperties;
+  private boolean useApplicationProperties = true;
 
   public HashSet<String> uuidPool = new HashSet<>();
 
