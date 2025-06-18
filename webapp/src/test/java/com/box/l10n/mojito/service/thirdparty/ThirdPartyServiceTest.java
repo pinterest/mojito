@@ -316,6 +316,8 @@ public class ThirdPartyServiceTest extends ServiceTestBase {
                 Arrays.asList(
                     createThirdPartyTextUnit(
                         asset.getPath(), "3rd-hello", "hello", "Hello", "comment 1 updated"),
+                    createThirdPartyTextUnit(
+                        asset.getPath(), "3rd-hello", "hello", "Hello", "comment 1"),
                     createThirdPartyTextUnit(asset.getPath(), "3rd-bye", "bye", "Bye", "comment 2"),
                     createThirdPartyTextUnit(
                         asset.getPath(),
@@ -358,13 +360,15 @@ public class ThirdPartyServiceTest extends ServiceTestBase {
             .collect(toList());
 
     assertThat(thirdPartyTextUnits)
-        .as("only the used text unit must be mapped")
+        .as(
+            "both used and unused text units with the same name but different comments must be mapped to their corresponding third party units")
         .extracting(
             t -> t.getAsset().getId(),
             com.box.l10n.mojito.entity.ThirdPartyTextUnit::getThirdPartyId,
             t -> t.getTmTextUnit().getId())
         .containsExactly(
             tuple(asset.getId(), "3rd-hello", tmTextUnitHelloCommentUpdated.getId()),
+            tuple(asset.getId(), "3rd-hello", thirdPartyServiceTestData.tmTextUnitHello.getId()),
             tuple(asset.getId(), "3rd-bye", thirdPartyServiceTestData.tmTextUnitBye.getId()),
             tuple(
                 asset.getId(),
