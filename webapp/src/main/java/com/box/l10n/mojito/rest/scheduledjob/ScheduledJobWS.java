@@ -1,12 +1,14 @@
 package com.box.l10n.mojito.rest.scheduledjob;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
+import com.box.l10n.mojito.security.Role;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobDTO;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobException;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobManager;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobRepository;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobResponse;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobService;
+import com.box.l10n.mojito.service.security.user.UserService;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -39,15 +41,18 @@ public class ScheduledJobWS {
   private final ScheduledJobRepository scheduledJobRepository;
   private final ScheduledJobManager scheduledJobManager;
   private final ScheduledJobService scheduledJobService;
+  private final UserService userService;
 
   @Autowired
   public ScheduledJobWS(
       ScheduledJobRepository scheduledJobRepository,
       ScheduledJobManager scheduledJobManager,
-      ScheduledJobService scheduledJobService) {
+      ScheduledJobService scheduledJobService,
+      UserService userService) {
     this.scheduledJobRepository = scheduledJobRepository;
     this.scheduledJobManager = scheduledJobManager;
     this.scheduledJobService = scheduledJobService;
+    this.userService = userService;
   }
 
   private final ResponseEntity<ScheduledJobResponse> notFoundResponse =
@@ -115,7 +120,14 @@ public class ScheduledJobWS {
   @ResponseStatus(HttpStatus.OK)
   public List<ScheduledJobDTO> getAllJobs() {
     List<ScheduledJob> scheduledJobs = scheduledJobRepository.findAll();
-    return scheduledJobs.stream().map(ScheduledJobDTO::new).collect(Collectors.toList());
+    if (userService.checkUserHasRole(Role.ROLE_ADMIN)) {
+      return scheduledJobs.stream().map(ScheduledJobDTO::new).collect(Collectors.toList());
+    } else {
+      // Filter out jobs that are deleted for non-admin users
+      List<ScheduledJob> activeJobs =
+          scheduledJobs.stream().filter(scheduledJob -> !scheduledJob.isDeleted()).toList();
+      return activeJobs.stream().map(ScheduledJobDTO::new).collect(Collectors.toList());
+    }
   }
 
   @RequestMapping(method = RequestMethod.GET, value = "/api/jobs/{id}")

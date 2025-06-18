@@ -27,6 +27,7 @@ public class UserServiceTest extends ServiceTestBase {
   @Rule public TestIdWatcher testIdWatcher = new TestIdWatcher();
 
   @Test
+  @Transactional
   public void testCreateBasicUser() {
 
     String username = testIdWatcher.getEntityName("testUser");
@@ -67,6 +68,29 @@ public class UserServiceTest extends ServiceTestBase {
     String username = "testUser";
     String pwd = null;
     userService.createUserWithRole(username, pwd, Role.ROLE_USER);
+  }
+
+  @Test
+  @Transactional
+  public void testCheckUserHasRole() {
+    String username = testIdWatcher.getEntityName("testUser");
+    String pwd = "testPwd1234";
+    String surname = "surname";
+    String givenName = "givenName";
+    String commonName = "commonName";
+    Role userRole = Role.ROLE_USER;
+    String expectedAuthorityName = userService.createAuthorityName(userRole);
+
+    User userWithRole =
+        userService.createUserWithRole(
+            username, pwd, userRole, givenName, surname, commonName, false);
+
+    assertTrue(
+        userWithRole.getAuthorities().stream()
+            .anyMatch(authority -> authority.getAuthority().equals(expectedAuthorityName)));
+    assertFalse(
+        userWithRole.getAuthorities().stream()
+            .anyMatch(authority -> authority.getAuthority().equals(Role.ROLE_ADMIN.name())));
   }
 
   @Test
