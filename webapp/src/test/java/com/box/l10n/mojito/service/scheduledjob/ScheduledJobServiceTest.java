@@ -1,8 +1,6 @@
 package com.box.l10n.mojito.service.scheduledjob;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
@@ -105,7 +103,7 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
   }
 
   @Test
-  public void testDeleteScheduledJob() throws SchedulerException, ClassNotFoundException {
+  public void testDeleteRestoreScheduledJob() throws SchedulerException, ClassNotFoundException {
     ScheduledJobDTO scheduledJobDTO = new ScheduledJobDTO();
     scheduledJobDTO.setRepository("Demo");
     scheduledJobDTO.setCron("0 0/1 * * * ?");
@@ -117,5 +115,10 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
     Optional<ScheduledJob> deletedJob = scheduledJobRepository.findByUuid(createdJob.getUuid());
     assertTrue(deletedJob.isPresent());
     assertTrue(deletedJob.get().isDeleted());
+
+    scheduledJobService.restoreJob(deletedJob.get());
+    Optional<ScheduledJob> restoredJob = scheduledJobRepository.findByUuid(createdJob.getUuid());
+    assertTrue(restoredJob.isPresent());
+    assertFalse(restoredJob.get().isDeleted());
   }
 }

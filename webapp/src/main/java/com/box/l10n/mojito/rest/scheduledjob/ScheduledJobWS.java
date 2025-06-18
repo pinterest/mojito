@@ -96,6 +96,21 @@ public class ScheduledJobWS {
     scheduledJobService.deleteJob(scheduledJob);
   }
 
+  @RequestMapping(method = RequestMethod.PATCH, value = "/api/jobs/{id}/restore")
+  @ResponseStatus(HttpStatus.OK)
+  public void restoreJob(@PathVariable UUID id) throws SchedulerException {
+    logger.info("Restoring scheduled job [{}]", id);
+    ScheduledJob scheduledJob =
+        scheduledJobRepository
+            .findByUuid(id.toString())
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Job not found with id: " + id));
+
+    scheduledJobService.restoreJob(scheduledJob);
+  }
+
   @RequestMapping(method = RequestMethod.GET, value = "/api/jobs")
   @ResponseStatus(HttpStatus.OK)
   public List<ScheduledJobDTO> getAllJobs() {
