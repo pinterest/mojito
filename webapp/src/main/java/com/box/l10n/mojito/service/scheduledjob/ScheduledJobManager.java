@@ -101,8 +101,9 @@ public class ScheduledJobManager {
     if (useApplicationProperties) {
       pushJobsToDB();
       cleanQuartzJobs();
-      scheduleAllJobs();
     }
+
+    scheduleAllJobs();
   }
 
   /** Schedule all the jobs in the scheduled_job table with their cron expression. */
