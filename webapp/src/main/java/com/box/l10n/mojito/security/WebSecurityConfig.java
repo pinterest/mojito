@@ -212,13 +212,13 @@ public class WebSecurityConfig {
                 .hasAnyRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/jobs/*/restore")
                 .hasAnyRole("ADMIN")
-                    . // trigger, enable, and disable jobs is only allowed for PMs and ADMINs
-                    requestMatchers(HttpMethod.POST, "/api/jobs/*/trigger")
-                    .hasAnyRole("PM", "ADMIN")
-                    .requestMatchers(HttpMethod.POST, "/api/jobs/*/enable")
-                    .hasAnyRole("PM", "ADMIN")
-                    .requestMatchers(HttpMethod.POST, "/api/jobs/*/disable")
-                    .hasAnyRole("PM", "ADMIN")
+                . // trigger, enable, and disable jobs is only allowed for PMs and ADMINs
+                requestMatchers(HttpMethod.POST, "/api/jobs/*/trigger")
+                .hasAnyRole("PM", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/jobs/*/enable")
+                .hasAnyRole("PM", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/jobs/*/disable")
+                .hasAnyRole("PM", "ADMIN")
                 . // get, create and update jobs is allowed for all users
                 requestMatchers(HttpMethod.GET, "/api/jobs")
                 .authenticated()
