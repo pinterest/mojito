@@ -190,9 +190,6 @@ public class SmartlingClient {
       HttpResponse<String> response =
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-      if (locale.equals("af-ZA")) {
-        logger.info("Response body: {}", response.body());
-      }
       return response.body();
     } catch (InterruptedException | IOException e) {
       throw wrapIntoSmartlingException(e, ERROR_CANT_DOWNLOAD_FILE, fileUri, projectId, locale);
