@@ -155,10 +155,16 @@ public class ThirdPartyServiceTest extends ServiceTestBase {
     doAnswer(
             invocation ->
                 Arrays.asList(
-                    createThirdPartyTextUnit(asset.getPath(), "3rd-hello", "hello"),
-                    createThirdPartyTextUnit(asset.getPath(), "3rd-bye", "bye"),
                     createThirdPartyTextUnit(
-                        asset.getPath(), "3rd-plural_things", "plural_things", true)))
+                        asset.getPath(), "3rd-hello", "hello", "Hello", "comment 1"),
+                    createThirdPartyTextUnit(asset.getPath(), "3rd-bye", "bye", "Bye", "comment 2"),
+                    createThirdPartyTextUnit(
+                        asset.getPath(),
+                        "3rd-plural_things",
+                        "plural_things",
+                        true,
+                        "Multiple things",
+                        "comment 3")))
         .when(thirdPartyTMSMock)
         .getThirdPartyTextUnits(any(), any(), any());
 
@@ -287,6 +293,7 @@ public class ThirdPartyServiceTest extends ServiceTestBase {
             + "    <string name=\"hello\">Hello</string>\n"
             + "    <!--comment 2-->\n"
             + "    <string name=\"bye\">Bye</string>\n"
+            + "    <!--comment 3-->\n"
             + "    <plurals name=\"plural_things\">\n"
             + "        <item quantity=\"one\">One thing</item>\n"
             + "        <item quantity=\"other\">Multiple things</item>\n"
@@ -307,10 +314,18 @@ public class ThirdPartyServiceTest extends ServiceTestBase {
     doAnswer(
             invocation ->
                 Arrays.asList(
-                    createThirdPartyTextUnit(asset.getPath(), "3rd-hello", "hello"),
-                    createThirdPartyTextUnit(asset.getPath(), "3rd-bye", "bye"),
                     createThirdPartyTextUnit(
-                        asset.getPath(), "3rd-plural_things", "plural_things", true)))
+                        asset.getPath(), "3rd-hello", "hello", "Hello", "comment 1 updated"),
+                    createThirdPartyTextUnit(
+                        asset.getPath(), "3rd-hello", "hello", "Hello", "comment 1"),
+                    createThirdPartyTextUnit(asset.getPath(), "3rd-bye", "bye", "Bye", "comment 2"),
+                    createThirdPartyTextUnit(
+                        asset.getPath(),
+                        "3rd-plural_things",
+                        "plural_things",
+                        true,
+                        "Multiple things",
+                        "comment 3")))
         .when(thirdPartyTMSMock)
         .getThirdPartyTextUnits(any(), any(), any());
 
@@ -345,7 +360,8 @@ public class ThirdPartyServiceTest extends ServiceTestBase {
             .collect(toList());
 
     assertThat(thirdPartyTextUnits)
-        .as("both the used and unsed text units with the same name must be mapped")
+        .as(
+            "both used and unused text units with the same name but different comments must be mapped to their corresponding third party units")
         .extracting(
             t -> t.getAsset().getId(),
             com.box.l10n.mojito.entity.ThirdPartyTextUnit::getThirdPartyId,
@@ -391,11 +407,14 @@ public class ThirdPartyServiceTest extends ServiceTestBase {
     logger.debug("Create mocks and data for tests");
     doAnswer(
             invocation ->
-                Arrays.asList(createThirdPartyTextUnit(asset.getPath(), "3rd-hello", "hello")))
+                Arrays.asList(
+                    createThirdPartyTextUnit(
+                        asset.getPath(), "3rd-hello", "hello", "Hello", "comment 1")))
         .doAnswer(
             invocation ->
                 Arrays.asList(
-                    createThirdPartyTextUnit(asset.getPath(), "3rd-hello-duplicate", "hello")))
+                    createThirdPartyTextUnit(
+                        asset.getPath(), "3rd-hello-duplicate", "hello", "Hello", "comment 444")))
         .when(thirdPartyTMSMock)
         .getThirdPartyTextUnits(any(), any(), any());
 
@@ -745,16 +764,24 @@ public class ThirdPartyServiceTest extends ServiceTestBase {
         .isInstanceOf(IllegalArgumentException.class);
   }
 
-  ThirdPartyTextUnit createThirdPartyTextUnit(String assetPath, String id, String name) {
-    return createThirdPartyTextUnit(assetPath, id, name, false);
+  ThirdPartyTextUnit createThirdPartyTextUnit(
+      String assetPath, String id, String name, String source, String comment) {
+    return createThirdPartyTextUnit(assetPath, id, name, false, source, comment);
   }
 
   ThirdPartyTextUnit createThirdPartyTextUnit(
-      String assetPath, String id, String name, boolean isNamePluralPrefix) {
+      String assetPath,
+      String id,
+      String name,
+      boolean isNamePluralPrefix,
+      String source,
+      String comment) {
     ThirdPartyTextUnit thirdPartyTextUnit = new ThirdPartyTextUnit();
     thirdPartyTextUnit.setAssetPath(assetPath);
     thirdPartyTextUnit.setId(id);
     thirdPartyTextUnit.setName(name);
+    thirdPartyTextUnit.setSource(source);
+    thirdPartyTextUnit.setComment(comment);
     thirdPartyTextUnit.setNamePluralPrefix(isNamePluralPrefix);
     thirdPartyTextUnit.setUploadedFileUri("testFileUri");
     return thirdPartyTextUnit;

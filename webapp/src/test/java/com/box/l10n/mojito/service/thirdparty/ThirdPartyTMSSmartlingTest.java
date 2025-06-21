@@ -2422,6 +2422,7 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
 
   public String pluralsContent(ThirdPartyServiceTestData testData) {
     return "<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>\n"
+        + "<!--comment 3-->\n"
         + "<plurals name=\"src/main/res/values/strings.xml#@#plural_things\">\n"
         + "<item quantity=\"zero\" tmTextUnitId=\""
         + testData.tmTextUnitPluralThingsZero.getId()
