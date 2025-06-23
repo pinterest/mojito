@@ -103,7 +103,7 @@ public class ScheduledJobWS {
 
   @RequestMapping(method = RequestMethod.PATCH, value = "/api/jobs/{id}/restore")
   @ResponseStatus(HttpStatus.OK)
-  public void restoreJob(@PathVariable UUID id) throws SchedulerException {
+  public void restoreJob(@PathVariable UUID id) throws SchedulerException, ClassNotFoundException {
     logger.info("Restoring scheduled job [{}]", id);
     ScheduledJob scheduledJob =
         scheduledJobRepository

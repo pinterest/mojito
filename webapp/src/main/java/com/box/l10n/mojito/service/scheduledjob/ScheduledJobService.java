@@ -106,10 +106,11 @@ public class ScheduledJobService {
     logger.info("Deleted scheduled job with uuid: {}", scheduledJob.getUuid());
   }
 
-  public void restoreJob(ScheduledJob scheduledJob) throws SchedulerException {
+  public void restoreJob(ScheduledJob scheduledJob)
+      throws SchedulerException, ClassNotFoundException {
     scheduledJob.setDeleted(false);
     scheduledJobRepository.save(scheduledJob);
-    scheduledJobManager.deleteJobFromQuartz(scheduledJob);
+    scheduledJobManager.scheduleJob(scheduledJob);
     logger.info("Restored scheduled job with uuid: {}", scheduledJob.getUuid());
   }
 
