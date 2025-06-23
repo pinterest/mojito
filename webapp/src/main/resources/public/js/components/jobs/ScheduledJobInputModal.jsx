@@ -3,7 +3,6 @@ import createReactClass from "create-react-class";
 import PropTypes from "prop-types";
 import { Button, Modal, Form } from "react-bootstrap";
 import CreateJobRepositoryDropDown from "./CreateJobRepositoryDropDown";
-import JobActions from "../../actions/jobs/JobActions";
 import { JobType } from "../../utils/JobType";
 import JobTypeDropdown from "./JobTypeDropdown";
 import ThirdPartySyncActionsInput from "./ThirdPartySyncActionsInput";
@@ -18,23 +17,7 @@ const ScheduledJobInputModal  = createReactClass({
     },
 
 
-    getInitialState() {
-        if (this.props.job) {
-            return {
-                id: this.props.job.id,
-                selectedRepository: this.props.job.repository,
-                jobType: this.props.job.type,
-                cron: this.props.job.cron,
-                thirdPartyProjectId: this.props.job.propertiesString.thirdPartyProjectId || "",
-                selectedActions: this.props.job.propertiesString.actions || [],
-                localeMapping: this.props.job.propertiesString.localeMapping || "",
-                skipTextUnitsWithPattern: this.props.job.propertiesString.skipTextUnitsWithPattern || "",
-                pluralSeparator: this.props.job.propertiesString.pluralSeparator || "",
-                skipAssetsWithPathPattern: this.props.job.propertiesString.skipAssetsWithPathPattern || "",
-                includeTextUnitsWithPattern: this.props.job.propertiesString.includeTextUnitsWithPattern || ""
-            }
-        }
-        
+    getInitialState() {        
         return {
             selectedRepository: null,
             jobType: JobType.THIRD_PARTY_SYNC,
@@ -49,13 +32,23 @@ const ScheduledJobInputModal  = createReactClass({
         };
     },
 
-    onHandleInputChange(e) {
-        const { name, value } = e.target;
-        this.setState({ [name]: value });
-    },
-
-    handleRepositorySelect(selectedRepository) {
-        this.setState({ selectedRepository });
+    componentDidMount() {
+        if (this.props.job) {
+            console.log("ScheduledJobInputModal: componentDidMount job", this.props.job);
+            this.setState({
+                id: this.props.job.id,
+                selectedRepository: this.props.job.repository,
+                jobType: this.props.job.type,
+                cron: this.props.job.cron,
+                thirdPartyProjectId: this.props.job.properties.thirdPartyProjectId || "",
+                selectedActions: this.props.job.properties.actions || [],
+                localeMapping: this.props.job.properties.localeMapping || "",
+                skipTextUnitsWithPattern: this.props.job.properties.skipTextUnitsWithPattern || "",
+                pluralSeparator: this.props.job.properties.pluralSeparator || "",
+                skipAssetsWithPathPattern: this.props.job.properties.skipAssetsWithPathPattern || "",
+                includeTextUnitsWithPattern: this.props.job.properties.includeTextUnitsWithPattern || ""
+            });
+        }
     },
 
     getScheduledJobInput() {
@@ -77,12 +70,29 @@ const ScheduledJobInputModal  = createReactClass({
         };
     },
 
-    handleSubmit(e) {
-        e.preventDefault();
-        const scheduledJobInput = this.getScheduledJobInput();
-        this.props.onSubmit(scheduledJobInput);
-        this.setState({ selectedRepository: null });
-        this.props.onClose();
+    clearModal() {
+        this.setState({
+            selectedRepository: null,
+            jobType: JobType.THIRD_PARTY_SYNC,
+            cron: "",
+            thirdPartyProjectId: "",
+            selectedActions: [],
+            localeMapping: "",
+            skipTextUnitsWithPattern: "",
+            pluralSeparator: "",
+            skipAssetsWithPathPattern: "",
+            includeTextUnitsWithPattern: ""
+        });
+    },
+
+
+    onHandleInputChange(e) {
+        const { name, value } = e.target;
+        this.setState({ [name]: value });
+    },
+
+    handleRepositorySelect(selectedRepository) {
+        this.setState({ selectedRepository });
     },
 
     handleActionsChange(actions) {
@@ -107,6 +117,14 @@ const ScheduledJobInputModal  = createReactClass({
                 />
             </div>
         );
+    },
+
+    handleSubmit(e) {
+        e.preventDefault();
+        const scheduledJobInput = this.getScheduledJobInput();
+        this.props.onSubmit(scheduledJobInput);
+        this.clearModal();
+        this.props.onClose();
     },
 
     render() {
