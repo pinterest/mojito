@@ -27,12 +27,12 @@ const ThirdPartySyncActionsInput = ({ selectedActions, onChange }) => {
                             className="form-check-input"
                             type="checkbox"
                             id={`action-checkbox-${key}`}
-                            name={ThirdPartySyncAction[key].name}
-                            checked={selectedActions.includes(ThirdPartySyncAction[key].name)}
+                            name={ThirdPartySyncAction[key]}
+                            checked={selectedActions.includes(ThirdPartySyncAction[key])}
                             onChange={handleCheckboxChange}
                         />
                         <label className="form-check-label mls" htmlFor={`action-checkbox-${key}`}>
-                            {ThirdPartySyncAction[key].label}
+                            {ThirdPartySyncAction[key]}
                         </label>
                     </div>
                 ))}

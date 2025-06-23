@@ -13,6 +13,7 @@ const CreateJobModal = createReactClass({
     propTypes: {
         show: PropTypes.bool.isRequired,
         onClose: PropTypes.func.isRequired,
+        job: PropTypes.object
     },
 
 
@@ -65,6 +66,7 @@ const CreateJobModal = createReactClass({
 
     handleSubmit(e) {
         e.preventDefault();
+        // console.log(job);
         const scheduledJobInput = this.getScheduledJobInput();
         JobActions.createJob(scheduledJobInput);
         this.setState({ selectedRepository: null });

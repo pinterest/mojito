@@ -20,8 +20,12 @@ class JobStore {
         this.jobs = [...this.jobs, job];
     }
 
-    deleteJob(job) {
-        this.getInstance().deleteJob(job);
+    updateJob(job) {
+        this.getInstance().updateJob(job);
+    }
+
+    updateJobSuccess(job) {
+        this.jobs = this.jobs.map(j => j.id === job.id ? { ...j, ...job } : j);
     }
 
     getAllJobs() {

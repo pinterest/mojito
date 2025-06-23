@@ -139,9 +139,6 @@ class JobThirdPartySyncRow extends React.Component {
                         <JobButton job={job}
                                    type={JobButton.TYPES.EDIT} disabled={inProgress}
                         />
-                        <JobButton job={job}
-                                   type={JobButton.TYPES.DELETE}
-                        />
                     </div>
                 </div>
             </div>

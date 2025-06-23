@@ -9,10 +9,6 @@ class JobClient extends BaseClient {
         return this.patch(this.getUrl() + `/${job.id}`, {});
     }
 
-    deleteJob(job) {
-        return this.delete(this.getUrl() + `/${job.id}`, {});
-    }
-
     getJobs() {
         return this.get(this.getUrl(), {});
     }

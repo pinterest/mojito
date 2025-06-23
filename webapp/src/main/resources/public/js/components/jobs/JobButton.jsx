@@ -42,9 +42,6 @@ class JobButton extends React.Component {
             case JobButton.TYPES.ENABLE:
                 JobActions.enableJob(job);
                 break;
-            case JobButton.TYPES.DELETE:
-                JobActions.deleteJob(job);
-                break;
             case JobButton.TYPES.EDIT:
                 this.setState({ showEditModal: true });
         }
@@ -84,7 +81,6 @@ JobButton.TYPES = {
     "RUN": "RUN",
     "DISABLE": "DISABLE",
     "ENABLE": "ENABLE",
-    "DELETE": "DELETE",
     "EDIT": "EDIT"
 }
 

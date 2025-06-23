@@ -10,13 +10,13 @@ const JobDataSource = {
         success: JobActions.createJobSuccess,
         error: JobActions.createJobError
     },
-    deleteJob: {
+    updateJob: {
         remote(state, job) {
-            return JobClient.deleteJob(job);
+            return JobClient.updateJob(job);
         },
 
-        success: JobActions.deleteJobSuccess,
-        error: JobActions.deleteJobError
+        success: JobActions.updateJobSuccess,
+        error: JobActions.updateJobError
     },
     getAllJobs: {
         remote() {
