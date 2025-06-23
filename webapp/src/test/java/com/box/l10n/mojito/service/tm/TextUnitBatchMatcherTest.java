@@ -371,6 +371,24 @@ public class TextUnitBatchMatcherTest {
   }
 
   @Test
+  public void testCreateMatchByNameAndUsed_MatchesSourceWithLeadingAndTrailingSpaces() {
+    List<TextUnitDTO> existingTextUnitDTOs =
+        Arrays.asList(
+            createTextUnitDTO("name-0", "comment-0", "First source"),
+            createTextUnitDTO("name-1", "comment-1", " Second source "));
+
+    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameAndUsed =
+        textUnitBatchMatcher.createMatchByNameAndUsed(existingTextUnitDTOs, true);
+
+    Optional<TextUnitDTO> name1 =
+        matchByNameAndUsed.apply(
+            createTextUnitForBatchMatcher("name-1", "comment-1", "Second source"));
+
+    assertTrue(name1.isPresent());
+    assertEquals("name-1", name1.get().getName());
+  }
+
+  @Test
   public void testCreateMatchByNameAndUsed_DoesNotMatchSourceOrComment() {
     List<TextUnitDTO> existingTextUnitDTOs =
         Arrays.asList(
