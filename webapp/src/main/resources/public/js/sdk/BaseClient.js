@@ -143,6 +143,7 @@ class BaseClient {
             follow: 0
         }).then(response => {
             this.handleUnauthenticatedResponse(response);
+            return response.json(); // ensure the updated job is returned
         });
     }
 

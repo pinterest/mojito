@@ -17,7 +17,6 @@ class JobStore {
     }
 
     createJobSuccess(job) {
-        console.log("Job created successfully:", job);
         this.jobs = [...this.jobs, job];
     }
 
@@ -26,7 +25,6 @@ class JobStore {
     }
 
     updateJobSuccess(job) {
-        console.log("Job updated successfully:", job);
         this.jobs = this.jobs.map(j => j.id === job.id ? { ...j, ...job } : j);
     }
 

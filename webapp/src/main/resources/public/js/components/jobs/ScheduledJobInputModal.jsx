@@ -20,7 +20,6 @@ const ScheduledJobInputModal  = createReactClass({
 
     getInitialState() {
         if (this.props.job) {
-            console.log("props.job", this.props.job);
             return {
                 id: this.props.job.id,
                 selectedRepository: this.props.job.repository,
@@ -81,7 +80,6 @@ const ScheduledJobInputModal  = createReactClass({
     handleSubmit(e) {
         e.preventDefault();
         const scheduledJobInput = this.getScheduledJobInput();
-        console.log("Submitting scheduled job input:", scheduledJobInput);
         this.props.onSubmit(scheduledJobInput);
         this.setState({ selectedRepository: null });
         this.props.onClose();
