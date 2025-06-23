@@ -53,6 +53,7 @@ public class TextUnitBatchMatcher {
     Predicate<TextUnitDTO> notAlreadyMatched = notAlreadyMatched("global");
 
     return textUnitForBatchMatcher -> {
+      logger.info("textUnitForBatchMatcher name: {}", textUnitForBatchMatcher.getName());
       return Optionals.or(
           textUnitForBatchMatcher,
           notAlreadyMatched,
@@ -107,6 +108,7 @@ public class TextUnitBatchMatcher {
           ofNullable(tmTextUnitIdToTextUnitDTO.get(textUnitForBatchMatcher.getTmTextUnitId()));
       textUnitDTO.ifPresent(
           t -> logger.debug("Got match by tmTextUnitId: {}", t.getTmTextUnitId()));
+      logger.info("textUnitID: {}, {}", textUnitForBatchMatcher.getName(), textUnitDTO.isPresent());
       return textUnitDTO;
     };
   }
@@ -166,6 +168,7 @@ public class TextUnitBatchMatcher {
                 + "import. Duplicated names can easily happen when working with branches (while without it should not)",
             textUnitForBatchImport.getName());
       }
+      logger.info("match: {}, {}", textUnitForBatchImport.getName(), textUnitDTOS.size());
 
       return textUnitDTOS.stream().filter(byNameAndUsedNotAlreadyMatched).findFirst();
     };
@@ -227,6 +230,7 @@ public class TextUnitBatchMatcher {
           optionalTextUnitDTOS = Optional.of(filtered);
         }
       }
+      logger.info("match plural: {}, {}", textUnitForBatchMatcher.getName(), optionalTextUnitDTOS.isPresent());
       return optionalTextUnitDTOS;
     };
   }
@@ -276,6 +280,7 @@ public class TextUnitBatchMatcher {
         }
       }
 
+      logger.info("match plural unused: {}, {}", textUnitForBatchMatcher.getName(), optionalTextUnitDTOS.isPresent());
       return optionalTextUnitDTOS;
     };
   }
@@ -331,6 +336,7 @@ public class TextUnitBatchMatcher {
         logger.debug("No unique match in unused, skip");
       }
 
+      logger.info("match unused: {}, {}", textUnitForBatchMatcher.getName(), candidates.size());
       return textUnitDTO;
     };
   }

@@ -200,6 +200,8 @@ public class TextUnitBatchImporterService {
         "Map the text units to import with current text unit for the given locale and asset");
     List<TextUnitDTO> textUnitTDOsForLocaleAndAsset =
         getTextUnitTDOsForLocaleAndAsset(locale, asset);
+    Optional<TextUnitDTO> textUnitDTO = textUnitTDOsForLocaleAndAsset.stream().filter(tu -> tu.getName().contains("plural_homefeed_section_count_v6")).findFirst();
+    logger.info("Contains: {}, {}", textUnitDTO.isPresent(), textUnitDTO.map(TextUnitDTO::getComment).orElse(null));
     Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> match =
         textUnitBatchMatcher.match(textUnitTDOsForLocaleAndAsset);
     textUnitsToImport.forEach(tu -> match.apply(tu).ifPresent(m -> tu.setCurrentTextUnit(m)));

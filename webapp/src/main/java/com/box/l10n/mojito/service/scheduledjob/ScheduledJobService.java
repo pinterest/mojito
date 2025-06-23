@@ -100,18 +100,9 @@ public class ScheduledJobService {
   }
 
   public void deleteJob(ScheduledJob scheduledJob) throws SchedulerException {
-    scheduledJob.setDeleted(true);
-    scheduledJobRepository.save(scheduledJob);
+    scheduledJobRepository.deleteByUuid(scheduledJob.getUuid());
     scheduledJobManager.deleteJobFromQuartz(scheduledJob);
     logger.info("Deleted scheduled job with uuid: {}", scheduledJob.getUuid());
-  }
-
-  public void restoreJob(ScheduledJob scheduledJob)
-      throws SchedulerException, ClassNotFoundException {
-    scheduledJob.setDeleted(false);
-    scheduledJobRepository.save(scheduledJob);
-    scheduledJobManager.scheduleJob(scheduledJob);
-    logger.info("Restored scheduled job with uuid: {}", scheduledJob.getUuid());
   }
 
   private Repository resolveRepositoryFromDTO(ScheduledJobDTO scheduledJobDTO) {

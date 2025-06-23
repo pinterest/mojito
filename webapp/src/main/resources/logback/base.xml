@@ -4,4 +4,7 @@
     <logger name="NativeCriteriaPerformance" level="ERROR"/>
     <logger name="com.box.l10n.mojito.service.repository.RepositoryStatisticsScheduler" level="INFO"/>
     <logger name="com.box.l10n.mojito.service.repository.RepositoryStatisticService" level="INFO"/>
+    <logger name="com.box.l10n.mojito.service.tm.TextUnitBatchMatcher" level="INFO"/>
+    <logger name="com.box.l10n.mojito.service.thirdparty.ThirdPartyService" level="INFO"/>
+    <logger name="com.box.l10n.mojito.service.tm.importerTextUnitBatchImporterService" level="INFO"/>
 </included>
