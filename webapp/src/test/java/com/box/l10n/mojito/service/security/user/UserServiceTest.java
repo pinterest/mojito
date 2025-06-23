@@ -6,13 +6,18 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 import com.box.l10n.mojito.entity.security.user.User;
+import com.box.l10n.mojito.security.AuditorAwareImpl;
 import com.box.l10n.mojito.security.Role;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
 import com.box.l10n.mojito.test.TestIdWatcher;
+import java.util.Optional;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,7 +29,11 @@ public class UserServiceTest extends ServiceTestBase {
 
   @Autowired UserRepository userRepository;
 
+  @Mock AuditorAwareImpl auditorAwareImpl;
+
   @Rule public TestIdWatcher testIdWatcher = new TestIdWatcher();
+
+  @InjectMocks UserService mockedUserService;
 
   @Test
   @Transactional
@@ -79,18 +88,14 @@ public class UserServiceTest extends ServiceTestBase {
     String givenName = "givenName";
     String commonName = "commonName";
     Role userRole = Role.ROLE_USER;
-    String expectedAuthorityName = userService.createAuthorityName(userRole);
 
     User userWithRole =
         userService.createUserWithRole(
             username, pwd, userRole, givenName, surname, commonName, false);
 
-    assertTrue(
-        userWithRole.getAuthorities().stream()
-            .anyMatch(authority -> authority.getAuthority().equals(expectedAuthorityName)));
-    assertFalse(
-        userWithRole.getAuthorities().stream()
-            .anyMatch(authority -> authority.getAuthority().equals(Role.ROLE_ADMIN.name())));
+    when(auditorAwareImpl.getCurrentAuditor()).thenReturn(Optional.ofNullable(userWithRole));
+    assertTrue(mockedUserService.checkUserHasRole(userRole));
+    assertFalse(mockedUserService.checkUserHasRole(Role.ROLE_ADMIN));
   }
 
   @Test
