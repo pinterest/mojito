@@ -1,7 +1,8 @@
 import React from "react";
 import createReactClass from "create-react-class";
 import { Button } from "react-bootstrap";
-import CreateJobModal from "./CreateJobModal";
+import ScheduledJobInputModal from "./ScheduledJobInputModal";
+import JobActions from "../../actions/jobs/JobActions";
 
 const CreateJobButton = createReactClass({
     displayName: "CreateJobButton",
@@ -22,7 +23,7 @@ const CreateJobButton = createReactClass({
                 <Button bsStyle="primary" onClick={this.openModal}>
                     Create Job
                 </Button>
-                <CreateJobModal show={this.state.modalOpen} onClose={this.closeModal} />
+                <ScheduledJobInputModal show={this.state.modalOpen} onClose={this.closeModal} onSubmit={JobActions.createJob} />
             </div>
         );
     }

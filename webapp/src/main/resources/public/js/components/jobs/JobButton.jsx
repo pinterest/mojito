@@ -1,7 +1,7 @@
 import React from "react";
 import JobActions from "../../actions/jobs/JobActions";
 import PropTypes from "prop-types";
-import CreateJobModal from "./CreateJobModal";
+import ScheduledJobInputModal from "./ScheduledJobInputModal";
 
 class JobButton extends React.Component {
 
@@ -67,7 +67,7 @@ class JobButton extends React.Component {
 
         return (
             <div>
-                <CreateJobModal onClose={this.closeEditModal} show={this.state.showEditModal} job={job} />
+                <ScheduledJobInputModal onClose={this.closeEditModal} show={this.state.showEditModal} job={job} onSubmit={JobActions.updateJob}/>
                 <button className={`job-button ${disabled || this.state.disabled ? 'disabled' : ''}`} disabled={disabled || this.state.disabled}
                     onClick={() => this.handleClick(job, type)} >
                     {type}

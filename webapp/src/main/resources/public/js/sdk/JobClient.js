@@ -6,7 +6,8 @@ class JobClient extends BaseClient {
     }
 
     updateJob(job) {
-        return this.patch(this.getUrl() + `/${job.id}`, {});
+        console.log("Updating job:", job);
+        return this.patch(this.getUrl() + `/${job.id}`, job);
     }
 
     getJobs() {
