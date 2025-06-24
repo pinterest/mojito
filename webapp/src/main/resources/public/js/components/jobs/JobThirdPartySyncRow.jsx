@@ -11,6 +11,7 @@ class JobThirdPartySyncRow extends React.Component {
 
     static propTypes = {
         "job": PropTypes.object.isRequired,
+        "openEditJobModal": PropTypes.func.isRequired,
         "hideThirdPartyLink": PropTypes.bool,
     }
 
@@ -137,7 +138,8 @@ class JobThirdPartySyncRow extends React.Component {
                                    type={ job.enabled ? JobButton.TYPES.DISABLE : JobButton.TYPES.ENABLE}
                         />
                         <JobButton job={job}
-                                   type={JobButton.TYPES.EDIT} disabled={inProgress}
+                                   type={JobButton.TYPES.EDIT}
+                                   openEditJobModal={this.props.openEditJobModal}
                         />
                     </div>
                 </div>

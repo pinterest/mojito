@@ -1,13 +1,15 @@
 import React from "react";
 import JobActions from "../../actions/jobs/JobActions";
 import PropTypes from "prop-types";
-import ScheduledJobInputModal from "./ScheduledJobInputModal";
 
 class JobButton extends React.Component {
 
     static propTypes = {
         "job": PropTypes.object.isRequired,
         "type": PropTypes.string.isRequired,
+        "disabled": PropTypes.bool,
+        "openEditJobModal": PropTypes.func
+        
     }
 
     constructor(props) {
@@ -15,17 +17,8 @@ class JobButton extends React.Component {
         this.timeout = null;
 
         this.state = {
-            disabled: false,
-            showEditModal: false
+            disabled: false
         }
-    }
-
-    openEditModal = () => {
-        this.setState({ showEditModal: true });
-    }
-
-    closeEditModal = () => {
-        this.setState({ showEditModal: false });
     }
 
     handleClick = (job, type, button) => {
@@ -43,7 +36,8 @@ class JobButton extends React.Component {
                 JobActions.enableJob(job);
                 break;
             case JobButton.TYPES.EDIT:
-                this.setState({ showEditModal: true });
+                this.props.openEditJobModal(job);
+                break;
         }
 
         this.timeout = setTimeout(() => {
@@ -66,13 +60,10 @@ class JobButton extends React.Component {
         const { type, disabled, job } = this.props;
 
         return (
-            <div>
-                <ScheduledJobInputModal onClose={this.closeEditModal} show={this.state.showEditModal} job={job} onSubmit={JobActions.updateJob}/>
-                <button className={`job-button ${disabled || this.state.disabled ? 'disabled' : ''}`} disabled={disabled || this.state.disabled}
-                    onClick={() => this.handleClick(job, type)} >
-                    {type}
-                </button>
-            </div>
+            <button className={`job-button ${disabled || this.state.disabled ? 'disabled' : ''}`} disabled={disabled || this.state.disabled}
+                onClick={() => this.handleClick(job, type)} >
+                {type}
+            </button>
         );
     }
 }

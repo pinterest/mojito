@@ -12,6 +12,7 @@ class JobsView extends React.Component {
         "jobs": PropTypes.array.isRequired,
         "filter": PropTypes.array.isRequired,
         "jobType": PropTypes.string.isRequired,
+        "openEditJobModal": PropTypes.func.isRequired
     }
 
     constructor(props) {
@@ -60,9 +61,9 @@ class JobsView extends React.Component {
         // Render specific row with correct job information depending on the type.
         switch(job.type) {
             case JobType.THIRD_PARTY_SYNC:
-                return <JobThirdPartySyncRow key={job.id} job={job} />;
+                return <JobThirdPartySyncRow key={job.id} job={job} openEditJobModal={this.props.openEditJobModal} />;
             case JobType.EVOLVE_SYNC:
-                return <JobThirdPartySyncRow key={job.id} job={job} hideThirdPartyLink={true} />;
+                return <JobThirdPartySyncRow key={job.id} job={job} hideThirdPartyLink={true} openEditJobModal={this.props.openEditJobModal} />;
             default:
                 return null;
         }

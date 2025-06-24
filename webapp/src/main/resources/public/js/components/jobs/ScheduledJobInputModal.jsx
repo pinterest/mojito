@@ -12,13 +12,14 @@ const ScheduledJobInputModal  = createReactClass({
     propTypes: {
         show: PropTypes.bool.isRequired,
         onClose: PropTypes.func.isRequired,
-        job: PropTypes.object,
-        onSubmit: PropTypes.func.isRequired
+        onSubmit: PropTypes.func.isRequired,
+        job: PropTypes.object
     },
 
 
-    getInitialState() {        
+    getInitialState() { 
         return {
+            id: null,
             selectedRepository: null,
             jobType: JobType.THIRD_PARTY_SYNC,
             cron: "",
@@ -32,22 +33,25 @@ const ScheduledJobInputModal  = createReactClass({
         };
     },
 
-    componentDidMount() {
-        if (this.props.job) {
-            console.log("ScheduledJobInputModal: componentDidMount job", this.props.job);
-            this.setState({
-                id: this.props.job.id,
-                selectedRepository: this.props.job.repository,
-                jobType: this.props.job.type,
-                cron: this.props.job.cron,
-                thirdPartyProjectId: this.props.job.properties.thirdPartyProjectId || "",
-                selectedActions: this.props.job.properties.actions || [],
-                localeMapping: this.props.job.properties.localeMapping || "",
-                skipTextUnitsWithPattern: this.props.job.properties.skipTextUnitsWithPattern || "",
-                pluralSeparator: this.props.job.properties.pluralSeparator || "",
-                skipAssetsWithPathPattern: this.props.job.properties.skipAssetsWithPathPattern || "",
-                includeTextUnitsWithPattern: this.props.job.properties.includeTextUnitsWithPattern || ""
-            });
+    componentDidUpdate(prevProps) {
+        if (prevProps.job !== this.props.job) {
+            if (this.props.job) {
+                this.setState({
+                    id: this.props.job.id,
+                    selectedRepository: this.props.job.repository,
+                    jobType: this.props.job.type,
+                    cron: this.props.job.cron,
+                    thirdPartyProjectId: this.props.job.properties.thirdPartyProjectId || "",
+                    selectedActions: this.props.job.properties.actions || [],
+                    localeMapping: this.props.job.properties.localeMapping || "",
+                    skipTextUnitsWithPattern: this.props.job.properties.skipTextUnitsWithPattern || "",
+                    pluralSeparator: this.props.job.properties.pluralSeparator || "",
+                    skipAssetsWithPathPattern: this.props.job.properties.skipAssetsWithPathPattern || "",
+                    includeTextUnitsWithPattern: this.props.job.properties.includeTextUnitsWithPattern || ""
+                });
+            } else {
+                this.clearModal();
+            }
         }
     },
 
@@ -72,6 +76,7 @@ const ScheduledJobInputModal  = createReactClass({
 
     clearModal() {
         this.setState({
+            id: null,
             selectedRepository: null,
             jobType: JobType.THIRD_PARTY_SYNC,
             cron: "",
@@ -123,8 +128,8 @@ const ScheduledJobInputModal  = createReactClass({
         e.preventDefault();
         const scheduledJobInput = this.getScheduledJobInput();
         this.props.onSubmit(scheduledJobInput);
-        this.clearModal();
         this.props.onClose();
+        this.clearModal();
     },
 
     render() {
