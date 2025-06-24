@@ -59,7 +59,7 @@ public class ScheduledJob extends BaseEntity {
   private Boolean enabled = true;
 
   @Basic(optional = false)
-  @Column(name = "deleted")
+  @Column(name = "deleted", nullable = false)
   private Boolean deleted = false;
 
   @PostLoad

@@ -190,7 +190,9 @@ public class SmartlingClient {
       HttpResponse<String> response =
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-      return response.body();
+      String responseBody = response.body();
+      logger.info("File URIL: {}, responseBody: {}", fileUri, responseBody);
+      return responseBody;
     } catch (InterruptedException | IOException e) {
       throw wrapIntoSmartlingException(e, ERROR_CANT_DOWNLOAD_FILE, fileUri, projectId, locale);
     }
