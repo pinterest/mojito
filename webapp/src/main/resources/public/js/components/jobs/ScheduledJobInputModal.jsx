@@ -1,7 +1,7 @@
 import React from "react";
 import createReactClass from "create-react-class";
 import PropTypes from "prop-types";
-import { Button, Modal, Form } from "react-bootstrap";
+import { Button, Modal, Form, Tabs, Tab } from "react-bootstrap";
 import CreateJobRepositoryDropDown from "./CreateJobRepositoryDropDown";
 import { JobType } from "../../utils/JobType";
 import JobTypeDropdown from "./JobTypeDropdown";
@@ -104,7 +104,7 @@ const ScheduledJobInputModal  = createReactClass({
         this.setState({ selectedActions: actions });
     },
 
-    onJobTypeChange(jobType) {
+    handleJobTypeChange(jobType) {
         this.setState({jobType: jobType})
     },
 
@@ -142,31 +142,40 @@ const ScheduledJobInputModal  = createReactClass({
                         <Modal.Title>Create a Scheduled Job</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <div className="form-group mbm">
-                            <label>Repository</label>
-                            <CreateJobRepositoryDropDown
-                                selected={this.state.selectedRepository}
-                                onSelect={this.handleRepositorySelect}
-                            />
-                        </div>
-                        <div className="form-group mbm">
-                            <label>Job Type</label>
-                            <div>
-                                <JobTypeDropdown onJobTypeChange={this.onJobTypeChange} />
-                            </div>
-                        </div>
-
-                        <ThirdPartySyncActionsInput
-                            selectedActions={this.state.selectedActions}
-                            onChange={this.handleActionsChange}
-                        />
-                        {this.getLabelInputTextBox("Sync Frequency (Cron)", "Enter cron expression", "cron")}
-                        {this.getLabelInputTextBox("Third Party Project ID", "Enter Smartling Project Id", "thirdPartyProjectId")}
-                        {this.getLabelInputTextBox("Locale Mapping", "Enter locale mapping", "localeMapping")}
-                        {this.getLabelInputTextBox("Plural Separator", "Enter plural separator", "pluralSeparator")}
-                        {this.getLabelInputTextBox("Skip Text Units With Pattern", "Enter skip text units pattern", "skipTextUnitsWithPattern")}
-                        {this.getLabelInputTextBox("Skip Assets With Path Pattern", "Enter skip assets with path pattern", "skipAssetsWithPathPattern")}
-                        {this.getLabelInputTextBox("Include Text Units With Pattern", "Enter include text units pattern", "includeTextUnitsWithPattern")}
+                        <Tabs defaultActiveKey="general" id="scheduled-job-tabs">
+                            <Tab eventKey="general" title="General">
+                                <div className="form-group mtm mbm">
+                                    <label>Repository</label>
+                                    <CreateJobRepositoryDropDown
+                                        selected={this.state.selectedRepository}
+                                        onSelect={this.handleRepositorySelect}
+                                    />
+                                </div>
+                                <div className="form-group mtm mbm">
+                                    <label>Job Type</label>
+                                    <JobTypeDropdown onJobTypeChange={this.handleJobTypeChange} />
+                                </div>
+                                {this.getLabelInputTextBox("Sync Frequency (Cron)", "Enter cron expression", "cron")}
+                            </Tab>
+                            <Tab eventKey="advanced" title="Smartling">
+                                <div className="form-group mtm">
+                                    {this.getLabelInputTextBox("Third Party Project ID", "Enter Smartling Project Id", "thirdPartyProjectId")}
+                                    <ThirdPartySyncActionsInput
+                                        selectedActions={this.state.selectedActions}
+                                        onChange={this.handleActionsChange}
+                                    />
+                                    {this.getLabelInputTextBox("Locale Mapping", "Enter locale mapping", "localeMapping")}
+                                </div>
+                            </Tab>
+                            <Tab eventKey="options" title="Advanced">
+                                <div className="form-group mtm">
+                                    {this.getLabelInputTextBox("Plural Separator", "Enter plural separator", "pluralSeparator")}
+                                    {this.getLabelInputTextBox("Skip Text Units With Pattern", "Enter skip text units pattern", "skipTextUnitsWithPattern")}
+                                    {this.getLabelInputTextBox("Skip Assets With Path Pattern", "Enter skip assets with path pattern", "skipAssetsWithPathPattern")}
+                                    {this.getLabelInputTextBox("Include Text Units With Pattern", "Enter include text units pattern", "includeTextUnitsWithPattern")}
+                                </div>
+                            </Tab>
+                        </Tabs>
                     </Modal.Body>
                     <Modal.Footer>
                         <Button variant="secondary" onClick={this.props.onClose}>
