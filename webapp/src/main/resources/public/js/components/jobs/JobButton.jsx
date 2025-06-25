@@ -38,6 +38,12 @@ class JobButton extends React.Component {
             case JobButton.TYPES.EDIT:
                 this.props.openEditJobModal(job);
                 break;
+            case JobButton.TYPES.DELETE:
+                JobActions.deleteJob(job);
+                break;
+            case JobButton.TYPES.RESTORE:
+                JobActions.restoreJob(job);
+                break;
         }
 
         this.timeout = setTimeout(() => {
@@ -72,7 +78,9 @@ JobButton.TYPES = {
     "RUN": "RUN",
     "DISABLE": "DISABLE",
     "ENABLE": "ENABLE",
-    "EDIT": "EDIT"
+    "EDIT": "EDIT",
+    "DELETE": "DELETE",
+    "RESTORE": "RESTORE"
 }
 
 export default JobButton;

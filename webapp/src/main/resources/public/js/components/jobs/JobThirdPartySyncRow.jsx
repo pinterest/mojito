@@ -6,6 +6,7 @@ import JobButton from "./JobButton";
 import {ImSpinner2} from "react-icons/im";
 import {JobStatus} from "../../utils/JobStatus";
 import PropTypes from "prop-types";
+import AuthorityService from "../../utils/AuthorityService";
 
 class JobThirdPartySyncRow extends React.Component {
 
@@ -103,7 +104,7 @@ class JobThirdPartySyncRow extends React.Component {
                             <h1 className={inProgress ? "job-details-title-loading" : ""}>
                             { job.type && jobTypeFormatted }
                             </h1>
-                            <JobStatusLabel status={job.enabled ? job.status : "DISABLED"} />
+                            <JobStatusLabel status={job.deleted ? "DELETED" : (job.enabled ? job.status : "DISABLED")} />
                         </div>
                         <div>{job.repository}{this.getThirdPartyLink(job)}</div>
                     </div>
@@ -120,27 +121,43 @@ class JobThirdPartySyncRow extends React.Component {
                             {!job.enabled && <div>(Job will not run again)</div>}
                         </div>
                         :
+                        job.deleted ?
+                            <div>
+                                <div>Deleted</div>
+                            </div>
+                        :
                         job.enabled ?
                             <div>
                                 <div>{this.state.nextStartMessage}</div>
                             </div>
-                            :
+                        :
                             <div>
                                 <div>Disabled</div>
                             </div>
                     }
 
                     <div className="job-controls">
-                        <JobButton job={job}
-                                   type={JobButton.TYPES.RUN} disabled={inProgress || !job.enabled}
-                        />
-                        <JobButton job={job}
-                                   type={ job.enabled ? JobButton.TYPES.DISABLE : JobButton.TYPES.ENABLE}
-                        />
+                        {AuthorityService.canTriggerEnableDisableJobs() &&
+                            <JobButton job={job}
+                                type={JobButton.TYPES.RUN} disabled={inProgress || !job.enabled}
+                            />
+                        }
+                        {AuthorityService.canTriggerEnableDisableJobs() &&
+                            <JobButton job={job}
+                                type={ job.enabled ? JobButton.TYPES.DISABLE : JobButton.TYPES.ENABLE}
+                                disabled={job.deleted}
+                            />
+                        }
                         <JobButton job={job}
                                    type={JobButton.TYPES.EDIT}
                                    openEditJobModal={this.props.openEditJobModal}
+                                   disabled={job.deleted}
                         />
+                        {AuthorityService.canDeleteRestoreJobs() &&
+                            <JobButton job={job}
+                                type={ job.deleted ? JobButton.TYPES.RESTORE : JobButton.TYPES.DELETE}
+                            />
+                        }
                     </div>
                 </div>
             </div>

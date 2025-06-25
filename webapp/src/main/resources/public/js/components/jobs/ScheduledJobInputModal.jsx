@@ -17,7 +17,6 @@ const ScheduledJobInputModal  = createReactClass({
         job: PropTypes.object
     },
 
-
     getInitialState() { 
         return {
             id: null,

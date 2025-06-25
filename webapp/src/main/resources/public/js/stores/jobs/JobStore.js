@@ -28,6 +28,22 @@ class JobStore {
         this.jobs = this.jobs.map(j => j.id === job.id ? { ...j, ...job } : j);
     }
 
+    deleteJob(job) {
+        this.getInstance().deleteJob(job);
+    }
+
+    deleteJobSuccess() {
+        this.getAllJobs();
+    }
+
+    restoreJob(job) {
+        this.getInstance().restoreJob(job);
+    }
+
+    restoreJobSuccess() {
+        this.getAllJobs();
+    }
+
     getAllJobs() {
         this.getInstance().getAllJobs();
     }

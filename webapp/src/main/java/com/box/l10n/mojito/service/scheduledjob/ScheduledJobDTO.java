@@ -21,6 +21,7 @@ public class ScheduledJobDTO {
   private ZonedDateTime endDate;
   private ZonedDateTime nextStartDate;
   private Boolean enabled;
+  private Boolean deleted;
 
   public ScheduledJobDTO() {}
 
@@ -35,6 +36,7 @@ public class ScheduledJobDTO {
     this.startDate = scheduledJob.getStartDate();
     this.endDate = scheduledJob.getEndDate();
     this.enabled = scheduledJob.isEnabled();
+    this.deleted = scheduledJob.isDeleted();
 
     // Get the next start date using the cron expression
     try {
@@ -152,5 +154,13 @@ public class ScheduledJobDTO {
 
   public Boolean getEnabled() {
     return enabled;
+  }
+
+  public Boolean isDeleted() {
+    return deleted;
+  }
+
+  public void setDeleted(Boolean deleted) {
+    this.deleted = deleted;
   }
 }
