@@ -30,7 +30,8 @@ const ScheduledJobInputModal  = createReactClass({
             skipTextUnitsWithPattern: "",
             pluralSeparator: "",
             skipAssetsWithPathPattern: "",
-            includeTextUnitsWithPattern: ""
+            includeTextUnitsWithPattern: "",
+            options: []
         };
     },
 
@@ -48,7 +49,8 @@ const ScheduledJobInputModal  = createReactClass({
                     skipTextUnitsWithPattern: this.props.job.properties.skipTextUnitsWithPattern || "",
                     pluralSeparator: this.props.job.properties.pluralSeparator || "",
                     skipAssetsWithPathPattern: this.props.job.properties.skipAssetsWithPathPattern || "",
-                    includeTextUnitsWithPattern: this.props.job.properties.includeTextUnitsWithPattern || ""
+                    includeTextUnitsWithPattern: this.props.job.properties.includeTextUnitsWithPattern || "",
+                    options: this.parseOptionsArray(this.props.job.properties.options || [])
                 });
             } else {
                 this.clearModal();
@@ -57,9 +59,9 @@ const ScheduledJobInputModal  = createReactClass({
     },
 
     // Converts "en:en-US, fr: fr-FR" to [{key: 'en', value: 'en-US'}, {key: 'fr', value: 'fr-FR'}]
-    parseLocaleMappingString(localeMappingStr) {
-        if (!localeMappingStr || typeof localeMappingStr !== 'string') return [];
-        return localeMappingStr.split(',').map(pair => {
+    parseLocaleMappingString(localeMappingString) {
+        if (!localeMappingString || typeof localeMappingString !== 'string') return [];
+        return localeMappingString.split(',').map(pair => {
             const [key, value] = pair.split(':');
             return {
                 key: key ? key.trim() : '',
@@ -69,12 +71,32 @@ const ScheduledJobInputModal  = createReactClass({
     },
 
     // Converts array of {key, value} to "en:en-US, fr:fr-FR"
-    serializeLocaleMappingArray(localeMappingArr) {
-        if (!Array.isArray(localeMappingArr)) return '';
-        return localeMappingArr
+    serializeLocaleMappingArray(localeMappingArray) {
+        if (!Array.isArray(localeMappingArray)) return '';
+        return localeMappingArray
             .filter(pair => pair.key && pair.value)
             .map(pair => `${pair.key}:${pair.value}`)
             .join(', ');
+    },
+
+    // Converts array of {key, value} to ["key=value", ...]
+    serializeOptionsArray(optionsArray) {
+        if (!Array.isArray(optionsArray)) return [];
+        return optionsArray
+            .filter(pair => pair.key && pair.value)
+            .map(pair => `${pair.key}=${pair.value}`);
+    },
+
+    // Converts ["key=value", ...] to array of {key, value}
+    parseOptionsArray(optionsList) {
+        if (!Array.isArray(optionsList)) return [];
+        return optionsList.map(option => {
+            const [key, value] = option.split('=');
+            return {
+                key: key ? key.trim() : '',
+                value: value ? value.trim() : ''
+            };
+        }).filter(pair => pair.key || pair.value);
     },
 
     getScheduledJobInput() {
@@ -89,7 +111,7 @@ const ScheduledJobInputModal  = createReactClass({
                 skipTextUnitsWithPattern: this.state.skipTextUnitsWithPattern,
                 skipAssetsWithPathPattern: this.state.skipAssetsWithPathPattern,
                 includeTextUnitsWithPattern: this.state.includeTextUnitsWithPattern,
-                options: ["smartling-placeholder-format=NONE"]
+                options: this.serializeOptionsArray(this.state.options)
             }),
             cron: this.state.cron,
             type: this.state.jobType,
@@ -108,7 +130,8 @@ const ScheduledJobInputModal  = createReactClass({
             skipTextUnitsWithPattern: "",
             pluralSeparator: "",
             skipAssetsWithPathPattern: "",
-            includeTextUnitsWithPattern: ""
+            includeTextUnitsWithPattern: "",
+            options: []
         });
     },
 
@@ -132,6 +155,10 @@ const ScheduledJobInputModal  = createReactClass({
 
     handleLocaleMappingChange(newMapping) {
         this.setState({ localeMapping: newMapping });
+    },
+
+    handleOptionsMappingChange(newOptions) {
+        this.setState({ options: newOptions });
     },
 
     getLabelInputTextBox(label, placeholder, inputName) {
@@ -216,6 +243,11 @@ const ScheduledJobInputModal  = createReactClass({
                                     {this.getLabelInputTextBox("Skip Text Units With Pattern", "Enter skip text units pattern", "skipTextUnitsWithPattern")}
                                     {this.getLabelInputTextBox("Skip Assets With Path Pattern", "Enter skip assets with path pattern", "skipAssetsWithPathPattern")}
                                     {this.getLabelInputTextBox("Include Text Units With Pattern", "Enter include text units pattern", "includeTextUnitsWithPattern")}
+                                    <KeyValueInput
+                                        value={this.state.options}
+                                        onChange={this.handleOptionsMappingChange}
+                                        inputLabel="Options"
+                                    />
                                 </div>
                             </Tab>
                         </Tabs>
