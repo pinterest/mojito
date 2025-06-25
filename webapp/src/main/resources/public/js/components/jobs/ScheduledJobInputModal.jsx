@@ -6,6 +6,7 @@ import CreateJobRepositoryDropDown from "./CreateJobRepositoryDropDown";
 import { JobType } from "../../utils/JobType";
 import JobTypeDropdown from "./JobTypeDropdown";
 import ThirdPartySyncActionsInput from "./ThirdPartySyncActionsInput";
+import KeyValueInput from "./KeyValueInput";
 
 const ScheduledJobInputModal  = createReactClass({
     displayName: "ScheduledJobInputModal",
@@ -25,7 +26,7 @@ const ScheduledJobInputModal  = createReactClass({
             cron: "",
             thirdPartyProjectId: "",
             selectedActions: [],
-            localeMapping: "",
+            localeMapping: [],
             skipTextUnitsWithPattern: "",
             pluralSeparator: "",
             skipAssetsWithPathPattern: "",
@@ -43,7 +44,7 @@ const ScheduledJobInputModal  = createReactClass({
                     cron: this.props.job.cron,
                     thirdPartyProjectId: this.props.job.properties.thirdPartyProjectId || "",
                     selectedActions: this.props.job.properties.actions || [],
-                    localeMapping: this.props.job.properties.localeMapping || "",
+                    localeMapping: this.parseLocaleMappingString(this.props.job.properties.localeMapping),
                     skipTextUnitsWithPattern: this.props.job.properties.skipTextUnitsWithPattern || "",
                     pluralSeparator: this.props.job.properties.pluralSeparator || "",
                     skipAssetsWithPathPattern: this.props.job.properties.skipAssetsWithPathPattern || "",
@@ -55,6 +56,27 @@ const ScheduledJobInputModal  = createReactClass({
         }
     },
 
+    // Converts "en:en-US, fr: fr-FR" to [{key: 'en', value: 'en-US'}, {key: 'fr', value: 'fr-FR'}]
+    parseLocaleMappingString(localeMappingStr) {
+        if (!localeMappingStr || typeof localeMappingStr !== 'string') return [];
+        return localeMappingStr.split(',').map(pair => {
+            const [key, value] = pair.split(':');
+            return {
+                key: key ? key.trim() : '',
+                value: value ? value.trim() : ''
+            };
+        }).filter(pair => pair.key || pair.value);
+    },
+
+    // Converts array of {key, value} to "en:en-US, fr:fr-FR"
+    serializeLocaleMappingArray(localeMappingArr) {
+        if (!Array.isArray(localeMappingArr)) return '';
+        return localeMappingArr
+            .filter(pair => pair.key && pair.value)
+            .map(pair => `${pair.key}:${pair.value}`)
+            .join(', ');
+    },
+
     getScheduledJobInput() {
         return {
             id: this.state.id,
@@ -63,7 +85,7 @@ const ScheduledJobInputModal  = createReactClass({
                 thirdPartyProjectId: this.state.thirdPartyProjectId,
                 actions: this.state.selectedActions,
                 pluralSeparator: this.state.pluralSeparator,
-                localeMapping: this.state.localeMapping,
+                localeMapping: this.serializeLocaleMappingArray(this.state.localeMapping),
                 skipTextUnitsWithPattern: this.state.skipTextUnitsWithPattern,
                 skipAssetsWithPathPattern: this.state.skipAssetsWithPathPattern,
                 includeTextUnitsWithPattern: this.state.includeTextUnitsWithPattern,
@@ -82,7 +104,7 @@ const ScheduledJobInputModal  = createReactClass({
             cron: "",
             thirdPartyProjectId: "",
             selectedActions: [],
-            localeMapping: "",
+            localeMapping: [],
             skipTextUnitsWithPattern: "",
             pluralSeparator: "",
             skipAssetsWithPathPattern: "",
@@ -106,6 +128,10 @@ const ScheduledJobInputModal  = createReactClass({
 
     handleJobTypeChange(jobType) {
         this.setState({jobType: jobType})
+    },
+
+    handleLocaleMappingChange(newMapping) {
+        this.setState({ localeMapping: newMapping });
     },
 
     getLabelInputTextBox(label, placeholder, inputName) {
@@ -132,6 +158,17 @@ const ScheduledJobInputModal  = createReactClass({
         this.clearModal();
     },
 
+    isFormValid() {
+        return (
+            this.state.selectedRepository &&
+            this.state.jobType &&
+            this.state.cron &&
+            this.state.thirdPartyProjectId &&
+            Array.isArray(this.state.selectedActions) &&
+            this.state.selectedActions.length > 0
+        );
+    },
+
     render() {
         return (
             <Modal show={this.props.show} onHide={this.props.onClose}>
@@ -145,29 +182,35 @@ const ScheduledJobInputModal  = createReactClass({
                         <Tabs defaultActiveKey="general" id="scheduled-job-tabs">
                             <Tab eventKey="general" title="General">
                                 <div className="form-group mtm mbm">
-                                    <label>Repository</label>
+                                    <label>Repository*</label>
                                     <CreateJobRepositoryDropDown
                                         selected={this.state.selectedRepository}
                                         onSelect={this.handleRepositorySelect}
                                     />
                                 </div>
                                 <div className="form-group mtm mbm">
-                                    <label>Job Type</label>
+                                    <label>Job Type*</label>
                                     <JobTypeDropdown onJobTypeChange={this.handleJobTypeChange} />
                                 </div>
-                                {this.getLabelInputTextBox("Sync Frequency (Cron)", "Enter cron expression", "cron")}
+                                {this.getLabelInputTextBox("Sync Frequency (Cron)*", "Enter cron expression", "cron")}
                             </Tab>
-                            <Tab eventKey="advanced" title="Smartling">
+                            <Tab eventKey="smartling" title="Smartling">
                                 <div className="form-group mtm">
-                                    {this.getLabelInputTextBox("Third Party Project ID", "Enter Smartling Project Id", "thirdPartyProjectId")}
+                                    {this.getLabelInputTextBox("Third Party Project ID*", "Enter Smartling Project Id", "thirdPartyProjectId")}
                                     <ThirdPartySyncActionsInput
                                         selectedActions={this.state.selectedActions}
                                         onChange={this.handleActionsChange}
                                     />
-                                    {this.getLabelInputTextBox("Locale Mapping", "Enter locale mapping", "localeMapping")}
+                                    <KeyValueInput
+                                        value={this.state.localeMapping}
+                                        onChange={this.handleLocaleMappingChange}
+                                        inputLabel="Locale Mapping"
+                                        keyLabel="Smartling Locale (en)"
+                                        valueLabel="Mojito Locale (en-US)"
+                                    />
                                 </div>
                             </Tab>
-                            <Tab eventKey="options" title="Advanced">
+                            <Tab eventKey="advanced" title="Advanced">
                                 <div className="form-group mtm">
                                     {this.getLabelInputTextBox("Plural Separator", "Enter plural separator", "pluralSeparator")}
                                     {this.getLabelInputTextBox("Skip Text Units With Pattern", "Enter skip text units pattern", "skipTextUnitsWithPattern")}
@@ -184,7 +227,7 @@ const ScheduledJobInputModal  = createReactClass({
                         <Button
                             variant="primary"
                             type="submit"
-                            disabled={!this.state.selectedRepository}
+                            disabled={!this.isFormValid()}
                         >
                             Submit
                         </Button>

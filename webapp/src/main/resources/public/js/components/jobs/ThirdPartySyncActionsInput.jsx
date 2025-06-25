@@ -19,7 +19,7 @@ const ThirdPartySyncActionsInput = ({ selectedActions, onChange }) => {
 
     return (
         <div className="form-group mbm">
-            <label>Enable Sync Actions</label>
+            <label>Enable Sync Actions*</label>
             <div>
                 {actionKeys.map(key => (
                     <div className="form-check-control" key={key}>
