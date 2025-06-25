@@ -63,7 +63,7 @@ let JobsPage = createReactClass({
         };
         return (
             <div>
-                <div className="pull-left">
+                <div className="pull-left flex">
                     <JobTypeDropdown onJobTypeChange={this.onJobTypeChange} />
                     <RepositoryDropDown />
                 </div>

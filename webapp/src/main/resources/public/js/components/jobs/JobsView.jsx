@@ -25,13 +25,10 @@ class JobsView extends React.Component {
         // Bind this to the function call to ensure 'this' references the current instance.
         this.jobStoreChange = this.jobStoreChange.bind(this);
 
-        if(AuthorityService.canViewJobs()) {
-            // Only poll if we have access (stops polling for 403 responses)
+        JobActions.getAllJobs();
+        this.interval = setInterval(() => {
             JobActions.getAllJobs();
-            this.interval = setInterval(() => {
-                JobActions.getAllJobs();
-            }, 5000);
-        }
+        }, 5000);
     }
 
     componentDidUpdate(prevProps) {
@@ -73,14 +70,6 @@ class JobsView extends React.Component {
      * @return {XML}
      */
     render() {
-        if (!AuthorityService.canViewJobs()) {
-            return (
-                <div className="ptl">
-                    <h4 className="text-center mtl">You do not have permissions to view Jobs.</h4>
-                </div>
-            )
-        }
-
         if(this.isDoneInitialLoad && this.state.jobs.length === 0)  {
             return (
                 <div className="ptl">
