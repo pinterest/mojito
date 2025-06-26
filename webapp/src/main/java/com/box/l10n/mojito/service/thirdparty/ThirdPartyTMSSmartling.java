@@ -357,7 +357,7 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
                         thirdPartyTextUnit.setSource(stringInfo.getParsedStringText());
                         thirdPartyTextUnit.setComment(
                             stringInfo.getContentFileStringInstructions().stream()
-                                .findFirst()
+                                .reduce((first, second) -> second)
                                 .map(ContentFileStringInstruction::getContentFileStringInstruction)
                                 .orElse(null));
 
