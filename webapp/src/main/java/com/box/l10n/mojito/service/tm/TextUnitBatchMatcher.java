@@ -135,9 +135,7 @@ public class TextUnitBatchMatcher {
                             "%s%s",
                             textUnitDTO.getName(),
                             matchSourceAndComment
-                                ? DigestUtils.md5Hex(
-                                    textUnitDTO.getSource().trim()
-                                        + ofNullable(textUnitDTO.getComment()).orElse(""))
+                                ? DigestUtils.md5Hex(textUnitDTO.getSource().trim())
                                 : "")));
     Predicate<TextUnitDTO> byNameAndUsedNotAlreadyMatched = notAlreadyMatched("byNameAndUsed");
 
@@ -150,9 +148,7 @@ public class TextUnitBatchMatcher {
                           "%s%s",
                           textUnitForBatchImport.getName(),
                           matchSourceAndComment
-                              ? DigestUtils.md5Hex(
-                                  textUnitForBatchImport.getSource()
-                                      + ofNullable(textUnitForBatchImport.getComment()).orElse(""))
+                              ? DigestUtils.md5Hex(textUnitForBatchImport.getSource())
                               : "")))
               .orElseGet(ArrayList::new);
 
@@ -302,9 +298,7 @@ public class TextUnitBatchMatcher {
                             "%s%s",
                             textUnitDTO.getName(),
                             matchSourceAndComment
-                                ? DigestUtils.md5Hex(
-                                    textUnitDTO.getSource().trim()
-                                        + ofNullable(textUnitDTO.getComment()).orElse(""))
+                                ? DigestUtils.md5Hex(textUnitDTO.getSource().trim())
                                 : "")));
 
     logger.debug("createMatchByNameAndUnused");
@@ -316,9 +310,7 @@ public class TextUnitBatchMatcher {
                           "%s%s",
                           textUnitForBatchMatcher.getName(),
                           matchSourceAndComment
-                              ? DigestUtils.md5Hex(
-                                  textUnitForBatchMatcher.getSource()
-                                      + ofNullable(textUnitForBatchMatcher.getComment()).orElse(""))
+                              ? DigestUtils.md5Hex(textUnitForBatchMatcher.getSource())
                               : "")))
               .orElseGet(ArrayList::new);
 
