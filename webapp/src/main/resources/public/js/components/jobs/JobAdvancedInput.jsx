@@ -12,7 +12,6 @@ const JobAdvancedInput = ({
     onOptionsMappingChange
 }) => (
     <div className="form-group">
-        <h3>Advanced Settings</h3>
         <LabeledTextInput
             label="Plural Separator"
             placeholder="Enter plural separator"

@@ -6,7 +6,6 @@ import { JobType } from "../../utils/JobType";
 import JobGeneralInput from "./JobGeneralInput";
 import JobThirdPartyInput from "./JobThirdPartyInput";
 import JobAdvancedInput from "./JobAdvancedInput";
-import ThirdPartySyncAction from "../../utils/ThirdPartySyncAction";
 
 const JobInputModal  = createReactClass({
     displayName: "JobInputModal",
@@ -174,7 +173,6 @@ const JobInputModal  = createReactClass({
         return (
             this.state.selectedRepository &&
             this.state.jobType &&
-            this.state.cron &&
             this.state.thirdPartyProjectId &&
             Array.isArray(this.state.selectedActions) &&
             this.state.selectedActions.length > 0

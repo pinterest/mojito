@@ -1,7 +1,7 @@
 import React from "react";
 import JobRepositoryDropDown from "./JobRepositoryDropDown";
 import JobTypeDropdown from "./JobTypeDropdown";
-import LabeledTextInput from "./LabeledTextInput";
+import CronExpressionInput from "./CronExpressionInput";
 
 const JobGeneralInput = ({ selectedRepository, onRepositorySelect, jobType, onJobTypeChange, cron, onInputChange }) => (
     <div>
@@ -12,17 +12,14 @@ const JobGeneralInput = ({ selectedRepository, onRepositorySelect, jobType, onJo
                 onSelect={onRepositorySelect}
             />
         </div>
-        <div className="form-group mtm mbm">
+        <div className="form-group mbm">
             <label>Job Type*</label>
             <JobTypeDropdown jobType={jobType} onJobTypeChange={onJobTypeChange} />
         </div>
-        <LabeledTextInput
-            label="Sync Frequency (Cron)*"
-            placeholder="Enter cron expression"
-            inputName="cron"
-            value={cron}
-            onChange={onInputChange}
-        />
+        <div className="form-group mbm">
+            <label>Sync Frequency (Cron)*</label>
+            <CronExpressionInput cron={cron} onChange={onInputChange} />
+        </div>
     </div>
 );
 
