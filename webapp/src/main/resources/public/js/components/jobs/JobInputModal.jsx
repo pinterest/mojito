@@ -6,6 +6,7 @@ import { JobType } from "../../utils/JobType";
 import JobGeneralInput from "./JobGeneralInput";
 import JobThirdPartyInput from "./JobThirdPartyInput";
 import JobAdvancedInput from "./JobAdvancedInput";
+import { validateCronExpression } from "../../utils/CronExpressionHelper";
 
 const JobInputModal  = createReactClass({
     displayName: "JobInputModal",
@@ -169,14 +170,19 @@ const JobInputModal  = createReactClass({
         this.clearModal();
     },
 
-    isFormValid() {
-        return (
-            this.state.selectedRepository &&
-            this.state.jobType &&
-            this.state.thirdPartyProjectId &&
-            Array.isArray(this.state.selectedActions) &&
-            this.state.selectedActions.length > 0
-        );
+    isStepValid(step) {
+        if (step === 0) {
+            return this.state.selectedRepository &&
+                this.state.jobType &&
+                this.state.cron &&
+                validateCronExpression(this.state.cron);
+        }
+        if (step === 1) {
+            return this.state.thirdPartyProjectId &&
+                Array.isArray(this.state.selectedActions) &&
+                this.state.selectedActions.length > 0;
+        }
+        return true;
     },
 
     renderStepContent() {
@@ -260,10 +266,7 @@ const JobInputModal  = createReactClass({
                             <Button
                                 variant="primary"
                                 onClick={this.handleNextStep}
-                                disabled={
-                                    (currentStep === 0 && !(this.state.selectedRepository && this.state.jobType && this.state.cron)) ||
-                                    (currentStep === 1 && !(this.state.thirdPartyProjectId && Array.isArray(this.state.selectedActions) && this.state.selectedActions.length > 0))
-                                }
+                                disabled={!this.isStepValid(currentStep)}
                             >
                                 Next
                             </Button>
@@ -272,7 +275,7 @@ const JobInputModal  = createReactClass({
                             <Button
                                 variant="primary"
                                 type="submit"
-                                disabled={!this.isFormValid()}
+                                disabled={!this.isStepValid(currentStep)}
                             >
                                 Submit
                             </Button>

@@ -139,7 +139,7 @@ class JobThirdPartySyncRow extends React.Component {
                     <div className="job-controls">
                         {AuthorityService.canTriggerEnableDisableJobs() &&
                             <JobButton job={job}
-                                type={JobButton.TYPES.RUN} disabled={inProgress || !job.enabled}
+                                type={JobButton.TYPES.RUN} disabled={inProgress || !job.enabled || job.deleted}
                             />
                         }
                         {AuthorityService.canTriggerEnableDisableJobs() &&
