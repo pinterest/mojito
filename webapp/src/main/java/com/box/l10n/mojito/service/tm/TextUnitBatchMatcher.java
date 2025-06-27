@@ -111,6 +111,21 @@ public class TextUnitBatchMatcher {
     };
   }
 
+  private String getAdditionalKeyValue(TextUnitDTO textUnitDTO, boolean matchBySource) {
+    if (matchBySource) {
+      return DigestUtils.md5Hex(textUnitDTO.getSource().trim());
+    }
+    return DigestUtils.md5Hex(ofNullable(textUnitDTO.getComment()).orElse(""));
+  }
+
+  private String getAdditionalKeyValue(
+      TextUnitForBatchMatcher textUnitForBatchMatcher, boolean matchBySource) {
+    if (matchBySource) {
+      return DigestUtils.md5Hex(textUnitForBatchMatcher.getSource());
+    }
+    return DigestUtils.md5Hex(ofNullable(textUnitForBatchMatcher.getComment()).orElse(""));
+  }
+
   /**
    * Match used text units by name.
    *
@@ -122,7 +137,7 @@ public class TextUnitBatchMatcher {
    * @return
    */
   Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> createMatchByNameAndUsed(
-      List<TextUnitDTO> existingTextUnits, boolean matchSourceAndComment) {
+      List<TextUnitDTO> existingTextUnits, boolean matchBySource) {
 
     logger.debug("Create the map to match by name and used text units");
     Map<String, List<TextUnitDTO>> nameToUsedTextUnitDTO =
@@ -134,9 +149,7 @@ public class TextUnitBatchMatcher {
                         String.format(
                             "%s%s",
                             textUnitDTO.getName(),
-                            matchSourceAndComment
-                                ? DigestUtils.md5Hex(textUnitDTO.getSource().trim())
-                                : "")));
+                            this.getAdditionalKeyValue(textUnitDTO, matchBySource))));
     Predicate<TextUnitDTO> byNameAndUsedNotAlreadyMatched = notAlreadyMatched("byNameAndUsed");
 
     logger.debug("createMatchByNameAndUsed");
@@ -147,9 +160,7 @@ public class TextUnitBatchMatcher {
                       String.format(
                           "%s%s",
                           textUnitForBatchImport.getName(),
-                          matchSourceAndComment
-                              ? DigestUtils.md5Hex(textUnitForBatchImport.getSource())
-                              : "")))
+                          this.getAdditionalKeyValue(textUnitForBatchImport, matchBySource))))
               .orElseGet(ArrayList::new);
 
       if (textUnitDTOS.size() == 1) {
@@ -285,7 +296,7 @@ public class TextUnitBatchMatcher {
    * @return
    */
   Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> createMatchByNameAndUnused(
-      List<TextUnitDTO> existingTextUnits, boolean matchSourceAndComment) {
+      List<TextUnitDTO> existingTextUnits, boolean matchBySource) {
 
     logger.debug("Create the map to match by name and unused text units");
     Map<String, List<TextUnitDTO>> nameToUnusedTextUnitDTO =
@@ -297,9 +308,7 @@ public class TextUnitBatchMatcher {
                         String.format(
                             "%s%s",
                             textUnitDTO.getName(),
-                            matchSourceAndComment
-                                ? DigestUtils.md5Hex(textUnitDTO.getSource().trim())
-                                : "")));
+                            this.getAdditionalKeyValue(textUnitDTO, matchBySource))));
 
     logger.debug("createMatchByNameAndUnused");
     return (textUnitForBatchMatcher) -> {
@@ -309,9 +318,7 @@ public class TextUnitBatchMatcher {
                       String.format(
                           "%s%s",
                           textUnitForBatchMatcher.getName(),
-                          matchSourceAndComment
-                              ? DigestUtils.md5Hex(textUnitForBatchMatcher.getSource())
-                              : "")))
+                          this.getAdditionalKeyValue(textUnitForBatchMatcher, matchBySource))))
               .orElseGet(ArrayList::new);
 
       Optional<TextUnitDTO> textUnitDTO = Optional.empty();
