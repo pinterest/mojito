@@ -1,36 +1,38 @@
 import React from "react";
 import createReactClass from "create-react-class";
 import PropTypes from "prop-types";
-import { Button, Modal, Form, Tabs, Tab } from "react-bootstrap";
-import CreateJobRepositoryDropDown from "./CreateJobRepositoryDropDown";
+import { Button, Modal, Form } from "react-bootstrap";
 import { JobType } from "../../utils/JobType";
-import JobTypeDropdown from "./JobTypeDropdown";
-import ThirdPartySyncActionsInput from "./ThirdPartySyncActionsInput";
-import KeyValueInput from "./KeyValueInput";
+import JobGeneralInput from "./JobGeneralInput";
+import JobThirdPartyInput from "./JobThirdPartyInput";
+import JobAdvancedInput from "./JobAdvancedInput";
+import ThirdPartySyncAction from "../../utils/ThirdPartySyncAction";
 
-const ScheduledJobInputModal  = createReactClass({
-    displayName: "ScheduledJobInputModal",
+const JobInputModal  = createReactClass({
+    displayName: "JobInputModal",
     propTypes: {
+        title: PropTypes.string.isRequired,
         show: PropTypes.bool.isRequired,
         onClose: PropTypes.func.isRequired,
         onSubmit: PropTypes.func.isRequired,
         job: PropTypes.object
     },
 
-    getInitialState() { 
+    getInitialState() {
         return {
             id: null,
             selectedRepository: null,
             jobType: JobType.THIRD_PARTY_SYNC,
             cron: "",
             thirdPartyProjectId: "",
-            selectedActions: [],
+            selectedActions: ["PUSH", "PULL", "MAP_TEXTUNIT", "PUSH_SCREENSHOT"],
             localeMapping: [],
             skipTextUnitsWithPattern: "",
             pluralSeparator: "",
             skipAssetsWithPathPattern: "",
             includeTextUnitsWithPattern: "",
-            options: []
+            options: [],
+            currentStep: 0
         };
     },
 
@@ -39,9 +41,9 @@ const ScheduledJobInputModal  = createReactClass({
             if (this.props.job) {
                 this.setState({
                     id: this.props.job.id,
-                    selectedRepository: this.props.job.repository,
-                    jobType: this.props.job.type,
-                    cron: this.props.job.cron,
+                    selectedRepository: this.props.job.repository || null,
+                    jobType: this.props.job.type || JobType.THIRD_PARTY_SYNC,
+                    cron: this.props.job.cron || "",
                     thirdPartyProjectId: this.props.job.properties.thirdPartyProjectId || "",
                     selectedActions: this.props.job.properties.actions || [],
                     localeMapping: this.parseLocaleMappingString(this.props.job.properties.localeMapping),
@@ -121,7 +123,7 @@ const ScheduledJobInputModal  = createReactClass({
         this.setState({
             id: null,
             selectedRepository: null,
-            jobType: JobType.THIRD_PARTY_SYNC,
+            jobType: null,
             cron: "",
             thirdPartyProjectId: "",
             selectedActions: [],
@@ -130,7 +132,8 @@ const ScheduledJobInputModal  = createReactClass({
             pluralSeparator: "",
             skipAssetsWithPathPattern: "",
             includeTextUnitsWithPattern: "",
-            options: []
+            options: [],
+            currentStep: 0
         });
     },
 
@@ -160,27 +163,10 @@ const ScheduledJobInputModal  = createReactClass({
         this.setState({ options: newOptions });
     },
 
-    getLabelInputTextBox(label, placeholder, inputName) {
-        return (
-            <div className="form-group mbm">
-                <label>{label}</label>
-                <input
-                    className="form-control"
-                    type="text"
-                    name={inputName}
-                    placeholder={placeholder}
-                    value={this.state[inputName]}
-                    onChange={this.onHandleInputChange}
-                />
-            </div>
-        );
-    },
-
     handleSubmit(e) {
         e.preventDefault();
         const scheduledJobInput = this.getScheduledJobInput();
         this.props.onSubmit(scheduledJobInput);
-        this.props.onClose();
         this.clearModal();
     },
 
@@ -195,73 +181,104 @@ const ScheduledJobInputModal  = createReactClass({
         );
     },
 
+    renderStepContent() {
+        const { currentStep } = this.state;
+        switch (currentStep) {
+            case 0:
+                return (
+                    <JobGeneralInput
+                        selectedRepository={this.state.selectedRepository}
+                        onRepositorySelect={this.handleRepositorySelect}
+                        jobType={this.state.jobType}
+                        onJobTypeChange={this.handleJobTypeChange}
+                        cron={this.state.cron}
+                        onInputChange={this.onHandleInputChange}
+                        getLabelInputTextBox={this.getLabelInputTextBox}
+                    />
+                );
+            case 1:
+                return (
+                    <JobThirdPartyInput
+                        thirdPartyProjectId={this.state.thirdPartyProjectId}
+                        onInputChange={this.onHandleInputChange}
+                        selectedActions={this.state.selectedActions}
+                        onActionsChange={this.handleActionsChange}
+                        localeMapping={this.state.localeMapping}
+                        onLocaleMappingChange={this.handleLocaleMappingChange}
+                        getLabelInputTextBox={this.getLabelInputTextBox}
+                    />
+                );
+            case 2:
+                return (
+                    <JobAdvancedInput
+                        pluralSeparator={this.state.pluralSeparator}
+                        skipTextUnitsWithPattern={this.state.skipTextUnitsWithPattern}
+                        skipAssetsWithPathPattern={this.state.skipAssetsWithPathPattern}
+                        includeTextUnitsWithPattern={this.state.includeTextUnitsWithPattern}
+                        options={this.state.options}
+                        onInputChange={this.onHandleInputChange}
+                        onOptionsMappingChange={this.handleOptionsMappingChange}
+                        getLabelInputTextBox={this.getLabelInputTextBox}
+                    />
+                );
+            default:
+                return null;
+        }
+    },
+
+    handleNextStep() {
+        this.setState((prevState) => ({ currentStep: prevState.currentStep + 1 }));
+    },
+
+    handlePrevStep() {
+        this.setState((prevState) => ({ currentStep: prevState.currentStep - 1 }));
+    },
+
     render() {
+        const { currentStep } = this.state;
+        const isLastStep = currentStep === 2;
+        const isFirstStep = currentStep === 0;
         return (
             <Modal show={this.props.show} onHide={this.props.onClose}>
                 <Form
                     onSubmit={this.handleSubmit}
                 >
                     <Modal.Header closeButton>
-                        <Modal.Title>Create a Scheduled Job</Modal.Title>
+                        <Modal.Title>{this.props.title}</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <Tabs defaultActiveKey="general" id="scheduled-job-tabs">
-                            <Tab eventKey="general" title="General">
-                                <div className="form-group mtm mbm">
-                                    <label>Repository*</label>
-                                    <CreateJobRepositoryDropDown
-                                        selected={this.state.selectedRepository}
-                                        onSelect={this.handleRepositorySelect}
-                                    />
-                                </div>
-                                <div className="form-group mtm mbm">
-                                    <label>Job Type*</label>
-                                    <JobTypeDropdown onJobTypeChange={this.handleJobTypeChange} />
-                                </div>
-                                {this.getLabelInputTextBox("Sync Frequency (Cron)*", "Enter cron expression", "cron")}
-                            </Tab>
-                            <Tab eventKey="smartling" title="Smartling">
-                                <div className="form-group mtm">
-                                    {this.getLabelInputTextBox("Third Party Project ID*", "Enter Smartling Project Id", "thirdPartyProjectId")}
-                                    <ThirdPartySyncActionsInput
-                                        selectedActions={this.state.selectedActions}
-                                        onChange={this.handleActionsChange}
-                                    />
-                                    <KeyValueInput
-                                        value={this.state.localeMapping}
-                                        onChange={this.handleLocaleMappingChange}
-                                        inputLabel="Locale Mapping"
-                                        keyLabel="Smartling Locale (en)"
-                                        valueLabel="Mojito Locale (en-US)"
-                                    />
-                                </div>
-                            </Tab>
-                            <Tab eventKey="advanced" title="Advanced">
-                                <div className="form-group mtm">
-                                    {this.getLabelInputTextBox("Plural Separator", "Enter plural separator", "pluralSeparator")}
-                                    {this.getLabelInputTextBox("Skip Text Units With Pattern", "Enter skip text units pattern", "skipTextUnitsWithPattern")}
-                                    {this.getLabelInputTextBox("Skip Assets With Path Pattern", "Enter skip assets with path pattern", "skipAssetsWithPathPattern")}
-                                    {this.getLabelInputTextBox("Include Text Units With Pattern", "Enter include text units pattern", "includeTextUnitsWithPattern")}
-                                    <KeyValueInput
-                                        value={this.state.options}
-                                        onChange={this.handleOptionsMappingChange}
-                                        inputLabel="Options"
-                                    />
-                                </div>
-                            </Tab>
-                        </Tabs>
+                        {this.renderStepContent()}
                     </Modal.Body>
                     <Modal.Footer>
                         <Button variant="secondary" onClick={this.props.onClose}>
                             Close
                         </Button>
-                        <Button
-                            variant="primary"
-                            type="submit"
-                            disabled={!this.isFormValid()}
-                        >
-                            Submit
-                        </Button>
+                        {!isFirstStep && (
+                            <Button variant="secondary" onClick={this.handlePrevStep}>
+                                Back
+                            </Button>
+                        )}
+                        {!isLastStep && (
+                            <Button
+                                variant="primary"
+                                onClick={this.handleNextStep}
+                                disabled={
+                                    (currentStep === 0 && !(this.state.selectedRepository && this.state.jobType && this.state.cron)) ||
+                                    (currentStep === 1 && !(this.state.thirdPartyProjectId && Array.isArray(this.state.selectedActions) && this.state.selectedActions.length > 0))
+                                }
+                            >
+                                Next
+                            </Button>
+                        )}
+                        {isLastStep && (
+                            <Button
+                                variant="primary"
+                                type="submit"
+                                disabled={!this.isFormValid()}
+                            >
+                                Submit
+                            </Button>
+                        )}
                     </Modal.Footer>
                 </Form>
             </Modal>
@@ -269,4 +286,4 @@ const ScheduledJobInputModal  = createReactClass({
     }
 });
 
-export default ScheduledJobInputModal;
+export default JobInputModal;

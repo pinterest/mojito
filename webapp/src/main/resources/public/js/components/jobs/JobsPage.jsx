@@ -8,7 +8,7 @@ import JobStore from "../../stores/jobs/JobStore";
 import RepositoryDropDown from "./RepositoryDropDown";
 import { Button } from "react-bootstrap";
 import JobActions from "../../actions/jobs/JobActions";
-import ScheduledJobInputModal from "./ScheduledJobInputModal";
+import JobInputModal from "./JobInputModal";
 
 let JobsPage = createReactClass({
     displayName: 'JobsPage',
@@ -75,7 +75,8 @@ let JobsPage = createReactClass({
 
                 <div style={clearLeftFix}></div>
                 
-                <ScheduledJobInputModal 
+                <JobInputModal
+                    title={this.state.editingJob ? "Edit Scheduled Job" : "Create Scheduled Job"}
                     show={this.state.showScheduledJobInputModal}
                     job={this.state.editingJob}
                     onClose={this.state.editingJob ? this.closeEditJobModal : this.closeCreateJobModal}

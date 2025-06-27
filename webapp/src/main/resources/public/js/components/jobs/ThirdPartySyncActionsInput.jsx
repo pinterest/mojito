@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { ThirdPartySyncAction } from "../../utils/ThirdPartySyncAction";
+import { OverlayTrigger, Tooltip } from "react-bootstrap";
 
 
 const ThirdPartySyncActionsInput = ({ selectedActions, onChange }) => {
@@ -27,13 +28,21 @@ const ThirdPartySyncActionsInput = ({ selectedActions, onChange }) => {
                             className="form-check-input"
                             type="checkbox"
                             id={`action-checkbox-${key}`}
-                            name={ThirdPartySyncAction[key]}
-                            checked={selectedActions.includes(ThirdPartySyncAction[key])}
+                            name={key}
+                            checked={selectedActions.includes(key)}
                             onChange={handleCheckboxChange}
                         />
                         <label className="form-check-label mls" htmlFor={`action-checkbox-${key}`}>
-                            {ThirdPartySyncAction[key]}
+                            {ThirdPartySyncAction[key].displayName}
                         </label>
+                        {ThirdPartySyncAction[key].tooltip && (
+                            <OverlayTrigger
+                                placement="right"
+                                overlay={<Tooltip id={`action-tooltip-${key}`}>{ThirdPartySyncAction[key].tooltip}</Tooltip>}
+                            >
+                                <span className="textunit-gitInfo glyphicon glyphicon-info-sign mls"/>
+                            </OverlayTrigger>
+                        )}
                     </div>
                 ))}
             </div>

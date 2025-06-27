@@ -2,7 +2,6 @@ import React from "react";
 import {withAppConfig} from "../../utils/AppConfig";
 import JobStore from "../../stores/jobs/JobStore";
 import JobActions from "../../actions/jobs/JobActions";
-import AuthorityService from "../../utils/AuthorityService";
 import JobThirdPartySyncRow from "./JobThirdPartySyncRow";
 import {JobType} from "../../utils/JobType";
 import PropTypes from "prop-types";
@@ -70,7 +69,7 @@ class JobsView extends React.Component {
      * @return {XML}
      */
     render() {
-        if(this.isDoneInitialLoad && this.state.jobs.length === 0)  {
+        if (this.isDoneInitialLoad && this.state.jobs.length === 0)  {
             return (
                 <div className="ptl">
                     <h4 className="text-center mtl">No jobs have been configured.</h4>

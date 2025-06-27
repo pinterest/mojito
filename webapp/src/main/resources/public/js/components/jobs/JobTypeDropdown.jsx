@@ -5,6 +5,7 @@ import {DropdownButton, MenuItem} from "react-bootstrap";
 import {JobType} from "../../utils/JobType";
 
 let JobTypeDropDown = createReactClass({
+    displayName: 'JobTypeDropDown',
     getInitialState() {
         return {
             jobType: JobType.THIRD_PARTY_SYNC
@@ -23,8 +24,6 @@ let JobTypeDropDown = createReactClass({
     getJobName(jobType) {
         return jobType.toLowerCase().split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
     },
-
-    displayName: 'JobTypeDropDown',
 
     forceDropdownOpen: false,
 
