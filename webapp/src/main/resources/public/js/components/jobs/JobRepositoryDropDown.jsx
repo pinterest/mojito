@@ -4,7 +4,7 @@ import { DropdownButton, MenuItem } from "react-bootstrap";
 import RepositoryActions from "../../actions/RepositoryActions";
 import RepositoryStore from "../../stores/RepositoryStore";
 
-class CreateJobRepositoryDropDown extends React.Component {
+class JobRepositoryDropDown extends React.Component {
     static propTypes = {
         onSelect: PropTypes.func,
         selected: PropTypes.string,
@@ -59,4 +59,4 @@ class CreateJobRepositoryDropDown extends React.Component {
     }
 }
 
-export default CreateJobRepositoryDropDown;
+export default JobRepositoryDropDown;

@@ -3,6 +3,7 @@ import createReactClass from 'create-react-class';
 import {injectIntl} from 'react-intl';
 import {DropdownButton, MenuItem} from "react-bootstrap";
 import {JobType} from "../../utils/JobType";
+import { componentDidMount } from "alt-mixins/FluxyMixin";
 
 let JobTypeDropDown = createReactClass({
     displayName: 'JobTypeDropDown',
@@ -14,6 +15,12 @@ let JobTypeDropDown = createReactClass({
 
     componentDidMount() {
         this.props.onJobTypeChange(this.state.jobType);
+    },
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.jobType !== this.props.jobType) {
+            this.setState({jobType: this.props.jobType});
+        }
     },
 
     onJobTypeChange(jobType) {

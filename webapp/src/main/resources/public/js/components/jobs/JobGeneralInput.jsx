@@ -1,5 +1,5 @@
 import React from "react";
-import CreateJobRepositoryDropDown from "./CreateJobRepositoryDropDown";
+import JobRepositoryDropDown from "./JobRepositoryDropDown";
 import JobTypeDropdown from "./JobTypeDropdown";
 import LabeledTextInput from "./LabeledTextInput";
 
@@ -7,7 +7,7 @@ const JobGeneralInput = ({ selectedRepository, onRepositorySelect, jobType, onJo
     <div>
         <div className="form-group mbm">
             <label>Repository*</label>
-            <CreateJobRepositoryDropDown
+            <JobRepositoryDropDown
                 selected={selectedRepository}
                 onSelect={onRepositorySelect}
             />
