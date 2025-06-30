@@ -176,6 +176,7 @@ const JobInputModal  = createReactClass({
         e.preventDefault();
         const scheduledJobInput = this.getScheduledJobInput();
         this.props.onSubmit(scheduledJobInput);
+        this.setState({ currentStep: 0 });
     },
 
     isStepValid(step) {
@@ -183,7 +184,7 @@ const JobInputModal  = createReactClass({
             return this.state.selectedRepository &&
                 this.state.jobType &&
                 this.state.cron
-                // validateCronExpression(this.state.cron);
+                validateCronExpression(this.state.cron);
         }
         if (step === 1) {
             return this.state.thirdPartyProjectId &&
