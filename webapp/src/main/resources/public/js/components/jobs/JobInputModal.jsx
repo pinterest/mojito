@@ -183,7 +183,7 @@ const JobInputModal  = createReactClass({
         if (step === 0) {
             return this.state.selectedRepository &&
                 this.state.jobType &&
-                this.state.cron
+                this.state.cron &&
                 validateCronExpression(this.state.cron);
         }
         if (step === 1) {
