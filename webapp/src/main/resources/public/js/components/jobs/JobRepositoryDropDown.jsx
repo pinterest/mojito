@@ -20,9 +20,12 @@ class JobRepositoryDropDown extends React.Component {
     }
 
     componentDidMount() {
-        RepositoryActions.getAllRepositories();
         RepositoryStore.listen(this.repositoryStoreChange);
         this.repositoryStoreChange(RepositoryStore.getState());
+
+        if (!RepositoryStore.getState().repositories || RepositoryStore.getState().repositories.length === 0) {
+            RepositoryActions.getAllRepositories();
+        }
     }
 
     componentWillUnmount() {

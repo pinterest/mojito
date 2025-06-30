@@ -8,7 +8,7 @@ class JobStore {
     constructor() {
         this.jobs = [];
         this.filter = [];
-        this.errorMessage = null;
+        this.error = null;
         this.bindActions(JobActions);
         this.registerAsync(JobDataSource);
     }
@@ -19,14 +19,11 @@ class JobStore {
 
     createJobSuccess(job) {
         this.jobs = [...this.jobs, job];
+        this.setError(null);
     }
 
     createJobError(error) {
-        if (error.response) {
-            error.response.json().then(data => {
-                this.setErrorMessage(data.message);
-            });
-        }
+        this.setError(error);
     }
 
     updateJob(job) {
@@ -35,14 +32,11 @@ class JobStore {
 
     updateJobSuccess(job) {
         this.jobs = this.jobs.map(j => j.id === job.id ? { ...j, ...job } : j);
+        this.setError(null);
     }
 
     updateJobError(error) {
-        if (error.response) {
-            error.response.json().then(data => {
-                this.setErrorMessage(data.message);
-            });
-        }
+        this.setError(error);
     }
 
     deleteJob(job) {
@@ -61,12 +55,12 @@ class JobStore {
         this.getAllJobs();
     }
 
-    setErrorMessage(message) {
-        this.errorMessage = message;
+    setError(message) {
+        this.error = message;
     }
 
-    static getErrorMessage() {
-        return this.getState().errorMessage;
+    getError() {
+        return this.getState().error;
     }
 
     getAllJobs() {

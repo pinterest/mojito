@@ -17,40 +17,78 @@ let JobsPage = createReactClass({
       return {
           jobType: null,
           showScheduledJobInputModal: false,
-          editingJob: null
+          editingJob: null,
+          isSubmitting: false,
+          errorMessage: null
       };
     },
 
+    componentDidMount() {
+        this.jobStoreListener = JobStore.listen(this.jobStoreChange);
+    },
+
+    componentWillUnmount() {
+        JobStore.unlisten(this.jobStoreListener);
+    },
+
+    jobStoreChange(state) {
+        if (this.state.showScheduledJobInputModal && this.state.isSubmitting) {
+            if (state.error && state.error.response) {
+                state.error.response.json().then(data => {
+                    this.setState({ isSubmitting: false, errorMessage: data.message });
+                })
+            } else {
+                this.setState({ 
+                    showScheduledJobInputModal: false, 
+                    editingJob: null, 
+                    isSubmitting: false, 
+                    errorMessage: null 
+                });
+            }
+        }
+    },
+
     openCreateJobModal() {
-        this.setState({showScheduledJobInputModal: true});
+        this.setState({
+            showScheduledJobInputModal: true,
+            editingJob: null,
+            errorMessage: null
+        });
     },
 
     closeCreateJobModal() {
-        this.setState({showScheduledJobInputModal: false});
+        this.setState({
+            showScheduledJobInputModal: false, 
+            isSubmitting: false, 
+            errorMessage: null
+        });
     },
 
     handleCreateJobSubmit(job) {
+        this.setState({ isSubmitting: true, errorMessage: null });
         JobActions.createJob(job);
-        this.closeCreateJobModal();
     },
 
     openEditJobModal(job) {
         this.setState({
             showScheduledJobInputModal: true,
-            editingJob: job
+            editingJob: job,
+            lastErrorMessage: null
         });
     },
 
     closeEditJobModal() {
         this.setState({
             showScheduledJobInputModal: false,
-            editingJob: null
+            editingJob: null,
+            isSubmitting: false,
+            errorMessage: null
         });
     },
 
     handleEditJobSubmit(job) {
+        this.setState({ isSubmitting: true, errorMessage: null });
         JobActions.updateJob(job);
-        this.closeEditJobModal();
     },
 
     onJobTypeChange(jobType) {
@@ -80,7 +118,9 @@ let JobsPage = createReactClass({
                     show={this.state.showScheduledJobInputModal}
                     job={this.state.editingJob}
                     onClose={this.state.editingJob ? this.closeEditJobModal : this.closeCreateJobModal}
-                    onSubmit={this.state.editingJob ? this.handleEditJobSubmit : this.handleCreateJobSubmit} 
+                    onSubmit={this.state.editingJob ? this.handleEditJobSubmit : this.handleCreateJobSubmit}
+                    errorMessage={this.state.errorMessage}
+                    isSubmitting={this.state.isSubmitting}
                 />
 
                 <AltContainer store={JobStore} className="mtl mbl" >

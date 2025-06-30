@@ -3,7 +3,6 @@ import createReactClass from 'create-react-class';
 import {injectIntl} from 'react-intl';
 import {DropdownButton, MenuItem} from "react-bootstrap";
 import {JobType} from "../../utils/JobType";
-import { componentDidMount } from "alt-mixins/FluxyMixin";
 
 let JobTypeDropDown = createReactClass({
     displayName: 'JobTypeDropDown',

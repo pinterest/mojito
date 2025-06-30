@@ -15,7 +15,9 @@ const JobInputModal  = createReactClass({
         show: PropTypes.bool.isRequired,
         onClose: PropTypes.func.isRequired,
         onSubmit: PropTypes.func.isRequired,
-        job: PropTypes.object
+        job: PropTypes.object,
+        errorMessage: PropTypes.string,
+        isSubmitting: PropTypes.bool
     },
 
     getInitialState() {
@@ -37,6 +39,13 @@ const JobInputModal  = createReactClass({
     },
 
     componentDidUpdate(prevProps) {
+        if (
+            this.props.errorMessage &&
+            this.props.errorMessage !== prevProps.errorMessage &&
+            this.state.currentStep !== 0
+        ) {
+            this.setState({ currentStep: 0 });
+        }
         if (prevProps.job !== this.props.job) {
             if (this.props.job) {
                 this.setState({
@@ -123,10 +132,10 @@ const JobInputModal  = createReactClass({
         this.setState({
             id: null,
             selectedRepository: null,
-            jobType: null,
+            jobType: JobType.THIRD_PARTY_SYNC,
             cron: "",
             thirdPartyProjectId: "",
-            selectedActions: [],
+            selectedActions: ["PUSH", "PULL", "MAP_TEXTUNIT", "PUSH_SCREENSHOT"],
             localeMapping: [],
             skipTextUnitsWithPattern: "",
             pluralSeparator: "",
@@ -167,15 +176,14 @@ const JobInputModal  = createReactClass({
         e.preventDefault();
         const scheduledJobInput = this.getScheduledJobInput();
         this.props.onSubmit(scheduledJobInput);
-        this.clearModal();
     },
 
     isStepValid(step) {
         if (step === 0) {
             return this.state.selectedRepository &&
                 this.state.jobType &&
-                this.state.cron &&
-                validateCronExpression(this.state.cron);
+                this.state.cron
+                // validateCronExpression(this.state.cron);
         }
         if (step === 1) {
             return this.state.thirdPartyProjectId &&
@@ -251,6 +259,11 @@ const JobInputModal  = createReactClass({
                         <Modal.Title>{this.props.title}</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
+                        {this.props.errorMessage && (
+                            <div className="alert alert-danger">
+                                {this.props.errorMessage}
+                            </div>
+                        )}
                         {this.renderStepContent()}
                     </Modal.Body>
                     <Modal.Footer>
@@ -266,7 +279,7 @@ const JobInputModal  = createReactClass({
                             <Button
                                 variant="primary"
                                 onClick={this.handleNextStep}
-                                disabled={!this.isStepValid(currentStep)}
+                                disabled={!this.isStepValid(currentStep) || this.props.isSubmitting}
                             >
                                 Next
                             </Button>
@@ -275,9 +288,9 @@ const JobInputModal  = createReactClass({
                             <Button
                                 variant="primary"
                                 type="submit"
-                                disabled={!this.isStepValid(currentStep)}
+                                disabled={!this.isStepValid(currentStep) || this.props.isSubmitting}
                             >
-                                Submit
+                                {this.props.isSubmitting ? "Submitting..." : "Submit"}
                             </Button>
                         )}
                     </Modal.Footer>

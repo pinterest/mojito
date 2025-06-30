@@ -14,7 +14,6 @@ class JobClient extends BaseClient {
     }
 
     restoreJob(job) {
-        console.log(job);
         return this.patch(this.getUrl() + `/${job.id}/restore`);
     }
 
