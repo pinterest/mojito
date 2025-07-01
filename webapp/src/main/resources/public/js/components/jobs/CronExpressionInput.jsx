@@ -42,12 +42,12 @@ class CronExpressionInput extends React.Component {
         }
     }
 
-    handleDropdownSelect = (eventKey) => {
-        if (eventKey === "__custom__") {
+    handleDropdownSelect = (option) => {
+        if (option === "__custom__") {
             this.setState({ selectedOption: "__custom__", customCron: "" });
         } else {
-            this.setState({ selectedOption: eventKey, customCron: "" });
-            this.props.onChange({ target: { name: "cron", value: eventKey } });
+            this.setState({ selectedOption: option, customCron: "" });
+            this.props.onChange({ target: { name: "cron", value: option } });
         }
     };
 
