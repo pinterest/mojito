@@ -71,6 +71,7 @@ const KeyValueInput = createReactClass({
                             />
                             <button
                                 className="btn btn-danger"
+                                type="button"
                                 onClick={() => this.handleRemove(index)}
                             >
                                 Remove
