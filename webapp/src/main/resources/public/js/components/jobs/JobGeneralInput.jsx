@@ -8,7 +8,7 @@ const JobGeneralInput = ({ selectedRepository, onRepositorySelect, jobType, onJo
         <div className="form-group mbm">
             <label>Repository*</label>
             <JobRepositoryDropDown
-                selected={selectedRepository}
+                selectedRepository={selectedRepository}
                 onSelect={onRepositorySelect}
             />
         </div>
