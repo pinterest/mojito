@@ -60,12 +60,12 @@ class CronExpressionInput extends React.Component {
     getCustomCronDescription = (cron) => {
         if (!cron) { return }
         if (!validateCronExpression(cron)) {
-            return <span style={{ color: 'red' }}>Invalid cron expression</span>;
+            return <span className="red">Invalid cron expression</span>;
         }
         try {
             return cronstrue.toString(cron);
         } catch (e) {
-            return <span style={{ color: 'red' }}>Invalid cron expression</span>;
+            return <span className="red">Invalid cron expression</span>;
         }
     };
 

@@ -7,7 +7,7 @@ import RepositoryStore from "../../stores/RepositoryStore";
 class JobRepositoryDropDown extends React.Component {
     static propTypes = {
         onSelect: PropTypes.func,
-        selected: PropTypes.string,
+        selectedRepo: PropTypes.string,
     };
 
     constructor(props) {
@@ -48,7 +48,7 @@ class JobRepositoryDropDown extends React.Component {
             <div>
                 <DropdownButton
                     id="create-job-repo-dropdown"
-                    title={this.props.selected ? this.props.selected : "Choose a repository"}
+                    title={this.props.selectedRepo ? this.props.selectedRepo : "Choose a repository"}
                     onSelect={this.handleSelect}
                 >
                     {this.state.repositories.map(repo => (

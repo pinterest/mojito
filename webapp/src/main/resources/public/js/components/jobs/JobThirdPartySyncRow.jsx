@@ -82,6 +82,11 @@ class JobThirdPartySyncRow extends React.Component {
         return <span> - {(job.properties && job.properties.thirdPartyProjectId) || ""}</span>;
     }
 
+    getJobStatusLabelStatus(job) {
+        if (job.deleted) return "DELETED";
+        if (!job.enabled) return "DISABLED";
+        return job.status;
+    }
 
     /**
      * @return {XML}
@@ -104,7 +109,7 @@ class JobThirdPartySyncRow extends React.Component {
                             <h1 className={inProgress ? "job-details-title-loading" : ""}>
                             { job.type && jobTypeFormatted }
                             </h1>
-                            <JobStatusLabel status={job.deleted ? "DELETED" : (job.enabled ? job.status : "DISABLED")} />
+                            <JobStatusLabel status={this.getJobStatusLabelStatus(job)} />
                         </div>
                         <div>{job.repository}{this.getThirdPartyLink(job)}</div>
                     </div>

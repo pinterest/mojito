@@ -7,6 +7,23 @@ import JobGeneralInput from "./JobGeneralInput";
 import JobThirdPartyInput from "./JobThirdPartyInput";
 import JobAdvancedInput from "./JobAdvancedInput";
 import { validateCronExpression } from "../../utils/CronExpressionHelper";
+import { parseLocaleMappingString, serializeLocaleMappingArray, parseOptionsArray, serializeOptionsArray } from "../../utils/JobInputHelper";
+
+const DEFAULT_STATE = {
+    id: null,
+    selectedRepository: null,
+    jobType: JobType.THIRD_PARTY_SYNC,
+    cron: "",
+    thirdPartyProjectId: "",
+    selectedActions: ["PUSH", "PULL", "MAP_TEXTUNIT", "PUSH_SCREENSHOT"],
+    localeMapping: [],
+    skipTextUnitsWithPattern: "",
+    pluralSeparator: "",
+    skipAssetsWithPathPattern: "",
+    includeTextUnitsWithPattern: "",
+    options: [],
+    currentStep: 0
+};
 
 const JobInputModal  = createReactClass({
     displayName: "JobInputModal",
@@ -21,21 +38,7 @@ const JobInputModal  = createReactClass({
     },
 
     getInitialState() {
-        return {
-            id: null,
-            selectedRepository: null,
-            jobType: JobType.THIRD_PARTY_SYNC,
-            cron: "",
-            thirdPartyProjectId: "",
-            selectedActions: ["PUSH", "PULL", "MAP_TEXTUNIT", "PUSH_SCREENSHOT"],
-            localeMapping: [],
-            skipTextUnitsWithPattern: "",
-            pluralSeparator: "",
-            skipAssetsWithPathPattern: "",
-            includeTextUnitsWithPattern: "",
-            options: [],
-            currentStep: 0
-        };
+        return { ...DEFAULT_STATE };
     },
 
     componentDidUpdate(prevProps) {
@@ -56,58 +59,17 @@ const JobInputModal  = createReactClass({
                     cron: this.props.job.cron || "",
                     thirdPartyProjectId: jobProperties.thirdPartyProjectId || "",
                     selectedActions: jobProperties.actions || [],
-                    localeMapping: this.parseLocaleMappingString(jobProperties.localeMapping),
+                    localeMapping: parseLocaleMappingString(jobProperties.localeMapping),
                     skipTextUnitsWithPattern: jobProperties.skipTextUnitsWithPattern || "",
                     pluralSeparator: jobProperties.pluralSeparator || "",
                     skipAssetsWithPathPattern: jobProperties.skipAssetsWithPathPattern || "",
                     includeTextUnitsWithPattern: jobProperties.includeTextUnitsWithPattern || "",
-                    options: this.parseOptionsArray(jobProperties.options || [])
+                    options: parseOptionsArray(jobProperties.options || [])
                 });
             } else {
                 this.clearModal();
             }
         }
-    },
-
-    // Converts "en:en-US, fr: fr-FR" to [{key: 'en', value: 'en-US'}, {key: 'fr', value: 'fr-FR'}]
-    parseLocaleMappingString(localeMappingString) {
-        if (!localeMappingString || typeof localeMappingString !== 'string') return [];
-        return localeMappingString.split(',').map(pair => {
-            const [key, value] = pair.split(':');
-            return {
-                key: key ? key.trim() : '',
-                value: value ? value.trim() : ''
-            };
-        }).filter(pair => pair.key || pair.value);
-    },
-
-    // Converts array of {key, value} to "en:en-US, fr:fr-FR"
-    serializeLocaleMappingArray(localeMappingArray) {
-        if (!Array.isArray(localeMappingArray)) return '';
-        return localeMappingArray
-            .filter(pair => pair.key && pair.value)
-            .map(pair => `${pair.key}:${pair.value}`)
-            .join(', ');
-    },
-
-    // Converts array of {key, value} to ["key=value", ...]
-    serializeOptionsArray(optionsArray) {
-        if (!Array.isArray(optionsArray)) return [];
-        return optionsArray
-            .filter(pair => pair.key && pair.value)
-            .map(pair => `${pair.key}=${pair.value}`);
-    },
-
-    // Converts ["key=value", ...] to array of {key, value}
-    parseOptionsArray(optionsList) {
-        if (!Array.isArray(optionsList)) return [];
-        return optionsList.map(option => {
-            const [key, value] = option.split('=');
-            return {
-                key: key ? key.trim() : '',
-                value: value ? value.trim() : ''
-            };
-        }).filter(pair => pair.key || pair.value);
     },
 
     getScheduledJobInput() {
@@ -118,11 +80,11 @@ const JobInputModal  = createReactClass({
                 thirdPartyProjectId: this.state.thirdPartyProjectId,
                 actions: this.state.selectedActions,
                 pluralSeparator: this.state.pluralSeparator,
-                localeMapping: this.serializeLocaleMappingArray(this.state.localeMapping),
+                localeMapping: serializeLocaleMappingArray(this.state.localeMapping),
                 skipTextUnitsWithPattern: this.state.skipTextUnitsWithPattern,
                 skipAssetsWithPathPattern: this.state.skipAssetsWithPathPattern,
                 includeTextUnitsWithPattern: this.state.includeTextUnitsWithPattern,
-                options: this.serializeOptionsArray(this.state.options)
+                options: serializeOptionsArray(this.state.options)
             }),
             cron: this.state.cron,
             type: this.state.jobType,
@@ -130,21 +92,7 @@ const JobInputModal  = createReactClass({
     },
 
     clearModal() {
-        this.setState({
-            id: null,
-            selectedRepository: null,
-            jobType: JobType.THIRD_PARTY_SYNC,
-            cron: "",
-            thirdPartyProjectId: "",
-            selectedActions: ["PUSH", "PULL", "MAP_TEXTUNIT", "PUSH_SCREENSHOT"],
-            localeMapping: [],
-            skipTextUnitsWithPattern: "",
-            pluralSeparator: "",
-            skipAssetsWithPathPattern: "",
-            includeTextUnitsWithPattern: "",
-            options: [],
-            currentStep: 0
-        });
+        this.setState({ ...DEFAULT_STATE });
     },
 
 
