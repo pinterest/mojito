@@ -10,7 +10,7 @@ class JobsView extends React.Component {
     static propTypes = {
         "jobs": PropTypes.array.isRequired,
         "filter": PropTypes.array.isRequired,
-        "jobType": PropTypes.string.isRequired,
+        "jobType": PropTypes.string,
         "openEditJobModal": PropTypes.func.isRequired
     }
 
