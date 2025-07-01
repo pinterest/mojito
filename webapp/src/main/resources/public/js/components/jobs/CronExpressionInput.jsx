@@ -4,11 +4,13 @@ import { DropdownButton, MenuItem } from "react-bootstrap";
 import cronstrue from "cronstrue";
 import { validateCronExpression } from "../../utils/CronExpressionHelper";
 
+const CUSTOM_CRON_OPTION = "__custom__";
+
 const CRON_EXPRESSION_OPTIONS = [
     { display: "Every 5 Minutes", cron: "0 0/5 * * * ?" },
     { display: "Every Hour", cron: "0 0 * * * ?" },
     { display: "Every Day at Midnight (UTC)", cron: "0 0 0 * * ?" },
-    { display: "Custom Cron Expression", cron: "__custom__" },
+    { display: "Custom Cron Expression", cron: CUSTOM_CRON_OPTION },
 ];
 
 class CronExpressionInput extends React.Component {
@@ -22,7 +24,7 @@ class CronExpressionInput extends React.Component {
         const matchedOption = CRON_EXPRESSION_OPTIONS.find(option => option.cron === props.cron);
         this.state = {
             selectedOption: props.cron
-                ? (matchedOption ? matchedOption.cron : "__custom__")
+                ? (matchedOption ? matchedOption.cron : CUSTOM_CRON_OPTION)
                 : null,
             customCron: matchedOption || !props.cron ? "" : (props.cron || "")
         };
@@ -31,10 +33,10 @@ class CronExpressionInput extends React.Component {
     componentDidUpdate(prevProps) {
         if (prevProps.cron !== this.props.cron) {
             const matchedOption = CRON_EXPRESSION_OPTIONS.find(option => option.cron === this.props.cron);
-            if (this.state.selectedOption !== "__custom__" || (this.props.cron && matchedOption)) {
+            if (this.state.selectedOption !== CUSTOM_CRON_OPTION || (this.props.cron && matchedOption)) {
                 this.setState({
                     selectedOption: this.props.cron
-                        ? (matchedOption ? matchedOption.cron : "__custom__")
+                        ? (matchedOption ? matchedOption.cron : CUSTOM_CRON_OPTION)
                         : null,
                     customCron: matchedOption || !this.props.cron ? "" : (this.props.cron || "")
                 });
@@ -43,8 +45,8 @@ class CronExpressionInput extends React.Component {
     }
 
     handleDropdownSelect = (option) => {
-        if (option === "__custom__") {
-            this.setState({ selectedOption: "__custom__", customCron: "" });
+        if (option === CUSTOM_CRON_OPTION) {
+            this.setState({ selectedOption: CUSTOM_CRON_OPTION, customCron: "" });
         } else {
             this.setState({ selectedOption: option, customCron: "" });
             this.props.onChange({ target: { name: "cron", value: option } });
@@ -72,7 +74,7 @@ class CronExpressionInput extends React.Component {
     render() {
         const { selectedOption, customCron } = this.state;
         let selectedDisplay = "Choose a Cron Expression";
-        if (selectedOption === "__custom__") {
+        if (selectedOption === CUSTOM_CRON_OPTION) {
             selectedDisplay = "Custom Cron Expression";
         } else if (selectedOption) {
             selectedDisplay = (CRON_EXPRESSION_OPTIONS.find(option => option.cron === selectedOption) || {}).display;
@@ -94,7 +96,7 @@ class CronExpressionInput extends React.Component {
                         </MenuItem>
                     ))}
                 </DropdownButton>
-                {selectedOption === "__custom__" && (
+                {selectedOption === CUSTOM_CRON_OPTION && (
                     <div>
                         <input
                             type="text"
