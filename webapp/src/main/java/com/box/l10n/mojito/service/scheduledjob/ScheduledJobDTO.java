@@ -49,20 +49,6 @@ public class ScheduledJobDTO {
     }
   }
 
-  //  public void deserializeProperties() {
-  //    ObjectMapper objectMapper = new ObjectMapper();
-  //    try {
-  //      this.properties = objectMapper.readValue(propertiesString, type.getPropertiesClass());
-  //    } catch (Exception e) {
-  //      throw new ScheduledJobException(
-  //          "Failed to deserialize properties '"
-  //              + propertiesString
-  //              + "' for class: "
-  //              + type.getPropertiesClass().getName(),
-  //          e);
-  //    }
-  //  }
-
   public String getId() {
     return id;
   }
