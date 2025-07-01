@@ -7,7 +7,7 @@ import { validateCronExpression } from "../../utils/CronExpressionHelper";
 const CRON_EXPRESSION_OPTIONS = [
     { display: "Every 5 Minutes", cron: "0 0/5 * * * ?" },
     { display: "Every Hour", cron: "0 0 * * * ?" },
-    { display: "Every Day at Midnight", cron: "0 0 0 * * ?" },
+    { display: "Every Day at Midnight (UTC)", cron: "0 0 0 * * ?" },
     { display: "Custom Cron Expression", cron: "__custom__" },
 ];
 

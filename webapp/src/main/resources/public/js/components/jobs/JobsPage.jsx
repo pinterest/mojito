@@ -73,7 +73,7 @@ let JobsPage = createReactClass({
         this.setState({
             showScheduledJobInputModal: true,
             editingJob: job,
-            lastErrorMessage: null
+            errorMessage: null
         });
     },
 

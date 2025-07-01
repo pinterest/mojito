@@ -48,19 +48,20 @@ const JobInputModal  = createReactClass({
         }
         if (prevProps.job !== this.props.job) {
             if (this.props.job) {
+                const jobProperties = this.props.job.properties || {};
                 this.setState({
                     id: this.props.job.id,
                     selectedRepository: this.props.job.repository || null,
                     jobType: this.props.job.type || JobType.THIRD_PARTY_SYNC,
                     cron: this.props.job.cron || "",
-                    thirdPartyProjectId: this.props.job.properties.thirdPartyProjectId || "",
-                    selectedActions: this.props.job.properties.actions || [],
-                    localeMapping: this.parseLocaleMappingString(this.props.job.properties.localeMapping),
-                    skipTextUnitsWithPattern: this.props.job.properties.skipTextUnitsWithPattern || "",
-                    pluralSeparator: this.props.job.properties.pluralSeparator || "",
-                    skipAssetsWithPathPattern: this.props.job.properties.skipAssetsWithPathPattern || "",
-                    includeTextUnitsWithPattern: this.props.job.properties.includeTextUnitsWithPattern || "",
-                    options: this.parseOptionsArray(this.props.job.properties.options || [])
+                    thirdPartyProjectId: jobProperties.thirdPartyProjectId || "",
+                    selectedActions: jobProperties.actions || [],
+                    localeMapping: this.parseLocaleMappingString(jobProperties.localeMapping),
+                    skipTextUnitsWithPattern: jobProperties.skipTextUnitsWithPattern || "",
+                    pluralSeparator: jobProperties.pluralSeparator || "",
+                    skipAssetsWithPathPattern: jobProperties.skipAssetsWithPathPattern || "",
+                    includeTextUnitsWithPattern: jobProperties.includeTextUnitsWithPattern || "",
+                    options: this.parseOptionsArray(jobProperties.options || [])
                 });
             } else {
                 this.clearModal();
@@ -179,6 +180,11 @@ const JobInputModal  = createReactClass({
         this.setState({ currentStep: 0 });
     },
 
+    handleCloseModal() {
+        this.props.onClose();
+        this.clearModal();
+    },
+
     isStepValid(step) {
         if (step === 0) {
             return this.state.selectedRepository &&
@@ -252,7 +258,7 @@ const JobInputModal  = createReactClass({
         const isLastStep = currentStep === 2;
         const isFirstStep = currentStep === 0;
         return (
-            <Modal show={this.props.show} onHide={this.props.onClose}>
+            <Modal show={this.props.show} onHide={this.handleCloseModal}>
                 <Form
                     onSubmit={this.handleSubmit}
                 >
@@ -268,7 +274,7 @@ const JobInputModal  = createReactClass({
                         {this.renderStepContent()}
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={this.props.onClose}>
+                        <Button variant="secondary" onClick={this.handleCloseModal}>
                             Close
                         </Button>
                         {!isFirstStep && (

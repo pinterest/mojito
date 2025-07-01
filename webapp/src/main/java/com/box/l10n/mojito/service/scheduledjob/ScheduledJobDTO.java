@@ -1,7 +1,6 @@
 package com.box.l10n.mojito.service.scheduledjob;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
-import com.box.l10n.mojito.json.ObjectMapper;
 import java.text.ParseException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -50,19 +49,19 @@ public class ScheduledJobDTO {
     }
   }
 
-  public void deserializeProperties() {
-    ObjectMapper objectMapper = new ObjectMapper();
-    try {
-      this.properties = objectMapper.readValue(propertiesString, type.getPropertiesClass());
-    } catch (Exception e) {
-      throw new ScheduledJobException(
-          "Failed to deserialize properties '"
-              + propertiesString
-              + "' for class: "
-              + type.getPropertiesClass().getName(),
-          e);
-    }
-  }
+  //  public void deserializeProperties() {
+  //    ObjectMapper objectMapper = new ObjectMapper();
+  //    try {
+  //      this.properties = objectMapper.readValue(propertiesString, type.getPropertiesClass());
+  //    } catch (Exception e) {
+  //      throw new ScheduledJobException(
+  //          "Failed to deserialize properties '"
+  //              + propertiesString
+  //              + "' for class: "
+  //              + type.getPropertiesClass().getName(),
+  //          e);
+  //    }
+  //  }
 
   public String getId() {
     return id;
