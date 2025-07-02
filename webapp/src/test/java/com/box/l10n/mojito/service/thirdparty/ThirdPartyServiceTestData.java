@@ -76,7 +76,6 @@ public class ThirdPartyServiceTestData {
             + "    <string name=\"hello\">Hello</string>\n"
             + "    <!--comment 2-->\n"
             + "    <string name=\"bye\">Bye</string>\n"
-            + "    <!--comment 3-->\n"
             + "    <plurals name=\"plural_things\">\n"
             + "        <item quantity=\"one\">One thing</item>\n"
             + "        <item quantity=\"other\">Multiple things</item>\n"

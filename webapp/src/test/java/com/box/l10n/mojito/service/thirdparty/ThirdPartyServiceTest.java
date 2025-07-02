@@ -155,16 +155,14 @@ public class ThirdPartyServiceTest extends ServiceTestBase {
     doAnswer(
             invocation ->
                 Arrays.asList(
-                    createThirdPartyTextUnit(
-                        asset.getPath(), "3rd-hello", "hello", "Hello", "comment 1"),
-                    createThirdPartyTextUnit(asset.getPath(), "3rd-bye", "bye", "Bye", "comment 2"),
+                    createThirdPartyTextUnit(asset.getPath(), "3rd-hello", "hello", "Hello"),
+                    createThirdPartyTextUnit(asset.getPath(), "3rd-bye", "bye", "Bye"),
                     createThirdPartyTextUnit(
                         asset.getPath(),
                         "3rd-plural_things",
                         "plural_things",
                         true,
-                        "Multiple things",
-                        "comment 3")))
+                        "Multiple things")))
         .when(thirdPartyTMSMock)
         .getThirdPartyTextUnits(any(), any(), any());
 
@@ -314,18 +312,15 @@ public class ThirdPartyServiceTest extends ServiceTestBase {
     doAnswer(
             invocation ->
                 Arrays.asList(
-                    createThirdPartyTextUnit(
-                        asset.getPath(), "3rd-hello", "hello", "Hello", "comment 1 updated"),
-                    createThirdPartyTextUnit(
-                        asset.getPath(), "3rd-hello", "hello", "Hello", "comment 1"),
-                    createThirdPartyTextUnit(asset.getPath(), "3rd-bye", "bye", "Bye", "comment 2"),
+                    createThirdPartyTextUnit(asset.getPath(), "3rd-hello", "hello", "Hello"),
+                    createThirdPartyTextUnit(asset.getPath(), "3rd-hello", "hello", "Hello"),
+                    createThirdPartyTextUnit(asset.getPath(), "3rd-bye", "bye", "Bye"),
                     createThirdPartyTextUnit(
                         asset.getPath(),
                         "3rd-plural_things",
                         "plural_things",
                         true,
-                        "Multiple things",
-                        "comment 3")))
+                        "Multiple things")))
         .when(thirdPartyTMSMock)
         .getThirdPartyTextUnits(any(), any(), any());
 
@@ -408,13 +403,12 @@ public class ThirdPartyServiceTest extends ServiceTestBase {
     doAnswer(
             invocation ->
                 Arrays.asList(
-                    createThirdPartyTextUnit(
-                        asset.getPath(), "3rd-hello", "hello", "Hello", "comment 1")))
+                    createThirdPartyTextUnit(asset.getPath(), "3rd-hello", "hello", "Hello")))
         .doAnswer(
             invocation ->
                 Arrays.asList(
                     createThirdPartyTextUnit(
-                        asset.getPath(), "3rd-hello-duplicate", "hello", "Hello", "comment 444")))
+                        asset.getPath(), "3rd-hello-duplicate", "hello", "Hello")))
         .when(thirdPartyTMSMock)
         .getThirdPartyTextUnits(any(), any(), any());
 
@@ -765,23 +759,17 @@ public class ThirdPartyServiceTest extends ServiceTestBase {
   }
 
   ThirdPartyTextUnit createThirdPartyTextUnit(
-      String assetPath, String id, String name, String source, String comment) {
-    return createThirdPartyTextUnit(assetPath, id, name, false, source, comment);
+      String assetPath, String id, String name, String source) {
+    return createThirdPartyTextUnit(assetPath, id, name, false, source);
   }
 
   ThirdPartyTextUnit createThirdPartyTextUnit(
-      String assetPath,
-      String id,
-      String name,
-      boolean isNamePluralPrefix,
-      String source,
-      String comment) {
+      String assetPath, String id, String name, boolean isNamePluralPrefix, String source) {
     ThirdPartyTextUnit thirdPartyTextUnit = new ThirdPartyTextUnit();
     thirdPartyTextUnit.setAssetPath(assetPath);
     thirdPartyTextUnit.setId(id);
     thirdPartyTextUnit.setName(name);
     thirdPartyTextUnit.setSource(source);
-    thirdPartyTextUnit.setComment(comment);
     thirdPartyTextUnit.setNamePluralPrefix(isNamePluralPrefix);
     thirdPartyTextUnit.setUploadedFileUri("testFileUri");
     return thirdPartyTextUnit;

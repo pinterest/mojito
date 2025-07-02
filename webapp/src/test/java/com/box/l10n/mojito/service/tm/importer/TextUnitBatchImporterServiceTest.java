@@ -84,7 +84,6 @@ public class TextUnitBatchImporterServiceTest extends ServiceTestBase {
     textUnitDTO.setAssetPath(tmTestData.asset.getPath());
     textUnitDTO.setName("TEST2");
     textUnitDTO.setTarget("TEST2 translation for fr");
-    textUnitDTO.setComment("Comment2");
 
     TextUnitDTO textUnitDTO2 = new TextUnitDTO();
     textUnitDTO2.setRepositoryName(tmTestData.repository.getName());
@@ -92,7 +91,6 @@ public class TextUnitBatchImporterServiceTest extends ServiceTestBase {
     textUnitDTO2.setAssetPath(tmTestData.asset.getPath());
     textUnitDTO2.setName("TEST3");
     textUnitDTO2.setTarget("TEST3 translation for fr");
-    textUnitDTO2.setComment("Comment3");
 
     TextUnitDTO textUnitDTO3 = new TextUnitDTO();
     textUnitDTO3.setRepositoryName(tmTestData.repository.getName());
@@ -100,7 +98,6 @@ public class TextUnitBatchImporterServiceTest extends ServiceTestBase {
     textUnitDTO3.setAssetPath(tmTestData.asset.getPath());
     textUnitDTO3.setName("zuora_error_message_verify_state_province");
     textUnitDTO3.setTarget("zuora_error_message_verify_state_province translation for fr");
-    textUnitDTO3.setComment("Comment1");
 
     List<TextUnitDTO> textUnitDTOsForImport =
         Arrays.asList(textUnitDTO, textUnitDTO2, textUnitDTO3);
@@ -382,7 +379,6 @@ public class TextUnitBatchImporterServiceTest extends ServiceTestBase {
     textUnitDTO.setRepositoryName(repository.getName());
     textUnitDTO.setAssetPath("default");
     textUnitDTO.setName("name1");
-    textUnitDTO.setComment("comment1");
     textUnitDTO.setTargetLocale("fr-FR");
     textUnitDTO.setTarget("v1");
 
@@ -415,7 +411,6 @@ public class TextUnitBatchImporterServiceTest extends ServiceTestBase {
     textUnitDTO.setRepositoryName(repository.getName());
     textUnitDTO.setAssetPath("default");
     textUnitDTO.setName("name1");
-    textUnitDTO.setComment("comment1");
     textUnitDTO.setTargetLocale("fr-FR");
     textUnitDTO.setTarget("v2");
 
@@ -520,7 +515,6 @@ public class TextUnitBatchImporterServiceTest extends ServiceTestBase {
     textUnitDTO.setAssetPath(tmTestData.asset.getPath());
     textUnitDTO.setName("TEST2");
     textUnitDTO.setTarget("New TEST2 translation for fr");
-    textUnitDTO.setComment("Comment2");
     textUnitDTO.setStatus(TMTextUnitVariant.Status.OVERRIDDEN);
 
     TextUnitDTO textUnitDTO2 = new TextUnitDTO();
@@ -528,7 +522,6 @@ public class TextUnitBatchImporterServiceTest extends ServiceTestBase {
     textUnitDTO2.setTargetLocale(tmTestData.frFR.getBcp47Tag());
     textUnitDTO2.setAssetPath(tmTestData.asset.getPath());
     textUnitDTO2.setName("TEST3");
-    textUnitDTO2.setComment("Comment3");
     textUnitDTO2.setTarget("New TEST3 translation for fr");
 
     List<TextUnitDTO> textUnitDTOsForImport = Arrays.asList(textUnitDTO, textUnitDTO2);
@@ -560,7 +553,6 @@ public class TextUnitBatchImporterServiceTest extends ServiceTestBase {
     textUnitDTO.setAssetPath(tmTestData.asset.getPath());
     textUnitDTO.setName("TEST2");
     textUnitDTO.setTarget("The newest TEST2 translation for fr");
-    textUnitDTO.setComment("Comment2");
 
     textUnitDTO2 = new TextUnitDTO();
     textUnitDTO2.setRepositoryName(tmTestData.repository.getName());
@@ -568,7 +560,6 @@ public class TextUnitBatchImporterServiceTest extends ServiceTestBase {
     textUnitDTO2.setAssetPath(tmTestData.asset.getPath());
     textUnitDTO2.setName("TEST3");
     textUnitDTO2.setTarget("The newest TEST3 translation for fr");
-    textUnitDTO2.setComment("Comment3");
 
     textUnitDTOsForImport = Arrays.asList(textUnitDTO, textUnitDTO2);
 
