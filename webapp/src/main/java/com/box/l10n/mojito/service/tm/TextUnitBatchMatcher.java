@@ -70,6 +70,9 @@ public class TextUnitBatchMatcher {
 
   public Function<TextUnitForBatchMatcher, List<TextUnitDTO>> matchByNameAndPluralPrefix(
       List<TextUnitDTO> existingTextUnits, String pluralSeparator) {
+    Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>>
+        matchByPluralPrefixCommentAndUsed =
+            createMatchByPluralPrefixCommentAndUsed(existingTextUnits, pluralSeparator);
     Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByPluralPrefixAndUsed =
         createMatchByPluralPrefixAndUsed(existingTextUnits, pluralSeparator);
     Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByNameSourceAndUsed =
@@ -77,6 +80,9 @@ public class TextUnitBatchMatcher {
             .andThen(Optionals::optionalToOptionalList);
     Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByNameAndUsed =
         createMatchByNameAndUsed(existingTextUnits).andThen(Optionals::optionalToOptionalList);
+    Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>>
+        matchByPluralPrefixCommentAndUnused =
+            createMatchByPluralPrefixCommentAndUnused(existingTextUnits, pluralSeparator);
     Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByPluralPrefixAndUnused =
         createMatchByPluralPrefixAndUnused(existingTextUnits, pluralSeparator);
     Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByNameSourceAndUnused =
@@ -89,9 +95,11 @@ public class TextUnitBatchMatcher {
     return textUnitForBatchMatcher -> {
       ImmutableList<TextUnitDTO> textUnitDTOs =
           Stream.of(
+                  matchByPluralPrefixCommentAndUsed,
                   matchByPluralPrefixAndUsed,
                   matchByNameSourceAndUsed,
                   matchByNameAndUsed,
+                  matchByPluralPrefixCommentAndUnused,
                   matchByPluralPrefixAndUnused,
                   matchByNameSourceAndUnused,
                   matchByNameAndUnused)
@@ -252,22 +260,14 @@ public class TextUnitBatchMatcher {
                 + "import. Duplicated names can easily happen when working with branches (while without it should not)",
             textUnitForBatchImport.getName());
       }
+
       return textUnitDTOS.stream().filter(byNameAndUsedNotAlreadyMatched).findFirst();
     };
   }
 
-  /**
-   * Match used text units by plural prefix and comment.
-   *
-   * <p>Plural text units are grouped by prefix and comment. The plural separator is assumed to be:
-   * "_" at the very end of the string
-   *
-   * @param existingTextUnits
-   * @param pluralSeparator
-   * @return
-   */
-  Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> createMatchByPluralPrefixAndUsed(
-      List<TextUnitDTO> existingTextUnits, String pluralSeparator) {
+  Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>>
+      createMatchByPluralPrefixCommentAndUsed(
+          List<TextUnitDTO> existingTextUnits, String pluralSeparator) {
 
     logger.debug("Create the map to match by prefix, comment and used text units");
     Map<String, List<TextUnitDTO>> pluralPrefixToUsedTextUnitDTOsMap =
@@ -311,8 +311,54 @@ public class TextUnitBatchMatcher {
     };
   }
 
-  Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> createMatchByPluralPrefixAndUnused(
+  /**
+   * Match used text units by plural prefix.
+   *
+   * <p>Plural text units are grouped by prefix. The plural separator is assumed to be: "_" at the
+   * very end of the string
+   *
+   * @param existingTextUnits
+   * @param pluralSeparator
+   * @return
+   */
+  Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> createMatchByPluralPrefixAndUsed(
       List<TextUnitDTO> existingTextUnits, String pluralSeparator) {
+
+    logger.debug("Create the map to match by prefix and used text units");
+    Map<String, List<TextUnitDTO>> pluralPrefixToUsedTextUnitDTOsMap =
+        existingTextUnits.stream()
+            .filter(TextUnitDTO::isUsed)
+            .filter(t -> t.getPluralForm() != null)
+            .collect(
+                groupingBy(
+                    o -> pluralNameParser.getPrefix(o.getPluralFormOther(), pluralSeparator)));
+
+    Predicate<TextUnitDTO> byPluralPreifxNotAlreadyMatched =
+        notAlreadyMatched("byPluralPrefixAndUsed");
+
+    logger.debug("createMatchByPluralPrefixAndUsed");
+    return (textUnitForBatchMatcher) -> {
+      Optional<List<TextUnitDTO>> optionalTextUnitDTOS = Optional.empty();
+      if (textUnitForBatchMatcher.isNamePluralPrefix()) {
+        List<TextUnitDTO> textUnitDTOS =
+            ofNullable(pluralPrefixToUsedTextUnitDTOsMap.get(textUnitForBatchMatcher.getName()))
+                .orElseGet(ArrayList::new);
+        List<TextUnitDTO> filtered =
+            textUnitDTOS.stream()
+                .filter(byPluralPreifxNotAlreadyMatched)
+                .collect(Collectors.toList());
+
+        if (!filtered.isEmpty()) {
+          optionalTextUnitDTOS = Optional.of(filtered);
+        }
+      }
+      return optionalTextUnitDTOS;
+    };
+  }
+
+  Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>>
+      createMatchByPluralPrefixCommentAndUnused(
+          List<TextUnitDTO> existingTextUnits, String pluralSeparator) {
 
     logger.debug("Create the map to match by prefix, comment and not used text units");
     Map<String, List<TextUnitDTO>> pluralPrefixToUsedTextUnitDTOsMap =
@@ -330,7 +376,7 @@ public class TextUnitBatchMatcher {
     Predicate<TextUnitDTO> byPluralPreifxNotAlreadyMatched =
         notAlreadyMatched("byPluralPrefixAndUnused");
 
-    logger.debug("createMatchByPluralPrefixAndUnused");
+    logger.debug("createMatchByPluralPrefixCommentAndUnused");
     return (textUnitForBatchMatcher) -> {
       Optional<List<TextUnitDTO>> optionalTextUnitDTOS = Optional.empty();
       if (textUnitForBatchMatcher.isNamePluralPrefix()) {
@@ -355,6 +401,45 @@ public class TextUnitBatchMatcher {
               "Unique match by name: {}, comment: {} and unused",
               textUnitForBatchMatcher.getName(),
               textUnitForBatchMatcher.getComment());
+          optionalTextUnitDTOS = Optional.of(filtered);
+        }
+      }
+
+      return optionalTextUnitDTOS;
+    };
+  }
+
+  Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> createMatchByPluralPrefixAndUnused(
+      List<TextUnitDTO> existingTextUnits, String pluralSeparator) {
+
+    logger.debug("Create the map to match by prefix and not used text units");
+    Map<String, List<TextUnitDTO>> pluralPrefixToUsedTextUnitDTOsMap =
+        existingTextUnits.stream()
+            .filter(not(TextUnitDTO::isUsed))
+            .filter(t -> t.getPluralForm() != null)
+            .collect(
+                groupingBy(
+                    o -> pluralNameParser.getPrefix(o.getPluralFormOther(), pluralSeparator)));
+
+    Predicate<TextUnitDTO> byPluralPreifxNotAlreadyMatched =
+        notAlreadyMatched("byPluralPrefixAndUnused");
+
+    logger.debug("createMatchByPluralPrefixAndUnused");
+    return (textUnitForBatchMatcher) -> {
+      Optional<List<TextUnitDTO>> optionalTextUnitDTOS = Optional.empty();
+      if (textUnitForBatchMatcher.isNamePluralPrefix()) {
+        List<TextUnitDTO> textUnitDTOS =
+            ofNullable(pluralPrefixToUsedTextUnitDTOsMap.get(textUnitForBatchMatcher.getName()))
+                .orElseGet(ArrayList::new);
+        List<TextUnitDTO> filtered =
+            textUnitDTOS.stream()
+                .filter(byPluralPreifxNotAlreadyMatched)
+                .collect(Collectors.toList());
+
+        if (filtered.size() == 0 || filtered.size() > 6) {
+          logger.debug("No unique match in unused, skip");
+        } else {
+          logger.debug("Unique match by name: {} and unused", textUnitForBatchMatcher.getName());
           optionalTextUnitDTOS = Optional.of(filtered);
         }
       }
@@ -472,12 +557,14 @@ public class TextUnitBatchMatcher {
               .orElseGet(ArrayList::new);
 
       Optional<TextUnitDTO> textUnitDTO = Optional.empty();
+
       if (candidates.size() == 1) {
         logger.debug("Unique match by name: {} and unused", textUnitForBatchMatcher.getName());
         textUnitDTO = Optional.of(candidates.get(0));
       } else if (candidates.size() > 1) {
         logger.debug("No unique match in unused, skip");
       }
+
       return textUnitDTO;
     };
   }

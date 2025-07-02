@@ -291,7 +291,6 @@ public class ThirdPartyServiceTest extends ServiceTestBase {
             + "    <string name=\"hello\">Hello</string>\n"
             + "    <!--comment 2-->\n"
             + "    <string name=\"bye\">Bye</string>\n"
-            + "    <!--comment 3-->\n"
             + "    <plurals name=\"plural_things\">\n"
             + "        <item quantity=\"one\">One thing</item>\n"
             + "        <item quantity=\"other\">Multiple things</item>\n"
@@ -355,8 +354,7 @@ public class ThirdPartyServiceTest extends ServiceTestBase {
             .collect(toList());
 
     assertThat(thirdPartyTextUnits)
-        .as(
-            "both used and unused text units with the same name but different comments must be mapped to their corresponding third party units")
+        .as("both the used and unsed text units with the same name must be mapped")
         .extracting(
             t -> t.getAsset().getId(),
             com.box.l10n.mojito.entity.ThirdPartyTextUnit::getThirdPartyId,

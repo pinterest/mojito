@@ -87,18 +87,19 @@ public class TextUnitBatchMatcherTest {
   }
 
   @Test
-  public void testMatchByPluralPrefixNoPlural_IncludesComment() {
+  public void testCreateMatchByPluralPrefixCommentAndUsed_DoesNotMatchNoPlural() {
     List<TextUnitDTO> existingTextUnitDTOs =
         Arrays.asList(
             createTextUnitDTO("name-0", "comment-0", "First string"),
             createTextUnitDTO("name-1", "comment-1", "Second string"));
 
-    Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByPluralPrefix =
-        textUnitBatchMatcher.createMatchByPluralPrefixAndUsed(
+    Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByPluralPrefixAndComment =
+        textUnitBatchMatcher.createMatchByPluralPrefixCommentAndUsed(
             existingTextUnitDTOs, PLURAL_SEPARATOR);
 
     Optional<List<TextUnitDTO>> result =
-        matchByPluralPrefix.apply(createPluralTextUnitForBatchMatcher("name-0", "comment-0"));
+        matchByPluralPrefixAndComment.apply(
+            createPluralTextUnitForBatchMatcher("name-0", "comment-0"));
     assertTrue(result.isEmpty());
   }
 
@@ -143,7 +144,7 @@ public class TextUnitBatchMatcherTest {
   }
 
   @Test
-  public void testMatchByPluralPrefix_matchesComment() {
+  public void testCreateMatchByPluralPrefixCommentAndUsed() {
     List<TextUnitDTO> existingTextUnitDTOs =
         Arrays.asList(
             createTextUnitDTO("name-0"),
@@ -157,18 +158,22 @@ public class TextUnitBatchMatcherTest {
             createPluralTextUnitDTO("name-3", "many", "comment-3"),
             createPluralTextUnitDTO("name-3", "other", "comment-3"));
 
-    Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByPluralPrefix =
-        textUnitBatchMatcher.createMatchByPluralPrefixAndUsed(
+    Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByPluralPrefixAndComment =
+        textUnitBatchMatcher.createMatchByPluralPrefixCommentAndUsed(
             existingTextUnitDTOs, PLURAL_SEPARATOR);
 
     List<TextUnitDTO> name2 =
-        matchByPluralPrefix.apply(createPluralTextUnitForBatchMatcher("name-2", "comment-2")).get();
+        matchByPluralPrefixAndComment
+            .apply(createPluralTextUnitForBatchMatcher("name-2", "comment-2"))
+            .get();
     assertEquals(2, name2.size());
     assertEquals("name-2_other", name2.get(0).getName());
     assertEquals("name-2_one", name2.get(1).getName());
 
     List<TextUnitDTO> name3 =
-        matchByPluralPrefix.apply(createPluralTextUnitForBatchMatcher("name-3", "comment-3")).get();
+        matchByPluralPrefixAndComment
+            .apply(createPluralTextUnitForBatchMatcher("name-3", "comment-3"))
+            .get();
     assertEquals(6, name3.size());
     assertEquals("name-3_zero", name3.get(0).getName());
     assertEquals("name-3_one", name3.get(1).getName());
@@ -178,12 +183,13 @@ public class TextUnitBatchMatcherTest {
     assertEquals("name-3_other", name3.get(5).getName());
 
     Optional<List<TextUnitDTO>> name3SecondTime =
-        matchByPluralPrefix.apply(createPluralTextUnitForBatchMatcher("name-3", "comment-3"));
+        matchByPluralPrefixAndComment.apply(
+            createPluralTextUnitForBatchMatcher("name-3", "comment-3"));
     assertFalse(name3SecondTime.isPresent());
   }
 
   @Test
-  public void testMatchByPluralPrefix_DoesNotMatchComment() {
+  public void testCreateMatchByPluralPrefixCommentAndUsed_DoesNotMatch() {
     List<TextUnitDTO> existingTextUnitDTOs =
         Arrays.asList(
             createTextUnitDTO("name-0"),
@@ -197,16 +203,18 @@ public class TextUnitBatchMatcherTest {
             createPluralTextUnitDTO("name-3", "many", "comment-3"),
             createPluralTextUnitDTO("name-3", "other", "comment-3"));
 
-    Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByPluralPrefix =
-        textUnitBatchMatcher.createMatchByPluralPrefixAndUsed(
+    Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByPluralPrefixAndComment =
+        textUnitBatchMatcher.createMatchByPluralPrefixCommentAndUsed(
             existingTextUnitDTOs, PLURAL_SEPARATOR);
 
     Optional<List<TextUnitDTO>> name2 =
-        matchByPluralPrefix.apply(createPluralTextUnitForBatchMatcher("name-2", "comment-4"));
+        matchByPluralPrefixAndComment.apply(
+            createPluralTextUnitForBatchMatcher("name-2", "comment-4"));
     assertTrue(name2.isEmpty());
 
     Optional<List<TextUnitDTO>> name3 =
-        matchByPluralPrefix.apply(createPluralTextUnitForBatchMatcher("name-3", "comment-5"));
+        matchByPluralPrefixAndComment.apply(
+            createPluralTextUnitForBatchMatcher("name-3", "comment-5"));
     assertTrue(name3.isEmpty());
   }
 
@@ -251,7 +259,7 @@ public class TextUnitBatchMatcherTest {
   }
 
   @Test
-  public void testMatchByPluralPrefixUnused_matchesComment() {
+  public void testCreateMatchByPluralPrefixCommentAndUnused() {
     List<TextUnitDTO> existingTextUnitDTOs =
         Arrays.asList(
             createTextUnitDTO("name-0"),
@@ -265,18 +273,22 @@ public class TextUnitBatchMatcherTest {
             createUnusedPluralTextUnitDTO("name-3", "many", "comment-3"),
             createUnusedPluralTextUnitDTO("name-3", "other", "comment-3"));
 
-    Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByPluralPrefix =
-        textUnitBatchMatcher.createMatchByPluralPrefixAndUnused(
+    Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByPluralPrefixAndComment =
+        textUnitBatchMatcher.createMatchByPluralPrefixCommentAndUnused(
             existingTextUnitDTOs, PLURAL_SEPARATOR);
 
     List<TextUnitDTO> name2 =
-        matchByPluralPrefix.apply(createPluralTextUnitForBatchMatcher("name-2", "comment-2")).get();
+        matchByPluralPrefixAndComment
+            .apply(createPluralTextUnitForBatchMatcher("name-2", "comment-2"))
+            .get();
     assertEquals(2, name2.size());
     assertEquals("name-2_other", name2.get(0).getName());
     assertEquals("name-2_one", name2.get(1).getName());
 
     List<TextUnitDTO> name3 =
-        matchByPluralPrefix.apply(createPluralTextUnitForBatchMatcher("name-3", "comment-3")).get();
+        matchByPluralPrefixAndComment
+            .apply(createPluralTextUnitForBatchMatcher("name-3", "comment-3"))
+            .get();
     assertEquals(6, name3.size());
     assertEquals("name-3_zero", name3.get(0).getName());
     assertEquals("name-3_one", name3.get(1).getName());
@@ -286,12 +298,13 @@ public class TextUnitBatchMatcherTest {
     assertEquals("name-3_other", name3.get(5).getName());
 
     Optional<List<TextUnitDTO>> name3SecondTime =
-        matchByPluralPrefix.apply(createPluralTextUnitForBatchMatcher("name-3", "comment-3"));
+        matchByPluralPrefixAndComment.apply(
+            createPluralTextUnitForBatchMatcher("name-3", "comment-3"));
     assertFalse(name3SecondTime.isPresent());
   }
 
   @Test
-  public void testMatchByPluralPrefixUnused_DoesNotMatchComment() {
+  public void testCreateMatchByPluralPrefixCommentAndUnused_DoesNotMatch() {
     List<TextUnitDTO> existingTextUnitDTOs =
         Arrays.asList(
             createTextUnitDTO("name-0"),
@@ -305,16 +318,18 @@ public class TextUnitBatchMatcherTest {
             createUnusedPluralTextUnitDTO("name-3", "many", "comment-3"),
             createUnusedPluralTextUnitDTO("name-3", "other", "comment-3"));
 
-    Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByPluralPrefix =
-        textUnitBatchMatcher.createMatchByPluralPrefixAndUnused(
+    Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByPluralPrefixAndComment =
+        textUnitBatchMatcher.createMatchByPluralPrefixCommentAndUnused(
             existingTextUnitDTOs, PLURAL_SEPARATOR);
 
     Optional<List<TextUnitDTO>> name2 =
-        matchByPluralPrefix.apply(createPluralTextUnitForBatchMatcher("name-2", "comment-4"));
+        matchByPluralPrefixAndComment.apply(
+            createPluralTextUnitForBatchMatcher("name-2", "comment-4"));
     assertTrue(name2.isEmpty());
 
     Optional<List<TextUnitDTO>> name3 =
-        matchByPluralPrefix.apply(createPluralTextUnitForBatchMatcher("name-3", "comment-5"));
+        matchByPluralPrefixAndComment.apply(
+            createPluralTextUnitForBatchMatcher("name-3", "comment-5"));
     assertTrue(name3.isEmpty());
   }
 
@@ -348,93 +363,97 @@ public class TextUnitBatchMatcherTest {
   }
 
   @Test
-  public void testCreateMatchByNameAndUsed_MatchesBySource() {
+  public void testCreateMatchByNameSourceAndUsed() {
     List<TextUnitDTO> existingTextUnitDTOs =
         Arrays.asList(
             createTextUnitDTO("name-1", "First source"),
             createTextUnitDTO("name-2", "Second source"));
 
-    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameAndUsed =
-        textUnitBatchMatcher.createMatchByNameAndUsed(existingTextUnitDTOs, true);
+    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUsed =
+        textUnitBatchMatcher.createMatchByNameSourceAndUsed(existingTextUnitDTOs);
 
     Optional<TextUnitDTO> textUnit =
-        matchByNameAndUsed.apply(createTextUnitForBatchMatcher("name-2", "Second source"));
+        matchByNameSourceAndUsed.apply(createTextUnitForBatchMatcher("name-2", "Second source"));
 
     assertTrue(textUnit.isPresent());
     assertEquals("name-2", textUnit.get().getName());
   }
 
   @Test
-  public void testCreateMatchByNameAndUsed_MatchesByComment() {
-    List<TextUnitDTO> existingTextUnitDTOs =
-        Arrays.asList(
-            createTextUnitDTOWithComment("name-1", "comment-1"),
-            createTextUnitDTOWithComment("name-2", "comment-2"));
-
-    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameAndUsed =
-        textUnitBatchMatcher.createMatchByNameAndUsed(existingTextUnitDTOs);
-
-    Optional<TextUnitDTO> textUnit =
-        matchByNameAndUsed.apply(createTextUnitForBatchMatcherWithComment("name-2", "comment-2"));
-
-    assertTrue(textUnit.isPresent());
-    assertEquals("name-2", textUnit.get().getName());
-  }
-
-  @Test
-  public void testCreateMatchByNameAndUsed_MatchesBySourceWithLeadingAndTrailingSpaces() {
+  public void testCreateMatchByNameSourceAndUsed_RemovesLeadingAndTrailingWhitespaces() {
     List<TextUnitDTO> existingTextUnitDTOs =
         Arrays.asList(
             createTextUnitDTO("name-1", "First source"),
             createTextUnitDTO("name-2", " Second source "));
 
-    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameAndUsed =
-        textUnitBatchMatcher.createMatchByNameAndUsed(existingTextUnitDTOs, true);
+    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUsed =
+        textUnitBatchMatcher.createMatchByNameSourceAndUsed(existingTextUnitDTOs);
 
     Optional<TextUnitDTO> textUnit =
-        matchByNameAndUsed.apply(createTextUnitForBatchMatcher("name-2", "Second source"));
+        matchByNameSourceAndUsed.apply(createTextUnitForBatchMatcher("name-2", "Second source"));
 
     assertTrue(textUnit.isPresent());
     assertEquals("name-2", textUnit.get().getName());
   }
 
   @Test
-  public void testCreateMatchByNameAndUsed_DoesNotMatchBySource() {
+  public void testCreateMatchByNameSourceAndUsed_DoesNotMatch() {
     List<TextUnitDTO> existingTextUnitDTOs =
         Arrays.asList(
             createTextUnitDTO("name-1", "First source"),
             createTextUnitDTO("name-2", "Second source"));
 
-    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameAndUsed =
-        textUnitBatchMatcher.createMatchByNameAndUsed(existingTextUnitDTOs, true);
+    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUsed =
+        textUnitBatchMatcher.createMatchByNameSourceAndUsed(existingTextUnitDTOs);
 
     Optional<TextUnitDTO> textUnit =
-        matchByNameAndUsed.apply(createTextUnitForBatchMatcher("name-1", "Second source"));
+        matchByNameSourceAndUsed.apply(createTextUnitForBatchMatcher("name-1", "Second source"));
 
     assertTrue(textUnit.isEmpty());
 
-    textUnit = matchByNameAndUsed.apply(createTextUnitForBatchMatcher("name-2", "First source"));
+    textUnit =
+        matchByNameSourceAndUsed.apply(createTextUnitForBatchMatcher("name-2", "First source"));
 
     assertTrue(textUnit.isEmpty());
   }
 
   @Test
-  public void testCreateMatchByNameAndUsed_DoesNotMatchByComment() {
+  public void testCreateMatchByNameCommentAndUsed() {
     List<TextUnitDTO> existingTextUnitDTOs =
         Arrays.asList(
             createTextUnitDTOWithComment("name-1", "comment-1"),
             createTextUnitDTOWithComment("name-2", "comment-2"));
 
-    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameAndUsed =
-        textUnitBatchMatcher.createMatchByNameAndUsed(existingTextUnitDTOs);
+    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameCommentAndUsed =
+        textUnitBatchMatcher.createMatchByNameCommentAndUsed(existingTextUnitDTOs);
 
     Optional<TextUnitDTO> textUnit =
-        matchByNameAndUsed.apply(createTextUnitForBatchMatcherWithComment("name-1", "comment-2"));
+        matchByNameCommentAndUsed.apply(
+            createTextUnitForBatchMatcherWithComment("name-2", "comment-2"));
+
+    assertTrue(textUnit.isPresent());
+    assertEquals("name-2", textUnit.get().getName());
+  }
+
+  @Test
+  public void testCreateMatchByNameCommentAndUsed_DoesNotMatch() {
+    List<TextUnitDTO> existingTextUnitDTOs =
+        Arrays.asList(
+            createTextUnitDTOWithComment("name-1", "comment-1"),
+            createTextUnitDTOWithComment("name-2", "comment-2"));
+
+    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameCommentAndUsed =
+        textUnitBatchMatcher.createMatchByNameCommentAndUsed(existingTextUnitDTOs);
+
+    Optional<TextUnitDTO> textUnit =
+        matchByNameCommentAndUsed.apply(
+            createTextUnitForBatchMatcherWithComment("name-1", "comment-2"));
 
     assertTrue(textUnit.isEmpty());
 
     textUnit =
-        matchByNameAndUsed.apply(createTextUnitForBatchMatcherWithComment("name-2", "comment-1"));
+        matchByNameCommentAndUsed.apply(
+            createTextUnitForBatchMatcherWithComment("name-2", "comment-1"));
 
     assertTrue(textUnit.isEmpty());
   }
@@ -469,84 +488,86 @@ public class TextUnitBatchMatcherTest {
   }
 
   @Test
-  public void testCreateMatchByNameAndUnused_MatchesBySource() {
+  public void testCreateMatchByNameSourceAndUnused() {
     List<TextUnitDTO> existingTextUnitDTOs =
         Arrays.asList(
             createUnusedTextUnitDTO("name-1", "First string"),
             createUnusedTextUnitDTO("name-2", "Second string"));
 
-    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameAndUnused =
-        textUnitBatchMatcher.createMatchByNameAndUnused(existingTextUnitDTOs, true);
+    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUnused =
+        textUnitBatchMatcher.createMatchByNameSourceAndUnused(existingTextUnitDTOs);
 
     Optional<TextUnitDTO> textUnit =
-        matchByNameAndUnused.apply(createTextUnitForBatchMatcher("name-2", "Second string"));
+        matchByNameSourceAndUnused.apply(createTextUnitForBatchMatcher("name-2", "Second string"));
 
     assertTrue(textUnit.isPresent());
     assertEquals("name-2", textUnit.get().getName());
   }
 
   @Test
-  public void testCreateMatchByNameAndUnused_MatchesByComment() {
-    List<TextUnitDTO> existingTextUnitDTOs =
-        Arrays.asList(
-            createUnusedTextUnitDTOWithComment("name-1", "comment-1"),
-            createUnusedTextUnitDTOWithComment("name-2", "comment-2"));
-
-    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameAndUnused =
-        textUnitBatchMatcher.createMatchByNameAndUnused(existingTextUnitDTOs);
-
-    Optional<TextUnitDTO> textUnit =
-        matchByNameAndUnused.apply(createTextUnitForBatchMatcherWithComment("name-2", "comment-2"));
-
-    assertTrue(textUnit.isPresent());
-    assertEquals("name-2", textUnit.get().getName());
-  }
-
-  @Test
-  public void testCreateMatchByNameAndUnused_MatchesBySourceWithLeadingAndTrailingSpaces() {
+  public void testCreateMatchByNameSourceAndUnused_RemovesLeadingAndTrailingWhitespaces() {
     List<TextUnitDTO> existingTextUnitDTOs =
         Arrays.asList(
             createUnusedTextUnitDTO("name-1", "First source"),
             createUnusedTextUnitDTO("name-2", " Second source "));
 
-    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameAndUnused =
-        textUnitBatchMatcher.createMatchByNameAndUnused(existingTextUnitDTOs, true);
+    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUnused =
+        textUnitBatchMatcher.createMatchByNameSourceAndUnused(existingTextUnitDTOs);
 
     Optional<TextUnitDTO> textUnit =
-        matchByNameAndUnused.apply(createTextUnitForBatchMatcher("name-2", "Second source"));
+        matchByNameSourceAndUnused.apply(createTextUnitForBatchMatcher("name-2", "Second source"));
 
     assertTrue(textUnit.isPresent());
     assertEquals("name-2", textUnit.get().getName());
   }
 
   @Test
-  public void testCreateMatchByNameAndUnused_DoesNotMatchBySource() {
+  public void testCreateMatchByNameSourceAndUnused_DoesNotMatch() {
     List<TextUnitDTO> existingTextUnitDTOs =
         Arrays.asList(
             createUnusedTextUnitDTO("name-1", "First string"),
             createUnusedTextUnitDTO("name-2", "Second string"));
 
-    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameAndUnused =
-        textUnitBatchMatcher.createMatchByNameAndUnused(existingTextUnitDTOs, true);
+    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUnused =
+        textUnitBatchMatcher.createMatchByNameSourceAndUnused(existingTextUnitDTOs);
 
     Optional<TextUnitDTO> textUnit =
-        matchByNameAndUnused.apply(createTextUnitForBatchMatcher("name-2", "First string"));
+        matchByNameSourceAndUnused.apply(createTextUnitForBatchMatcher("name-2", "First string"));
 
     assertTrue(textUnit.isEmpty());
   }
 
   @Test
-  public void testCreateMatchByNameAndUnused_DoesNotMatchByComment() {
+  public void testCreateMatchByNameCommentAndUnused() {
     List<TextUnitDTO> existingTextUnitDTOs =
         Arrays.asList(
             createUnusedTextUnitDTOWithComment("name-1", "comment-1"),
             createUnusedTextUnitDTOWithComment("name-2", "comment-2"));
 
-    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameAndUnused =
-        textUnitBatchMatcher.createMatchByNameAndUnused(existingTextUnitDTOs);
+    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameCommentAndUnused =
+        textUnitBatchMatcher.createMatchByNameCommentAndUnused(existingTextUnitDTOs);
 
     Optional<TextUnitDTO> textUnit =
-        matchByNameAndUnused.apply(createTextUnitForBatchMatcherWithComment("name-2", "comment-1"));
+        matchByNameCommentAndUnused.apply(
+            createTextUnitForBatchMatcherWithComment("name-2", "comment-2"));
+
+    assertTrue(textUnit.isPresent());
+    assertEquals("name-2", textUnit.get().getName());
+  }
+
+  @Test
+  public void testCreateMatchByNameCommentAndUnused_DoesNotMatchByComment() {
+    List<TextUnitDTO> existingTextUnitDTOs =
+        Arrays.asList(
+            createUnusedTextUnitDTOWithComment("name-1", "comment-1"),
+            createUnusedTextUnitDTOWithComment("name-2", "comment-2"));
+
+    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameCommentAndUnused =
+        textUnitBatchMatcher.createMatchByNameCommentAndUnused(existingTextUnitDTOs);
+
+    Optional<TextUnitDTO> textUnit =
+        matchByNameCommentAndUnused.apply(
+            createTextUnitForBatchMatcherWithComment("name-2", "comment-1"));
 
     assertTrue(textUnit.isEmpty());
   }
