@@ -33,6 +33,7 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
     if (repositoryRepository.findByName("Demo1") == null) {
       repositoryService.createRepository("Demo1");
     }
+    scheduledJobRepository.deleteAll();
   }
 
   @Test
@@ -59,6 +60,42 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
 
     assertThrows(ScheduledJobException.class, scheduledJobDTO::deserializeProperties);
     assertThrows(ScheduledJobException.class, () -> scheduledJobService.createJob(scheduledJobDTO));
+  }
+
+  @Test
+  public void testCreateScheduledJobIfJobForRepositoryAlreadyExists()
+      throws SchedulerException, ClassNotFoundException {
+    ScheduledJobDTO scheduledJobDTO = new ScheduledJobDTO();
+    scheduledJobDTO.setRepository("Demo");
+    scheduledJobDTO.setCron("0 0/1 * * * ?");
+    scheduledJobDTO.setType(ScheduledJobType.THIRD_PARTY_SYNC);
+    scheduledJobDTO.setPropertiesString("{\"version\": 1}");
+
+    scheduledJobService.createJob(scheduledJobDTO);
+
+    ScheduledJobDTO scheduledJobDTOThirdPartyDuplicate = new ScheduledJobDTO();
+    scheduledJobDTOThirdPartyDuplicate.setRepository("Demo");
+    scheduledJobDTOThirdPartyDuplicate.setCron("0 0/1 * * * ?");
+    scheduledJobDTOThirdPartyDuplicate.setType(ScheduledJobType.THIRD_PARTY_SYNC);
+    scheduledJobDTOThirdPartyDuplicate.setPropertiesString("{\"version\": 1}");
+
+    // Throws an exception because Third Party Sync job for the repository already exists
+    assertThrows(
+        ScheduledJobException.class,
+        () -> scheduledJobService.createJob(scheduledJobDTOThirdPartyDuplicate));
+
+    ScheduledJobDTO scheduledJobDTOEvolve = new ScheduledJobDTO();
+    scheduledJobDTOEvolve.setRepository("Demo");
+    scheduledJobDTOEvolve.setCron("0 0/1 * * * ?");
+    scheduledJobDTOEvolve.setType(ScheduledJobType.EVOLVE_SYNC);
+    scheduledJobDTOEvolve.setPropertiesString("{\"version\": 1}");
+
+    // This should succeed because each repository can have an Evolve job and Third Party job
+    ScheduledJob scheduledJobEvolve = scheduledJobService.createJob(scheduledJobDTOEvolve);
+    Optional<ScheduledJob> createdJobEvolve =
+        scheduledJobRepository.findByUuid(scheduledJobEvolve.getUuid());
+    assertTrue(createdJobEvolve.isPresent());
+    assertEquals(ScheduledJob.class, createdJobEvolve.get().getClass());
   }
 
   @Test
@@ -103,6 +140,36 @@ public class ScheduledJobServiceTest extends ServiceTestBase {
     assertThrows(
         ScheduledJobException.class,
         () -> scheduledJobService.updateJob(createdJob.getUuid(), updatedJobDTO));
+  }
+
+  @Test
+  public void testUpdateJobRepository() throws SchedulerException, ClassNotFoundException {
+    ScheduledJobDTO scheduledJobDTODemo = new ScheduledJobDTO();
+    scheduledJobDTODemo.setRepository("Demo");
+    scheduledJobDTODemo.setCron("0 0/1 * * * ?");
+    scheduledJobDTODemo.setType(ScheduledJobType.THIRD_PARTY_SYNC);
+    scheduledJobDTODemo.setPropertiesString("{\"version\": 1}");
+    ScheduledJob createdJobDemo = scheduledJobService.createJob(scheduledJobDTODemo);
+
+    ScheduledJobDTO scheduledJobDTODemo1 = new ScheduledJobDTO();
+    scheduledJobDTODemo1.setRepository("Demo1");
+    scheduledJobDTODemo1.setCron("0 0/1 * * * ?");
+    scheduledJobDTODemo1.setType(ScheduledJobType.THIRD_PARTY_SYNC);
+    scheduledJobDTODemo1.setPropertiesString("{\"version\": 1}");
+    ScheduledJob createdJobDemo1 = scheduledJobService.createJob(scheduledJobDTODemo1);
+
+    ScheduledJobDTO updatedJobDTO = new ScheduledJobDTO();
+    updatedJobDTO.setRepository("Demo1");
+
+    // Throws exception because updating job repository but a job already exists for that repository
+    assertThrows(
+        ScheduledJobException.class,
+        () -> scheduledJobService.updateJob(createdJobDemo.getUuid(), updatedJobDTO));
+
+    updatedJobDTO.setRepository("Demo");
+    assertThrows(
+        ScheduledJobException.class,
+        () -> scheduledJobService.updateJob(createdJobDemo1.getUuid(), updatedJobDTO));
   }
 
   @Test
