@@ -89,8 +89,9 @@ public class ScheduledJobService {
             .orElseThrow(() -> new ScheduledJobException("Job not found with id: " + uuid));
 
     if (scheduledJobDTO.getRepository() != null) {
-      // Check if a job with the same type and repository already exists and is different from the
-      // current job that's being updated
+      // Check if a job with the same type and repository already exists and updated repository is
+      // different from the
+      // existing repository on the job
       if (scheduledJobRepository
               .findByRepositoryNameAndJobType(
                   scheduledJobDTO.getRepository(), updatedJob.getJobType().getEnum())
