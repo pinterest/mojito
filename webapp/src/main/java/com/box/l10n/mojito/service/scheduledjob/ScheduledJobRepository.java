@@ -16,7 +16,7 @@ public interface ScheduledJobRepository extends JpaRepository<ScheduledJob, Long
   Optional<ScheduledJob> findByUuid(String uuid);
 
   @Query(
-      "SELECT sj FROM ScheduledJob sj JOIN sj.repository r WHERE r.name = :repositoryName AND sj.jobType.jobType = :jobType")
+      "SELECT sj FROM ScheduledJob sj JOIN sj.repository r WHERE r.name = :repositoryName AND sj.jobType.jobType = :jobType AND sj.deleted = false")
   Optional<ScheduledJob> findByRepositoryNameAndJobType(
       String repositoryName, ScheduledJobType jobType);
 

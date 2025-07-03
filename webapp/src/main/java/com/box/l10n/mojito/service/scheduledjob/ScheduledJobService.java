@@ -123,6 +123,14 @@ public class ScheduledJobService {
 
   public void restoreJob(ScheduledJob scheduledJob)
       throws SchedulerException, ClassNotFoundException {
+    if (scheduledJobRepository
+        .findByRepositoryNameAndJobType(
+            scheduledJob.getRepository().getName(), scheduledJob.getJobType().getEnum())
+        .isPresent()) {
+      throw new ScheduledJobException(
+          "Scheduled job with repository already exists: "
+              + scheduledJob.getRepository().getName());
+    }
     scheduledJob.setDeleted(false);
     scheduledJobRepository.save(scheduledJob);
     scheduledJobManager.scheduleJob(scheduledJob);
