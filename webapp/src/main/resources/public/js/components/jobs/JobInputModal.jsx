@@ -48,7 +48,7 @@ const JobInputModal  = createReactClass({
             this.state.currentStep !== 0
         ) {
             this.setState({ currentStep: 0 });
-        }
+        } 
         if (prevProps.job !== this.props.job) {
             if (this.props.job) {
                 const jobProperties = this.props.job.properties || {};
@@ -69,6 +69,10 @@ const JobInputModal  = createReactClass({
             } else {
                 this.clearModal();
             }
+        }
+
+        if (prevProps.show && !this.props.show) {
+            this.clearModal();
         }
     },
 
@@ -125,7 +129,6 @@ const JobInputModal  = createReactClass({
         e.preventDefault();
         const scheduledJobInput = this.getScheduledJobInput();
         this.props.onSubmit(scheduledJobInput);
-        this.setState({ currentStep: 0 });
     },
 
     handleCloseModal() {
