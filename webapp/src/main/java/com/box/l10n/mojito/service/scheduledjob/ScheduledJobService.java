@@ -90,8 +90,7 @@ public class ScheduledJobService {
 
     if (scheduledJobDTO.getRepository() != null) {
       // Check if a job with the same type and repository already exists and updated repository is
-      // different from the
-      // existing repository on the job
+      // different from the existing repository on the job
       if (scheduledJobRepository
               .findByRepositoryNameAndJobType(
                   scheduledJobDTO.getRepository(), updatedJob.getJobType().getEnum())
