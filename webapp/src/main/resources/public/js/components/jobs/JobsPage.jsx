@@ -49,7 +49,7 @@ let JobsPage = createReactClass({
             }
         }
 
-        if (this.state.showJobErrorModal && state.error && state.error.response) {
+        if (!this.state.showJobErrorModal && state.error && state.error.response) {
             state.error.response.json().then(data => {
                 this.setState({ 
                     showJobErrorModal: true, 
