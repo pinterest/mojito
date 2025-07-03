@@ -43,7 +43,7 @@ public class ScheduledJobService {
       throw new ScheduledJobException("Valid repository must be provided to create a job");
     }
     if (scheduledJobRepository
-        .findByRepositoryName(
+        .findByRepositoryNameAndJobType(
             scheduledJobDTO.getRepository(), resolveJobTypeFromDTO(scheduledJobDTO).getEnum())
         .isPresent()) {
       throw new ScheduledJobException(
@@ -87,7 +87,7 @@ public class ScheduledJobService {
 
     if (scheduledJobDTO.getRepository() != null) {
       if (scheduledJobRepository
-              .findByRepositoryName(
+              .findByRepositoryNameAndJobType(
                   scheduledJobDTO.getRepository(), updatedJob.getJobType().getEnum())
               .isPresent()
           && !updatedJob.getRepository().getName().equals(scheduledJobDTO.getRepository())) {

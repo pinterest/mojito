@@ -17,7 +17,8 @@ public interface ScheduledJobRepository extends JpaRepository<ScheduledJob, Long
 
   @Query(
       "SELECT sj FROM ScheduledJob sj JOIN sj.repository r WHERE r.name = :repositoryName AND sj.jobType.jobType = :jobType")
-  Optional<ScheduledJob> findByRepositoryName(String repositoryName, ScheduledJobType jobType);
+  Optional<ScheduledJob> findByRepositoryNameAndJobType(
+      String repositoryName, ScheduledJobType jobType);
 
   default ScheduledJob findByJobKey(JobKey jobKey) {
     return findByIdAndJobType(jobKey.getName(), ScheduledJobType.valueOf(jobKey.getGroup()));
