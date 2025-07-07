@@ -1192,10 +1192,6 @@ label.current-pageNumber {
     gap: 8px;
 }
 
-.flex { 
-    display: flex;
-}
-
 .red {
     color: red;
 }
@@ -1235,4 +1231,28 @@ label.current-pageNumber {
 
 .locale-dropdown-item-disabled {
   cursor: not-allowed;
+}
+
+/**
+ * Repository Locale Row (custom for RepositoryLocaleNode)
+ */
+.repo-locale-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.repo-locale-checkbox {
+}
+
+.repo-locale-dropdown {
+  min-width: 220px;
+  max-width: 300px;
+}
+
+.repo-locale-add-parent {
+}
+
+.repo-locale-remove {
 }

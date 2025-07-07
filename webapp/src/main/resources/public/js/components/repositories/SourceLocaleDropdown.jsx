@@ -77,7 +77,7 @@ class SourceLocaleDropdown extends React.Component {
             this.setState(prevState => ({
                 open: false,
                 searchTerm: prevState.searchTerm === "" && this.props.selectedLocale.bcp47Tag
-                    ? Locales.getDisplayName(this.props.selectedLocale.bcp47Tag)
+                    ? `${Locales.getDisplayName(this.props.selectedLocale.bcp47Tag)} ${this.props.selectedLocale.bcp47Tag}`
                     : prevState.searchTerm
             }));
         }

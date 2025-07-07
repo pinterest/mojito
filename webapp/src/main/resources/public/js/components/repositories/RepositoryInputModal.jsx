@@ -89,12 +89,14 @@ const RepositoryInputModal  = createReactClass({
 
     handleSubmit(e) {
         e.preventDefault();
+        console.log(this.state.repositoryLocales);
         this.props.onSubmit({
             name: this.state.name,
             description: this.state.description,
             sourceLocale: this.state.sourceLocale,
             checkSLA: this.state.checkSLA,
-            assetIntegrityCheckers: this.state.assetIntegrityCheckers
+            assetIntegrityCheckers: this.state.assetIntegrityCheckers,
+            repositoryLocales: this.state.repositoryLocales
         });
     },
 
