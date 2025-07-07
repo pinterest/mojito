@@ -1,0 +1,56 @@
+import React from "react";
+import LabeledTextInput from "../jobs/LabeledTextInput";
+import SourceLocaleDropdown from "./SourceLocaleDropdown";
+
+const RepositoryGeneralInput = ({
+    name,
+    description,
+    sourceLocale,
+    checkSLA,
+    assetIntegrityCheckers,
+    onTextInputChange,
+    onSourceLocaleChange,
+    onCheckSLAChange
+}) => (
+    <div className="form-group">
+        <LabeledTextInput
+            label="Repository Name*"
+            placeholder="Enter repository name"
+            inputName="name"
+            value={name}
+            onChange={onTextInputChange}
+        />
+        <LabeledTextInput
+            label="Description"
+            placeholder="Enter repository description"
+            inputName="description"
+            value={description}
+            onChange={onTextInputChange}
+        />
+        <div className="mbm">
+            <label>Source Locale*</label>
+            <SourceLocaleDropdown 
+                selectedLocale={sourceLocale} 
+                onSelect={onSourceLocaleChange}
+            />
+        </div>
+        <LabeledTextInput
+            label="Asset Integrity Checkers"
+            placeholder="Enter asset integrity checkers"
+            inputName="assetIntegrityCheckers"
+            value={assetIntegrityCheckers}
+            onChange={onTextInputChange}
+        />
+        <div className="form-check-control">
+            <label className="form-check-label mrs">Check SLA</label>
+            <input
+                type="checkbox"
+                className="form-check-input"
+                checked={checkSLA}
+                onChange={onCheckSLAChange}
+            />
+        </div>
+    </div>
+);
+
+export default RepositoryGeneralInput;
