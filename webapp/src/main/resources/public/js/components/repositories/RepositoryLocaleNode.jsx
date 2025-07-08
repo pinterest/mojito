@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import createReactClass from 'create-react-class';
-import EMPTY_LOCALE from './RepositoryLocalesInput';
+import { EMPTY_LOCALE } from './RepositoryLocalesInput';
 import{ OverlayTrigger, Tooltip } from 'react-bootstrap';
 import SourceLocaleDropdown from "./SourceLocaleDropdown";
 
@@ -53,18 +53,23 @@ const RepositoryLocaleNode = createReactClass({
 
     render() {
         const { localeObj, isRoot } = this.props;
+        const hasParent = !!localeObj.parentLocale;
         return (
             <div>
                 <div className="repo-locale-row">
+                    {!isRoot && (
+                        <span className="mlm">→</span>
+                    )}
                     <OverlayTrigger
                         placement="top"
                         overlay={<Tooltip id="ft-tooltip">To Be Fully Translated</Tooltip>}
                     >
                         <input
                             type="checkbox"
-                            checked={!!localeObj.toBeFullyTranslated}
+                            checked={hasParent ? false : !!localeObj.toBeFullyTranslated}
                             onChange={this.handleToBeFullyTranslatedChange}
                             className="repo-locale-checkbox"
+                            disabled={hasParent}
                         />
                     </OverlayTrigger>
                     <SourceLocaleDropdown

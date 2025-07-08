@@ -4,13 +4,14 @@ import PropTypes from "prop-types";
 import { Button, Modal, Form } from "react-bootstrap";
 import RepositoryGeneralInput from "./RepositoryGeneralInput";
 import RepositoryLocalesInput from "./RepositoryLocalesInput";
+import { deserializeAssetIntegrityCheckers, validateAssetIntegrityCheckers } from "../../utils/RepositoryInputHelper";
 
 const DEFAULT_STATE = {
     name: "",
     description: "",
     sourceLocale: {},
     checkSLA: false,
-    assetIntegrityCheckers: [],
+    assetIntegrityCheckers: "",
     repositoryLocales: [],
     currentStep: 0,
 }
@@ -46,7 +47,7 @@ const RepositoryInputModal  = createReactClass({
 
     isStepValid(step) {
         if (step === 0) {
-            return this.state.name && this.state.sourceLocale
+            return this.state.name && this.state.sourceLocale && validateAssetIntegrityCheckers(this.state.assetIntegrityCheckers);
         }
         if (step === 1) {
             return this.state.repositoryLocales.length > 0;
@@ -89,13 +90,12 @@ const RepositoryInputModal  = createReactClass({
 
     handleSubmit(e) {
         e.preventDefault();
-        console.log(this.state.repositoryLocales);
         this.props.onSubmit({
             name: this.state.name,
             description: this.state.description,
             sourceLocale: this.state.sourceLocale,
             checkSLA: this.state.checkSLA,
-            assetIntegrityCheckers: this.state.assetIntegrityCheckers,
+            assetIntegrityCheckers: deserializeAssetIntegrityCheckers(this.state.assetIntegrityCheckers),
             repositoryLocales: this.state.repositoryLocales
         });
     },
@@ -111,6 +111,7 @@ const RepositoryInputModal  = createReactClass({
                         sourceLocale={this.state.sourceLocale}
                         checkSLA={this.state.checkSLA}
                         assetIntegrityCheckers={this.state.assetIntegrityCheckers}
+                        validAssetIntegrityCheckers={validateAssetIntegrityCheckers(this.state.assetIntegrityCheckers)}
                         onTextInputChange={this.handleTextInputChange}
                         onSourceLocaleChange={this.handleSourceLocaleChange}
                         onCheckSLAChange={this.handleCheckSLAChange}

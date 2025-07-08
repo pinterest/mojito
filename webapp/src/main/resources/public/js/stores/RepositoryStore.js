@@ -19,6 +19,7 @@ class RepositoryStore {
     }
 
     createRepositorySuccess(repository) {
+        console.log(repository);
         this.repositories = [...this.repositories, repository];
         this.setError(null);
     }  

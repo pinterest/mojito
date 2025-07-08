@@ -5,7 +5,7 @@ import RepositoryLocaleNode from "./RepositoryLocaleNode";
 
 export const EMPTY_LOCALE = {
     locale: {},
-    toBeFullyTranslated: false
+    toBeFullyTranslated: true
 };
 
 const RepositoryLocalesInput = createReactClass({

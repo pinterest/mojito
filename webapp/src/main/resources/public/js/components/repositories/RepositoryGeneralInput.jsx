@@ -8,6 +8,7 @@ const RepositoryGeneralInput = ({
     sourceLocale,
     checkSLA,
     assetIntegrityCheckers,
+    validAssetIntegrityCheckers,
     onTextInputChange,
     onSourceLocaleChange,
     onCheckSLAChange
@@ -41,6 +42,11 @@ const RepositoryGeneralInput = ({
             value={assetIntegrityCheckers}
             onChange={onTextInputChange}
         />
+        {!validAssetIntegrityCheckers && (
+            <div className="alert alert-danger">
+                Invalid asset integrity checkers format. Expects: "extension: integrityChecker, ..."
+            </div>
+        )}
         <div className="form-check-control">
             <label className="form-check-label mrs">Check SLA</label>
             <input
