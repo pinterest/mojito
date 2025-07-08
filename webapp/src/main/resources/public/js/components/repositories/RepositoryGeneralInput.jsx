@@ -1,6 +1,6 @@
 import React from "react";
 import LabeledTextInput from "../jobs/LabeledTextInput";
-import SourceLocaleDropdown from "./SourceLocaleDropdown";
+import RepositoryLocaleDropdown from "./RepositoryLocaleDropdown";
 
 const RepositoryGeneralInput = ({
     name,
@@ -30,9 +30,10 @@ const RepositoryGeneralInput = ({
         />
         <div className="mbm">
             <label>Source Locale*</label>
-            <SourceLocaleDropdown 
+            <RepositoryLocaleDropdown 
                 selectedLocale={sourceLocale} 
                 onSelect={onSourceLocaleChange}
+                defaultLocaleTag="en"
             />
         </div>
         <LabeledTextInput

@@ -76,10 +76,6 @@ const RepositoryInputModal  = createReactClass({
         this.setState({ checkSLA: e.target.checked });
     },
 
-    handleAssetIntegrityCheckersChange(e) {
-        this.setState({ assetIntegrityCheckers: e.target.value });
-    },
-
     handleRepositoryLocalesChange(repositoryLocales) {
         this.setState({ repositoryLocales });
     },
@@ -101,8 +97,7 @@ const RepositoryInputModal  = createReactClass({
     },
 
     renderStepContent() {
-        const { currentStep } = this.state;
-        switch (currentStep) {
+        switch (this.state.currentStep) {
             case 0:
                 return (
                     <RepositoryGeneralInput

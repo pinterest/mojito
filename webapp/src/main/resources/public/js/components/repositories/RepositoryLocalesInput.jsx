@@ -56,6 +56,7 @@ const RepositoryLocalesInput = createReactClass({
                     {repositoryLocales.map((locale, idx) => (
                         <RepositoryLocaleNode
                             key={idx}
+                            repositoryLocales={repositoryLocales}
                             localeObj={locale}
                             onChange={newLocale => this.handleLocaleChange(idx, newLocale)}
                             onRemove={() => this.handleRemoveLocale(idx)}

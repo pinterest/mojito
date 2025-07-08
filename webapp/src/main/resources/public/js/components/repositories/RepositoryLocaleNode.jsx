@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import createReactClass from 'create-react-class';
 import { EMPTY_LOCALE } from './RepositoryLocalesInput';
 import{ OverlayTrigger, Tooltip } from 'react-bootstrap';
-import SourceLocaleDropdown from "./SourceLocaleDropdown";
+import RepositoryLocaleDropdown from "./RepositoryLocaleDropdown";
 
 const cloneLocale = (locale) => {
     return JSON.parse(JSON.stringify(locale));
@@ -14,7 +14,20 @@ const RepositoryLocaleNode = createReactClass({
         localeObj: PropTypes.object.isRequired,
         onChange: PropTypes.func.isRequired,
         onRemove: PropTypes.func.isRequired,
+        repositoryLocales: PropTypes.arrayOf(
+            PropTypes.shape({
+                locale: PropTypes.object,
+                parentLocale: PropTypes.object,
+                toBeFullyTranslated: PropTypes.bool
+            })
+        ),
         isRoot: PropTypes.bool
+    },
+
+    getLocaleOptions() {
+        return this.props.repositoryLocales
+            .map(repoLocale => repoLocale.locale)
+            .filter(locale => locale && locale.bcp47Tag);
     },
 
     handleToBeFullyTranslatedChange(e) {
@@ -25,6 +38,7 @@ const RepositoryLocaleNode = createReactClass({
 
     handleAddParentLocale() {
         const newLocale = cloneLocale(this.props.localeObj);
+        newLocale.toBeFullyTranslated = false;
         newLocale.parentLocale = { ...EMPTY_LOCALE };
         this.props.onChange(newLocale);
     },
@@ -53,7 +67,9 @@ const RepositoryLocaleNode = createReactClass({
 
     render() {
         const { localeObj, isRoot } = this.props;
-        const hasParent = !!localeObj.parentLocale;
+        const selectedLocale = (localeObj.locale && localeObj.locale.bcp47Tag)
+            ? localeObj.locale
+            : {};
         return (
             <div>
                 <div className="repo-locale-row">
@@ -66,16 +82,17 @@ const RepositoryLocaleNode = createReactClass({
                     >
                         <input
                             type="checkbox"
-                            checked={hasParent ? false : !!localeObj.toBeFullyTranslated}
+                            checked={localeObj.toBeFullyTranslated}
                             onChange={this.handleToBeFullyTranslatedChange}
                             className="repo-locale-checkbox"
-                            disabled={hasParent}
+                            disabled={!!localeObj.parentLocale}
                         />
                     </OverlayTrigger>
-                    <SourceLocaleDropdown
-                        selectedLocale={localeObj.locale || {}}
-                        onSelect={this.handleLocaleSelect}
+                    <RepositoryLocaleDropdown
                         className="repo-locale-dropdown"
+                        selectedLocale={selectedLocale}
+                        onSelect={this.handleLocaleSelect}
+                        localeOptions={!isRoot ? this.getLocaleOptions() : null}
                     />
                     {localeObj.parentLocale ? null : (
                         <button type="button" onClick={this.handleAddParentLocale} className="repo-locale-add-parent btn btn-secondary">Add Parent</button>
@@ -87,6 +104,7 @@ const RepositoryLocaleNode = createReactClass({
                         localeObj={localeObj.parentLocale}
                         onChange={this.handleParentChange}
                         onRemove={this.handleRemoveParent}
+                        repositoryLocales={this.props.repositoryLocales}
                         isRoot={false}
                     />
                 )}

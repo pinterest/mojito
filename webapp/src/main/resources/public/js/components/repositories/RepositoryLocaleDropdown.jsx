@@ -4,10 +4,17 @@ import LocaleActions from "../../actions/LocaleActions";
 import LocaleStore from "../../stores/LocaleStore";
 import Locales from "../../utils/Locales";
 
-class SourceLocaleDropdown extends React.Component {
+class RepositoryLocaleDropdown extends React.Component {
     static propTypes = {
         onSelect: PropTypes.func.isRequired,
         selectedLocale: PropTypes.object.isRequired,
+        defaultLocaleTag: PropTypes.string,
+        localeOptions: PropTypes.arrayOf(
+            PropTypes.shape({
+                bcp47Tag: PropTypes.string,
+                id: PropTypes.number
+            })
+        ),
     };
 
     constructor(props) {
@@ -36,7 +43,7 @@ class SourceLocaleDropdown extends React.Component {
             this.props.selectedLocale &&
             Object.keys(this.props.selectedLocale).length === 0
         ) {
-            const defaultLocale = this.getDefaultLocale();
+            const defaultLocale = this.getDefaultLocale(this.props.defaultLocaleTag);
             if (defaultLocale) {
                 this.handleSelect(defaultLocale);
             }
@@ -83,13 +90,14 @@ class SourceLocaleDropdown extends React.Component {
         }
     };
 
-    getDefaultLocale = () => {
-        return this.state.locales.find(locale => locale.bcp47Tag === "en") || null;
+    getDefaultLocale = (defaultLocaleTag) => {
+        return this.state.locales.find(locale => locale.bcp47Tag === defaultLocaleTag) || null;
     };
 
     render() {
         const { searchTerm, locales, open } = this.state;
-        const filteredLocales = locales.filter(locale => {
+        const options = this.props.localeOptions && this.props.localeOptions.length > 0 ? this.props.localeOptions : locales;
+        const filteredLocales = options.filter(locale => {
             const displayString = `${Locales.getDisplayName(locale.bcp47Tag)} ${locale.bcp47Tag}`.toLowerCase();
             return displayString.includes(searchTerm.toLowerCase());
         });
@@ -139,4 +147,4 @@ class SourceLocaleDropdown extends React.Component {
     }
 }
 
-export default SourceLocaleDropdown;
+export default RepositoryLocaleDropdown;
