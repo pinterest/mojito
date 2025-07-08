@@ -10,7 +10,7 @@ const RepositoryDataSource = {
         success: RepositoryActions.createRepositorySuccess,
         error: RepositoryActions.createRepositoryError
     },
-    
+
     getAllRepositories: {
         remote() {
             return RepositoryClient.getRepositories();

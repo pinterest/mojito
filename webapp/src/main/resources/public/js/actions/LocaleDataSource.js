@@ -1,7 +1,7 @@
 import LocaleClient from "../sdk/LocaleClient";
 import LocaleActions from "./LocaleActions";
 
-const LocaleDataSource = {    
+const LocaleDataSource = {
     getLocales: {
         remote() {
             return LocaleClient.getLocales();

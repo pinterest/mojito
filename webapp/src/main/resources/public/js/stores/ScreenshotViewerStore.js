@@ -64,7 +64,7 @@ class ScreenshotViewerStore {
         this.isDeleting = false;
     }
 
-    onDeleteScreenshotFailure({ response }) {
+    onDeleteScreenshotFailure() {
         this.isDeleting = false;
         this.error = true;
     }

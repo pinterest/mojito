@@ -12,7 +12,7 @@ class LocaleStore {
 
     getLocales() {
         this.getInstance().getLocales();
-    }  
+    }
 
     getLocalesSuccess(locales) {
         this.locales = locales;
