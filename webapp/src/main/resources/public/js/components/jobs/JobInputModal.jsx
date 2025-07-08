@@ -48,7 +48,7 @@ const JobInputModal  = createReactClass({
             this.state.currentStep !== 0
         ) {
             this.setState({ currentStep: 0 });
-        } 
+        }
         if (prevProps.job !== this.props.job) {
             if (this.props.job) {
                 const jobProperties = this.props.job.properties || {};

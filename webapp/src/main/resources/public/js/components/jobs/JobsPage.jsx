@@ -143,10 +143,10 @@ let JobsPage = createReactClass({
                 </AltContainer>
 
                 <JobErrorModal
+                    title="Error Restoring Job"
                     showModal={this.state.showJobErrorModal}
                     onErrorModalClosed={this.onCloseJobErrorModal}
                     errorMessage={this.state.errorMessage || "An error occurred while processing the job."}
-                    title="Error Restoring Job"
                 />
             </div>
         );
