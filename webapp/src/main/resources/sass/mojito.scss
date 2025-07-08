@@ -1233,9 +1233,6 @@ label.current-pageNumber {
   cursor: not-allowed;
 }
 
-/**
- * Repository Locale Row (custom for RepositoryLocaleNode)
- */
 .repo-locale-row {
   display: flex;
   align-items: center;
@@ -1243,16 +1240,7 @@ label.current-pageNumber {
   margin-bottom: 8px;
 }
 
-.repo-locale-checkbox {
-}
-
 .repo-locale-dropdown {
   min-width: 220px;
   max-width: 300px;
-}
-
-.repo-locale-add-parent {
-}
-
-.repo-locale-remove {
 }

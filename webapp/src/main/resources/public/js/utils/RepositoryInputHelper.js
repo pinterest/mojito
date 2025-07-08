@@ -1,8 +1,4 @@
-/**
- * Deserializes a string of asset integrity checkers into an array of objects.
- * Example input: "xml:PO,properties:JavaProperties"
- * Output: [ { assetExtension: "xml", integrityCheckerType: "PO" }, ... ]
- */
+// Converts "extension:checkerType,..." string to an array of objects [{assetExtension, integrityCheckerType}]
 export function deserializeAssetIntegrityCheckers(assetIntegrityCheckersString) {
     if (!assetIntegrityCheckersString) return [];
     return assetIntegrityCheckersString.split(',').map(pair => {
@@ -14,11 +10,7 @@ export function deserializeAssetIntegrityCheckers(assetIntegrityCheckersString) 
     });
 }
 
-/**
- * Validates the asset integrity checkers string.
- * Returns true if the string is valid, false otherwise.
- * Valid format: "ext:type,ext:type,..."
- */
+// Validates that assetIntegrityCheckersString is in the format "extension:checkerType,..."
 export function validateAssetIntegrityCheckers(assetIntegrityCheckersString) {
     if (!assetIntegrityCheckersString) return true;
     return assetIntegrityCheckersString.split(',').every(pair => {
