@@ -34,7 +34,6 @@ public class ExtractionDiffService {
    * Check if a diff has added text units in it.
    *
    * @param extractionDiffPaths
-   * @param diffExtractionName
    * @return
    */
   public boolean hasAddedTextUnits(ExtractionDiffPaths extractionDiffPaths) {
