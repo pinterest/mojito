@@ -107,6 +107,7 @@ public class RepositoryService {
    * @param checkSLA if SLA will be checked for this repository
    * @return the created {@link Repository}
    */
+  @Transactional
   public Repository createRepository(
       String name, String description, Locale sourceLocale, Boolean checkSLA)
       throws RepositoryNameAlreadyUsedException {
@@ -343,6 +344,7 @@ public class RepositoryService {
     updateRepositoryLocales(null, repositoryLocales);
   }
 
+  @Transactional
   public void updateRepositoryLocales(
       Repository repository, Set<RepositoryLocale> repositoryLocales)
       throws RepositoryLocaleCreationException {
