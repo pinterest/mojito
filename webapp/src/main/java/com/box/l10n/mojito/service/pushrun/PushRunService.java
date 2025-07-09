@@ -163,4 +163,19 @@ public class PushRunService {
     commitToPushRunRepository.deleteAllByPushRunWithCreatedDateBefore(beforeDate);
     pushRunRepository.deleteAllByCreatedDateBefore(beforeDate);
   }
+
+  public void cleanPushRunPerAsset(ZonedDateTime startDate, ZonedDateTime endDate) {
+    int batchNumber = 1;
+    int deleteCount;
+    do {
+      deleteCount =
+          pushRunAssetTmTextUnitRepository.deleteAllByPushRunAndAsset(
+              startDate, endDate, DELETE_BATCH_SIZE);
+      logger.debug(
+          "Deleted {} pushRunAssetTmTextUnit rows in batch: {}", deleteCount, batchNumber++);
+    } while (deleteCount == DELETE_BATCH_SIZE);
+    this.pushRunAssetRepository.deleteAllByPushRunAndAsset(startDate, endDate);
+    this.commitToPushRunRepository.deleteAllByPushRunAndAsset(startDate, endDate);
+    this.pushRunRepository.cleanPushRunPerAsset(startDate, endDate);
+  }
 }

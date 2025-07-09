@@ -52,4 +52,41 @@ public interface PushRunAssetTmTextUnitRepository
           """)
   int deleteAllByPushRunWithCreatedDateBefore(
       @Param("beforeDate") ZonedDateTime beforeDate, @Param("batchSize") int batchSize);
+
+  @Transactional
+  @Modifying
+  @Query(
+      nativeQuery = true,
+      value =
+          """
+          delete push_run_asset_tm_text_unit
+            from push_run_asset_tm_text_unit
+            join (select prattu.id as id
+                    from push_run pr
+                    join push_run_asset pra
+                      on pra.push_run_id = pr.id
+                    join push_run_asset_tm_text_unit prattu
+                      on prattu.push_run_asset_id = pra.id
+                   where pr.created_date between :startDate and :endDate
+                     and pr.id not in (select MAX(pr.id) as max_id
+                                         from push_run pr
+                                         join push_run_asset pra
+                                           on pra.push_run_id = pr.id
+                                         join (select pra.asset_id as asset_id,
+                                                      MAX(pr.created_date) as max_created_date
+                                                 from push_run pr
+                                                 join push_run_asset pra
+                                                   on pra.push_run_id = pr.id
+                                                where pr.created_date between :startDate and :endDate
+                                                group by pra.asset_id) latest_pr
+                                           on pra.asset_id = latest_pr.asset_id
+                                          and pr.created_date = latest_pr.max_created_date
+                                        group by pra.asset_id)
+                   limit :batchSize) todelete
+              on todelete.id = push_run_asset_tm_text_unit.id
+          """)
+  int deleteAllByPushRunAndAsset(
+      @Param("startDate") ZonedDateTime startDate,
+      @Param("endDate") ZonedDateTime endDate,
+      @Param("batchSize") int batchSize);
 }

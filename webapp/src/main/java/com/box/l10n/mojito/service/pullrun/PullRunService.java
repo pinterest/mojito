@@ -76,4 +76,20 @@ public class PullRunService {
       throw new RuntimeException(e);
     }
   }
+
+  public void cleanPullRunPerAsset(ZonedDateTime startDate, ZonedDateTime endDate) {
+    int batchNumber = 1;
+    int deleteCount;
+    do {
+      deleteCount =
+          pullRunTextUnitVariantRepository.deleteAllByPullRunAndAsset(
+              startDate, endDate, deleteBatchSize);
+      logger.debug(
+          "Deleted {} pullRunTextUnitVariant rows in batch: {}", deleteCount, batchNumber++);
+      waitForConfiguredTime();
+    } while (deleteCount == deleteBatchSize);
+    pullRunAssetRepository.deleteAllByPullRunAndAsset(startDate, endDate);
+    commitToPullRunRepository.deleteAllByPullRunAndAsset(startDate, endDate);
+    this.pullRunRepository.cleanPullRunPerAsset(startDate, endDate);
+  }
 }
