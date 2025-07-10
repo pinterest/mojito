@@ -37,32 +37,31 @@ public class PushPullRunCleanupService {
   }
 
   private Optional<DateRange> getRange(
-      ZonedDateTime validStartDateTimeRange,
+      ZonedDateTime validStartDateOfRange,
       ZonedDateTime currentDateTime,
       int startDay,
       int endDay) {
-    ZonedDateTime startDateRange =
-        validStartDateTimeRange
+    ZonedDateTime startDateOfRange =
+        validStartDateOfRange
             .toLocalDate()
-            .withDayOfMonth(
-                Math.min(startDay, validStartDateTimeRange.toLocalDate().lengthOfMonth()))
+            .withDayOfMonth(Math.min(startDay, validStartDateOfRange.toLocalDate().lengthOfMonth()))
             .atStartOfDay(ZoneId.systemDefault());
-    ZonedDateTime endDateRange =
-        validStartDateTimeRange
+    ZonedDateTime endDateOfRange =
+        validStartDateOfRange
             .toLocalDate()
-            .withDayOfMonth(Math.min(endDay, validStartDateTimeRange.toLocalDate().lengthOfMonth()))
+            .withDayOfMonth(Math.min(endDay, validStartDateOfRange.toLocalDate().lengthOfMonth()))
             .atStartOfDay(ZoneId.systemDefault());
-    if (this.isEqualOrAfter(startDateRange, validStartDateTimeRange)
-        && startDateRange.isBefore(currentDateTime)) {
+    if (this.isEqualOrAfter(startDateOfRange, validStartDateOfRange)
+        && startDateOfRange.isBefore(currentDateTime)) {
       return of(
           new DateRange(
-              startDateRange,
-              endDateRange.isBefore(currentDateTime) ? endDateRange : currentDateTime));
-    } else if (endDateRange.isAfter(validStartDateTimeRange)) {
+              startDateOfRange,
+              endDateOfRange.isBefore(currentDateTime) ? endDateOfRange : currentDateTime));
+    } else if (endDateOfRange.isAfter(validStartDateOfRange)) {
       return of(
           new DateRange(
-              validStartDateTimeRange,
-              endDateRange.isBefore(currentDateTime) ? endDateRange : currentDateTime));
+              validStartDateOfRange,
+              endDateOfRange.isBefore(currentDateTime) ? endDateOfRange : currentDateTime));
     }
     return empty();
   }
@@ -70,28 +69,28 @@ public class PushPullRunCleanupService {
   private void cleanPushPullPerAsset(Duration retentionDuration) {
     List<DateRange> dateRanges = new ArrayList<>();
     ZonedDateTime currentDateTime = ZonedDateTime.now();
-    ZonedDateTime validStartDateTimeRange =
+    ZonedDateTime validStartDateOfRange =
         currentDateTime.minusSeconds((int) retentionDuration.getSeconds());
-    while ((validStartDateTimeRange.getYear() < currentDateTime.getYear())
-        || (validStartDateTimeRange.getYear() == currentDateTime.getYear()
-            && validStartDateTimeRange.getMonthValue() <= currentDateTime.getMonthValue())) {
+    while ((validStartDateOfRange.getYear() < currentDateTime.getYear())
+        || (validStartDateOfRange.getYear() == currentDateTime.getYear()
+            && validStartDateOfRange.getMonthValue() <= currentDateTime.getMonthValue())) {
       Optional<DateRange> firstDateRange =
           this.getRange(
-              validStartDateTimeRange,
+              validStartDateOfRange,
               currentDateTime,
-              this.configurationProperties.getStartDayFirstRange(),
-              this.configurationProperties.getEndDayFirstRange());
+              this.configurationProperties.getStartDayOfFirstRange(),
+              this.configurationProperties.getEndDayOfFirstRange());
       firstDateRange.ifPresent(dateRanges::add);
       Optional<DateRange> secondDateRange =
           this.getRange(
-              validStartDateTimeRange,
+              validStartDateOfRange,
               currentDateTime,
-              this.configurationProperties.getStartDaySecondRange(),
-              this.configurationProperties.getEndDaySecondRange());
+              this.configurationProperties.getStartDayOfSecondRange(),
+              this.configurationProperties.getEndDayOfSecondRange());
       secondDateRange.ifPresent(dateRanges::add);
 
-      validStartDateTimeRange =
-          validStartDateTimeRange
+      validStartDateOfRange =
+          validStartDateOfRange
               .toLocalDate()
               .withDayOfMonth(1)
               .plusMonths(1)

@@ -45,7 +45,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 @TestPropertySource(
-    properties = "l10n.push-pull-run.cleanup-job.cleanup-per-asset.start-day-first-range=1")
+    properties = "l10n.push-pull-run.cleanup-job.cleanup-per-asset.start-day-of-first-range=1")
 public class PushPullRunCleanupServiceTest extends ServiceTestBase {
 
   @Rule public TestIdWatcher testIdWatcher = new TestIdWatcher();
@@ -197,7 +197,7 @@ public class PushPullRunCleanupServiceTest extends ServiceTestBase {
         pullRunTextUnitVariantRepository.findByPullRun(pullRun, Pageable.unpaged());
     Assert.assertEquals(2, recordedVariants.size());
 
-    // This should only delete first push and pull runs
+    // This should only delete the first push and pull runs
     pushPullRunCleanupService.cleanOldPushPullData(Duration.ofDays(1000));
 
     entityManager.flush();

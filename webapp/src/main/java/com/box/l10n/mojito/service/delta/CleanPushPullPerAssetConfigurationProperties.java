@@ -6,43 +6,43 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties("l10n.push-pull-run.cleanup-job.cleanup-per-asset")
 public class CleanPushPullPerAssetConfigurationProperties {
-  private int startDayFirstRange = 15;
+  private int startDayOfFirstRange = 15;
 
-  private int endDayFirstRange = 21;
+  private int endDayOfFirstRange = 21;
 
-  private int startDaySecondRange = 22;
+  private int startDayOfSecondRange = 22;
 
-  private int endDaySecondRange = 31;
+  private int endDayOfSecondRange = 31;
 
-  public int getStartDayFirstRange() {
-    return startDayFirstRange;
+  public int getStartDayOfFirstRange() {
+    return startDayOfFirstRange;
   }
 
-  public void setStartDayFirstRange(int startDayFirstRange) {
-    this.startDayFirstRange = startDayFirstRange;
+  public void setStartDayOfFirstRange(int startDayOfFirstRange) {
+    this.startDayOfFirstRange = startDayOfFirstRange;
   }
 
-  public int getEndDayFirstRange() {
-    return endDayFirstRange;
+  public int getEndDayOfFirstRange() {
+    return endDayOfFirstRange;
   }
 
-  public void setEndDayFirstRange(int endDayFirstRange) {
-    this.endDayFirstRange = endDayFirstRange;
+  public void setEndDayOfFirstRange(int endDayOfFirstRange) {
+    this.endDayOfFirstRange = endDayOfFirstRange;
   }
 
-  public int getStartDaySecondRange() {
-    return startDaySecondRange;
+  public int getStartDayOfSecondRange() {
+    return startDayOfSecondRange;
   }
 
-  public void setStartDaySecondRange(int startDaySecondRange) {
-    this.startDaySecondRange = startDaySecondRange;
+  public void setStartDayOfSecondRange(int startDayOfSecondRange) {
+    this.startDayOfSecondRange = startDayOfSecondRange;
   }
 
-  public int getEndDaySecondRange() {
-    return endDaySecondRange;
+  public int getEndDayOfSecondRange() {
+    return endDayOfSecondRange;
   }
 
-  public void setEndDaySecondRange(int endDaySecondRange) {
-    this.endDaySecondRange = endDaySecondRange;
+  public void setEndDayOfSecondRange(int endDayOfSecondRange) {
+    this.endDayOfSecondRange = endDayOfSecondRange;
   }
 }
