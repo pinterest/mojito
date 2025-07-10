@@ -11,6 +11,7 @@ const RepositoryGeneralInput = ({
     validAssetIntegrityCheckers,
     onTextInputChange,
     onSourceLocaleChange,
+    locales,
     onCheckSLAChange
 }) => (
     <div className="form-group">
@@ -30,7 +31,8 @@ const RepositoryGeneralInput = ({
         />
         <div className="mbm">
             <label>Source Locale*</label>
-            <RepositoryLocaleDropdown 
+            <RepositoryLocaleDropdown
+                localeOptions={locales || []}
                 selectedLocale={sourceLocale} 
                 onSelect={onSourceLocaleChange}
                 defaultLocaleTag="en"

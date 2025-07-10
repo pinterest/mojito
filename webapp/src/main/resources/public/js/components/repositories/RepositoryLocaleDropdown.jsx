@@ -1,26 +1,23 @@
 import React from "react";
 import PropTypes from "prop-types";
-import LocaleActions from "../../actions/LocaleActions";
-import LocaleStore from "../../stores/LocaleStore";
 import Locales from "../../utils/Locales";
 
 class RepositoryLocaleDropdown extends React.Component {
     static propTypes = {
         onSelect: PropTypes.func.isRequired,
         selectedLocale: PropTypes.object.isRequired,
-        defaultLocaleTag: PropTypes.string,
         localeOptions: PropTypes.arrayOf(
             PropTypes.shape({
                 bcp47Tag: PropTypes.string,
                 id: PropTypes.number
             })
-        ),
+        ).isRequired,
+        defaultLocaleTag: PropTypes.string
     };
 
     constructor(props) {
         super(props);
         this.state = {
-            locales: [],
             searchTerm: "",
             open: false,
         };
@@ -28,21 +25,8 @@ class RepositoryLocaleDropdown extends React.Component {
     }
 
     componentDidMount() {
-        LocaleStore.listen(this.localeStoreChange);
-        this.localeStoreChange(LocaleStore.getState());
-
-        if (!LocaleStore.getState().locales || LocaleStore.getState().locales.length === 0) {
-            LocaleActions.getLocales();
-        }
-
         document.addEventListener("mousedown", this.handleClickOutside);
-    }
-
-    componentDidUpdate() {
-        if (
-            this.props.selectedLocale &&
-            Object.keys(this.props.selectedLocale).length === 0
-        ) {
+        if (this.props.defaultLocaleTag) {
             const defaultLocale = this.getDefaultLocale(this.props.defaultLocaleTag);
             if (defaultLocale) {
                 this.handleSelect(defaultLocale);
@@ -50,15 +34,13 @@ class RepositoryLocaleDropdown extends React.Component {
         }
     }
 
-    componentWillUnmount() {
-        LocaleStore.unlisten(this.localeStoreChange);
-        document.removeEventListener("mousedown", this.handleClickOutside);
+    getDefaultLocale = (defaultLocaleTag) => {
+        return this.props.localeOptions.find(locale => locale.bcp47Tag === defaultLocaleTag) || null;
     }
 
-    localeStoreChange = (state) => {
-        const locales = state.locales || [];
-        this.setState({ locales });
-    };
+    componentWillUnmount() {
+        document.removeEventListener("mousedown", this.handleClickOutside);
+    }
 
     handleSelect = (locale) => {
         const display = `${Locales.getDisplayName(locale.bcp47Tag)} ${locale.bcp47Tag}`;
@@ -90,36 +72,40 @@ class RepositoryLocaleDropdown extends React.Component {
         }
     };
 
-    getDefaultLocale = (defaultLocaleTag) => {
-        return this.state.locales.find(locale => locale.bcp47Tag === defaultLocaleTag) || null;
+    getInputValue = () => {
+        if (this.state.open) {
+            return this.state.searchTerm;
+        }
+        if (this.props.selectedLocale && this.props.selectedLocale.bcp47Tag) {
+            return `${Locales.getDisplayName(this.props.selectedLocale.bcp47Tag)} ${this.props.selectedLocale.bcp47Tag}`;
+        }
+        if (this.props.defaultLocale) {
+            return `${Locales.getDisplayName(this.props.defaultLocale)} ${this.props.defaultLocale}`;
+        }
+        return "";
+    };
+
+    getFilteredLocales = () => {
+        return this.props.localeOptions.filter(locale => {
+            const displayString = `${Locales.getDisplayName(locale.bcp47Tag)} ${locale.bcp47Tag}`.toLowerCase();
+            return displayString.includes(this.state.searchTerm.toLowerCase());
+        });
     };
 
     render() {
-        const { searchTerm, locales, open } = this.state;
-        const options = this.props.localeOptions && this.props.localeOptions.length > 0 ? this.props.localeOptions : locales;
-        const filteredLocales = options.filter(locale => {
-            const displayString = `${Locales.getDisplayName(locale.bcp47Tag)} ${locale.bcp47Tag}`.toLowerCase();
-            return displayString.includes(searchTerm.toLowerCase());
-        });
-        
-        let inputValue = open
-            ? searchTerm
-            : (this.props.selectedLocale.bcp47Tag
-                ? `${Locales.getDisplayName(this.props.selectedLocale.bcp47Tag)} ${this.props.selectedLocale.bcp47Tag}`
-                : "");
-
+        const filteredLocales = this.getFilteredLocales();
         return (
             <div ref={this.dropdownRef} className="locale-dropdown-root">
                 <input
                     type="text"
                     className="form-control locale-dropdown-input"
                     placeholder="Choose a locale"
-                    value={inputValue}
+                    value={this.getInputValue()}
                     onChange={this.handleInputChange}
                     onClick={this.handleInputClick}
                     autoComplete="off"
                 />
-                {open && (
+                {this.state.open && (
                     <ul
                         className="dropdown-menu locale-dropdown-menu"
                     >

@@ -18,3 +18,39 @@ export function validateAssetIntegrityCheckers(assetIntegrityCheckersString) {
         return !!assetExtension && !!integrityCheckerType;
     });
 }
+
+// Converts [{parentLocale, childLocales, toBeFullyTranlsated}...] to 
+// [{childLocale, parentLocale, toBeFullyTranslated}...]
+export function flattenRepositoryLocales(repositoryLocales) {
+    const result = [];
+    const childLocalesSet = new Set();
+
+    repositoryLocales.forEach(parent => {
+        if (Array.isArray(parent.childLocales)) {
+            parent.childLocales.forEach(child => {
+                childLocalesSet.add(child.locale);
+            });
+        }
+    });
+
+    repositoryLocales.forEach(parent => {
+        if (!childLocalesSet.has(parent.locale)) {
+            result.push({
+                locale: parent.locale,
+                toBeFullyTranslated: parent.toBeFullyTranslated
+            });
+        }
+        
+        if (Array.isArray(parent.childLocales)) {
+            parent.childLocales.forEach(child => {
+                result.push({
+                    locale: child.locale,
+                    toBeFullyTranslated: child.toBeFullyTranslated,
+                    parentLocale: { locale: parent.locale }
+                });
+            });
+        }
+    });
+
+    return result;
+}

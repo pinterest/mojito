@@ -4,9 +4,11 @@ import PropTypes from "prop-types";
 import { Button, Modal, Form } from "react-bootstrap";
 import RepositoryGeneralInput from "./RepositoryGeneralInput";
 import RepositoryLocalesInput from "./RepositoryLocalesInput";
-import { deserializeAssetIntegrityCheckers, validateAssetIntegrityCheckers } from "../../utils/RepositoryInputHelper";
+import { deserializeAssetIntegrityCheckers, validateAssetIntegrityCheckers, flattenRepositoryLocales } from "../../utils/RepositoryInputHelper";
+import LocaleStore from "../../stores/LocaleStore";
+import LocaleActions from "../../actions/LocaleActions";
 
-const DEFAULT_STATE = {
+const DEFAULT_INPUT_STATE = {
     name: "",
     description: "",
     sourceLocale: {},
@@ -28,9 +30,26 @@ const RepositoryInputModal  = createReactClass({
     },
 
     getInitialState() {
-        return { ...DEFAULT_STATE };
+        return { ...DEFAULT_INPUT_STATE, locales: [] };
     },
 
+    componentDidMount() {
+        LocaleStore.listen(this.localeStoreChange);
+        this.localeStoreChange(LocaleStore.getState());
+
+        if (!LocaleStore.getState().locales || LocaleStore.getState().locales.length === 0) {
+            LocaleActions.getLocales();
+        }
+    },
+
+    componentWillUnmount() {
+        LocaleStore.unlisten(this.localeStoreChange);
+    },
+
+    localeStoreChange(state) {
+        const locales = state.locales || [];
+        this.setState({ locales });
+    },
 
     componentDidUpdate(prevProps) {
         if (
@@ -41,7 +60,7 @@ const RepositoryInputModal  = createReactClass({
             this.setState({ currentStep: 0 });
         }
         if (!this.props.show && prevProps.show) {
-            this.setState({ ...DEFAULT_STATE });
+            this.setState({ ...DEFAULT_INPUT_STATE });
         }
     },
 
@@ -92,7 +111,7 @@ const RepositoryInputModal  = createReactClass({
             sourceLocale: this.state.sourceLocale,
             checkSLA: this.state.checkSLA,
             assetIntegrityCheckers: deserializeAssetIntegrityCheckers(this.state.assetIntegrityCheckers),
-            repositoryLocales: this.state.repositoryLocales
+            repositoryLocales: flattenRepositoryLocales(this.state.repositoryLocales)
         });
     },
 
@@ -108,6 +127,7 @@ const RepositoryInputModal  = createReactClass({
                         assetIntegrityCheckers={this.state.assetIntegrityCheckers}
                         validAssetIntegrityCheckers={validateAssetIntegrityCheckers(this.state.assetIntegrityCheckers)}
                         onTextInputChange={this.handleTextInputChange}
+                        locales={this.state.locales}
                         onSourceLocaleChange={this.handleSourceLocaleChange}
                         onCheckSLAChange={this.handleCheckSLAChange}
                     />
@@ -115,6 +135,7 @@ const RepositoryInputModal  = createReactClass({
             case 1:
                 return (
                     <RepositoryLocalesInput
+                        locales={this.state.locales}
                         repositoryLocales={this.state.repositoryLocales}
                         onRepositoryLocalesChange={this.handleRepositoryLocalesChange}
                     />
