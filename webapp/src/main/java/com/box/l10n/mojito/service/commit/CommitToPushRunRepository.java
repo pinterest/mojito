@@ -55,6 +55,6 @@ public interface CommitToPushRunRepository extends JpaRepository<CommitToPushRun
                                   and pr.created_date = latest_pr.max_created_date
                                 group by pra.asset_id)
           """)
-  void deleteAllByPushRunAndAsset(
+  void deleteByPushRunAndAsset(
       @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 }

@@ -64,6 +64,6 @@ public interface PushRunAssetRepository extends JpaRepository<PushRunAsset, Long
                                           and pr.created_date = latest_pr.max_created_date
                                         group by pra.asset_id) as latest_pr)
           """)
-  void deleteAllByPushRunAndAsset(
+  void deleteByPushRunAndAsset(
       @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 }

@@ -91,7 +91,7 @@ public interface PullRunTextUnitVariantRepository
             limit :batchSize
           ) todelete on todelete.id = pull_run_text_unit_variant.id
           """)
-  int deleteAllByPullRunAndAsset(
+  int deleteByPullRunAndAsset(
       @Param("startDate") ZonedDateTime startDate,
       @Param("endDate") ZonedDateTime endDate,
       @Param("batchSize") int batchSize);

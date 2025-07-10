@@ -77,19 +77,19 @@ public class PullRunService {
     }
   }
 
-  public void cleanPullRunPerAsset(ZonedDateTime startDate, ZonedDateTime endDate) {
+  public void deletePullRunsByAsset(ZonedDateTime startDate, ZonedDateTime endDate) {
     int batchNumber = 1;
     int deleteCount;
     do {
       deleteCount =
-          pullRunTextUnitVariantRepository.deleteAllByPullRunAndAsset(
+          pullRunTextUnitVariantRepository.deleteByPullRunAndAsset(
               startDate, endDate, deleteBatchSize);
       logger.debug(
           "Deleted {} pullRunTextUnitVariant rows in batch: {}", deleteCount, batchNumber++);
       waitForConfiguredTime();
     } while (deleteCount == deleteBatchSize);
-    pullRunAssetRepository.deleteAllByPullRunAndAsset(startDate, endDate);
-    commitToPullRunRepository.deleteAllByPullRunAndAsset(startDate, endDate);
-    this.pullRunRepository.cleanPullRunPerAsset(startDate, endDate);
+    pullRunAssetRepository.deleteByPullRunAndAsset(startDate, endDate);
+    commitToPullRunRepository.deleteByPullRunAndAsset(startDate, endDate);
+    this.pullRunRepository.deletePullRunsByAsset(startDate, endDate);
   }
 }

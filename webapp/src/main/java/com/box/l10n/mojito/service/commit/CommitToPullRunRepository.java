@@ -55,6 +55,6 @@ public interface CommitToPullRunRepository extends JpaRepository<CommitToPullRun
                                   and pr.created_date = latest_pr.max_created_date
                                 group by pra.asset_id)
           """)
-  void deleteAllByPullRunAndAsset(
+  void deleteByPullRunAndAsset(
       @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 }

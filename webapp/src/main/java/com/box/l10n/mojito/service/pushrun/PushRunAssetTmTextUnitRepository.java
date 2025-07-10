@@ -85,7 +85,7 @@ public interface PushRunAssetTmTextUnitRepository
                    limit :batchSize) todelete
               on todelete.id = push_run_asset_tm_text_unit.id
           """)
-  int deleteAllByPushRunAndAsset(
+  int deleteByPushRunAndAsset(
       @Param("startDate") ZonedDateTime startDate,
       @Param("endDate") ZonedDateTime endDate,
       @Param("batchSize") int batchSize);
