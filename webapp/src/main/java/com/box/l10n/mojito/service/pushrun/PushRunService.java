@@ -165,17 +165,22 @@ public class PushRunService {
   }
 
   public void deletePushRunsByAsset(ZonedDateTime startDate, ZonedDateTime endDate) {
+    List<Long> latestPushRunIdsPerAsset =
+        this.pushRunRepository.getLatestPushRunIdsPerAsset(startDate, endDate);
     int batchNumber = 1;
     int deleteCount;
     do {
       deleteCount =
-          pushRunAssetTmTextUnitRepository.deleteByPushRunAndAsset(
-              startDate, endDate, DELETE_BATCH_SIZE);
+          pushRunAssetTmTextUnitRepository.deleteByPushRunsNotLatestPerAsset(
+              startDate, endDate, latestPushRunIdsPerAsset, DELETE_BATCH_SIZE);
       logger.debug(
           "Deleted {} pushRunAssetTmTextUnit rows in batch: {}", deleteCount, batchNumber++);
     } while (deleteCount == DELETE_BATCH_SIZE);
-    this.pushRunAssetRepository.deleteByPushRunAndAsset(startDate, endDate);
-    this.commitToPushRunRepository.deleteByPushRunAndAsset(startDate, endDate);
-    this.pushRunRepository.deletePushRunsByAsset(startDate, endDate);
+    this.pushRunAssetRepository.deleteByPushRunsNotLatestPerAsset(
+        startDate, endDate, latestPushRunIdsPerAsset);
+    this.commitToPushRunRepository.deleteByPushRunsNotLatestPerAsset(
+        startDate, endDate, latestPushRunIdsPerAsset);
+    this.pushRunRepository.deletePushRunsNotLatestPerAsset(
+        startDate, endDate, latestPushRunIdsPerAsset);
   }
 }

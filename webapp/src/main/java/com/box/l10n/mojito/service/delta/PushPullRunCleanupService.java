@@ -124,7 +124,9 @@ public class PushPullRunCleanupService {
   }
 
   public void cleanOldPushPullData(Duration retentionDuration) {
-    this.deletePushAndPullRunsByAsset(retentionDuration);
+    if (this.configurationProperties.isEnabled()) {
+      this.deletePushAndPullRunsByAsset(retentionDuration);
+    }
 
     pushRunService.deleteAllPushEntitiesOlderThan(retentionDuration);
     pullRunService.deleteAllPullEntitiesOlderThan(retentionDuration);

@@ -90,30 +90,35 @@ public interface PushRunRepository extends JpaRepository<PushRun, Long> {
   List<Long> getAllTextUnitIdsFromLastPushRunByRepositoryId(
       @Param("repositoryId") Long repositoryId);
 
+  @Query(
+      """
+    select MAX(pr.id) as max_id
+      from PushRun pr
+      join pr.pushRunAssets pra
+      join (select pra2.asset as asset,
+                   MAX(pr2.createdDate) as max_created_date
+              from PushRun pr2
+              join pr2.pushRunAssets pra2
+             where pr2.createdDate between :startDate and :endDate
+             group by pra2.asset) latest_pr
+        on pra.asset = latest_pr.asset
+       and pr.createdDate = latest_pr.max_created_date
+     group by pra.asset
+""")
+  List<Long> getLatestPushRunIdsPerAsset(
+      @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
+
   @Transactional
   @Modifying
   @Query(
-      nativeQuery = true,
       value =
           """
-          delete from push_run
-           where created_date between :startDate and :endDate
-             and id not in (select max_id
-                              from (select MAX(pr.id) as max_id
-                                      from push_run pr
-                                      join push_run_asset pra
-                                        on pra.push_run_id = pr.id
-                                      join (select pra.asset_id as asset_id,
-                                                   MAX(pr.created_date) as max_created_date
-                                              from push_run pr
-                                              join push_run_asset pra
-                                                on pra.push_run_id = pr.id
-                                             where pr.created_date between :startDate and :endDate
-                                             group by pra.asset_id) latest_pr
-                                        on pra.asset_id = latest_pr.asset_id
-                                       and pr.created_date = latest_pr.max_created_date
-                                     group by pra.asset_id) as latest_pr)
+          delete from PushRun
+           where createdDate between :startDate and :endDate
+             and id not in :latestPushRunIdsPerAsset
           """)
-  void deletePushRunsByAsset(
-      @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
+  void deletePushRunsNotLatestPerAsset(
+      @Param("startDate") ZonedDateTime startDate,
+      @Param("endDate") ZonedDateTime endDate,
+      @Param("latestPushRunIdsPerAsset") List<Long> latestPushRunIdsPerAsset);
 }

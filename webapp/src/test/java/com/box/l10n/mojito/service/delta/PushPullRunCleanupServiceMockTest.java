@@ -1,6 +1,7 @@
 package com.box.l10n.mojito.service.delta;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -271,6 +272,29 @@ public class PushPullRunCleanupServiceMockTest {
             LocalDate.of(2025, 6, 30).atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()),
             currentDateTime);
     assertEquals(expectedEndDates, endDateTimeCaptor.getAllValues());
+  }
+
+  @Test
+  public void testCleanOldPushPullData_DoesNotRunDeletePushRunsByAsset() {
+    LocalDate date = LocalDate.of(2025, 7, 1);
+    ZonedDateTime currentDateTime = date.atStartOfDay(ZoneId.systemDefault());
+    CleanPushPullPerAssetConfigurationProperties configurationProperties =
+        new CleanPushPullPerAssetConfigurationProperties();
+    configurationProperties.setEnabled(false);
+    this.pushPullRunCleanupService =
+        new PushPullRunCleanupServiceTestImpl(
+            this.pushRunServiceMock,
+            this.pullRunServiceMock,
+            configurationProperties,
+            currentDateTime);
+    Duration duration = Duration.ofDays(30);
+
+    this.pushPullRunCleanupService.cleanOldPushPullData(duration);
+
+    verify(this.pushRunServiceMock, times(0))
+        .deletePushRunsByAsset(any(ZonedDateTime.class), any(ZonedDateTime.class));
+    verify(this.pullRunServiceMock, times(0))
+        .deletePullRunsByAsset(any(ZonedDateTime.class), any(ZonedDateTime.class));
   }
 
   @AfterEach
