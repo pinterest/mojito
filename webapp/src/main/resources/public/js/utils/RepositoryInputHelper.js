@@ -19,7 +19,7 @@ export function validateAssetIntegrityCheckers(assetIntegrityCheckersString) {
     });
 }
 
-// Converts [{parentLocale, childLocales, toBeFullyTranlsated}...] to 
+// Converts [{parentLocale, childLocales, toBeFullyTranlsated}...] to
 // [{childLocale, parentLocale, toBeFullyTranslated}...]
 export function flattenRepositoryLocales(repositoryLocales) {
     const result = [];
@@ -40,7 +40,7 @@ export function flattenRepositoryLocales(repositoryLocales) {
                 toBeFullyTranslated: parent.toBeFullyTranslated
             });
         }
-        
+
         if (Array.isArray(parent.childLocales)) {
             parent.childLocales.forEach(child => {
                 result.push({
