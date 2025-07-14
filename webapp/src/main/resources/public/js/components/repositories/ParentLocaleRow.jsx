@@ -17,28 +17,34 @@ const ParentLocaleRow = ({
 }) => {
     // For parent locale dropdown, returns options excluding its own children and already used parent tags
     const getParentLocaleDropdownOptions = ({ parentLocales, locales, locale, index }) => {
-        const usedParentTags = parentLocales
-            .filter((_, i) => i !== index)
-            .map(l => l.locale.bcp47Tag);
-        const childTags = (locale.childLocales || [])
-            .map(childLocale => childLocale.locale.bcp47Tag);
+        const usedParentTags = new Set(
+            parentLocales
+                .filter((_, i) => i !== index)
+                .map(l => l.locale.bcp47Tag)
+        );
+        const childTags = new Set(
+            (locale.childLocales || [])
+                .map(childLocale => childLocale.locale.bcp47Tag)
+        );
         return locales.filter(option =>
-            !usedParentTags.includes(option.bcp47Tag) &&
-            !childTags.includes(option.bcp47Tag)
+            !usedParentTags.has(option.bcp47Tag) &&
+            !childTags.has(option.bcp47Tag)
         );
     };
 
     // For child locale dropdown, returns options excluding its parent and all other children
     const getChildLocaleDropdownOptions = ({ locale, parentLocales, locales, index, childIndex }) => {
         const parentTag = locale.locale.bcp47Tag;
-        const allChildTags = parentLocales.flatMap((parent, parentIndex) =>
-            (parent.childLocales || [])
-                .filter((_, i) => !(parentIndex === index && i === childIndex))
-                .map(childLocale => childLocale.locale.bcp47Tag)
+        const allChildTags = new Set(
+            parentLocales.flatMap((parent, parentIndex) =>
+                (parent.childLocales || [])
+                    .filter((_, i) => !(parentIndex === index && i === childIndex))
+                    .map(childLocale => childLocale.locale.bcp47Tag)
+            )
         );
         return locales.filter(option =>
             option.bcp47Tag !== parentTag &&
-            !allChildTags.includes(option.bcp47Tag)
+            !allChildTags.has(option.bcp47Tag)
         );
     };
 
@@ -62,7 +68,7 @@ const ParentLocaleRow = ({
                 >
                     <input
                         type="checkbox"
-                        checked={!!locale.toBeFullyTranslated}
+                        checked={Boolean(locale.toBeFullyTranslated)}
                         onChange={e => onToggleFullyTranslated(index, e.target.checked)}
                         className="repo-locale-checkbox"
                     />

@@ -45,31 +45,31 @@ const RepositoryLocalesInput = createReactClass({
     },
 
     handleAddChildLocale(parentIndex) {
-        const newParentLocales = [...this.props.repositoryLocales];
-        const parent = { ...newParentLocales[parentIndex] };
+        const newLocales = [...this.props.repositoryLocales];
+        const parent = { ...newLocales[parentIndex] };
         parent.childLocales = parent.childLocales ? [...parent.childLocales, { ...EMPTY_CHILD_LOCALE }] : [{ ...EMPTY_CHILD_LOCALE }];
-        newParentLocales[parentIndex] = parent;
-        this.props.onRepositoryLocalesChange(newParentLocales);
+        newLocales[parentIndex] = parent;
+        this.props.onRepositoryLocalesChange(newLocales);
     },
 
     handleRemoveChildLocale(parentIndex, childIndex) {
-        const newParentLocales = [...this.props.repositoryLocales];
-        const parent = { ...newParentLocales[parentIndex] };
+        const newLocales = [...this.props.repositoryLocales];
+        const parent = { ...newLocales[parentIndex] };
         const childLocales = [...(parent.childLocales || [])];
         childLocales.splice(childIndex, 1);
         parent.childLocales = childLocales;
-        newParentLocales[parentIndex] = parent;
-        this.props.onRepositoryLocalesChange(newParentLocales);
+        newLocales[parentIndex] = parent;
+        this.props.onRepositoryLocalesChange(newLocales);
     },
 
     handleChildLocaleSelect(parentIndex, childIndex, selectedLocale) {
-        const newParentLocales = [...this.props.repositoryLocales];
-        const parent = { ...newParentLocales[parentIndex] };
+        const newLocales = [...this.props.repositoryLocales];
+        const parent = { ...newLocales[parentIndex] };
         const childLocales = [...(parent.childLocales || [])];
         childLocales[childIndex] = { ...childLocales[childIndex], locale: selectedLocale };
         parent.childLocales = childLocales;
-        newParentLocales[parentIndex] = parent;
-        this.props.onRepositoryLocalesChange(newParentLocales);
+        newLocales[parentIndex] = parent;
+        this.props.onRepositoryLocalesChange(newLocales);
     },
 
     handleToggleFullyTranslated(index, checked) {

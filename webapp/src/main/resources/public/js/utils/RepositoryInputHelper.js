@@ -15,7 +15,7 @@ export function validateAssetIntegrityCheckers(assetIntegrityCheckersString) {
     if (!assetIntegrityCheckersString) return true;
     return assetIntegrityCheckersString.split(',').every(pair => {
         const [assetExtension, integrityCheckerType] = pair.trim().split(':');
-        return !!assetExtension && !!integrityCheckerType;
+        return Boolean(assetExtension) && Boolean(integrityCheckerType);
     });
 }
 

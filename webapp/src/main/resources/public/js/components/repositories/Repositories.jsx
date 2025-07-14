@@ -24,7 +24,7 @@ let Repositories = createReactClass({
             repositories: RepositoryStore.getState().repositories,
             isLocaleStatsShown: false,
             activeRepoId: null,
-            showRepositoryInputModal: false,
+            isRepositoryInputModalOpen: false,
             errorMessage: null,
             isSubmitting: false,
         };
@@ -33,14 +33,14 @@ let Repositories = createReactClass({
     onRepositoryStoreChanged(state) {
         this.setState({ repositories: state.repositories });
 
-        if (this.state.showRepositoryInputModal && this.state.isSubmitting) {
+        if (this.state.isRepositoryInputModalOpen && this.state.isSubmitting) {
             if (state.error && state.error.response) {
                 state.error.response.text().then(data => {
                     this.setState({ isSubmitting: false, errorMessage: data });
                 });
             } else {
                 this.setState({
-                    showRepositoryInputModal: false,
+                    isRepositoryInputModalOpen: false,
                     isSubmitting: false,
                     errorMessage: null
                 });
@@ -82,7 +82,7 @@ let Repositories = createReactClass({
 
     openCreateRepositoryModal() {
         this.setState({ 
-            showRepositoryInputModal: true,
+            isRepositoryInputModalOpen: true,
             isSubmitting: false,
             errorMessage: null
         });
@@ -90,7 +90,7 @@ let Repositories = createReactClass({
 
     closeCreateRepositoryModal() {
         this.setState({ 
-            showRepositoryInputModal: false,
+            isRepositoryInputModalOpen: false,
             isSubmitting: false,
             errorMessage: null
         });
@@ -142,7 +142,7 @@ let Repositories = createReactClass({
                 </ReactSidebarResponsive>
                 <RepositoryInputModal
                     title="Create Repository"
-                    show={this.state.showRepositoryInputModal}
+                    show={this.state.isRepositoryInputModalOpen}
                     onClose={this.closeCreateRepositoryModal}
                     onSubmit={this.handleCreateRepositorySubmit}
                     isSubmitting={this.state.isSubmitting}

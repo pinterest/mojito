@@ -19,7 +19,7 @@ class RepositoryLocaleDropdown extends React.Component {
         super(props);
         this.state = {
             searchTerm: "",
-            open: false,
+            isOpen: false,
         };
         this.dropdownRef = React.createRef();
     }
@@ -38,24 +38,27 @@ class RepositoryLocaleDropdown extends React.Component {
         return this.props.localeOptions.find(locale => locale.bcp47Tag === defaultLocaleTag) || null;
     }
 
+    getLocaleDisplayName = (bcp47Tag) => {
+        return `${Locales.getDisplayName(bcp47Tag)} (${bcp47Tag})`;
+    }
+
     componentWillUnmount() {
         document.removeEventListener("mousedown", this.handleClickOutside);
     }
 
     handleSelect = (locale) => {
-        const display = `${Locales.getDisplayName(locale.bcp47Tag)} ${locale.bcp47Tag}`;
-        this.setState({ open: false, searchTerm: display });
+        this.setState({ isOpen: false, searchTerm: this.getLocaleDisplayName(locale.bcp47Tag) });
         if (this.props.onSelect) {
             this.props.onSelect(locale);
         }
     };
 
     handleInputChange = (e) => {
-        this.setState({ searchTerm: e.target.value, open: true });
+        this.setState({ searchTerm: e.target.value, isOpen: true });
     };
 
     handleInputClick = () => {
-        this.setState({ open: true });
+        this.setState({ isOpen: true });
     };
 
     handleClickOutside = (event) => {
@@ -64,31 +67,30 @@ class RepositoryLocaleDropdown extends React.Component {
             !this.dropdownRef.current.contains(event.target)
         ) {
             this.setState(prevState => ({
-                open: false,
+                isOpen: false,
                 searchTerm: prevState.searchTerm === "" && this.props.selectedLocale.bcp47Tag
-                    ? `${Locales.getDisplayName(this.props.selectedLocale.bcp47Tag)} ${this.props.selectedLocale.bcp47Tag}`
+                    ? this.getLocaleDisplayName(this.props.selectedLocale.bcp47Tag)
                     : prevState.searchTerm
             }));
         }
     };
 
     getInputValue = () => {
-        if (this.state.open) {
+        if (this.state.isOpen) {
             return this.state.searchTerm;
         }
         if (this.props.selectedLocale && this.props.selectedLocale.bcp47Tag) {
-            return `${Locales.getDisplayName(this.props.selectedLocale.bcp47Tag)} ${this.props.selectedLocale.bcp47Tag}`;
+            return this.getLocaleDisplayName(this.props.selectedLocale.bcp47Tag);
         }
         if (this.props.defaultLocale) {
-            return `${Locales.getDisplayName(this.props.defaultLocale)} ${this.props.defaultLocale}`;
+            return this.getLocaleDisplayName(this.props.defaultLocale);
         }
         return "";
     };
 
     getFilteredLocales = () => {
         return this.props.localeOptions.filter(locale => {
-            const displayString = `${Locales.getDisplayName(locale.bcp47Tag)} ${locale.bcp47Tag}`.toLowerCase();
-            return displayString.includes(this.state.searchTerm.toLowerCase());
+            return this.getLocaleDisplayName(locale.bcp47Tag).toLowerCase().includes(this.state.searchTerm.toLowerCase());
         });
     };
 
@@ -105,7 +107,7 @@ class RepositoryLocaleDropdown extends React.Component {
                     onClick={this.handleInputClick}
                     autoComplete="off"
                 />
-                {this.state.open && (
+                {this.state.isOpen && (
                     <ul
                         className="dropdown-menu locale-dropdown-menu"
                     >
@@ -116,14 +118,14 @@ class RepositoryLocaleDropdown extends React.Component {
                                     className="locale-dropdown-item"
                                     onClick={() => this.handleSelect(locale)}
                                 >
-                                    <a tabIndex="-1">
-                                        {Locales.getDisplayName(locale.bcp47Tag)} {locale.bcp47Tag}
+                                    <a>
+                                        {this.getLocaleDisplayName(locale.bcp47Tag)}
                                     </a>
                                 </li>
                             ))
                         ) : (
                             <li className="disabled locale-dropdown-item-disabled">
-                                <a tabIndex="-1">No results</a>
+                                <a>No results</a>
                             </li>
                         )}
                     </ul>
