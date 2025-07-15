@@ -174,7 +174,10 @@ public class PushRunService {
           pushRunAssetTmTextUnitRepository.deleteByPushRunsNotLatestPerAsset(
               startDate, endDate, latestPushRunIdsPerAsset, DELETE_BATCH_SIZE);
       logger.debug(
-          "Deleted {} pushRunAssetTmTextUnit rows in batch: {}", deleteCount, batchNumber++);
+          "Deleted {} pushRunAssetTmTextUnit rows in batch: {} without IDs: {}",
+          deleteCount,
+          batchNumber++,
+          latestPushRunIdsPerAsset);
     } while (deleteCount == DELETE_BATCH_SIZE);
     this.pushRunAssetRepository.deleteByPushRunsNotLatestPerAsset(
         startDate, endDate, latestPushRunIdsPerAsset);

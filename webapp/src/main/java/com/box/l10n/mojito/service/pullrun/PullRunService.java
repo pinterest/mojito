@@ -88,7 +88,10 @@ public class PullRunService {
           pullRunTextUnitVariantRepository.deleteByPullRunsNotLatestPerAsset(
               startDate, endDate, latestPullRunIdsPerAsset, deleteBatchSize);
       logger.debug(
-          "Deleted {} pullRunTextUnitVariant rows in batch: {}", deleteCount, batchNumber++);
+          "Deleted {} pullRunTextUnitVariant rows in batch: {} without IDs: {}",
+          deleteCount,
+          batchNumber++,
+          latestPullRunIdsPerAsset);
       waitForConfiguredTime();
     } while (deleteCount == deleteBatchSize);
     pullRunAssetRepository.deleteByPullRunsNotLatestPerAsset(

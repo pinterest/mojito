@@ -4,7 +4,6 @@ import static com.box.l10n.mojito.service.delta.CleanPushPullPerAssetConfigurati
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 
-import com.box.l10n.mojito.service.assetExtraction.AssetExtractionCleanupJob;
 import com.box.l10n.mojito.service.pullrun.PullRunService;
 import com.box.l10n.mojito.service.pushrun.PushRunService;
 import java.time.Duration;
@@ -25,7 +24,7 @@ import org.springframework.stereotype.Service;
 public class PushPullRunCleanupService {
 
   /** logger */
-  static Logger logger = LoggerFactory.getLogger(AssetExtractionCleanupJob.class);
+  static Logger logger = LoggerFactory.getLogger(PushPullRunCleanupService.class);
 
   private final PushRunService pushRunService;
 
