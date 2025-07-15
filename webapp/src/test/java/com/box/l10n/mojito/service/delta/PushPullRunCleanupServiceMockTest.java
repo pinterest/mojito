@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.delta;
 
+import static com.box.l10n.mojito.service.delta.CleanPushPullPerAssetConfigurationProperties.DayRange;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -43,12 +44,8 @@ public class PushPullRunCleanupServiceMockTest {
     mocks = MockitoAnnotations.openMocks(this);
 
     this.configurationProperties = new CleanPushPullPerAssetConfigurationProperties();
-    DayRange firstDayRange = new DayRange();
-    firstDayRange.setStartDay((short) 15);
-    firstDayRange.setEndDay((short) 21);
-    DayRange secondDayRange = new DayRange();
-    secondDayRange.setStartDay((short) 22);
-    secondDayRange.setEndDay((short) 31);
+    DayRange firstDayRange = new DayRange(15, 21);
+    DayRange secondDayRange = new DayRange(22, 31);
     this.configurationProperties.setDayRanges(ImmutableList.of(firstDayRange, secondDayRange));
   }
 

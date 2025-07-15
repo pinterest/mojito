@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.delta;
 
+import static com.box.l10n.mojito.service.delta.CleanPushPullPerAssetConfigurationProperties.DayRange;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -90,9 +91,7 @@ public class PushPullRunCleanupServiceTest extends ServiceTestBase {
 
   @Before
   public void before() throws RepositoryNameAlreadyUsedException {
-    DayRange dayRange = new DayRange();
-    dayRange.setStartDay((short) 1);
-    dayRange.setEndDay((short) 31);
+    DayRange dayRange = new DayRange(1, 31);
     this.configurationProperties.setDayRanges(ImmutableList.of(dayRange));
     if (tm == null) {
       tm = new TM();

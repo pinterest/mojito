@@ -17,4 +17,6 @@ public class CleanPushPullPerAssetConfigurationProperties {
   public void setDayRanges(List<DayRange> dayRanges) {
     this.dayRanges = dayRanges;
   }
+
+  public record DayRange(int startDay, int endDay) {}
 }

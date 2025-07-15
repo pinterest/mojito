@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.delta;
 
+import static com.box.l10n.mojito.service.delta.CleanPushPullPerAssetConfigurationProperties.DayRange;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 
@@ -97,10 +98,7 @@ public class PushPullRunCleanupService {
       for (DayRange dayRange : configurationProperties.getDayRanges()) {
         Optional<DateRange> dateRange =
             this.getRange(
-                validStartDateOfRange,
-                currentDateTime,
-                dayRange.getStartDay(),
-                dayRange.getEndDay());
+                validStartDateOfRange, currentDateTime, dayRange.startDay(), dayRange.endDay());
         dateRange.ifPresent(dateRanges::add);
       }
       validStartDateOfRange =
