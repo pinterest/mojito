@@ -29,6 +29,7 @@ import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.service.tm.TMRepository;
 import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.test.TestIdWatcher;
+import com.google.common.collect.ImmutableList;
 import jakarta.persistence.EntityManager;
 import java.time.Duration;
 import java.util.Arrays;
@@ -89,7 +90,10 @@ public class PushPullRunCleanupServiceTest extends ServiceTestBase {
 
   @Before
   public void before() throws RepositoryNameAlreadyUsedException {
-    this.configurationProperties.setStartDayOfFirstRange(1);
+    DayRange dayRange = new DayRange();
+    dayRange.setStartDay((short) 1);
+    dayRange.setEndDay((short) 31);
+    this.configurationProperties.setDayRanges(ImmutableList.of(dayRange));
     if (tm == null) {
       tm = new TM();
       tmRepository.save(tm);

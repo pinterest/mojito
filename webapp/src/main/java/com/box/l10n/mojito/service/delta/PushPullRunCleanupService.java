@@ -94,21 +94,15 @@ public class PushPullRunCleanupService {
     while ((validStartDateOfRange.getYear() < currentDateTime.getYear())
         || (validStartDateOfRange.getYear() == currentDateTime.getYear()
             && validStartDateOfRange.getMonthValue() <= currentDateTime.getMonthValue())) {
-      Optional<DateRange> firstDateRange =
-          this.getRange(
-              validStartDateOfRange,
-              currentDateTime,
-              this.configurationProperties.getStartDayOfFirstRange(),
-              this.configurationProperties.getEndDayOfFirstRange());
-      firstDateRange.ifPresent(dateRanges::add);
-      Optional<DateRange> secondDateRange =
-          this.getRange(
-              validStartDateOfRange,
-              currentDateTime,
-              this.configurationProperties.getStartDayOfSecondRange(),
-              this.configurationProperties.getEndDayOfSecondRange());
-      secondDateRange.ifPresent(dateRanges::add);
-
+      for (DayRange dayRange : configurationProperties.getDayRanges()) {
+        Optional<DateRange> dateRange =
+            this.getRange(
+                validStartDateOfRange,
+                currentDateTime,
+                dayRange.getStartDay(),
+                dayRange.getEndDay());
+        dateRange.ifPresent(dateRanges::add);
+      }
       validStartDateOfRange =
           validStartDateOfRange
               .toLocalDate()
@@ -118,15 +112,15 @@ public class PushPullRunCleanupService {
     }
     dateRanges.forEach(
         dateRange -> {
+          logger.debug(
+              "Deleting push and pull runs from {} to {}", dateRange.startDate, dateRange.endDate);
           this.pushRunService.deletePushRunsByAsset(dateRange.startDate, dateRange.endDate);
           this.pullRunService.deletePullRunsByAsset(dateRange.startDate, dateRange.endDate);
         });
   }
 
   public void cleanOldPushPullData(Duration retentionDuration) {
-    if (this.configurationProperties.isEnabled()) {
-      this.deletePushAndPullRunsByAsset(retentionDuration);
-    }
+    this.deletePushAndPullRunsByAsset(retentionDuration);
 
     pushRunService.deleteAllPushEntitiesOlderThan(retentionDuration);
     pullRunService.deleteAllPullEntitiesOlderThan(retentionDuration);

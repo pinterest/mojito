@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 
 import com.box.l10n.mojito.service.pullrun.PullRunService;
 import com.box.l10n.mojito.service.pushrun.PushRunService;
+import com.google.common.collect.ImmutableList;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -33,11 +34,22 @@ public class PushPullRunCleanupServiceMockTest {
 
   @Captor ArgumentCaptor<ZonedDateTime> endDateTimeCaptor;
 
+  CleanPushPullPerAssetConfigurationProperties configurationProperties;
+
   AutoCloseable mocks;
 
   @BeforeEach
   public void setUp() {
     mocks = MockitoAnnotations.openMocks(this);
+
+    this.configurationProperties = new CleanPushPullPerAssetConfigurationProperties();
+    DayRange firstDayRange = new DayRange();
+    firstDayRange.setStartDay((short) 15);
+    firstDayRange.setEndDay((short) 21);
+    DayRange secondDayRange = new DayRange();
+    secondDayRange.setStartDay((short) 22);
+    secondDayRange.setEndDay((short) 31);
+    this.configurationProperties.setDayRanges(ImmutableList.of(firstDayRange, secondDayRange));
   }
 
   @Test
@@ -48,7 +60,7 @@ public class PushPullRunCleanupServiceMockTest {
         new PushPullRunCleanupServiceTestImpl(
             this.pushRunServiceMock,
             this.pullRunServiceMock,
-            new CleanPushPullPerAssetConfigurationProperties(),
+            this.configurationProperties,
             currentDateTime);
     Duration duration = Duration.ofDays(30);
 
@@ -80,7 +92,7 @@ public class PushPullRunCleanupServiceMockTest {
         new PushPullRunCleanupServiceTestImpl(
             this.pushRunServiceMock,
             this.pullRunServiceMock,
-            new CleanPushPullPerAssetConfigurationProperties(),
+            this.configurationProperties,
             currentDateTime);
     Duration duration = Duration.ofDays(30);
 
@@ -112,7 +124,7 @@ public class PushPullRunCleanupServiceMockTest {
         new PushPullRunCleanupServiceTestImpl(
             this.pushRunServiceMock,
             this.pullRunServiceMock,
-            new CleanPushPullPerAssetConfigurationProperties(),
+            this.configurationProperties,
             currentDateTime);
     Duration duration = Duration.ofDays(30);
 
@@ -144,7 +156,7 @@ public class PushPullRunCleanupServiceMockTest {
         new PushPullRunCleanupServiceTestImpl(
             this.pushRunServiceMock,
             this.pullRunServiceMock,
-            new CleanPushPullPerAssetConfigurationProperties(),
+            this.configurationProperties,
             currentDateTime);
     Duration duration = Duration.ofDays(30);
 
@@ -176,7 +188,7 @@ public class PushPullRunCleanupServiceMockTest {
         new PushPullRunCleanupServiceTestImpl(
             this.pushRunServiceMock,
             this.pullRunServiceMock,
-            new CleanPushPullPerAssetConfigurationProperties(),
+            this.configurationProperties,
             currentDateTime);
     Duration duration = Duration.ofDays(30);
 
@@ -210,7 +222,7 @@ public class PushPullRunCleanupServiceMockTest {
         new PushPullRunCleanupServiceTestImpl(
             this.pushRunServiceMock,
             this.pullRunServiceMock,
-            new CleanPushPullPerAssetConfigurationProperties(),
+            this.configurationProperties,
             currentDateTime);
     Duration duration = Duration.ofDays(30);
 
@@ -244,7 +256,7 @@ public class PushPullRunCleanupServiceMockTest {
         new PushPullRunCleanupServiceTestImpl(
             this.pushRunServiceMock,
             this.pullRunServiceMock,
-            new CleanPushPullPerAssetConfigurationProperties(),
+            this.configurationProperties,
             currentDateTime);
     Duration duration = Duration.ofDays(60);
 
@@ -280,7 +292,6 @@ public class PushPullRunCleanupServiceMockTest {
     ZonedDateTime currentDateTime = date.atStartOfDay(ZoneId.systemDefault());
     CleanPushPullPerAssetConfigurationProperties configurationProperties =
         new CleanPushPullPerAssetConfigurationProperties();
-    configurationProperties.setEnabled(false);
     this.pushPullRunCleanupService =
         new PushPullRunCleanupServiceTestImpl(
             this.pushRunServiceMock,
