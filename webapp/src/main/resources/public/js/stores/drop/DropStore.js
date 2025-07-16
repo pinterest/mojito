@@ -1,4 +1,4 @@
-import alt from "../../alt";
+import alt from "../../alt.js";
 
 import DropActions from "../../actions/drop/dropActions";
 import DropDataSource from "./DropDataSource";

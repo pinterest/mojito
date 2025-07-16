@@ -1,4 +1,4 @@
-import alt from "../../alt";
+import alt from "../../alt.js";
 import UserSearchParamActions from "../../actions/users/UserSearchParamActions";
 import UserActions from "../../actions/users/UserActions";
 

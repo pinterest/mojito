@@ -1,4 +1,4 @@
-import alt from "../../alt";
+import alt from "../../alt.js";
 import BranchesDataSource from "../../actions/branches/BranchesDataSource";
 import BranchesSearchParamStore from "./BranchesSearchParamStore";
 import BranchesPageActions from "../../actions/branches/BranchesPageActions";

@@ -1,4 +1,4 @@
-import alt from "../../alt";
+import alt from "../../alt.js";
 import ShareSearchParamsModalActions from "../../actions/workbench/ShareSearchParamsModalActions";
 import ShareSearchParamsDataSource from "../../actions/workbench/ShareSearchParamsDataSource";
 import UrlHelper from "../../utils/UrlHelper";

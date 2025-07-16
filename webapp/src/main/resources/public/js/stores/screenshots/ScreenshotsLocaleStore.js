@@ -1,4 +1,4 @@
-import alt from "../../alt";
+import alt from "../../alt.js";
 import ScreenshotsRepositoryActions from "../../actions/screenshots/ScreenshotsRepositoryActions";
 import ScreenshotsPageActions from "../../actions/screenshots/ScreenshotsPageActions";
 import ScreenshotsLocaleActions from "../../actions/screenshots/ScreenshotsLocaleActions";

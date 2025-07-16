@@ -1,4 +1,4 @@
-import alt from "../../alt";
+import alt from "../../alt.js";
 import UserActions from "../../actions/users/UserActions";
 import UserDataSource from "../../actions/users/UserDataSource";
 import User from "../../sdk/entity/User";

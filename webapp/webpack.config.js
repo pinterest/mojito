@@ -1,8 +1,15 @@
-const path = require('path');
-const webpack = require("webpack");
-const TerserPlugin = require("terser-webpack-plugin");
+import path from 'path';
+import webpack from 'webpack';
+import TerserPlugin from 'terser-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-module.exports = (env) => {
+// Polyfill __dirname for ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+export default (env) => {
     env = env || {};
 
     const isProdEnv = Boolean(env.production);
@@ -142,8 +149,7 @@ module.exports = (env) => {
             extensions: ['.js', '.jsx']
         }
     };
-
-    const HtmlWebpackPlugin = require('html-webpack-plugin');
+    
     config.plugins.push(new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, './target/classes/templates/index.html'),
         template: 'src/main/resources/templates/index.html',

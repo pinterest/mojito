@@ -1,4 +1,4 @@
-import alt from "../../alt";
+import alt from "../../alt.js";
 import Error from "../../utils/Error";
 import SearchConstants from "../../utils/SearchConstants";
 import SearchDataSource from "../../actions/workbench/SearchDataSource";

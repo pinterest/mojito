@@ -1,5 +1,5 @@
 import PaginatorStore from "../PaginatorStore";
-import alt from "../../alt";
+import alt from "../../alt.js";
 import BranchTextUnitsPaginatorActions from "../../actions/branches/BranchTextUnitsPaginatorActions";
 import BranchTextUnitsPageActions from "../../actions/branches/BranchTextUnitsPageActions";
 import BranchesPageActions from "../../actions/branches/BranchesPageActions";

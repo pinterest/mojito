@@ -1,4 +1,4 @@
-import alt from "../../alt";
+import alt from "../../alt.js";
 import ScreenshotsPaginatorActions from "../../actions/screenshots/ScreenshotsPaginatorActions";
 import ScreenshotsPageActions from "../../actions/screenshots/ScreenshotsPageActions";
 import PaginatorStore from "../PaginatorStore";

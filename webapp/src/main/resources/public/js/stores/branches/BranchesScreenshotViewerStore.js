@@ -1,4 +1,4 @@
-import alt from "../../alt";
+import alt from "../../alt.js";
 import BranchesScreenshotViewerActions from "../../actions/branches/BranchesScreenshotViewerActions";
 import BranchesStore from "./BranchesStore";
 import ScreenshotViewerStore from "../ScreenshotViewerStore";

@@ -1,5 +1,5 @@
-import alt from "../../alt";
-import TextUnitDataSource from "../../actions/workbench/TextUnitDataSource";
+import alt from "../../alt.js";
+import TextUnitDataSource from "../../actions/workbench/TextUnitDataSource.js";
 import GitBlameActions from "../../actions/workbench/GitBlameActions";
 import GitBlameScreenshotViewerActions from "../../actions/workbench/GitBlameScreenshotViewerActions";
 import GitBlameScreenshotViewerStore from "./GitBlameScreenshotViewerStore";

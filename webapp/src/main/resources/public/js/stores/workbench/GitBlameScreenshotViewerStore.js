@@ -1,4 +1,4 @@
-import alt from "../../alt";
+import alt from "../../alt.js";
 import GitBlameScreenshotViewerActions from "../../actions/workbench/GitBlameScreenshotViewerActions";
 import ScreenshotViewerStore from "../ScreenshotViewerStore";
 import ScreenshotViewerDataSource from "../../actions/screenshots/ScreenshotViewerDataSource";

@@ -1,4 +1,4 @@
-import alt from "../../alt";
+import alt from "../../alt.js";
 import UserModalActions from "../../actions/users/UserModalActions";
 import UserDataSource from "../../actions/users/UserDataSource";
 import UserStore from "./UserStore";

@@ -1,4 +1,4 @@
-import alt from "../../alt";
+import alt from "../../alt.js";
 
 import BoxSDKConfigActions from "../../actions/boxsdk/BoxSDKConfigActions";
 import BoxSDKConfigDataSource from "./BoxSDKConfigDataSource";

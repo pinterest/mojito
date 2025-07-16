@@ -1,4 +1,4 @@
-import alt from "../../alt";
+import alt from "../../alt.js";
 import ScreenshotsSearchTextActions from "../../actions/screenshots/ScreenshotsSearchTextActions";
 import ScreenshotsPageActions from "../../actions/screenshots/ScreenshotsPageActions";
 import SearchParamsStore from "../../stores/workbench/SearchParamsStore";

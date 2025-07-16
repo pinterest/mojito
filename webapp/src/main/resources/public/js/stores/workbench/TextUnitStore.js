@@ -1,7 +1,7 @@
-import alt from "../../alt";
+import alt from "../../alt.js";
 import Error from "../../utils/Error";
 import TextUnit from "../../sdk/TextUnit";
-import TextUnitDataSource from "../../actions/workbench/TextUnitDataSource";
+import TextUnitDataSource from "../../actions/workbench/TextUnitDataSource.js";
 import WorkbenchActions from "../../actions/workbench/WorkbenchActions";
 
 class TextUnitStore {

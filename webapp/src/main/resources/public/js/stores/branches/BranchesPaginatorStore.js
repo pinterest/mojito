@@ -1,4 +1,4 @@
-import alt from "../../alt";
+import alt from "../../alt.js";
 import BranchesPaginatorActions from "../../actions/branches/BranchesPaginatorActions";
 import BranchesPageActions from "../../actions/branches/BranchesPageActions";
 import PaginatorStore from "../PaginatorStore";

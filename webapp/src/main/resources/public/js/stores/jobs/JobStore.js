@@ -1,4 +1,4 @@
-import alt from "../../alt";
+import alt from "../../alt.js";
 import JobDataSource from "../../actions/jobs/JobDataSource";
 import JobActions from "../../actions/jobs/JobActions";
 import { JobStatus } from "../../utils/JobStatus";

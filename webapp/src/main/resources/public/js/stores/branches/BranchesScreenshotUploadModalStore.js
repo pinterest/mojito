@@ -1,4 +1,4 @@
-import alt from "../../alt";
+import alt from "../../alt.js";
 import BranchesScreenshotUploadActions from "../../actions/branches/BranchesScreenshotUploadActions";
 import BranchesScreenshotUploadDataSource from "../../actions/branches/BranchesScreenshotUploadDataSource";
 import v4 from "uuid/v4";

@@ -1,4 +1,4 @@
-import alt from "../../alt";
+import alt from "../../alt.js";
 import BranchTextUnitsPageActions from "../../actions/branches/BranchTextUnitsPageActions";
 import BranchTextUnitsParamActions from "../../actions/branches/BranchTextUnitsParamActions";
 import BranchesPageActions from "../../actions/branches/BranchesPageActions";

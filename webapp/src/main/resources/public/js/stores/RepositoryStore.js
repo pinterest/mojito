@@ -1,4 +1,4 @@
-import alt from "../alt";
+import alt from "../alt.js";
 import RepositoryActions from "../actions/RepositoryActions";
 import WorkbenchActions from "../actions/workbench/WorkbenchActions";
 import RepositoryDataSource from "../actions/RepositoryDataSource";
