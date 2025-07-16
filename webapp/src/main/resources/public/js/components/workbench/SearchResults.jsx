@@ -29,6 +29,7 @@ import ViewModeDropdown from "./ViewModeDropdown";
 import ViewModeActions from "../../actions/workbench/ViewModeActions.js";
 import AuthorityService from "../../utils/AuthorityService";
 import DelayedSpinner from "../common/DelayedSpinner";
+import magnifyingGlassSvg from "../../../img/magnifying-glass.svg";
 
 let SearchResults = createReactClass({
     displayName: 'SearchResults',
@@ -801,7 +802,7 @@ let SearchResults = createReactClass({
                 </div>
                 <img
                     className="empty-search-container-img"
-                    src={require("../../../img/magnifying-glass.svg")}
+                    src={magnifyingGlassSvg}
                 />
             </div>
         );

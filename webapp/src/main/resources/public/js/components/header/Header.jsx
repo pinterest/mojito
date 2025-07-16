@@ -18,7 +18,7 @@ import SearchConstants from "../../utils/SearchConstants";
 import {FormControl, Glyphicon, MenuItem, Nav, Navbar, NavDropdown, NavItem} from 'react-bootstrap';
 import BranchesPageActions from "../../actions/branches/BranchesPageActions";
 import {withAppConfig} from "../../utils/AppConfig";
-import AuthorityService from "../../utils/AuthorityService";
+import LogoPng from "../../../img/logo.png";
 
 class Header extends React.Component {
     state = {
@@ -83,7 +83,7 @@ class Header extends React.Component {
         return (
             <Navbar fluid={true}>
                 <a className="navbar-brand">
-                    <img src={require('../../../img/logo.png')} className="logo" alt="Box Mojito"/>
+                    <img src={LogoPng} className="logo" alt="Box Mojito"/>
                 </a>
                 <Nav>
                     <LinkContainer to="/repositories" onClick={() => {

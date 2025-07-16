@@ -62,7 +62,11 @@ export default (env) => {
                     }
                 },
                 {
-                    test: /\.(gif|png|jpe?g|svg)$/i,
+                    test: /\.(svg|png)$/,
+                    type: 'asset/resource',
+                },
+                {
+                    test: /\.(gif|jpe?g)$/i,
                     use: [
                         {
                             loader: 'file-loader',
