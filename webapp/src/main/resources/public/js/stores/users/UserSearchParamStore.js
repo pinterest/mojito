@@ -1,6 +1,6 @@
 import alt from "../../alt.js";
-import UserSearchParamActions from "../../actions/users/UserSearchParamActions";
-import UserActions from "../../actions/users/UserActions";
+import UserSearchParamActions from "../../actions/users/UserSearchParamActions.js";
+import UserActions from "../../actions/users/UserActions.js";
 
 class UserSearchParamStore {
     constructor() {

@@ -1,7 +1,7 @@
 import alt from "../../alt.js";
-import BranchesPaginatorActions from "../../actions/branches/BranchesPaginatorActions";
-import BranchesPageActions from "../../actions/branches/BranchesPageActions";
-import PaginatorStore from "../PaginatorStore";
+import BranchesPaginatorActions from "../../actions/branches/BranchesPaginatorActions.js";
+import BranchesPageActions from "../../actions/branches/BranchesPageActions.js";
+import PaginatorStore from "../PaginatorStore.js";
 
 class BranchesPaginatorStore extends PaginatorStore {
 

@@ -1,4 +1,4 @@
-import alt from "../...js";
+import alt from "../../alt.js";
 
 class BranchTextUnitsPageActions {
     constructor() {
