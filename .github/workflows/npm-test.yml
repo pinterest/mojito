@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
@@ -15,7 +15,7 @@ jobs:
       - name: Spotless check
         run: mvn spotless:check
       - name: Maven install, test skipped
-        run: mvn install -DskipTests
+        run: mvn clean install -DskipTests
       - name: Npm test
         run: npm test
         working-directory: ./webapp
