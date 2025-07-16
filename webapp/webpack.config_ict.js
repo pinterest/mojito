@@ -1,9 +1,14 @@
-const path = require('path');
-const webpack = require("webpack");
-const TerserPlugin = require("terser-webpack-plugin");
+import path from 'path';
+import webpack from 'webpack';
+import TerserPlugin from 'terser-webpack-plugin';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
+// Polyfill __dirname for ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-module.exports = function (env) {
+export default (env) => {
     env = env || {};
     
     const isProdEnv = Boolean(env.production)
@@ -52,7 +57,11 @@ module.exports = function (env) {
                     }
                 },
                 {
-                    test: /\.(gif|png|jpe?g|svg)$/i,
+                    test: /\.(svg|png)$/,
+                    type: 'asset/resource',
+                },
+                {
+                    test: /\.(gif|jpe?g)$/i,
                     use: [
                         {
                             loader: 'file-loader',
@@ -90,16 +99,16 @@ module.exports = function (env) {
                         {
                             loader: path.resolve('src/main/webpackloader/properties.js')
                         }
-                    ]
+                    ],
                 },
                 {
                     // __webpack_public_path__ is not supported by ExtractTextPlugin
-                    // so we inline all the fonts here. If not inlined, references 
-                    // to the font are invalid if mojito is deployed with a 
-                    // specific deploy path. 
+                    // so we inline all the fonts here. If not inlined, references
+                    // to the font are invalid if mojito is deployed with a
+                    // specific deploy path.
                     // hardcoded for deploy path for test -->
                     //    name: '{deployPath}/fonts/[name]-[contenthash].[ext]'
-                    
+
                     test: /\.(eot|ttf|woff|woff2)$/,
                     loader: 'url-loader',
                     options: {
