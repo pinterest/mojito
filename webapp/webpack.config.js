@@ -67,32 +67,18 @@ export default (env) => {
                 },
                 {
                     test: /\.(gif|jpe?g)$/i,
+                    type: 'asset/resource',
+                    generator: {
+                        filename: 'img/[name]-[contenthash][ext]'
+                    },
                     use: [
-                        {
-                            loader: 'file-loader',
-                            options: {
-                                name: 'img/[name]-[contenthash].[ext]',
-                            }
-                        },
                         {
                             loader: 'image-webpack-loader',
                             options: {
-                                name: 'img/[name]-[contenthash].[ext]',
-                                query: {
-                                    mozjpeg: {
-                                        progressive: true
-                                    },
-                                    gifsicle: {
-                                        interlaced: false
-                                    },
-                                    optipng: {
-                                        optimizationLevel: 4
-                                    },
-                                    pngquant: {
-                                        quality: '75-90',
-                                        speed: 3
-                                    },
-                                },
+                                mozjpeg: { progressive: true },
+                                gifsicle: { interlaced: false },
+                                optipng: { optimizationLevel: 4 },
+                                pngquant: { quality: [0.75, 0.9], speed: 3 },
                             }
                         }
                     ]
