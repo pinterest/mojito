@@ -22,7 +22,7 @@ export default (env) => {
         },
         output: {
             path: path.resolve(__dirname, './target/classes/public'),
-            publicPath: '/',
+            publicPath: '',
             filename: 'js/[name]-[contenthash].js',
             chunkFilename: 'js/[name]-[chunkhash].js'
         },
@@ -62,11 +62,7 @@ export default (env) => {
                     }
                 },
                 {
-                    test: /\.(svg|png)$/,
-                    type: 'asset/resource',
-                },
-                {
-                    test: /\.(gif|jpe?g)$/i,
+                    test: /\.(svg|png|gif|jpe?g)$/i,
                     type: 'asset/resource',
                     generator: {
                         filename: 'img/[name]-[contenthash][ext]'
