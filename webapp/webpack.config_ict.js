@@ -57,37 +57,19 @@ export default (env) => {
                     }
                 },
                 {
-                    test: /\.(svg|png)$/,
+                    test: /\.(svg|png|gif|jpe?g)$/i,
                     type: 'asset/resource',
-                },
-                {
-                    test: /\.(gif|jpe?g)$/i,
+                    generator: {
+                        filename: 'img/[name]-[contenthash][ext]'
+                    },
                     use: [
-                        {
-                            loader: 'file-loader',
-                            options: {
-                                name: 'img/[name]-[contenthash].[ext]',
-                            }
-                        },
                         {
                             loader: 'image-webpack-loader',
                             options: {
-                                name: 'img/[name]-[contenthash].[ext]',
-                                query: {
-                                    mozjpeg: {
-                                        progressive: true
-                                    },
-                                    gifsicle: {
-                                        interlaced: false
-                                    },
-                                    optipng: {
-                                        optimizationLevel: 4
-                                    },
-                                    pngquant: {
-                                        quality: '75-90',
-                                        speed: 3
-                                    },
-                                },
+                                mozjpeg: { progressive: true },
+                                gifsicle: { interlaced: false },
+                                optipng: { optimizationLevel: 4 },
+                                pngquant: { quality: [0.75, 0.9], speed: 3 },
                             }
                         }
                     ]
@@ -102,20 +84,12 @@ export default (env) => {
                     ],
                 },
                 {
-                    // __webpack_public_path__ is not supported by ExtractTextPlugin
-                    // so we inline all the fonts here. If not inlined, references
-                    // to the font are invalid if mojito is deployed with a
-                    // specific deploy path.
-                    // hardcoded for deploy path for test -->
-                    //    name: '{deployPath}/fonts/[name]-[contenthash].[ext]'
-
                     test: /\.(eot|ttf|woff|woff2)$/,
-                    loader: 'url-loader',
-                    options: {
-                        name: 'fonts/[name]-[contenthash].[ext]'
+                    type: 'asset/resource',
+                    generator: {
+                        filename: 'fonts/[name]-[contenthash].[ext]'
                     }
                 },
-
                 {
                     test: /\.scss$/,
                     use: [{

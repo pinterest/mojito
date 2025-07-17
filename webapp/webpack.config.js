@@ -95,7 +95,6 @@ export default (env) => {
                         filename: 'fonts/[name]-[contenthash].[ext]'
                     }
                 },
-
                 {
                     test: /\.scss$/,
                     use: [{
