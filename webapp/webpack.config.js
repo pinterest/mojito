@@ -1,11 +1,11 @@
 import path from 'path';
 import webpack from 'webpack';
-import TerserPlugin from 'terser-webpack-plugin';
+import TerserPluginImport from 'terser-webpack-plugin';
+const TerserPlugin = TerserPluginImport.default || TerserPluginImport;
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
-// Polyfill __dirname for ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -93,17 +93,10 @@ export default (env) => {
                     ],
                 },
                 {
-                    // __webpack_public_path__ is not supported by ExtractTextPlugin
-                    // so we inline all the fonts here. If not inlined, references
-                    // to the font are invalid if mojito is deployed with a
-                    // specific deploy path.
-                    // hardcoded for deploy path for test -->
-                    //    name: '{deployPath}/fonts/[name]-[contenthash].[ext]'
-
                     test: /\.(eot|ttf|woff|woff2)$/,
-                    loader: 'url-loader',
-                    options: {
-                        name: 'fonts/[name]-[contenthash].[ext]'
+                    type: 'asset/resource',
+                    generator: {
+                        filename: 'fonts/[name]-[contenthash][ext][query]'
                     }
                 },
 
