@@ -96,7 +96,7 @@ export default (env) => {
                     test: /\.(eot|ttf|woff|woff2)$/,
                     type: 'asset/resource',
                     generator: {
-                        filename: 'fonts/[name]-[contenthash][ext][query]'
+                        filename: 'fonts/[name]-[contenthash].[ext]'
                     }
                 },
 
