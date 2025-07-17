@@ -1,4 +1,4 @@
-import { validateCronExpression } from '../utils/CronExpressionHelper';
+import { validateCronExpression } from '../utils/CronExpressionHelper.js';
 
 describe('validateCronExpression', () => {
   it('returns true for valid cron expressions', () => {
