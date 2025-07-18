@@ -63,7 +63,7 @@ export default (env) => {
                 },
                 {
                     test: /\.(svg|png|gif|jpe?g)$/i,
-                    type: 'asset/resource',
+                    type: 'asset',
                     generator: {
                         filename: 'img/[name]-[contenthash][ext]'
                     },
@@ -90,7 +90,7 @@ export default (env) => {
                 },
                 {
                     test: /\.(eot|ttf|woff|woff2)$/,
-                    type: 'asset/resource',
+                    type: 'asset',
                     generator: {
                         filename: 'fonts/[name]-[contenthash].[ext]'
                     }
