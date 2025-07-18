@@ -12,7 +12,8 @@ const RepositoryGeneralInput = ({
     onTextInputChange,
     onSourceLocaleChange,
     locales,
-    onCheckSLAChange
+    onCheckSLAChange,
+    isEditing
 }) => (
     <div className="form-group">
         <LabeledTextInput
@@ -36,6 +37,7 @@ const RepositoryGeneralInput = ({
                 selectedLocale={sourceLocale} 
                 onSelect={onSourceLocaleChange}
                 defaultLocaleTag="en"
+                disabled={isEditing}
             />
         </div>
         <LabeledTextInput

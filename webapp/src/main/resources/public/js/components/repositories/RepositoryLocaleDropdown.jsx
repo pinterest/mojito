@@ -12,7 +12,8 @@ class RepositoryLocaleDropdown extends React.Component {
                 id: PropTypes.number
             })
         ).isRequired,
-        defaultLocaleTag: PropTypes.string
+        defaultLocaleTag: PropTypes.string,
+        disabled: PropTypes.bool
     };
 
     constructor(props) {
@@ -106,6 +107,7 @@ class RepositoryLocaleDropdown extends React.Component {
                     onChange={this.handleInputChange}
                     onClick={this.handleInputClick}
                     autoComplete="off"
+                    disabled={this.props.disabled}
                 />
                 {this.state.isOpen && (
                     <ul

@@ -11,6 +11,15 @@ const RepositoryDataSource = {
         error: RepositoryActions.createRepositoryError
     },
 
+    updateRepository: {
+        remote(state, repository) {
+            return RepositoryClient.updateRepository(repository);
+        },
+
+        success: RepositoryActions.updateRepositorySuccess,
+        error: RepositoryActions.updateRepositoryError
+    },
+
     getAllRepositories: {
         remote() {
             return RepositoryClient.getRepositories();

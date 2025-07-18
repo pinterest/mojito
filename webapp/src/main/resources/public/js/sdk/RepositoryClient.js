@@ -5,6 +5,10 @@ class RepositoryClient extends BaseClient {
         return this.post(this.getUrl(), repository);
     }
 
+    updateRepository(repository) {
+        return this.patch(this.getUrl() + "/" + repository.id, repository);
+    }
+
     getRepositories() {
         return this.get(this.getUrl(), {});
     }

@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import { Button, Modal, Form } from "react-bootstrap";
 import RepositoryGeneralInput from "./RepositoryGeneralInput";
 import RepositoryLocalesInput from "./RepositoryLocalesInput";
-import { deserializeAssetIntegrityCheckers, validateAssetIntegrityCheckers, flattenRepositoryLocales } from "../../utils/RepositoryInputHelper";
+import { deserializeAssetIntegrityCheckers, serializeAssetIntegrityCheckers, validateAssetIntegrityCheckers, flattenRepositoryLocales, unflattenRepositoryLocales } from "../../utils/RepositoryInputHelper";
 import LocaleStore from "../../stores/LocaleStore";
 import LocaleActions from "../../actions/LocaleActions";
 
@@ -14,6 +14,7 @@ const STEP = {
 };
 
 const DEFAULT_INPUT_STATE = {
+    id: null,
     name: "",
     description: "",
     sourceLocale: {},
@@ -26,6 +27,7 @@ const DEFAULT_INPUT_STATE = {
 const RepositoryInputModal  = createReactClass({
     displayName: "RepositoryInputModal",
     propTypes: {
+        repository: PropTypes.object,
         title: PropTypes.string.isRequired,
         show: PropTypes.bool.isRequired,
         onClose: PropTypes.func.isRequired,
@@ -64,9 +66,31 @@ const RepositoryInputModal  = createReactClass({
         ) {
             this.setState({ currentStep: STEP.GENERAL });
         }
-        if (!this.props.show && prevProps.show) {
-            this.setState({ ...DEFAULT_INPUT_STATE });
+        if (prevProps.repository !== this.props.repository) {
+            if (this.props.repository) {
+                this.setState({
+                    id: this.props.repository.id,
+                    name: this.props.repository.name || "",
+                    description: this.props.repository.description || "",
+                    sourceLocale: this.props.repository.sourceLocale || {},
+                    checkSLA: this.props.repository.checkSLA || false,
+                    assetIntegrityCheckers: serializeAssetIntegrityCheckers(this.props.repository.assetIntegrityCheckers) || "",
+                    repositoryLocales: unflattenRepositoryLocales(this.props.repository.repositoryLocales, this.props.repository.sourceLocale) || [],
+                    currentStep: STEP.GENERAL
+                });
+            } else {
+                this.clearModal();
+            }
         }
+        if (!this.props.show && prevProps.show) {
+            this.clearModal();
+        }
+    },
+
+    clearModal() {
+        this.setState({
+            ...DEFAULT_INPUT_STATE
+        });
     },
 
     isStepValid(step) {
@@ -111,6 +135,7 @@ const RepositoryInputModal  = createReactClass({
     handleSubmit(e) {
         e.preventDefault();
         this.props.onSubmit({
+            id: this.state.id,
             name: this.state.name,
             description: this.state.description,
             sourceLocale: this.state.sourceLocale,
@@ -135,6 +160,7 @@ const RepositoryInputModal  = createReactClass({
                         locales={this.state.locales}
                         onSourceLocaleChange={this.handleSourceLocaleChange}
                         onCheckSLAChange={this.handleCheckSLAChange}
+                        isEditing={Boolean(this.props.repository)}
                     />
                 );
             case STEP.LOCALES:

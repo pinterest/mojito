@@ -27,6 +27,19 @@ class RepositoryStore {
         this.setError(error);
     }
 
+    updateRepository(repository) {
+        this.getInstance().updateRepository(repository);
+    }
+
+    updateRepositorySuccess() {
+        this.getAllRepositories();
+        this.setError(null);
+    }
+
+    updateRepositoryError(error) {
+        this.setError(error);
+    }
+
     setError(error) {
         this.error = error;
     }
