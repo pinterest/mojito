@@ -246,8 +246,6 @@ public class WebSecurityConfig {
                 // Everyone can create and update repositories
                 .requestMatchers(HttpMethod.POST, "/api/repositories")
                 .authenticated()
-                .requestMatchers(HttpMethod.PATCH, "/api/repositories/**")
-                .authenticated()
                 // Everyone can retrieve, upload and delete screenshots
                 .requestMatchers(HttpMethod.GET, "/api/screenshots")
                 .authenticated()
