@@ -8,7 +8,10 @@ class RepositoryActions {
             "getAllRepositoriesError",
             "createRepository",
             "createRepositorySuccess",
-            "createRepositoryError"
+            "createRepositoryError",
+            "updateRepository",
+            "updateRepositorySuccess",
+            "updateRepositoryError"
         );
     }
 }

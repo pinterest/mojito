@@ -1248,3 +1248,11 @@ label.current-pageNumber {
 .flex {
     display: flex;
 }
+
+.flex-row {
+    flex-direction: row;
+}
+
+.justify-end {
+    justify-content: flex-end;
+}
