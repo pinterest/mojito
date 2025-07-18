@@ -160,6 +160,7 @@ const RepositoryInputModal  = createReactClass({
                         locales={this.state.locales}
                         onSourceLocaleChange={this.handleSourceLocaleChange}
                         onCheckSLAChange={this.handleCheckSLAChange}
+                        isEditing={Boolean(this.props.repository)}
                     />
                 );
             case STEP.LOCALES:
