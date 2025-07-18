@@ -22,7 +22,7 @@ export default (env) => {
         },
         output: {
             path: path.resolve(__dirname, './target/classes/public'),
-            publicPath: '',
+            publicPath: '/',
             filename: 'js/[name]-[contenthash].js',
             chunkFilename: 'js/[name]-[chunkhash].js'
         },
