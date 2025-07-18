@@ -4,6 +4,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.box.l10n.mojito.entity.PollableTask;
 import io.micrometer.core.instrument.MeterRegistry;
+import java.time.Period;
 import java.time.ZonedDateTime;
 import java.util.List;
 import org.slf4j.Logger;
@@ -66,5 +67,24 @@ public class PollableTaskCleanupService {
     meterRegistry
         .counter("PollableTaskCleanupService.markAsZombieTask", "name", pollableTask.getName())
         .increment();
+  }
+
+  public void cleanOldPollableTaskData(Period retentionPeriod, int batchSize) {
+    ZonedDateTime beforeDate = ZonedDateTime.now().minus(retentionPeriod);
+    int batchNumber = 1;
+    int deleteCount;
+    do {
+      deleteCount =
+          this.pollableTaskRepository.clearParentTasksWithFinishedDateBefore(beforeDate, batchSize);
+      logger.debug("Updated {} Pollable Task rows in batch: {}", deleteCount, batchNumber++);
+    } while (deleteCount == batchSize);
+
+    batchNumber = 1;
+    do {
+      deleteCount =
+          this.pollableTaskRepository.deleteAllByFinishedDateBefore(beforeDate, batchSize);
+      ;
+      logger.debug("Deleted {} Pollable Task rows in batch: {}", deleteCount, batchNumber++);
+    } while (deleteCount == batchSize);
   }
 }

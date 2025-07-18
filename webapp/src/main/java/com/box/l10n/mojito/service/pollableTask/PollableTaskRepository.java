@@ -8,9 +8,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.EntityGraph.EntityGraphType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author jaurambault
@@ -38,4 +40,29 @@ public interface PollableTaskRepository extends JpaRepository<PollableTask, Long
       and (cast(unix_timestamp(pt.createdDate) as biginteger) + cast(pt.timeout as biginteger)) < cast(unix_timestamp(:now) as biginteger)
       """)
   List<PollableTask> findZombiePollableTasks(@Param("now") ZonedDateTime now, Pageable pageable);
+
+  @Modifying
+  @Transactional
+  @Query(
+      nativeQuery = true,
+      value =
+          """
+        update pollable_task set parent_task_id = null
+         where id in (select pt.id
+                        from pollable_task pt
+                        join pollable_task parent_pt
+                          on pt.parent_task_id = parent_pt.id
+                       where parent_pt.finished_date < :beforeDate
+                       limit :batchSize)
+        """)
+  int clearParentTasksWithFinishedDateBefore(
+      @Param("beforeDate") ZonedDateTime beforeDate, @Param("batchSize") int batchSize);
+
+  @Modifying
+  @Transactional
+  @Query(
+      nativeQuery = true,
+      value = "delete from pollable_task where finished_date < :beforeDate limit :batchSize")
+  int deleteAllByFinishedDateBefore(
+      @Param("beforeDate") ZonedDateTime beforeDate, @Param("batchSize") int batchSize);
 }
