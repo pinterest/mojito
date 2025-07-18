@@ -83,7 +83,6 @@ public class PollableTaskCleanupService {
     do {
       deleteCount =
           this.pollableTaskRepository.deleteAllByFinishedDateBefore(beforeDate, batchSize);
-      ;
       logger.debug("Deleted {} Pollable Task rows in batch: {}", deleteCount, batchNumber++);
     } while (deleteCount == batchSize);
   }
