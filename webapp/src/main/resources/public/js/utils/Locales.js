@@ -53,7 +53,6 @@ import zhHantScripts from 'cldr-data/main/zh-Hant/scripts.json';
 
 Cldr.load(
   likelySubtags,
-
   beLanguages, beTerritories, beScripts,
   enLanguages, enTerritories, enScripts,
   frLanguages, frTerritories, frScripts,
