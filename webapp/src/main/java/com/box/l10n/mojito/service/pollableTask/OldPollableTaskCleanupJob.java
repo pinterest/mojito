@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 @Configuration
 @Component
 @DisallowConcurrentExecution
-@ConditionalOnProperty(value = "l10n.pollable-task.enabled", havingValue = "true")
+@ConditionalOnProperty(value = "l10n.pollable-task.cleanup-job.enabled", havingValue = "true")
 public class OldPollableTaskCleanupJob implements Job {
   private static final Logger LOGGER = LoggerFactory.getLogger(OldPollableTaskCleanupJob.class);
 

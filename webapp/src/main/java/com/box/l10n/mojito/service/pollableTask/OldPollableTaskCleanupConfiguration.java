@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties("l10n.pollable-task")
+@ConfigurationProperties("l10n.pollable-task.cleanup-job")
 public class OldPollableTaskCleanupConfiguration {
   private String cron = "0 0 0 * * ?";
 
