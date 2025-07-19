@@ -76,14 +76,14 @@ public class PollableTaskCleanupService {
     do {
       deleteCount =
           this.pollableTaskRepository.clearParentTasksWithFinishedDateBefore(beforeDate, batchSize);
-      logger.debug("Updated {} Pollable Task rows in batch: {}", deleteCount, batchNumber++);
+      logger.info("Updated {} Pollable Task rows in batch: {}", deleteCount, batchNumber++);
     } while (deleteCount == batchSize);
 
     batchNumber = 1;
     do {
       deleteCount =
           this.pollableTaskRepository.deleteAllByFinishedDateBefore(beforeDate, batchSize);
-      logger.debug("Deleted {} Pollable Task rows in batch: {}", deleteCount, batchNumber++);
+      logger.info("Deleted {} Pollable Task rows in batch: {}", deleteCount, batchNumber++);
     } while (deleteCount == batchSize);
   }
 }
