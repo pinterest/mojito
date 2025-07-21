@@ -2,13 +2,17 @@ package com.box.l10n.mojito.service.assetExtraction;
 
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.AssetExtraction;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author aloison
@@ -33,4 +37,18 @@ public interface AssetExtractionRepository extends JpaRepository<AssetExtraction
         and pt.finishedDate is not null
         """)
   List<Long> findFinishedAndOldAssetExtractions(Pageable pageable);
+
+  @Modifying
+  @Transactional
+  @Query(
+      nativeQuery = true,
+      value =
+          """
+        update asset_extraction ae
+          join pollable_task pt
+            on pt.id = ae.pollable_task_id
+           set ae.pollable_task_id = null
+         where pt.finished_date < :beforeDate
+        """)
+  int cleanOldPollableTaskIds(@Param("beforeDate") ZonedDateTime beforeDate);
 }

@@ -57,7 +57,7 @@ public interface PollableTaskRepository extends JpaRepository<PollableTask, Long
             on pt_to_update.id = pt.id
            set pt_to_update.parent_task_id = null
         """)
-  int clearParentTasksWithFinishedDateBefore(
+  int cleanParentTasksWithFinishedDateBefore(
       @Param("beforeDate") ZonedDateTime beforeDate, @Param("batchSize") int batchSize);
 
   @Modifying

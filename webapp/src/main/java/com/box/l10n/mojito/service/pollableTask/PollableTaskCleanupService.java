@@ -3,6 +3,9 @@ package com.box.l10n.mojito.service.pollableTask;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.box.l10n.mojito.entity.PollableTask;
+import com.box.l10n.mojito.service.assetExtraction.AssetExtractionRepository;
+import com.box.l10n.mojito.service.drop.DropRepository;
+import com.box.l10n.mojito.service.tm.TMXliffRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Period;
 import java.time.ZonedDateTime;
@@ -24,6 +27,12 @@ public class PollableTaskCleanupService {
   @Autowired PollableTaskRepository pollableTaskRepository;
 
   @Autowired PollableTaskService pollableTaskService;
+
+  @Autowired DropRepository dropRepository;
+
+  @Autowired TMXliffRepository tmxliffRepository;
+
+  @Autowired AssetExtractionRepository assetExtractionRepository;
 
   @Autowired MeterRegistry meterRegistry;
 
@@ -71,11 +80,18 @@ public class PollableTaskCleanupService {
 
   public void cleanOldPollableTaskData(Period retentionPeriod, int batchSize) {
     ZonedDateTime beforeDate = ZonedDateTime.now().minus(retentionPeriod);
+    int deleteCount = this.dropRepository.cleanOldExportPollableTaskIds(beforeDate);
+    logger.debug("Updated {} Drop rows (exported)", deleteCount);
+    deleteCount = this.dropRepository.cleanOldImportPollableTaskIds(beforeDate);
+    logger.debug("Updated {} Drop rows (imported)", deleteCount);
+    deleteCount = this.assetExtractionRepository.cleanOldPollableTaskIds(beforeDate);
+    logger.debug("Updated {} Asset Extraction rows", deleteCount);
+    deleteCount = this.tmxliffRepository.cleanOldExportPollableTaskIds(beforeDate);
+    logger.debug("Updated {} TM Xliff rows", deleteCount);
     int batchNumber = 1;
-    int deleteCount;
     do {
       deleteCount =
-          this.pollableTaskRepository.clearParentTasksWithFinishedDateBefore(beforeDate, batchSize);
+          this.pollableTaskRepository.cleanParentTasksWithFinishedDateBefore(beforeDate, batchSize);
       logger.debug("Updated {} Pollable Task rows in batch: {}", deleteCount, batchNumber++);
     } while (deleteCount == batchSize);
 
