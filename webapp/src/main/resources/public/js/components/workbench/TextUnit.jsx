@@ -1114,7 +1114,7 @@ let TextUnit = createReactClass({
                     placement="top"
                     overlay={
                         <Tooltip id={`textunit-tooltip-${this.props.textUnit.getId()}`}>
-                            This text unit string is still in review, please do not skip translations required.
+                            This text unit string is still in review and has not yet been approved.
                         </Tooltip>
                     }
                 >
