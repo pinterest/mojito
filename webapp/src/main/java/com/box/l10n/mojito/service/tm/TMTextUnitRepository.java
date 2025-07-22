@@ -60,4 +60,28 @@ public interface TMTextUnitRepository extends JpaRepository<TMTextUnit, Long> {
       @Param("repositoryId") Long repositoryId,
       @Param("mainBranch") String mainBranch,
       @Param("daysInterval") int daysInterval);
+
+  @Query(
+      "SELECT new com.box.l10n.mojito.service.tm.BranchTextUnitVariantDTO("
+          + "tu.id, "
+          + "tu.name, "
+          + "tu.content, "
+          + "tu.comment, "
+          + "b.name, "
+          + "tuv.id, "
+          + "tuv.content, "
+          + "tuv.status, "
+          + "rl.locale.bcp47Tag) "
+          + "FROM TMTextUnit tu "
+          + "INNER JOIN TMTextUnitToBranch tutb ON tu.id = tutb.tmTextUnit.id "
+          + "INNER JOIN Branch b ON tutb.branch.id = b.id "
+          + "INNER JOIN Asset a ON tu.asset.id = a.id "
+          + "INNER JOIN Repository r ON a.repository.id = r.id "
+          + "INNER JOIN RepositoryLocale rl ON r.id = rl.repository.id "
+          + "LEFT JOIN TMTextUnitVariant tuv ON (tu.id = tuv.tmTextUnit.id AND rl.locale.id = tuv.locale.id) "
+          + "WHERE b.name = :branchName "
+          + "AND b.deleted = false "
+          + "AND rl.locale.id != r.sourceLocale.id "
+          + "ORDER BY tu.name, rl.locale.bcp47Tag")
+  List<BranchTextUnitVariantDTO> getBranchTextUnits(@Param("branchName") String branchName);
 }

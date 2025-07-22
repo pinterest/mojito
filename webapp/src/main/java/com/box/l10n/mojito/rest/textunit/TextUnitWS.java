@@ -20,10 +20,12 @@ import com.box.l10n.mojito.service.locale.LocaleService;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.repository.RepositoryNameNotFoundException;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
+import com.box.l10n.mojito.service.tm.BranchTextUnitVariantDTO;
 import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.service.tm.TMTextUnitCurrentVariantService;
 import com.box.l10n.mojito.service.tm.TMTextUnitHistoryService;
 import com.box.l10n.mojito.service.tm.TMTextUnitIntegrityCheckService;
+import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitStatisticService;
 import com.box.l10n.mojito.service.tm.importer.TextUnitBatchImporterService;
 import com.box.l10n.mojito.service.tm.search.SearchType;
@@ -37,7 +39,10 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.swagger.v3.oas.annotations.Operation;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
@@ -87,6 +92,8 @@ public class TextUnitWS {
   @Autowired LocaleService localeService;
 
   @Autowired AssetRepository assetRepository;
+
+  @Autowired TMTextUnitRepository tmTextUnitRepository;
 
   /**
    * Gets the TextUnits that matches the search parameters.
@@ -474,5 +481,156 @@ public class TextUnitWS {
     PollableFuture<Void> pollableFuture =
         gitBlameService.saveGitBlameWithUsages(gitBlameWithUsages);
     return pollableFuture.getPollableTask();
+  }
+
+  /**
+   * Gets text units associated with a branch that have missing variants for a locale or variants
+   * for a locale not yet in APPROVED state.
+   *
+   * <p>This endpoint returns text units for a specific branch along with information about which
+   * locale variants are not yet approved (status other than APPROVED) and missing variants (i.e.
+   * not translation created yet).
+   *
+   * @param branchName The name of the branch to search for text units
+   * @return List of text units with their relevant information
+   */
+  @Operation(
+      summary = "Get text units associated with a branch that have missing or unapproved variants")
+  @RequestMapping(
+      method = RequestMethod.GET,
+      value = "/api/textunits/branch/{branchName}/untranslated-variants")
+  @ResponseStatus(HttpStatus.OK)
+  @JsonView(View.TranslationHistorySummary.class)
+  public List<BranchTextUnitVariantStatusDTO> getTextUnitsNotYetFullyTranslated(
+      @PathVariable String branchName) {
+
+    logger.debug("Getting text units with non-approved variants for branch: {}", branchName);
+
+    List<BranchTextUnitVariantDTO> results = tmTextUnitRepository.getBranchTextUnits(branchName);
+
+    Map<Long, BranchTextUnitVariantStatusDTO> textUnitMap = new LinkedHashMap<>();
+
+    for (BranchTextUnitVariantDTO result : results) {
+      BranchTextUnitVariantStatusDTO textUnitDTO =
+          textUnitMap.computeIfAbsent(
+              result.getTextUnitId(),
+              k ->
+                  new BranchTextUnitVariantStatusDTO(
+                      result.getTextUnitId(),
+                      result.getTextUnitName(),
+                      result.getTextUnitContent(),
+                      result.getTextUnitComment(),
+                      result.getBranchName(),
+                      new ArrayList<>()));
+
+      BranchTextUnitVariantStatusDTO.UnapprovedVariantDTO variantDTO =
+          new BranchTextUnitVariantStatusDTO.UnapprovedVariantDTO(
+              result.getVariantId(),
+              result.getLocaleCode(),
+              result.getVariantContent(),
+              result.getVariantStatus());
+
+      textUnitDTO.getUnapprovedVariants().add(variantDTO);
+    }
+
+    return new ArrayList<>(textUnitMap.values());
+  }
+
+  /**
+   * Gets comprehensive translation status for a branch including statistics and variant details.
+   *
+   * <p>This endpoint returns detailed translation information for a specific branch including: -
+   * Total counts of approved, unapproved, and missing translations - Completion percentage
+   * statistics - Per text unit breakdown of approved variants, unapproved variants, and missing
+   * variants
+   *
+   * @param branchName The name of the branch to get translation status for
+   * @return Comprehensive translation status including statistics and variant details
+   */
+  @Operation(summary = "Get comprehensive translation status for a branch")
+  @RequestMapping(
+      method = RequestMethod.GET,
+      value = "/api/textunits/branch/{branchName}/translation-status")
+  @ResponseStatus(HttpStatus.OK)
+  @JsonView(View.TranslationHistorySummary.class)
+  public BranchTranslationStatusDTO getBranchTranslationStatus(@PathVariable String branchName) {
+
+    logger.debug("Getting comprehensive translation status for branch: {}", branchName);
+
+    List<BranchTextUnitVariantDTO> results = tmTextUnitRepository.getBranchTextUnits(branchName);
+
+    // Group by text unit and build comprehensive status
+    Map<Long, BranchTranslationStatusDTO.TextUnitTranslationStatusDTO> textUnitMap =
+        new LinkedHashMap<>();
+    Set<String> allLocales = new HashSet<>();
+
+    // Statistics counters
+    int totalApproved = 0;
+    int totalInProgress = 0; // combines unapproved + missing
+
+    for (BranchTextUnitVariantDTO result : results) {
+      allLocales.add(result.getLocaleCode());
+
+      BranchTranslationStatusDTO.TextUnitTranslationStatusDTO textUnitDTO =
+          textUnitMap.computeIfAbsent(
+              result.getTextUnitId(),
+              k -> {
+                BranchTranslationStatusDTO.TextUnitTranslationStatusDTO dto =
+                    new BranchTranslationStatusDTO.TextUnitTranslationStatusDTO(
+                        result.getTextUnitId(),
+                        result.getTextUnitName(),
+                        result.getTextUnitContent(),
+                        result.getTextUnitComment());
+                dto.setApprovedVariants(new ArrayList<>());
+                dto.setUnapprovedVariants(new ArrayList<>());
+                dto.setMissingVariants(new ArrayList<>());
+                return dto;
+              });
+
+      if (result.isMissingVariant()) {
+        // Missing variant - no translation exists yet
+        BranchTranslationStatusDTO.MissingVariantDTO missingVariant =
+            new BranchTranslationStatusDTO.MissingVariantDTO(result.getLocaleCode());
+        textUnitDTO.getMissingVariants().add(missingVariant);
+        totalInProgress++; // count as in-progress
+      } else if (TMTextUnitVariant.Status.APPROVED.equals(result.getVariantStatus())) {
+        // Approved variant
+        BranchTranslationStatusDTO.VariantDTO approvedVariant =
+            new BranchTranslationStatusDTO.VariantDTO(
+                result.getVariantId(),
+                result.getLocaleCode(),
+                result.getVariantContent(),
+                result.getVariantStatus(),
+                null // variant comment not included in current query
+                );
+        textUnitDTO.getApprovedVariants().add(approvedVariant);
+        totalApproved++;
+      } else {
+        // Non-approved variant (needs translation work)
+        BranchTranslationStatusDTO.VariantDTO unapprovedVariant =
+            new BranchTranslationStatusDTO.VariantDTO(
+                result.getVariantId(),
+                result.getLocaleCode(),
+                result.getVariantContent(),
+                result.getVariantStatus(),
+                null // variant comment not included in current query
+                );
+        textUnitDTO.getUnapprovedVariants().add(unapprovedVariant);
+        totalInProgress++; // count as in-progress
+      }
+    }
+
+    // Create statistics
+    int totalTextUnits = textUnitMap.size();
+    int totalConfiguredLocales = allLocales.size();
+    BranchTranslationStatusDTO.TranslationStatistics statistics =
+        new BranchTranslationStatusDTO.TranslationStatistics(
+            totalApproved, totalInProgress, totalTextUnits, totalConfiguredLocales);
+
+    // Build final response
+    List<BranchTranslationStatusDTO.TextUnitTranslationStatusDTO> textUnits =
+        new ArrayList<>(textUnitMap.values());
+
+    return new BranchTranslationStatusDTO(branchName, statistics, textUnits);
   }
 }
