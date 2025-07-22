@@ -2089,6 +2089,47 @@ paths:
           description: OK
       tags:
       - text-unit-ws
+  /api/textunits/branch/{branchName}/translation-status:
+    get:
+      operationId: getBranchTranslationStatus
+      parameters:
+      - in: path
+        name: branchName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: "#/components/schemas/BranchTranslationStatusDTO_TranslationHistorySummary"
+          description: OK
+      summary: Get comprehensive translation status for a branch
+      tags:
+      - text-unit-ws
+  /api/textunits/branch/{branchName}/untranslated-variants:
+    get:
+      operationId: getTextUnitsNotYetFullyTranslated
+      parameters:
+      - in: path
+        name: branchName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BranchTextUnitVariantStatusDTO_TranslationHistorySummary"
+          description: OK
+      summary: Get text units associated with a branch that have missing or unapproved
+        variants
+      tags:
+      - text-unit-ws
   /api/textunits/check:
     post:
       operationId: checkTMTextUnit
@@ -3253,6 +3294,35 @@ components:
         totalCount:
           type: integer
           format: int64
+    BranchTextUnitVariantStatusDTO_TranslationHistorySummary:
+      type: object
+      properties:
+        branchName:
+          type: string
+        comment:
+          type: string
+        content:
+          type: string
+        name:
+          type: string
+        remainingVariants:
+          type: array
+          items:
+            $ref: "#/components/schemas/RemainingVariantDTO_TranslationHistorySummary"
+        tmTextUnitId:
+          type: integer
+          format: int64
+    BranchTranslationStatusDTO_TranslationHistorySummary:
+      type: object
+      properties:
+        branchName:
+          type: string
+        statistics:
+          $ref: "#/components/schemas/TranslationStatistics_TranslationHistorySummary"
+        textUnits:
+          type: array
+          items:
+            $ref: "#/components/schemas/TextUnitTranslationStatusDTO_TranslationHistorySummary"
     Branch_BranchStatistic:
       type: object
       properties:
@@ -3921,6 +3991,11 @@ components:
           - ALL
           - ACCEPTED_OR_NEEDS_REVIEW
           - ACCEPTED
+    MissingVariantDTO_TranslationHistorySummary:
+      type: object
+      properties:
+        localeCode:
+          type: string
     MultiLocalizedAssetBody:
       type: object
       properties:
@@ -4313,6 +4388,25 @@ components:
           format: int64
         name:
           type: string
+    RemainingVariantDTO_TranslationHistorySummary:
+      type: object
+      properties:
+        localeCode:
+          type: string
+        status:
+          type: string
+          enum:
+          - TRANSLATION_NEEDED
+          - REVIEW_NEEDED
+          - MT_TRANSLATED
+          - MT_REVIEW_NEEDED
+          - APPROVED
+          - OVERRIDDEN
+        variantContent:
+          type: string
+        variantId:
+          type: integer
+          format: int64
     Repository:
       type: object
       properties:
@@ -5464,6 +5558,30 @@ components:
           enum:
           - USED
           - UNUSED
+    TextUnitTranslationStatusDTO_TranslationHistorySummary:
+      type: object
+      properties:
+        approvedVariants:
+          type: array
+          items:
+            $ref: "#/components/schemas/VariantDTO_TranslationHistorySummary"
+        comment:
+          type: string
+        content:
+          type: string
+        missingVariants:
+          type: array
+          items:
+            $ref: "#/components/schemas/MissingVariantDTO_TranslationHistorySummary"
+        name:
+          type: string
+        remainingVariants:
+          type: array
+          items:
+            $ref: "#/components/schemas/VariantDTO_TranslationHistorySummary"
+        tmTextUnitId:
+          type: integer
+          format: int64
     TextUnitVariantDeltaDTO:
       type: object
       properties:
@@ -5599,6 +5717,27 @@ components:
           type: string
         textSource:
           type: string
+    TranslationStatistics_TranslationHistorySummary:
+      type: object
+      properties:
+        completionPercentage:
+          type: number
+          format: double
+        totalApprovedTranslations:
+          type: integer
+          format: int32
+        totalConfiguredLocales:
+          type: integer
+          format: int32
+        totalExpectedTranslations:
+          type: integer
+          format: int32
+        totalInProgressTranslations:
+          type: integer
+          format: int32
+        totalTextUnits:
+          type: integer
+          format: int32
     User:
       type: object
       properties:
@@ -5727,6 +5866,25 @@ components:
           format: int64
         username:
           type: string
+    VariantDTO_TranslationHistorySummary:
+      type: object
+      properties:
+        localeCode:
+          type: string
+        status:
+          type: string
+          enum:
+          - TRANSLATION_NEEDED
+          - REVIEW_NEEDED
+          - MT_TRANSLATED
+          - MT_REVIEW_NEEDED
+          - APPROVED
+          - OVERRIDDEN
+        variantContent:
+          type: string
+        variantId:
+          type: integer
+          format: int64
     VirtualAsset:
       type: object
       properties:
