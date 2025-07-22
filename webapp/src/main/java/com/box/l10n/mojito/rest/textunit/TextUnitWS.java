@@ -523,8 +523,8 @@ public class TextUnitWS {
                       result.getBranchName(),
                       new ArrayList<>()));
 
-      BranchTextUnitVariantStatusDTO.UnapprovedVariantDTO variantDTO =
-          new BranchTextUnitVariantStatusDTO.UnapprovedVariantDTO(
+      BranchTextUnitVariantStatusDTO.RemainingVariantDTO variantDTO =
+          new BranchTextUnitVariantStatusDTO.RemainingVariantDTO(
               result.getVariantId(),
               result.getLocaleCode(),
               result.getVariantContent(),

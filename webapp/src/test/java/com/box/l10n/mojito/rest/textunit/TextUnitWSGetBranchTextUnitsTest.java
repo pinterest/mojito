@@ -85,7 +85,7 @@ class TextUnitWSGetBranchTextUnitsTest {
     assertEquals(TEST_BRANCH_NAME, textUnit.getBranchName());
 
     assertEquals(1, textUnit.getRemainingVariants().size());
-    BranchTextUnitVariantStatusDTO.UnapprovedVariantDTO variant =
+    BranchTextUnitVariantStatusDTO.RemainingVariantDTO variant =
         textUnit.getRemainingVariants().getFirst();
     assertEquals(301L, variant.getVariantId());
     assertEquals("fr-FR", variant.getLocaleCode());
@@ -135,14 +135,14 @@ class TextUnitWSGetBranchTextUnitsTest {
     assertEquals(2, textUnit.getRemainingVariants().size()); // Should have 2 variants
 
     // Verify French variant
-    BranchTextUnitVariantStatusDTO.UnapprovedVariantDTO frVariant =
+    BranchTextUnitVariantStatusDTO.RemainingVariantDTO frVariant =
         textUnit.getRemainingVariants().getFirst();
     assertEquals(301L, frVariant.getVariantId());
     assertEquals("fr-FR", frVariant.getLocaleCode());
     assertEquals(TMTextUnitVariant.Status.REVIEW_NEEDED, frVariant.getStatus());
 
     // Verify Spanish variant
-    BranchTextUnitVariantStatusDTO.UnapprovedVariantDTO esVariant =
+    BranchTextUnitVariantStatusDTO.RemainingVariantDTO esVariant =
         textUnit.getRemainingVariants().get(1);
     assertEquals(302L, esVariant.getVariantId());
     assertEquals("es-ES", esVariant.getLocaleCode());
