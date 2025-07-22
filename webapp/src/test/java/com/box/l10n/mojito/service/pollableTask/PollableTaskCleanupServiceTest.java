@@ -8,16 +8,31 @@ import static org.junit.Assert.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.box.l10n.mojito.JSR310Migration;
+import com.box.l10n.mojito.entity.Asset;
+import com.box.l10n.mojito.entity.AssetExtraction;
+import com.box.l10n.mojito.entity.Drop;
 import com.box.l10n.mojito.entity.PollableTask;
+import com.box.l10n.mojito.entity.Repository;
+import com.box.l10n.mojito.entity.TMXliff;
 import com.box.l10n.mojito.service.DBUtils;
+import com.box.l10n.mojito.service.asset.AssetService;
 import com.box.l10n.mojito.service.assetExtraction.AssetExtractionRepository;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
+import com.box.l10n.mojito.service.drop.DropRepository;
+import com.box.l10n.mojito.service.drop.DropService;
+import com.box.l10n.mojito.service.repository.RepositoryNameAlreadyUsedException;
+import com.box.l10n.mojito.service.repository.RepositoryService;
+import com.box.l10n.mojito.service.tm.TMService;
+import com.box.l10n.mojito.service.tm.TMXliffRepository;
+import com.box.l10n.mojito.test.TestIdWatcher;
 import java.time.Duration;
 import java.time.Period;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +53,21 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
 
   @Autowired AssetExtractionRepository assetExtractionRepository;
 
+  @Autowired RepositoryService repositoryService;
+
+  @Autowired DropService dropService;
+
+  @Autowired DropRepository dropRepository;
+
+  @Autowired TMService tmService;
+
+  @Autowired AssetService assetService;
+
+  @Autowired TMXliffRepository tmXliffRepository;
+
   @Autowired DBUtils dbUtils;
+
+  @Rule public TestIdWatcher testIdWatcher = new TestIdWatcher();
 
   @Before
   public void finishAllPollableTasks() {
@@ -103,9 +132,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
   private PollableTask setPollableTaskFinishedInPast(PollableTask pollableTask, Duration duration) {
     ZonedDateTime pastCreatedDate = (pollableTask.getCreatedDate()).minus(duration);
     pollableTask.setFinishedDate(pastCreatedDate);
-    pollableTaskRepository.save(pollableTask);
-
-    return pollableTaskRepository.findById(pollableTask.getId()).orElse(null);
+    return pollableTaskRepository.save(pollableTask);
   }
 
   @Test
@@ -162,6 +189,145 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
     PollableTask updatedChildPollableTask =
         this.pollableTaskService.getPollableTask(childPollableTask.getId());
     assertNull(updatedChildPollableTask.getParentTask());
+  }
+
+  @Transactional
+  private Drop setExportPollableTask(Drop drop, PollableTask pollableTask) {
+    drop.setExportPollableTask(pollableTask);
+    return this.dropRepository.save(drop);
+  }
+
+  @Transactional
+  private Drop setImportPollableTask(Drop drop, PollableTask pollableTask) {
+    drop.setImportPollableTask(pollableTask);
+    return this.dropRepository.save(drop);
+  }
+
+  @Test
+  public void testCleanOldPollableTaskData_DeletesPollableTasksWithAssociatedDrop()
+      throws RepositoryNameAlreadyUsedException {
+    Assume.assumeTrue(this.dbUtils.isMysql());
+    // exportPollableTask
+    PollableTask pollableTask =
+        this.pollableTaskService.createPollableTask(null, "test-pollable", null, 0);
+
+    Repository repository =
+        this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
+    Drop drop = this.dropService.createDrop(repository);
+    Drop updatedDrop = this.setExportPollableTask(drop, pollableTask);
+
+    this.pollableTaskService.finishTask(pollableTask.getId(), null, null, null);
+    PollableTask pollableTaskInPast =
+        this.setPollableTaskFinishedInPast(pollableTask, Duration.ofDays(5));
+
+    assertNotNull(updatedDrop.getExportPollableTask());
+
+    this.pollableTaskCleanupService.cleanOldPollableTaskData(Period.ofDays(4), 10);
+
+    assertThrows(
+        NullPointerException.class,
+        () -> this.pollableTaskService.getPollableTask(pollableTaskInPast.getId()));
+
+    Optional<Drop> updatedDropOptional = this.dropRepository.findById(updatedDrop.getId());
+    assertTrue(updatedDropOptional.isPresent());
+    assertNull(updatedDropOptional.get().getExportPollableTask());
+
+    // importPollableTask
+    PollableTask pollableTask2 =
+        this.pollableTaskService.createPollableTask(null, "test-pollable-2", null, 0);
+
+    Drop drop2 = this.dropService.createDrop(repository);
+    Drop updatedDrop2 = this.setImportPollableTask(drop2, pollableTask2);
+
+    this.pollableTaskService.finishTask(pollableTask2.getId(), null, null, null);
+    PollableTask pollableTaskInPast2 =
+        this.setPollableTaskFinishedInPast(pollableTask2, Duration.ofDays(5));
+
+    assertNotNull(updatedDrop2.getImportPollableTask());
+
+    this.pollableTaskCleanupService.cleanOldPollableTaskData(Period.ofDays(4), 10);
+
+    assertThrows(
+        NullPointerException.class,
+        () -> this.pollableTaskService.getPollableTask(pollableTaskInPast2.getId()));
+
+    Optional<Drop> updatedDropOptional2 = this.dropRepository.findById(updatedDrop2.getId());
+    assertTrue(updatedDropOptional2.isPresent());
+    assertNull(updatedDropOptional2.get().getImportPollableTask());
+  }
+
+  @Transactional
+  private TMXliff setPollableTask(TMXliff tmXliff, PollableTask pollableTask) {
+    tmXliff.setPollableTask(pollableTask);
+    return this.tmXliffRepository.save(tmXliff);
+  }
+
+  @Test
+  public void testCleanOldPollableTaskData_DeletesPollableTasksWithAssociatedTMXliff()
+      throws RepositoryNameAlreadyUsedException {
+    Assume.assumeTrue(this.dbUtils.isMysql());
+    PollableTask pollableTask =
+        this.pollableTaskService.createPollableTask(null, "test-pollable", null, 0);
+
+    Repository repository =
+        this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
+    Asset asset =
+        this.assetService.createAssetWithContent(
+            repository.getId(), "test-asset-path.xliff", "test asset content");
+    TMXliff tmXliff = this.tmService.createTMXliff(asset.getId(), "en", null, null);
+    TMXliff updatedTmXliff = this.setPollableTask(tmXliff, pollableTask);
+
+    this.pollableTaskService.finishTask(pollableTask.getId(), null, null, null);
+    PollableTask pollableTaskInPast =
+        this.setPollableTaskFinishedInPast(pollableTask, Duration.ofDays(5));
+
+    assertNotNull(updatedTmXliff.getPollableTask());
+
+    this.pollableTaskCleanupService.cleanOldPollableTaskData(Period.ofDays(4), 10);
+
+    assertThrows(
+        NullPointerException.class,
+        () -> this.pollableTaskService.getPollableTask(pollableTaskInPast.getId()));
+
+    Optional<TMXliff> updatedTmXliffOptional =
+        this.tmXliffRepository.findById(updatedTmXliff.getId());
+    assertTrue(updatedTmXliffOptional.isPresent());
+    assertNull(updatedTmXliffOptional.get().getPollableTask());
+  }
+
+  @Test
+  public void testCleanOldPollableTaskData_DeletesPollableTasksWithAssociatedAssetExtraction()
+      throws RepositoryNameAlreadyUsedException {
+    Assume.assumeTrue(this.dbUtils.isMysql());
+    PollableTask pollableTask =
+        this.pollableTaskService.createPollableTask(null, "test-pollable", null, 0);
+
+    Repository repository =
+        this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
+    Asset asset =
+        this.assetService.createAssetWithContent(
+            repository.getId(), "test-asset-path.xliff", "test asset content");
+    AssetExtraction assetExtraction = new AssetExtraction();
+    assetExtraction.setAsset(asset);
+    assetExtraction.setPollableTask(pollableTask);
+    assetExtraction = assetExtractionRepository.save(assetExtraction);
+
+    this.pollableTaskService.finishTask(pollableTask.getId(), null, null, null);
+    PollableTask pollableTaskInPast =
+        this.setPollableTaskFinishedInPast(pollableTask, Duration.ofDays(5));
+
+    assertNotNull(assetExtraction.getPollableTask());
+
+    this.pollableTaskCleanupService.cleanOldPollableTaskData(Period.ofDays(4), 10);
+
+    assertThrows(
+        NullPointerException.class,
+        () -> this.pollableTaskService.getPollableTask(pollableTaskInPast.getId()));
+
+    Optional<AssetExtraction> updatedAssetExtraction =
+        this.assetExtractionRepository.findById(assetExtraction.getId());
+    assertTrue(updatedAssetExtraction.isPresent());
+    assertNull(updatedAssetExtraction.get().getPollableTask());
   }
 
   @Test
