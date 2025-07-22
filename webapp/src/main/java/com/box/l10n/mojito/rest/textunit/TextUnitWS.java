@@ -484,59 +484,6 @@ public class TextUnitWS {
   }
 
   /**
-   * Gets text units associated with a branch that have missing variants for a locale or variants
-   * for a locale not yet in APPROVED state.
-   *
-   * <p>This endpoint returns text units for a specific branch along with information about which
-   * locale variants are not yet approved (status other than APPROVED) and missing variants (i.e.
-   * not translation created yet).
-   *
-   * @param branchName The name of the branch to search for text units
-   * @return List of text units with their relevant information
-   */
-  @Operation(
-      summary = "Get text units associated with a branch that have missing or unapproved variants")
-  @RequestMapping(
-      method = RequestMethod.GET,
-      value = "/api/textunits/branch/{branchName}/untranslated-variants")
-  @ResponseStatus(HttpStatus.OK)
-  @JsonView(View.TranslationHistorySummary.class)
-  public List<BranchTextUnitVariantStatusDTO> getTextUnitsNotYetFullyTranslated(
-      @PathVariable String branchName) {
-
-    logger.debug("Getting text units with non-approved variants for branch: {}", branchName);
-
-    List<BranchTextUnitVariantDTO> results = tmTextUnitRepository.getBranchTextUnits(branchName);
-
-    Map<Long, BranchTextUnitVariantStatusDTO> textUnitMap = new LinkedHashMap<>();
-
-    for (BranchTextUnitVariantDTO result : results) {
-      BranchTextUnitVariantStatusDTO textUnitDTO =
-          textUnitMap.computeIfAbsent(
-              result.getTextUnitId(),
-              k ->
-                  new BranchTextUnitVariantStatusDTO(
-                      result.getTextUnitId(),
-                      result.getTextUnitName(),
-                      result.getTextUnitContent(),
-                      result.getTextUnitComment(),
-                      result.getBranchName(),
-                      new ArrayList<>()));
-
-      BranchTextUnitVariantStatusDTO.RemainingVariantDTO variantDTO =
-          new BranchTextUnitVariantStatusDTO.RemainingVariantDTO(
-              result.getVariantId(),
-              result.getLocaleCode(),
-              result.getVariantContent(),
-              result.getVariantStatus());
-
-      textUnitDTO.getRemainingVariants().add(variantDTO);
-    }
-
-    return new ArrayList<>(textUnitMap.values());
-  }
-
-  /**
    * Gets comprehensive translation status for a branch including statistics and variant details.
    *
    * <p>This endpoint returns detailed translation information for a specific branch including: -
@@ -548,12 +495,10 @@ public class TextUnitWS {
    * @return Comprehensive translation status including statistics and variant details
    */
   @Operation(summary = "Get comprehensive translation status for a branch")
-  @RequestMapping(
-      method = RequestMethod.GET,
-      value = "/api/textunits/branch/{branchName}/translation-status")
+  @RequestMapping(method = RequestMethod.GET, value = "/api/textunits/branch/translation-status")
   @ResponseStatus(HttpStatus.OK)
   @JsonView(View.TranslationHistorySummary.class)
-  public BranchTranslationStatusDTO getBranchTranslationStatus(@PathVariable String branchName) {
+  public BranchTranslationStatusDTO getBranchTranslationStatus(@RequestParam String branchName) {
 
     logger.debug("Getting comprehensive translation status for branch: {}", branchName);
 

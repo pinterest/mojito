@@ -2089,11 +2089,11 @@ paths:
           description: OK
       tags:
       - text-unit-ws
-  /api/textunits/branch/{branchName}/translation-status:
+  /api/textunits/branch/translation-status:
     get:
       operationId: getBranchTranslationStatus
       parameters:
-      - in: path
+      - in: query
         name: branchName
         required: true
         schema:
@@ -2106,28 +2106,6 @@ paths:
                 $ref: "#/components/schemas/BranchTranslationStatusDTO_TranslationHistorySummary"
           description: OK
       summary: Get comprehensive translation status for a branch
-      tags:
-      - text-unit-ws
-  /api/textunits/branch/{branchName}/untranslated-variants:
-    get:
-      operationId: getTextUnitsNotYetFullyTranslated
-      parameters:
-      - in: path
-        name: branchName
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/hal+json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/BranchTextUnitVariantStatusDTO_TranslationHistorySummary"
-          description: OK
-      summary: Get text units associated with a branch that have missing or unapproved
-        variants
       tags:
       - text-unit-ws
   /api/textunits/check:
@@ -3294,24 +3272,6 @@ components:
         totalCount:
           type: integer
           format: int64
-    BranchTextUnitVariantStatusDTO_TranslationHistorySummary:
-      type: object
-      properties:
-        branchName:
-          type: string
-        comment:
-          type: string
-        content:
-          type: string
-        name:
-          type: string
-        remainingVariants:
-          type: array
-          items:
-            $ref: "#/components/schemas/RemainingVariantDTO_TranslationHistorySummary"
-        tmTextUnitId:
-          type: integer
-          format: int64
     BranchTranslationStatusDTO_TranslationHistorySummary:
       type: object
       properties:
@@ -4388,25 +4348,6 @@ components:
           format: int64
         name:
           type: string
-    RemainingVariantDTO_TranslationHistorySummary:
-      type: object
-      properties:
-        localeCode:
-          type: string
-        status:
-          type: string
-          enum:
-          - TRANSLATION_NEEDED
-          - REVIEW_NEEDED
-          - MT_TRANSLATED
-          - MT_REVIEW_NEEDED
-          - APPROVED
-          - OVERRIDDEN
-        variantContent:
-          type: string
-        variantId:
-          type: integer
-          format: int64
     Repository:
       type: object
       properties:
