@@ -9,12 +9,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.PollableTask;
+import com.box.l10n.mojito.service.DBUtils;
 import com.box.l10n.mojito.service.assetExtraction.AssetExtractionRepository;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
 import java.time.Duration;
 import java.time.Period;
 import java.time.ZonedDateTime;
 import java.util.List;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -35,6 +37,8 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
   @Autowired PollableTaskRepository pollableTaskRepository;
 
   @Autowired AssetExtractionRepository assetExtractionRepository;
+
+  @Autowired DBUtils dbUtils;
 
   @Before
   public void finishAllPollableTasks() {
@@ -106,6 +110,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
 
   @Test
   public void testCleanOldPollableTaskData_DeletesSuccessfully() {
+    Assume.assumeTrue(this.dbUtils.isMysql());
     PollableTask pollableTask =
         this.pollableTaskService.createPollableTask(null, "test-pollable", null, 0);
 
@@ -124,7 +129,8 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
 
     pollableTaskService.finishTask(pollableTask2.getId(), null, null, null);
     PollableTask pollableTaskInPast2 =
-        this.setPollableTaskFinishedInPast(pollableTask2, Duration.ofDays(5));
+        this.setPollableTaskFinishedInPast(
+            pollableTask2, Duration.ofDays(5).plus(Duration.ofSeconds(1)));
 
     this.pollableTaskCleanupService.cleanOldPollableTaskData(Period.ofDays(5), 10);
 
@@ -135,6 +141,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
 
   @Test
   public void testCleanOldPollableTaskData_DeletesParentPollableTaskSuccessfully() {
+    Assume.assumeTrue(this.dbUtils.isMysql());
     PollableTask pollableTask =
         this.pollableTaskService.createPollableTask(null, "test-pollable", null, 0);
 
@@ -159,6 +166,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
 
   @Test
   public void testCleanOldPollableTaskData_CallsDeleteAndUpdateMethodThrice() {
+    Assume.assumeTrue(this.dbUtils.isMysql());
     PollableTask pollableTask1 =
         this.pollableTaskService.createPollableTask(null, "test-pollable-1", null, 0);
     PollableTask pollableTask2 =
@@ -197,6 +205,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
 
   @Test
   public void testCleanOldPollableTaskData_DoesNotDeleteAny() {
+    Assume.assumeTrue(this.dbUtils.isMysql());
     PollableTask pollableTask =
         this.pollableTaskService.createPollableTask(null, "test-pollable", null, 0);
 
