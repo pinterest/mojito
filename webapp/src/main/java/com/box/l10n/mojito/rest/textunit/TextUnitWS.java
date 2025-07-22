@@ -582,7 +582,7 @@ public class TextUnitWS {
                         result.getTextUnitContent(),
                         result.getTextUnitComment());
                 dto.setApprovedVariants(new ArrayList<>());
-                dto.setUnapprovedVariants(new ArrayList<>());
+                dto.setRemainingVariants(new ArrayList<>());
                 dto.setMissingVariants(new ArrayList<>());
                 return dto;
               });
@@ -600,34 +600,28 @@ public class TextUnitWS {
                 result.getVariantId(),
                 result.getLocaleCode(),
                 result.getVariantContent(),
-                result.getVariantStatus(),
-                null // variant comment not included in current query
-                );
+                result.getVariantStatus());
         textUnitDTO.getApprovedVariants().add(approvedVariant);
         totalApproved++;
       } else {
-        // Non-approved variant (needs translation work)
+        // In progress variant (needs translation work)
         BranchTranslationStatusDTO.VariantDTO unapprovedVariant =
             new BranchTranslationStatusDTO.VariantDTO(
                 result.getVariantId(),
                 result.getLocaleCode(),
                 result.getVariantContent(),
-                result.getVariantStatus(),
-                null // variant comment not included in current query
-                );
-        textUnitDTO.getUnapprovedVariants().add(unapprovedVariant);
-        totalInProgress++; // count as in-progress
+                result.getVariantStatus());
+        textUnitDTO.getRemainingVariants().add(unapprovedVariant);
+        totalInProgress++;
       }
     }
 
-    // Create statistics
     int totalTextUnits = textUnitMap.size();
     int totalConfiguredLocales = allLocales.size();
     BranchTranslationStatusDTO.TranslationStatistics statistics =
         new BranchTranslationStatusDTO.TranslationStatistics(
             totalApproved, totalInProgress, totalTextUnits, totalConfiguredLocales);
 
-    // Build final response
     List<BranchTranslationStatusDTO.TextUnitTranslationStatusDTO> textUnits =
         new ArrayList<>(textUnitMap.values());
 

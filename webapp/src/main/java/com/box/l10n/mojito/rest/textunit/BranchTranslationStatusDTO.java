@@ -128,7 +128,7 @@ public class BranchTranslationStatusDTO {
     private List<VariantDTO> approvedVariants;
 
     @JsonView(View.TranslationHistorySummary.class)
-    private List<VariantDTO> unapprovedVariants;
+    private List<VariantDTO> remainingVariants;
 
     @JsonView(View.TranslationHistorySummary.class)
     private List<MissingVariantDTO> missingVariants;
@@ -184,12 +184,12 @@ public class BranchTranslationStatusDTO {
       this.approvedVariants = approvedVariants;
     }
 
-    public List<VariantDTO> getUnapprovedVariants() {
-      return unapprovedVariants;
+    public List<VariantDTO> getRemainingVariants() {
+      return remainingVariants;
     }
 
-    public void setUnapprovedVariants(List<VariantDTO> unapprovedVariants) {
-      this.unapprovedVariants = unapprovedVariants;
+    public void setRemainingVariants(List<VariantDTO> remainingVariants) {
+      this.remainingVariants = remainingVariants;
     }
 
     public List<MissingVariantDTO> getMissingVariants() {
@@ -215,22 +215,14 @@ public class BranchTranslationStatusDTO {
     @JsonView(View.TranslationHistorySummary.class)
     private TMTextUnitVariant.Status status;
 
-    @JsonView(View.TranslationHistorySummary.class)
-    private String variantComment;
-
     public VariantDTO() {}
 
     public VariantDTO(
-        Long variantId,
-        String localeCode,
-        String variantContent,
-        TMTextUnitVariant.Status status,
-        String variantComment) {
+        Long variantId, String localeCode, String variantContent, TMTextUnitVariant.Status status) {
       this.variantId = variantId;
       this.localeCode = localeCode;
       this.variantContent = variantContent;
       this.status = status;
-      this.variantComment = variantComment;
     }
 
     // Getters and setters
@@ -264,14 +256,6 @@ public class BranchTranslationStatusDTO {
 
     public void setStatus(TMTextUnitVariant.Status status) {
       this.status = status;
-    }
-
-    public String getVariantComment() {
-      return variantComment;
-    }
-
-    public void setVariantComment(String variantComment) {
-      this.variantComment = variantComment;
     }
   }
 

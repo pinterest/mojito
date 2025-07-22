@@ -5550,6 +5550,10 @@ components:
           type: string
         content:
           type: string
+        inProgressVariants:
+          type: array
+          items:
+            $ref: "#/components/schemas/VariantDTO_TranslationHistorySummary"
         missingVariants:
           type: array
           items:
@@ -5559,10 +5563,6 @@ components:
         tmTextUnitId:
           type: integer
           format: int64
-        unapprovedVariants:
-          type: array
-          items:
-            $ref: "#/components/schemas/VariantDTO_TranslationHistorySummary"
     TextUnitVariantDeltaDTO:
       type: object
       properties:
@@ -5880,8 +5880,6 @@ components:
           - MT_REVIEW_NEEDED
           - APPROVED
           - OVERRIDDEN
-        variantComment:
-          type: string
         variantContent:
           type: string
         variantId:
