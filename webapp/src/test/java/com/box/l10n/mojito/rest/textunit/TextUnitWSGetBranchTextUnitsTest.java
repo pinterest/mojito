@@ -84,9 +84,9 @@ class TextUnitWSGetBranchTextUnitsTest {
     assertEquals("Main welcome message", textUnit.getComment());
     assertEquals(TEST_BRANCH_NAME, textUnit.getBranchName());
 
-    assertEquals(1, textUnit.getUnapprovedVariants().size());
+    assertEquals(1, textUnit.getRemainingVariants().size());
     BranchTextUnitVariantStatusDTO.UnapprovedVariantDTO variant =
-        textUnit.getUnapprovedVariants().getFirst();
+        textUnit.getRemainingVariants().getFirst();
     assertEquals(301L, variant.getVariantId());
     assertEquals("fr-FR", variant.getLocaleCode());
     assertEquals("Bienvenue", variant.getVariantContent());
@@ -132,18 +132,18 @@ class TextUnitWSGetBranchTextUnitsTest {
 
     BranchTextUnitVariantStatusDTO textUnit = result.getFirst();
     assertEquals(TEXT_UNIT_ID_1, textUnit.getTmTextUnitId());
-    assertEquals(2, textUnit.getUnapprovedVariants().size()); // Should have 2 variants
+    assertEquals(2, textUnit.getRemainingVariants().size()); // Should have 2 variants
 
     // Verify French variant
     BranchTextUnitVariantStatusDTO.UnapprovedVariantDTO frVariant =
-        textUnit.getUnapprovedVariants().getFirst();
+        textUnit.getRemainingVariants().getFirst();
     assertEquals(301L, frVariant.getVariantId());
     assertEquals("fr-FR", frVariant.getLocaleCode());
     assertEquals(TMTextUnitVariant.Status.REVIEW_NEEDED, frVariant.getStatus());
 
     // Verify Spanish variant
     BranchTextUnitVariantStatusDTO.UnapprovedVariantDTO esVariant =
-        textUnit.getUnapprovedVariants().get(1);
+        textUnit.getRemainingVariants().get(1);
     assertEquals(302L, esVariant.getVariantId());
     assertEquals("es-ES", esVariant.getLocaleCode());
     assertEquals(TMTextUnitVariant.Status.TRANSLATION_NEEDED, esVariant.getStatus());
@@ -189,18 +189,18 @@ class TextUnitWSGetBranchTextUnitsTest {
     BranchTextUnitVariantStatusDTO firstTextUnit = result.getFirst();
     assertEquals(TEXT_UNIT_ID_1, firstTextUnit.getTmTextUnitId());
     assertEquals("welcome.message", firstTextUnit.getName());
-    assertEquals(1, firstTextUnit.getUnapprovedVariants().size());
+    assertEquals(1, firstTextUnit.getRemainingVariants().size());
 
     // Verify second text unit
     BranchTextUnitVariantStatusDTO secondTextUnit = result.get(1);
     assertEquals(TEXT_UNIT_ID_2, secondTextUnit.getTmTextUnitId());
     assertEquals("goodbye.message", secondTextUnit.getName());
-    assertEquals(1, secondTextUnit.getUnapprovedVariants().size());
-    assertEquals(401L, secondTextUnit.getUnapprovedVariants().getFirst().getVariantId());
-    assertEquals("fr-FR", secondTextUnit.getUnapprovedVariants().getFirst().getLocaleCode());
+    assertEquals(1, secondTextUnit.getRemainingVariants().size());
+    assertEquals(401L, secondTextUnit.getRemainingVariants().getFirst().getVariantId());
+    assertEquals("fr-FR", secondTextUnit.getRemainingVariants().getFirst().getLocaleCode());
     assertEquals(
         TMTextUnitVariant.Status.MT_TRANSLATED,
-        secondTextUnit.getUnapprovedVariants().getFirst().getStatus());
+        secondTextUnit.getRemainingVariants().getFirst().getStatus());
   }
 
   @Test
@@ -256,7 +256,7 @@ class TextUnitWSGetBranchTextUnitsTest {
     assertEquals(1, result.size());
 
     BranchTextUnitVariantStatusDTO textUnit = result.getFirst();
-    assertEquals(4, textUnit.getUnapprovedVariants().size());
+    assertEquals(4, textUnit.getRemainingVariants().size());
 
     // Verify each variant has the correct status
     List<TMTextUnitVariant.Status> expectedStatuses =
@@ -266,8 +266,8 @@ class TextUnitWSGetBranchTextUnitsTest {
             TMTextUnitVariant.Status.MT_TRANSLATED,
             TMTextUnitVariant.Status.MT_REVIEW_NEEDED);
 
-    for (int i = 0; i < textUnit.getUnapprovedVariants().size(); i++) {
-      assertEquals(expectedStatuses.get(i), textUnit.getUnapprovedVariants().get(i).getStatus());
+    for (int i = 0; i < textUnit.getRemainingVariants().size(); i++) {
+      assertEquals(expectedStatuses.get(i), textUnit.getRemainingVariants().get(i).getStatus());
     }
   }
 
@@ -297,7 +297,7 @@ class TextUnitWSGetBranchTextUnitsTest {
 
     BranchTextUnitVariantStatusDTO textUnit = result.getFirst();
     assertNull(textUnit.getComment());
-    assertEquals(1, textUnit.getUnapprovedVariants().size());
+    assertEquals(1, textUnit.getRemainingVariants().size());
   }
 
   @Test

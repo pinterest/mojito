@@ -28,7 +28,7 @@ public class BranchTextUnitVariantStatusDTO {
   private String branchName;
 
   @JsonView(View.TranslationHistorySummary.class)
-  private List<UnapprovedVariantDTO> unapprovedVariants;
+  private List<UnapprovedVariantDTO> remainingVariants;
 
   public static class UnapprovedVariantDTO {
 
@@ -95,13 +95,13 @@ public class BranchTextUnitVariantStatusDTO {
       String content,
       String comment,
       String branchName,
-      List<UnapprovedVariantDTO> unapprovedVariants) {
+      List<UnapprovedVariantDTO> remainingVariants) {
     this.tmTextUnitId = tmTextUnitId;
     this.name = name;
     this.content = content;
     this.comment = comment;
     this.branchName = branchName;
-    this.unapprovedVariants = unapprovedVariants;
+    this.remainingVariants = remainingVariants;
   }
 
   public Long getTmTextUnitId() {
@@ -144,11 +144,11 @@ public class BranchTextUnitVariantStatusDTO {
     this.branchName = branchName;
   }
 
-  public List<UnapprovedVariantDTO> getUnapprovedVariants() {
-    return unapprovedVariants;
+  public List<UnapprovedVariantDTO> getRemainingVariants() {
+    return remainingVariants;
   }
 
-  public void setUnapprovedVariants(List<UnapprovedVariantDTO> unapprovedVariants) {
-    this.unapprovedVariants = unapprovedVariants;
+  public void setRemainingVariants(List<UnapprovedVariantDTO> remainingVariants) {
+    this.remainingVariants = remainingVariants;
   }
 }

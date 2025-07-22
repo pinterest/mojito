@@ -530,7 +530,7 @@ public class TextUnitWS {
               result.getVariantContent(),
               result.getVariantStatus());
 
-      textUnitDTO.getUnapprovedVariants().add(variantDTO);
+      textUnitDTO.getRemainingVariants().add(variantDTO);
     }
 
     return new ArrayList<>(textUnitMap.values());
