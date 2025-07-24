@@ -59,7 +59,7 @@ const browserHistory = useRouterHistory(createHistory)({basename: APP_CONFIG.con
 
 import(
     /* webpackChunkName: "[request]", webpackMode: "lazy" */
-    `../../properties/${APP_CONFIG.locale}.properties`).then(messages => {
+    `../../properties/${APP_CONFIG.locale}.properties`).then(({default: messages}) => {
     startApp(getMergedMessages(messages));
 });
 
