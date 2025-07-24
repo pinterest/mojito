@@ -22,38 +22,38 @@ import org.springframework.stereotype.Component;
 @Component
 @DisallowConcurrentExecution
 @ConditionalOnProperty(value = "l10n.pollable-task.cleanup-job.enabled", havingValue = "true")
-public class OldPollableTaskCleanupJob implements Job {
-  private static final Logger LOGGER = LoggerFactory.getLogger(OldPollableTaskCleanupJob.class);
+public class StalePollableTaskCleanupJob implements Job {
+  private static final Logger LOGGER = LoggerFactory.getLogger(StalePollableTaskCleanupJob.class);
 
   @Autowired private PollableTaskCleanupService pollableTaskCleanupService;
 
-  @Autowired private OldPollableTaskCleanupConfiguration oldPollableTaskCleanupConfiguration;
+  @Autowired private StalePollableTaskCleanupConfiguration stalePollableTaskCleanupConfiguration;
 
   @Override
   public void execute(JobExecutionContext context) throws JobExecutionException {
     LOGGER.debug(
         "Cleaning up pollable tasks older than {}",
-        this.oldPollableTaskCleanupConfiguration.getRetentionPeriod());
-    this.pollableTaskCleanupService.cleanOldPollableTaskData(
-        this.oldPollableTaskCleanupConfiguration.getRetentionPeriod(),
-        this.oldPollableTaskCleanupConfiguration.getBatchSize());
+        this.stalePollableTaskCleanupConfiguration.getRetentionPeriod());
+    this.pollableTaskCleanupService.cleanStalePollableTaskData(
+        this.stalePollableTaskCleanupConfiguration.getRetentionPeriod(),
+        this.stalePollableTaskCleanupConfiguration.getBatchSize());
   }
 
-  @Bean(name = "jobDetailOldPollableTaskCleanup")
-  public JobDetailFactoryBean jobDetailOldPollableTaskCleanup() {
+  @Bean(name = "jobDetailStalePollableTaskCleanup")
+  public JobDetailFactoryBean jobDetailStalePollableTaskCleanup() {
     JobDetailFactoryBean jobDetailFactory = new JobDetailFactoryBean();
-    jobDetailFactory.setJobClass(OldPollableTaskCleanupJob.class);
-    jobDetailFactory.setDescription("Delete old Pollable Task data");
+    jobDetailFactory.setJobClass(StalePollableTaskCleanupJob.class);
+    jobDetailFactory.setDescription("Delete stale Pollable Task data");
     jobDetailFactory.setDurability(true);
     return jobDetailFactory;
   }
 
   @Bean
-  public CronTriggerFactoryBean triggerOldPollableTaskCleanup(
-      @Qualifier("jobDetailOldPollableTaskCleanup") JobDetail job) {
+  public CronTriggerFactoryBean triggerStalePollableTaskCleanup(
+      @Qualifier("jobDetailStalePollableTaskCleanup") JobDetail job) {
     CronTriggerFactoryBean trigger = new CronTriggerFactoryBean();
     trigger.setJobDetail(job);
-    trigger.setCronExpression(this.oldPollableTaskCleanupConfiguration.getCron());
+    trigger.setCronExpression(this.stalePollableTaskCleanupConfiguration.getCron());
     return trigger;
   }
 }

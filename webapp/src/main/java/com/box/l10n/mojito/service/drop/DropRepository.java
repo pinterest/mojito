@@ -35,7 +35,7 @@ public interface DropRepository extends JpaRepository<Drop, Long>, JpaSpecificat
            set d.export_pollable_task_id = null
          where pt.finished_date < :beforeDate
         """)
-  int cleanOldExportPollableTaskIds(@Param("beforeDate") ZonedDateTime beforeDate);
+  int cleanStaleExportPollableTaskIds(@Param("beforeDate") ZonedDateTime beforeDate);
 
   @Modifying
   @Transactional
@@ -49,5 +49,5 @@ public interface DropRepository extends JpaRepository<Drop, Long>, JpaSpecificat
            set d.import_pollable_task_id = null
          where pt.finished_date < :beforeDate
         """)
-  int cleanOldImportPollableTaskIds(@Param("beforeDate") ZonedDateTime beforeDate);
+  int cleanStaleImportPollableTaskIds(@Param("beforeDate") ZonedDateTime beforeDate);
 }

@@ -30,5 +30,5 @@ public interface TMXliffRepository extends JpaRepository<TMXliff, Long> {
            set tx.export_pollable_task_id = null
          where pt.finished_date < :beforeDate
         """)
-  int cleanOldExportPollableTaskIds(@Param("beforeDate") ZonedDateTime beforeDate);
+  int cleanStaleExportPollableTaskIds(@Param("beforeDate") ZonedDateTime beforeDate);
 }

@@ -50,5 +50,5 @@ public interface AssetExtractionRepository extends JpaRepository<AssetExtraction
            set ae.pollable_task_id = null
          where pt.finished_date < :beforeDate
         """)
-  int cleanOldPollableTaskIds(@Param("beforeDate") ZonedDateTime beforeDate);
+  int cleanStalePollableTaskIds(@Param("beforeDate") ZonedDateTime beforeDate);
 }

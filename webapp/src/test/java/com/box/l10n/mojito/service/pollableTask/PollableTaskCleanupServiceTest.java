@@ -136,7 +136,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
   }
 
   @Test
-  public void testCleanOldPollableTaskData_DeletesSuccessfully() {
+  public void testCleanStalePollableTaskData_DeletesSuccessfully() {
     Assume.assumeTrue(this.dbUtils.isMysql());
     PollableTask pollableTask =
         this.pollableTaskService.createPollableTask(null, "test-pollable", null, 0);
@@ -145,7 +145,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
     PollableTask pollableTaskInPast =
         this.setPollableTaskFinishedInPast(pollableTask, Duration.ofDays(5));
 
-    this.pollableTaskCleanupService.cleanOldPollableTaskData(Period.ofDays(4), 10);
+    this.pollableTaskCleanupService.cleanStalePollableTaskData(Period.ofDays(4), 10);
 
     assertThrows(
         NullPointerException.class,
@@ -159,7 +159,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
         this.setPollableTaskFinishedInPast(
             pollableTask2, Duration.ofDays(5).plus(Duration.ofSeconds(1)));
 
-    this.pollableTaskCleanupService.cleanOldPollableTaskData(Period.ofDays(5), 10);
+    this.pollableTaskCleanupService.cleanStalePollableTaskData(Period.ofDays(5), 10);
 
     assertThrows(
         NullPointerException.class,
@@ -167,7 +167,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
   }
 
   @Test
-  public void testCleanOldPollableTaskData_DeletesParentPollableTaskSuccessfully() {
+  public void testCleanStalePollableTaskData_DeletesParentPollableTaskSuccessfully() {
     Assume.assumeTrue(this.dbUtils.isMysql());
     PollableTask pollableTask =
         this.pollableTaskService.createPollableTask(null, "test-pollable", null, 0);
@@ -180,7 +180,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
     PollableTask pollableTaskInPast =
         this.setPollableTaskFinishedInPast(pollableTask, Duration.ofDays(5));
 
-    this.pollableTaskCleanupService.cleanOldPollableTaskData(Period.ofDays(4), 10);
+    this.pollableTaskCleanupService.cleanStalePollableTaskData(Period.ofDays(4), 10);
 
     assertThrows(
         NullPointerException.class,
@@ -204,7 +204,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
   }
 
   @Test
-  public void testCleanOldPollableTaskData_DeletesPollableTasksWithAssociatedDrop()
+  public void testCleanStalePollableTaskData_DeletesPollableTasksWithAssociatedDrop()
       throws RepositoryNameAlreadyUsedException {
     Assume.assumeTrue(this.dbUtils.isMysql());
     // exportPollableTask
@@ -222,7 +222,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
 
     assertNotNull(updatedDrop.getExportPollableTask());
 
-    this.pollableTaskCleanupService.cleanOldPollableTaskData(Period.ofDays(4), 10);
+    this.pollableTaskCleanupService.cleanStalePollableTaskData(Period.ofDays(4), 10);
 
     assertThrows(
         NullPointerException.class,
@@ -245,7 +245,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
 
     assertNotNull(updatedDrop2.getImportPollableTask());
 
-    this.pollableTaskCleanupService.cleanOldPollableTaskData(Period.ofDays(4), 10);
+    this.pollableTaskCleanupService.cleanStalePollableTaskData(Period.ofDays(4), 10);
 
     assertThrows(
         NullPointerException.class,
@@ -263,7 +263,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
   }
 
   @Test
-  public void testCleanOldPollableTaskData_DeletesPollableTasksWithAssociatedTMXliff()
+  public void testCleanStalePollableTaskData_DeletesPollableTasksWithAssociatedTMXliff()
       throws RepositoryNameAlreadyUsedException {
     Assume.assumeTrue(this.dbUtils.isMysql());
     PollableTask pollableTask =
@@ -283,7 +283,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
 
     assertNotNull(updatedTmXliff.getPollableTask());
 
-    this.pollableTaskCleanupService.cleanOldPollableTaskData(Period.ofDays(4), 10);
+    this.pollableTaskCleanupService.cleanStalePollableTaskData(Period.ofDays(4), 10);
 
     assertThrows(
         NullPointerException.class,
@@ -296,7 +296,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
   }
 
   @Test
-  public void testCleanOldPollableTaskData_DeletesPollableTasksWithAssociatedAssetExtraction()
+  public void testCleanStalePollableTaskData_DeletesPollableTasksWithAssociatedAssetExtraction()
       throws RepositoryNameAlreadyUsedException {
     Assume.assumeTrue(this.dbUtils.isMysql());
     PollableTask pollableTask =
@@ -318,7 +318,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
 
     assertNotNull(assetExtraction.getPollableTask());
 
-    this.pollableTaskCleanupService.cleanOldPollableTaskData(Period.ofDays(4), 10);
+    this.pollableTaskCleanupService.cleanStalePollableTaskData(Period.ofDays(4), 10);
 
     assertThrows(
         NullPointerException.class,
@@ -331,7 +331,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
   }
 
   @Test
-  public void testCleanOldPollableTaskData_CallsDeleteAndUpdateMethodThrice() {
+  public void testCleanStalePollableTaskData_CallsDeleteAndUpdateMethodThrice() {
     Assume.assumeTrue(this.dbUtils.isMysql());
     PollableTask pollableTask1 =
         this.pollableTaskService.createPollableTask(null, "test-pollable-1", null, 0);
@@ -352,7 +352,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
     PollableTask pollableTask2InPast =
         this.setPollableTaskFinishedInPast(pollableTask2, Duration.ofDays(6));
 
-    this.pollableTaskCleanupService.cleanOldPollableTaskData(Period.ofDays(4), 1);
+    this.pollableTaskCleanupService.cleanStalePollableTaskData(Period.ofDays(4), 1);
 
     assertThrows(
         NullPointerException.class,
@@ -370,7 +370,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
   }
 
   @Test
-  public void testCleanOldPollableTaskData_DoesNotDeleteAny() {
+  public void testCleanStalePollableTaskData_DoesNotDeleteAny() {
     Assume.assumeTrue(this.dbUtils.isMysql());
     PollableTask pollableTask =
         this.pollableTaskService.createPollableTask(null, "test-pollable", null, 0);
@@ -379,7 +379,7 @@ public class PollableTaskCleanupServiceTest extends ServiceTestBase {
     PollableTask pollableTaskInPast =
         this.setPollableTaskFinishedInPast(pollableTask, Duration.ofDays(5));
 
-    this.pollableTaskCleanupService.cleanOldPollableTaskData(Period.ofDays(6), 10);
+    this.pollableTaskCleanupService.cleanStalePollableTaskData(Period.ofDays(6), 10);
 
     PollableTask pollableTaskAfterCleanup =
         this.pollableTaskService.getPollableTask(pollableTaskInPast.getId());

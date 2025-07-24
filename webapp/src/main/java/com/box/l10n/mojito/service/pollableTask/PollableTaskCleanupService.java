@@ -78,15 +78,15 @@ public class PollableTaskCleanupService {
         .increment();
   }
 
-  public void cleanOldPollableTaskData(Period retentionPeriod, int batchSize) {
+  public void cleanStalePollableTaskData(Period retentionPeriod, int batchSize) {
     ZonedDateTime beforeDate = ZonedDateTime.now().minus(retentionPeriod);
-    int deleteCount = this.dropRepository.cleanOldExportPollableTaskIds(beforeDate);
+    int deleteCount = this.dropRepository.cleanStaleExportPollableTaskIds(beforeDate);
     logger.debug("Updated {} Drop rows (exported)", deleteCount);
-    deleteCount = this.dropRepository.cleanOldImportPollableTaskIds(beforeDate);
+    deleteCount = this.dropRepository.cleanStaleImportPollableTaskIds(beforeDate);
     logger.debug("Updated {} Drop rows (imported)", deleteCount);
-    deleteCount = this.assetExtractionRepository.cleanOldPollableTaskIds(beforeDate);
+    deleteCount = this.assetExtractionRepository.cleanStalePollableTaskIds(beforeDate);
     logger.debug("Updated {} Asset Extraction rows", deleteCount);
-    deleteCount = this.tmxliffRepository.cleanOldExportPollableTaskIds(beforeDate);
+    deleteCount = this.tmxliffRepository.cleanStaleExportPollableTaskIds(beforeDate);
     logger.debug("Updated {} TM Xliff rows", deleteCount);
     int batchNumber = 1;
     do {

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @ConfigurationProperties("l10n.pollable-task.cleanup-job")
-public class OldPollableTaskCleanupConfiguration {
+public class StalePollableTaskCleanupConfiguration {
   private String cron = "0 0 0 * * ?";
 
   private Period retentionPeriod = Period.ofMonths(6);
