@@ -43,10 +43,12 @@ public class RedisStructuredBlobStorageProxy {
               return redisClient.get(key);
             });
     if (redisValue.isPresent()) {
+      LOGGER.info("CACHE HIT FOR REDIS :)");
       return redisValue;
     } else {
       LOGGER.debug(
           "RedisStructuredBlobStorageProxy: Retrieve string from BlobStorage for key: {}", key);
+      LOGGER.info("CACHE MISS FOR REDIS :(");
       Optional<String> result = this.structuredBlobStorage.getString(prefix, name);
       if (result.isPresent() && this.redisClientOptional.isPresent()) {
         RedisClient redisClient = this.redisClientOptional.get();
