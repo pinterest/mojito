@@ -175,7 +175,7 @@ let Repositories = createReactClass({
                     </div>
                 </ReactSidebarResponsive>
                 <RepositoryInputModal
-                    title={this.state.editingRepository ? " Edit Repository" : "Create Repository"}
+                    title={this.state.editingRepository ? "Edit Repository" : "Create Repository"}
                     repository={this.state.editingRepository}
                     show={this.state.isRepositoryInputModalOpen}
                     onClose={this.state.editingRepository ? this.closeEditRepositoryModal : this.closeCreateRepositoryModal}
