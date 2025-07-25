@@ -10,6 +10,14 @@ export function deserializeAssetIntegrityCheckers(assetIntegrityCheckersString) 
     });
 }
 
+// Serializes an array of objects [{assetExtension, integrityCheckerType}] to "extension:checkerType,..."
+export function serializeAssetIntegrityCheckers(assetIntegrityCheckers) {
+    if (!Array.isArray(assetIntegrityCheckers)) return "";
+    return assetIntegrityCheckers.map(pair => {
+        return `${pair.assetExtension}:${pair.integrityCheckerType}`;
+    }).join(',');
+}
+
 // Validates that assetIntegrityCheckersString is in the format "extension:checkerType,..."
 export function validateAssetIntegrityCheckers(assetIntegrityCheckersString) {
     if (!assetIntegrityCheckersString) return true;
@@ -53,4 +61,30 @@ export function flattenRepositoryLocales(repositoryLocales) {
     });
 
     return result;
+}
+
+// Converts flattened repository locales back to hierarchical structure
+// [{parentLocale, childLocales, toBeFullyTranslated}...] excluding the sourceLocale
+export function unflattenRepositoryLocales(flattened, sourceLocale) {
+    const localeMap = new Map();
+
+    flattened.forEach(item => {
+        localeMap.set(item.locale.id, {
+            id: item.id,
+            locale: item.locale,
+            toBeFullyTranslated: item.toBeFullyTranslated,
+            childLocales: [],
+        });
+    });
+
+    flattened.forEach(item => {
+        const parentId = item.parentLocale?.locale?.id;
+        if (parentId && localeMap.has(parentId)) {
+            localeMap.get(parentId).childLocales.push(localeMap.get(item.locale.id));
+        }
+    });
+
+    return flattened
+        .filter(item => item.parentLocale?.locale?.id === sourceLocale.id)
+        .map(item => localeMap.get(item.locale.id));
 }
