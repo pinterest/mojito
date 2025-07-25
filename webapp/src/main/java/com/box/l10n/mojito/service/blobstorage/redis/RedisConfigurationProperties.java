@@ -20,6 +20,12 @@ public class RedisConfigurationProperties {
 
   private String replicationGroupId;
 
+  private Boolean useIAM = true;
+
+  private Boolean useSSL = true;
+
+  private String password = "";
+
   public String getEndpoint() {
     return endpoint;
   }
@@ -74,5 +80,29 @@ public class RedisConfigurationProperties {
 
   public void setReplicationGroupId(String replicationGroupId) {
     this.replicationGroupId = replicationGroupId;
+  }
+
+  public Boolean getUseIAM() {
+    return useIAM;
+  }
+
+  public void setUseIAM(Boolean useIAM) {
+    this.useIAM = useIAM;
+  }
+
+  public Boolean getUseSSL() {
+    return useSSL;
+  }
+
+  public void setUseSSL(Boolean useSSL) {
+    this.useSSL = useSSL;
+  }
+
+  public String getPassword() {
+    return password;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
   }
 }

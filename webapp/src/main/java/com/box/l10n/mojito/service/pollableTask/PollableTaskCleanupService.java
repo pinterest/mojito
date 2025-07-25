@@ -3,7 +3,11 @@ package com.box.l10n.mojito.service.pollableTask;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.box.l10n.mojito.entity.PollableTask;
+import com.box.l10n.mojito.service.assetExtraction.AssetExtractionRepository;
+import com.box.l10n.mojito.service.drop.DropRepository;
+import com.box.l10n.mojito.service.tm.TMXliffRepository;
 import io.micrometer.core.instrument.MeterRegistry;
+import java.time.Period;
 import java.time.ZonedDateTime;
 import java.util.List;
 import org.slf4j.Logger;
@@ -23,6 +27,12 @@ public class PollableTaskCleanupService {
   @Autowired PollableTaskRepository pollableTaskRepository;
 
   @Autowired PollableTaskService pollableTaskService;
+
+  @Autowired DropRepository dropRepository;
+
+  @Autowired TMXliffRepository tmxliffRepository;
+
+  @Autowired AssetExtractionRepository assetExtractionRepository;
 
   @Autowired MeterRegistry meterRegistry;
 
@@ -66,5 +76,30 @@ public class PollableTaskCleanupService {
     meterRegistry
         .counter("PollableTaskCleanupService.markAsZombieTask", "name", pollableTask.getName())
         .increment();
+  }
+
+  public void cleanStalePollableTaskData(Period retentionPeriod, int batchSize) {
+    ZonedDateTime beforeDate = ZonedDateTime.now().minus(retentionPeriod);
+    int deleteCount = this.dropRepository.cleanStaleExportPollableTaskIds(beforeDate);
+    logger.debug("Updated {} Drop rows (exported)", deleteCount);
+    deleteCount = this.dropRepository.cleanStaleImportPollableTaskIds(beforeDate);
+    logger.debug("Updated {} Drop rows (imported)", deleteCount);
+    deleteCount = this.assetExtractionRepository.cleanStalePollableTaskIds(beforeDate);
+    logger.debug("Updated {} Asset Extraction rows", deleteCount);
+    deleteCount = this.tmxliffRepository.cleanStaleExportPollableTaskIds(beforeDate);
+    logger.debug("Updated {} TM Xliff rows", deleteCount);
+    int batchNumber = 1;
+    do {
+      deleteCount =
+          this.pollableTaskRepository.cleanParentTasksWithFinishedDateBefore(beforeDate, batchSize);
+      logger.debug("Updated {} Pollable Task rows in batch: {}", deleteCount, batchNumber++);
+    } while (deleteCount == batchSize);
+
+    batchNumber = 1;
+    do {
+      deleteCount =
+          this.pollableTaskRepository.deleteAllByFinishedDateBefore(beforeDate, batchSize);
+      logger.debug("Deleted {} Pollable Task rows in batch: {}", deleteCount, batchNumber++);
+    } while (deleteCount == batchSize);
   }
 }
