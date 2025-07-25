@@ -87,7 +87,7 @@ public class ScheduledJobService {
         scheduledJob.getUuid(),
         scheduledJob.getRepository().getName());
 
-    uptickMetrics("create", scheduledJob);
+    uptickScheduledThirdPartySyncActionMetric("create", scheduledJob);
     return scheduledJob;
   }
 
@@ -129,7 +129,7 @@ public class ScheduledJobService {
     scheduledJobManager.scheduleJob(updatedJob);
 
     logger.info("Job '{}' was updated.", uuid);
-    uptickMetrics("update", updatedJob);
+    uptickScheduledThirdPartySyncActionMetric("update", updatedJob);
     return updatedJob;
   }
 
@@ -138,7 +138,7 @@ public class ScheduledJobService {
     scheduledJobRepository.save(scheduledJob);
     scheduledJobManager.deleteJobFromQuartz(scheduledJob);
     logger.info("Deleted scheduled job with uuid: {}", scheduledJob.getUuid());
-    uptickMetrics("delete", scheduledJob);
+    uptickScheduledThirdPartySyncActionMetric("delete", scheduledJob);
   }
 
   public void restoreJob(ScheduledJob scheduledJob)
@@ -157,7 +157,7 @@ public class ScheduledJobService {
     scheduledJobRepository.save(scheduledJob);
     scheduledJobManager.scheduleJob(scheduledJob);
     logger.info("Restored scheduled job with uuid: {}", scheduledJob.getUuid());
-    uptickMetrics("restore", scheduledJob);
+    uptickScheduledThirdPartySyncActionMetric("restore", scheduledJob);
   }
 
   private Repository resolveRepositoryFromDTO(ScheduledJobDTO scheduledJobDTO) {
@@ -182,7 +182,7 @@ public class ScheduledJobService {
     return jobType;
   }
 
-  public void uptickMetrics(String action, ScheduledJob scheduledJob) {
+  public void uptickScheduledThirdPartySyncActionMetric(String action, ScheduledJob scheduledJob) {
     User currentUser = auditorAwareImpl.getCurrentAuditor().orElse(null);
     meterRegistry
         .counter(

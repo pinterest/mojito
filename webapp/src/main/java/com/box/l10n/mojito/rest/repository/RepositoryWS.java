@@ -110,7 +110,9 @@ public class RepositoryWS {
               repository.getCheckSLA(),
               repository.getAssetIntegrityCheckers(),
               repository.getRepositoryLocales());
+
       result = new ResponseEntity<>(createdRepo, HttpStatus.CREATED);
+      repositoryService.uptickRepositoryActionMetrics("create", createdRepo);
     } catch (RepositoryNameAlreadyUsedException e) {
       logger.debug("Cannot create the repository", e);
       result =
@@ -121,7 +123,6 @@ public class RepositoryWS {
       logger.debug("Cannot create the repository", e);
       result = new ResponseEntity(e.getMessage(), HttpStatus.CONFLICT);
     }
-
     return result;
   }
 
@@ -205,6 +206,7 @@ public class RepositoryWS {
           repository.getAssetIntegrityCheckers());
 
       result = new ResponseEntity(HttpStatus.OK);
+      repositoryService.uptickRepositoryActionMetrics("create", repoToUpdate);
 
     } catch (RepositoryNameAlreadyUsedException e) {
       logger.debug("Cannot create the repository", e);

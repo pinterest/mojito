@@ -5,13 +5,9 @@ import static com.box.l10n.mojito.rest.repository.RepositorySpecification.nameEq
 import static com.box.l10n.mojito.specification.Specifications.ifParamNotNull;
 import static org.springframework.data.jpa.domain.Specification.where;
 
-import com.box.l10n.mojito.entity.AssetIntegrityChecker;
-import com.box.l10n.mojito.entity.Locale;
-import com.box.l10n.mojito.entity.Repository;
-import com.box.l10n.mojito.entity.RepositoryLocale;
-import com.box.l10n.mojito.entity.RepositoryStatistic;
-import com.box.l10n.mojito.entity.ScreenshotRun;
-import com.box.l10n.mojito.entity.TM;
+import com.box.l10n.mojito.entity.*;
+import com.box.l10n.mojito.entity.security.user.User;
+import com.box.l10n.mojito.security.AuditorAwareImpl;
 import com.box.l10n.mojito.service.assetintegritychecker.AssetIntegrityCheckerRepository;
 import com.box.l10n.mojito.service.drop.exporter.DropExporterConfig;
 import com.box.l10n.mojito.service.locale.LocaleService;
@@ -19,6 +15,8 @@ import com.box.l10n.mojito.service.repository.statistics.RepositoryLocaleStatist
 import com.box.l10n.mojito.service.repository.statistics.RepositoryStatisticRepository;
 import com.box.l10n.mojito.service.screenshot.ScreenshotRunRepository;
 import com.box.l10n.mojito.service.tm.TMRepository;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -61,6 +59,10 @@ public class RepositoryService {
   @Autowired DropExporterConfig dropExporterConfiguration;
 
   @Autowired ScreenshotRunRepository screenshotRunRepository;
+
+  @Autowired MeterRegistry meterRegistry;
+
+  @Autowired AuditorAwareImpl auditorAwareImpl;
 
   /**
    * Default root locale.
@@ -786,5 +788,20 @@ public class RepositoryService {
     updateAssetIntegrityCheckers(repository, assetIntegrityCheckers);
 
     logger.debug("Updated repository with name: {}", repository.getName());
+  }
+
+  public void uptickRepositoryActionMetrics(String action, Repository repository) {
+    User currentUser = auditorAwareImpl.getCurrentAuditor().orElse(null);
+    meterRegistry
+        .counter(
+            "Repository.action",
+            Tags.of(
+                "Action",
+                action,
+                "Repository",
+                String.valueOf(repository.getName()),
+                "User",
+                currentUser != null ? currentUser.getUsername() : null))
+        .increment();
   }
 }
