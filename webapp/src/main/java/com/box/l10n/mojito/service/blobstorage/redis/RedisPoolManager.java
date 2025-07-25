@@ -81,6 +81,7 @@ public class RedisPoolManager {
     DefaultJedisClientConfig clientConfig;
 
     if (this.redisConfigurationProperties.getUseIAM()) {
+      LOG.info("Using Redis with IAM authentication");
       String authToken =
           this.iamAuthTokenRequest.toSignedRequestUri(
               this.redisConfigurationProperties.getUserId(),
@@ -92,15 +93,22 @@ public class RedisPoolManager {
           DefaultJedisClientConfig.builder()
               .user(this.redisConfigurationProperties.getUserId())
               .password(authToken)
-              .ssl(true)
+              .ssl(this.redisConfigurationProperties.getUseSSL())
               .timeoutMillis(this.redisPoolConfigurationProperties.getTimeoutMillis())
               .build();
     } else {
       LOG.info("Using redis without IAM authentication");
-      clientConfig =
+      DefaultJedisClientConfig.Builder configBuilder =
           DefaultJedisClientConfig.builder()
-              .timeoutMillis(this.redisPoolConfigurationProperties.getTimeoutMillis())
-              .build();
+              .ssl(this.redisConfigurationProperties.getUseSSL())
+              .timeoutMillis(this.redisPoolConfigurationProperties.getTimeoutMillis());
+
+      String password = this.redisConfigurationProperties.getPassword();
+      if (password != null && !password.isEmpty()) {
+        configBuilder.password(password);
+      }
+
+      clientConfig = configBuilder.build();
     }
 
     this.jedisPool =
