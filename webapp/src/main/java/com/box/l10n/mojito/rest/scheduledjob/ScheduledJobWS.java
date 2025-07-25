@@ -185,6 +185,7 @@ public class ScheduledJobWS {
           "Job '{}' for repository '{}' was manually triggered.",
           scheduledJob.getJobType().getEnum(),
           scheduledJob.getRepository().getName());
+      scheduledJobService.uptickMetrics("trigger", scheduledJob);
       return ResponseEntity.status(HttpStatus.OK)
           .body(
               new ScheduledJobResponse(
@@ -232,6 +233,7 @@ public class ScheduledJobWS {
 
       scheduledJob.setEnabled(active);
       scheduledJobRepository.save(scheduledJob);
+      scheduledJobService.uptickMetrics(active ? "enable" : "disable", scheduledJob);
 
       return createResponse(
           HttpStatus.OK,

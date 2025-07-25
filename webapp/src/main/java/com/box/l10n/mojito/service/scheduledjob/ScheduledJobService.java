@@ -3,7 +3,11 @@ package com.box.l10n.mojito.service.scheduledjob;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.ScheduledJob;
 import com.box.l10n.mojito.entity.ScheduledJobType;
+import com.box.l10n.mojito.entity.security.user.User;
+import com.box.l10n.mojito.security.AuditorAwareImpl;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import java.util.UUID;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -20,6 +24,10 @@ public class ScheduledJobService {
   private final ScheduledJobTypeRepository scheduledJobTypeRepository;
   private final ScheduledJobManager scheduledJobManager;
   private final RepositoryRepository repositoryRepository;
+
+  @Autowired AuditorAwareImpl auditorAwareImpl;
+
+  @Autowired MeterRegistry meterRegistry;
 
   @Autowired
   public ScheduledJobService(
@@ -78,6 +86,8 @@ public class ScheduledJobService {
         "Job '{}' for repository '{}' was created.",
         scheduledJob.getUuid(),
         scheduledJob.getRepository().getName());
+
+    uptickMetrics("create", scheduledJob);
     return scheduledJob;
   }
 
@@ -119,6 +129,7 @@ public class ScheduledJobService {
     scheduledJobManager.scheduleJob(updatedJob);
 
     logger.info("Job '{}' was updated.", uuid);
+    uptickMetrics("update", updatedJob);
     return updatedJob;
   }
 
@@ -127,6 +138,7 @@ public class ScheduledJobService {
     scheduledJobRepository.save(scheduledJob);
     scheduledJobManager.deleteJobFromQuartz(scheduledJob);
     logger.info("Deleted scheduled job with uuid: {}", scheduledJob.getUuid());
+    uptickMetrics("delete", scheduledJob);
   }
 
   public void restoreJob(ScheduledJob scheduledJob)
@@ -145,6 +157,7 @@ public class ScheduledJobService {
     scheduledJobRepository.save(scheduledJob);
     scheduledJobManager.scheduleJob(scheduledJob);
     logger.info("Restored scheduled job with uuid: {}", scheduledJob.getUuid());
+    uptickMetrics("restore", scheduledJob);
   }
 
   private Repository resolveRepositoryFromDTO(ScheduledJobDTO scheduledJobDTO) {
@@ -167,5 +180,20 @@ public class ScheduledJobService {
       throw new ScheduledJobException("Job type not found: " + scheduledJobDTO.getType());
     }
     return jobType;
+  }
+
+  public void uptickMetrics(String action, ScheduledJob scheduledJob) {
+    User currentUser = auditorAwareImpl.getCurrentAuditor().orElse(null);
+    meterRegistry
+        .counter(
+            "ScheduledThirdPartySync.action",
+            Tags.of(
+                "Action",
+                action,
+                "JobType",
+                String.valueOf(scheduledJob.getJobType().getEnum()),
+                "User",
+                currentUser != null ? currentUser.getUsername() : null))
+        .increment();
   }
 }
