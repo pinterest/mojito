@@ -96,7 +96,7 @@ public class RedisPoolManager {
               .timeoutMillis(this.redisPoolConfigurationProperties.getTimeoutMillis())
               .build();
     } else {
-      LOG.info("USING LOCAL REDIS");
+      LOG.info("Using redis without IAM authentication");
       clientConfig =
           DefaultJedisClientConfig.builder()
               .timeoutMillis(this.redisPoolConfigurationProperties.getTimeoutMillis())

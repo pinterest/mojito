@@ -1,7 +1,6 @@
 package com.box.l10n.mojito.service.appender;
 
 import com.box.l10n.mojito.json.ObjectMapper;
-import com.box.l10n.mojito.service.blobstorage.RedisStructuredBlobStorageProxy;
 import com.box.l10n.mojito.service.blobstorage.Retention;
 import com.box.l10n.mojito.service.blobstorage.StructuredBlobStorage;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -19,12 +18,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class AppendedAssetBlobStorage {
 
-  private final RedisStructuredBlobStorageProxy structuredBlobStorage;
+  private final StructuredBlobStorage structuredBlobStorage;
   private final ObjectMapper objectMapper;
 
   @Autowired
   public AppendedAssetBlobStorage(
-      RedisStructuredBlobStorageProxy structuredBlobStorage, ObjectMapper objectMapper) {
+      StructuredBlobStorage structuredBlobStorage, ObjectMapper objectMapper) {
     this.structuredBlobStorage = structuredBlobStorage;
     this.objectMapper = objectMapper;
   }
