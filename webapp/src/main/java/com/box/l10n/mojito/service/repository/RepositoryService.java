@@ -5,7 +5,13 @@ import static com.box.l10n.mojito.rest.repository.RepositorySpecification.nameEq
 import static com.box.l10n.mojito.specification.Specifications.ifParamNotNull;
 import static org.springframework.data.jpa.domain.Specification.where;
 
-import com.box.l10n.mojito.entity.*;
+import com.box.l10n.mojito.entity.AssetIntegrityChecker;
+import com.box.l10n.mojito.entity.Locale;
+import com.box.l10n.mojito.entity.Repository;
+import com.box.l10n.mojito.entity.RepositoryLocale;
+import com.box.l10n.mojito.entity.RepositoryStatistic;
+import com.box.l10n.mojito.entity.ScreenshotRun;
+import com.box.l10n.mojito.entity.TM;
 import com.box.l10n.mojito.entity.security.user.User;
 import com.box.l10n.mojito.security.AuditorAwareImpl;
 import com.box.l10n.mojito.service.assetintegritychecker.AssetIntegrityCheckerRepository;
