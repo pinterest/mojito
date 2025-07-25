@@ -2,8 +2,6 @@ package com.box.l10n.mojito.rest.scheduledjob;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
 import com.box.l10n.mojito.security.Role;
-import com.box.l10n.mojito.service.blobstorage.Retention;
-import com.box.l10n.mojito.service.blobstorage.redis.RedisClient;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobDTO;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobException;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobManager;
@@ -44,20 +42,17 @@ public class ScheduledJobWS {
   private final ScheduledJobManager scheduledJobManager;
   private final ScheduledJobService scheduledJobService;
   private final UserService userService;
-  private final RedisClient redisClient;
 
   @Autowired
   public ScheduledJobWS(
       ScheduledJobRepository scheduledJobRepository,
       ScheduledJobManager scheduledJobManager,
       ScheduledJobService scheduledJobService,
-      UserService userService,
-      RedisClient redisClient) {
+      UserService userService) {
     this.scheduledJobRepository = scheduledJobRepository;
     this.scheduledJobManager = scheduledJobManager;
     this.scheduledJobService = scheduledJobService;
     this.userService = userService;
-    this.redisClient = redisClient;
   }
 
   private final ResponseEntity<ScheduledJobResponse> notFoundResponse =
@@ -124,14 +119,6 @@ public class ScheduledJobWS {
   @RequestMapping(method = RequestMethod.GET, value = "/api/jobs")
   @ResponseStatus(HttpStatus.OK)
   public List<ScheduledJobDTO> getAllJobs() {
-    Optional<String> hello = redisClient.get("hello_world");
-    if (hello.isPresent()) {
-      logger.info("CACHE HIT '{}'", hello.get());
-    } else {
-      logger.info("CACHE MISS :(");
-      redisClient.put("hello_world", "HI WORLD!", Retention.MIN_1_DAY);
-    }
-
     List<ScheduledJob> scheduledJobs = scheduledJobRepository.findAll();
     if (userService.checkUserHasRole(Role.ROLE_ADMIN)) {
       return scheduledJobs.stream().map(ScheduledJobDTO::new).collect(Collectors.toList());
