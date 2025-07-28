@@ -12,6 +12,8 @@ import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.entity.RepositoryStatistic;
 import com.box.l10n.mojito.entity.ScreenshotRun;
 import com.box.l10n.mojito.entity.TM;
+import com.box.l10n.mojito.entity.security.user.User;
+import com.box.l10n.mojito.security.AuditorAwareImpl;
 import com.box.l10n.mojito.service.assetintegritychecker.AssetIntegrityCheckerRepository;
 import com.box.l10n.mojito.service.drop.exporter.DropExporterConfig;
 import com.box.l10n.mojito.service.locale.LocaleService;
@@ -19,6 +21,8 @@ import com.box.l10n.mojito.service.repository.statistics.RepositoryLocaleStatist
 import com.box.l10n.mojito.service.repository.statistics.RepositoryStatisticRepository;
 import com.box.l10n.mojito.service.screenshot.ScreenshotRunRepository;
 import com.box.l10n.mojito.service.tm.TMRepository;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -61,6 +65,10 @@ public class RepositoryService {
   @Autowired DropExporterConfig dropExporterConfiguration;
 
   @Autowired ScreenshotRunRepository screenshotRunRepository;
+
+  @Autowired MeterRegistry meterRegistry;
+
+  @Autowired AuditorAwareImpl auditorAwareImpl;
 
   /**
    * Default root locale.
@@ -786,5 +794,30 @@ public class RepositoryService {
     updateAssetIntegrityCheckers(repository, assetIntegrityCheckers);
 
     logger.debug("Updated repository with name: {}", repository.getName());
+  }
+
+  public void uptickRepositoryServiceActionMetrics(
+      Enum<RepositoryServiceAction> action, Repository repository) {
+    uptickRepositoryServiceActionMetrics(action, repository, false);
+  }
+
+  public void uptickRepositoryServiceActionMetrics(
+      Enum<RepositoryServiceAction> action,
+      Repository repository,
+      boolean hasRepositoryLocalesChanged) {
+    User currentUser = auditorAwareImpl.getCurrentAuditor().orElse(null);
+    meterRegistry
+        .counter(
+            "RepositoryService.action",
+            Tags.of(
+                "Action",
+                action.name(),
+                "Repository",
+                String.valueOf(repository.getName()),
+                "User",
+                currentUser != null ? currentUser.getUsername() : null,
+                "HasRepositoryLocalesChanged",
+                String.valueOf(hasRepositoryLocalesChanged)))
+        .increment();
   }
 }
