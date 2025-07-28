@@ -122,7 +122,7 @@ public class AssetAppenderService {
     // being appended again.
     Set<String> textUnitNamesInSourceAsset =
         tmTextUnitRepository.findAllById(textUnitIdsInLastPushRun).stream()
-            .map(TMTextUnit::getName)
+            .flatMap(tu -> expandPluralTextUnitNames(extension, tu).stream())
             .collect(Collectors.toSet());
 
     // Fetch all branches to be appended, sorted by translated date in ascending order to ensure
@@ -221,7 +221,7 @@ public class AssetAppenderService {
   }
 
   /**
-   * Save results to block storage : S3 / DB. The branches will be used in the commit step to link
+   * Save results to blob storage : S3 / DB. The branches will be used in the commit step to link
    * the branch to the commit that landed the appended text units.
    *
    * @param appendJobId Job id supplied by the -abtu param at the pull step.
@@ -236,5 +236,25 @@ public class AssetAppenderService {
     // Save branches to blob storage, will be serialized to a JSON string
     appendedAssetBlobStorage.saveAppendedBranches(
         appendJobId, appendedBranches.stream().map(BaseEntity::getId).toList());
+  }
+
+  protected List<String> expandPluralTextUnitNames(String extension, TMTextUnit tmTextUnit) {
+    List<String> textUnitNames = new ArrayList<>();
+    textUnitNames.add(tmTextUnit.getName());
+    switch (extension) {
+      case "po":
+      case "pot":
+        if (tmTextUnit.getPluralForm() != null && tmTextUnit.getPluralForm().getId() != null) {
+          // Add the singular to the set if there is a plural form defined
+          // This is because PO files use the plural form for singular lookups if both exist
+          String singularName = tmTextUnit.getName().split(" _")[0];
+          textUnitNames.add(singularName);
+        }
+        break;
+      default:
+        // For other extensions, we just use the name as is
+        break;
+    }
+    return textUnitNames;
   }
 }
