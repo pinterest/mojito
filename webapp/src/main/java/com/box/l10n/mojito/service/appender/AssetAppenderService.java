@@ -244,7 +244,6 @@ public class AssetAppenderService {
     List<String> textUnitNames = new ArrayList<>();
     textUnitNames.add(tmTextUnit.getName());
     switch (extension) {
-      case "po":
       case "pot":
         if (tmTextUnit.getPluralForm() != null && tmTextUnit.getPluralForm().getId() != null) {
           // Add the singular to the set if there is a plural form defined
