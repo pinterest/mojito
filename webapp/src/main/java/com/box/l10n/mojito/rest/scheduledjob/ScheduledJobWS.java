@@ -8,6 +8,7 @@ import com.box.l10n.mojito.service.scheduledjob.ScheduledJobManager;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobRepository;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobResponse;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobService;
+import com.box.l10n.mojito.service.scheduledjob.ScheduledJobServiceAction;
 import com.box.l10n.mojito.service.security.user.UserService;
 import java.util.List;
 import java.util.Optional;
@@ -185,6 +186,8 @@ public class ScheduledJobWS {
           "Job '{}' for repository '{}' was manually triggered.",
           scheduledJob.getJobType().getEnum(),
           scheduledJob.getRepository().getName());
+      scheduledJobService.uptickScheduledThirdPartySyncActionMetric(
+          ScheduledJobServiceAction.TRIGGER, scheduledJob);
       return ResponseEntity.status(HttpStatus.OK)
           .body(
               new ScheduledJobResponse(
@@ -232,6 +235,9 @@ public class ScheduledJobWS {
 
       scheduledJob.setEnabled(active);
       scheduledJobRepository.save(scheduledJob);
+      scheduledJobService.uptickScheduledThirdPartySyncActionMetric(
+          active ? ScheduledJobServiceAction.ENABLE : ScheduledJobServiceAction.DISABLE,
+          scheduledJob);
 
       return createResponse(
           HttpStatus.OK,
