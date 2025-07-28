@@ -10,17 +10,20 @@ describe('deserializeAssetIntegrityCheckers', () => {
   it('returns empty array for empty string', () => {
     expect(deserializeAssetIntegrityCheckers('')).toEqual([]);
   });
+
   it('parses single pair', () => {
     expect(deserializeAssetIntegrityCheckers('js:checker1')).toEqual([
       { assetExtension: 'js', integrityCheckerType: 'checker1' }
     ]);
   });
+
   it('parses multiple pairs', () => {
     expect(deserializeAssetIntegrityCheckers('js:checker1,css:checker2')).toEqual([
       { assetExtension: 'js', integrityCheckerType: 'checker1' },
       { assetExtension: 'css', integrityCheckerType: 'checker2' }
     ]);
   });
+
   it('trims whitespace', () => {
     expect(deserializeAssetIntegrityCheckers(' js : checker1 , css : checker2 ')).toEqual([
       { assetExtension: 'js', integrityCheckerType: 'checker1' },
@@ -34,11 +37,13 @@ describe('serializeAssetIntegrityCheckers', () => {
     expect(serializeAssetIntegrityCheckers(null)).toBe('');
     expect(serializeAssetIntegrityCheckers(undefined)).toBe('');
   });
+
   it('serializes single pair', () => {
     expect(serializeAssetIntegrityCheckers([
       { assetExtension: 'js', integrityCheckerType: 'checker1' }
     ])).toBe('js:checker1');
   });
+
   it('serializes multiple pairs', () => {
     expect(serializeAssetIntegrityCheckers([
       { assetExtension: 'js', integrityCheckerType: 'checker1' },
@@ -51,10 +56,12 @@ describe('validateAssetIntegrityCheckers', () => {
   it('returns true for empty string', () => {
     expect(validateAssetIntegrityCheckers('')).toBe(true);
   });
+
   it('returns true for valid pairs', () => {
     expect(validateAssetIntegrityCheckers('js:checker1')).toBe(true);
     expect(validateAssetIntegrityCheckers('js:checker1,css:checker2')).toBe(true);
   });
+
   it('returns false for missing assetExtension or checkerType', () => {
     expect(validateAssetIntegrityCheckers('js:')).toBe(false);
     expect(validateAssetIntegrityCheckers(':checker1')).toBe(false);
@@ -88,6 +95,7 @@ describe('flattenRepositoryLocales', () => {
       { locale: 'es', toBeFullyTranslated: true }
     ]);
   });
+
   it('handles empty input', () => {
     expect(flattenRepositoryLocales([])).toEqual([]);
   });
@@ -106,6 +114,7 @@ describe('unflattenRepositoryLocales', () => {
     expect(result[1].locale.locale).toBe('de');
     expect(result[0].childLocales).toEqual([]);
   });
+
   it('filters out child locale if parent locale is invalid', () => {
     const sourceLocale = { id: 1, locale: 'en' };
     const flattened = [
@@ -117,6 +126,7 @@ describe('unflattenRepositoryLocales', () => {
     expect(result[0].locale.locale).toBe('fr');
     expect(result[0].childLocales).toEqual([]);
   });
+  
   it('handles empty flattened', () => {
     expect(unflattenRepositoryLocales([], { id: 1, locale: 'en' })).toEqual([]);
   });
