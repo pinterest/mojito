@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.appender;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
@@ -11,6 +12,7 @@ import static org.mockito.Mockito.when;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.Branch;
 import com.box.l10n.mojito.entity.Repository;
+import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.rest.asset.LocalizedAssetBody;
 import com.box.l10n.mojito.service.branch.BranchRepository;
 import com.box.l10n.mojito.service.branch.BranchStatisticService;
@@ -258,5 +260,43 @@ public class AssetAppenderServiceTest {
     // Make sure the appended count is only 2 as the text units were duplicates
     verify(appendCountCounterMock, times(1)).increment(2);
     verify(appendBranchCountCounterMock, times(1)).increment(3);
+  }
+
+  @Test
+  public void testExpandPluralTextUnitsNames() {
+    // Test with a regular text unit (no plural form)
+    TMTextUnit regularTextUnit = new TMTextUnit();
+    regularTextUnit.setName("Hello World! -- greetings.hello_world");
+
+    List<String> regularResult =
+        assetAppenderService.expandPluralTextUnitNames("pot", regularTextUnit);
+    assertEquals(1, regularResult.size());
+    assertEquals("Hello World! -- greetings.hello_world", regularResult.getFirst());
+
+    // Test with a plural text unit
+    TMTextUnit pluralTextUnit = new TMTextUnit();
+    pluralTextUnit.setName("Hello Worlds! -- greetings.hello_worlds _other");
+
+    // Mock plural form
+    com.box.l10n.mojito.entity.PluralForm pluralForm = new com.box.l10n.mojito.entity.PluralForm();
+    pluralForm.setId(1L);
+    pluralTextUnit.setPluralForm(pluralForm);
+
+    List<String> pluralResult =
+        assetAppenderService.expandPluralTextUnitNames("pot", pluralTextUnit);
+    assertEquals(2, pluralResult.size());
+    assertEquals("Hello Worlds! -- greetings.hello_worlds _other", pluralResult.get(0));
+    assertEquals("Hello Worlds! -- greetings.hello_worlds", pluralResult.get(1));
+
+    // Test with plural text unit that has multiple underscores
+    TMTextUnit complexPluralTextUnit = new TMTextUnit();
+    complexPluralTextUnit.setName("Hello_Worlds! -- greetings_hello_worlds _many");
+    complexPluralTextUnit.setPluralForm(pluralForm);
+
+    List<String> manyUnderscoresResult =
+        assetAppenderService.expandPluralTextUnitNames("pot", complexPluralTextUnit);
+    assertEquals(2, manyUnderscoresResult.size());
+    assertEquals("Hello_Worlds! -- greetings_hello_worlds _many", manyUnderscoresResult.get(0));
+    assertEquals("Hello_Worlds! -- greetings_hello_worlds", manyUnderscoresResult.get(1));
   }
 }
