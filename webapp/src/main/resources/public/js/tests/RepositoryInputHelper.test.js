@@ -126,7 +126,7 @@ describe('unflattenRepositoryLocales', () => {
     expect(result[0].locale.locale).toBe('fr');
     expect(result[0].childLocales).toEqual([]);
   });
-  
+
   it('handles empty flattened', () => {
     expect(unflattenRepositoryLocales([], { id: 1, locale: 'en' })).toEqual([]);
   });
