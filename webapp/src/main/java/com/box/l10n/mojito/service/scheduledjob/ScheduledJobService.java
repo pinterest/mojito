@@ -87,7 +87,7 @@ public class ScheduledJobService {
         scheduledJob.getUuid(),
         scheduledJob.getRepository().getName());
 
-    uptickScheduledThirdPartySyncActionMetric("create", scheduledJob);
+    uptickScheduledThirdPartySyncActionMetric(ScheduledJobServiceAction.CREATE, scheduledJob);
     return scheduledJob;
   }
 
@@ -129,7 +129,7 @@ public class ScheduledJobService {
     scheduledJobManager.scheduleJob(updatedJob);
 
     logger.info("Job '{}' was updated.", uuid);
-    uptickScheduledThirdPartySyncActionMetric("update", updatedJob);
+    uptickScheduledThirdPartySyncActionMetric(ScheduledJobServiceAction.UPDATE, updatedJob);
     return updatedJob;
   }
 
@@ -138,7 +138,7 @@ public class ScheduledJobService {
     scheduledJobRepository.save(scheduledJob);
     scheduledJobManager.deleteJobFromQuartz(scheduledJob);
     logger.info("Deleted scheduled job with uuid: {}", scheduledJob.getUuid());
-    uptickScheduledThirdPartySyncActionMetric("delete", scheduledJob);
+    uptickScheduledThirdPartySyncActionMetric(ScheduledJobServiceAction.DELETE, scheduledJob);
   }
 
   public void restoreJob(ScheduledJob scheduledJob)
@@ -157,7 +157,7 @@ public class ScheduledJobService {
     scheduledJobRepository.save(scheduledJob);
     scheduledJobManager.scheduleJob(scheduledJob);
     logger.info("Restored scheduled job with uuid: {}", scheduledJob.getUuid());
-    uptickScheduledThirdPartySyncActionMetric("restore", scheduledJob);
+    uptickScheduledThirdPartySyncActionMetric(ScheduledJobServiceAction.RESTORE, scheduledJob);
   }
 
   private Repository resolveRepositoryFromDTO(ScheduledJobDTO scheduledJobDTO) {
@@ -182,16 +182,19 @@ public class ScheduledJobService {
     return jobType;
   }
 
-  public void uptickScheduledThirdPartySyncActionMetric(String action, ScheduledJob scheduledJob) {
+  public void uptickScheduledThirdPartySyncActionMetric(
+      Enum<ScheduledJobServiceAction> action, ScheduledJob scheduledJob) {
     User currentUser = auditorAwareImpl.getCurrentAuditor().orElse(null);
     meterRegistry
         .counter(
-            "ScheduledThirdPartySync.action",
+            "ScheduledJobService.action",
             Tags.of(
                 "Action",
-                action,
+                action.name(),
                 "JobType",
                 String.valueOf(scheduledJob.getJobType().getEnum()),
+                "Repository",
+                scheduledJob.getRepository().getName(),
                 "User",
                 currentUser != null ? currentUser.getUsername() : null))
         .increment();

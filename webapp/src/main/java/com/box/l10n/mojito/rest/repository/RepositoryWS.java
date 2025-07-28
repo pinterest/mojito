@@ -22,11 +22,13 @@ import com.box.l10n.mojito.service.repository.RepositoryLocaleCreationException;
 import com.box.l10n.mojito.service.repository.RepositoryNameAlreadyUsedException;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.repository.RepositoryService;
+import com.box.l10n.mojito.service.repository.RepositoryServiceAction;
 import com.box.l10n.mojito.service.tm.TMImportService;
 import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.Operation;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -112,7 +114,8 @@ public class RepositoryWS {
               repository.getRepositoryLocales());
 
       result = new ResponseEntity<>(createdRepo, HttpStatus.CREATED);
-      repositoryService.uptickRepositoryActionMetrics("create", createdRepo);
+      repositoryService.uptickRepositoryServiceActionMetrics(
+          RepositoryServiceAction.CREATE, createdRepo);
     } catch (RepositoryNameAlreadyUsedException e) {
       logger.debug("Cannot create the repository", e);
       result =
@@ -196,6 +199,13 @@ public class RepositoryWS {
       throw new RepositoryWithIdNotFoundException(repositoryId);
     }
 
+    boolean hasRepositoryLocalesChanged = false;
+
+    if (repository.getRepositoryLocales() != null) {
+      hasRepositoryLocalesChanged =
+          !Objects.equals(repoToUpdate.getRepositoryLocales(), repository.getRepositoryLocales());
+    }
+
     try {
       repositoryService.updateRepository(
           repoToUpdate,
@@ -206,7 +216,8 @@ public class RepositoryWS {
           repository.getAssetIntegrityCheckers());
 
       result = new ResponseEntity(HttpStatus.OK);
-      repositoryService.uptickRepositoryActionMetrics("create", repoToUpdate);
+      repositoryService.uptickRepositoryServiceActionMetrics(
+          RepositoryServiceAction.UPDATE, repoToUpdate, hasRepositoryLocalesChanged);
 
     } catch (RepositoryNameAlreadyUsedException e) {
       logger.debug("Cannot create the repository", e);

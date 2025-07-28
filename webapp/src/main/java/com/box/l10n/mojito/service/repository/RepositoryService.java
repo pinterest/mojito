@@ -796,18 +796,28 @@ public class RepositoryService {
     logger.debug("Updated repository with name: {}", repository.getName());
   }
 
-  public void uptickRepositoryActionMetrics(String action, Repository repository) {
+  public void uptickRepositoryServiceActionMetrics(
+      Enum<RepositoryServiceAction> action, Repository repository) {
+    uptickRepositoryServiceActionMetrics(action, repository, false);
+  }
+
+  public void uptickRepositoryServiceActionMetrics(
+      Enum<RepositoryServiceAction> action,
+      Repository repository,
+      boolean hasRepositoryLocalesChanged) {
     User currentUser = auditorAwareImpl.getCurrentAuditor().orElse(null);
     meterRegistry
         .counter(
-            "Repository.action",
+            "RepositoryService.action",
             Tags.of(
                 "Action",
-                action,
+                action.name(),
                 "Repository",
                 String.valueOf(repository.getName()),
                 "User",
-                currentUser != null ? currentUser.getUsername() : null))
+                currentUser != null ? currentUser.getUsername() : null,
+                "HasRepositoryLocalesChanged",
+                String.valueOf(hasRepositoryLocalesChanged)))
         .increment();
   }
 }
