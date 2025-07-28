@@ -767,7 +767,7 @@ public class RepositoryService {
 
     logger.debug("Update a repository with name: {}", repository.getName());
 
-    if (newName != null) {
+    if (newName != null && !repository.getName().equals(newName)) {
       // check duplicated name
       Repository existingRepository = repositoryRepository.findByName(newName);
       if (existingRepository != null && repository.getId().equals(existingRepository.getId())) {
