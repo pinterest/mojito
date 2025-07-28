@@ -243,8 +243,10 @@ public class WebSecurityConfig {
                 .authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/images/**")
                 .authenticated()
-                // Everyone can create repositories
+                // Everyone can create and update repositories
                 .requestMatchers(HttpMethod.POST, "/api/repositories")
+                .authenticated()
+                .requestMatchers(HttpMethod.PATCH, "/api/repositories/**")
                 .authenticated()
                 // Everyone can retrieve, upload and delete screenshots
                 .requestMatchers(HttpMethod.GET, "/api/screenshots")
