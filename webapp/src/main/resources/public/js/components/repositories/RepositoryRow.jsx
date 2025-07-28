@@ -1,5 +1,5 @@
 import React from "react";
-import {Tooltip, OverlayTrigger, Label, Glyphicon} from "react-bootstrap";
+import {Tooltip, OverlayTrigger, Label, Glyphicon, Button} from "react-bootstrap";
 import {FormattedMessage, FormattedNumber} from "react-intl";
 import {Link} from "react-router";
 import RepositoryStore from "../../stores/RepositoryStore";
@@ -442,8 +442,12 @@ class RepositoryRow extends React.Component {
             <tr className={rowClass}>
                 <td className="repo-name">
                     <OverlayTrigger placement="right" overlay={descriptionTooltip}>
-                        <Link onClick={this.updateSearchParamsForRepoDefault.bind(this, repoId)}
-                              to='/workbench'>{this.props.rowData.name}</Link>
+                        <Link
+                            onClick={this.updateSearchParamsForRepoDefault.bind(this, repoId)}
+                            to="/workbench"
+                        >
+                            {this.props.rowData.name}
+                        </Link>
                     </OverlayTrigger>
                 </td>
 
@@ -451,8 +455,20 @@ class RepositoryRow extends React.Component {
                 <td>{this.getNeedsTranslationLabel()}</td>
                 <td>{this.getNeedsReviewLabel()}</td>
                 <td>
-                    <Label className="clickable label label-primary show-details-button"
-                           onClick={this.onLocalesButtonToggle}><Glyphicon glyph="option-horizontal"/></Label>
+                    <span className="flex flex-row justify-end">
+                        <Label
+                            className="clickable label label-primary"
+                            onClick={() => this.props.openEditRepositoryModal(this.props.rowData)}
+                        >
+                            Edit
+                        </Label>
+                        <Label
+                            className="clickable label label-primary show-details-button mls"
+                            onClick={this.onLocalesButtonToggle}
+                        >
+                            <Glyphicon glyph="option-horizontal" />
+                        </Label>
+                    </span>
                 </td>
             </tr>
         );
