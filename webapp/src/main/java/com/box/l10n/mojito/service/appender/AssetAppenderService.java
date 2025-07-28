@@ -50,6 +50,8 @@ public class AssetAppenderService {
   private final AssetAppenderConfig assetAppenderConfig;
   private final TMTextUnitRepository tmTextUnitRepository;
 
+  private final String POT_PLURAL_SEPARATOR = " _";
+
   @Autowired
   public AssetAppenderService(
       AssetAppenderFactory assetAppenderFactory,
@@ -247,7 +249,7 @@ public class AssetAppenderService {
         if (tmTextUnit.getPluralForm() != null && tmTextUnit.getPluralForm().getId() != null) {
           // Add the singular to the set if there is a plural form defined
           // This is because PO files use the plural form for singular lookups if both exist
-          String singularName = tmTextUnit.getName().split(" _")[0];
+          String singularName = tmTextUnit.getName().split(POT_PLURAL_SEPARATOR)[0];
           textUnitNames.add(singularName);
         }
         break;
