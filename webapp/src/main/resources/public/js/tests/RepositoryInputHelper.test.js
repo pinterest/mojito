@@ -106,6 +106,17 @@ describe('unflattenRepositoryLocales', () => {
     expect(result[1].locale.locale).toBe('de');
     expect(result[0].childLocales).toEqual([]);
   });
+  it('filters out child locale if parent locale is invalid', () => {
+    const sourceLocale = { id: 1, locale: 'en' };
+    const flattened = [
+      { id: 2, locale: { id: 2, locale: 'fr' }, toBeFullyTranslated: true, parentLocale: { locale: { id: 1, locale: 'en' } } },
+      { id: 3, locale: { id: 3, locale: 'de' }, toBeFullyTranslated: false, parentLocale: { locale: { id: 42, locale: 'invalid' } } }
+    ];
+    const result = unflattenRepositoryLocales(flattened, sourceLocale);
+    expect(result.length).toBe(1);
+    expect(result[0].locale.locale).toBe('fr');
+    expect(result[0].childLocales).toEqual([]);
+  });
   it('handles empty flattened', () => {
     expect(unflattenRepositoryLocales([], { id: 1, locale: 'en' })).toEqual([]);
   });
