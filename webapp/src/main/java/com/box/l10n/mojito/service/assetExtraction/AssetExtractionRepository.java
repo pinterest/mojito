@@ -51,4 +51,6 @@ public interface AssetExtractionRepository extends JpaRepository<AssetExtraction
          where pt.finished_date < :beforeDate
         """)
   int cleanStalePollableTaskIds(@Param("beforeDate") ZonedDateTime beforeDate);
+
+  List<AssetExtraction> findByAssetContentId(Long assetContentId);
 }

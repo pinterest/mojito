@@ -4,6 +4,7 @@ import static com.box.l10n.mojito.service.assetcontent.S3ContentService.FILE_EXT
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -14,15 +15,28 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.AssetContent;
+import com.box.l10n.mojito.entity.AssetExtraction;
+import com.box.l10n.mojito.entity.AssetExtractionByBranch;
+import com.box.l10n.mojito.entity.AssetTextUnit;
 import com.box.l10n.mojito.entity.Branch;
+import com.box.l10n.mojito.entity.PluralForm;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.service.asset.AssetService;
+import com.box.l10n.mojito.service.assetExtraction.AssetExtractionByBranchRepository;
+import com.box.l10n.mojito.service.assetExtraction.AssetExtractionRepository;
+import com.box.l10n.mojito.service.assetExtraction.AssetTextUnitToTMTextUnitRepository;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
+import com.box.l10n.mojito.service.assetTextUnit.AssetTextUnitRepository;
 import com.box.l10n.mojito.service.blobstorage.s3.S3BlobStorage;
+import com.box.l10n.mojito.service.branch.BranchRepository;
 import com.box.l10n.mojito.service.branch.BranchService;
+import com.box.l10n.mojito.service.pluralform.PluralFormRepository;
+import com.box.l10n.mojito.service.pluralform.PluralFormService;
 import com.box.l10n.mojito.service.repository.RepositoryNameAlreadyUsedException;
 import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.test.TestIdWatcher;
+import com.google.common.collect.Sets;
+import java.time.Period;
 import java.util.List;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,6 +60,20 @@ public class AssetContentServiceTest extends ServiceTestBase {
   @Autowired RepositoryService repositoryService;
 
   @Autowired BranchService branchService;
+
+  @Autowired AssetExtractionRepository assetExtractionRepository;
+
+  @Autowired AssetExtractionByBranchRepository assetExtractionByBranchRepository;
+
+  @Autowired AssetTextUnitToTMTextUnitRepository assetTextUnitToTMTextUnitRepository;
+
+  @Autowired AssetTextUnitRepository assetTextUnitRepository;
+
+  @Autowired BranchRepository branchRepository;
+
+  @Autowired PluralFormRepository pluralFormRepository;
+
+  @Autowired PluralFormService pluralFormService;
 
   @Test
   public void createAssetContentAndFind() throws RepositoryNameAlreadyUsedException {
@@ -116,7 +144,14 @@ public class AssetContentServiceTest extends ServiceTestBase {
     S3BlobStorage blobStorage = Mockito.mock(S3BlobStorage.class);
     S3ContentService s3ContentService = new S3ContentService(blobStorage, s3PathPrefix);
     AssetContentService s3AssetContentService =
-        new AssetContentService(this.branchService, this.assetContentRepository, s3ContentService);
+        new AssetContentService(
+            this.branchService,
+            this.assetContentRepository,
+            s3ContentService,
+            this.assetExtractionRepository,
+            this.assetExtractionByBranchRepository,
+            this.assetTextUnitToTMTextUnitRepository,
+            this.assetTextUnitRepository);
 
     Repository repository =
         this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
@@ -151,7 +186,13 @@ public class AssetContentServiceTest extends ServiceTestBase {
     S3FallbackContentService s3FallbackContentService =
         new S3FallbackContentService(s3ContentService, s3UploadContentAsyncTask);
     return new AssetContentService(
-        this.branchService, this.assetContentRepository, s3FallbackContentService);
+        this.branchService,
+        this.assetContentRepository,
+        s3FallbackContentService,
+        this.assetExtractionRepository,
+        this.assetExtractionByBranchRepository,
+        this.assetTextUnitToTMTextUnitRepository,
+        this.assetTextUnitRepository);
   }
 
   @Test
@@ -225,5 +266,134 @@ public class AssetContentServiceTest extends ServiceTestBase {
     verify(blobStorage, times(1))
         .getString(
             String.format(pathPlaceholder, s3PathPrefix, assetContent.getId(), FILE_EXTENSION));
+  }
+
+  @Test
+  public void testCleanAssetContentData() throws RepositoryNameAlreadyUsedException {
+    Repository repository =
+        this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
+
+    Asset asset = this.assetService.createAsset(repository.getId(), "asset-path", false);
+
+    assertTrue(
+        this.assetContentRepository
+            .findByAssetRepositoryIdAndBranchName(repository.getId(), null)
+            .isEmpty());
+
+    AssetContent assetContent = this.assetContentService.createAssetContent(asset, "asset-content");
+
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 10);
+
+    assetContent = this.assetContentService.findOne(assetContent.getId());
+
+    assertNull(assetContent);
+  }
+
+  @Test
+  public void testCleanAssetContentData_DeletesAssetExtraction()
+      throws RepositoryNameAlreadyUsedException {
+    Repository repository =
+        this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
+
+    Asset asset = this.assetService.createAsset(repository.getId(), "asset-path", false);
+
+    assertTrue(
+        this.assetContentRepository
+            .findByAssetRepositoryIdAndBranchName(repository.getId(), null)
+            .isEmpty());
+
+    AssetContent assetContent = this.assetContentService.createAssetContent(asset, "asset-content");
+    AssetExtraction assetExtraction = new AssetExtraction();
+    assetExtraction.setAssetContent(assetContent);
+    assetContent.setAsset(asset);
+    this.assetExtractionRepository.save(assetExtraction);
+
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 10);
+
+    assetContent = this.assetContentService.findOne(assetContent.getId());
+
+    assertNull(assetContent);
+  }
+
+  @Test
+  public void testCleanAssetContentData_DeletesAssetExtractionByBranch()
+      throws RepositoryNameAlreadyUsedException {
+    Repository repository =
+        this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
+
+    Asset asset = this.assetService.createAsset(repository.getId(), "asset-path", false);
+
+    assertTrue(
+        this.assetContentRepository
+            .findByAssetRepositoryIdAndBranchName(repository.getId(), null)
+            .isEmpty());
+
+    Branch branch = branchService.createBranch(asset.getRepository(), "branch1", null, null);
+
+    AssetContent assetContent = this.assetContentService.createAssetContent(asset, "asset-content");
+    AssetExtraction assetExtraction = new AssetExtraction();
+    assetExtraction.setAssetContent(assetContent);
+    assetExtraction.setAsset(asset);
+    assetExtraction = this.assetExtractionRepository.save(assetExtraction);
+    AssetExtractionByBranch assetExtractionByBranch = new AssetExtractionByBranch();
+    assetExtractionByBranch.setAsset(asset);
+    assetExtractionByBranch.setBranch(branch);
+    assetExtractionByBranch.setAssetExtraction(assetExtraction);
+    this.assetExtractionByBranchRepository.save(assetExtractionByBranch);
+
+    branch.setDeleted(true);
+    this.branchRepository.save(branch);
+
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 10);
+
+    assetContent = this.assetContentService.findOne(assetContent.getId());
+
+    assertNull(assetContent);
+  }
+
+  @Test
+  public void testCleanAssetContentData_DeletesAssetTextUnit()
+      throws RepositoryNameAlreadyUsedException {
+    Repository repository =
+        this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
+
+    Asset asset = this.assetService.createAsset(repository.getId(), "asset-path", false);
+
+    assertTrue(
+        this.assetContentRepository
+            .findByAssetRepositoryIdAndBranchName(repository.getId(), null)
+            .isEmpty());
+
+    Branch branch = branchService.createBranch(asset.getRepository(), "branch1", null, null);
+
+    AssetContent assetContent = this.assetContentService.createAssetContent(asset, "asset-content");
+    AssetExtraction assetExtraction = new AssetExtraction();
+    assetExtraction.setAssetContent(assetContent);
+    assetExtraction.setAsset(asset);
+    assetExtraction = this.assetExtractionRepository.save(assetExtraction);
+
+    AssetTextUnit assetTextUnit = new AssetTextUnit();
+    assetTextUnit.setAssetExtraction(assetExtraction);
+    assetTextUnit.setName("text-unit");
+    assetTextUnit.setContent("content");
+    assetTextUnit.setComment("comment");
+    assetTextUnit.setMd5("098f6bcd4621d373cade4e832627b4f6");
+    assetTextUnit.setContentMd5("098f6bcd4621d373cade4e832627b4f6");
+    PluralForm pluralForm = this.pluralFormService.findByPluralFormString("other");
+    assetTextUnit.setPluralForm(pluralForm);
+    assetTextUnit.setPluralFormOther("other");
+    assetTextUnit.setDoNotTranslate(false);
+    assetTextUnit.setUsages(Sets.newHashSet("file1.txt", "file2.txt"));
+    assetTextUnit.setBranch(branch);
+    assetTextUnitRepository.save(assetTextUnit);
+
+    branch.setDeleted(true);
+    this.branchRepository.save(branch);
+
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 10);
+
+    assetContent = this.assetContentService.findOne(assetContent.getId());
+
+    assertNull(assetContent);
   }
 }
