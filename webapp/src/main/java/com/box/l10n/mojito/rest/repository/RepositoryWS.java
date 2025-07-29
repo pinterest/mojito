@@ -25,6 +25,8 @@ import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.service.repository.RepositoryServiceAction;
 import com.box.l10n.mojito.service.tm.TMImportService;
 import com.fasterxml.jackson.annotation.JsonView;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import io.swagger.v3.oas.annotations.Operation;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -61,6 +63,8 @@ public class RepositoryWS {
   @Autowired BranchRepository branchRepository;
 
   @Autowired BranchService branchService;
+
+  @Autowired MeterRegistry meterRegistry;
 
   @JsonView(View.Repository.class)
   @RequestMapping(value = "/api/repositories/{repositoryId}", method = RequestMethod.GET)
@@ -125,6 +129,11 @@ public class RepositoryWS {
     } catch (RepositoryLocaleCreationException e) {
       logger.debug("Cannot create the repository", e);
       result = new ResponseEntity(e.getMessage(), HttpStatus.CONFLICT);
+    } catch (Exception e) {
+      meterRegistry
+          .counter("RepositoryWS.error", Tags.of("Action", RepositoryServiceAction.CREATE.name()))
+          .increment();
+      throw e;
     }
     return result;
   }
@@ -228,6 +237,11 @@ public class RepositoryWS {
     } catch (RepositoryLocaleCreationException e) {
       logger.debug("Cannot create the repository", e);
       result = new ResponseEntity(e.getMessage(), HttpStatus.CONFLICT);
+    } catch (Exception e) {
+      meterRegistry
+          .counter("RepositoryWS.error", Tags.of("Action", RepositoryServiceAction.CREATE.name()))
+          .increment();
+      throw e;
     }
 
     return result;
