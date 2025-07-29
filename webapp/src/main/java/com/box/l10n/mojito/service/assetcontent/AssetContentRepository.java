@@ -34,8 +34,7 @@ public interface AssetContentRepository
       select ac.id from AssetContent ac
         left join ac.assetExtractions ae
         left join ae.asset a
-        left join ae.assetExtractionByBranches aebb
-        left join aebb.branch b
+        left join ac.branch b
        where ac.lastModifiedDate < :beforeDate
          and (b is null or b.deleted)
          and (a is null or a.lastSuccessfulAssetExtraction <> ae)
