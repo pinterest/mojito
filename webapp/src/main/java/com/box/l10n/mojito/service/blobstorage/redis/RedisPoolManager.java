@@ -132,7 +132,7 @@ public class RedisPoolManager {
   }
 
   public Jedis getJedis() {
-    LOG.info("Getting Jedis");
+    LOG.debug("Getting Jedis");
     return this.jedisPool.getResource();
   }
 
