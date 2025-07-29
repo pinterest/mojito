@@ -12,8 +12,6 @@ import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.entity.RepositoryStatistic;
 import com.box.l10n.mojito.entity.ScreenshotRun;
 import com.box.l10n.mojito.entity.TM;
-import com.box.l10n.mojito.entity.security.user.User;
-import com.box.l10n.mojito.security.AuditorAwareImpl;
 import com.box.l10n.mojito.service.assetintegritychecker.AssetIntegrityCheckerRepository;
 import com.box.l10n.mojito.service.drop.exporter.DropExporterConfig;
 import com.box.l10n.mojito.service.locale.LocaleService;
@@ -67,8 +65,6 @@ public class RepositoryService {
   @Autowired ScreenshotRunRepository screenshotRunRepository;
 
   @Autowired MeterRegistry meterRegistry;
-
-  @Autowired AuditorAwareImpl auditorAwareImpl;
 
   /**
    * Default root locale.
@@ -805,7 +801,6 @@ public class RepositoryService {
       Enum<RepositoryServiceAction> action,
       Repository repository,
       boolean hasRepositoryLocalesChanged) {
-    User currentUser = auditorAwareImpl.getCurrentAuditor().orElse(null);
     meterRegistry
         .counter(
             "RepositoryService.action",
@@ -814,8 +809,6 @@ public class RepositoryService {
                 action.name(),
                 "Repository",
                 String.valueOf(repository.getName()),
-                "User",
-                currentUser != null ? currentUser.getUsername() : null,
                 "HasRepositoryLocalesChanged",
                 String.valueOf(hasRepositoryLocalesChanged)))
         .increment();

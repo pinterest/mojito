@@ -3,8 +3,6 @@ package com.box.l10n.mojito.service.scheduledjob;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.ScheduledJob;
 import com.box.l10n.mojito.entity.ScheduledJobType;
-import com.box.l10n.mojito.entity.security.user.User;
-import com.box.l10n.mojito.security.AuditorAwareImpl;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
@@ -24,8 +22,6 @@ public class ScheduledJobService {
   private final ScheduledJobTypeRepository scheduledJobTypeRepository;
   private final ScheduledJobManager scheduledJobManager;
   private final RepositoryRepository repositoryRepository;
-
-  @Autowired AuditorAwareImpl auditorAwareImpl;
 
   @Autowired MeterRegistry meterRegistry;
 
@@ -184,7 +180,6 @@ public class ScheduledJobService {
 
   public void uptickScheduledThirdPartySyncActionMetric(
       Enum<ScheduledJobServiceAction> action, ScheduledJob scheduledJob) {
-    User currentUser = auditorAwareImpl.getCurrentAuditor().orElse(null);
     meterRegistry
         .counter(
             "ScheduledJobService.action",
@@ -194,9 +189,7 @@ public class ScheduledJobService {
                 "JobType",
                 String.valueOf(scheduledJob.getJobType().getEnum()),
                 "Repository",
-                scheduledJob.getRepository().getName(),
-                "User",
-                currentUser != null ? currentUser.getUsername() : null))
+                scheduledJob.getRepository().getName()))
         .increment();
   }
 }
