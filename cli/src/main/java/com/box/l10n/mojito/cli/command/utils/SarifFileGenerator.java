@@ -73,8 +73,12 @@ public class SarifFileGenerator {
         .map(
             usage -> {
               int colonIndex = usage.lastIndexOf(':');
-              String fileUri = usage.substring(0, colonIndex);
+              if (colonIndex == -1) {
+                return null;
+              }
+
               try {
+                String fileUri = usage.substring(0, colonIndex);
                 Integer startLineNumber = Integer.parseInt(usage.substring(colonIndex + 1));
                 return new Location(fileUri, startLineNumber);
               } catch (NumberFormatException e) {
