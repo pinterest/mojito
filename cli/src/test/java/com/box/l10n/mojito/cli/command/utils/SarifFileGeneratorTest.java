@@ -147,7 +147,14 @@ class SarifFileGeneratorTest {
 
     AssetExtractorTextUnit textUnit =
         createAssetExtractorTextUnit(
-            "badSource", Set.of("badfile.java:notanumber", "goodfile.java:5"));
+            "badSource",
+            Set.of(
+                "badfile.java:notanumber",
+                "goodfile.java:5",
+                "badUsage.java",
+                "noColon",
+                "badUsage2.java",
+                ""));
 
     AssetExtractionDiff diff = new AssetExtractionDiff();
     diff.setAddedTextunits(List.of(textUnit));
