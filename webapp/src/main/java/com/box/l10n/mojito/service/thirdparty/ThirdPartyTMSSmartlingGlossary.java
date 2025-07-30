@@ -339,6 +339,7 @@ public class ThirdPartyTMSSmartlingGlossary {
     thirdPartyTextUnit.setId(conceptEntry.getId());
     thirdPartyTextUnit.setName(conceptEntry.getId());
     thirdPartyTextUnit.setAssetPath(glossaryName);
+    thirdPartyTextUnit.setSource(conceptEntry.getId());
     return Optional.of(thirdPartyTextUnit);
   }
 
