@@ -239,7 +239,7 @@ public class RepositoryWS {
       result = new ResponseEntity(e.getMessage(), HttpStatus.CONFLICT);
     } catch (Exception e) {
       meterRegistry
-          .counter("RepositoryWS.error", Tags.of("Action", RepositoryServiceAction.CREATE.name()))
+          .counter("RepositoryWS.error", Tags.of("Action", RepositoryServiceAction.UPDATE.name()))
           .increment();
       throw e;
     }
