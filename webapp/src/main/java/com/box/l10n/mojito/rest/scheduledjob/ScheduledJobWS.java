@@ -10,6 +10,8 @@ import com.box.l10n.mojito.service.scheduledjob.ScheduledJobResponse;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobService;
 import com.box.l10n.mojito.service.scheduledjob.ScheduledJobServiceAction;
 import com.box.l10n.mojito.service.security.user.UserService;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,6 +46,8 @@ public class ScheduledJobWS {
   private final ScheduledJobService scheduledJobService;
   private final UserService userService;
 
+  @Autowired MeterRegistry meterRegistry;
+
   @Autowired
   public ScheduledJobWS(
       ScheduledJobRepository scheduledJobRepository,
@@ -70,6 +74,12 @@ public class ScheduledJobWS {
       logger.error("Error creating job", e);
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "Error creating job: " + e.getMessage(), e);
+    } catch (Exception e) {
+      meterRegistry
+          .counter(
+              "ScheduledJobWS.error", Tags.of("Action", ScheduledJobServiceAction.CREATE.name()))
+          .increment();
+      throw e;
     }
   }
 
@@ -84,6 +94,12 @@ public class ScheduledJobWS {
       logger.error("Error updating job", e);
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "Error updating job: " + e.getMessage(), e);
+    } catch (Exception e) {
+      meterRegistry
+          .counter(
+              "ScheduledJobWS.error", Tags.of("Action", ScheduledJobServiceAction.UPDATE.name()))
+          .increment();
+      throw e;
     }
   }
 
@@ -91,30 +107,46 @@ public class ScheduledJobWS {
   @ResponseStatus(HttpStatus.OK)
   public void deleteJob(@PathVariable UUID id) throws SchedulerException {
     logger.info("Deleting scheduled job [{}]", id);
-    ScheduledJob scheduledJob =
-        scheduledJobRepository
-            .findByUuid(id.toString())
-            .orElseThrow(
-                () ->
-                    new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Job not found with id: " + id));
+    try {
+      ScheduledJob scheduledJob =
+          scheduledJobRepository
+              .findByUuid(id.toString())
+              .orElseThrow(
+                  () ->
+                      new ResponseStatusException(
+                          HttpStatus.NOT_FOUND, "Job not found with id: " + id));
 
-    scheduledJobService.deleteJob(scheduledJob);
+      scheduledJobService.deleteJob(scheduledJob);
+    } catch (Exception e) {
+      meterRegistry
+          .counter(
+              "ScheduledJobWS.error", Tags.of("Action", ScheduledJobServiceAction.DELETE.name()))
+          .increment();
+      throw e;
+    }
   }
 
   @RequestMapping(method = RequestMethod.PATCH, value = "/api/jobs/{id}/restore")
   @ResponseStatus(HttpStatus.OK)
   public void restoreJob(@PathVariable UUID id) throws SchedulerException, ClassNotFoundException {
     logger.info("Restoring scheduled job [{}]", id);
-    ScheduledJob scheduledJob =
-        scheduledJobRepository
-            .findByUuid(id.toString())
-            .orElseThrow(
-                () ->
-                    new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Job not found with id: " + id));
+    try {
+      ScheduledJob scheduledJob =
+          scheduledJobRepository
+              .findByUuid(id.toString())
+              .orElseThrow(
+                  () ->
+                      new ResponseStatusException(
+                          HttpStatus.NOT_FOUND, "Job not found with id: " + id));
 
-    scheduledJobService.restoreJob(scheduledJob);
+      scheduledJobService.restoreJob(scheduledJob);
+    } catch (Exception e) {
+      meterRegistry
+          .counter(
+              "ScheduledJobWS.error", Tags.of("Action", ScheduledJobServiceAction.RESTORE.name()))
+          .increment();
+      throw e;
+    }
   }
 
   @RequestMapping(method = RequestMethod.GET, value = "/api/jobs")
@@ -200,6 +232,12 @@ public class ScheduledJobWS {
           ScheduledJobResponse.Status.FAILURE,
           e.getMessage(),
           scheduledJob.getUuid());
+    } catch (Exception e) {
+      meterRegistry
+          .counter(
+              "ScheduledJobWS.error", Tags.of("Action", ScheduledJobServiceAction.TRIGGER.name()))
+          .increment();
+      throw e;
     }
   }
 
@@ -245,7 +283,6 @@ public class ScheduledJobWS {
           "Job is now " + (active ? "enabled" : "disabled"),
           scheduledJob.getUuid());
     } catch (SchedulerException e) {
-
       logger.error(
           "SchedulerException thrown from trying to change job '{}' : '{}' to active: {}",
           scheduledJob.getJobType().getEnum(),
@@ -255,6 +292,17 @@ public class ScheduledJobWS {
       throw new ResponseStatusException(
           HttpStatus.INTERNAL_SERVER_ERROR,
           "Job with id: " + id.toString() + " could not be disabled");
+    } catch (Exception e) {
+      meterRegistry
+          .counter(
+              "ScheduledJobWS.error",
+              Tags.of(
+                  "Action",
+                  active
+                      ? ScheduledJobServiceAction.ENABLE.name()
+                      : ScheduledJobServiceAction.DISABLE.name()))
+          .increment();
+      throw e;
     }
   }
 
