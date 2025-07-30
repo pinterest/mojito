@@ -4,11 +4,13 @@ import static com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNot
 
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
+import com.google.common.base.Optional;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
@@ -104,7 +106,7 @@ public class RecommendStringIdChecker extends AbstractCliChecker {
                 ? textUnit.getName().split(ID_SEPARATOR)[1]
                 : "");
     String cwd = Paths.get(".").toAbsolutePath().toString();
-    for (String filePath : textUnit.getUsages()) {
+    for (String filePath : Optional.fromNullable(textUnit.getUsages()).or(Collections.emptySet())) {
       if (Paths.get(filePath).isAbsolute()) {
         filePath =
             filePath.replace(
