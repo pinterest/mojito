@@ -33,11 +33,11 @@ public interface AssetContentRepository
       """
       select ac.id from AssetContent ac
         left join ac.assetExtractions ae
-        left join ae.asset a
+        left join ac.asset a
         left join ac.branch b
        where ac.lastModifiedDate < :beforeDate
          and (b is null or b.deleted)
-         and (a is null or a.lastSuccessfulAssetExtraction <> ae)
+         and (a is null or a.lastSuccessfulAssetExtraction is null or ae is null or a.lastSuccessfulAssetExtraction <> ae)
       """)
   List<Long> findStaleAssetContent(
       @Param("beforeDate") ZonedDateTime beforeDate, Pageable pageable);
