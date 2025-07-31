@@ -7,14 +7,10 @@ import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
 @Profile("!disablescheduling")
-@Component
 @DisallowConcurrentExecution
-@ConditionalOnProperty(value = "l10n.asset-content.cleanup-job.enabled", havingValue = "true")
 public class AssetContentCleanupJob implements Job {
   private static final Logger LOGGER = LoggerFactory.getLogger(AssetContentCleanupJob.class);
 
