@@ -35,7 +35,7 @@ public class RecommendStringIdChecker extends AbstractCliChecker {
     if (!recommendations.isEmpty()) {
       result.setSuccessful(false);
       result.setNotificationText(buildNotificationText(recommendations));
-      result.appendToFieldFailuresMap(recommendations);
+      result.appendToFailuresMap(recommendations);
     }
     return result;
   }
@@ -60,7 +60,7 @@ public class RecommendStringIdChecker extends AbstractCliChecker {
         .filter(RecommendStringIdCheckResult::isRecommendedUpdate)
         .collect(
             Collectors.toMap(
-                RecommendStringIdCheckResult::getSource,
+                RecommendStringIdCheckResult::getName,
                 recommendation ->
                     new CliCheckResult.CheckFailure(
                         CheckerRuleId.RECOMMENDED_PREFIX_CHECK,
@@ -83,6 +83,7 @@ public class RecommendStringIdChecker extends AbstractCliChecker {
       AssetExtractorTextUnit textUnit) {
     RecommendStringIdCheckResult recommendation = new RecommendStringIdCheckResult();
     recommendation.setSource(textUnit.getSource());
+    recommendation.setName(textUnit.getName());
     recommendation.setRecommendedUpdate(false);
     return generateRecommendation(textUnit, recommendation);
   }
@@ -159,6 +160,7 @@ public class RecommendStringIdChecker extends AbstractCliChecker {
     String source;
     String stringId;
     String recommendedIdPrefix;
+    String name;
     boolean isRecommendedUpdate;
 
     public String getSource() {
@@ -191,6 +193,14 @@ public class RecommendStringIdChecker extends AbstractCliChecker {
 
     public void setStringId(String stringId) {
       this.stringId = stringId;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
     }
   }
 }

@@ -92,7 +92,7 @@ public class SpellCliChecker extends AbstractCliChecker {
     if (!failureMap.isEmpty()) {
       cliCheckResult.setSuccessful(false);
       cliCheckResult.setNotificationText(buildNotificationText(failureMap));
-      cliCheckResult.appendToFieldFailuresMap(
+      cliCheckResult.appendToFailuresMap(
           failureMap.entrySet().stream()
               .collect(
                   Collectors.toMap(

@@ -32,18 +32,18 @@ public class SarifFileGenerator {
   public Sarif generateSarifFile(
       List<CliCheckResult> cliCheckerFailures, List<AssetExtractionDiff> assetExtractionDiffs) {
     SarifBuilder sarifBuilder = new SarifBuilder();
-    Map<String, AssetExtractorTextUnit> sourceToAssetTextUnitMap =
+    Map<String, AssetExtractorTextUnit> nameToAssetTextUnitMap =
         assetExtractionDiffs.stream()
             .flatMap(diff -> diff.getAddedTextunits().stream())
-            .collect(Collectors.toMap(AssetExtractorTextUnit::getSource, x -> x));
+            .collect(Collectors.toMap(AssetExtractorTextUnit::getName, x -> x));
     for (CliCheckResult checkFailure : cliCheckerFailures) {
       ResultLevel resultLevel = checkFailure.isHardFail() ? ResultLevel.ERROR : ResultLevel.WARNING;
       sarifBuilder.addRun(checkFailure.getCheckName(), infoUri);
       for (Map.Entry<String, CliCheckResult.CheckFailure> entry :
-          checkFailure.getFieldFailuresMap().entrySet()) {
+          checkFailure.getNameToFailuresMap().entrySet()) {
         String source = entry.getKey();
         CliCheckResult.CheckFailure resultCheckFailure = entry.getValue();
-        AssetExtractorTextUnit assetExtractorTextUnit = sourceToAssetTextUnitMap.get(source);
+        AssetExtractorTextUnit assetExtractorTextUnit = nameToAssetTextUnitMap.get(source);
         if (hasUsages(assetExtractorTextUnit)) {
           sarifBuilder.addResultWithLocations(
               resultCheckFailure.ruleId().toString(),

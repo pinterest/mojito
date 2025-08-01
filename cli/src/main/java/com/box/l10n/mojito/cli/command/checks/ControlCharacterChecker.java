@@ -20,14 +20,14 @@ public class ControlCharacterChecker extends AbstractCliChecker {
   @Override
   public CliCheckResult run(List<AssetExtractionDiff> assetExtractionDiffs) {
     final Map<String, CliCheckResult.CheckFailure> failedFeatureMap = new HashMap<>();
-    getSourceStringsFromDiff(assetExtractionDiffs)
+    getAddedTextUnitsExcludingInconsistentComments(assetExtractionDiffs)
         .forEach(
             textUnit -> {
               ControlCharacterCheckerResult checkerResult =
-                  getControlCharacterCheckerResult(textUnit);
+                  getControlCharacterCheckerResult(textUnit.getSource());
               if (!checkerResult.isSuccessful) {
                 failedFeatureMap.put(
-                    textUnit,
+                    textUnit.getName(),
                     new CliCheckResult.CheckFailure(
                         CheckerRuleId.CONTROL_CHARACTER_DETECTED, checkerResult.failureText));
               }
@@ -37,7 +37,7 @@ public class ControlCharacterChecker extends AbstractCliChecker {
             .map(CliCheckResult.CheckFailure::failureMessage)
             .collect(Collectors.toList());
     CliCheckResult result = createCliCheckerResult();
-    result.appendToFieldFailuresMap(failedFeatureMap);
+    result.appendToFailuresMap(failedFeatureMap);
     if (!failures.isEmpty()) {
       result.setSuccessful(false);
       result.setNotificationText(getNotificationText(failures));

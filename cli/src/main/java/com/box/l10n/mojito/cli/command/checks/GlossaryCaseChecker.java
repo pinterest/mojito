@@ -29,12 +29,12 @@ public class GlossaryCaseChecker extends AbstractCliChecker {
             failures.stream()
                 .collect(
                     Collectors.toMap(
-                        GlossaryCaseCheckerSearchResult::getSource,
+                        GlossaryCaseCheckerSearchResult::getName,
                         searchResult ->
                             new CliCheckResult.CheckFailure(
                                 CheckerRuleId.AGGREGATE_GLOSSARY_CASE_CHECKER_RESULTS,
                                 String.join("\n ", searchResult.getFailures()))));
-        cliCheckResult.appendToFieldFailuresMap(failedFeatureMap);
+        cliCheckResult.appendToFailuresMap(failedFeatureMap);
         cliCheckResult.setNotificationText(buildNotificationText(failures).toString());
       }
     } catch (IOException e) {
@@ -54,7 +54,7 @@ public class GlossaryCaseChecker extends AbstractCliChecker {
         .map(
             assetExtractorTextUnit ->
                 glossaryTermCaseCheckerTrie.runGlossaryCaseCheck(
-                    assetExtractorTextUnit.getSource()))
+                    assetExtractorTextUnit.getName(), assetExtractorTextUnit.getSource()))
         .filter(result -> !result.isSuccess())
         .collect(Collectors.toList());
   }

@@ -28,16 +28,22 @@ public class ContextAndCommentCliChecker extends AbstractCliChecker {
 
   static class ContextAndCommentCliCheckerResult {
     String sourceString;
+    String name;
     String failureMessage;
     CheckerRuleId ruleId;
     boolean failed;
 
     public ContextAndCommentCliCheckerResult(
-        boolean failed, String sourceString, String failureMessage, CheckerRuleId ruleId) {
+        boolean failed,
+        String name,
+        String sourceString,
+        String failureMessage,
+        CheckerRuleId ruleId) {
       this.sourceString = sourceString;
       this.failureMessage = failureMessage;
       this.failed = failed;
       this.ruleId = ruleId;
+      this.name = name;
     }
 
     public ContextAndCommentCliCheckerResult(boolean failed) {
@@ -59,6 +65,10 @@ public class ContextAndCommentCliChecker extends AbstractCliChecker {
     public boolean isFailed() {
       return failed;
     }
+
+    public String getName() {
+      return name;
+    }
   }
 
   @Override
@@ -71,11 +81,11 @@ public class ContextAndCommentCliChecker extends AbstractCliChecker {
               .filter(ContextAndCommentCliCheckerResult::isFailed)
               .collect(
                   Collectors.toMap(
-                      ContextAndCommentCliCheckerResult::getSourceString,
+                      ContextAndCommentCliCheckerResult::getName,
                       result ->
                           new CliCheckResult.CheckFailure(
                               result.getRuleId(), result.getFailureMessage())));
-      cliCheckResult.appendToFieldFailuresMap(featureFailureMap);
+      cliCheckResult.appendToFailuresMap(featureFailureMap);
       cliCheckResult.setSuccessful(false);
       cliCheckResult.setNotificationText(
           "Context and comment check found failures:"
@@ -135,6 +145,7 @@ public class ContextAndCommentCliChecker extends AbstractCliChecker {
       result =
           new ContextAndCommentCliCheckerResult(
               true,
+              assetExtractorTextUnit.getName(),
               assetExtractorTextUnit.getSource(),
               checkFailure.failureMessage(),
               checkFailure.ruleId());

@@ -34,7 +34,7 @@ public class ContextCommentRejectPatternChecker extends AbstractCliChecker {
   private CliCheckResult getCliCheckResult(
       Map<String, CliCheckResult.CheckFailure> failedFeatureMap) {
     CliCheckResult cliCheckResult = createCliCheckerResult();
-    cliCheckResult.appendToFieldFailuresMap(failedFeatureMap);
+    cliCheckResult.appendToFailuresMap(failedFeatureMap);
     String failures = getFailureText(failedFeatureMap);
     if (StringUtils.isNotBlank(failures)) {
       StringBuilder notificationTextBuilder = new StringBuilder();
@@ -56,7 +56,7 @@ public class ContextCommentRejectPatternChecker extends AbstractCliChecker {
     Pattern pattern = Pattern.compile(cliCheckerOptions.getContextCommentRejectPattern());
     return getAddedTextUnitsExcludingInconsistentComments(assetExtractionDiffs).stream()
         .filter(textUnit -> isInvalidContextOrComment(pattern, textUnit))
-        .collect(Collectors.toMap(AssetExtractorTextUnit::getSource, this::buildCheckFailure));
+        .collect(Collectors.toMap(AssetExtractorTextUnit::getName, this::buildCheckFailure));
   }
 
   private String getFailureText(Map<String, CliCheckResult.CheckFailure> failedFeatureMap) {
