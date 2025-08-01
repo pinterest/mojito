@@ -32,10 +32,10 @@ public class GlossaryTermCaseCheckerTrie {
     currentNode.glossaryTerms.add(term);
   }
 
-  public GlossaryCaseCheckerSearchResult runGlossaryCaseCheck(String source) {
+  public GlossaryCaseCheckerSearchResult runGlossaryCaseCheck(String name, String source) {
     String sourceTrimmedWhitespace = source.trim().replaceAll(" +", " ");
     List<String> words = CheckerUtils.getWordsInString(source);
-    GlossaryCaseCheckerSearchResult result = new GlossaryCaseCheckerSearchResult(source);
+    GlossaryCaseCheckerSearchResult result = new GlossaryCaseCheckerSearchResult(source, name);
     List<String> failures = new ArrayList<>();
     for (int i = 0; i < words.size(); i++) {
       Node current = rootNode;

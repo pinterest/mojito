@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -29,13 +30,25 @@ public class PlaceholderCommentChecker extends AbstractCliChecker {
   public CliCheckResult run(List<AssetExtractionDiff> assetExtractionDiffs) {
     CliCheckResult cliCheckResult =
         new CliCheckResult(isHardFail(), CliCheckerType.PLACEHOLDER_COMMENT_CHECKER.name());
-    Map<String, List<CliCheckResult.CheckFailure>> failureMap =
+    Set<PlaceholderCommentCheckResult> placeholderCommentCheckResultSet =
         checkForPlaceholderDescriptionsInComment(assetExtractionDiffs);
-    if (!failureMap.isEmpty()) {
+    Map<String, List<CliCheckResult.CheckFailure>> sourceToFailureMap =
+        placeholderCommentCheckResultSet.stream()
+            .collect(
+                Collectors.toMap(
+                    PlaceholderCommentCheckResult::getSource,
+                    PlaceholderCommentCheckResult::getFailures));
+    Map<String, List<CliCheckResult.CheckFailure>> nameToFailureMap =
+        placeholderCommentCheckResultSet.stream()
+            .collect(
+                Collectors.toMap(
+                    PlaceholderCommentCheckResult::getName,
+                    PlaceholderCommentCheckResult::getFailures));
+    if (!sourceToFailureMap.isEmpty()) {
       cliCheckResult.setSuccessful(false);
-      cliCheckResult.setNotificationText(buildNotificationText(failureMap).toString());
-      cliCheckResult.appendToFieldFailuresMap(
-          failureMap.entrySet().stream()
+      cliCheckResult.setNotificationText(buildNotificationText(sourceToFailureMap).toString());
+      cliCheckResult.appendToFailuresMap(
+          nameToFailureMap.entrySet().stream()
               .collect(
                   Collectors.toMap(
                       Map.Entry::getKey,
@@ -49,7 +62,7 @@ public class PlaceholderCommentChecker extends AbstractCliChecker {
     return cliCheckResult;
   }
 
-  protected Map<String, List<CliCheckResult.CheckFailure>> checkForPlaceholderDescriptionsInComment(
+  protected Set<PlaceholderCommentCheckResult> checkForPlaceholderDescriptionsInComment(
       List<AssetExtractionDiff> assetExtractionDiffs) {
     List<AbstractPlaceholderDescriptionCheck> placeholderDescriptionChecks =
         getPlaceholderCommentChecks();
@@ -60,23 +73,21 @@ public class PlaceholderCommentChecker extends AbstractCliChecker {
                 getPlaceholderCommentCheckResult(
                     placeholderDescriptionChecks, assetExtractorTextUnit))
         .filter(result -> !result.getFailures().isEmpty())
-        .distinct()
-        .collect(
-            Collectors.toMap(
-                PlaceholderCommentCheckResult::getSource,
-                PlaceholderCommentCheckResult::getFailures));
+        .collect(Collectors.toSet());
   }
 
   private PlaceholderCommentCheckResult getPlaceholderCommentCheckResult(
       List<AbstractPlaceholderDescriptionCheck> placeholderDescriptionChecks,
       AssetExtractorTextUnit assetExtractorTextUnit) {
     PlaceholderCommentCheckResult result;
+    String name = assetExtractorTextUnit.getName();
     String source = assetExtractorTextUnit.getSource();
     String comment = assetExtractorTextUnit.getComments();
     if (StringUtils.isBlank(comment)) {
       result =
           new PlaceholderCommentCheckResult(
               source,
+              name,
               Lists.newArrayList(
                   new CliCheckResult.CheckFailure(
                       CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Comment is empty.")));
@@ -85,7 +96,7 @@ public class PlaceholderCommentChecker extends AbstractCliChecker {
           placeholderDescriptionChecks.stream()
               .flatMap(check -> check.checkCommentForDescriptions(source, comment).stream())
               .collect(Collectors.toList());
-      result = new PlaceholderCommentCheckResult(source, failures);
+      result = new PlaceholderCommentCheckResult(source, name, failures);
     }
 
     return result;
@@ -141,13 +152,16 @@ public class PlaceholderCommentChecker extends AbstractCliChecker {
     return notificationText;
   }
 
-  class PlaceholderCommentCheckResult {
+  protected class PlaceholderCommentCheckResult {
     final List<CliCheckResult.CheckFailure> failures;
     final String source;
+    final String name;
 
-    PlaceholderCommentCheckResult(String source, List<CliCheckResult.CheckFailure> failures) {
+    PlaceholderCommentCheckResult(
+        String source, String name, List<CliCheckResult.CheckFailure> failures) {
       this.source = source;
       this.failures = failures;
+      this.name = name;
     }
 
     public List<CliCheckResult.CheckFailure> getFailures() {
@@ -156,6 +170,10 @@ public class PlaceholderCommentChecker extends AbstractCliChecker {
 
     public String getSource() {
       return source;
+    }
+
+    public String getName() {
+      return name;
     }
 
     @Override

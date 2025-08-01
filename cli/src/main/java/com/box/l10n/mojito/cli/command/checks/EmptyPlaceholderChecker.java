@@ -33,35 +33,39 @@ public class EmptyPlaceholderChecker extends AbstractCliChecker {
   @Override
   public CliCheckResult run(List<AssetExtractionDiff> assetExtractionDiffs) {
     CliCheckResult cliCheckResult = createCliCheckerResult();
-    Set<String> failures = checkForEmptyPlaceholders(assetExtractionDiffs);
-    if (!failures.isEmpty()) {
+    Set<AssetExtractorTextUnit> failingTextUnits = checkForEmptyPlaceholders(assetExtractionDiffs);
+    Set<String> failingSources =
+        failingTextUnits.stream()
+            .map(AssetExtractorTextUnit::getSource)
+            .collect(Collectors.toSet());
+    if (!failingSources.isEmpty()) {
       Map<String, CliCheckResult.CheckFailure> failedFeatureMap = new HashMap<>();
-      failures.forEach(
+      failingTextUnits.forEach(
           (textUnit) ->
               failedFeatureMap.put(
-                  textUnit,
+                  textUnit.getName(),
                   new CliCheckResult.CheckFailure(
                       CheckerRuleId.PLACEHOLDER_NEEDS_DESCRIPTIVE_NAME,
                       "Empty placeholder(s) detected, please remove or update the placeholder(s) to contain a descriptive name")));
-      cliCheckResult.appendToFieldFailuresMap(failedFeatureMap);
+      cliCheckResult.appendToFailuresMap(failedFeatureMap);
       cliCheckResult.setSuccessful(false);
-      cliCheckResult.setNotificationText(buildNotificationText(failures).toString());
+      cliCheckResult.setNotificationText(buildNotificationText(failingSources).toString());
     }
 
     return cliCheckResult;
   }
 
-  private Set<String> checkForEmptyPlaceholders(List<AssetExtractionDiff> assetExtractionDiffs) {
+  private Set<AssetExtractorTextUnit> checkForEmptyPlaceholders(
+      List<AssetExtractionDiff> assetExtractionDiffs) {
     return cliCheckerOptions.getParameterRegexSet().stream()
         .filter(this::isEmptyPlaceholderRegex)
         .flatMap(
             placeholderRegularExpressions ->
                 getAddedTextUnitsExcludingInconsistentComments(assetExtractionDiffs).stream()
-                    .map(AssetExtractorTextUnit::getSource)
                     .filter(
                         source ->
                             isSourceStringWithEmptyPlaceholders(
-                                placeholderRegularExpressions, source)))
+                                placeholderRegularExpressions, source.getSource())))
         .collect(Collectors.toSet());
   }
 

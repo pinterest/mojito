@@ -121,7 +121,7 @@ public class AIChecker extends AbstractCliChecker {
     }
 
     CliCheckResult cliCheckResult = createCliCheckerResult();
-    cliCheckResult.appendToFieldFailuresMap(featureFailureMap);
+    cliCheckResult.appendToFailuresMap(featureFailureMap);
     if (!failureMap.isEmpty()) {
       String notificationText = buildNotificationText(failureMap);
       cliCheckResult.setNotificationText(notificationText);

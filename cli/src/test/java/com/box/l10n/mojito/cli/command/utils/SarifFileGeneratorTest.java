@@ -20,12 +20,13 @@ class SarifFileGeneratorTest {
   private CliCheckResult createCliCheckResult(
       boolean isError, String checkName, Map<String, CliCheckResult.CheckFailure> fieldFailures) {
     CliCheckResult checkResult = new CliCheckResult(isError, checkName);
-    checkResult.appendToFieldFailuresMap(fieldFailures);
+    checkResult.appendToFailuresMap(fieldFailures);
     return checkResult;
   }
 
   private AssetExtractorTextUnit createAssetExtractorTextUnit(String source, Set<String> usages) {
     AssetExtractorTextUnit textUnit = new AssetExtractorTextUnit();
+    textUnit.setName(source);
     textUnit.setSource(source);
     textUnit.setUsages(usages);
     return textUnit;

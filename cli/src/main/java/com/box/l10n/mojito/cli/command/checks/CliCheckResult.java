@@ -9,7 +9,7 @@ public class CliCheckResult {
 
   private final boolean hardFail;
   private final String checkName;
-  private final Map<String, CheckFailure> fieldFailuresMap = new HashMap<>();
+  private final Map<String, CheckFailure> nameToFailuresMap = new HashMap<>();
   private boolean successful = true;
   private String notificationText = "";
 
@@ -48,11 +48,11 @@ public class CliCheckResult {
     this.notificationText = notificationText;
   }
 
-  public Map<String, CheckFailure> getFieldFailuresMap() {
-    return fieldFailuresMap;
+  public Map<String, CheckFailure> getNameToFailuresMap() {
+    return nameToFailuresMap;
   }
 
-  public void appendToFieldFailuresMap(Map<String, CheckFailure> newFailuresMap) {
-    fieldFailuresMap.putAll(newFailuresMap);
+  public void appendToFailuresMap(Map<String, CheckFailure> newFailuresMap) {
+    nameToFailuresMap.putAll(newFailuresMap);
   }
 }
