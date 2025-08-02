@@ -52,5 +52,22 @@ public interface AssetExtractionRepository extends JpaRepository<AssetExtraction
         """)
   int cleanStalePollableTaskIds(@Param("beforeDate") ZonedDateTime beforeDate);
 
-  List<AssetExtraction> findByAssetContentId(Long assetContentId);
+  @Modifying
+  @Transactional
+  @Query(
+      nativeQuery = true,
+      value =
+          """
+        update asset_extraction todelete
+          join (select ae.id
+                  from asset_extraction ae
+                  join asset_content ac
+                    on ac.id = ae.asset_content_id
+                 where ac.last_modified_date < :beforeDate
+                 limit :batchSize) ae
+            on ae.id = todelete.id
+           set todelete.asset_content_id = null
+        """)
+  int cleanStaleAssetContentIds(
+      @Param("beforeDate") ZonedDateTime beforeDate, @Param("batchSize") int batchSize);
 }

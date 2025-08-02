@@ -5,21 +5,15 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.AssetContent;
-import com.box.l10n.mojito.entity.AssetExtraction;
 import com.box.l10n.mojito.entity.Branch;
-import com.box.l10n.mojito.service.assetExtraction.AssetExtractionByBranchRepository;
 import com.box.l10n.mojito.service.assetExtraction.AssetExtractionRepository;
-import com.box.l10n.mojito.service.assetExtraction.AssetTextUnitToTMTextUnitRepository;
-import com.box.l10n.mojito.service.assetTextUnit.AssetTextUnitRepository;
 import com.box.l10n.mojito.service.branch.BranchService;
 import java.time.Period;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Optional;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 /**
@@ -48,28 +42,16 @@ public class AssetContentService {
 
   private final AssetExtractionRepository assetExtractionRepository;
 
-  private final AssetExtractionByBranchRepository assetExtractionByBranchRepository;
-
-  private final AssetTextUnitToTMTextUnitRepository assetTextUnitToTMTextUnitRepository;
-
-  private final AssetTextUnitRepository assetTextUnitRepository;
-
   @Autowired
   public AssetContentService(
       BranchService branchService,
       AssetContentRepository assetContentRepository,
       @Autowired(required = false) ContentService contentService,
-      AssetExtractionRepository assetExtractionRepository,
-      AssetExtractionByBranchRepository assetExtractionByBranchRepository,
-      AssetTextUnitToTMTextUnitRepository assetTextUnitToTMTextUnitRepository,
-      AssetTextUnitRepository assetTextUnitRepository) {
+      AssetExtractionRepository assetExtractionRepository) {
     this.branchService = branchService;
     this.assetContentRepository = assetContentRepository;
     this.contentService = ofNullable(contentService);
     this.assetExtractionRepository = assetExtractionRepository;
-    this.assetExtractionByBranchRepository = assetExtractionByBranchRepository;
-    this.assetTextUnitToTMTextUnitRepository = assetTextUnitToTMTextUnitRepository;
-    this.assetTextUnitRepository = assetTextUnitRepository;
   }
 
   /**
@@ -137,44 +119,20 @@ public class AssetContentService {
     return optionalAssetContent.orElse(null);
   }
 
-  private void deleteAssetTextUnits(long assetExtractionId, int batchSize) {
-    List<Long> assetTextUnitIdsToDelete;
-    do {
-      assetTextUnitIdsToDelete =
-          this.assetTextUnitRepository.findByAssetExtractionId(assetExtractionId, batchSize);
-      for (Long assetTextUnitIdToDelete : assetTextUnitIdsToDelete) {
-        this.assetTextUnitToTMTextUnitRepository.deleteByAssetTextUnitId(assetTextUnitIdToDelete);
-        this.assetTextUnitRepository.deleteById(assetTextUnitIdToDelete);
-      }
-    } while (!assetTextUnitIdsToDelete.isEmpty());
-  }
-
-  private void deleteAssetContent(Long assetContentIdToDelete, int batchSize) {
-    List<AssetExtraction> assetExtractions =
-        this.assetExtractionRepository.findByAssetContentId(assetContentIdToDelete);
-    assetExtractions.forEach(
-        assetExtraction -> {
-          long assetExtractionId = assetExtraction.getId();
-          this.deleteAssetTextUnits(assetExtractionId, batchSize);
-          int deleteCount =
-              this.assetExtractionByBranchRepository.deleteByAssetExtractionId(assetExtractionId);
-          logger.debug("Deleted {} Asset Extraction by Branch rows", deleteCount);
-          this.assetExtractionRepository.deleteById(assetExtractionId);
-        });
-    logger.debug("Delete Asset Content with ID: {}", assetContentIdToDelete);
-    this.assetContentRepository.deleteById(assetContentIdToDelete);
-  }
-
   public void cleanAssetContentData(Period retentionPeriod, int batchSize) {
-    List<Long> assetContentIdsToDelete;
-    PageRequest pageable = PageRequest.of(0, batchSize);
     ZonedDateTime beforeDate = ZonedDateTime.now().minus(retentionPeriod);
+    int batchNumber = 1;
+    int deleteCount;
     do {
-      assetContentIdsToDelete =
-          this.assetContentRepository.findStaleAssetContent(beforeDate, pageable);
-      for (long assetContentIdToDelete : assetContentIdsToDelete) {
-        this.deleteAssetContent(assetContentIdToDelete, batchSize);
-      }
-    } while (!assetContentIdsToDelete.isEmpty());
+      deleteCount = this.assetExtractionRepository.cleanStaleAssetContentIds(beforeDate, batchSize);
+      logger.debug("Updated {} Asset Extraction rows in batch: {}", deleteCount, batchNumber++);
+    } while (deleteCount == batchSize);
+
+    batchNumber = 1;
+    do {
+      deleteCount =
+          this.assetContentRepository.deleteAllByLastModifiedDateBefore(beforeDate, batchSize);
+      logger.debug("Deleted {} Asset Content rows in batch: {}", deleteCount, batchNumber++);
+    } while (deleteCount == batchSize);
   }
 }

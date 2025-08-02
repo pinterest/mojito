@@ -7,9 +7,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.EntityGraph.EntityGraphType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,33 +67,4 @@ public interface AssetTextUnitRepository
   List<AssetTextUnit> findByIdIn(List<Long> assetTextUnitIds);
 
   void deleteByIdIn(List<Long> assetTextUnitIds);
-
-  @Query(
-      nativeQuery = true,
-      value =
-          """
-      select atu.id
-        from asset_text_unit atu
-       where atu.asset_extraction_id = :assetExtractionId
-       limit :batchSize
-     """)
-  List<Long> findByAssetExtractionId(
-      @Param("assetExtractionId") long assetExtractionId, @Param("batchSize") int batchSize);
-
-  @Modifying
-  @Transactional
-  @Query(
-      nativeQuery = true,
-      value =
-          """
-      delete todelete
-        from asset_text_unit todelete
-        join (select id
-                from asset_text_unit
-               where asset_extraction_id = :assetExtractionId
-               limit :batchSize) atu
-          on atu.id = todelete.id
-    """)
-  int deleteByAssetExtractionId(
-      @Param("assetExtractionId") long assetExtractionId, @Param("batchSize") int batchSize);
 }
