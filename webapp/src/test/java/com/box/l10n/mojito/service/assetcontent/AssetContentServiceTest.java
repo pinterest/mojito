@@ -4,6 +4,8 @@ import static com.box.l10n.mojito.service.assetcontent.S3ContentService.FILE_EXT
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -14,21 +16,35 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.AssetContent;
+import com.box.l10n.mojito.entity.AssetExtraction;
 import com.box.l10n.mojito.entity.Branch;
 import com.box.l10n.mojito.entity.Repository;
+import com.box.l10n.mojito.service.DBUtils;
+import com.box.l10n.mojito.service.asset.AssetRepository;
 import com.box.l10n.mojito.service.asset.AssetService;
+import com.box.l10n.mojito.service.assetExtraction.AssetExtractionByBranchRepository;
+import com.box.l10n.mojito.service.assetExtraction.AssetExtractionRepository;
+import com.box.l10n.mojito.service.assetExtraction.AssetTextUnitToTMTextUnitRepository;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
+import com.box.l10n.mojito.service.assetTextUnit.AssetTextUnitRepository;
 import com.box.l10n.mojito.service.blobstorage.s3.S3BlobStorage;
+import com.box.l10n.mojito.service.branch.BranchRepository;
 import com.box.l10n.mojito.service.branch.BranchService;
+import com.box.l10n.mojito.service.pluralform.PluralFormRepository;
+import com.box.l10n.mojito.service.pluralform.PluralFormService;
 import com.box.l10n.mojito.service.repository.RepositoryNameAlreadyUsedException;
 import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.test.TestIdWatcher;
+import java.time.Period;
 import java.util.List;
+import java.util.Optional;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 public class AssetContentServiceTest extends ServiceTestBase {
 
@@ -46,6 +62,24 @@ public class AssetContentServiceTest extends ServiceTestBase {
   @Autowired RepositoryService repositoryService;
 
   @Autowired BranchService branchService;
+
+  @Autowired AssetExtractionRepository assetExtractionRepository;
+
+  @Autowired AssetExtractionByBranchRepository assetExtractionByBranchRepository;
+
+  @Autowired AssetTextUnitToTMTextUnitRepository assetTextUnitToTMTextUnitRepository;
+
+  @Autowired AssetTextUnitRepository assetTextUnitRepository;
+
+  @Autowired BranchRepository branchRepository;
+
+  @Autowired PluralFormRepository pluralFormRepository;
+
+  @Autowired PluralFormService pluralFormService;
+
+  @Autowired AssetRepository assetRepository;
+
+  @Autowired DBUtils dbUtils;
 
   @Test
   public void createAssetContentAndFind() throws RepositoryNameAlreadyUsedException {
@@ -116,7 +150,11 @@ public class AssetContentServiceTest extends ServiceTestBase {
     S3BlobStorage blobStorage = Mockito.mock(S3BlobStorage.class);
     S3ContentService s3ContentService = new S3ContentService(blobStorage, s3PathPrefix);
     AssetContentService s3AssetContentService =
-        new AssetContentService(this.branchService, this.assetContentRepository, s3ContentService);
+        new AssetContentService(
+            this.branchService,
+            this.assetContentRepository,
+            s3ContentService,
+            this.assetExtractionRepository);
 
     Repository repository =
         this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
@@ -151,7 +189,10 @@ public class AssetContentServiceTest extends ServiceTestBase {
     S3FallbackContentService s3FallbackContentService =
         new S3FallbackContentService(s3ContentService, s3UploadContentAsyncTask);
     return new AssetContentService(
-        this.branchService, this.assetContentRepository, s3FallbackContentService);
+        this.branchService,
+        this.assetContentRepository,
+        s3FallbackContentService,
+        this.assetExtractionRepository);
   }
 
   @Test
@@ -225,5 +266,173 @@ public class AssetContentServiceTest extends ServiceTestBase {
     verify(blobStorage, times(1))
         .getString(
             String.format(pathPlaceholder, s3PathPrefix, assetContent.getId(), FILE_EXTENSION));
+  }
+
+  @Test
+  public void testCleanAssetContentData_DeletesOneAssetContent()
+      throws RepositoryNameAlreadyUsedException {
+    Assume.assumeTrue(this.dbUtils.isMysql());
+    Repository repository =
+        this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
+
+    Asset asset = this.assetService.createAsset(repository.getId(), "asset-path", false);
+    assertTrue(
+        this.assetContentRepository
+            .findByAssetRepositoryIdAndBranchName(repository.getId(), null)
+            .isEmpty());
+
+    AssetContent assetContent = this.assetContentService.createAssetContent(asset, "asset-content");
+
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1);
+
+    assetContent = this.assetContentService.findOne(assetContent.getId());
+
+    assertNull(assetContent);
+  }
+
+  @Test
+  public void testCleanAssetContentData_DeletesOTwoAssetContents()
+      throws RepositoryNameAlreadyUsedException {
+    Assume.assumeTrue(this.dbUtils.isMysql());
+    Repository repository =
+        this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
+
+    Asset asset = this.assetService.createAsset(repository.getId(), "asset-path", false);
+    assertTrue(
+        this.assetContentRepository
+            .findByAssetRepositoryIdAndBranchName(repository.getId(), null)
+            .isEmpty());
+
+    AssetContent assetContent1 =
+        this.assetContentService.createAssetContent(asset, "asset-content-1");
+    AssetContent assetContent2 =
+        this.assetContentService.createAssetContent(asset, "asset-content-2");
+
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1);
+
+    assetContent1 = this.assetContentService.findOne(assetContent1.getId());
+    assetContent2 = this.assetContentService.findOne(assetContent2.getId());
+
+    assertNull(assetContent1);
+    assertNull(assetContent2);
+  }
+
+  @Test
+  public void testCleanAssetContentData_DoesNotDeleteAnyAssetContent()
+      throws RepositoryNameAlreadyUsedException {
+    Assume.assumeTrue(this.dbUtils.isMysql());
+    Repository repository =
+        this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
+
+    Asset asset = this.assetService.createAsset(repository.getId(), "asset-path", false);
+    assertTrue(
+        this.assetContentRepository
+            .findByAssetRepositoryIdAndBranchName(repository.getId(), null)
+            .isEmpty());
+
+    AssetContent assetContent = this.assetContentService.createAssetContent(asset, "asset-content");
+
+    this.assetContentService.cleanAssetContentData(Period.ofDays(1), 1);
+
+    assetContent = this.assetContentService.findOne(assetContent.getId());
+
+    assertNotNull(assetContent);
+  }
+
+  @Transactional
+  private AssetExtraction createAssetExtraction(Asset asset, AssetContent assetContent) {
+    AssetExtraction assetExtraction = new AssetExtraction();
+    assetExtraction.setAssetContent(assetContent);
+    assetExtraction.setAsset(asset);
+    return this.assetExtractionRepository.save(assetExtraction);
+  }
+
+  @Test
+  public void testCleanAssetContentData_DeletesOneAssetExtraction()
+      throws RepositoryNameAlreadyUsedException {
+    Assume.assumeTrue(this.dbUtils.isMysql());
+    Repository repository =
+        this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
+
+    Asset asset = this.assetService.createAsset(repository.getId(), "asset-path", false);
+
+    assertTrue(
+        this.assetContentRepository
+            .findByAssetRepositoryIdAndBranchName(repository.getId(), null)
+            .isEmpty());
+
+    AssetContent assetContent = this.assetContentService.createAssetContent(asset, "asset-content");
+
+    this.createAssetExtraction(asset, assetContent);
+
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 10);
+
+    assetContent = this.assetContentService.findOne(assetContent.getId());
+
+    assertNull(assetContent);
+  }
+
+  @Test
+  public void testCleanAssetContentData_DeletesTwoAssetExtractions()
+      throws RepositoryNameAlreadyUsedException {
+    Assume.assumeTrue(this.dbUtils.isMysql());
+    Repository repository =
+        this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
+
+    Asset asset = this.assetService.createAsset(repository.getId(), "asset-path", false);
+
+    assertTrue(
+        this.assetContentRepository
+            .findByAssetRepositoryIdAndBranchName(repository.getId(), null)
+            .isEmpty());
+
+    AssetContent assetContent1 =
+        this.assetContentService.createAssetContent(asset, "asset-content");
+    AssetContent assetContent2 =
+        this.assetContentService.createAssetContent(asset, "asset-content");
+
+    AssetExtraction assetExtraction1 = this.createAssetExtraction(asset, assetContent1);
+    AssetExtraction assetExtraction2 = this.createAssetExtraction(asset, assetContent2);
+
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 10);
+
+    assetContent1 = this.assetContentService.findOne(assetContent1.getId());
+    assetContent2 = this.assetContentService.findOne(assetContent2.getId());
+    Optional<AssetExtraction> assetExtraction1Removed =
+        this.assetExtractionRepository.findById(assetExtraction1.getId());
+    Optional<AssetExtraction> assetExtraction2Removed =
+        this.assetExtractionRepository.findById(assetExtraction2.getId());
+
+    assertNull(assetContent1);
+    assertNull(assetContent2);
+    assertTrue(assetExtraction1Removed.isPresent());
+    assertNull(assetExtraction1Removed.get().getAssetContent());
+    assertTrue(assetExtraction2Removed.isPresent());
+    assertNull(assetExtraction2Removed.get().getAssetContent());
+  }
+
+  @Test
+  public void testCleanAssetContentData_DoesNotDeleteAnyAssetExtraction()
+      throws RepositoryNameAlreadyUsedException {
+    Assume.assumeTrue(this.dbUtils.isMysql());
+    Repository repository =
+        this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
+
+    Asset asset = this.assetService.createAsset(repository.getId(), "asset-path", false);
+
+    assertTrue(
+        this.assetContentRepository
+            .findByAssetRepositoryIdAndBranchName(repository.getId(), null)
+            .isEmpty());
+
+    AssetContent assetContent = this.assetContentService.createAssetContent(asset, "asset-content");
+
+    this.createAssetExtraction(asset, assetContent);
+
+    this.assetContentService.cleanAssetContentData(Period.ofDays(1), 10);
+
+    assetContent = this.assetContentService.findOne(assetContent.getId());
+
+    assertNotNull(assetContent);
   }
 }
