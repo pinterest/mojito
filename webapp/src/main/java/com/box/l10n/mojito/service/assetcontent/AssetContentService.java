@@ -125,14 +125,14 @@ public class AssetContentService {
     int deleteCount;
     do {
       deleteCount = this.assetExtractionRepository.cleanStaleAssetContentIds(beforeDate, batchSize);
-      logger.debug("Updated {} Asset Extraction rows in batch: {}", deleteCount, batchNumber++);
+      logger.info("Updated {} Asset Extraction rows in batch: {}", deleteCount, batchNumber++);
     } while (deleteCount == batchSize);
 
     batchNumber = 1;
     do {
       deleteCount =
           this.assetContentRepository.deleteAllByLastModifiedDateBefore(beforeDate, batchSize);
-      logger.debug("Updated {} Asset Content rows in batch: {}", deleteCount, batchNumber++);
+      logger.info("Updated {} Asset Content rows in batch: {}", deleteCount, batchNumber++);
     } while (deleteCount == batchSize);
   }
 }
