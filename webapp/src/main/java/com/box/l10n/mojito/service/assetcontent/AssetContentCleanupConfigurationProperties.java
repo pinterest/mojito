@@ -11,7 +11,7 @@ public class AssetContentCleanupConfigurationProperties {
 
   private Period retentionPeriod = Period.ofMonths(6);
 
-  private int batchSize = 100;
+  private int batchSize = 10000;
 
   public String getCron() {
     return cron;

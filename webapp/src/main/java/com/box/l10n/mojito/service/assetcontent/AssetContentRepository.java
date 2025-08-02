@@ -4,10 +4,10 @@ import com.box.l10n.mojito.entity.AssetContent;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
@@ -29,16 +29,20 @@ public interface AssetContentRepository
   @Transactional
   int deleteByAssetExtractionsIdIsNull();
 
+  @Modifying
+  @Transactional
   @Query(
-      """
-      select ac.id from AssetContent ac
-        left join ac.assetExtractions ae
-        left join ac.asset a
-        left join ac.branch b
-       where ac.lastModifiedDate < :beforeDate
-         and (b is null or b.deleted)
-         and (a is null or a.lastSuccessfulAssetExtraction is null or ae is null or a.lastSuccessfulAssetExtraction <> ae)
-      """)
-  List<Long> findStaleAssetContent(
-      @Param("beforeDate") ZonedDateTime beforeDate, Pageable pageable);
+      nativeQuery = true,
+      value =
+          """
+      delete todelete
+        from asset_content todelete
+        join (select id
+                from asset_content
+               where last_modified_date < :beforeDate
+               limit :batchSize) ac
+          on ac.id = todelete.id
+    """)
+  int deleteAllByLastModifiedDateBefore(
+      @Param("beforeDate") ZonedDateTime beforeDate, @Param("batchSize") int batchSize);
 }
