@@ -268,6 +268,12 @@ public class AssetContentServiceTest extends ServiceTestBase {
             String.format(pathPlaceholder, s3PathPrefix, assetContent.getId(), FILE_EXTENSION));
   }
 
+  @Transactional
+  private Branch markBranchAsDeleted(Branch branch) {
+    branch.setDeleted(true);
+    return this.branchRepository.save(branch);
+  }
+
   @Test
   public void testCleanAssetContentData_DeletesOneAssetContent()
       throws RepositoryNameAlreadyUsedException {
@@ -281,7 +287,10 @@ public class AssetContentServiceTest extends ServiceTestBase {
             .findByAssetRepositoryIdAndBranchName(repository.getId(), null)
             .isEmpty());
 
-    AssetContent assetContent = this.assetContentService.createAssetContent(asset, "asset-content");
+    Branch branch = branchService.createBranch(asset.getRepository(), "branch1", null, null);
+    branch = this.markBranchAsDeleted(branch);
+    AssetContent assetContent =
+        this.assetContentService.createAssetContent(asset, "asset-content", true, branch);
 
     this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1);
 
@@ -303,10 +312,12 @@ public class AssetContentServiceTest extends ServiceTestBase {
             .findByAssetRepositoryIdAndBranchName(repository.getId(), null)
             .isEmpty());
 
+    Branch branch = branchService.createBranch(asset.getRepository(), "branch1", null, null);
+    branch = this.markBranchAsDeleted(branch);
     AssetContent assetContent1 =
-        this.assetContentService.createAssetContent(asset, "asset-content-1");
+        this.assetContentService.createAssetContent(asset, "asset-content-1", true, branch);
     AssetContent assetContent2 =
-        this.assetContentService.createAssetContent(asset, "asset-content-2");
+        this.assetContentService.createAssetContent(asset, "asset-content-2", true, branch);
 
     this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1);
 
@@ -330,9 +341,20 @@ public class AssetContentServiceTest extends ServiceTestBase {
             .findByAssetRepositoryIdAndBranchName(repository.getId(), null)
             .isEmpty());
 
-    AssetContent assetContent = this.assetContentService.createAssetContent(asset, "asset-content");
+    Branch branch = branchService.createBranch(asset.getRepository(), "branch1", null, null);
+    branch = this.markBranchAsDeleted(branch);
+    AssetContent assetContent =
+        this.assetContentService.createAssetContent(asset, "asset-content-1", true, branch);
 
     this.assetContentService.cleanAssetContentData(Period.ofDays(1), 1);
+
+    assetContent = this.assetContentService.findOne(assetContent.getId());
+
+    assertNotNull(assetContent);
+
+    assetContent = this.assetContentService.createAssetContent(asset, "asset-content-2");
+
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1);
 
     assetContent = this.assetContentService.findOne(assetContent.getId());
 
@@ -361,7 +383,10 @@ public class AssetContentServiceTest extends ServiceTestBase {
             .findByAssetRepositoryIdAndBranchName(repository.getId(), null)
             .isEmpty());
 
-    AssetContent assetContent = this.assetContentService.createAssetContent(asset, "asset-content");
+    Branch branch = branchService.createBranch(asset.getRepository(), "branch1", null, null);
+    branch = this.markBranchAsDeleted(branch);
+    AssetContent assetContent =
+        this.assetContentService.createAssetContent(asset, "asset-content", true, branch);
 
     this.createAssetExtraction(asset, assetContent);
 
@@ -386,10 +411,14 @@ public class AssetContentServiceTest extends ServiceTestBase {
             .findByAssetRepositoryIdAndBranchName(repository.getId(), null)
             .isEmpty());
 
+    Branch branch1 = branchService.createBranch(asset.getRepository(), "branch1", null, null);
+    branch1 = this.markBranchAsDeleted(branch1);
     AssetContent assetContent1 =
-        this.assetContentService.createAssetContent(asset, "asset-content");
+        this.assetContentService.createAssetContent(asset, "asset-content", true, branch1);
+    Branch branch2 = branchService.createBranch(asset.getRepository(), "branch2", null, null);
+    branch2 = this.markBranchAsDeleted(branch2);
     AssetContent assetContent2 =
-        this.assetContentService.createAssetContent(asset, "asset-content");
+        this.assetContentService.createAssetContent(asset, "asset-content", true, branch2);
 
     AssetExtraction assetExtraction1 = this.createAssetExtraction(asset, assetContent1);
     AssetExtraction assetExtraction2 = this.createAssetExtraction(asset, assetContent2);
@@ -425,11 +454,24 @@ public class AssetContentServiceTest extends ServiceTestBase {
             .findByAssetRepositoryIdAndBranchName(repository.getId(), null)
             .isEmpty());
 
-    AssetContent assetContent = this.assetContentService.createAssetContent(asset, "asset-content");
+    Branch branch = branchService.createBranch(asset.getRepository(), "branch1", null, null);
+    branch = this.markBranchAsDeleted(branch);
+    AssetContent assetContent =
+        this.assetContentService.createAssetContent(asset, "asset-content", true, branch);
 
     this.createAssetExtraction(asset, assetContent);
 
     this.assetContentService.cleanAssetContentData(Period.ofDays(1), 10);
+
+    assetContent = this.assetContentService.findOne(assetContent.getId());
+
+    assertNotNull(assetContent);
+
+    assetContent = this.assetContentService.createAssetContent(asset, "asset-content");
+
+    this.createAssetExtraction(asset, assetContent);
+
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 10);
 
     assetContent = this.assetContentService.findOne(assetContent.getId());
 

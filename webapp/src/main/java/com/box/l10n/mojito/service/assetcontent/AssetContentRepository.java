@@ -37,9 +37,12 @@ public interface AssetContentRepository
           """
       delete todelete
         from asset_content todelete
-        join (select id
-                from asset_content
-               where last_modified_date < :beforeDate
+        join (select ac.id
+                from asset_content ac
+                join branch b
+                  on b.id = ac.branch_id
+               where ac.last_modified_date < :beforeDate
+                 and b.deleted is true
                limit :batchSize) ac
           on ac.id = todelete.id
     """)
