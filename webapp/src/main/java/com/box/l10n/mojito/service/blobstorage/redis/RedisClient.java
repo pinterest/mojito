@@ -6,6 +6,7 @@ import static java.util.Optional.ofNullable;
 import com.box.l10n.mojito.service.blobstorage.Retention;
 import com.google.common.annotations.VisibleForTesting;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,9 +23,11 @@ public class RedisClient {
   @VisibleForTesting static final int ONE_DAY_IN_SECONDS = 24 * 60 * 60;
 
   private final RedisPoolManager redisPoolManager;
+  private final RedisScriptManager redisScriptManager;
 
-  public RedisClient(RedisPoolManager redisPoolManager) {
+  public RedisClient(RedisPoolManager redisPoolManager, RedisScriptManager redisScriptManager) {
     this.redisPoolManager = redisPoolManager;
+    this.redisScriptManager = redisScriptManager;
   }
 
   public Optional<String> get(String key) {
@@ -75,6 +78,19 @@ public class RedisClient {
       }
     } catch (JedisException e) {
       LOG.error("Unable to save key to Redis: {}", key, e);
+    }
+  }
+
+  public Object executeScript(RedisScript script, List<String> keys, List<String> args)
+      throws JedisException {
+    try (Jedis redisClient = this.redisPoolManager.getJedis()) {
+      if (!redisScriptManager.isScriptLoaded(script)) {
+        // The script may not have loaded on startup if Redis was down, try load it now before
+        // executing the script.
+        LOG.warn("Script '{}' not loaded in Redis, loading now.", script.getScriptName());
+        redisScriptManager.loadScript(script);
+      }
+      return redisClient.evalsha(redisScriptManager.getScriptSHA(script), keys, args);
     }
   }
 }

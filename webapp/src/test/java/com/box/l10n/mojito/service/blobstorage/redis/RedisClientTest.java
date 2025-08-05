@@ -41,7 +41,7 @@ public class RedisClientTest {
     this.redisPoolManagerMock = mock(RedisPoolManager.class);
     this.jedisMock = mock(Jedis.class);
     when(this.redisPoolManagerMock.getJedis()).thenReturn(this.jedisMock);
-    this.redisClient = new RedisClient(redisPoolManagerMock);
+    this.redisClient = new RedisClient(redisPoolManagerMock, null);
   }
 
   @Test
