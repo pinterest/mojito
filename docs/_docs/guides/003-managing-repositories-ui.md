@@ -40,4 +40,4 @@ In the above Repository Locales example, `fr` and `fr-BE` are parent locales. `f
 
 ![Edit Repository Button](./managing-repositories-ui/images/edit-repository-button.png)
 
-Click the `Edit` button next to any repository to modify its settings. The same modal will open with the current values pre-filled, allowing you to update any field except the source locale.
+Click the `Edit` button next to any repository to modify its settings. The same modal will open with the repository's values pre-filled, allowing you to update any field except the source locale.
