@@ -7,18 +7,18 @@ permalink: /docs/guides/managing-repositories-ui/
 
 {{ site.mojito_green }} allows you to create and update repositories. A repository is a container for strings and their translations, storing localization configurations such as locales and integrity checkers.
 
-### Creating Repository
+## Creating Repository
 
 ![Creating Repository Button](./managing-repositories-ui/images/creating-repository-button.png)
 
-Click on the `New Repository` button and fill out the following fields:
+Click on the **New Repository** button and fill out the following fields:
 
-- Name of Repository
-- Description of Repository (Optional)
-- Source Locale - the original language of your application's strings (typically English). This is the language you are translating from
-- Check SLA (Optional) - enable alerting if translations have taken longer than 24 / 48 hours to come back from Smartling. This feature is currently disabled
-- Asset Integrity Checker (Optional) - this is a string in the format `fileExtension1 : integrityCheckerType1, fileExtension2: integrityCheckerType2...`. See [Integrity Checkers]({{ site.url }}/docs/guides/integrity-checkers/) for more information
-- Repository Locales - the target languages you want to translate your strings into. You can also set up parent and child locales, where child locales inherit translations from their parent locales. See [Managing Locales]({{ site.url }}/docs/guides/managing-locales/) for more information
+- **Name of Repository**: Enter the repository name
+- **Description of Repository** (Optional): Add a description for the repository
+- **Source Locale**: The original language of your application's strings (typically English). This is the language you are translating from
+- **Check SLA** (Optional): Enable alerting if translations have taken longer than 24 / 48 hours to come back from Smartling. This feature is currently disabled
+- **Asset Integrity Checker** (Optional): This is a string in the format `fileExtension1 : integrityCheckerType1, fileExtension2: integrityCheckerType2...`. See [Integrity Checkers]({{ site.url }}/docs/guides/integrity-checkers/) for more information
+- **Repository Locales**: The target languages you want to translate your strings into. You can also set up parent and child locales, where child locales inherit translations from their parent locales. See [Managing Locales]({{ site.url }}/docs/guides/managing-locales/) for more information
 
 ### Repository Locales Example
 
@@ -32,11 +32,11 @@ In the above Repository Locales example, `fr` and `es` are parent locales. `fr-C
 
 In the above Repository Locales example, `fr` and `fr-BE` are parent locales. `fr-BE` inherits translations from `fr`. `fr` inherits translations from `fr-BE`. This creates a cycle, because `fr` is the parent of `fr-BE` which is the parent of `fr`. This is an invalid configuration.
 
-### Creating Repository Video Walkthrough
+## Video Walkthrough
 
 ![Creating Repository Demo](./managing-repositories-ui/images/creating-repository-ui.gif)
 
-### Updating Repository
+## Updating Repository
 
 ![Edit Repository Button](./managing-repositories-ui/images/edit-repository-button.png)
 
