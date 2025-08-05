@@ -13,6 +13,8 @@ public class AssetContentCleanupConfigurationProperties {
 
   private int batchSize = 10000;
 
+  private int maxNumberOfIterations = 10;
+
   public String getCron() {
     return cron;
   }
@@ -35,5 +37,13 @@ public class AssetContentCleanupConfigurationProperties {
 
   public void setBatchSize(int batchSize) {
     this.batchSize = batchSize;
+  }
+
+  public int getMaxNumberOfIterations() {
+    return maxNumberOfIterations;
+  }
+
+  public void setMaxNumberOfIterations(int maxNumberOfIterations) {
+    this.maxNumberOfIterations = maxNumberOfIterations;
   }
 }

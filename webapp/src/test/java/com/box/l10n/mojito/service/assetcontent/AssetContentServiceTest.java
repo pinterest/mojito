@@ -292,7 +292,7 @@ public class AssetContentServiceTest extends ServiceTestBase {
     AssetContent assetContent =
         this.assetContentService.createAssetContent(asset, "asset-content", true, branch);
 
-    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1);
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 1);
 
     assetContent = this.assetContentService.findOne(assetContent.getId());
 
@@ -300,7 +300,7 @@ public class AssetContentServiceTest extends ServiceTestBase {
   }
 
   @Test
-  public void testCleanAssetContentData_DeletesOTwoAssetContents()
+  public void testCleanAssetContentData_DeletesTwoAssetContents()
       throws RepositoryNameAlreadyUsedException {
     Assume.assumeTrue(this.dbUtils.isMysql());
     Repository repository =
@@ -319,12 +319,47 @@ public class AssetContentServiceTest extends ServiceTestBase {
     AssetContent assetContent2 =
         this.assetContentService.createAssetContent(asset, "asset-content-2", true, branch);
 
-    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1);
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 2);
 
     assetContent1 = this.assetContentService.findOne(assetContent1.getId());
     assetContent2 = this.assetContentService.findOne(assetContent2.getId());
 
     assertNull(assetContent1);
+    assertNull(assetContent2);
+  }
+
+  @Test
+  public void testCleanAssetContentData_DeletesOneAssetContentAtATime()
+      throws RepositoryNameAlreadyUsedException {
+    Assume.assumeTrue(this.dbUtils.isMysql());
+    Repository repository =
+        this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
+
+    Asset asset = this.assetService.createAsset(repository.getId(), "asset-path", false);
+    assertTrue(
+        this.assetContentRepository
+            .findByAssetRepositoryIdAndBranchName(repository.getId(), null)
+            .isEmpty());
+
+    Branch branch = branchService.createBranch(asset.getRepository(), "branch1", null, null);
+    branch = this.markBranchAsDeleted(branch);
+    AssetContent assetContent1 =
+        this.assetContentService.createAssetContent(asset, "asset-content-1", true, branch);
+    AssetContent assetContent2 =
+        this.assetContentService.createAssetContent(asset, "asset-content-2", true, branch);
+
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 1);
+
+    assetContent1 = this.assetContentService.findOne(assetContent1.getId());
+    assetContent2 = this.assetContentService.findOne(assetContent2.getId());
+
+    assertNull(assetContent1);
+    assertNotNull(assetContent2);
+
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 1);
+
+    assetContent2 = this.assetContentService.findOne(assetContent2.getId());
+
     assertNull(assetContent2);
   }
 
@@ -346,7 +381,7 @@ public class AssetContentServiceTest extends ServiceTestBase {
     AssetContent assetContent =
         this.assetContentService.createAssetContent(asset, "asset-content-1", true, branch);
 
-    this.assetContentService.cleanAssetContentData(Period.ofDays(1), 1);
+    this.assetContentService.cleanAssetContentData(Period.ofDays(1), 1, 1);
 
     assetContent = this.assetContentService.findOne(assetContent.getId());
 
@@ -354,7 +389,7 @@ public class AssetContentServiceTest extends ServiceTestBase {
 
     assetContent = this.assetContentService.createAssetContent(asset, "asset-content-2");
 
-    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1);
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 1);
 
     assetContent = this.assetContentService.findOne(assetContent.getId());
 
@@ -390,7 +425,7 @@ public class AssetContentServiceTest extends ServiceTestBase {
 
     this.createAssetExtraction(asset, assetContent);
 
-    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 10);
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 1);
 
     assetContent = this.assetContentService.findOne(assetContent.getId());
 
@@ -423,7 +458,7 @@ public class AssetContentServiceTest extends ServiceTestBase {
     AssetExtraction assetExtraction1 = this.createAssetExtraction(asset, assetContent1);
     AssetExtraction assetExtraction2 = this.createAssetExtraction(asset, assetContent2);
 
-    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 10);
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 2);
 
     assetContent1 = this.assetContentService.findOne(assetContent1.getId());
     assetContent2 = this.assetContentService.findOne(assetContent2.getId());
@@ -436,6 +471,58 @@ public class AssetContentServiceTest extends ServiceTestBase {
     assertNull(assetContent2);
     assertTrue(assetExtraction1Removed.isPresent());
     assertNull(assetExtraction1Removed.get().getAssetContent());
+    assertTrue(assetExtraction2Removed.isPresent());
+    assertNull(assetExtraction2Removed.get().getAssetContent());
+  }
+
+  @Test
+  public void testCleanAssetContentData_DeletesOneAssetExtractionAtATime()
+      throws RepositoryNameAlreadyUsedException {
+    Assume.assumeTrue(this.dbUtils.isMysql());
+    Repository repository =
+        this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
+
+    Asset asset = this.assetService.createAsset(repository.getId(), "asset-path", false);
+
+    assertTrue(
+        this.assetContentRepository
+            .findByAssetRepositoryIdAndBranchName(repository.getId(), null)
+            .isEmpty());
+
+    Branch branch1 = branchService.createBranch(asset.getRepository(), "branch1", null, null);
+    branch1 = this.markBranchAsDeleted(branch1);
+    AssetContent assetContent1 =
+        this.assetContentService.createAssetContent(asset, "asset-content-1", true, branch1);
+    Branch branch2 = branchService.createBranch(asset.getRepository(), "branch2", null, null);
+    branch2 = this.markBranchAsDeleted(branch2);
+    AssetContent assetContent2 =
+        this.assetContentService.createAssetContent(asset, "asset-content-2", true, branch2);
+
+    AssetExtraction assetExtraction1 = this.createAssetExtraction(asset, assetContent1);
+    AssetExtraction assetExtraction2 = this.createAssetExtraction(asset, assetContent2);
+
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 1);
+
+    assetContent1 = this.assetContentService.findOne(assetContent1.getId());
+    assetContent2 = this.assetContentService.findOne(assetContent2.getId());
+    Optional<AssetExtraction> assetExtraction1Removed =
+        this.assetExtractionRepository.findById(assetExtraction1.getId());
+    Optional<AssetExtraction> assetExtraction2Removed =
+        this.assetExtractionRepository.findById(assetExtraction2.getId());
+
+    assertNull(assetContent1);
+    assertNotNull(assetContent2);
+    assertTrue(assetExtraction1Removed.isPresent());
+    assertNull(assetExtraction1Removed.get().getAssetContent());
+    assertTrue(assetExtraction2Removed.isPresent());
+    assertNotNull(assetExtraction2Removed.get().getAssetContent());
+
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 1);
+
+    assetContent2 = this.assetContentService.findOne(assetContent2.getId());
+    assetExtraction2Removed = this.assetExtractionRepository.findById(assetExtraction2.getId());
+
+    assertNull(assetContent2);
     assertTrue(assetExtraction2Removed.isPresent());
     assertNull(assetExtraction2Removed.get().getAssetContent());
   }
@@ -461,7 +548,7 @@ public class AssetContentServiceTest extends ServiceTestBase {
 
     this.createAssetExtraction(asset, assetContent);
 
-    this.assetContentService.cleanAssetContentData(Period.ofDays(1), 10);
+    this.assetContentService.cleanAssetContentData(Period.ofDays(1), 1, 1);
 
     assetContent = this.assetContentService.findOne(assetContent.getId());
 
@@ -471,7 +558,7 @@ public class AssetContentServiceTest extends ServiceTestBase {
 
     this.createAssetExtraction(asset, assetContent);
 
-    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 10);
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 1);
 
     assetContent = this.assetContentService.findOne(assetContent.getId());
 

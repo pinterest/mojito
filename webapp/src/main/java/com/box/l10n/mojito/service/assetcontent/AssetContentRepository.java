@@ -41,8 +41,11 @@ public interface AssetContentRepository
                 from asset_content ac
                 join branch b
                   on b.id = ac.branch_id
+                left join asset_extraction ae
+                  on ae.asset_content_id = ac.id
                where ac.last_modified_date < :beforeDate
                  and b.deleted is true
+                 and ae.id is null
                limit :batchSize) ac
           on ac.id = todelete.id
     """)

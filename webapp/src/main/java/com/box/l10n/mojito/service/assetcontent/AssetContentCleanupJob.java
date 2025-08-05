@@ -23,6 +23,7 @@ public class AssetContentCleanupJob implements Job {
     LOGGER.debug("Cleaning up asset content");
     this.assetContentService.cleanAssetContentData(
         this.configurationProperties.getRetentionPeriod(),
-        this.configurationProperties.getBatchSize());
+        this.configurationProperties.getBatchSize(),
+        this.configurationProperties.getMaxNumberOfIterations());
   }
 }
