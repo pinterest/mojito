@@ -36,12 +36,11 @@ Configure which operations the job should perform:
 
 ### Advanced Settings
 
-- **Locale Mapping**: Map different locale codes between Mojito and the provider
-- **Plural Separator**: Default is `_` - separates text units from their plural forms
+- **Locale Mapping**: Map locale code differences between Mojito and the third-party provider
+- **Plural Separator**: Default is ` _` - separates text units from their plural forms
 - **Skip Text Unit With Pattern**: Exclude text units matching specific patterns
 - **Skip Assets with Path Pattern**: Exclude assets matching path patterns
 - **Include Text Units with Pattern**: Only include text units matching patterns
-- **Smartling Placeholder Format**: Set to `NONE` for custom placeholders, or `JAVA`
 
 ## Video Walkthrough
 
