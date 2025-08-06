@@ -11,6 +11,8 @@ import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -40,6 +42,9 @@ public class AssetAppenderService {
 
   @Value("${l10n.asset-appender.default.limit:1000}")
   protected int DEFAULT_APPEND_LIMIT;
+
+  @Value("${l10n.asset-appender.branches.translated-max-age:30d}")
+  protected Duration branchesTranslatedMaxAge;
 
   private final AssetAppenderFactory assetAppenderFactory;
   private final BranchRepository branchRepository;
@@ -127,10 +132,12 @@ public class AssetAppenderService {
             .flatMap(tu -> expandPluralTextUnitNames(extension, tu).stream())
             .collect(Collectors.toSet());
 
+    ZonedDateTime cutoffDate = ZonedDateTime.now().minus(branchesTranslatedMaxAge);
+
     // Fetch all branches to be appended, sorted by translated date in ascending order to ensure
     // older translated branches make it in
     List<Branch> branchesToAppend =
-        branchRepository.findBranchesForAppending(asset.getRepository());
+        branchRepository.findBranchesForAppending(asset.getRepository(), cutoffDate);
 
     List<Branch> appendedBranches = new ArrayList<>();
 
