@@ -24,6 +24,6 @@ public class AssetContentCleanupJob implements Job {
     this.assetContentService.cleanAssetContentData(
         this.configurationProperties.getRetentionPeriod(),
         this.configurationProperties.getBatchSize(),
-        this.configurationProperties.getMaxNumberOfIterations());
+        this.configurationProperties.getMaxNumberOfBatches());
   }
 }

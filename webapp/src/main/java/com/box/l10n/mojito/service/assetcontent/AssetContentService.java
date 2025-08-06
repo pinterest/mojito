@@ -119,21 +119,20 @@ public class AssetContentService {
     return optionalAssetContent.orElse(null);
   }
 
-  public void cleanAssetContentData(
-      Period retentionPeriod, int batchSize, int maxNumberOfIterations) {
+  public void cleanAssetContentData(Period retentionPeriod, int batchSize, int maxNumberOfBatches) {
     ZonedDateTime beforeDate = ZonedDateTime.now().minus(retentionPeriod);
     int batchNumber = 1;
     int deleteCount;
     do {
       deleteCount = this.assetExtractionRepository.cleanStaleAssetContentIds(beforeDate, batchSize);
       logger.debug("Updated {} Asset Extraction rows in batch: {}", deleteCount, batchNumber++);
-    } while (deleteCount == batchSize && batchNumber <= maxNumberOfIterations);
+    } while (deleteCount == batchSize && batchNumber <= maxNumberOfBatches);
 
     batchNumber = 1;
     do {
       deleteCount =
           this.assetContentRepository.deleteAllByLastModifiedDateBefore(beforeDate, batchSize);
       logger.debug("Deleted {} Asset Content rows in batch: {}", deleteCount, batchNumber++);
-    } while (deleteCount == batchSize && batchNumber <= maxNumberOfIterations);
+    } while (deleteCount == batchSize && batchNumber <= maxNumberOfBatches);
   }
 }
