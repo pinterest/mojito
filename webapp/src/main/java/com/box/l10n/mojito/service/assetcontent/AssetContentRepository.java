@@ -35,19 +35,17 @@ public interface AssetContentRepository
       nativeQuery = true,
       value =
           """
-      delete todelete
-        from asset_content todelete
-        join (select ac.id
-                from asset_content ac
-                join branch b
-                  on b.id = ac.branch_id
-                left join asset_extraction ae
-                  on ae.asset_content_id = ac.id
-               where ac.last_modified_date < :beforeDate
-                 and b.deleted is true
-                 and ae.id is null
-               limit :batchSize) ac
-          on ac.id = todelete.id
+      delete from asset_content
+       where id in (select ac.id
+                      from asset_content ac
+                      join branch b
+                        on b.id = ac.branch_id
+                      left join asset_extraction ae
+                        on ae.asset_content_id = ac.id
+                     where ac.last_modified_date < :beforeDate
+                       and b.deleted is true
+                       and ae.id is null
+                     limit :batchSize)
     """)
   int deleteAllByLastModifiedDateBefore(
       @Param("beforeDate") ZonedDateTime beforeDate, @Param("batchSize") int batchSize);

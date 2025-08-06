@@ -19,7 +19,6 @@ import com.box.l10n.mojito.entity.AssetContent;
 import com.box.l10n.mojito.entity.AssetExtraction;
 import com.box.l10n.mojito.entity.Branch;
 import com.box.l10n.mojito.entity.Repository;
-import com.box.l10n.mojito.service.DBUtils;
 import com.box.l10n.mojito.service.asset.AssetRepository;
 import com.box.l10n.mojito.service.asset.AssetService;
 import com.box.l10n.mojito.service.assetExtraction.AssetExtractionByBranchRepository;
@@ -38,7 +37,6 @@ import com.box.l10n.mojito.test.TestIdWatcher;
 import java.time.Period;
 import java.util.List;
 import java.util.Optional;
-import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -78,8 +76,6 @@ public class AssetContentServiceTest extends ServiceTestBase {
   @Autowired PluralFormService pluralFormService;
 
   @Autowired AssetRepository assetRepository;
-
-  @Autowired DBUtils dbUtils;
 
   @Test
   public void createAssetContentAndFind() throws RepositoryNameAlreadyUsedException {
@@ -277,7 +273,6 @@ public class AssetContentServiceTest extends ServiceTestBase {
   @Test
   public void testCleanAssetContentData_DeletesOneAssetContent()
       throws RepositoryNameAlreadyUsedException {
-    Assume.assumeTrue(this.dbUtils.isMysql());
     Repository repository =
         this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
 
@@ -302,7 +297,6 @@ public class AssetContentServiceTest extends ServiceTestBase {
   @Test
   public void testCleanAssetContentData_DeletesTwoAssetContents()
       throws RepositoryNameAlreadyUsedException {
-    Assume.assumeTrue(this.dbUtils.isMysql());
     Repository repository =
         this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
 
@@ -331,7 +325,6 @@ public class AssetContentServiceTest extends ServiceTestBase {
   @Test
   public void testCleanAssetContentData_DeletesOneAssetContentAtATime()
       throws RepositoryNameAlreadyUsedException {
-    Assume.assumeTrue(this.dbUtils.isMysql());
     Repository repository =
         this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
 
@@ -366,7 +359,6 @@ public class AssetContentServiceTest extends ServiceTestBase {
   @Test
   public void testCleanAssetContentData_DoesNotDeleteAnyAssetContent()
       throws RepositoryNameAlreadyUsedException {
-    Assume.assumeTrue(this.dbUtils.isMysql());
     Repository repository =
         this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
 
@@ -407,7 +399,6 @@ public class AssetContentServiceTest extends ServiceTestBase {
   @Test
   public void testCleanAssetContentData_DeletesOneAssetExtraction()
       throws RepositoryNameAlreadyUsedException {
-    Assume.assumeTrue(this.dbUtils.isMysql());
     Repository repository =
         this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
 
@@ -435,7 +426,6 @@ public class AssetContentServiceTest extends ServiceTestBase {
   @Test
   public void testCleanAssetContentData_DeletesTwoAssetExtractions()
       throws RepositoryNameAlreadyUsedException {
-    Assume.assumeTrue(this.dbUtils.isMysql());
     Repository repository =
         this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
 
@@ -478,7 +468,6 @@ public class AssetContentServiceTest extends ServiceTestBase {
   @Test
   public void testCleanAssetContentData_DeletesOneAssetExtractionAtATime()
       throws RepositoryNameAlreadyUsedException {
-    Assume.assumeTrue(this.dbUtils.isMysql());
     Repository repository =
         this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
 
@@ -530,7 +519,6 @@ public class AssetContentServiceTest extends ServiceTestBase {
   @Test
   public void testCleanAssetContentData_DoesNotDeleteAnyAssetExtraction()
       throws RepositoryNameAlreadyUsedException {
-    Assume.assumeTrue(this.dbUtils.isMysql());
     Repository repository =
         this.repositoryService.createRepository(this.testIdWatcher.getEntityName("repository"));
 
