@@ -60,12 +60,14 @@ public interface AssetExtractionRepository extends JpaRepository<AssetExtraction
           """
         update asset_extraction todelete
            set todelete.asset_content_id = null
-         where todelete.id in (select ae.id
-                                 from asset_extraction ae
-                                 join asset_content ac
-                                   on ac.id = ae.asset_content_id
-                                where ac.last_modified_date < :beforeDate
-                                limit :batchSize)
+         where todelete.id in (select id
+                                 from (select ae.id
+                                         from asset_extraction ae
+                                         join asset_content ac
+                                           on ac.id = ae.asset_content_id
+                                        where ac.last_modified_date < :beforeDate
+                                        limit :batchSize) as ae
+                              )
         """)
   int cleanStaleAssetContentIds(
       @Param("beforeDate") ZonedDateTime beforeDate, @Param("batchSize") int batchSize);
