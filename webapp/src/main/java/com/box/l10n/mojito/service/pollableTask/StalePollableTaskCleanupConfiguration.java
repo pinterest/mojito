@@ -11,7 +11,9 @@ public class StalePollableTaskCleanupConfiguration {
 
   private Period retentionPeriod = Period.ofMonths(6);
 
-  private int batchSize = 100000;
+  private int batchSize = 10000;
+
+  private int maxNumberOfIterations = 10;
 
   public String getCron() {
     return cron;
@@ -35,5 +37,13 @@ public class StalePollableTaskCleanupConfiguration {
 
   public void setBatchSize(int batchSize) {
     this.batchSize = batchSize;
+  }
+
+  public int getMaxNumberOfIterations() {
+    return maxNumberOfIterations;
+  }
+
+  public void setMaxNumberOfIterations(int maxNumberOfIterations) {
+    this.maxNumberOfIterations = maxNumberOfIterations;
   }
 }
