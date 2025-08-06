@@ -37,6 +37,7 @@ import com.box.l10n.mojito.test.TestIdWatcher;
 import java.time.Period;
 import java.util.List;
 import java.util.Optional;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -76,6 +77,12 @@ public class AssetContentServiceTest extends ServiceTestBase {
   @Autowired PluralFormService pluralFormService;
 
   @Autowired AssetRepository assetRepository;
+
+  @After
+  public void after() {
+    // Clean all asset contents
+    this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 10, 10);
+  }
 
   @Test
   public void createAssetContentAndFind() throws RepositoryNameAlreadyUsedException {
