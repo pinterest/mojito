@@ -296,7 +296,8 @@ public class ThirdPartyTMSSmartlingGlossaryTest {
                 .filter(
                     textUnit ->
                         textUnit.getId().equals(SCHOOL_TEXT_UNIT_ID)
-                            && textUnit.getName().equals(SCHOOL_TEXT_UNIT_ID))
+                            && textUnit.getName().equals(SCHOOL_TEXT_UNIT_ID)
+                            && textUnit.getSource().equals(SCHOOL_TEXT_UNIT_ID))
                 .count()
             == 1);
     assertTrue(
@@ -304,7 +305,8 @@ public class ThirdPartyTMSSmartlingGlossaryTest {
                 .filter(
                     textUnit ->
                         textUnit.getId().equals(HOUSE_TEXT_UNIT_ID)
-                            && textUnit.getName().equals(HOUSE_TEXT_UNIT_ID))
+                            && textUnit.getName().equals(HOUSE_TEXT_UNIT_ID)
+                            && textUnit.getSource().equals(HOUSE_TEXT_UNIT_ID))
                 .count()
             == 1);
     assertTrue(
@@ -312,7 +314,8 @@ public class ThirdPartyTMSSmartlingGlossaryTest {
                 .filter(
                     textUnit ->
                         textUnit.getId().equals(FIELD_TEXT_UNIT_ID)
-                            && textUnit.getName().equals(FIELD_TEXT_UNIT_ID))
+                            && textUnit.getName().equals(FIELD_TEXT_UNIT_ID)
+                            && textUnit.getSource().equals(FIELD_TEXT_UNIT_ID))
                 .count()
             == 1);
     assertTrue(
@@ -320,7 +323,8 @@ public class ThirdPartyTMSSmartlingGlossaryTest {
             .noneMatch(
                 textUnit ->
                     textUnit.getId().equals(FOOTBALL_TEXT_UNIT_ID)
-                        && textUnit.getName().equals(FOOTBALL_TEXT_UNIT_ID)));
+                        && textUnit.getName().equals(FOOTBALL_TEXT_UNIT_ID)
+                        && textUnit.getSource().equals(FOOTBALL_TEXT_UNIT_ID)));
     assertEquals(
         3,
         thirdPartyTextUnits.stream()
