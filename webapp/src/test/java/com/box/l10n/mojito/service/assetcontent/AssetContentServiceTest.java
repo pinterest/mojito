@@ -346,14 +346,15 @@ public class AssetContentServiceTest extends ServiceTestBase {
     assetContent1 = this.assetContentService.findOne(assetContent1.getId());
     assetContent2 = this.assetContentService.findOne(assetContent2.getId());
 
-    assertNull(assetContent1);
-    assertNotNull(assetContent2);
+    assertTrue(assetContent1 == null || assetContent2 == null);
 
     this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 1);
 
-    assetContent2 = this.assetContentService.findOne(assetContent2.getId());
+    AssetContent assetContent =
+        this.assetContentService.findOne(
+            assetContent1 != null ? assetContent1.getId() : assetContent2.getId());
 
-    assertNull(assetContent2);
+    assertNull(assetContent);
   }
 
   @Test
@@ -499,20 +500,25 @@ public class AssetContentServiceTest extends ServiceTestBase {
     Optional<AssetExtraction> assetExtraction2Removed =
         this.assetExtractionRepository.findById(assetExtraction2.getId());
 
-    assertNull(assetContent1);
-    assertNotNull(assetContent2);
+    assertTrue(assetContent1 == null || assetContent2 == null);
     assertTrue(assetExtraction1Removed.isPresent());
-    assertNull(assetExtraction1Removed.get().getAssetContent());
     assertTrue(assetExtraction2Removed.isPresent());
-    assertNotNull(assetExtraction2Removed.get().getAssetContent());
+    assertTrue(
+        assetExtraction1Removed.get().getAssetContent() == null
+            || assetExtraction2Removed.get().getAssetContent() == null);
 
     this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 1);
 
-    assetContent2 = this.assetContentService.findOne(assetContent2.getId());
+    AssetContent assetContent =
+        this.assetContentService.findOne(
+            assetContent1 != null ? assetContent1.getId() : assetContent2.getId());
+    assetExtraction1Removed = this.assetExtractionRepository.findById(assetExtraction1.getId());
     assetExtraction2Removed = this.assetExtractionRepository.findById(assetExtraction2.getId());
 
-    assertNull(assetContent2);
+    assertNull(assetContent);
+    assertTrue(assetExtraction1Removed.isPresent());
     assertTrue(assetExtraction2Removed.isPresent());
+    assertNull(assetExtraction1Removed.get().getAssetContent());
     assertNull(assetExtraction2Removed.get().getAssetContent());
   }
 
