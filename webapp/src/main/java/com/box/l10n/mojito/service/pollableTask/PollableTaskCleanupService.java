@@ -79,7 +79,7 @@ public class PollableTaskCleanupService {
   }
 
   public void cleanStalePollableTaskData(
-      Period retentionPeriod, int batchSize, int maxNumberOfIterations) {
+      Period retentionPeriod, int batchSize, int maxNumberOfBatches) {
     ZonedDateTime beforeDate = ZonedDateTime.now().minus(retentionPeriod);
     int deleteCount = this.dropRepository.cleanStaleExportPollableTaskIds(beforeDate);
     logger.debug("Updated {} Drop rows (exported)", deleteCount);
@@ -94,13 +94,13 @@ public class PollableTaskCleanupService {
       deleteCount =
           this.pollableTaskRepository.cleanParentTasksWithFinishedDateBefore(beforeDate, batchSize);
       logger.debug("Updated {} Pollable Task rows in batch: {}", deleteCount, batchNumber++);
-    } while (deleteCount == batchSize && batchNumber <= maxNumberOfIterations);
+    } while (deleteCount == batchSize && batchNumber <= maxNumberOfBatches);
 
     batchNumber = 1;
     do {
       deleteCount =
           this.pollableTaskRepository.deleteAllByFinishedDateBefore(beforeDate, batchSize);
       logger.debug("Deleted {} Pollable Task rows in batch: {}", deleteCount, batchNumber++);
-    } while (deleteCount == batchSize && batchNumber <= maxNumberOfIterations);
+    } while (deleteCount == batchSize && batchNumber <= maxNumberOfBatches);
   }
 }
