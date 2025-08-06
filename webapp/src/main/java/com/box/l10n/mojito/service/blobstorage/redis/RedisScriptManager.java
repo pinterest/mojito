@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +20,7 @@ import redis.clients.jedis.Jedis;
  * their SHA hashes for later execution.
  *
  * <p>Scripts are loaded at application startup and can be executed using their enum representation.
- * To execute a script, use {@link RedisScriptManager#getScriptSHA(RedisScript)}.
+ * To execute a script, use {@link RedisClient#executeScript(RedisScript, List, List)}.
  *
  * @author mwilshire
  */

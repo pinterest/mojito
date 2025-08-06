@@ -5,6 +5,7 @@ import static com.box.l10n.mojito.service.blobstorage.Retention.PERMANENT;
 import static com.box.l10n.mojito.service.blobstorage.redis.RedisClient.ONE_DAY_IN_SECONDS;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -15,6 +16,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,12 +39,15 @@ public class RedisClientTest {
 
   RedisClient redisClient;
 
+  RedisScriptManager redisScriptManagerMock;
+
   @BeforeEach
   public void setUp() {
     this.redisPoolManagerMock = mock(RedisPoolManager.class);
     this.jedisMock = mock(Jedis.class);
+    this.redisScriptManagerMock = mock(RedisScriptManager.class);
     when(this.redisPoolManagerMock.getJedis()).thenReturn(this.jedisMock);
-    this.redisClient = new RedisClient(redisPoolManagerMock, null);
+    this.redisClient = new RedisClient(redisPoolManagerMock, redisScriptManagerMock);
   }
 
   @Test
@@ -203,5 +209,115 @@ public class RedisClientTest {
         .thenThrow(new JedisException("jedis client exception"));
 
     this.redisClient.put(KEY, VALUE_BYTES, PERMANENT);
+  }
+
+  @Test
+  public void testExecuteScript_ScriptAlreadyLoaded_ReturnsResult() {
+    RedisScript script = RedisScript.SLIDING_WINDOW_RATE_LIMITER;
+    List<String> keys = Arrays.asList("key1", "key2");
+    List<String> args = Arrays.asList("arg1", "arg2");
+    String scriptSHA = "test-sha-hash";
+    Object expectedResult = 1L;
+
+    when(this.redisScriptManagerMock.isScriptLoaded(script)).thenReturn(true);
+    when(this.redisScriptManagerMock.getScriptSHA(script)).thenReturn(scriptSHA);
+    when(this.jedisMock.evalsha(scriptSHA, keys, args)).thenReturn(expectedResult);
+
+    Object result = this.redisClient.executeScript(script, keys, args);
+
+    assertEquals(expectedResult, result);
+    verify(this.redisScriptManagerMock).isScriptLoaded(script);
+    verify(this.redisScriptManagerMock).getScriptSHA(script);
+    verify(this.jedisMock).evalsha(scriptSHA, keys, args);
+  }
+
+  @Test
+  public void testExecuteScript_ScriptNotLoaded_LoadsScriptThenExecutes() {
+    RedisScript script = RedisScript.SLIDING_WINDOW_RATE_LIMITER;
+    List<String> keys = Arrays.asList("key1");
+    List<String> args = Arrays.asList("arg1");
+    String scriptSHA = "test-sha-hash";
+    Object expectedResult = 0L;
+
+    when(this.redisScriptManagerMock.isScriptLoaded(script)).thenReturn(false);
+    when(this.redisScriptManagerMock.getScriptSHA(script)).thenReturn(scriptSHA);
+    when(this.jedisMock.evalsha(scriptSHA, keys, args)).thenReturn(expectedResult);
+
+    Object result = this.redisClient.executeScript(script, keys, args);
+
+    assertEquals(expectedResult, result);
+    verify(this.redisScriptManagerMock).isScriptLoaded(script);
+    verify(this.redisScriptManagerMock).loadScript(script);
+    verify(this.redisScriptManagerMock).getScriptSHA(script);
+    verify(this.jedisMock).evalsha(scriptSHA, keys, args);
+  }
+
+  @Test
+  public void testExecuteScript_EmptyKeysAndArgs_ExecutesSuccessfully() {
+    RedisScript script = RedisScript.SLIDING_WINDOW_RATE_LIMITER;
+    List<String> keys = Arrays.asList();
+    List<String> args = Arrays.asList();
+    String scriptSHA = "test-sha-hash";
+    Object expectedResult = 1L;
+
+    when(this.redisScriptManagerMock.isScriptLoaded(script)).thenReturn(true);
+    when(this.redisScriptManagerMock.getScriptSHA(script)).thenReturn(scriptSHA);
+    when(this.jedisMock.evalsha(scriptSHA, keys, args)).thenReturn(expectedResult);
+
+    Object result = this.redisClient.executeScript(script, keys, args);
+
+    assertEquals(expectedResult, result);
+  }
+
+  @Test
+  public void testExecuteScript_JedisPoolException_ThrowsException() {
+    RedisScript script = RedisScript.SLIDING_WINDOW_RATE_LIMITER;
+    List<String> keys = Arrays.asList("key1");
+    List<String> args = Arrays.asList("arg1");
+
+    when(this.redisPoolManagerMock.getJedis())
+        .thenThrow(new JedisException("jedis pool exception"));
+
+    assertThrows(
+        JedisException.class,
+        () -> {
+          this.redisClient.executeScript(script, keys, args);
+        });
+  }
+
+  @Test
+  public void testExecuteScript_JedisEvalshaException_ThrowsException() {
+    RedisScript script = RedisScript.SLIDING_WINDOW_RATE_LIMITER;
+    List<String> keys = Arrays.asList("key1");
+    List<String> args = Arrays.asList("arg1");
+    String scriptSHA = "test-sha-hash";
+
+    when(this.redisScriptManagerMock.isScriptLoaded(script)).thenReturn(true);
+    when(this.redisScriptManagerMock.getScriptSHA(script)).thenReturn(scriptSHA);
+    when(this.jedisMock.evalsha(scriptSHA, keys, args))
+        .thenThrow(new JedisException("evalsha execution failed"));
+
+    assertThrows(
+        JedisException.class,
+        () -> {
+          this.redisClient.executeScript(script, keys, args);
+        });
+  }
+
+  @Test
+  public void testExecuteScript_ScriptManagerGetSHAException_ThrowsException() {
+    RedisScript script = RedisScript.SLIDING_WINDOW_RATE_LIMITER;
+    List<String> keys = Arrays.asList("key1");
+    List<String> args = Arrays.asList("arg1");
+
+    when(this.redisScriptManagerMock.isScriptLoaded(script)).thenReturn(true);
+    when(this.redisScriptManagerMock.getScriptSHA(script))
+        .thenThrow(new IllegalStateException("Script SHA not found"));
+
+    assertThrows(
+        IllegalStateException.class,
+        () -> {
+          this.redisClient.executeScript(script, keys, args);
+        });
   }
 }
