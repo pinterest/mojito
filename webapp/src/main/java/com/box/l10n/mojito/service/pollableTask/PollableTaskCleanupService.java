@@ -82,25 +82,25 @@ public class PollableTaskCleanupService {
       Period retentionPeriod, int batchSize, int maxNumberOfBatches) {
     ZonedDateTime beforeDate = ZonedDateTime.now().minus(retentionPeriod);
     int deleteCount = this.dropRepository.cleanStaleExportPollableTaskIds(beforeDate);
-    logger.debug("Updated {} Drop rows (exported)", deleteCount);
+    logger.info("Updated {} Drop rows (exported)", deleteCount);
     deleteCount = this.dropRepository.cleanStaleImportPollableTaskIds(beforeDate);
-    logger.debug("Updated {} Drop rows (imported)", deleteCount);
+    logger.info("Updated {} Drop rows (imported)", deleteCount);
     deleteCount = this.assetExtractionRepository.cleanStalePollableTaskIds(beforeDate);
-    logger.debug("Updated {} Asset Extraction rows", deleteCount);
+    logger.info("Updated {} Asset Extraction rows", deleteCount);
     deleteCount = this.tmxliffRepository.cleanStaleExportPollableTaskIds(beforeDate);
-    logger.debug("Updated {} TM Xliff rows", deleteCount);
+    logger.info("Updated {} TM Xliff rows", deleteCount);
     int batchNumber = 1;
     do {
       deleteCount =
           this.pollableTaskRepository.cleanParentTasksWithFinishedDateBefore(beforeDate, batchSize);
-      logger.debug("Updated {} Pollable Task rows in batch: {}", deleteCount, batchNumber++);
+      logger.info("Updated {} Pollable Task rows in batch: {}", deleteCount, batchNumber++);
     } while (deleteCount == batchSize && batchNumber <= maxNumberOfBatches);
 
     batchNumber = 1;
     do {
       deleteCount =
           this.pollableTaskRepository.deleteAllByFinishedDateBefore(beforeDate, batchSize);
-      logger.debug("Deleted {} Pollable Task rows in batch: {}", deleteCount, batchNumber++);
+      logger.info("Deleted {} Pollable Task rows in batch: {}", deleteCount, batchNumber++);
     } while (deleteCount == batchSize && batchNumber <= maxNumberOfBatches);
   }
 }
