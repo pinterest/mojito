@@ -29,7 +29,7 @@ public interface DropRepository extends JpaRepository<Drop, Long>, JpaSpecificat
       nativeQuery = true,
       value =
           """
-        update "drop"
+        update `drop`
            set export_pollable_task_id = null
          where export_pollable_task_id in (select id
                                              from pollable_task
@@ -43,7 +43,7 @@ public interface DropRepository extends JpaRepository<Drop, Long>, JpaSpecificat
       nativeQuery = true,
       value =
           """
-        update "drop"
+        update `drop`
            set import_pollable_task_id = null
          where import_pollable_task_id in (select id
                                              from pollable_task
