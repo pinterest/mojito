@@ -294,6 +294,8 @@ public class AssetContentServiceTest extends ServiceTestBase {
     AssetContent assetContent =
         this.assetContentService.createAssetContent(asset, "asset-content", true, branch);
 
+    // The last modified date is set to the current date by default, so the retention period needs
+    // to be in the future to remove asset contents added recently
     this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 1);
 
     assetContent = this.assetContentService.findOne(assetContent.getId());
@@ -320,6 +322,8 @@ public class AssetContentServiceTest extends ServiceTestBase {
     AssetContent assetContent2 =
         this.assetContentService.createAssetContent(asset, "asset-content-2", true, branch);
 
+    // The last modified date is set to the current date by default, so the retention period needs
+    // to be in the future to remove asset contents added recently
     this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 2);
 
     assetContent1 = this.assetContentService.findOne(assetContent1.getId());
@@ -348,6 +352,8 @@ public class AssetContentServiceTest extends ServiceTestBase {
     AssetContent assetContent2 =
         this.assetContentService.createAssetContent(asset, "asset-content-2", true, branch);
 
+    // The last modified date is set to the current date by default, so the retention period needs
+    // to be in the future to remove asset contents added recently
     this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 1);
 
     assetContent1 = this.assetContentService.findOne(assetContent1.getId());
@@ -389,6 +395,8 @@ public class AssetContentServiceTest extends ServiceTestBase {
 
     assetContent = this.assetContentService.createAssetContent(asset, "asset-content-2");
 
+    // The last modified date is set to the current date by default, so the retention period needs
+    // to be in the future to remove asset contents added recently
     this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 1);
 
     assetContent = this.assetContentService.findOne(assetContent.getId());
@@ -424,6 +432,8 @@ public class AssetContentServiceTest extends ServiceTestBase {
 
     this.createAssetExtraction(asset, assetContent);
 
+    // The last modified date is set to the current date by default, so the retention period needs
+    // to be in the future to remove asset contents added recently
     this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 1);
 
     assetContent = this.assetContentService.findOne(assetContent.getId());
@@ -456,6 +466,8 @@ public class AssetContentServiceTest extends ServiceTestBase {
     AssetExtraction assetExtraction1 = this.createAssetExtraction(asset, assetContent1);
     AssetExtraction assetExtraction2 = this.createAssetExtraction(asset, assetContent2);
 
+    // The last modified date is set to the current date by default, so the retention period needs
+    // to be in the future to remove asset contents added recently
     this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 2);
 
     assetContent1 = this.assetContentService.findOne(assetContent1.getId());
@@ -498,6 +510,8 @@ public class AssetContentServiceTest extends ServiceTestBase {
     AssetExtraction assetExtraction1 = this.createAssetExtraction(asset, assetContent1);
     AssetExtraction assetExtraction2 = this.createAssetExtraction(asset, assetContent2);
 
+    // The last modified date is set to the current date by default, so the retention period needs
+    // to be in the future to remove asset contents added recently
     this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 1);
 
     assetContent1 = this.assetContentService.findOne(assetContent1.getId());
@@ -559,6 +573,8 @@ public class AssetContentServiceTest extends ServiceTestBase {
 
     this.createAssetExtraction(asset, assetContent);
 
+    // The last modified date is set to the current date by default, so the retention period needs
+    // to be in the future to remove asset contents added recently
     this.assetContentService.cleanAssetContentData(Period.ofDays(-1), 1, 1);
 
     assetContent = this.assetContentService.findOne(assetContent.getId());
