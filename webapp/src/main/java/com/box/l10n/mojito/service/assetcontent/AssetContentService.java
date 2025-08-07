@@ -6,7 +6,10 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.AssetContent;
 import com.box.l10n.mojito.entity.Branch;
+import com.box.l10n.mojito.service.assetExtraction.AssetExtractionRepository;
 import com.box.l10n.mojito.service.branch.BranchService;
+import java.time.Period;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
@@ -37,14 +40,18 @@ public class AssetContentService {
 
   private final Optional<ContentService> contentService;
 
+  private final AssetExtractionRepository assetExtractionRepository;
+
   @Autowired
   public AssetContentService(
       BranchService branchService,
       AssetContentRepository assetContentRepository,
-      @Autowired(required = false) ContentService contentService) {
+      @Autowired(required = false) ContentService contentService,
+      AssetExtractionRepository assetExtractionRepository) {
     this.branchService = branchService;
     this.assetContentRepository = assetContentRepository;
     this.contentService = ofNullable(contentService);
+    this.assetExtractionRepository = assetExtractionRepository;
   }
 
   /**
@@ -110,5 +117,22 @@ public class AssetContentService {
     }
 
     return optionalAssetContent.orElse(null);
+  }
+
+  public void cleanAssetContentData(Period retentionPeriod, int batchSize, int maxNumberOfBatches) {
+    ZonedDateTime beforeDate = ZonedDateTime.now().minus(retentionPeriod);
+    int batchNumber = 1;
+    int deleteCount;
+    do {
+      deleteCount = this.assetExtractionRepository.cleanStaleAssetContentIds(beforeDate, batchSize);
+      logger.debug("Updated {} Asset Extraction rows in batch: {}", deleteCount, batchNumber++);
+    } while (deleteCount == batchSize && batchNumber <= maxNumberOfBatches);
+
+    batchNumber = 1;
+    do {
+      deleteCount =
+          this.assetContentRepository.deleteAllByLastModifiedDateBefore(beforeDate, batchSize);
+      logger.debug("Deleted {} Asset Content rows in batch: {}", deleteCount, batchNumber++);
+    } while (deleteCount == batchSize && batchNumber <= maxNumberOfBatches);
   }
 }
