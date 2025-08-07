@@ -24,13 +24,13 @@ Click on the **New Repository** button and fill out the following fields:
 
 ![Repository Locales Example](./managing-repositories-ui/images/repository-locales-example.png)
 
-In the above Repository Locales example, `fr` and `es` are parent locales. `fr-CA` and `fr-BE` inherit translations from `fr`. `es-BO` inherits translations from `es`.
+In the above Repository Locales example, `fr` and `es` are parent locales. `fr-CA` and `fr-BE` inherit translations from `fr`. `es-BO` inherits translations from `es`. This means that if translations for `fr-CA`, `fr-BE` aren't available, they would fall back to translations for `fr`. Similarly, if translations for `es-BO` aren't available, they would fall back to translations for `es`.
 
-### Repository Locales Cycle Example
+#### Repository Locale Cycles are Prohibited
 
 ![Repository Locales Cycle Example](./managing-repositories-ui/images/repository-locales-cycle-example.png)
 
-In the above Repository Locales example, `fr` and `fr-BE` are parent locales. `fr-BE` inherits translations from `fr`. `fr` inherits translations from `fr-BE`. This creates a cycle, because `fr` is the parent of `fr-BE` which is the parent of `fr`. This is an invalid configuration.
+In the above Repository Locales example, `fr` and `fr-BE` are parent locales. `fr-BE` inherits translations from `fr`. `fr` inherits translations from `fr-BE`. This creates a cycle, `fr` -> `fr-BE` -> `fr`, because `fr` is the parent of `fr-BE` which is the parent of `fr`. This is an invalid configuration.
 
 ## Video Walkthrough
 
