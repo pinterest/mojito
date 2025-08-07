@@ -2,6 +2,7 @@ package com.box.l10n.mojito.service.branch;
 
 import com.box.l10n.mojito.entity.Branch;
 import com.box.l10n.mojito.entity.Repository;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -37,6 +38,7 @@ public interface BranchRepository
         INNER JOIN BranchStatistic bs ON bs.branch = b
         INNER JOIN BranchMergeTarget bmt ON b = bmt.branch
         WHERE bs.translatedDate IS NOT NULL
+        AND bs.translatedDate >= :cutoffDate
         AND bs.forTranslationCount = 0
         AND bs.totalCount > 0
         AND bmt.targetsMain = true
@@ -44,5 +46,6 @@ public interface BranchRepository
         AND b.deleted = false
         ORDER BY bs.translatedDate ASC
         """)
-  List<Branch> findBranchesForAppending(@Param("repository") Repository repository);
+  List<Branch> findBranchesForAppending(
+      @Param("repository") Repository repository, @Param("cutoffDate") ZonedDateTime cutoffDate);
 }
