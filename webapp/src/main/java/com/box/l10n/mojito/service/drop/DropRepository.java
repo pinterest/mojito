@@ -50,4 +50,32 @@ public interface DropRepository extends JpaRepository<Drop, Long>, JpaSpecificat
                                             where finished_date < :beforeDate)
         """)
   int cleanStaleImportPollableTaskIds(@Param("beforeDate") ZonedDateTime beforeDate);
+
+  @Modifying
+  @Transactional
+  @Query(
+      nativeQuery = true,
+      value =
+          """
+        update "drop"
+           set export_pollable_task_id = null
+         where export_pollable_task_id in (select id
+                                             from pollable_task
+                                            where finished_date < :beforeDate)
+        """)
+  int cleanStaleExportPollableTaskIdsForHsqldb(@Param("beforeDate") ZonedDateTime beforeDate);
+
+  @Modifying
+  @Transactional
+  @Query(
+      nativeQuery = true,
+      value =
+          """
+        update "drop"
+           set import_pollable_task_id = null
+         where import_pollable_task_id in (select id
+                                             from pollable_task
+                                            where finished_date < :beforeDate)
+        """)
+  int cleanStaleImportPollableTaskIdsForHsqldb(@Param("beforeDate") ZonedDateTime beforeDate);
 }
