@@ -24,11 +24,11 @@ public interface TMXliffRepository extends JpaRepository<TMXliff, Long> {
       nativeQuery = true,
       value =
           """
-        update tm_xliff tx
-          join pollable_task pt
-            on pt.id = tx.export_pollable_task_id
-           set tx.export_pollable_task_id = null
-         where pt.finished_date < :beforeDate
+        update tm_xliff
+           set export_pollable_task_id = null
+         where export_pollable_task_id in (select id
+                                             from pollable_task
+                                            where finished_date < :beforeDate)
         """)
   int cleanStaleExportPollableTaskIds(@Param("beforeDate") ZonedDateTime beforeDate);
 }

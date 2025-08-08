@@ -29,11 +29,11 @@ public interface DropRepository extends JpaRepository<Drop, Long>, JpaSpecificat
       nativeQuery = true,
       value =
           """
-        update `drop` d
-          join pollable_task pt
-            on pt.id = d.export_pollable_task_id
-           set d.export_pollable_task_id = null
-         where pt.finished_date < :beforeDate
+        update `drop`
+           set export_pollable_task_id = null
+         where export_pollable_task_id in (select id
+                                             from pollable_task
+                                            where finished_date < :beforeDate)
         """)
   int cleanStaleExportPollableTaskIds(@Param("beforeDate") ZonedDateTime beforeDate);
 
@@ -43,11 +43,39 @@ public interface DropRepository extends JpaRepository<Drop, Long>, JpaSpecificat
       nativeQuery = true,
       value =
           """
-        update `drop` d
-          join pollable_task pt
-            on pt.id = d.import_pollable_task_id
-           set d.import_pollable_task_id = null
-         where pt.finished_date < :beforeDate
+        update `drop`
+           set import_pollable_task_id = null
+         where import_pollable_task_id in (select id
+                                             from pollable_task
+                                            where finished_date < :beforeDate)
         """)
   int cleanStaleImportPollableTaskIds(@Param("beforeDate") ZonedDateTime beforeDate);
+
+  @Modifying
+  @Transactional
+  @Query(
+      nativeQuery = true,
+      value =
+          """
+        update "drop"
+           set export_pollable_task_id = null
+         where export_pollable_task_id in (select id
+                                             from pollable_task
+                                            where finished_date < :beforeDate)
+        """)
+  int cleanStaleExportPollableTaskIdsForHsqldb(@Param("beforeDate") ZonedDateTime beforeDate);
+
+  @Modifying
+  @Transactional
+  @Query(
+      nativeQuery = true,
+      value =
+          """
+        update "drop"
+           set import_pollable_task_id = null
+         where import_pollable_task_id in (select id
+                                             from pollable_task
+                                            where finished_date < :beforeDate)
+        """)
+  int cleanStaleImportPollableTaskIdsForHsqldb(@Param("beforeDate") ZonedDateTime beforeDate);
 }
