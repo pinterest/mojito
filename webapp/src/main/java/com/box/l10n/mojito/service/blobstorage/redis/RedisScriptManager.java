@@ -9,7 +9,6 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
@@ -26,7 +25,6 @@ import redis.clients.jedis.Jedis;
  */
 @Component
 @ConditionalOnProperty("l10n.redis.connection.endpoint")
-@DependsOn("redisPoolManager")
 public class RedisScriptManager {
   static Logger logger = LoggerFactory.getLogger(RedisScriptManager.class);
 

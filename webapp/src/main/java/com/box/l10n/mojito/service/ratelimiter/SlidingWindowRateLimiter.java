@@ -3,9 +3,13 @@ package com.box.l10n.mojito.service.ratelimiter;
 import com.box.l10n.mojito.service.blobstorage.redis.RedisClient;
 import com.box.l10n.mojito.service.blobstorage.redis.RedisScript;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.exceptions.JedisException;
 
 public class SlidingWindowRateLimiter {
+  static Logger logger = LoggerFactory.getLogger(SlidingWindowRateLimiter.class);
+
   private final RedisClient redisClient;
   private final String rateLimiterKey;
   private final int maxRequests;
@@ -36,6 +40,9 @@ public class SlidingWindowRateLimiter {
           == 1L;
     } else {
       // No rate limiting if Redis is not configured
+      logger.debug(
+          "Redis is not configured, allowing all requests for rate limiter key: {}",
+          rateLimiterKey);
       return true;
     }
   }
