@@ -1,6 +1,6 @@
 ---
 layout: doc
-title:  "Creating Repository"
+title:  "Creating Repository CLI"
 categories: guides
 permalink: /docs/guides/creating-repository/
 ---
@@ -22,7 +22,7 @@ It is configured with locales `de-DE es-ES fr-FR ja-JP`.  These locales are used
 You can now see the repository `MyRepo` in the Webapp.
 
 
-![Creating Repository](./images/creating-repository.png)
+![Creating Repository](./creating-repository/images/creating-repository.png)
 
 
 
