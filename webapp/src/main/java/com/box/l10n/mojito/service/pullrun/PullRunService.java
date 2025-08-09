@@ -3,7 +3,6 @@ package com.box.l10n.mojito.service.pullrun;
 import com.box.l10n.mojito.entity.PullRun;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.service.commit.CommitToPullRunRepository;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import org.slf4j.Logger;
@@ -50,10 +49,7 @@ public class PullRunService {
             });
   }
 
-  public void deleteAllPullEntitiesOlderThan(Duration retentionDuration) {
-    ZonedDateTime beforeDate =
-        ZonedDateTime.now().minusSeconds((int) retentionDuration.getSeconds());
-
+  public void deleteAllPullEntitiesOlderThan(ZonedDateTime beforeDate, int deleteBatchSize) {
     int batchNumber = 1;
     int deleteCount;
     do {
@@ -78,7 +74,8 @@ public class PullRunService {
     }
   }
 
-  public void deletePullRunsByAsset(ZonedDateTime startDate, ZonedDateTime endDate) {
+  public void deletePullRunsByAsset(
+      ZonedDateTime startDate, ZonedDateTime endDate, int deleteBatchSize, int maxNumberOfBatches) {
     List<Long> latestPullRunIdsPerAsset =
         this.pullRunRepository.getLatestPullRunIdsPerAsset(startDate, endDate);
     int batchNumber = 1;
@@ -93,12 +90,18 @@ public class PullRunService {
           batchNumber++,
           latestPullRunIdsPerAsset);
       waitForConfiguredTime();
-    } while (deleteCount == deleteBatchSize);
-    pullRunAssetRepository.deleteByPullRunsNotLatestPerAsset(
-        startDate, endDate, latestPullRunIdsPerAsset);
-    commitToPullRunRepository.deleteByPullRunsNotLatestPerAsset(
-        startDate, endDate, latestPullRunIdsPerAsset);
-    this.pullRunRepository.deletePullRunsNotLatestPerAsset(
-        startDate, endDate, latestPullRunIdsPerAsset);
+    } while (deleteCount == deleteBatchSize && batchNumber <= maxNumberOfBatches);
+    deleteCount =
+        pullRunAssetRepository.deleteByPullRunsNotLatestPerAsset(
+            startDate, endDate, latestPullRunIdsPerAsset);
+    logger.debug("Deleted {} pullRunAsset rows", deleteCount);
+    deleteCount =
+        commitToPullRunRepository.deleteByPullRunsNotLatestPerAsset(
+            startDate, endDate, latestPullRunIdsPerAsset);
+    logger.debug("Deleted {} commitToPullRun rows", deleteCount);
+    deleteCount =
+        this.pullRunRepository.deletePullRunsNotLatestPerAsset(
+            startDate, endDate, latestPullRunIdsPerAsset);
+    logger.debug("Deleted {} pullRun rows", deleteCount);
   }
 }

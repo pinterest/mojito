@@ -9,7 +9,6 @@ import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.service.commit.CommitToPushRunRepository;
 import com.google.common.collect.Lists;
 import jakarta.persistence.EntityManager;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -35,8 +34,6 @@ public class PushRunService {
   static Logger logger = LoggerFactory.getLogger(PushRunService.class);
 
   public static final int BATCH_SIZE = 1000;
-
-  static final int DELETE_BATCH_SIZE = 100000;
 
   final EntityManager entityManager;
 
@@ -145,26 +142,24 @@ public class PushRunService {
             () -> new RuntimeException(String.format("Could not find a PushRun for id: %s", id)));
   }
 
-  public void deleteAllPushEntitiesOlderThan(Duration retentionDuration) {
-    ZonedDateTime beforeDate =
-        ZonedDateTime.now().minusSeconds((int) retentionDuration.getSeconds());
-
+  public void deleteAllPushEntitiesOlderThan(ZonedDateTime beforeDate, int deleteBatchSize) {
     int batchNumber = 1;
     int deleteCount;
     do {
       deleteCount =
           pushRunAssetTmTextUnitRepository.deleteAllByPushRunWithCreatedDateBefore(
-              beforeDate, DELETE_BATCH_SIZE);
+              beforeDate, deleteBatchSize);
       logger.debug(
           "Deleted {} pushRunAssetTmTextUnit rows in batch: {}", deleteCount, batchNumber++);
-    } while (deleteCount == DELETE_BATCH_SIZE);
+    } while (deleteCount == deleteBatchSize);
 
     pushRunAssetRepository.deleteAllByPushRunWithCreatedDateBefore(beforeDate);
     commitToPushRunRepository.deleteAllByPushRunWithCreatedDateBefore(beforeDate);
     pushRunRepository.deleteAllByCreatedDateBefore(beforeDate);
   }
 
-  public void deletePushRunsByAsset(ZonedDateTime startDate, ZonedDateTime endDate) {
+  public void deletePushRunsByAsset(
+      ZonedDateTime startDate, ZonedDateTime endDate, int deleteBatchSize, int maxNumberOfBatches) {
     List<Long> latestPushRunIdsPerAsset =
         this.pushRunRepository.getLatestPushRunIdsPerAsset(startDate, endDate);
     int batchNumber = 1;
@@ -172,18 +167,24 @@ public class PushRunService {
     do {
       deleteCount =
           pushRunAssetTmTextUnitRepository.deleteByPushRunsNotLatestPerAsset(
-              startDate, endDate, latestPushRunIdsPerAsset, DELETE_BATCH_SIZE);
+              startDate, endDate, latestPushRunIdsPerAsset, deleteBatchSize);
       logger.debug(
           "Deleted {} pushRunAssetTmTextUnit rows in batch: {} without IDs: {}",
           deleteCount,
           batchNumber++,
           latestPushRunIdsPerAsset);
-    } while (deleteCount == DELETE_BATCH_SIZE);
-    this.pushRunAssetRepository.deleteByPushRunsNotLatestPerAsset(
-        startDate, endDate, latestPushRunIdsPerAsset);
-    this.commitToPushRunRepository.deleteByPushRunsNotLatestPerAsset(
-        startDate, endDate, latestPushRunIdsPerAsset);
-    this.pushRunRepository.deletePushRunsNotLatestPerAsset(
-        startDate, endDate, latestPushRunIdsPerAsset);
+    } while (deleteCount == deleteBatchSize && batchNumber <= maxNumberOfBatches);
+    deleteCount =
+        this.pushRunAssetRepository.deleteByPushRunsNotLatestPerAsset(
+            startDate, endDate, latestPushRunIdsPerAsset);
+    logger.debug("Deleted {} pushRunAsset rows", deleteCount);
+    deleteCount =
+        this.commitToPushRunRepository.deleteByPushRunsNotLatestPerAsset(
+            startDate, endDate, latestPushRunIdsPerAsset);
+    logger.debug("Deleted {} commitToPushRun rows", deleteCount);
+    deleteCount =
+        this.pushRunRepository.deletePushRunsNotLatestPerAsset(
+            startDate, endDate, latestPushRunIdsPerAsset);
+    logger.debug("Deleted {} pushRun rows", deleteCount);
   }
 }
