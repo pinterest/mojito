@@ -37,7 +37,7 @@ public class StalePollableTaskCleanupJob implements Job {
     this.pollableTaskCleanupService.cleanStalePollableTaskData(
         this.stalePollableTaskCleanupConfiguration.getRetentionPeriod(),
         this.stalePollableTaskCleanupConfiguration.getBatchSize(),
-        this.stalePollableTaskCleanupConfiguration.getMaxNumberOfIterations());
+        this.stalePollableTaskCleanupConfiguration.getMaxNumberOfBatches());
   }
 
   @Bean(name = "jobDetailStalePollableTaskCleanup")

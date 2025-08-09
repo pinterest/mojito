@@ -48,14 +48,15 @@ public interface PollableTaskRepository extends JpaRepository<PollableTask, Long
       value =
           """
         update pollable_task pt_to_update
-          join (select pt.id
-                  from pollable_task pt
-                  join pollable_task parent_pt
-                    on pt.parent_task_id = parent_pt.id
-                 where parent_pt.finished_date < :beforeDate
-                 limit :batchSize) pt
-            on pt_to_update.id = pt.id
-           set pt_to_update.parent_task_id = null
+           set parent_task_id = null
+         where id in (select id
+                        from (select pt.id
+                                from pollable_task pt
+                                join pollable_task parent_pt
+                                  on pt.parent_task_id = parent_pt.id
+                               where parent_pt.finished_date < :beforeDate
+                               limit :batchSize) pt
+                     )
         """)
   int cleanParentTasksWithFinishedDateBefore(
       @Param("beforeDate") ZonedDateTime beforeDate, @Param("batchSize") int batchSize);
@@ -66,16 +67,16 @@ public interface PollableTaskRepository extends JpaRepository<PollableTask, Long
       nativeQuery = true,
       value =
           """
-        delete todelete
-          from pollable_task todelete
-          join (select pt.id
-                       from pollable_task pt
-                       left join pollable_task child_pt
-                         on child_pt.parent_task_id = pt.id
-                      where pt.finished_date < :beforeDate
-                        and child_pt.id is null
-                      limit :batchSize) pt
-            on todelete.id = pt.id
+        delete from pollable_task
+         where id in (select id
+                        from (select pt.id
+                                from pollable_task pt
+                                left join pollable_task child_pt
+                                  on child_pt.parent_task_id = pt.id
+                               where pt.finished_date < :beforeDate
+                                 and child_pt.id is null
+                               limit :batchSize) pt
+                     )
         """)
   int deleteAllByFinishedDateBefore(
       @Param("beforeDate") ZonedDateTime beforeDate, @Param("batchSize") int batchSize);
