@@ -46,7 +46,7 @@ public interface PushRunAssetRepository extends JpaRepository<PushRunAsset, Long
              and pushRunAssetTmTextUnits is empty
              and pushRun.id not in :latestPushRunIdsPerAsset
           """)
-  void deleteByPushRunsNotLatestPerAsset(
+  int deleteByPushRunsNotLatestPerAsset(
       @Param("startDate") ZonedDateTime startDate,
       @Param("endDate") ZonedDateTime endDate,
       @Param("latestPushRunIdsPerAsset") List<Long> latestPushRunIdsPerAsset);

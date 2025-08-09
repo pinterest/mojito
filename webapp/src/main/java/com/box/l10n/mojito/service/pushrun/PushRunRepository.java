@@ -112,7 +112,7 @@ public interface PushRunRepository extends JpaRepository<PushRun, Long> {
              and pushRunAssets is empty
              and id not in :latestPushRunIdsPerAsset
           """)
-  void deletePushRunsNotLatestPerAsset(
+  int deletePushRunsNotLatestPerAsset(
       @Param("startDate") ZonedDateTime startDate,
       @Param("endDate") ZonedDateTime endDate,
       @Param("latestPushRunIdsPerAsset") List<Long> latestPushRunIdsPerAsset);

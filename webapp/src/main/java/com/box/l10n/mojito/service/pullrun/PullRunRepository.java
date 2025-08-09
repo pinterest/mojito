@@ -67,7 +67,7 @@ public interface PullRunRepository extends JpaRepository<PullRun, Long> {
              and pullRunAssets is empty
              and id not in :latestPullRunIdsPerAsset
           """)
-  void deletePullRunsNotLatestPerAsset(
+  int deletePullRunsNotLatestPerAsset(
       @Param("startDate") ZonedDateTime startDate,
       @Param("endDate") ZonedDateTime endDate,
       @Param("latestPullRunIdsPerAsset") List<Long> latestPullRunIdsPerAsset);

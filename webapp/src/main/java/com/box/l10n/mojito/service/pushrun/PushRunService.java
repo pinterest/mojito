@@ -174,11 +174,17 @@ public class PushRunService {
           batchNumber++,
           latestPushRunIdsPerAsset);
     } while (deleteCount == deleteBatchSize && batchNumber <= maxNumberOfBatches);
-    this.pushRunAssetRepository.deleteByPushRunsNotLatestPerAsset(
-        startDate, endDate, latestPushRunIdsPerAsset);
-    this.commitToPushRunRepository.deleteByPushRunsNotLatestPerAsset(
-        startDate, endDate, latestPushRunIdsPerAsset);
-    this.pushRunRepository.deletePushRunsNotLatestPerAsset(
-        startDate, endDate, latestPushRunIdsPerAsset);
+    deleteCount =
+        this.pushRunAssetRepository.deleteByPushRunsNotLatestPerAsset(
+            startDate, endDate, latestPushRunIdsPerAsset);
+    logger.debug("Deleted {} pushRunAsset rows", deleteCount);
+    deleteCount =
+        this.commitToPushRunRepository.deleteByPushRunsNotLatestPerAsset(
+            startDate, endDate, latestPushRunIdsPerAsset);
+    logger.debug("Deleted {} commitToPushRun rows", deleteCount);
+    deleteCount =
+        this.pushRunRepository.deletePushRunsNotLatestPerAsset(
+            startDate, endDate, latestPushRunIdsPerAsset);
+    logger.debug("Deleted {} pushRun rows", deleteCount);
   }
 }

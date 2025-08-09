@@ -38,7 +38,7 @@ public interface CommitToPullRunRepository extends JpaRepository<CommitToPullRun
              and pullRun.createdDate < :endDate
              and pullRun.id not in :latestPullRunIdsPerAsset
           """)
-  void deleteByPullRunsNotLatestPerAsset(
+  int deleteByPullRunsNotLatestPerAsset(
       @Param("startDate") ZonedDateTime startDate,
       @Param("endDate") ZonedDateTime endDate,
       @Param("latestPullRunIdsPerAsset") List<Long> latestPullRunIdsPerAsset);

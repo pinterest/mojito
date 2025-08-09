@@ -91,11 +91,17 @@ public class PullRunService {
           latestPullRunIdsPerAsset);
       waitForConfiguredTime();
     } while (deleteCount == deleteBatchSize && batchNumber <= maxNumberOfBatches);
-    pullRunAssetRepository.deleteByPullRunsNotLatestPerAsset(
-        startDate, endDate, latestPullRunIdsPerAsset);
-    commitToPullRunRepository.deleteByPullRunsNotLatestPerAsset(
-        startDate, endDate, latestPullRunIdsPerAsset);
-    this.pullRunRepository.deletePullRunsNotLatestPerAsset(
-        startDate, endDate, latestPullRunIdsPerAsset);
+    deleteCount =
+        pullRunAssetRepository.deleteByPullRunsNotLatestPerAsset(
+            startDate, endDate, latestPullRunIdsPerAsset);
+    logger.debug("Deleted {} pullRunAsset rows", deleteCount);
+    deleteCount =
+        commitToPullRunRepository.deleteByPullRunsNotLatestPerAsset(
+            startDate, endDate, latestPullRunIdsPerAsset);
+    logger.debug("Deleted {} commitToPullRun rows", deleteCount);
+    deleteCount =
+        this.pullRunRepository.deletePullRunsNotLatestPerAsset(
+            startDate, endDate, latestPullRunIdsPerAsset);
+    logger.debug("Deleted {} pullRun rows", deleteCount);
   }
 }
