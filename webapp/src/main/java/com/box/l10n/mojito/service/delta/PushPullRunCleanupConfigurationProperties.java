@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "l10n.push-pull-run.cleanup-job")
 public class PushPullRunCleanupConfigurationProperties {
   /** Runs once a day by default. */
-  private String pushPullCleanupCron = "0 0 0 * * ?";
+  private String cron = "0 0 0 * * ?";
 
   private Duration retentionDuration = Duration.ofDays(30);
 
@@ -18,12 +18,12 @@ public class PushPullRunCleanupConfigurationProperties {
 
   private int maxNumberOfBatches = 100;
 
-  public String getPushPullCleanupCron() {
-    return pushPullCleanupCron;
+  public String getCron() {
+    return cron;
   }
 
-  public void setPushPullCleanupCron(String pushPullCleanupCron) {
-    this.pushPullCleanupCron = pushPullCleanupCron;
+  public void setCron(String cron) {
+    this.cron = cron;
   }
 
   public Duration getRetentionDuration() {

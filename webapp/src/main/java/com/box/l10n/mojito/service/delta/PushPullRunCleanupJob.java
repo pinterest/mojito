@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 @Configuration
 @Component
 @DisallowConcurrentExecution
-@ConditionalOnProperty(value = "l10n.PushPullRun.cleanup-job.enabled", havingValue = "true")
+@ConditionalOnProperty(value = "l10n.push-pull-run.cleanup-job.enabled", havingValue = "true")
 public class PushPullRunCleanupJob implements Job {
 
   /** logger */
@@ -54,7 +54,7 @@ public class PushPullRunCleanupJob implements Job {
       @Qualifier("jobDetailPushPullRunCleanupJob") JobDetail job) {
     CronTriggerFactoryBean trigger = new CronTriggerFactoryBean();
     trigger.setJobDetail(job);
-    trigger.setCronExpression(this.configurationProperties.getPushPullCleanupCron());
+    trigger.setCronExpression(this.configurationProperties.getCron());
     return trigger;
   }
 }
