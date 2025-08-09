@@ -35,14 +35,7 @@ public interface PullRunRepository extends JpaRepository<PullRun, Long> {
 
   @Transactional
   @Modifying
-  @Query(
-      nativeQuery = true,
-      value =
-          """
-          delete pr
-          from pull_run pr
-          where pr.created_date < :beforeDate
-          """)
+  @Query(value = "delete from PullRun where createdDate < :beforeDate")
   void deleteAllByCreatedDateBefore(@Param("beforeDate") ZonedDateTime beforeDate);
 
   @Query(
@@ -69,7 +62,9 @@ public interface PullRunRepository extends JpaRepository<PullRun, Long> {
       value =
           """
           delete from PullRun
-           where createdDate between :startDate and :endDate
+           where createdDate >= :startDate
+             and createdDate < :endDate
+             and pullRunAssets is empty
              and id not in :latestPullRunIdsPerAsset
           """)
   void deletePullRunsNotLatestPerAsset(

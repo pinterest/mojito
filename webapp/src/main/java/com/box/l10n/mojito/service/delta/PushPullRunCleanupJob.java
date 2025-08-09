@@ -1,6 +1,5 @@
 package com.box.l10n.mojito.service.delta;
 
-import java.time.Duration;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
 import org.quartz.JobDetail;
@@ -10,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,19 +30,14 @@ public class PushPullRunCleanupJob implements Job {
   /** logger */
   static Logger logger = LoggerFactory.getLogger(PushPullRunCleanupJob.class);
 
-  /** Runs once a day by default. */
-  @Value("${l10n.PushPullRun.cleanup-job.cron:0 0 0 * * ?}")
-  String pushPullCleanupCron;
-
-  @Value("${l10n.PushPullRun.cleanup-job.retentionDuration:P30D}")
-  Duration retentionDuration;
+  @Autowired private PushPullRunCleanupConfigurationProperties configurationProperties;
 
   @Autowired PushPullRunCleanupService pushPullRunCleanupService;
 
   @Override
   public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
     logger.debug("Running Push and Pull run retention cleanup job.");
-    pushPullRunCleanupService.cleanOldPushPullData(retentionDuration);
+    pushPullRunCleanupService.cleanOldPushPullData(this.configurationProperties);
   }
 
   @Bean(name = "jobDetailPushPullRunCleanupJob")
@@ -61,7 +54,7 @@ public class PushPullRunCleanupJob implements Job {
       @Qualifier("jobDetailPushPullRunCleanupJob") JobDetail job) {
     CronTriggerFactoryBean trigger = new CronTriggerFactoryBean();
     trigger.setJobDetail(job);
-    trigger.setCronExpression(pushPullCleanupCron);
+    trigger.setCronExpression(this.configurationProperties.getPushPullCleanupCron());
     return trigger;
   }
 }
