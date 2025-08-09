@@ -84,7 +84,7 @@ public class PullRunService {
       deleteCount =
           pullRunTextUnitVariantRepository.deleteByPullRunsNotLatestPerAsset(
               startDate, endDate, latestPullRunIdsPerAsset, deleteBatchSize);
-      logger.debug(
+      logger.info(
           "Deleted {} pullRunTextUnitVariant rows in batch: {} without IDs: {}",
           deleteCount,
           batchNumber++,
@@ -94,14 +94,14 @@ public class PullRunService {
     deleteCount =
         pullRunAssetRepository.deleteByPullRunsNotLatestPerAsset(
             startDate, endDate, latestPullRunIdsPerAsset);
-    logger.debug("Deleted {} pullRunAsset rows", deleteCount);
+    logger.info("Deleted {} pullRunAsset rows", deleteCount);
     deleteCount =
         commitToPullRunRepository.deleteByPullRunsNotLatestPerAsset(
             startDate, endDate, latestPullRunIdsPerAsset);
-    logger.debug("Deleted {} commitToPullRun rows", deleteCount);
+    logger.info("Deleted {} commitToPullRun rows", deleteCount);
     deleteCount =
         this.pullRunRepository.deletePullRunsNotLatestPerAsset(
             startDate, endDate, latestPullRunIdsPerAsset);
-    logger.debug("Deleted {} pullRun rows", deleteCount);
+    logger.info("Deleted {} pullRun rows", deleteCount);
   }
 }

@@ -168,7 +168,7 @@ public class PushRunService {
       deleteCount =
           pushRunAssetTmTextUnitRepository.deleteByPushRunsNotLatestPerAsset(
               startDate, endDate, latestPushRunIdsPerAsset, deleteBatchSize);
-      logger.debug(
+      logger.info(
           "Deleted {} pushRunAssetTmTextUnit rows in batch: {} without IDs: {}",
           deleteCount,
           batchNumber++,
@@ -177,14 +177,14 @@ public class PushRunService {
     deleteCount =
         this.pushRunAssetRepository.deleteByPushRunsNotLatestPerAsset(
             startDate, endDate, latestPushRunIdsPerAsset);
-    logger.debug("Deleted {} pushRunAsset rows", deleteCount);
+    logger.info("Deleted {} pushRunAsset rows", deleteCount);
     deleteCount =
         this.commitToPushRunRepository.deleteByPushRunsNotLatestPerAsset(
             startDate, endDate, latestPushRunIdsPerAsset);
-    logger.debug("Deleted {} commitToPushRun rows", deleteCount);
+    logger.info("Deleted {} commitToPushRun rows", deleteCount);
     deleteCount =
         this.pushRunRepository.deletePushRunsNotLatestPerAsset(
             startDate, endDate, latestPushRunIdsPerAsset);
-    logger.debug("Deleted {} pushRun rows", deleteCount);
+    logger.info("Deleted {} pushRun rows", deleteCount);
   }
 }
