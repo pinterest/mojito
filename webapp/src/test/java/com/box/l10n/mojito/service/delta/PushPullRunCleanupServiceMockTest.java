@@ -45,6 +45,7 @@ public class PushPullRunCleanupServiceMockTest {
     this.configurationProperties.setRetentionDuration(Duration.ofDays(15));
     this.configurationProperties.setDeleteBatchSize(1);
     this.configurationProperties.setMaxNumberOfBatches(1);
+    this.configurationProperties.setExtraNumberOfWeeksToRetain(2);
   }
 
   @Test

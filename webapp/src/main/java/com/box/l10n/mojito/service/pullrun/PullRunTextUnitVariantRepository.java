@@ -1,6 +1,7 @@
 package com.box.l10n.mojito.service.pullrun;
 
 import com.box.l10n.mojito.entity.PullRun;
+import com.box.l10n.mojito.entity.PullRunAsset;
 import com.box.l10n.mojito.entity.PullRunTextUnitVariant;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
 import java.time.ZonedDateTime;
@@ -20,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 public interface PullRunTextUnitVariantRepository
     extends JpaRepository<PullRunTextUnitVariant, Long> {
 
+  List<PullRunTextUnitVariant> findByPullRunAsset(PullRunAsset pullRunAsset, Pageable pageable);
+
   List<PullRunTextUnitVariant> findByTmTextUnitVariant_TmTextUnitIdAndLocaleId(
       Long tmTextUnitId, Long localeId);
 
@@ -33,6 +36,9 @@ public interface PullRunTextUnitVariantRepository
       inner join pra.pullRun pr where pr = :pullRun
       """)
   List<TMTextUnitVariant> findByPullRun(@Param("pullRun") PullRun pullRun, Pageable pageable);
+
+  @Transactional
+  void deleteByPullRunAsset(PullRunAsset pullRunAsset);
 
   @Transactional
   @Modifying

@@ -12,7 +12,7 @@ public class PushPullRunCleanupConfigurationProperties {
 
   private Duration retentionDuration = Duration.ofDays(30);
 
-  private int extraNumberOfWeeksToRetain = 2;
+  private int extraNumberOfWeeksToRetain;
 
   private int deleteBatchSize = 100000;
 

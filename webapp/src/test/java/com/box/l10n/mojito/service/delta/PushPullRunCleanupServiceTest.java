@@ -192,6 +192,7 @@ public class PushPullRunCleanupServiceTest extends ServiceTestBase {
     configurationProperties.setRetentionDuration(Duration.ofDays(1000));
     configurationProperties.setDeleteBatchSize(1);
     configurationProperties.setMaxNumberOfBatches(1);
+    configurationProperties.setExtraNumberOfWeeksToRetain(2);
 
     // This should not delete anything
     pushPullRunCleanupService.cleanOldPushPullData(configurationProperties);
@@ -337,6 +338,7 @@ public class PushPullRunCleanupServiceTest extends ServiceTestBase {
     configurationProperties.setRetentionDuration(Duration.ofSeconds(-1));
     configurationProperties.setDeleteBatchSize(1);
     configurationProperties.setMaxNumberOfBatches(2);
+    configurationProperties.setExtraNumberOfWeeksToRetain(2);
 
     pushPullRunCleanupService.cleanOldPushPullData(configurationProperties);
 
@@ -459,6 +461,7 @@ public class PushPullRunCleanupServiceTest extends ServiceTestBase {
     configurationProperties.setRetentionDuration(Duration.ofSeconds(-1));
     configurationProperties.setDeleteBatchSize(1);
     configurationProperties.setMaxNumberOfBatches(1);
+    configurationProperties.setExtraNumberOfWeeksToRetain(2);
 
     pushPullRunCleanupService.cleanOldPushPullData(configurationProperties);
 
