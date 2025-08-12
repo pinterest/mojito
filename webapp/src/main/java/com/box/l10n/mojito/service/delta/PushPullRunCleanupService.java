@@ -1,18 +1,10 @@
 package com.box.l10n.mojito.service.delta;
 
-import static com.box.l10n.mojito.service.delta.CleanPushPullPerAssetConfigurationProperties.DayRange;
-import static java.util.Optional.empty;
-import static java.util.Optional.of;
-
 import com.box.l10n.mojito.service.pullrun.PullRunService;
 import com.box.l10n.mojito.service.pushrun.PushRunService;
-import java.time.Duration;
-import java.time.LocalTime;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -30,15 +22,9 @@ public class PushPullRunCleanupService {
 
   private final PullRunService pullRunService;
 
-  private final CleanPushPullPerAssetConfigurationProperties configurationProperties;
-
-  public PushPullRunCleanupService(
-      PushRunService pushRunService,
-      PullRunService pullRunService,
-      CleanPushPullPerAssetConfigurationProperties configurationProperties) {
+  public PushPullRunCleanupService(PushRunService pushRunService, PullRunService pullRunService) {
     this.pushRunService = pushRunService;
     this.pullRunService = pullRunService;
-    this.configurationProperties = configurationProperties;
   }
 
   /**
@@ -50,77 +36,55 @@ public class PushPullRunCleanupService {
     return ZonedDateTime.now();
   }
 
-  private boolean isEqualOrAfter(ZonedDateTime dateTime1, ZonedDateTime dateTime2) {
-    return dateTime1.isEqual(dateTime2) || dateTime1.isAfter(dateTime2);
-  }
-
-  private Optional<DateRange> getRange(
-      ZonedDateTime validStartDateOfRange,
-      ZonedDateTime currentDateTime,
-      int startDay,
-      int endDay) {
-    ZonedDateTime startDateOfRange =
-        validStartDateOfRange
-            .toLocalDate()
-            .withDayOfMonth(Math.min(startDay, validStartDateOfRange.toLocalDate().lengthOfMonth()))
-            .atStartOfDay(ZoneId.systemDefault());
-    ZonedDateTime endDateOfRange =
-        validStartDateOfRange
-            .toLocalDate()
-            .withDayOfMonth(Math.min(endDay, validStartDateOfRange.toLocalDate().lengthOfMonth()))
-            .atTime(LocalTime.MAX)
-            .atZone(ZoneId.systemDefault());
-    if (this.isEqualOrAfter(startDateOfRange, validStartDateOfRange)
-        && startDateOfRange.isBefore(currentDateTime)) {
-      return of(
-          new DateRange(
-              startDateOfRange,
-              endDateOfRange.isBefore(currentDateTime) ? endDateOfRange : currentDateTime));
-    } else if (endDateOfRange.isAfter(validStartDateOfRange)
-        && startDateOfRange.isBefore(currentDateTime)) {
-      return of(
-          new DateRange(
-              validStartDateOfRange,
-              endDateOfRange.isBefore(currentDateTime) ? endDateOfRange : currentDateTime));
-    }
-    return empty();
-  }
-
-  private void deletePushAndPullRunsByAsset(Duration retentionDuration) {
+  private List<DateRange> getDateRanges(
+      ZonedDateTime retentionStartDate, int extraNumberOfWeeksToRetain) {
     List<DateRange> dateRanges = new ArrayList<>();
-    ZonedDateTime currentDateTime = this.getCurrentDateTime();
-    ZonedDateTime validStartDateOfRange =
-        currentDateTime.minusSeconds((int) retentionDuration.getSeconds());
-    while ((validStartDateOfRange.getYear() < currentDateTime.getYear())
-        || (validStartDateOfRange.getYear() == currentDateTime.getYear()
-            && validStartDateOfRange.getMonthValue() <= currentDateTime.getMonthValue())) {
-      for (DayRange dayRange : configurationProperties.getDayRanges()) {
-        Optional<DateRange> dateRange =
-            this.getRange(
-                validStartDateOfRange, currentDateTime, dayRange.startDay(), dayRange.endDay());
-        dateRange.ifPresent(dateRanges::add);
-      }
-      validStartDateOfRange =
-          validStartDateOfRange
-              .toLocalDate()
-              .withDayOfMonth(1)
-              .plusMonths(1)
-              .atStartOfDay(ZoneId.systemDefault());
+    ZonedDateTime endWeekDateTime = retentionStartDate;
+    for (int i = 0; i < extraNumberOfWeeksToRetain; i++) {
+      ZonedDateTime startWeekDateTime = endWeekDateTime.minusWeeks(1);
+      DateRange dateRange = new DateRange(startWeekDateTime, endWeekDateTime);
+      dateRanges.add(dateRange);
+      endWeekDateTime = startWeekDateTime;
     }
-    dateRanges.forEach(
-        dateRange -> {
-          logger.debug(
-              "Deleting push and pull runs from {} to {}", dateRange.startDate, dateRange.endDate);
-          this.pushRunService.deletePushRunsByAsset(dateRange.startDate, dateRange.endDate);
-          this.pullRunService.deletePullRunsByAsset(dateRange.startDate, dateRange.endDate);
-        });
+    return dateRanges;
   }
 
-  public void cleanOldPushPullData(Duration retentionDuration) {
-    this.deletePushAndPullRunsByAsset(retentionDuration);
+  private ZonedDateTime cleanupPushPullRunsAndGetRetentionEndDate(
+      PushPullRunCleanupConfigurationProperties configurationProperties) {
+    ZonedDateTime currentDateTime = this.getCurrentDateTime();
+    ZonedDateTime retentionStartDate =
+        currentDateTime.minusSeconds(
+            (int) configurationProperties.getRetentionDuration().getSeconds());
+    List<DateRange> dateRanges =
+        this.getDateRanges(
+            retentionStartDate, configurationProperties.getExtraNumberOfWeeksToRetain());
+    ZonedDateTime retentionEndDate = retentionStartDate;
+    for (DateRange dateRange : dateRanges) {
+      logger.debug(
+          "Deleting push and pull runs from {} to {}", dateRange.startDate, dateRange.endDate);
+      this.pushRunService.deletePushRunsByAsset(
+          dateRange.startDate,
+          dateRange.endDate,
+          configurationProperties.getDeleteBatchSize(),
+          configurationProperties.getMaxNumberOfBatches());
+      this.pullRunService.deletePullRunsByAsset(
+          dateRange.startDate,
+          dateRange.endDate,
+          configurationProperties.getDeleteBatchSize(),
+          configurationProperties.getMaxNumberOfBatches());
+      retentionEndDate = dateRange.startDate;
+    }
+    return retentionEndDate;
+  }
 
-    pushRunService.deleteAllPushEntitiesOlderThan(retentionDuration);
-    pullRunService.deleteAllPullEntitiesOlderThan(retentionDuration);
+  public void cleanOldPushPullData(
+      PushPullRunCleanupConfigurationProperties configurationProperties) {
+    ZonedDateTime retentionEndDate =
+        this.cleanupPushPullRunsAndGetRetentionEndDate(configurationProperties);
+    pushRunService.deleteAllPushEntitiesOlderThan(
+        retentionEndDate, configurationProperties.getDeleteBatchSize());
+    pullRunService.deleteAllPullEntitiesOlderThan(
+        retentionEndDate, configurationProperties.getDeleteBatchSize());
   }
 
   private record DateRange(ZonedDateTime startDate, ZonedDateTime endDate) {}
