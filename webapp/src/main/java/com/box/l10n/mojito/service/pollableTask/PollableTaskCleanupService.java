@@ -3,6 +3,7 @@ package com.box.l10n.mojito.service.pollableTask;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.box.l10n.mojito.entity.PollableTask;
+import com.box.l10n.mojito.service.DBUtils;
 import com.box.l10n.mojito.service.assetExtraction.AssetExtractionRepository;
 import com.box.l10n.mojito.service.drop.DropRepository;
 import com.box.l10n.mojito.service.tm.TMXliffRepository;
@@ -35,6 +36,8 @@ public class PollableTaskCleanupService {
   @Autowired AssetExtractionRepository assetExtractionRepository;
 
   @Autowired MeterRegistry meterRegistry;
+
+  @Autowired private DBUtils dbUtils;
 
   /**
    * Marks zombie tasks as finished with error. A zombie task can be defined as a task that did not
@@ -78,14 +81,23 @@ public class PollableTaskCleanupService {
         .increment();
   }
 
+  private void cleanDropData(ZonedDateTime beforeDate) {
+    if (this.dbUtils.isMysql()) {
+      int deleteCount = this.dropRepository.cleanStaleExportPollableTaskIds(beforeDate);
+      logger.debug("Updated {} Drop rows (exported)", deleteCount);
+      deleteCount = this.dropRepository.cleanStaleImportPollableTaskIds(beforeDate);
+      logger.debug("Updated {} Drop rows (imported)", deleteCount);
+    } else {
+      this.dropRepository.cleanStaleExportPollableTaskIdsForHsqldb(beforeDate);
+      this.dropRepository.cleanStaleImportPollableTaskIdsForHsqldb(beforeDate);
+    }
+  }
+
   public void cleanStalePollableTaskData(
-      Period retentionPeriod, int batchSize, int maxNumberOfIterations) {
+      Period retentionPeriod, int batchSize, int maxNumberOfBatches) {
     ZonedDateTime beforeDate = ZonedDateTime.now().minus(retentionPeriod);
-    int deleteCount = this.dropRepository.cleanStaleExportPollableTaskIds(beforeDate);
-    logger.debug("Updated {} Drop rows (exported)", deleteCount);
-    deleteCount = this.dropRepository.cleanStaleImportPollableTaskIds(beforeDate);
-    logger.debug("Updated {} Drop rows (imported)", deleteCount);
-    deleteCount = this.assetExtractionRepository.cleanStalePollableTaskIds(beforeDate);
+    this.cleanDropData(beforeDate);
+    int deleteCount = this.assetExtractionRepository.cleanStalePollableTaskIds(beforeDate);
     logger.debug("Updated {} Asset Extraction rows", deleteCount);
     deleteCount = this.tmxliffRepository.cleanStaleExportPollableTaskIds(beforeDate);
     logger.debug("Updated {} TM Xliff rows", deleteCount);
@@ -94,13 +106,13 @@ public class PollableTaskCleanupService {
       deleteCount =
           this.pollableTaskRepository.cleanParentTasksWithFinishedDateBefore(beforeDate, batchSize);
       logger.debug("Updated {} Pollable Task rows in batch: {}", deleteCount, batchNumber++);
-    } while (deleteCount == batchSize && batchNumber <= maxNumberOfIterations);
+    } while (deleteCount == batchSize && batchNumber <= maxNumberOfBatches);
 
     batchNumber = 1;
     do {
       deleteCount =
           this.pollableTaskRepository.deleteAllByFinishedDateBefore(beforeDate, batchSize);
       logger.debug("Deleted {} Pollable Task rows in batch: {}", deleteCount, batchNumber++);
-    } while (deleteCount == batchSize && batchNumber <= maxNumberOfIterations);
+    } while (deleteCount == batchSize && batchNumber <= maxNumberOfBatches);
   }
 }

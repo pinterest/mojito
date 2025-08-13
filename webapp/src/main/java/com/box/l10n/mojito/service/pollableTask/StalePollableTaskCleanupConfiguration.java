@@ -13,7 +13,7 @@ public class StalePollableTaskCleanupConfiguration {
 
   private int batchSize = 10000;
 
-  private int maxNumberOfIterations = 10;
+  private int maxNumberOfBatches = 10;
 
   public String getCron() {
     return cron;
@@ -39,11 +39,11 @@ public class StalePollableTaskCleanupConfiguration {
     this.batchSize = batchSize;
   }
 
-  public int getMaxNumberOfIterations() {
-    return maxNumberOfIterations;
+  public int getMaxNumberOfBatches() {
+    return maxNumberOfBatches;
   }
 
-  public void setMaxNumberOfIterations(int maxNumberOfIterations) {
-    this.maxNumberOfIterations = maxNumberOfIterations;
+  public void setMaxNumberOfBatches(int maxNumberOfBatches) {
+    this.maxNumberOfBatches = maxNumberOfBatches;
   }
 }

@@ -1,7 +1,5 @@
 package com.box.l10n.mojito.service.delta;
 
-import static com.box.l10n.mojito.service.delta.CleanPushPullPerAssetConfigurationProperties.DayRange;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.box.l10n.mojito.entity.Asset;
@@ -13,7 +11,6 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TM;
 import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
-import com.box.l10n.mojito.service.DBUtils;
 import com.box.l10n.mojito.service.asset.AssetService;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
 import com.box.l10n.mojito.service.locale.LocaleService;
@@ -30,13 +27,11 @@ import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.service.tm.TMRepository;
 import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.test.TestIdWatcher;
-import com.google.common.collect.ImmutableList;
 import jakarta.persistence.EntityManager;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -75,11 +70,7 @@ public class PushPullRunCleanupServiceTest extends ServiceTestBase {
 
   @Autowired LocaleService localeService;
 
-  @Autowired DBUtils dbUtils;
-
   @Autowired TMService tmService;
-
-  @Autowired CleanPushPullPerAssetConfigurationProperties configurationProperties;
 
   TM tm;
 
@@ -91,8 +82,6 @@ public class PushPullRunCleanupServiceTest extends ServiceTestBase {
 
   @Before
   public void before() throws RepositoryNameAlreadyUsedException {
-    DayRange dayRange = new DayRange(1, 31);
-    this.configurationProperties.setDayRanges(ImmutableList.of(dayRange));
     if (tm == null) {
       tm = new TM();
       tmRepository.save(tm);
@@ -109,7 +98,151 @@ public class PushPullRunCleanupServiceTest extends ServiceTestBase {
   @Transactional
   @Test
   public void testCleanOldPushPullData() throws Exception {
-    Assume.assumeTrue(dbUtils.isMysql());
+    Repository repository =
+        repositoryService.createRepository(
+            testIdWatcher.getEntityName("repository") + "testCleanOldPushPullData");
+
+    PushRun firstPushRun = pushRunService.createPushRun(repository, "firstCleanOldPushPullData");
+    Assert.assertTrue(pushRunAssetRepository.findByPushRun(firstPushRun).isEmpty());
+
+    TMTextUnit firstTmTextUnit =
+        tmService.addTMTextUnit(
+            tm.getId(),
+            asset.getId(),
+            "hello_world 3",
+            "Hello World!",
+            "Comments about hello world");
+    TMTextUnit firstTmTextUnit2 =
+        tmService.addTMTextUnit(
+            tm.getId(),
+            asset.getId(),
+            "hello_world 4",
+            "Hello World!",
+            "Comments about hello world");
+
+    pushRunService.associatePushRunToTextUnitIds(
+        firstPushRun, asset, Arrays.asList(firstTmTextUnit.getId(), firstTmTextUnit2.getId()));
+    List<TMTextUnit> newTextUnits =
+        pushRunService.getPushRunTextUnits(firstPushRun, PageRequest.of(0, Integer.MAX_VALUE));
+    Assert.assertEquals(2, newTextUnits.size());
+
+    PushRun pushRun = pushRunService.createPushRun(repository, "cleanOldPushPullData");
+    Assert.assertTrue(pushRunAssetRepository.findByPushRun(pushRun).isEmpty());
+
+    TMTextUnit tmTextUnit1 =
+        tmService.addTMTextUnit(
+            tm.getId(),
+            asset.getId(),
+            "hello_world 1",
+            "Hello World!",
+            "Comments about hello world");
+    TMTextUnit tmTextUnit2 =
+        tmService.addTMTextUnit(
+            tm.getId(),
+            asset.getId(),
+            "hello_world 2",
+            "Hello World!",
+            "Comments about hello world");
+
+    pushRunService.associatePushRunToTextUnitIds(
+        pushRun, asset, Arrays.asList(tmTextUnit1.getId(), tmTextUnit2.getId()));
+    List<TMTextUnit> textUnits =
+        pushRunService.getPushRunTextUnits(pushRun, PageRequest.of(0, Integer.MAX_VALUE));
+    Assert.assertEquals(2, textUnits.size());
+
+    PullRun firstPullRun = pullRunService.getOrCreate("firstCleanOldPushPullData", repository);
+    PullRunAsset firstPullRunAsset = pullRunAssetService.createPullRunAsset(firstPullRun, asset);
+
+    Locale frFR = localeService.findByBcp47Tag("fr-FR");
+    TMTextUnitVariant firstTuv1 =
+        tmService.addCurrentTMTextUnitVariant(
+            firstTmTextUnit.getId(), frFR.getId(), "le hello_world 3");
+
+    TMTextUnitVariant firstTuv2 =
+        tmService.addCurrentTMTextUnitVariant(
+            firstTmTextUnit2.getId(), frFR.getId(), "le hello_world 4");
+
+    pullRunAssetService.replaceTextUnitVariants(
+        firstPullRunAsset,
+        frFR.getId(),
+        Arrays.asList(firstTuv1.getId(), firstTuv2.getId()),
+        "fr-FR");
+    List<TMTextUnitVariant> firstRecordedVariants =
+        pullRunTextUnitVariantRepository.findByPullRun(firstPullRun, Pageable.unpaged());
+    Assert.assertEquals(2, firstRecordedVariants.size());
+
+    PullRun pullRun = pullRunService.getOrCreate("cleanOldPushPullData", repository);
+    PullRunAsset pullRunAsset = pullRunAssetService.createPullRunAsset(pullRun, asset);
+
+    TMTextUnitVariant tuv1 =
+        tmService.addCurrentTMTextUnitVariant(
+            tmTextUnit1.getId(), frFR.getId(), "le hello_world 1");
+
+    TMTextUnitVariant tuv2 =
+        tmService.addCurrentTMTextUnitVariant(
+            tmTextUnit1.getId(), frFR.getId(), "le hello_world 2");
+
+    pullRunAssetService.replaceTextUnitVariants(
+        pullRunAsset, frFR.getId(), Arrays.asList(tuv1.getId(), tuv2.getId()), "fr-FR");
+    List<TMTextUnitVariant> recordedVariants =
+        pullRunTextUnitVariantRepository.findByPullRun(pullRun, Pageable.unpaged());
+    Assert.assertEquals(2, recordedVariants.size());
+    PushPullRunCleanupConfigurationProperties configurationProperties =
+        new PushPullRunCleanupConfigurationProperties();
+    configurationProperties.setRetentionDuration(Duration.ofDays(1000));
+    configurationProperties.setDeleteBatchSize(1);
+    configurationProperties.setMaxNumberOfBatches(1);
+    configurationProperties.setExtraNumberOfWeeksToRetain(2);
+
+    // This should not delete anything
+    pushPullRunCleanupService.cleanOldPushPullData(configurationProperties);
+
+    entityManager.flush();
+    entityManager.clear();
+
+    Assert.assertEquals(
+        2,
+        pushRunService
+            .getPushRunTextUnits(firstPushRun, PageRequest.of(0, Integer.MAX_VALUE))
+            .size());
+    Assert.assertEquals(
+        2, pullRunTextUnitVariantRepository.findByPullRun(firstPullRun, Pageable.unpaged()).size());
+    assertTrue(pushRunRepository.findById(firstPushRun.getId()).isPresent());
+    assertTrue(pullRunRepository.findById(firstPullRun.getId()).isPresent());
+    Assert.assertEquals(
+        2,
+        pushRunService.getPushRunTextUnits(pushRun, PageRequest.of(0, Integer.MAX_VALUE)).size());
+    Assert.assertEquals(
+        2, pullRunTextUnitVariantRepository.findByPullRun(pullRun, Pageable.unpaged()).size());
+    configurationProperties.setRetentionDuration(Duration.ofSeconds(-1));
+    configurationProperties.setExtraNumberOfWeeksToRetain(0);
+
+    // This should delete all of the old data
+    pushPullRunCleanupService.cleanOldPushPullData(configurationProperties);
+
+    entityManager.flush();
+    entityManager.clear();
+    Assert.assertEquals(
+        0,
+        pushRunService
+            .getPushRunTextUnits(firstPushRun, PageRequest.of(0, Integer.MAX_VALUE))
+            .size());
+    Assert.assertEquals(
+        0, pullRunTextUnitVariantRepository.findByPullRun(firstPullRun, Pageable.unpaged()).size());
+    Assert.assertEquals(
+        0,
+        pushRunService.getPushRunTextUnits(pushRun, PageRequest.of(0, Integer.MAX_VALUE)).size());
+    Assert.assertEquals(
+        0, pullRunTextUnitVariantRepository.findByPullRun(pullRun, Pageable.unpaged()).size());
+    assertTrue(pushRunRepository.findById(firstPushRun.getId()).isEmpty());
+    assertTrue(pullRunRepository.findById(firstPullRun.getId()).isEmpty());
+    assertTrue(pushRunRepository.findById(pushRun.getId()).isEmpty());
+    assertTrue(pullRunRepository.findById(pullRun.getId()).isEmpty());
+  }
+
+  @Transactional
+  @Test
+  public void testCleanOldPushPullData_KeepsMostRecentData() throws Exception {
     Repository repository =
         repositoryService.createRepository(
             testIdWatcher.getEntityName("repository") + "testCleanOldPushPullData");
@@ -200,10 +333,14 @@ public class PushPullRunCleanupServiceTest extends ServiceTestBase {
         pullRunTextUnitVariantRepository.findByPullRun(pullRun, Pageable.unpaged());
     Assert.assertEquals(2, recordedVariants.size());
 
-    Thread.sleep(500);
+    PushPullRunCleanupConfigurationProperties configurationProperties =
+        new PushPullRunCleanupConfigurationProperties();
+    configurationProperties.setRetentionDuration(Duration.ofSeconds(-1));
+    configurationProperties.setDeleteBatchSize(1);
+    configurationProperties.setMaxNumberOfBatches(2);
+    configurationProperties.setExtraNumberOfWeeksToRetain(2);
 
-    // This should only delete the first push and pull runs
-    pushPullRunCleanupService.cleanOldPushPullData(Duration.ofDays(1000));
+    pushPullRunCleanupService.cleanOldPushPullData(configurationProperties);
 
     entityManager.flush();
     entityManager.clear();
@@ -222,20 +359,130 @@ public class PushPullRunCleanupServiceTest extends ServiceTestBase {
         pushRunService.getPushRunTextUnits(pushRun, PageRequest.of(0, Integer.MAX_VALUE)).size());
     Assert.assertEquals(
         2, pullRunTextUnitVariantRepository.findByPullRun(pullRun, Pageable.unpaged()).size());
+    assertTrue(pushRunRepository.findById(pushRun.getId()).isPresent());
+    assertTrue(pullRunRepository.findById(pullRun.getId()).isPresent());
+  }
 
-    // This should delete all of the old data
-    pushPullRunCleanupService.cleanOldPushPullData(Duration.ofSeconds(-1));
+  @Transactional
+  @Test
+  public void testCleanOldPushPullData_DeletesPartiallyTextUnits() throws Exception {
+    Repository repository =
+        repositoryService.createRepository(
+            testIdWatcher.getEntityName("repository") + "testCleanOldPushPullData");
+
+    PushRun firstPushRun = pushRunService.createPushRun(repository, "firstCleanOldPushPullData");
+    Assert.assertTrue(pushRunAssetRepository.findByPushRun(firstPushRun).isEmpty());
+
+    TMTextUnit firstTmTextUnit =
+        tmService.addTMTextUnit(
+            tm.getId(),
+            asset.getId(),
+            "hello_world 3",
+            "Hello World!",
+            "Comments about hello world");
+    TMTextUnit firstTmTextUnit2 =
+        tmService.addTMTextUnit(
+            tm.getId(),
+            asset.getId(),
+            "hello_world 4",
+            "Hello World!",
+            "Comments about hello world");
+
+    pushRunService.associatePushRunToTextUnitIds(
+        firstPushRun, asset, Arrays.asList(firstTmTextUnit.getId(), firstTmTextUnit2.getId()));
+    List<TMTextUnit> newTextUnits =
+        pushRunService.getPushRunTextUnits(firstPushRun, PageRequest.of(0, Integer.MAX_VALUE));
+    Assert.assertEquals(2, newTextUnits.size());
+
+    PushRun pushRun = pushRunService.createPushRun(repository, "cleanOldPushPullData");
+    Assert.assertTrue(pushRunAssetRepository.findByPushRun(pushRun).isEmpty());
+
+    TMTextUnit tmTextUnit1 =
+        tmService.addTMTextUnit(
+            tm.getId(),
+            asset.getId(),
+            "hello_world 1",
+            "Hello World!",
+            "Comments about hello world");
+    TMTextUnit tmTextUnit2 =
+        tmService.addTMTextUnit(
+            tm.getId(),
+            asset.getId(),
+            "hello_world 2",
+            "Hello World!",
+            "Comments about hello world");
+
+    pushRunService.associatePushRunToTextUnitIds(
+        pushRun, asset, Arrays.asList(tmTextUnit1.getId(), tmTextUnit2.getId()));
+    List<TMTextUnit> textUnits =
+        pushRunService.getPushRunTextUnits(pushRun, PageRequest.of(0, Integer.MAX_VALUE));
+    Assert.assertEquals(2, textUnits.size());
+
+    PullRun firstPullRun = pullRunService.getOrCreate("firstCleanOldPushPullData", repository);
+    PullRunAsset firstPullRunAsset = pullRunAssetService.createPullRunAsset(firstPullRun, asset);
+
+    Locale frFR = localeService.findByBcp47Tag("fr-FR");
+    TMTextUnitVariant firstTuv1 =
+        tmService.addCurrentTMTextUnitVariant(
+            firstTmTextUnit.getId(), frFR.getId(), "le hello_world 3");
+
+    TMTextUnitVariant firstTuv2 =
+        tmService.addCurrentTMTextUnitVariant(
+            firstTmTextUnit2.getId(), frFR.getId(), "le hello_world 4");
+
+    pullRunAssetService.replaceTextUnitVariants(
+        firstPullRunAsset,
+        frFR.getId(),
+        Arrays.asList(firstTuv1.getId(), firstTuv2.getId()),
+        "fr-FR");
+    List<TMTextUnitVariant> firstRecordedVariants =
+        pullRunTextUnitVariantRepository.findByPullRun(firstPullRun, Pageable.unpaged());
+    Assert.assertEquals(2, firstRecordedVariants.size());
+
+    PullRun pullRun = pullRunService.getOrCreate("cleanOldPushPullData", repository);
+    PullRunAsset pullRunAsset = pullRunAssetService.createPullRunAsset(pullRun, asset);
+
+    TMTextUnitVariant tuv1 =
+        tmService.addCurrentTMTextUnitVariant(
+            tmTextUnit1.getId(), frFR.getId(), "le hello_world 1");
+
+    TMTextUnitVariant tuv2 =
+        tmService.addCurrentTMTextUnitVariant(
+            tmTextUnit1.getId(), frFR.getId(), "le hello_world 2");
+
+    pullRunAssetService.replaceTextUnitVariants(
+        pullRunAsset, frFR.getId(), Arrays.asList(tuv1.getId(), tuv2.getId()), "fr-FR");
+    List<TMTextUnitVariant> recordedVariants =
+        pullRunTextUnitVariantRepository.findByPullRun(pullRun, Pageable.unpaged());
+    Assert.assertEquals(2, recordedVariants.size());
+
+    PushPullRunCleanupConfigurationProperties configurationProperties =
+        new PushPullRunCleanupConfigurationProperties();
+    configurationProperties.setRetentionDuration(Duration.ofSeconds(-1));
+    configurationProperties.setDeleteBatchSize(1);
+    configurationProperties.setMaxNumberOfBatches(1);
+    configurationProperties.setExtraNumberOfWeeksToRetain(2);
+
+    pushPullRunCleanupService.cleanOldPushPullData(configurationProperties);
 
     entityManager.flush();
     entityManager.clear();
 
     Assert.assertEquals(
-        0,
+        1,
+        pushRunService
+            .getPushRunTextUnits(firstPushRun, PageRequest.of(0, Integer.MAX_VALUE))
+            .size());
+    Assert.assertEquals(
+        1, pullRunTextUnitVariantRepository.findByPullRun(firstPullRun, Pageable.unpaged()).size());
+    assertTrue(pushRunRepository.findById(firstPushRun.getId()).isPresent());
+    assertTrue(pullRunRepository.findById(firstPullRun.getId()).isPresent());
+    Assert.assertEquals(
+        2,
         pushRunService.getPushRunTextUnits(pushRun, PageRequest.of(0, Integer.MAX_VALUE)).size());
     Assert.assertEquals(
-        0, pullRunTextUnitVariantRepository.findByPullRun(pullRun, Pageable.unpaged()).size());
-
-    assertFalse(pushRunRepository.findById(pushRun.getId()).isPresent());
-    assertFalse(pullRunRepository.findById(pullRun.getId()).isPresent());
+        2, pullRunTextUnitVariantRepository.findByPullRun(pullRun, Pageable.unpaged()).size());
+    assertTrue(pushRunRepository.findById(pushRun.getId()).isPresent());
+    assertTrue(pullRunRepository.findById(pullRun.getId()).isPresent());
   }
 }
