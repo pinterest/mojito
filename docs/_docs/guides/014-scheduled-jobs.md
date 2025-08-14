@@ -9,7 +9,7 @@ Scheduled jobs automatically sync source strings and translations between Mojito
 
 ## Creating a Scheduled Job
 
-![Create Job Button](./scheduled-jobs/images/create-job-button.png)
+![Create Job Button](./images/create-job-button.png)
 
 1. Navigate to the **Jobs** page
 2. Click the **Create Job** button
@@ -44,10 +44,10 @@ Configure which operations the job should perform:
 
 ## Video Walkthrough
 
-![Creating Scheduled Jobs](./scheduled-jobs/images/creating-scheduled-job.gif)
+![Creating Scheduled Jobs](./images/creating-scheduled-job.gif)
 
 ## Editing Scheduled Jobs
 
-![Edit Scheduled Job Button](./scheduled-jobs/images/edit-scheduled-job-button.png)
+![Edit Scheduled Job Button](./images/edit-scheduled-job-button.png)
 
 Click the `Edit` button next to any scheduled job to modify its settings. The same modal will open with the scheduled job's values pre-filled, allowing you to update its fields.
