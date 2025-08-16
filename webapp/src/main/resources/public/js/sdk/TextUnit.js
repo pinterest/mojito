@@ -271,7 +271,7 @@ class TextUnit {
     }
 
     getLatestSeverity() {
-        return this.data.latestTmTextUnitVariantCommentSeverity;
+        return this.data.latestSeverity;
     }
 
     /**
