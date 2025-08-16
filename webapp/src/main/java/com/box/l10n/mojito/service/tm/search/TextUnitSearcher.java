@@ -1,6 +1,7 @@
 package com.box.l10n.mojito.service.tm.search;
 
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
+import com.box.l10n.mojito.entity.TMTextUnitVariantComment;
 import com.box.l10n.mojito.nativecriteria.JpaQueryProvider;
 import com.box.l10n.mojito.nativecriteria.NativeColumnEqExp;
 import com.box.l10n.mojito.nativecriteria.NativeContainsExp;
@@ -186,17 +187,21 @@ public class TextUnitSearcher {
     c.addJoin(NativeExps.innerJoin("repository_locale", "rl", onClauseRepositoryLocale));
 
     NativeJunctionExp onClauseTMTextUnitCurrentVariant = NativeExps.conjunction();
-    onClauseTMTextUnitCurrentVariant.add(new NativeColumnEqExp("tu.id", "tuvc.tm_text_unit_id"));
-    onClauseTMTextUnitCurrentVariant.add(new NativeColumnEqExp("l.id", "tuvc.locale_id"));
+    onClauseTMTextUnitCurrentVariant.add(new NativeColumnEqExp("tu.id", "tucv.tm_text_unit_id"));
+    onClauseTMTextUnitCurrentVariant.add(new NativeColumnEqExp("l.id", "tucv.locale_id"));
     c.addJoin(
         new NativeJoin(
             "tm_text_unit_current_variant",
-            "tuvc",
+            "tucv",
             NativeJoin.JoinType.LEFT_OUTER,
             onClauseTMTextUnitCurrentVariant));
     c.addJoin(
         NativeExps.leftJoin(
-            "tm_text_unit_variant", "tuv", "tuvc.tm_text_unit_variant_id", "tuv.id"));
+            "tm_text_unit_variant", "tuv", "tucv.tm_text_unit_variant_id", "tuv.id"));
+
+    c.addJoin(
+        NativeExps.customSql(
+            "LEFT JOIN LATERAL (SELECT tuvc.id, tuvc.severity FROM tm_text_unit_variant_comment tuvc WHERE tuv.id = tuvc.tm_text_unit_variant_id ORDER BY tuvc.last_modified_date DESC, tuvc.id DESC LIMIT 1) tuvc ON tuvc.id IS NOT NULL"));
 
     // We only want mapping for the last asset extraction
     NativeJunctionExp onClauseAssetTextUnit = NativeExps.conjunction();
@@ -255,7 +260,7 @@ public class TextUnitSearcher {
             .addProjection(
                 "a.last_successful_asset_extraction_id", "lastSuccessfulAssetExtractionId")
             .addProjection("atu.asset_extraction_id", "assetExtractionId")
-            .addProjection("tuvc.id", "tmTextUnitCurrentVariantId")
+            .addProjection("tucv.id", "tmTextUnitCurrentVariantId")
             .addProjection("tuv.status", "status")
             .addProjection("tuv.included_in_localized_file", "includedInLocalizedFile")
             .addProjection("tuv.created_date", "createdDate")
@@ -266,7 +271,8 @@ public class TextUnitSearcher {
             .addProjection("a.path", "assetPath")
             .addProjection("atu.id", "assetTextUnitId")
             .addProjection("tu.created_date", "tmTextUnitCreatedDate")
-            .addProjection("atu.do_not_translate", "doNotTranslate");
+            .addProjection("atu.do_not_translate", "doNotTranslate")
+            .addProjection("tuvc.severity", "severity");
 
     if (searchParameters.shouldRetrieveUploadedFileUri()) {
       projection.addProjection("tptu.uploaded_file_uri", "uploadedFileUri");
@@ -427,6 +433,8 @@ public class TextUnitSearcher {
               NativeExps.notEq("tuv.status", TMTextUnitVariant.Status.MT_TRANSLATED.toString()));
           conjunction.add(
               NativeExps.notEq("tuv.status", TMTextUnitVariant.Status.MT_REVIEW_NEEDED.toString()));
+          conjunction.add(
+              NativeExps.eq("tuvc.severity", TMTextUnitVariantComment.Severity.ERROR.toString()));
           break;
         case REVIEW_NEEDED:
           conjunction.add(

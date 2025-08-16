@@ -5332,6 +5332,12 @@ components:
         lastSuccessfulAssetExtractionId:
           type: integer
           format: int64
+        latestSeverity:
+          type: string
+          enum:
+          - INFO
+          - WARNING
+          - ERROR
         localeId:
           type: integer
           format: int64

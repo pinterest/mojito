@@ -443,7 +443,8 @@ let TextUnit = createReactClass({
                 glyphTitle = this.props.intl.formatMessage({id: "textUnit.reviewModal.mtReview"});
                 tooltipDescriptor = "Machine Translated - Review Needed";
             }
-            else if (!this.props.textUnit.isIncludedInLocalizedFile()) {
+            else if (!this.props.textUnit.isIncludedInLocalizedFile()
+                    && this.props.textUnit.getLatestSeverity() === 'ERROR') {
                 glyphType = "alert";
                 glyphTitle = this.props.intl.formatMessage({id: "textUnit.reviewModal.rejected"});
                 tooltipDescriptor = "Rejected";

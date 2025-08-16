@@ -14,6 +14,7 @@ import com.box.l10n.mojito.entity.AssetTextUnitToTMTextUnit;
 import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
+import com.box.l10n.mojito.entity.TMTextUnitVariantComment;
 import com.box.l10n.mojito.service.asset.AssetService;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
 import com.box.l10n.mojito.service.branch.BranchTestData;
@@ -22,6 +23,7 @@ import com.box.l10n.mojito.service.locale.LocaleService;
 import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.service.tm.TMTestData;
 import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
+import com.box.l10n.mojito.service.tm.TMTextUnitVariantCommentService;
 import com.box.l10n.mojito.service.tm.TMTextUnitVariantRepository;
 import com.box.l10n.mojito.test.TestIdWatcher;
 import jakarta.persistence.EntityManager;
@@ -73,6 +75,8 @@ public class TextUnitSearcherTest extends ServiceTestBase {
   @Autowired EntityManager entityManager;
 
   @Autowired BranchNotificationRepository branchNotificationRepository;
+
+  @Autowired TMTextUnitVariantCommentService tmTextUnitVariantCommentService;
 
   @Rule public TestIdWatcher testIdWatcher = new TestIdWatcher();
 
@@ -369,6 +373,68 @@ public class TextUnitSearcherTest extends ServiceTestBase {
     logger.debug("Mark one translated string as not included");
 
     Long invalidTmTextUnitId = tmTestData.addCurrentTMTextUnitVariant1FrFR.getTmTextUnit().getId();
+    TMTextUnitCurrentVariant tmTextUnitCurrentVariant =
+        tmService.addTMTextUnitCurrentVariant(
+            invalidTmTextUnitId,
+            tmTestData.addCurrentTMTextUnitVariant1FrFR.getLocale().getId(),
+            tmTestData.addCurrentTMTextUnitVariant1FrFR.getContent(),
+            "this translation fails compilation",
+            TMTextUnitVariant.Status.REVIEW_NEEDED,
+            false);
+
+    this.tmTextUnitVariantCommentService.addComment(
+        tmTextUnitCurrentVariant.getTmTextUnitVariant(),
+        TMTextUnitVariantComment.Type.INTEGRITY_CHECK,
+        TMTextUnitVariantComment.Severity.ERROR,
+        "Translation has an error");
+
+    variants =
+        tmTextUnitVariantRepository.findAllByLocale_IdAndTmTextUnit_Tm_id(
+            tmTestData.frFR.getId(), tmTestData.tm.getId());
+    assertEquals("There should be 3 TMTextUnitVariants", 3, variants.size());
+
+    TextUnitSearcherParameters textUnitSearcherParameters =
+        new TextUnitSearcherParametersForTesting();
+    textUnitSearcherParameters.setRepositoryIds(tmTestData.repository.getId());
+    textUnitSearcherParameters.setLocaleId(tmTestData.frFR.getId());
+
+    textUnitSearcherParameters.setStatusFilter(StatusFilter.NOT_REJECTED);
+    List<TextUnitDTO> textUnitDTOs = textUnitSearcher.search(textUnitSearcherParameters);
+
+    assertEquals(
+        "The searcher should have returned 1 included text unit DTOs", 1, textUnitDTOs.size());
+
+    for (TextUnitDTO textUnitDTO : textUnitDTOs) {
+      assertNotEquals(
+          "The found variant should not be the invalid one",
+          invalidTmTextUnitId,
+          textUnitDTO.getTmTextUnitId());
+    }
+
+    textUnitSearcherParameters.setStatusFilter(StatusFilter.REJECTED);
+    textUnitDTOs = textUnitSearcher.search(textUnitSearcherParameters);
+
+    assertEquals(
+        "The searcher should have returned only 1 excluded text unit DTO", 1, textUnitDTOs.size());
+    assertEquals(
+        "The found variant should be the invalid one",
+        invalidTmTextUnitId,
+        textUnitDTOs.get(0).getTmTextUnitId());
+  }
+
+  @Transactional
+  @Test
+  public void testSearch_ExcludeTextUnitsWithoutErrorSeverityWhenUsingNotRejectedFilter() {
+    TMTestData tmTestData = new TMTestData(testIdWatcher);
+
+    List<TMTextUnitVariant> variants =
+        tmTextUnitVariantRepository.findAllByLocale_IdAndTmTextUnit_Tm_id(
+            tmTestData.frFR.getId(), tmTestData.tm.getId());
+    assertEquals("There should be 2 TMTextUnitVariants", 2, variants.size());
+
+    logger.debug("Mark one translated string as not included");
+
+    Long invalidTmTextUnitId = tmTestData.addCurrentTMTextUnitVariant1FrFR.getTmTextUnit().getId();
     tmService.addTMTextUnitCurrentVariant(
         invalidTmTextUnitId,
         tmTestData.addCurrentTMTextUnitVariant1FrFR.getLocale().getId(),
@@ -404,11 +470,7 @@ public class TextUnitSearcherTest extends ServiceTestBase {
     textUnitDTOs = textUnitSearcher.search(textUnitSearcherParameters);
 
     assertEquals(
-        "The searcher should have returned only 1 excluded text unit DTO", 1, textUnitDTOs.size());
-    assertEquals(
-        "The found variant should be the invalid one",
-        invalidTmTextUnitId,
-        textUnitDTOs.get(0).getTmTextUnitId());
+        "The searcher should have returned no excluded text unit DTO", 0, textUnitDTOs.size());
   }
 
   @Transactional(noRollbackFor = {Throwable.class})

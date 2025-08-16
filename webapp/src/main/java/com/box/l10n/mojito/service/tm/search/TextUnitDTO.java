@@ -1,5 +1,7 @@
 package com.box.l10n.mojito.service.tm.search;
 
+import static com.box.l10n.mojito.entity.TMTextUnitVariantComment.Severity;
+
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
 import java.time.ZonedDateTime;
 
@@ -35,6 +37,7 @@ public class TextUnitDTO {
   private ZonedDateTime tmTextUnitCreatedDate;
   private boolean doNotTranslate;
   private String uploadedFileUri;
+  private Severity latestSeverity;
 
   public Long getTmTextUnitId() {
     return tmTextUnitId;
@@ -255,5 +258,13 @@ public class TextUnitDTO {
   public boolean isAiTranslateStatus() {
     return status == TMTextUnitVariant.Status.MT_TRANSLATED
         || status == TMTextUnitVariant.Status.MT_REVIEW_NEEDED;
+  }
+
+  public Severity getLatestSeverity() {
+    return latestSeverity;
+  }
+
+  public void setLatestSeverity(Severity latestSeverity) {
+    this.latestSeverity = latestSeverity;
   }
 }

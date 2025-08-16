@@ -1,7 +1,9 @@
 package com.box.l10n.mojito.service.repository.statistics;
 
+import static com.box.l10n.mojito.entity.TMTextUnitVariantComment.Severity.ERROR;
 import static com.box.l10n.mojito.utils.Predicates.not;
 import static com.box.l10n.mojito.utils.TaskExecutorUtils.waitForAllFutures;
+import static java.util.Optional.ofNullable;
 
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
@@ -361,6 +363,12 @@ public class RepositoryStatisticService {
                             .filter(TextUnitDTO::isTranslated)
                             .filter(TextUnitDTO::isUsed)
                             .filter(Predicate.not(TextUnitDTO::isAiTranslateStatus))
+                            .filter(
+                                textUnitDTO ->
+                                    textUnitDTO.isIncludedInLocalizedFile()
+                                        || ofNullable(textUnitDTO.getLatestSeverity())
+                                            .map(severity -> severity.equals(ERROR))
+                                            .orElse(false))
                             .peek(
                                 t ->
                                     logger.debug(
@@ -372,6 +380,12 @@ public class RepositoryStatisticService {
                             .filter(TextUnitDTO::isTranslated)
                             .filter(TextUnitDTO::isUsed)
                             .filter(Predicate.not(TextUnitDTO::isAiTranslateStatus))
+                            .filter(
+                                textUnitDTO ->
+                                    textUnitDTO.isIncludedInLocalizedFile()
+                                        || ofNullable(textUnitDTO.getLatestSeverity())
+                                            .map(severity -> severity.equals(ERROR))
+                                            .orElse(false))
                             .mapToLong(wordCountFunction())
                             .sum());
 
