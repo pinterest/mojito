@@ -7,7 +7,9 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.entity.RepositoryLocaleStatistic;
 import com.box.l10n.mojito.entity.RepositoryStatistic;
+import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
+import com.box.l10n.mojito.entity.TMTextUnitVariantComment;
 import com.box.l10n.mojito.service.asset.VirtualAsset;
 import com.box.l10n.mojito.service.asset.VirtualAssetService;
 import com.box.l10n.mojito.service.asset.VirtualAssetTextUnit;
@@ -17,6 +19,7 @@ import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.service.tm.TMTestData;
+import com.box.l10n.mojito.service.tm.TMTextUnitVariantCommentService;
 import com.box.l10n.mojito.test.TestIdWatcher;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -47,6 +50,8 @@ public class RepositoryStatisticServiceTest extends ServiceTestBase {
   @Autowired VirtualAssetService virtualAssetService;
 
   @Autowired RepositoryService repositoryService;
+
+  @Autowired TMTextUnitVariantCommentService tmTextUnitVariantCommentService;
 
   @Rule public TestIdWatcher testIdWatcher = new TestIdWatcher();
 
@@ -192,6 +197,48 @@ public class RepositoryStatisticServiceTest extends ServiceTestBase {
 
     logger.debug("Mark one translated string as not included and needs review");
 
+    TMTextUnitCurrentVariant tmTextUnitCurrentVariant =
+        tmService.addTMTextUnitCurrentVariant(
+            tmTestData.addCurrentTMTextUnitVariant1FrFR.getTmTextUnit().getId(),
+            tmTestData.frFR.getId(),
+            tmTestData.addCurrentTMTextUnitVariant1FrFR.getContent(),
+            "this translation fails compilation",
+            TMTextUnitVariant.Status.REVIEW_NEEDED,
+            false);
+
+    this.tmTextUnitVariantCommentService.addComment(
+        tmTextUnitCurrentVariant.getTmTextUnitVariant(),
+        TMTextUnitVariantComment.Type.INTEGRITY_CHECK,
+        TMTextUnitVariantComment.Severity.ERROR,
+        "Translation has an error");
+
+    tmService.addTMTextUnitCurrentVariant(
+        tmTestData.addCurrentTMTextUnitVariant1KoKR.getTmTextUnit().getId(),
+        tmTestData.koKR.getId(),
+        tmTestData.addCurrentTMTextUnitVariant1KoKR.getContent(),
+        "this translation fails compilation",
+        TMTextUnitVariant.Status.TRANSLATION_NEEDED,
+        true);
+
+    RepositoryLocaleStatistic repositoryLocaleStatisticFrFR =
+        repositoryStatisticService.computeLocaleStatistics(tmTestData.repoLocaleFrFR);
+    RepositoryLocaleStatistic repositoryLocaleStatisticKoKR =
+        repositoryStatisticService.computeLocaleStatistics(tmTestData.repoLocaleKoKR);
+
+    checkRepositoryLocaleStatistic(
+        repositoryLocaleStatisticFrFR, "fr-FR", 1, 8, 0, 0, 1, 8, 0, 0, 2, 9);
+    checkRepositoryLocaleStatistic(
+        repositoryLocaleStatisticKoKR, "ko-KR", 1, 8, 1, 8, 0, 0, 1, 8, 2, 9);
+  }
+
+  @Test
+  public void testComputeLocaleStatistics_ExcludeTextUnitVariantsWithoutErrorSeverity()
+      throws Exception {
+
+    TMTestData tmTestData = new TMTestData(testIdWatcher);
+
+    logger.debug("Mark one translated string as not included and needs review");
+
     tmService.addTMTextUnitCurrentVariant(
         tmTestData.addCurrentTMTextUnitVariant1FrFR.getTmTextUnit().getId(),
         tmTestData.frFR.getId(),
@@ -214,7 +261,7 @@ public class RepositoryStatisticServiceTest extends ServiceTestBase {
         repositoryStatisticService.computeLocaleStatistics(tmTestData.repoLocaleKoKR);
 
     checkRepositoryLocaleStatistic(
-        repositoryLocaleStatisticFrFR, "fr-FR", 1, 8, 0, 0, 1, 8, 0, 0, 2, 9);
+        repositoryLocaleStatisticFrFR, "fr-FR", 0, 0, 0, 0, 1, 8, 0, 0, 2, 9);
     checkRepositoryLocaleStatistic(
         repositoryLocaleStatisticKoKR, "ko-KR", 1, 8, 1, 8, 0, 0, 1, 8, 2, 9);
   }

@@ -270,6 +270,10 @@ class TextUnit {
         this.data.createdDate = createdDate;
     }
 
+    getLatestSeverity() {
+        return this.data.latestTmTextUnitVariantCommentSeverity;
+    }
+
     /**
      * According to the current implementation of the web service, the combination
      * of tmTextUnitId and localeId is a unique key for the TextUnit object. The

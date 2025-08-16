@@ -2,6 +2,7 @@ package com.box.l10n.mojito.service.tm.search;
 
 import static com.box.l10n.mojito.entity.TMTextUnitVariant.Status.TRANSLATION_NEEDED;
 import static com.box.l10n.mojito.entity.TMTextUnitVariant.Status.valueOf;
+import static com.box.l10n.mojito.entity.TMTextUnitVariantComment.Severity;
 
 import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
@@ -12,6 +13,12 @@ import com.github.pnowy.nc.core.mappers.NativeObjectMapper;
  * @author jaurambault
  */
 public class TextUnitDTONativeObjectMapper implements NativeObjectMapper<TextUnitDTO> {
+  public Severity getSeverity(String severityStr) {
+    if (severityStr == null) {
+      return null;
+    }
+    return Severity.valueOf(severityStr);
+  }
 
   @Override
   public TextUnitDTO mapObject(CriteriaResult cr) {
@@ -55,6 +62,8 @@ public class TextUnitDTONativeObjectMapper implements NativeObjectMapper<TextUni
 
     String doNotTranslate = cr.getString(idx++);
     t.setDoNotTranslate(Boolean.valueOf(doNotTranslate));
+
+    t.setLatestSeverity(this.getSeverity(cr.getString(idx++)));
 
     if (cr.hasProperty("uploadedFileUri")) {
       t.setUploadedFileUri(cr.getString(idx++));
