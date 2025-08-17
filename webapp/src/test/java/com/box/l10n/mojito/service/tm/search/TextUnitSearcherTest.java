@@ -427,13 +427,14 @@ public class TextUnitSearcherTest extends ServiceTestBase {
     assertEquals("There should be 2 TMTextUnitVariants", 2, variants.size());
 
     Long invalidTmTextUnitId = tmTestData.addCurrentTMTextUnitVariant1FrFR.getTmTextUnit().getId();
-    TMTextUnitCurrentVariant tmTextUnitCurrentVariant = tmService.addTMTextUnitCurrentVariant(
-        invalidTmTextUnitId,
-        tmTestData.addCurrentTMTextUnitVariant1FrFR.getLocale().getId(),
-        tmTestData.addCurrentTMTextUnitVariant1FrFR.getContent(),
-        "this translation fails compilation",
-        TMTextUnitVariant.Status.REVIEW_NEEDED,
-        false);
+    TMTextUnitCurrentVariant tmTextUnitCurrentVariant =
+        tmService.addTMTextUnitCurrentVariant(
+            invalidTmTextUnitId,
+            tmTestData.addCurrentTMTextUnitVariant1FrFR.getLocale().getId(),
+            tmTestData.addCurrentTMTextUnitVariant1FrFR.getContent(),
+            "this translation fails compilation",
+            TMTextUnitVariant.Status.REVIEW_NEEDED,
+            false);
 
     this.tmTextUnitVariantCommentService.addComment(
         tmTextUnitCurrentVariant.getTmTextUnitVariant(),
@@ -482,13 +483,14 @@ public class TextUnitSearcherTest extends ServiceTestBase {
     assertEquals("There should be 2 TMTextUnitVariants", 2, variants.size());
 
     Long invalidTmTextUnitId = tmTestData.addCurrentTMTextUnitVariant1FrFR.getTmTextUnit().getId();
-    TMTextUnitCurrentVariant tmTextUnitCurrentVariant = tmService.addTMTextUnitCurrentVariant(
-        invalidTmTextUnitId,
-        tmTestData.addCurrentTMTextUnitVariant1FrFR.getLocale().getId(),
-        tmTestData.addCurrentTMTextUnitVariant1FrFR.getContent(),
-        "this translation fails compilation",
-        TMTextUnitVariant.Status.REVIEW_NEEDED,
-        false);
+    TMTextUnitCurrentVariant tmTextUnitCurrentVariant =
+        tmService.addTMTextUnitCurrentVariant(
+            invalidTmTextUnitId,
+            tmTestData.addCurrentTMTextUnitVariant1FrFR.getLocale().getId(),
+            tmTestData.addCurrentTMTextUnitVariant1FrFR.getContent(),
+            "this translation fails compilation",
+            TMTextUnitVariant.Status.REVIEW_NEEDED,
+            false);
 
     this.tmTextUnitVariantCommentService.addComment(
         tmTextUnitCurrentVariant.getTmTextUnitVariant(),
