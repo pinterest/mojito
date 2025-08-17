@@ -444,7 +444,8 @@ let TextUnit = createReactClass({
                 tooltipDescriptor = "Machine Translated - Review Needed";
             }
             else if (!this.props.textUnit.isIncludedInLocalizedFile()
-                    && this.props.textUnit.getLatestSeverity() === 'ERROR') {
+                    && (!this.props.textUnit.getLatestSeverity()
+                        || this.props.textUnit.getLatestSeverity() === 'ERROR')) {
                 glyphType = "alert";
                 glyphTitle = this.props.intl.formatMessage({id: "textUnit.reviewModal.rejected"});
                 tooltipDescriptor = "Rejected";

@@ -232,12 +232,9 @@ public class RepositoryStatisticServiceTest extends ServiceTestBase {
   }
 
   @Test
-  public void testComputeLocaleStatistics_ExcludeTextUnitVariantsWithoutErrorSeverity()
-      throws Exception {
+  public void testComputeLocaleStatistics_IncludesTextUnitVariantsWithNoCommentSeverity() {
 
     TMTestData tmTestData = new TMTestData(testIdWatcher);
-
-    logger.debug("Mark one translated string as not included and needs review");
 
     tmService.addTMTextUnitCurrentVariant(
         tmTestData.addCurrentTMTextUnitVariant1FrFR.getTmTextUnit().getId(),
@@ -246,6 +243,45 @@ public class RepositoryStatisticServiceTest extends ServiceTestBase {
         "this translation fails compilation",
         TMTextUnitVariant.Status.REVIEW_NEEDED,
         false);
+
+    tmService.addTMTextUnitCurrentVariant(
+        tmTestData.addCurrentTMTextUnitVariant1KoKR.getTmTextUnit().getId(),
+        tmTestData.koKR.getId(),
+        tmTestData.addCurrentTMTextUnitVariant1KoKR.getContent(),
+        "this translation fails compilation",
+        TMTextUnitVariant.Status.TRANSLATION_NEEDED,
+        true);
+
+    RepositoryLocaleStatistic repositoryLocaleStatisticFrFR =
+        repositoryStatisticService.computeLocaleStatistics(tmTestData.repoLocaleFrFR);
+    RepositoryLocaleStatistic repositoryLocaleStatisticKoKR =
+        repositoryStatisticService.computeLocaleStatistics(tmTestData.repoLocaleKoKR);
+
+    checkRepositoryLocaleStatistic(
+        repositoryLocaleStatisticFrFR, "fr-FR", 1, 8, 0, 0, 1, 8, 0, 0, 2, 9);
+    checkRepositoryLocaleStatistic(
+        repositoryLocaleStatisticKoKR, "ko-KR", 1, 8, 1, 8, 0, 0, 1, 8, 2, 9);
+  }
+
+  @Test
+  public void testComputeLocaleStatistics_DoesNotCountAsRejectedWhenSeverityNotError() {
+
+    TMTestData tmTestData = new TMTestData(testIdWatcher);
+
+    TMTextUnitCurrentVariant tmTextUnitCurrentVariant =
+        tmService.addTMTextUnitCurrentVariant(
+            tmTestData.addCurrentTMTextUnitVariant1FrFR.getTmTextUnit().getId(),
+            tmTestData.frFR.getId(),
+            tmTestData.addCurrentTMTextUnitVariant1FrFR.getContent(),
+            "this translation fails compilation",
+            TMTextUnitVariant.Status.REVIEW_NEEDED,
+            false);
+
+    this.tmTextUnitVariantCommentService.addComment(
+        tmTextUnitCurrentVariant.getTmTextUnitVariant(),
+        TMTextUnitVariantComment.Type.LEVERAGING,
+        TMTextUnitVariantComment.Severity.INFO,
+        "Leveraging from TM Text Unit");
 
     tmService.addTMTextUnitCurrentVariant(
         tmTestData.addCurrentTMTextUnitVariant1KoKR.getTmTextUnit().getId(),

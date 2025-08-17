@@ -368,7 +368,7 @@ public class RepositoryStatisticService {
                                     textUnitDTO.isIncludedInLocalizedFile()
                                         || ofNullable(textUnitDTO.getLatestSeverity())
                                             .map(severity -> severity.equals(ERROR))
-                                            .orElse(false))
+                                            .orElse(true))
                             .peek(
                                 t ->
                                     logger.debug(
@@ -385,7 +385,7 @@ public class RepositoryStatisticService {
                                     textUnitDTO.isIncludedInLocalizedFile()
                                         || ofNullable(textUnitDTO.getLatestSeverity())
                                             .map(severity -> severity.equals(ERROR))
-                                            .orElse(false))
+                                            .orElse(true))
                             .mapToLong(wordCountFunction())
                             .sum());
 

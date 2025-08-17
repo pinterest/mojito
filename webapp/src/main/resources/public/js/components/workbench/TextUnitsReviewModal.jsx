@@ -216,7 +216,8 @@ class TextUnitsreviewModal extends React.Component {
                 currentReviewState = this.MT_REVIEW;
             }
             else if (!textUnit.isIncludedInLocalizedFile()
-                    && textUnit.getLatestSeverity() === "ERROR") {
+                    && (!textUnit.getLatestSeverity()
+                        || textUnit.getLatestSeverity() === "ERROR")) {
                 currentReviewState = this.REJECT;
             } else if (textUnit.getStatus() === TextUnit.STATUS.REVIEW_NEEDED) {
                 currentReviewState = this.REVIEW;

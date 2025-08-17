@@ -433,8 +433,11 @@ public class TextUnitSearcher {
               NativeExps.notEq("tuv.status", TMTextUnitVariant.Status.MT_TRANSLATED.toString()));
           conjunction.add(
               NativeExps.notEq("tuv.status", TMTextUnitVariant.Status.MT_REVIEW_NEEDED.toString()));
-          conjunction.add(
+          NativeJunctionExp severityExp = NativeExps.disjunction();
+          severityExp.add(NativeExps.isNull("tuvc.severity"));
+          severityExp.add(
               NativeExps.eq("tuvc.severity", TMTextUnitVariantComment.Severity.ERROR.toString()));
+          conjunction.add(severityExp);
           break;
         case REVIEW_NEEDED:
           conjunction.add(
