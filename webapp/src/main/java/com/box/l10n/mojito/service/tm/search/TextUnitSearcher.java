@@ -198,10 +198,11 @@ public class TextUnitSearcher {
     c.addJoin(
         NativeExps.leftJoin(
             "tm_text_unit_variant", "tuv", "tucv.tm_text_unit_variant_id", "tuv.id"));
-
-    c.addJoin(
-        NativeExps.customSql(
-            "LEFT JOIN LATERAL (SELECT tuvc.id, tuvc.severity FROM tm_text_unit_variant_comment tuvc WHERE tuv.id = tuvc.tm_text_unit_variant_id ORDER BY tuvc.last_modified_date DESC, tuvc.id DESC LIMIT 1) tuvc ON tuvc.id IS NOT NULL"));
+    if (searchParameters.isIncludeSeverity()) {
+      c.addJoin(
+          NativeExps.customSql(
+              "LEFT JOIN LATERAL (SELECT tuvc.id, tuvc.severity FROM tm_text_unit_variant_comment tuvc WHERE tuv.id = tuvc.tm_text_unit_variant_id ORDER BY tuvc.last_modified_date DESC, tuvc.id DESC LIMIT 1) tuvc ON tuvc.id IS NOT NULL"));
+    }
 
     // We only want mapping for the last asset extraction
     NativeJunctionExp onClauseAssetTextUnit = NativeExps.conjunction();
@@ -272,7 +273,8 @@ public class TextUnitSearcher {
             .addProjection("atu.id", "assetTextUnitId")
             .addProjection("tu.created_date", "tmTextUnitCreatedDate")
             .addProjection("atu.do_not_translate", "doNotTranslate")
-            .addProjection("tuvc.severity", "severity");
+            .addProjection(
+                searchParameters.isIncludeSeverity() ? "tuvc.severity" : "NULL", "severity");
 
     if (searchParameters.shouldRetrieveUploadedFileUri()) {
       projection.addProjection("tptu.uploaded_file_uri", "uploadedFileUri");
@@ -433,11 +435,13 @@ public class TextUnitSearcher {
               NativeExps.notEq("tuv.status", TMTextUnitVariant.Status.MT_TRANSLATED.toString()));
           conjunction.add(
               NativeExps.notEq("tuv.status", TMTextUnitVariant.Status.MT_REVIEW_NEEDED.toString()));
-          NativeJunctionExp severityExp = NativeExps.disjunction();
-          severityExp.add(NativeExps.isNull("tuvc.severity"));
-          severityExp.add(
-              NativeExps.eq("tuvc.severity", TMTextUnitVariantComment.Severity.ERROR.toString()));
-          conjunction.add(severityExp);
+          if (searchParameters.isIncludeSeverity()) {
+            NativeJunctionExp severityExp = NativeExps.disjunction();
+            severityExp.add(NativeExps.isNull("tuvc.severity"));
+            severityExp.add(
+                NativeExps.eq("tuvc.severity", TMTextUnitVariantComment.Severity.ERROR.toString()));
+            conjunction.add(severityExp);
+          }
           break;
         case REVIEW_NEEDED:
           conjunction.add(

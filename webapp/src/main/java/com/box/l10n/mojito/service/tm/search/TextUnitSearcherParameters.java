@@ -55,6 +55,7 @@ public class TextUnitSearcherParameters {
   boolean isExcludeUnexpiredPendingMT = false;
   Duration aiTranslationExpiryDuration;
   boolean shouldRetrieveUploadedFileUri = false;
+  boolean includeSeverity;
 
   public String getName() {
     return name;
@@ -365,6 +366,14 @@ public class TextUnitSearcherParameters {
     this.shouldRetrieveUploadedFileUri = retrieveUploadedFileUri;
   }
 
+  public boolean isIncludeSeverity() {
+    return includeSeverity;
+  }
+
+  public void setIncludeSeverity(boolean includeSeverity) {
+    this.includeSeverity = includeSeverity;
+  }
+
   public static class Builder {
     private String name;
     private String source;
@@ -403,6 +412,7 @@ public class TextUnitSearcherParameters {
     private boolean isExcludeUnexpiredPendingMT;
     private Duration aiTranslationExpiryDuration;
     private boolean shouldRetrieveUploadedFileUri;
+    private boolean includeSeverity;
 
     public TextUnitSearcherParameters build() {
       TextUnitSearcherParameters textUnitSearcherParameters = new TextUnitSearcherParameters();
@@ -443,6 +453,7 @@ public class TextUnitSearcherParameters {
       textUnitSearcherParameters.isExcludeUnexpiredPendingMT = this.isExcludeUnexpiredPendingMT;
       textUnitSearcherParameters.aiTranslationExpiryDuration = this.aiTranslationExpiryDuration;
       textUnitSearcherParameters.shouldRetrieveUploadedFileUri = this.shouldRetrieveUploadedFileUri;
+      textUnitSearcherParameters.includeSeverity = this.includeSeverity;
       return textUnitSearcherParameters;
     }
 
@@ -643,6 +654,11 @@ public class TextUnitSearcherParameters {
 
     public Builder shouldRetrieveUploadedFileUri(boolean shouldRetrieveUploadedFileUri) {
       this.shouldRetrieveUploadedFileUri = shouldRetrieveUploadedFileUri;
+      return this;
+    }
+
+    public Builder includeSeverity(boolean includeSeverity) {
+      this.includeSeverity = includeSeverity;
       return this;
     }
   }

@@ -129,7 +129,7 @@ public class TextUnitWS {
     TextUnitSearcherParameters textUnitSearcherParameters =
         textUnitSearchBodyToTextUnitSearcherParameters(textUnitSearchBody);
     applySharedSearchAndCountParameters(textUnitSearcherParameters);
-
+    textUnitSearcherParameters.setIncludeSeverity(true);
     List<TextUnitDTO> search = textUnitSearcher.search(textUnitSearcherParameters);
     return search;
   }

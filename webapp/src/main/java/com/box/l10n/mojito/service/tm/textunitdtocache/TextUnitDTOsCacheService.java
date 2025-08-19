@@ -226,7 +226,7 @@ public class TextUnitDTOsCacheService {
                 textUnitSearcherParameters.setRootLocaleExcluded(false);
                 textUnitSearcherParameters.setPluralFormsFiltered(false);
               }
-
+              textUnitSearcherParameters.setIncludeSeverity(true);
               List<TextUnitDTO> search = textUnitSearcher.search(textUnitSearcherParameters);
               return search.stream();
             })

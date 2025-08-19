@@ -373,14 +373,13 @@ public class TextUnitSearcherTest extends ServiceTestBase {
     logger.debug("Mark one translated string as not included");
 
     Long invalidTmTextUnitId = tmTestData.addCurrentTMTextUnitVariant1FrFR.getTmTextUnit().getId();
-    TMTextUnitCurrentVariant tmTextUnitCurrentVariant =
-        tmService.addTMTextUnitCurrentVariant(
-            invalidTmTextUnitId,
-            tmTestData.addCurrentTMTextUnitVariant1FrFR.getLocale().getId(),
-            tmTestData.addCurrentTMTextUnitVariant1FrFR.getContent(),
-            "this translation fails compilation",
-            TMTextUnitVariant.Status.REVIEW_NEEDED,
-            false);
+    tmService.addTMTextUnitCurrentVariant(
+        invalidTmTextUnitId,
+        tmTestData.addCurrentTMTextUnitVariant1FrFR.getLocale().getId(),
+        tmTestData.addCurrentTMTextUnitVariant1FrFR.getContent(),
+        "this translation fails compilation",
+        TMTextUnitVariant.Status.REVIEW_NEEDED,
+        false);
 
     variants =
         tmTextUnitVariantRepository.findAllByLocale_IdAndTmTextUnit_Tm_id(
@@ -393,6 +392,7 @@ public class TextUnitSearcherTest extends ServiceTestBase {
     textUnitSearcherParameters.setLocaleId(tmTestData.frFR.getId());
 
     textUnitSearcherParameters.setStatusFilter(StatusFilter.NOT_REJECTED);
+    textUnitSearcherParameters.setIncludeSeverity(true);
     List<TextUnitDTO> textUnitDTOs = textUnitSearcher.search(textUnitSearcherParameters);
 
     assertEquals(
@@ -453,6 +453,7 @@ public class TextUnitSearcherTest extends ServiceTestBase {
     textUnitSearcherParameters.setLocaleId(tmTestData.frFR.getId());
 
     textUnitSearcherParameters.setStatusFilter(StatusFilter.NOT_REJECTED);
+    textUnitSearcherParameters.setIncludeSeverity(true);
     List<TextUnitDTO> textUnitDTOs = textUnitSearcher.search(textUnitSearcherParameters);
 
     assertEquals(
@@ -509,6 +510,7 @@ public class TextUnitSearcherTest extends ServiceTestBase {
     textUnitSearcherParameters.setLocaleId(tmTestData.frFR.getId());
 
     textUnitSearcherParameters.setStatusFilter(StatusFilter.NOT_REJECTED);
+    textUnitSearcherParameters.setIncludeSeverity(true);
     List<TextUnitDTO> textUnitDTOs = textUnitSearcher.search(textUnitSearcherParameters);
 
     assertEquals(
@@ -525,7 +527,7 @@ public class TextUnitSearcherTest extends ServiceTestBase {
     textUnitDTOs = textUnitSearcher.search(textUnitSearcherParameters);
 
     assertEquals(
-        "The searcher should have returned no excluded text unit DTO", 1, textUnitDTOs.size());
+        "The searcher should have returned excluded text unit DTO", 1, textUnitDTOs.size());
   }
 
   @Transactional(noRollbackFor = {Throwable.class})
