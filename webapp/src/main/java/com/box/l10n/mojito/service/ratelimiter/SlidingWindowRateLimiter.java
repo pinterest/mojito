@@ -13,10 +13,10 @@ public class SlidingWindowRateLimiter {
   private final RedisClient redisClient;
   private final String rateLimiterKey;
   private final int maxRequests;
-  private final int windowSizeInMillis;
+  private final long windowSizeInMillis;
 
   public SlidingWindowRateLimiter(
-      RedisClient redisClient, String rateLimiterKey, int maxRequests, int windowSizeInMillis) {
+      RedisClient redisClient, String rateLimiterKey, int maxRequests, long windowSizeInMillis) {
     this.redisClient = redisClient;
     this.rateLimiterKey = rateLimiterKey;
     this.maxRequests = maxRequests;

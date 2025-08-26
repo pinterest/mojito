@@ -15,6 +15,9 @@ public class TmTextUnitPendingMT extends BaseEntity {
   @Column(name = "created_date")
   private ZonedDateTime createdDate;
 
+  @Column(name = "processing_started_at")
+  private ZonedDateTime processingStartedAt;
+
   public ZonedDateTime getCreatedDate() {
     return createdDate;
   }
@@ -29,5 +32,13 @@ public class TmTextUnitPendingMT extends BaseEntity {
 
   public void setTmTextUnitId(Long tmTextUnitId) {
     this.tmTextUnitId = tmTextUnitId;
+  }
+
+  public ZonedDateTime getProcessingStartedAt() {
+    return processingStartedAt;
+  }
+
+  public void setProcessingStartedAt(ZonedDateTime processingStartedAt) {
+    this.processingStartedAt = processingStartedAt;
   }
 }
