@@ -1,14 +1,21 @@
 package com.box.l10n.mojito.service.ai.translation;
 
+import com.box.l10n.mojito.service.blobstorage.redis.RedisClient;
+import com.box.l10n.mojito.service.ratelimiter.SlidingWindowRateLimiter;
 import com.google.common.collect.Maps;
 import java.time.Duration;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 @Component
 @ConfigurationProperties("l10n.ai.translation")
 public class AITranslationConfiguration {
+
+  @Autowired(required = false)
+  RedisClient redisClient;
 
   private boolean enabled = false;
   private int batchSize = 10;
@@ -24,6 +31,8 @@ public class AITranslationConfiguration {
   private Duration expiryDuration = Duration.ofHours(3);
 
   private String cron = "0 0/10 * * * ?";
+
+  private Duration timeout = Duration.ofMinutes(30);
 
   private Map<String, RepositorySettings> repositorySettings = Maps.newHashMap();
 
@@ -56,6 +65,60 @@ public class AITranslationConfiguration {
 
     public void setInjectGlossaryMatches(Boolean injectGlossaryMatches) {
       this.injectGlossaryMatches = injectGlossaryMatches;
+    }
+  }
+
+  private RateLimitConfiguration rateLimit;
+
+  public static class RateLimitConfiguration {
+    private int maxRequests;
+    private Duration windowSize;
+    private Duration minPollInterval;
+    private Duration maxPollInterval;
+
+    public int getMaxRequests() {
+      return maxRequests;
+    }
+
+    public void setMaxRequests(int maxRequests) {
+      this.maxRequests = maxRequests;
+    }
+
+    public Duration getWindowSize() {
+      return windowSize;
+    }
+
+    public void setWindowSize(Duration windowSize) {
+      this.windowSize = windowSize;
+    }
+
+    public Duration getMinPollInterval() {
+      return minPollInterval;
+    }
+
+    public void setMinPollInterval(Duration minPollInterval) {
+      this.minPollInterval = minPollInterval;
+    }
+
+    public Duration getMaxPollInterval() {
+      return maxPollInterval;
+    }
+
+    public void setMaxPollInterval(Duration maxPollInterval) {
+      this.maxPollInterval = maxPollInterval;
+    }
+  }
+
+  @Bean
+  public SlidingWindowRateLimiter aiTranslationRateLimiter() {
+    if (rateLimit != null) {
+      return new SlidingWindowRateLimiter(
+          redisClient,
+          "ai_translation",
+          rateLimit.getMaxRequests(),
+          rateLimit.getWindowSize().toMillis());
+    } else {
+      return null;
     }
   }
 
@@ -101,5 +164,21 @@ public class AITranslationConfiguration {
 
   public RepositorySettings getRepositorySettings(String repositoryName) {
     return repositorySettings.get(repositoryName);
+  }
+
+  public RateLimitConfiguration getRateLimit() {
+    return rateLimit;
+  }
+
+  public void setRateLimit(RateLimitConfiguration rateLimit) {
+    this.rateLimit = rateLimit;
+  }
+
+  public Duration getTimeout() {
+    return timeout;
+  }
+
+  public void setTimeout(Duration timeout) {
+    this.timeout = timeout;
   }
 }

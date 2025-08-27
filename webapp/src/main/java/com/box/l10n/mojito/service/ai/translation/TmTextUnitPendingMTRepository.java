@@ -13,7 +13,8 @@ public interface TmTextUnitPendingMTRepository extends JpaRepository<TmTextUnitP
   TmTextUnitPendingMT findByTmTextUnitId(Long tmTextUnitId);
 
   @Query(
-      value = "SELECT * FROM tm_text_unit_pending_mt ORDER BY id LIMIT :batchSize",
+      value =
+          "SELECT * FROM tm_text_unit_pending_mt WHERE processing_started_at is NULL ORDER BY id LIMIT :batchSize",
       nativeQuery = true)
   List<TmTextUnitPendingMT> findBatch(@Param("batchSize") int batchSize);
 }
