@@ -21,6 +21,7 @@ import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -108,6 +109,7 @@ public class AssetAppenderServiceTest {
     asset.setRepository(localRepository);
 
     assetAppenderService.DEFAULT_APPEND_LIMIT = 1000;
+    assetAppenderService.branchesTranslatedMaxAge = Duration.ofDays(30);
   }
 
   @Test
@@ -117,7 +119,7 @@ public class AssetAppenderServiceTest {
     assetAppenderService.appendBranchTextUnitsToSource(
         asset, localizedAssetBody.getAppendBranchTextUnitsId(), content);
 
-    verify(branchRepositoryMock, times(0)).findBranchesForAppending(any());
+    verify(branchRepositoryMock, times(0)).findBranchesForAppending(any(), any());
   }
 
   @Test
@@ -156,7 +158,7 @@ public class AssetAppenderServiceTest {
           i.addAndGet(2);
         });
 
-    when(branchRepositoryMock.findBranchesForAppending(any())).thenReturn(branches);
+    when(branchRepositoryMock.findBranchesForAppending(any(), any())).thenReturn(branches);
 
     assetAppenderService.appendBranchTextUnitsToSource(
         asset, localizedAssetBody.getAppendBranchTextUnitsId(), content);
@@ -206,7 +208,7 @@ public class AssetAppenderServiceTest {
 
     assetAppenderService.DEFAULT_APPEND_LIMIT = 10;
 
-    when(branchRepositoryMock.findBranchesForAppending(any())).thenReturn(branches);
+    when(branchRepositoryMock.findBranchesForAppending(any(), any())).thenReturn(branches);
 
     assetAppenderService.appendBranchTextUnitsToSource(
         asset, localizedAssetBody.getAppendBranchTextUnitsId(), content);
@@ -250,7 +252,7 @@ public class AssetAppenderServiceTest {
 
     // For every branch, return the same 2 text units for appending
     when(branchStatisticServiceMock.getTextUnitDTOsForBranch(any())).thenReturn(textUnits);
-    when(branchRepositoryMock.findBranchesForAppending(any())).thenReturn(branches);
+    when(branchRepositoryMock.findBranchesForAppending(any(), any())).thenReturn(branches);
 
     assetAppenderService.appendBranchTextUnitsToSource(
         asset, localizedAssetBody.getAppendBranchTextUnitsId(), content);

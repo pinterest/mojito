@@ -18,23 +18,15 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @RepositoryRestResource(exported = false)
 public interface PullRunAssetRepository extends JpaRepository<PullRunAsset, Long> {
-  List<PullRunAsset> findByPullRun(PullRun pullRun);
-
   Optional<PullRunAsset> findByPullRunAndAsset(PullRun pullRun, Asset asset);
-
-  @Transactional
-  void deleteByPullRun(PullRun pullRun);
 
   @Transactional
   @Modifying
   @Query(
-      nativeQuery = true,
       value =
           """
-          delete pra
-          from pull_run pr
-          join pull_run_asset pra on pra.pull_run_id = pr.id
-          where pr.created_date < :beforeDate
+          delete from PullRunAsset
+           where pullRun in (select pr from PullRun pr where createdDate < :beforeDate)
           """)
   void deleteAllByPullRunWithCreatedDateBefore(@Param("beforeDate") ZonedDateTime beforeDate);
 
@@ -44,10 +36,12 @@ public interface PullRunAssetRepository extends JpaRepository<PullRunAsset, Long
       value =
           """
           delete from PullRunAsset
-           where pullRun.createdDate between :startDate and :endDate
+           where pullRun.createdDate >= :startDate
+             and pullRun.createdDate < :endDate
+             and pullRunTextUnitVariants is empty
              and pullRun.id not in :latestPullRunIdsPerAsset
           """)
-  void deleteByPullRunsNotLatestPerAsset(
+  int deleteByPullRunsNotLatestPerAsset(
       @Param("startDate") ZonedDateTime startDate,
       @Param("endDate") ZonedDateTime endDate,
       @Param("latestPullRunIdsPerAsset") List<Long> latestPullRunIdsPerAsset);

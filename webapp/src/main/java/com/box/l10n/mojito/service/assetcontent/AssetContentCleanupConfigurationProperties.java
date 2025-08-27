@@ -1,12 +1,12 @@
-package com.box.l10n.mojito.service.pollableTask;
+package com.box.l10n.mojito.service.assetcontent;
 
 import java.time.Period;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties("l10n.pollable-task.cleanup-job")
-public class StalePollableTaskCleanupConfiguration {
+@ConfigurationProperties("l10n.asset-content.cleanup-job")
+public class AssetContentCleanupConfigurationProperties {
   private String cron = "0 0 0 * * ?";
 
   private Period retentionPeriod = Period.ofMonths(6);
