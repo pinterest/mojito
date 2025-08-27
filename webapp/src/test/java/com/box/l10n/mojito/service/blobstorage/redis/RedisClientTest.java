@@ -212,18 +212,18 @@ public class RedisClientTest {
   }
 
   @Test
-  public void testExecuteScript_ScriptAlreadyLoaded_ReturnsResult() {
+  public void testExecuteRateLimitScript_ScriptAlreadyLoaded_ReturnsResult() {
     RedisScript script = RedisScript.SLIDING_WINDOW_RATE_LIMITER;
     List<String> keys = Arrays.asList("key1", "key2");
     List<String> args = Arrays.asList("arg1", "arg2");
     String scriptSHA = "test-sha-hash";
-    Object expectedResult = 1L;
+    Long expectedResult = 1L;
 
     when(this.redisScriptManagerMock.isScriptLoaded(script)).thenReturn(true);
     when(this.redisScriptManagerMock.getScriptSHA(script)).thenReturn(scriptSHA);
     when(this.jedisMock.evalsha(scriptSHA, keys, args)).thenReturn(expectedResult);
 
-    Object result = this.redisClient.executeScript(script, keys, args);
+    Long result = this.redisClient.executeRateLimitScript(script, keys, args);
 
     assertEquals(expectedResult, result);
     verify(this.redisScriptManagerMock).isScriptLoaded(script);
@@ -232,18 +232,18 @@ public class RedisClientTest {
   }
 
   @Test
-  public void testExecuteScript_ScriptNotLoaded_LoadsScriptThenExecutes() {
+  public void testExecuteRateLimitScript_ScriptNotLoaded_LoadsScriptThenExecutes() {
     RedisScript script = RedisScript.SLIDING_WINDOW_RATE_LIMITER;
     List<String> keys = Arrays.asList("key1");
     List<String> args = Arrays.asList("arg1");
     String scriptSHA = "test-sha-hash";
-    Object expectedResult = 0L;
+    Long expectedResult = 0L;
 
     when(this.redisScriptManagerMock.isScriptLoaded(script)).thenReturn(false);
     when(this.redisScriptManagerMock.getScriptSHA(script)).thenReturn(scriptSHA);
     when(this.jedisMock.evalsha(scriptSHA, keys, args)).thenReturn(expectedResult);
 
-    Object result = this.redisClient.executeScript(script, keys, args);
+    Long result = this.redisClient.executeRateLimitScript(script, keys, args);
 
     assertEquals(expectedResult, result);
     verify(this.redisScriptManagerMock).isScriptLoaded(script);
@@ -253,24 +253,24 @@ public class RedisClientTest {
   }
 
   @Test
-  public void testExecuteScript_EmptyKeysAndArgs_ExecutesSuccessfully() {
+  public void testExecuteRateLimitScript_EmptyKeysAndArgs_ExecutesSuccessfully() {
     RedisScript script = RedisScript.SLIDING_WINDOW_RATE_LIMITER;
     List<String> keys = Arrays.asList();
     List<String> args = Arrays.asList();
     String scriptSHA = "test-sha-hash";
-    Object expectedResult = 1L;
+    Long expectedResult = 1L;
 
     when(this.redisScriptManagerMock.isScriptLoaded(script)).thenReturn(true);
     when(this.redisScriptManagerMock.getScriptSHA(script)).thenReturn(scriptSHA);
     when(this.jedisMock.evalsha(scriptSHA, keys, args)).thenReturn(expectedResult);
 
-    Object result = this.redisClient.executeScript(script, keys, args);
+    Long result = this.redisClient.executeRateLimitScript(script, keys, args);
 
     assertEquals(expectedResult, result);
   }
 
   @Test
-  public void testExecuteScript_JedisPoolException_ThrowsException() {
+  public void testExecuteRateLimitScript_JedisPoolException_ThrowsException() {
     RedisScript script = RedisScript.SLIDING_WINDOW_RATE_LIMITER;
     List<String> keys = Arrays.asList("key1");
     List<String> args = Arrays.asList("arg1");
@@ -281,12 +281,12 @@ public class RedisClientTest {
     assertThrows(
         JedisException.class,
         () -> {
-          this.redisClient.executeScript(script, keys, args);
+          this.redisClient.executeRateLimitScript(script, keys, args);
         });
   }
 
   @Test
-  public void testExecuteScript_JedisEvalshaException_ThrowsException() {
+  public void testExecuteRateLimitScript_JedisEvalshaException_ThrowsException() {
     RedisScript script = RedisScript.SLIDING_WINDOW_RATE_LIMITER;
     List<String> keys = Arrays.asList("key1");
     List<String> args = Arrays.asList("arg1");
@@ -300,12 +300,12 @@ public class RedisClientTest {
     assertThrows(
         JedisException.class,
         () -> {
-          this.redisClient.executeScript(script, keys, args);
+          this.redisClient.executeRateLimitScript(script, keys, args);
         });
   }
 
   @Test
-  public void testExecuteScript_ScriptManagerGetSHAException_ThrowsException() {
+  public void testExecuteRateLimitScript_ScriptManagerGetSHAException_ThrowsException() {
     RedisScript script = RedisScript.SLIDING_WINDOW_RATE_LIMITER;
     List<String> keys = Arrays.asList("key1");
     List<String> args = Arrays.asList("arg1");
@@ -317,7 +317,7 @@ public class RedisClientTest {
     assertThrows(
         IllegalStateException.class,
         () -> {
-          this.redisClient.executeScript(script, keys, args);
+          this.redisClient.executeRateLimitScript(script, keys, args);
         });
   }
 }

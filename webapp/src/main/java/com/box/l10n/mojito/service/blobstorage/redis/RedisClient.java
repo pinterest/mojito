@@ -81,16 +81,16 @@ public class RedisClient {
     }
   }
 
-  public Object executeScript(RedisScript script, List<String> keys, List<String> args)
+  public Long executeRateLimitScript(RedisScript script, List<String> keys, List<String> args)
       throws JedisException {
     try (Jedis redisClient = this.redisPoolManager.getJedis()) {
       if (!redisScriptManager.isScriptLoaded(script)) {
         // The script may not have loaded on startup if Redis was down, try load it now before
         // executing the script.
-        LOG.warn("Script '{}' not loaded in Redis, loading now.", script.getScriptName());
+        LOG.warn("RateLimitScript '{}' not loaded in Redis, loading now.", script.getScriptName());
         redisScriptManager.loadScript(script);
       }
-      return redisClient.evalsha(redisScriptManager.getScriptSHA(script), keys, args);
+      return (Long) redisClient.evalsha(redisScriptManager.getScriptSHA(script), keys, args);
     }
   }
 }

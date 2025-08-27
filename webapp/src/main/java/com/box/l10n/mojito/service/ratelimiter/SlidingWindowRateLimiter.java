@@ -32,11 +32,10 @@ public class SlidingWindowRateLimiter {
   public boolean isAllowed() throws JedisException {
     // If Redis is not configured, allow all requests
     if (redisClient != null) {
-      return (Long)
-              redisClient.executeScript(
-                  RedisScript.SLIDING_WINDOW_RATE_LIMITER,
-                  List.of(rateLimiterKey),
-                  List.of(String.valueOf(maxRequests), String.valueOf(windowSizeInMillis)))
+      return redisClient.executeRateLimitScript(
+              RedisScript.SLIDING_WINDOW_RATE_LIMITER,
+              List.of(rateLimiterKey),
+              List.of(String.valueOf(maxRequests), String.valueOf(windowSizeInMillis)))
           == 1L;
     } else {
       // No rate limiting if Redis is not configured
