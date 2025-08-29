@@ -6,6 +6,8 @@ import com.google.common.collect.Maps;
 import java.time.Duration;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
@@ -13,9 +15,6 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties("l10n.ai.translation")
 public class AITranslationConfiguration {
-
-  @Autowired(required = false)
-  RedisClient redisClient;
 
   private boolean enabled = false;
   private int batchSize = 10;
@@ -71,10 +70,19 @@ public class AITranslationConfiguration {
   private RateLimitConfiguration rateLimit;
 
   public static class RateLimitConfiguration {
+    private boolean enabled = false;
     private int maxRequests;
     private Duration windowSize;
     private Duration minPollInterval;
     private Duration maxPollInterval;
+
+    public boolean isEnabled() {
+      return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+      this.enabled = enabled;
+    }
 
     public int getMaxRequests() {
       return maxRequests;
@@ -110,16 +118,14 @@ public class AITranslationConfiguration {
   }
 
   @Bean
-  public SlidingWindowRateLimiter aiTranslationRateLimiter() {
-    if (rateLimit != null) {
-      return new SlidingWindowRateLimiter(
-          redisClient,
-          "ai_translation",
-          rateLimit.getMaxRequests(),
-          rateLimit.getWindowSize().toMillis());
-    } else {
-      return null;
-    }
+  @ConditionalOnBean(RedisClient.class)
+  @ConditionalOnProperty(value = "l10n.ai.translation.rateLimit.enabled", havingValue = "true")
+  public SlidingWindowRateLimiter aiTranslationRateLimiter(@Autowired RedisClient redisClient) {
+    return new SlidingWindowRateLimiter(
+        redisClient,
+        "ai_translation",
+        rateLimit.getMaxRequests(),
+        rateLimit.getWindowSize().toMillis());
   }
 
   public int getBatchSize() {
