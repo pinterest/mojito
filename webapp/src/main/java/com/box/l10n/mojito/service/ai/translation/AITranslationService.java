@@ -260,7 +260,11 @@ public class AITranslationService {
   @Transactional
   public void resetExpiredProcessingStartedAtEntries(Duration expiryDuration) {
     String sql =
-        "UPDATE tm_text_unit_pending_mt SET processing_started_at = NULL WHERE processing_started_at < CURRENT_TIMESTAMP - ?";
+        """
+            UPDATE tm_text_unit_pending_mt
+            SET processing_started_at = NULL
+            WHERE processing_started_at < CURRENT_TIMESTAMP - INTERVAL ? SECOND
+        """;
     jdbcTemplate.update(sql, expiryDuration.toSeconds());
   }
 
