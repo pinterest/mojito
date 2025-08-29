@@ -28,7 +28,6 @@ import com.box.l10n.mojito.service.tm.search.UsedFilter;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
-import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -431,7 +430,6 @@ public class AITranslateCronJob implements Job {
    */
   @Override
   @Timed("AITranslateCronJob.execute")
-  @Transactional
   public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
     logger.info("Executing AITranslateCronJob");
 
