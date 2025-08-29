@@ -201,46 +201,13 @@ public class AITranslateCronJob implements Job {
                     ? repositoryLocaleAIPrompts.get(targetLocale.getBcp47Tag())
                     : repositoryLocaleAIPrompts.get(REPOSITORY_DEFAULT_PROMPT);
             if (repositoryLocaleAIPrompt != null && !repositoryLocaleAIPrompt.isDisabled()) {
-              // If rate limiting is configured, wait and check if we can proceed
-              if (rateLimiter != null) {
-                // Wait for rate limit before executing the translation
-                waitForRateLimit(startTime);
-              } else {
-                // No rate limiter, still check if the thread should time out
-                if (System.currentTimeMillis() - startTime
-                    >= aiTranslationConfiguration.getTimeout().toMillis()) {
-                  throw new AITranslateTimeoutException();
-                }
-              }
-              logger.info(
-                  "Translating text unit id {} for locale: {} using prompt: {}",
-                  tmTextUnit.getId(),
-                  targetLocale.getBcp47Tag(),
-                  repositoryLocaleAIPrompt.getAiPrompt().getId());
-              if (aiTranslationConfiguration.getRepositorySettings(repository.getName()) != null
-                  && aiTranslationConfiguration
-                      .getRepositorySettings(repository.getName())
-                      .isInjectGlossaryMatches()) {
-                addAITranslationCurrentVariant(
-                    executeGlossaryMatchTranslationPrompt(
-                        tmTextUnit,
-                        repository,
-                        targetLocale,
-                        repositoryLocaleAIPrompt,
-                        glossaryCacheService
-                            .getGlossaryTermsInText(tmTextUnit.getContent())
-                            .stream()
-                            .filter(
-                                term ->
-                                    term.getLocaleTranslation(targetLocale.getBcp47Tag()) != null
-                                        || term.isDoNotTranslate())
-                            .collect(Collectors.toList())));
-              } else {
-                addAITranslationCurrentVariant(
-                    executeTranslationPrompt(
-                        tmTextUnit, repository, targetLocale, repositoryLocaleAIPrompt));
-              }
+              // Get the translation from the LLM service
+              AITranslation translation =
+                  sendTranslateRequest(
+                      tmTextUnit, repository, targetLocale, repositoryLocaleAIPrompt, startTime);
 
+              // Add the translation to the TM
+              addAITranslationCurrentVariant(translation);
             } else {
               if (repositoryLocaleAIPrompt != null && repositoryLocaleAIPrompt.isDisabled()) {
                 logger.debug(
@@ -280,6 +247,47 @@ public class AITranslateCronJob implements Job {
                 .increment();
           }
         });
+  }
+
+  private AITranslation sendTranslateRequest(
+      TMTextUnit tmTextUnit,
+      Repository repository,
+      Locale targetLocale,
+      RepositoryLocaleAIPrompt repositoryLocaleAIPrompt,
+      long startTime) {
+
+    if (rateLimiter != null) {
+      // Block and wait to respect rate limit
+      waitForRateLimit(startTime);
+    } else if (System.currentTimeMillis() - startTime
+        >= aiTranslationConfiguration.getTimeout().toMillis()) {
+      // Timeout reached, throw exception to abort processing this text unit
+      throw new AITranslateTimeoutException();
+    }
+
+    logger.info(
+        "Translating text unit id {} for locale: {} using prompt: {}",
+        tmTextUnit.getId(),
+        targetLocale.getBcp47Tag(),
+        repositoryLocaleAIPrompt.getAiPrompt().getId());
+
+    if (useGlossary(repository)) {
+      return executeGlossaryMatchTranslationPrompt(
+          tmTextUnit,
+          repository,
+          targetLocale,
+          repositoryLocaleAIPrompt,
+          glossaryCacheService.getGlossaryTermsInText(tmTextUnit.getContent()).stream()
+              .filter(
+                  term ->
+                      term.getLocaleTranslation(targetLocale.getBcp47Tag()) != null
+                          || term.isDoNotTranslate())
+              .collect(Collectors.toList()));
+
+    } else {
+      return executeTranslationPrompt(
+          tmTextUnit, repository, targetLocale, repositoryLocaleAIPrompt);
+    }
   }
 
   private void addAITranslationCurrentVariant(AITranslation aiTranslation) {
@@ -588,5 +596,12 @@ public class AITranslateCronJob implements Job {
               Tags.of("exception", e.getClass().getSimpleName()))
           .increment();
     }
+  }
+
+  private boolean useGlossary(Repository repository) {
+    return aiTranslationConfiguration.getRepositorySettings(repository.getName()) != null
+        && aiTranslationConfiguration
+            .getRepositorySettings(repository.getName())
+            .isInjectGlossaryMatches();
   }
 }
