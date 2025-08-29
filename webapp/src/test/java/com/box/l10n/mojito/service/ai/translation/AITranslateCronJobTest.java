@@ -62,7 +62,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-import org.springframework.jdbc.core.JdbcTemplate;
 import redis.clients.jedis.exceptions.JedisException;
 
 public class AITranslateCronJobTest {
@@ -97,8 +96,6 @@ public class AITranslateCronJobTest {
 
   @Mock GlossaryCacheService glossaryCacheService;
 
-  @Mock JdbcTemplate jdbcTemplate;
-
   AITranslateCronJob aiTranslateCronJob;
 
   TMTextUnit tmTextUnit;
@@ -125,7 +122,6 @@ public class AITranslateCronJobTest {
     aiTranslateCronJob.textUnitSearcher = textUnitSearcher;
     aiTranslateCronJob.glossaryCacheService = glossaryCacheService;
     aiTranslateCronJob.tmTextUnitVariantCommentService = tmTextUnitVariantCommentService;
-    aiTranslateCronJob.jdbcTemplate = jdbcTemplate;
     aITranslationConfiguration = new AITranslationConfiguration();
     aITranslationConfiguration.setEnabled(true);
     aITranslationConfiguration.setCron("0 0/10 * * * ?");

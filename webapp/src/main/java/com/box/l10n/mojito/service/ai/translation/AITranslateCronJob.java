@@ -53,7 +53,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.quartz.CronTriggerFactoryBean;
 import org.springframework.scheduling.quartz.JobDetailFactoryBean;
 import org.springframework.stereotype.Component;
@@ -100,8 +99,6 @@ public class AITranslateCronJob implements Job {
   @Autowired TmTextUnitPendingMTRepository tmTextUnitPendingMTRepository;
 
   @Autowired TextUnitSearcher textUnitSearcher;
-
-  @Autowired JdbcTemplate jdbcTemplate;
 
   @Autowired(required = false)
   GlossaryCacheService glossaryCacheService;
