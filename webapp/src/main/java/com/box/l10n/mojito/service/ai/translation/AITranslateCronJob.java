@@ -29,13 +29,11 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import jakarta.transaction.Transactional;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -114,7 +112,7 @@ public class AITranslateCronJob implements Job {
 
   @Timed("AITranslateCronJob.translate")
   public void translate(Repository repository, TMTextUnit tmTextUnit, TmTextUnitPendingMT pendingMT)
-      throws AIException, InterruptedException {
+      throws AIException {
 
     try {
       if (pendingMT != null) {
@@ -146,6 +144,10 @@ public class AITranslateCronJob implements Job {
         }
       }
     } catch (AITranslateTimeoutException e) {
+      meterRegistry
+          .counter(
+              "AITranslateCronJob.translate.timeout", Tags.of("repository", repository.getName()))
+          .increment();
       throw e;
     } catch (Exception e) {
       logger.error("Error running job for text unit id {}", tmTextUnit.getId(), e);
@@ -433,7 +435,8 @@ public class AITranslateCronJob implements Job {
   public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
     logger.info("Executing AITranslateCronJob");
 
-    resetExpiredProcessingStartedAtEntries(Duration.ofMinutes(30));
+    aiTranslationService.resetExpiredProcessingStartedAtEntries(
+        aiTranslationConfiguration.getTimeout());
 
     ExecutorService executorService = Executors.newFixedThreadPool(threads);
     meterRegistry
@@ -450,9 +453,8 @@ public class AITranslateCronJob implements Job {
       }
 
       // Update the processing started time for all pending MTs we are about to process
-      // This locks the pending MTs so that no other job can process them while we are working on
-      // them
-      bulkUpdateProcessingStartedAt(pendingMTs);
+      // Locks the pending MTs so that no other concurrent job can process them
+      aiTranslationService.bulkUpdateProcessingStartedAt(pendingMTs);
 
       logger.info("Processing {} pending MTs", pendingMTs.size());
 
@@ -488,7 +490,6 @@ public class AITranslateCronJob implements Job {
                               logger.warn(
                                   "Translation job timed out for text unit id: {}",
                                   pendingMT.getTmTextUnitId());
-                              // If interrupted, we consider it a timeout
                               timedOutTextUnits.add(pendingMT);
                             } catch (Exception e) {
                               logger.error(
@@ -512,15 +513,11 @@ public class AITranslateCronJob implements Job {
                           executorService))
               .toList();
 
-      try {
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-      } catch (CompletionException e) {
-        logger.warn(
-            "Timeout occurred while processing AI translations, some tasks may not have completed.");
+      CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+      if (!timedOutTextUnits.isEmpty()) {
+        aiTranslationService.resetProcessingStartedAtForTextUnits(timedOutTextUnits);
       }
-
-      resetProcessingStartedAtForTextUnits(timedOutTextUnits);
-
       aiTranslationService.deleteBatch(textUnitsToClearPendingMT);
     } finally {
       shutdownExecutor(executorService);
@@ -579,7 +576,8 @@ public class AITranslateCronJob implements Job {
           < aiTranslationConfiguration.getTimeout().toMillis()) {
         if (rateLimiter.isAllowed()) return;
         // Block until the rate limiter allows another request
-        logger.info("Rate limit exceeded for AI translation, waiting before retrying...");
+        logger.debug("Rate limit exceeded for AI translation, waiting before retrying...");
+        meterRegistry.counter("AITranslateCronJob.translate.rateLimited").increment();
         Thread.sleep(waitTime);
         waitTime =
             Math.min(
@@ -588,43 +586,12 @@ public class AITranslateCronJob implements Job {
       }
       throw new AITranslateTimeoutException();
     } catch (JedisException | InterruptedException e) {
-      logger.error("Error checking rate limit for AI translation, proceeding with translation", e);
+      logger.error("Error checking rate limit for AI translation, proceeding with translation");
+      meterRegistry
+          .counter(
+              "AITranslateCronJob.translate.rateLimitException",
+              Tags.of("exception", e.getClass().getSimpleName()))
+          .increment();
     }
-  }
-
-  private void bulkUpdateProcessingStartedAt(List<TmTextUnitPendingMT> pendingMTs) {
-    if (pendingMTs.isEmpty()) {
-      return;
-    }
-
-    String placeholders = pendingMTs.stream().map(p -> "?").collect(Collectors.joining(","));
-    String sql =
-        "UPDATE tm_text_unit_pending_mt SET processing_started_at = CURRENT_TIMESTAMP WHERE tm_text_unit_id IN ("
-            + placeholders
-            + ");";
-
-    jdbcTemplate.update(
-        sql, pendingMTs.stream().map(TmTextUnitPendingMT::getTmTextUnitId).toArray());
-  }
-
-  private void resetExpiredProcessingStartedAtEntries(Duration expiryDuration) {
-    String sql =
-        "UPDATE tm_text_unit_pending_mt SET processing_started_at = NULL WHERE processing_started_at < CURRENT_TIMESTAMP - ?";
-    jdbcTemplate.update(sql, expiryDuration.toSeconds());
-  }
-
-  private void resetProcessingStartedAtForTextUnits(Queue<TmTextUnitPendingMT> pendingMTs) {
-    if (pendingMTs.isEmpty()) {
-      return;
-    }
-
-    String placeholders = pendingMTs.stream().map(p -> "?").collect(Collectors.joining(","));
-    String sql =
-        "UPDATE tm_text_unit_pending_mt SET processing_started_at = NULL WHERE tm_text_unit_id IN ("
-            + placeholders
-            + ");";
-
-    jdbcTemplate.update(
-        sql, pendingMTs.stream().map(TmTextUnitPendingMT::getTmTextUnitId).toArray());
   }
 }

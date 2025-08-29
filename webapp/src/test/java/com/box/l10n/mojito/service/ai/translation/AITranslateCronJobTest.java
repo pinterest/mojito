@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.ai.translation;
 
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -7,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -28,6 +30,7 @@ import com.box.l10n.mojito.entity.TMTextUnitVariantComment;
 import com.box.l10n.mojito.entity.TmTextUnitPendingMT;
 import com.box.l10n.mojito.service.ai.LLMService;
 import com.box.l10n.mojito.service.ai.RepositoryLocaleAIPromptRepository;
+import com.box.l10n.mojito.service.ratelimiter.SlidingWindowRateLimiter;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.thirdparty.smartling.glossary.GlossaryCacheService;
 import com.box.l10n.mojito.service.thirdparty.smartling.glossary.GlossaryTerm;
@@ -59,6 +62,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import redis.clients.jedis.exceptions.JedisException;
 
 public class AITranslateCronJobTest {
 
@@ -92,6 +97,8 @@ public class AITranslateCronJobTest {
 
   @Mock GlossaryCacheService glossaryCacheService;
 
+  @Mock JdbcTemplate jdbcTemplate;
+
   AITranslateCronJob aiTranslateCronJob;
 
   TMTextUnit tmTextUnit;
@@ -118,11 +125,19 @@ public class AITranslateCronJobTest {
     aiTranslateCronJob.textUnitSearcher = textUnitSearcher;
     aiTranslateCronJob.glossaryCacheService = glossaryCacheService;
     aiTranslateCronJob.tmTextUnitVariantCommentService = tmTextUnitVariantCommentService;
+    aiTranslateCronJob.jdbcTemplate = jdbcTemplate;
     aITranslationConfiguration = new AITranslationConfiguration();
     aITranslationConfiguration.setEnabled(true);
     aITranslationConfiguration.setCron("0 0/10 * * * ?");
     aITranslationConfiguration.setBatchSize(5);
     aITranslationConfiguration.setExpiryDuration(Duration.ofHours(3));
+    AITranslationConfiguration.RateLimitConfiguration rateLimitConfiguration =
+        new AITranslationConfiguration.RateLimitConfiguration();
+    rateLimitConfiguration.setMaxRequests(10);
+    rateLimitConfiguration.setWindowSize(Duration.ofSeconds(60));
+    rateLimitConfiguration.setMinPollInterval(Duration.ofSeconds(1));
+    rateLimitConfiguration.setMaxPollInterval(Duration.ofSeconds(2));
+    aITranslationConfiguration.setRateLimit(rateLimitConfiguration);
     aiTranslateCronJob.threads = 1;
     AITranslationConfiguration.RepositorySettings repositorySettings =
         new AITranslationConfiguration.RepositorySettings();
@@ -440,15 +455,14 @@ public class AITranslateCronJobTest {
             tmTextUnitPendingMT,
             tmTextUnitPendingMT,
             tmTextUnitPendingMT);
-    when(tmTextUnitPendingMTRepository.findBatch(5))
-        .thenReturn(pendingMTList)
-        .thenReturn(pendingMTList)
-        .thenReturn(Collections.emptyList());
+    when(tmTextUnitPendingMTRepository.findBatch(5)).thenReturn(pendingMTList);
     aiTranslateCronJob.execute(mock(JobExecutionContext.class));
-    verify(llmService, times(30))
+    verify(aiTranslationService, times(1)).resetExpiredProcessingStartedAtEntries(any());
+    verify(aiTranslationService, times(1)).bulkUpdateProcessingStartedAt(pendingMTList);
+    verify(llmService, times(15))
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
-    verify(tmService, times(30))
+    verify(tmService, times(15))
         .addTMTextUnitCurrentVariantWithResult(
             anyLong(),
             anyLong(),
@@ -457,13 +471,13 @@ public class AITranslateCronJobTest {
             eq(TMTextUnitVariant.Status.MT_TRANSLATED),
             eq(false),
             isA(ZonedDateTime.class));
-    verify(tmTextUnitVariantCommentService, times(30))
+    verify(tmTextUnitVariantCommentService, times(15))
         .addComment(
             anyLong(),
             any(TMTextUnitVariantComment.Type.class),
             any(TMTextUnitVariantComment.Severity.class),
             eq("Translated via AI translation job."));
-    verify(aiTranslationService, times(3)).deleteBatch(isA(Queue.class));
+    verify(aiTranslationService, times(1)).deleteBatch(isA(Queue.class));
   }
 
   @Test
@@ -477,19 +491,16 @@ public class AITranslateCronJobTest {
             tmTextUnitPendingMT,
             tmTextUnitPendingMT,
             tmTextUnitPendingMT);
-    when(tmTextUnitPendingMTRepository.findBatch(5))
-        .thenReturn(pendingMTList)
-        .thenReturn(pendingMTList)
-        .thenReturn(Collections.emptyList());
+    when(tmTextUnitPendingMTRepository.findBatch(5)).thenReturn(pendingMTList);
     when(llmService.translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class)))
         .thenThrow(new RuntimeException("test"))
         .thenReturn("translated");
     aiTranslateCronJob.execute(mock(JobExecutionContext.class));
-    verify(llmService, times(30))
+    verify(llmService, times(15))
         .translate(
             isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
-    verify(tmService, times(29))
+    verify(tmService, times(14))
         .addTMTextUnitCurrentVariantWithResult(
             anyLong(),
             anyLong(),
@@ -498,13 +509,13 @@ public class AITranslateCronJobTest {
             eq(TMTextUnitVariant.Status.MT_TRANSLATED),
             eq(false),
             isA(ZonedDateTime.class));
-    verify(tmTextUnitVariantCommentService, times(29))
+    verify(tmTextUnitVariantCommentService, times(14))
         .addComment(
             anyLong(),
             any(TMTextUnitVariantComment.Type.class),
             any(TMTextUnitVariantComment.Severity.class),
             eq("Translated via AI translation job."));
-    verify(aiTranslationService, times(3)).deleteBatch(isA(Queue.class));
+    verify(aiTranslationService, times(1)).deleteBatch(isA(Queue.class));
   }
 
   @Test
@@ -520,9 +531,7 @@ public class AITranslateCronJobTest {
             tmTextUnitPendingMT,
             tmTextUnitPendingMT,
             tmTextUnitPendingMT);
-    when(tmTextUnitPendingMTRepository.findBatch(5))
-        .thenReturn(pendingMTList)
-        .thenReturn(Collections.emptyList());
+    when(tmTextUnitPendingMTRepository.findBatch(5)).thenReturn(pendingMTList);
     when(tmTextUnitRepository.findByIdWithAssetAndRepositoryAndTMFetched(2L))
         .thenReturn(Optional.empty());
     aiTranslateCronJob.execute(mock(JobExecutionContext.class));
@@ -544,7 +553,7 @@ public class AITranslateCronJobTest {
             any(TMTextUnitVariantComment.Type.class),
             any(TMTextUnitVariantComment.Severity.class),
             eq("Translated via AI translation job."));
-    verify(aiTranslationService, times(2)).deleteBatch(isA(Queue.class));
+    verify(aiTranslationService, times(1)).deleteBatch(isA(Queue.class));
   }
 
   @Test
@@ -582,8 +591,8 @@ public class AITranslateCronJobTest {
             any(TMTextUnitVariantComment.Type.class),
             any(TMTextUnitVariantComment.Severity.class),
             eq("Translated via AI translation job."));
-    verify(aiTranslationService, times(3)).deleteBatch(isA(Queue.class));
-    verify(aiTranslationService, times(2)).deleteBatch(argThat(q -> !q.isEmpty()));
+    verify(aiTranslationService, times(1)).deleteBatch(isA(Queue.class));
+    verify(aiTranslationService, times(1)).deleteBatch(argThat(q -> !q.isEmpty()));
   }
 
   @Test
@@ -726,5 +735,104 @@ public class AITranslateCronJobTest {
             eq("AITranslateCronJob.translate.glossaryMatch.caseSensitiveMatch"), any(Tags.class));
     verify(meterRegistry, times(3))
         .counter(eq("AITranslateCronJob.translate.glossaryMatch.exactMatch"), any(Tags.class));
+  }
+
+  @Test
+  public void testTranslateRateLimits() {
+    // Add the rate limiter
+    SlidingWindowRateLimiter rateLimiterMock = mock(SlidingWindowRateLimiter.class);
+    when(rateLimiterMock.isAllowed())
+        .thenReturn(false)
+        .thenReturn(true)
+        .thenReturn(false)
+        .thenReturn(true);
+    aiTranslateCronJob.rateLimiter = rateLimiterMock;
+
+    aiTranslateCronJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
+
+    verify(llmService, times(3))
+        .translate(
+            isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
+    verify(rateLimiterMock, times(5)).isAllowed();
+    verify(meterRegistry, times(2)).counter(eq("AITranslateCronJob.translate.rateLimited"));
+  }
+
+  @Test
+  public void testTranslateRateLimitException() {
+    SlidingWindowRateLimiter rateLimiterMock = mock(SlidingWindowRateLimiter.class);
+    doThrow(new JedisException("test")).when(rateLimiterMock).isAllowed();
+    aiTranslateCronJob.rateLimiter = rateLimiterMock;
+
+    aiTranslateCronJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
+
+    // Rate limit exception should not prevent translation attempts
+    verify(llmService, times(3))
+        .translate(
+            isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
+    verify(rateLimiterMock, times(3)).isAllowed();
+    verify(meterRegistry, times(3))
+        .counter(eq("AITranslateCronJob.translate.rateLimitException"), any(Tags.class));
+  }
+
+  @Test
+  public void testTranslateTimeoutWithRateLimit() {
+    // Timeout right away
+    aITranslationConfiguration.setTimeout(Duration.ofMillis(100));
+
+    SlidingWindowRateLimiter rateLimiterMock = mock(SlidingWindowRateLimiter.class);
+    when(rateLimiterMock.isAllowed()).thenReturn(true).thenReturn(false);
+    aiTranslateCronJob.rateLimiter = rateLimiterMock;
+
+    assertThrows(
+        AITranslateTimeoutException.class,
+        () -> {
+          aiTranslateCronJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
+        });
+
+    verify(llmService, times(1))
+        .translate(
+            isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
+    verify(rateLimiterMock, times(2)).isAllowed();
+
+    verify(meterRegistry, times(1))
+        .counter(eq("AITranslateCronJob.translate.timeout"), any(Tags.class));
+  }
+
+  @Test
+  public void testTranslateTimeout() {
+    // Timeout right away
+    aITranslationConfiguration.setTimeout(Duration.ofMillis(0));
+
+    assertThrows(
+        AITranslateTimeoutException.class,
+        () -> {
+          aiTranslateCronJob.translate(repository, tmTextUnit, tmTextUnitPendingMT);
+        });
+
+    verify(llmService, never())
+        .translate(
+            isA(TMTextUnit.class), isA(String.class), isA(String.class), isA(AIPrompt.class));
+    verify(meterRegistry, times(1))
+        .counter(eq("AITranslateCronJob.translate.timeout"), any(Tags.class));
+  }
+
+  @Test
+  public void testBatchLogicWithTimeout() throws JobExecutionException {
+    aITranslationConfiguration.setTimeout(Duration.ofMillis(0));
+
+    List<TmTextUnitPendingMT> pendingMTList =
+        Lists.list(
+            tmTextUnitPendingMT,
+            tmTextUnitPendingMT,
+            tmTextUnitPendingMT,
+            tmTextUnitPendingMT,
+            tmTextUnitPendingMT);
+    when(tmTextUnitPendingMTRepository.findBatch(5)).thenReturn(pendingMTList);
+    aiTranslateCronJob.execute(mock(JobExecutionContext.class));
+    verify(aiTranslationService, times(1)).deleteBatch(isA(Queue.class));
+    verify(meterRegistry, times(5))
+        .counter(eq("AITranslateCronJob.translate.timeout"), any(Tags.class));
+    verify(aiTranslationService, times(1)).resetProcessingStartedAtForTextUnits(any());
+    verify(aiTranslationService, times(1)).resetProcessingStartedAtForTextUnits(any());
   }
 }

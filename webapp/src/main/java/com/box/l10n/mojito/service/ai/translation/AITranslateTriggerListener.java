@@ -42,7 +42,7 @@ public class AITranslateTriggerListener extends TriggerListenerSupport {
   @Override
   public void triggerFired(Trigger trigger, JobExecutionContext context) {
     super.triggerFired(trigger, context);
-    logger.debug("Trigger fired: {}", trigger.getKey());
+    logger.debug("AITranslateTriggerListener: Trigger fired: {}", trigger.getKey());
   }
 
   /**
@@ -58,14 +58,17 @@ public class AITranslateTriggerListener extends TriggerListenerSupport {
 
     final String triggerName = trigger.getKey().getName();
     final int currentlyRunningJobs = getCurrentlyRunningJobsCount(triggerName);
+    final boolean veto = currentlyRunningJobs >= maxConcurrentJobs;
 
-    logger.info(
-        "Currently running jobs for trigger '{}': {} (max allowed: {})",
-        triggerName,
-        currentlyRunningJobs,
-        maxConcurrentJobs);
+    if (veto) {
+      logger.warn(
+          "Vetoing job execution for trigger '{}' as currently running jobs ({}) exceed max allowed ({})",
+          triggerName,
+          currentlyRunningJobs,
+          maxConcurrentJobs);
+    }
 
-    return currentlyRunningJobs > maxConcurrentJobs;
+    return veto;
   }
 
   /**

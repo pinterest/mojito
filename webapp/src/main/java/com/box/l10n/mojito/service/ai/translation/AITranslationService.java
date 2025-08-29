@@ -242,4 +242,36 @@ public class AITranslationService {
     tmTextUnitPendingMT.setCreatedDate(JSR310Migration.newDateTimeEmptyCtor());
     return tmTextUnitPendingMT;
   }
+
+  public void bulkUpdateProcessingStartedAt(List<TmTextUnitPendingMT> pendingMTs) {
+    if (pendingMTs.isEmpty()) return;
+
+    String placeholders = pendingMTs.stream().map(p -> "?").collect(Collectors.joining(","));
+    String sql =
+        "UPDATE tm_text_unit_pending_mt SET processing_started_at = CURRENT_TIMESTAMP WHERE tm_text_unit_id IN ("
+            + placeholders
+            + ");";
+
+    jdbcTemplate.update(
+        sql, pendingMTs.stream().map(TmTextUnitPendingMT::getTmTextUnitId).toArray());
+  }
+
+  public void resetExpiredProcessingStartedAtEntries(Duration expiryDuration) {
+    String sql =
+        "UPDATE tm_text_unit_pending_mt SET processing_started_at = NULL WHERE processing_started_at < CURRENT_TIMESTAMP - ?";
+    jdbcTemplate.update(sql, expiryDuration.toSeconds());
+  }
+
+  public void resetProcessingStartedAtForTextUnits(Queue<TmTextUnitPendingMT> pendingMTs) {
+    if (pendingMTs.isEmpty()) return;
+
+    String placeholders = pendingMTs.stream().map(p -> "?").collect(Collectors.joining(","));
+    String sql =
+        "UPDATE tm_text_unit_pending_mt SET processing_started_at = NULL WHERE tm_text_unit_id IN ("
+            + placeholders
+            + ");";
+
+    jdbcTemplate.update(
+        sql, pendingMTs.stream().map(TmTextUnitPendingMT::getTmTextUnitId).toArray());
+  }
 }

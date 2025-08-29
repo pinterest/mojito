@@ -28,7 +28,6 @@ public class AITranslateTriggerManager {
 
   @PostConstruct
   void init() throws SchedulerException {
-    System.out.println("AITranslateTriggerManager initialized with maxConcurrentJobs > 0");
     schedulerManager
         .getScheduler(DEFAULT_SCHEDULER_NAME)
         .getListenerManager()
