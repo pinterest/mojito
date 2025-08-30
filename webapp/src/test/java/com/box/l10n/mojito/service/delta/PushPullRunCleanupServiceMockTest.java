@@ -1,7 +1,6 @@
 package com.box.l10n.mojito.service.delta;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -64,7 +63,7 @@ public class PushPullRunCleanupServiceMockTest {
     verify(this.pullRunServiceMock)
         .deleteAllPullEntitiesOlderThan(
             eq(LocalDate.of(2025, 6, 2).atStartOfDay(ZoneId.systemDefault())), eq(1));
-    verify(this.pushRunServiceMock, times(2))
+    verify(this.pushRunServiceMock, times(1))
         .deletePushRunsByAsset(
             this.startDateTimeCaptor.capture(),
             this.endDateTimeCaptor.capture(),
@@ -72,14 +71,10 @@ public class PushPullRunCleanupServiceMockTest {
             anyInt());
 
     List<ZonedDateTime> expectedStartDates =
-        List.of(
-            LocalDate.of(2025, 6, 9).atStartOfDay(ZoneId.systemDefault()),
-            LocalDate.of(2025, 6, 2).atStartOfDay(ZoneId.systemDefault()));
+        List.of(LocalDate.of(2025, 6, 2).atStartOfDay(ZoneId.systemDefault()));
     assertEquals(expectedStartDates, startDateTimeCaptor.getAllValues());
     List<ZonedDateTime> expectedEndDates =
-        List.of(
-            LocalDate.of(2025, 6, 16).atStartOfDay(ZoneId.systemDefault()),
-            LocalDate.of(2025, 6, 9).atStartOfDay(ZoneId.systemDefault()));
+        List.of(LocalDate.of(2025, 6, 16).atStartOfDay(ZoneId.systemDefault()));
     assertEquals(expectedEndDates, endDateTimeCaptor.getAllValues());
   }
 
@@ -99,7 +94,7 @@ public class PushPullRunCleanupServiceMockTest {
     verify(this.pullRunServiceMock)
         .deleteAllPullEntitiesOlderThan(
             eq(LocalDate.of(2025, 7, 2).atStartOfDay(ZoneId.systemDefault())), eq(1));
-    verify(this.pushRunServiceMock, times(2))
+    verify(this.pushRunServiceMock, times(1))
         .deletePushRunsByAsset(
             this.startDateTimeCaptor.capture(),
             this.endDateTimeCaptor.capture(),
@@ -107,14 +102,10 @@ public class PushPullRunCleanupServiceMockTest {
             anyInt());
 
     List<ZonedDateTime> expectedStartDates =
-        List.of(
-            LocalDate.of(2025, 7, 9).atStartOfDay(ZoneId.systemDefault()),
-            LocalDate.of(2025, 7, 2).atStartOfDay(ZoneId.systemDefault()));
+        List.of(LocalDate.of(2025, 7, 2).atStartOfDay(ZoneId.systemDefault()));
     assertEquals(expectedStartDates, startDateTimeCaptor.getAllValues());
     List<ZonedDateTime> expectedEndDates =
-        List.of(
-            LocalDate.of(2025, 7, 16).atStartOfDay(ZoneId.systemDefault()),
-            LocalDate.of(2025, 7, 9).atStartOfDay(ZoneId.systemDefault()));
+        List.of(LocalDate.of(2025, 7, 16).atStartOfDay(ZoneId.systemDefault()));
     assertEquals(expectedEndDates, endDateTimeCaptor.getAllValues());
   }
 
@@ -134,7 +125,7 @@ public class PushPullRunCleanupServiceMockTest {
     verify(this.pullRunServiceMock)
         .deleteAllPullEntitiesOlderThan(
             eq(LocalDate.of(2025, 6, 16).atStartOfDay(ZoneId.systemDefault())), eq(1));
-    verify(this.pushRunServiceMock, times(2))
+    verify(this.pushRunServiceMock, times(1))
         .deletePushRunsByAsset(
             this.startDateTimeCaptor.capture(),
             this.endDateTimeCaptor.capture(),
@@ -142,14 +133,10 @@ public class PushPullRunCleanupServiceMockTest {
             anyInt());
 
     List<ZonedDateTime> expectedStartDates =
-        List.of(
-            LocalDate.of(2025, 6, 23).atStartOfDay(ZoneId.systemDefault()),
-            LocalDate.of(2025, 6, 16).atStartOfDay(ZoneId.systemDefault()));
+        List.of(LocalDate.of(2025, 6, 16).atStartOfDay(ZoneId.systemDefault()));
     assertEquals(expectedStartDates, startDateTimeCaptor.getAllValues());
     List<ZonedDateTime> expectedEndDates =
-        List.of(
-            LocalDate.of(2025, 6, 30).atStartOfDay(ZoneId.systemDefault()),
-            LocalDate.of(2025, 6, 23).atStartOfDay(ZoneId.systemDefault()));
+        List.of(LocalDate.of(2025, 6, 30).atStartOfDay(ZoneId.systemDefault()));
     assertEquals(expectedEndDates, endDateTimeCaptor.getAllValues());
   }
 
@@ -170,7 +157,7 @@ public class PushPullRunCleanupServiceMockTest {
     verify(this.pullRunServiceMock)
         .deleteAllPullEntitiesOlderThan(
             eq(LocalDate.of(2025, 6, 16).atStartOfDay(ZoneId.systemDefault())), eq(1));
-    verify(this.pushRunServiceMock, times(3))
+    verify(this.pushRunServiceMock, times(1))
         .deletePushRunsByAsset(
             this.startDateTimeCaptor.capture(),
             this.endDateTimeCaptor.capture(),
@@ -178,16 +165,10 @@ public class PushPullRunCleanupServiceMockTest {
             anyInt());
 
     List<ZonedDateTime> expectedStartDates =
-        List.of(
-            LocalDate.of(2025, 6, 30).atStartOfDay(ZoneId.systemDefault()),
-            LocalDate.of(2025, 6, 23).atStartOfDay(ZoneId.systemDefault()),
-            LocalDate.of(2025, 6, 16).atStartOfDay(ZoneId.systemDefault()));
+        List.of(LocalDate.of(2025, 6, 16).atStartOfDay(ZoneId.systemDefault()));
     assertEquals(expectedStartDates, startDateTimeCaptor.getAllValues());
     List<ZonedDateTime> expectedEndDates =
-        List.of(
-            LocalDate.of(2025, 7, 7).atStartOfDay(ZoneId.systemDefault()),
-            LocalDate.of(2025, 6, 30).atStartOfDay(ZoneId.systemDefault()),
-            LocalDate.of(2025, 6, 23).atStartOfDay(ZoneId.systemDefault()));
+        List.of(LocalDate.of(2025, 7, 7).atStartOfDay(ZoneId.systemDefault()));
     assertEquals(expectedEndDates, endDateTimeCaptor.getAllValues());
   }
 
@@ -208,7 +189,7 @@ public class PushPullRunCleanupServiceMockTest {
     verify(this.pullRunServiceMock)
         .deleteAllPullEntitiesOlderThan(
             eq(LocalDate.of(2025, 5, 5).atStartOfDay(ZoneId.systemDefault())), eq(1));
-    verify(this.pushRunServiceMock, times(2))
+    verify(this.pushRunServiceMock, times(1))
         .deletePushRunsByAsset(
             this.startDateTimeCaptor.capture(),
             this.endDateTimeCaptor.capture(),
@@ -216,14 +197,10 @@ public class PushPullRunCleanupServiceMockTest {
             anyInt());
 
     List<ZonedDateTime> expectedStartDates =
-        List.of(
-            LocalDate.of(2025, 5, 12).atStartOfDay(ZoneId.systemDefault()),
-            LocalDate.of(2025, 5, 5).atStartOfDay(ZoneId.systemDefault()));
+        List.of(LocalDate.of(2025, 5, 5).atStartOfDay(ZoneId.systemDefault()));
     assertEquals(expectedStartDates, startDateTimeCaptor.getAllValues());
     List<ZonedDateTime> expectedEndDates =
-        List.of(
-            LocalDate.of(2025, 5, 19).atStartOfDay(ZoneId.systemDefault()),
-            LocalDate.of(2025, 5, 12).atStartOfDay(ZoneId.systemDefault()));
+        List.of(LocalDate.of(2025, 5, 19).atStartOfDay(ZoneId.systemDefault()));
     assertEquals(expectedEndDates, endDateTimeCaptor.getAllValues());
   }
 
@@ -244,12 +221,19 @@ public class PushPullRunCleanupServiceMockTest {
     verify(this.pullRunServiceMock)
         .deleteAllPullEntitiesOlderThan(
             eq(LocalDate.of(2025, 6, 16).atStartOfDay(ZoneId.systemDefault())), eq(1));
-    verify(this.pushRunServiceMock, times(0))
+    verify(this.pushRunServiceMock, times(1))
         .deletePushRunsByAsset(
-            any(ZonedDateTime.class), any(ZonedDateTime.class), anyInt(), anyInt());
-    verify(this.pullRunServiceMock, times(0))
-        .deletePullRunsByAsset(
-            any(ZonedDateTime.class), any(ZonedDateTime.class), anyInt(), anyInt());
+            this.startDateTimeCaptor.capture(),
+            this.endDateTimeCaptor.capture(),
+            anyInt(),
+            anyInt());
+
+    List<ZonedDateTime> expectedStartDates =
+        List.of(LocalDate.of(2025, 6, 16).atStartOfDay(ZoneId.systemDefault()));
+    assertEquals(expectedStartDates, startDateTimeCaptor.getAllValues());
+    List<ZonedDateTime> expectedEndDates =
+        List.of(LocalDate.of(2025, 6, 16).atStartOfDay(ZoneId.systemDefault()));
+    assertEquals(expectedEndDates, endDateTimeCaptor.getAllValues());
   }
 
   @AfterEach
