@@ -36,6 +36,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -581,7 +582,12 @@ public class AITranslateCronJob implements Job {
         // Block until the rate limiter allows another request
         logger.debug("Rate limit exceeded for AI translation, waiting before retrying...");
         meterRegistry.counter("AITranslateCronJob.translate.rateLimited").increment();
-        Thread.sleep(waitTime);
+        long jitter =
+            ThreadLocalRandom.current()
+                .nextLong(
+                    aiTranslationConfiguration.getRateLimit().getMinJitter().toMillis(),
+                    aiTranslationConfiguration.getRateLimit().getMaxJitter().toMillis());
+        Thread.sleep(waitTime + jitter);
         waitTime =
             Math.min(
                 waitTime * 2,

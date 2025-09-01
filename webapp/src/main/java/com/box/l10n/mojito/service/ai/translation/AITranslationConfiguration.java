@@ -75,6 +75,8 @@ public class AITranslationConfiguration {
     private Duration windowSize;
     private Duration minPollInterval;
     private Duration maxPollInterval;
+    private Duration minJitter = Duration.ofMillis(50);
+    private Duration maxJitter = Duration.ofMillis(200);
 
     public boolean isEnabled() {
       return enabled;
@@ -114,6 +116,22 @@ public class AITranslationConfiguration {
 
     public void setMaxPollInterval(Duration maxPollInterval) {
       this.maxPollInterval = maxPollInterval;
+    }
+
+    public Duration getMinJitter() {
+      return minJitter;
+    }
+
+    public void setMinJitter(Duration minJitter) {
+      this.minJitter = minJitter;
+    }
+
+    public Duration getMaxJitter() {
+      return maxJitter;
+    }
+
+    public void setMaxJitter(Duration maxJitter) {
+      this.maxJitter = maxJitter;
     }
   }
 
