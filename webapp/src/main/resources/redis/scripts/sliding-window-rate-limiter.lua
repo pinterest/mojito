@@ -15,8 +15,12 @@ redis.call('ZREMRANGEBYSCORE', key, 0, now_ms - window_size_ms)
 local current_request_count = redis.call('ZCARD', key)
 
 if current_request_count < max_requests then
-    -- Add the current request, use the current time as the score and unique identifier
-    redis.call('ZADD', key, now_ms, now_ms)
+    -- Add the current request, use the current time as the score and a unique identifier as member
+    -- Member needs to be unique, although the script is atomic, multiple requests can have the
+    -- same timestamp (milliseconds) but differ in microseconds, without this you get a tricky to debug
+    -- race condition where multiple requests at the same millisecond are counted as one
+    local unique_id = now_ms .. ":" .. now[2] .. ":" .. math.random(1000000, 9999999)
+    redis.call('ZADD', key, now_ms, unique_id)
     redis.call('EXPIRE', key, math.ceil(window_size_ms / 1000))
     return 1
 else

@@ -13,6 +13,7 @@ import com.box.l10n.mojito.entity.TmTextUnitPendingMT;
 import com.box.l10n.mojito.rest.ai.AIException;
 import com.box.l10n.mojito.service.ai.LLMService;
 import com.box.l10n.mojito.service.ai.RepositoryLocaleAIPromptRepository;
+import com.box.l10n.mojito.service.ratelimiter.SlidingWindowRateLimiter;
 import com.box.l10n.mojito.service.thirdparty.smartling.glossary.GlossaryCacheService;
 import com.box.l10n.mojito.service.thirdparty.smartling.glossary.GlossaryTerm;
 import com.box.l10n.mojito.service.tm.AddTMTextUnitCurrentVariantResult;
@@ -24,7 +25,6 @@ import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.box.l10n.mojito.service.tm.search.TextUnitSearcher;
 import com.box.l10n.mojito.service.tm.search.TextUnitSearcherParameters;
 import com.box.l10n.mojito.service.tm.search.UsedFilter;
-import com.google.common.collect.Lists;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
@@ -36,11 +36,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
@@ -54,10 +54,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.quartz.CronTriggerFactoryBean;
 import org.springframework.scheduling.quartz.JobDetailFactoryBean;
 import org.springframework.stereotype.Component;
+import redis.clients.jedis.exceptions.JedisException;
 
 /**
  * Quartz job that translates text units in batches via AI.
@@ -67,12 +67,15 @@ import org.springframework.stereotype.Component;
 @Component
 @Configuration
 @ConditionalOnProperty(value = "l10n.ai.translation.enabled", havingValue = "true")
-@DisallowConcurrentExecution
 public class AITranslateCronJob implements Job {
 
   static Logger logger = LoggerFactory.getLogger(AITranslateCronJob.class);
 
   private static final String REPOSITORY_DEFAULT_PROMPT = "repository_default_prompt";
+
+  @Autowired(required = false)
+  @Qualifier("aiTranslationRateLimiter")
+  SlidingWindowRateLimiter rateLimiter;
 
   @Autowired TMTextUnitRepository tmTextUnitRepository;
 
@@ -95,8 +98,6 @@ public class AITranslateCronJob implements Job {
   @Lazy @Autowired TMService tmService;
 
   @Autowired TmTextUnitPendingMTRepository tmTextUnitPendingMTRepository;
-
-  @Autowired JdbcTemplate jdbcTemplate;
 
   @Autowired TextUnitSearcher textUnitSearcher;
 
@@ -139,6 +140,12 @@ public class AITranslateCronJob implements Job {
               .increment();
         }
       }
+    } catch (AITranslateTimeoutException e) {
+      meterRegistry
+          .counter(
+              "AITranslateCronJob.translate.timeout", Tags.of("repository", repository.getName()))
+          .increment();
+      throw e;
     } catch (Exception e) {
       logger.error("Error running job for text unit id {}", tmTextUnit.getId(), e);
       meterRegistry
@@ -161,6 +168,7 @@ public class AITranslateCronJob implements Job {
 
   private void translateLocales(
       TMTextUnit tmTextUnit, Repository repository, Set<Locale> localesForMT) {
+    long startTime = System.currentTimeMillis();
 
     Map<String, RepositoryLocaleAIPrompt> repositoryLocaleAIPrompts =
         repositoryLocaleAIPromptRepository
@@ -174,7 +182,6 @@ public class AITranslateCronJob implements Job {
                             ? rlap.getLocale().getBcp47Tag()
                             : REPOSITORY_DEFAULT_PROMPT,
                     Function.identity()));
-    List<AITranslation> aiTranslations = Lists.newArrayList();
     localesForMT.forEach(
         targetLocale -> {
           try {
@@ -184,7 +191,7 @@ public class AITranslateCronJob implements Job {
                     .getRepositorySettings(repository.getName())
                     .isReuseSourceOnLanguageMatch()
                 && targetLocale.getBcp47Tag().startsWith(sourceLang)) {
-              aiTranslations.add(
+              addAITranslationCurrentVariant(
                   reuseSourceStringAsTranslation(tmTextUnit, repository, targetLocale, sourceLang));
               return;
             }
@@ -195,35 +202,13 @@ public class AITranslateCronJob implements Job {
                     ? repositoryLocaleAIPrompts.get(targetLocale.getBcp47Tag())
                     : repositoryLocaleAIPrompts.get(REPOSITORY_DEFAULT_PROMPT);
             if (repositoryLocaleAIPrompt != null && !repositoryLocaleAIPrompt.isDisabled()) {
-              logger.info(
-                  "Translating text unit id {} for locale: {} using prompt: {}",
-                  tmTextUnit.getId(),
-                  targetLocale.getBcp47Tag(),
-                  repositoryLocaleAIPrompt.getAiPrompt().getId());
-              if (aiTranslationConfiguration.getRepositorySettings(repository.getName()) != null
-                  && aiTranslationConfiguration
-                      .getRepositorySettings(repository.getName())
-                      .isInjectGlossaryMatches()) {
-                aiTranslations.add(
-                    executeGlossaryMatchTranslationPrompt(
-                        tmTextUnit,
-                        repository,
-                        targetLocale,
-                        repositoryLocaleAIPrompt,
-                        glossaryCacheService
-                            .getGlossaryTermsInText(tmTextUnit.getContent())
-                            .stream()
-                            .filter(
-                                term ->
-                                    term.getLocaleTranslation(targetLocale.getBcp47Tag()) != null
-                                        || term.isDoNotTranslate())
-                            .collect(Collectors.toList())));
-              } else {
-                aiTranslations.add(
-                    executeTranslationPrompt(
-                        tmTextUnit, repository, targetLocale, repositoryLocaleAIPrompt));
-              }
+              // Get the translation from the LLM service
+              AITranslation translation =
+                  sendTranslateRequest(
+                      tmTextUnit, repository, targetLocale, repositoryLocaleAIPrompt, startTime);
 
+              // Add the translation to the TM
+              addAITranslationCurrentVariant(translation);
             } else {
               if (repositoryLocaleAIPrompt != null && repositoryLocaleAIPrompt.isDisabled()) {
                 logger.debug(
@@ -247,6 +232,8 @@ public class AITranslateCronJob implements Job {
                     .increment();
               }
             }
+          } catch (AITranslateTimeoutException e) {
+            throw e;
           } catch (Exception e) {
             logger.error(
                 "Error translating text unit id {} for locale: {}",
@@ -261,22 +248,64 @@ public class AITranslateCronJob implements Job {
                 .increment();
           }
         });
-    for (AITranslation aiTranslation : aiTranslations) {
-      AddTMTextUnitCurrentVariantResult result =
-          tmService.addTMTextUnitCurrentVariantWithResult(
-              aiTranslation.getTmTextUnit().getId(),
-              aiTranslation.getLocaleId(),
-              aiTranslation.getTranslation(),
-              aiTranslation.getComment(),
-              aiTranslation.getStatus(),
-              aiTranslation.isIncludedInLocalizedFile(),
-              aiTranslation.getCreatedDate());
-      tmTextUnitVariantCommentService.addComment(
-          result.getTmTextUnitCurrentVariant().getTmTextUnitVariant().getId(),
-          TMTextUnitVariantComment.Type.AI_TRANSLATION,
-          TMTextUnitVariantComment.Severity.INFO,
-          "Translated via AI translation job.");
+  }
+
+  private AITranslation sendTranslateRequest(
+      TMTextUnit tmTextUnit,
+      Repository repository,
+      Locale targetLocale,
+      RepositoryLocaleAIPrompt repositoryLocaleAIPrompt,
+      long startTime) {
+
+    if (rateLimiter != null) {
+      // Block and wait to respect rate limit
+      waitForRateLimit(startTime);
+    } else if (System.currentTimeMillis() - startTime
+        >= aiTranslationConfiguration.getTimeout().toMillis()) {
+      // Timeout reached, throw exception to abort processing this text unit
+      throw new AITranslateTimeoutException();
     }
+
+    logger.info(
+        "Translating text unit id {} for locale: {} using prompt: {}",
+        tmTextUnit.getId(),
+        targetLocale.getBcp47Tag(),
+        repositoryLocaleAIPrompt.getAiPrompt().getId());
+
+    if (useGlossary(repository)) {
+      return executeGlossaryMatchTranslationPrompt(
+          tmTextUnit,
+          repository,
+          targetLocale,
+          repositoryLocaleAIPrompt,
+          glossaryCacheService.getGlossaryTermsInText(tmTextUnit.getContent()).stream()
+              .filter(
+                  term ->
+                      term.getLocaleTranslation(targetLocale.getBcp47Tag()) != null
+                          || term.isDoNotTranslate())
+              .collect(Collectors.toList()));
+
+    } else {
+      return executeTranslationPrompt(
+          tmTextUnit, repository, targetLocale, repositoryLocaleAIPrompt);
+    }
+  }
+
+  private void addAITranslationCurrentVariant(AITranslation aiTranslation) {
+    AddTMTextUnitCurrentVariantResult result =
+        tmService.addTMTextUnitCurrentVariantWithResult(
+            aiTranslation.getTmTextUnit().getId(),
+            aiTranslation.getLocaleId(),
+            aiTranslation.getTranslation(),
+            aiTranslation.getComment(),
+            aiTranslation.getStatus(),
+            aiTranslation.isIncludedInLocalizedFile(),
+            aiTranslation.getCreatedDate());
+    tmTextUnitVariantCommentService.addComment(
+        result.getTmTextUnitCurrentVariant().getTmTextUnitVariant().getId(),
+        TMTextUnitVariantComment.Type.AI_TRANSLATION,
+        TMTextUnitVariantComment.Severity.INFO,
+        "Translated via AI translation job.");
   }
 
   private AITranslation reuseSourceStringAsTranslation(
@@ -408,70 +437,92 @@ public class AITranslateCronJob implements Job {
   @Override
   @Timed("AITranslateCronJob.execute")
   public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-    logger.info("Executing AITranslateCronJob");
+    logger.debug("Executing AITranslateCronJob");
+
+    aiTranslationService.resetExpiredProcessingStartedAtEntries(
+        aiTranslationConfiguration.getTimeout());
 
     ExecutorService executorService = Executors.newFixedThreadPool(threads);
+    meterRegistry
+        .counter("AITranslateCronJob.pendingMT.queueSize")
+        .increment(tmTextUnitPendingMTRepository.count());
 
-    List<TmTextUnitPendingMT> pendingMTs;
     try {
-      do {
-        meterRegistry
-            .counter("AITranslateCronJob.pendingMT.queueSize")
-            .increment(tmTextUnitPendingMTRepository.count());
-        pendingMTs =
-            tmTextUnitPendingMTRepository.findBatch(aiTranslationConfiguration.getBatchSize());
+      List<TmTextUnitPendingMT> pendingMTs =
+          tmTextUnitPendingMTRepository.findBatch(aiTranslationConfiguration.getBatchSize());
 
-        logger.info("Processing {} pending MTs", pendingMTs.size());
-        Queue<TmTextUnitPendingMT> textUnitsToClearPendingMT = new ConcurrentLinkedQueue<>();
-        if (glossaryCacheService != null) {
-          // Load glossary cache from blob storage to ensure it's up to date
-          glossaryCacheService.loadGlossaryCache();
-        }
-        List<Long> unusedIds = getUnusedIds(pendingMTs);
-        List<CompletableFuture<Void>> futures =
-            pendingMTs.stream()
-                .peek(
-                    pendingMT -> {
-                      if (isUnused(pendingMT, unusedIds)) {
-                        logger.info(
-                            "Skipping AI translation for tmTextUnitId: {} as it is unused & removing it from queue",
-                            pendingMT.getTmTextUnitId());
-                        textUnitsToClearPendingMT.add(pendingMT);
-                      }
-                    })
-                .filter(pendingMT -> !isUnused(pendingMT, unusedIds))
-                .map(
-                    pendingMT ->
-                        CompletableFuture.runAsync(
-                            () -> {
-                              try {
-                                TMTextUnit tmTextUnit = getTmTextUnit(pendingMT);
-                                Repository repository = tmTextUnit.getAsset().getRepository();
-                                translate(repository, tmTextUnit, pendingMT);
-                              } catch (Exception e) {
-                                logger.error(
-                                    "Error processing pending MT for text unit id: {}",
-                                    pendingMT.getTmTextUnitId(),
-                                    e);
-                                meterRegistry
-                                    .counter("AITranslateCronJob.pendingMT.error")
-                                    .increment();
-                              } finally {
-                                if (pendingMT != null) {
-                                  logger.debug(
-                                      "Sending pending MT for tmTextUnitId: {} for deletion",
-                                      pendingMT.getTmTextUnitId());
-                                  textUnitsToClearPendingMT.add(pendingMT);
-                                }
+      if (pendingMTs.isEmpty()) {
+        logger.debug("No pending MTs to process, finishing early.");
+        return;
+      }
+
+      // Update the processing started time for all pending MTs we are about to process
+      // Locks the pending MTs so that no other concurrent job can process them
+      aiTranslationService.bulkUpdateProcessingStartedAt(pendingMTs);
+
+      logger.info("Processing {} pending MTs", pendingMTs.size());
+
+      Queue<TmTextUnitPendingMT> textUnitsToClearPendingMT = new ConcurrentLinkedQueue<>();
+      Queue<TmTextUnitPendingMT> timedOutTextUnits = new ConcurrentLinkedQueue<>();
+
+      if (glossaryCacheService != null) {
+        // Load glossary cache from blob storage to ensure it's up to date
+        glossaryCacheService.loadGlossaryCache();
+      }
+      List<Long> unusedIds = getUnusedIds(pendingMTs);
+      List<CompletableFuture<Void>> futures =
+          pendingMTs.stream()
+              .peek(
+                  pendingMT -> {
+                    if (isUnused(pendingMT, unusedIds)) {
+                      logger.info(
+                          "Skipping AI translation for tmTextUnitId: {} as it is unused & removing it from queue",
+                          pendingMT.getTmTextUnitId());
+                      textUnitsToClearPendingMT.add(pendingMT);
+                    }
+                  })
+              .filter(pendingMT -> !isUnused(pendingMT, unusedIds))
+              .map(
+                  pendingMT ->
+                      CompletableFuture.runAsync(
+                          () -> {
+                            try {
+                              TMTextUnit tmTextUnit = getTmTextUnit(pendingMT);
+                              Repository repository = tmTextUnit.getAsset().getRepository();
+                              translate(repository, tmTextUnit, pendingMT);
+                            } catch (AITranslateTimeoutException e) {
+                              logger.warn(
+                                  "Translation job timed out for text unit id: {}",
+                                  pendingMT.getTmTextUnitId());
+                              timedOutTextUnits.add(pendingMT);
+                            } catch (Exception e) {
+                              logger.error(
+                                  "Error processing pending MT for text unit id: {}",
+                                  pendingMT.getTmTextUnitId(),
+                                  e);
+                              meterRegistry
+                                  .counter("AITranslateCronJob.pendingMT.error")
+                                  .increment();
+                            } finally {
+                              logger.debug(
+                                  "Sending pending MT for tmTextUnitId: {} for deletion",
+                                  pendingMT.getTmTextUnitId());
+
+                              // Only add to the clear queue if it didn't time out
+                              if (!timedOutTextUnits.contains(pendingMT)) {
+                                textUnitsToClearPendingMT.add(pendingMT);
                               }
-                            },
-                            executorService))
-                .toList();
+                            }
+                          },
+                          executorService))
+              .toList();
 
-        // Wait for all tasks in this batch to complete
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        aiTranslationService.deleteBatch(textUnitsToClearPendingMT);
-      } while (!pendingMTs.isEmpty());
+      CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+      if (!timedOutTextUnits.isEmpty()) {
+        aiTranslationService.resetProcessingStartedAtForTextUnits(timedOutTextUnits);
+      }
+      aiTranslationService.deleteBatch(textUnitsToClearPendingMT);
     } finally {
       shutdownExecutor(executorService);
     }
@@ -520,5 +571,45 @@ public class AITranslateCronJob implements Job {
     trigger.setJobDetail(job);
     trigger.setCronExpression(aiTranslationConfiguration.getCron());
     return trigger;
+  }
+
+  private void waitForRateLimit(long startTime) {
+    long waitTime = aiTranslationConfiguration.getRateLimit().getMinPollInterval().toMillis();
+    try {
+      while (System.currentTimeMillis() - startTime
+          < aiTranslationConfiguration.getTimeout().toMillis()) {
+        if (rateLimiter.isAllowed()) return;
+        // Block until the rate limiter allows another request
+        logger.debug("Rate limit exceeded for AI translation, waiting before retrying...");
+        meterRegistry.counter("AITranslateCronJob.translate.rateLimited").increment();
+        long jitter =
+            ThreadLocalRandom.current()
+                .nextLong(
+                    aiTranslationConfiguration.getRateLimit().getMinJitter().toMillis(),
+                    aiTranslationConfiguration.getRateLimit().getMaxJitter().toMillis());
+        Thread.sleep(waitTime + jitter);
+        waitTime =
+            Math.min(
+                waitTime * 2,
+                aiTranslationConfiguration.getRateLimit().getMaxPollInterval().toMillis());
+      }
+      throw new AITranslateTimeoutException();
+    } catch (InterruptedException e) {
+      throw new AITranslateTimeoutException();
+    } catch (JedisException e) {
+      logger.error("Error checking rate limit for AI translation, proceeding with translation");
+      meterRegistry
+          .counter(
+              "AITranslateCronJob.translate.rateLimitException",
+              Tags.of("exception", e.getClass().getSimpleName()))
+          .increment();
+    }
+  }
+
+  private boolean useGlossary(Repository repository) {
+    return aiTranslationConfiguration.getRepositorySettings(repository.getName()) != null
+        && aiTranslationConfiguration
+            .getRepositorySettings(repository.getName())
+            .isInjectGlossaryMatches();
   }
 }
