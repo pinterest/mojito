@@ -19,7 +19,7 @@ if current_request_count < max_requests then
     -- Member needs to be unique, although the script is atomic, multiple requests can have the
     -- same timestamp (milliseconds) but differ in microseconds, without this you get a tricky to debug
     -- race condition where multiple requests at the same millisecond are counted as one
-    local unique_id = now_ms .. ":" .. math.random(1000000, 9999999)
+    local unique_id = now_ms .. ":" .. now[2] .. ":" .. math.random(1000000, 9999999)
     redis.call('ZADD', key, now_ms, unique_id)
     redis.call('EXPIRE', key, math.ceil(window_size_ms / 1000))
     return 1

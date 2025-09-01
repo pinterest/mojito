@@ -436,7 +436,7 @@ public class AITranslateCronJob implements Job {
   @Override
   @Timed("AITranslateCronJob.execute")
   public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-    logger.info("Executing AITranslateCronJob");
+    logger.debug("Executing AITranslateCronJob");
 
     aiTranslationService.resetExpiredProcessingStartedAtEntries(
         aiTranslationConfiguration.getTimeout());
@@ -451,7 +451,7 @@ public class AITranslateCronJob implements Job {
           tmTextUnitPendingMTRepository.findBatch(aiTranslationConfiguration.getBatchSize());
 
       if (pendingMTs.isEmpty()) {
-        logger.info("No pending MTs to process, finishing early.");
+        logger.debug("No pending MTs to process, finishing early.");
         return;
       }
 
