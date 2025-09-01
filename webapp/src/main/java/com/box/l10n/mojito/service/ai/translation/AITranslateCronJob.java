@@ -588,7 +588,9 @@ public class AITranslateCronJob implements Job {
                 aiTranslationConfiguration.getRateLimit().getMaxPollInterval().toMillis());
       }
       throw new AITranslateTimeoutException();
-    } catch (JedisException | InterruptedException e) {
+    } catch (InterruptedException e) {
+      throw new AITranslateTimeoutException();
+    } catch (JedisException e) {
       logger.error("Error checking rate limit for AI translation, proceeding with translation");
       meterRegistry
           .counter(
