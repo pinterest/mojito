@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.service.ai.translation;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import org.quartz.JobExecutionContext;
 import org.quartz.Trigger;
 import org.quartz.listeners.TriggerListenerSupport;
@@ -26,12 +27,15 @@ public class AITranslateTriggerListener extends TriggerListenerSupport {
 
   private final int maxConcurrentJobs;
   private final JdbcTemplate jdbcTemplate;
+  private final MeterRegistry meterRegistry;
 
   public AITranslateTriggerListener(
       @Value("${l10n.ai.translation.job.maxConcurrentJobs:0}") int maxConcurrentJobs,
-      JdbcTemplate jdbcTemplate) {
+      JdbcTemplate jdbcTemplate,
+      MeterRegistry meterRegistry) {
     this.maxConcurrentJobs = maxConcurrentJobs;
     this.jdbcTemplate = jdbcTemplate;
+    this.meterRegistry = meterRegistry;
   }
 
   @Override
@@ -66,6 +70,8 @@ public class AITranslateTriggerListener extends TriggerListenerSupport {
           triggerName,
           currentlyRunningJobs,
           maxConcurrentJobs);
+
+      meterRegistry.counter("AITranslateTriggerListener.jobVetoed").increment();
     }
 
     return veto;
