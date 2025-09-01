@@ -233,7 +233,7 @@ class SearchParamsStore {
         // 'Filter by' related
         this.status = SearchParamsStore.STATUS.ALL;
         this.used = true;
-        this.unUsed = true;
+        this.unUsed = false;
 
         this.translate = true;
         this.doNotTranslate = true;
