@@ -93,10 +93,10 @@ public interface PushRunRepository extends JpaRepository<PushRun, Long> {
               from PushRun pr2
               join pr2.pushRunAssets pra2
              where pr2.createdDate between :startDate and :endDate
-             group by pra2.asset) latest_pr
+             group by pra2.asset, CAST(pr2.createdDate AS DATE)) latest_pr
         on pra.asset = latest_pr.asset
        and pr.createdDate = latest_pr.max_created_date
-     group by pra.asset
+     group by pra.asset, CAST(pr.createdDate AS DATE)
 """)
   List<Long> getLatestPushRunIdsPerAsset(
       @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);

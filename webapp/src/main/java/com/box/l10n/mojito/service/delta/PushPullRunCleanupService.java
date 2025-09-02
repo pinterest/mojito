@@ -3,8 +3,6 @@ package com.box.l10n.mojito.service.delta;
 import com.box.l10n.mojito.service.pullrun.PullRunService;
 import com.box.l10n.mojito.service.pushrun.PushRunService;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -36,45 +34,26 @@ public class PushPullRunCleanupService {
     return ZonedDateTime.now();
   }
 
-  private List<DateRange> getDateRanges(
-      ZonedDateTime retentionStartDate, int extraNumberOfWeeksToRetain) {
-    List<DateRange> dateRanges = new ArrayList<>();
-    ZonedDateTime endWeekDateTime = retentionStartDate;
-    for (int i = 0; i < extraNumberOfWeeksToRetain; i++) {
-      ZonedDateTime startWeekDateTime = endWeekDateTime.minusWeeks(1);
-      DateRange dateRange = new DateRange(startWeekDateTime, endWeekDateTime);
-      dateRanges.add(dateRange);
-      endWeekDateTime = startWeekDateTime;
-    }
-    return dateRanges;
-  }
-
   private ZonedDateTime cleanupPushPullRunsAndGetRetentionEndDate(
       PushPullRunCleanupConfigurationProperties configurationProperties) {
     ZonedDateTime currentDateTime = this.getCurrentDateTime();
-    ZonedDateTime retentionStartDate =
+    ZonedDateTime retentionEndDate =
         currentDateTime.minusSeconds(
             (int) configurationProperties.getRetentionDuration().getSeconds());
-    List<DateRange> dateRanges =
-        this.getDateRanges(
-            retentionStartDate, configurationProperties.getExtraNumberOfWeeksToRetain());
-    ZonedDateTime retentionEndDate = retentionStartDate;
-    for (DateRange dateRange : dateRanges) {
-      logger.debug(
-          "Deleting push and pull runs from {} to {}", dateRange.startDate, dateRange.endDate);
-      this.pushRunService.deletePushRunsByAsset(
-          dateRange.startDate,
-          dateRange.endDate,
-          configurationProperties.getDeleteBatchSize(),
-          configurationProperties.getMaxNumberOfBatches());
-      this.pullRunService.deletePullRunsByAsset(
-          dateRange.startDate,
-          dateRange.endDate,
-          configurationProperties.getDeleteBatchSize(),
-          configurationProperties.getMaxNumberOfBatches());
-      retentionEndDate = dateRange.startDate;
-    }
-    return retentionEndDate;
+    ZonedDateTime retentionStartDate =
+        retentionEndDate.minusWeeks(configurationProperties.getExtraNumberOfWeeksToRetain());
+    logger.debug("Deleting push and pull runs from {} to {}", retentionStartDate, retentionEndDate);
+    this.pushRunService.deletePushRunsByAsset(
+        retentionStartDate,
+        retentionEndDate,
+        configurationProperties.getDeleteBatchSize(),
+        configurationProperties.getMaxNumberOfBatches());
+    this.pullRunService.deletePullRunsByAsset(
+        retentionStartDate,
+        retentionEndDate,
+        configurationProperties.getDeleteBatchSize(),
+        configurationProperties.getMaxNumberOfBatches());
+    return retentionStartDate;
   }
 
   public void cleanOldPushPullData(
@@ -86,6 +65,4 @@ public class PushPullRunCleanupService {
     pullRunService.deleteAllPullEntitiesOlderThan(
         retentionEndDate, configurationProperties.getDeleteBatchSize());
   }
-
-  private record DateRange(ZonedDateTime startDate, ZonedDateTime endDate) {}
 }
