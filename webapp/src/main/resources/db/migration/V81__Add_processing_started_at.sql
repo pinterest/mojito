@@ -1,0 +1,4 @@
+ALTER TABLE tm_text_unit_pending_mt ADD COLUMN processing_started_at DATETIME NULL;
+
+ALTER TABLE tm_text_unit_pending_mt
+ADD INDEX I__TM_TEXT_UNIT_PENDING_MT__PROCESSING_STARTED_AT (processing_started_at);
