@@ -209,7 +209,7 @@ public class AITranslateCronJob implements Job {
                       tmTextUnit, repository, targetLocale, repositoryLocaleAIPrompt, startTime);
 
               if (Strings.isNullOrEmpty(translation.getTranslation())) {
-                logger.warn(
+                logger.error(
                     "AI translation is empty for text unit id: {}, for locale: {}, using prompt id: {}. Skipping adding the variant.",
                     tmTextUnit.getId(),
                     targetLocale.getBcp47Tag(),
