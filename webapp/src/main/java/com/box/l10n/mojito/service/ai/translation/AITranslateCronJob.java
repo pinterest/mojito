@@ -25,6 +25,7 @@ import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.box.l10n.mojito.service.tm.search.TextUnitSearcher;
 import com.box.l10n.mojito.service.tm.search.TextUnitSearcherParameters;
 import com.box.l10n.mojito.service.tm.search.UsedFilter;
+import com.google.common.base.Strings;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
@@ -207,8 +208,18 @@ public class AITranslateCronJob implements Job {
                   sendTranslateRequest(
                       tmTextUnit, repository, targetLocale, repositoryLocaleAIPrompt, startTime);
 
-              // Add the translation to the TM
-              addAITranslationCurrentVariant(translation);
+              if (Strings.isNullOrEmpty(translation.getTranslation())) {
+                logger.error(
+                    "AI translation is empty for text unit id: {}, for locale: {}, using prompt id: {}. Skipping adding the variant.",
+                    tmTextUnit.getId(),
+                    targetLocale.getBcp47Tag(),
+                    repositoryLocaleAIPrompt.getAiPrompt().getId());
+
+                meterRegistry.counter("AITranslateCronJob.translate.emptyTranslation").increment();
+              } else {
+                // Add the translation to the TM
+                addAITranslationCurrentVariant(translation);
+              }
             } else {
               if (repositoryLocaleAIPrompt != null && repositoryLocaleAIPrompt.isDisabled()) {
                 logger.debug(
