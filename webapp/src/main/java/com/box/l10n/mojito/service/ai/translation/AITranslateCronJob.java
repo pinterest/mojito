@@ -40,6 +40,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import joptsimple.internal.Strings;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.quartz.Job;
 import org.quartz.JobDetail;
@@ -207,8 +208,18 @@ public class AITranslateCronJob implements Job {
                   sendTranslateRequest(
                       tmTextUnit, repository, targetLocale, repositoryLocaleAIPrompt, startTime);
 
-              // Add the translation to the TM
-              addAITranslationCurrentVariant(translation);
+              if (Strings.isNullOrEmpty(translation.getTranslation())) {
+                logger.warn(
+                    "AI translation is empty for text unit id: {}, for locale: {}, using prompt id: {}. Skipping adding the variant.",
+                    tmTextUnit.getId(),
+                    targetLocale.getBcp47Tag(),
+                    repositoryLocaleAIPrompt.getAiPrompt().getId());
+
+                meterRegistry.counter("AITranslateCronJob.translate.emptyTranslation").increment();
+              } else {
+                // Add the translation to the TM
+                addAITranslationCurrentVariant(translation);
+              }
             } else {
               if (repositoryLocaleAIPrompt != null && repositoryLocaleAIPrompt.isDisabled()) {
                 logger.debug(
