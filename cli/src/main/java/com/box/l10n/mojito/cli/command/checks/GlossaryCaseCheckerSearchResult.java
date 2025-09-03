@@ -7,10 +7,12 @@ class GlossaryCaseCheckerSearchResult {
   boolean isSuccess;
   boolean isMajorFailure;
   final String source;
+  String name;
 
-  public GlossaryCaseCheckerSearchResult(String source) {
+  public GlossaryCaseCheckerSearchResult(String source, String name) {
     this.source = source;
     this.isSuccess = true;
+    this.name = name;
   }
 
   public boolean isSuccess() {
@@ -27,5 +29,9 @@ class GlossaryCaseCheckerSearchResult {
 
   public String getSource() {
     return source;
+  }
+
+  public String getName() {
+    return name;
   }
 }
