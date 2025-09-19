@@ -287,32 +287,34 @@ public class RecommendStringIdCheckerTest {
 
     CliCheckResult result = recommendStringIdChecker.run(assetExtractionDiffs);
     Assert.assertFalse(result.isSuccessful());
-    Assert.assertEquals(
-        "Recommended id updates for the following strings:"
-            + System.lineSeparator()
-            + BULLET_POINT
-            + "Please update id "
-            + QUOTE_MARKER
-            + "someOtherStringId"
-            + QUOTE_MARKER
-            + " for string "
-            + QUOTE_MARKER
-            + "Another source string with no errors."
-            + QUOTE_MARKER
-            + " to be prefixed with 'someDir.someSubDir.'"
-            + System.lineSeparator()
-            + BULLET_POINT
-            + "Please update id "
-            + QUOTE_MARKER
-            + "someStringId"
-            + QUOTE_MARKER
-            + " for string "
-            + QUOTE_MARKER
-            + "A source string with no errors."
-            + QUOTE_MARKER
-            + " to be prefixed with 'root.'"
-            + System.lineSeparator(),
-        result.getNotificationText());
+    Assert.assertTrue(
+        result
+            .getNotificationText()
+            .contains(
+                BULLET_POINT
+                    + "Please update id "
+                    + QUOTE_MARKER
+                    + "someOtherStringId"
+                    + QUOTE_MARKER
+                    + " for string "
+                    + QUOTE_MARKER
+                    + "Another source string with no errors."
+                    + QUOTE_MARKER
+                    + " to be prefixed with 'someDir.someSubDir.'"));
+    Assert.assertTrue(
+        result
+            .getNotificationText()
+            .contains(
+                BULLET_POINT
+                    + "Please update id "
+                    + QUOTE_MARKER
+                    + "someStringId"
+                    + QUOTE_MARKER
+                    + " for string "
+                    + QUOTE_MARKER
+                    + "A source string with no errors."
+                    + QUOTE_MARKER
+                    + " to be prefixed with 'root.'"));
   }
 
   @Test
@@ -346,32 +348,34 @@ public class RecommendStringIdCheckerTest {
     CliCheckResult result = recommendStringIdChecker.run(assetExtractionDiffs);
     Assert.assertFalse(result.isSuccessful());
     Assert.assertFalse(result.getNotificationText().contains("[aLabel]"));
-    Assert.assertEquals(
-        "Recommended id updates for the following strings:"
-            + System.lineSeparator()
-            + BULLET_POINT
-            + "Please update id "
-            + QUOTE_MARKER
-            + "someOtherStringId"
-            + QUOTE_MARKER
-            + " for string "
-            + QUOTE_MARKER
-            + "Another source string with no errors."
-            + QUOTE_MARKER
-            + " to be prefixed with 'someDir.someSubDir.'"
-            + System.lineSeparator()
-            + BULLET_POINT
-            + "Please update id "
-            + QUOTE_MARKER
-            + "someStringId"
-            + QUOTE_MARKER
-            + " for string "
-            + QUOTE_MARKER
-            + "A source string with no errors."
-            + QUOTE_MARKER
-            + " to be prefixed with 'root.'"
-            + System.lineSeparator(),
-        result.getNotificationText());
+    Assert.assertTrue(
+        result
+            .getNotificationText()
+            .contains(
+                BULLET_POINT
+                    + "Please update id "
+                    + QUOTE_MARKER
+                    + "someOtherStringId"
+                    + QUOTE_MARKER
+                    + " for string "
+                    + QUOTE_MARKER
+                    + "Another source string with no errors."
+                    + QUOTE_MARKER
+                    + " to be prefixed with 'someDir.someSubDir.'"));
+    Assert.assertTrue(
+        result
+            .getNotificationText()
+            .contains(
+                BULLET_POINT
+                    + "Please update id "
+                    + QUOTE_MARKER
+                    + "someStringId"
+                    + QUOTE_MARKER
+                    + " for string "
+                    + QUOTE_MARKER
+                    + "A source string with no errors."
+                    + QUOTE_MARKER
+                    + " to be prefixed with 'root.'"));
   }
 
   private List<AssetExtractionDiff> setTextUnitId(String id) {

@@ -513,7 +513,7 @@ public class ExtractionCheckCommand extends Command {
   }
 
   private void checkForHardFail(List<CliCheckResult> results) {
-    if (getCheckerHardFailures(results).count() > 0) {
+    if (getCheckerHardFailures(results).findAny().isPresent()) {
       String cliFailureString =
           "The following checks had hard failures:"
               + System.lineSeparator()
