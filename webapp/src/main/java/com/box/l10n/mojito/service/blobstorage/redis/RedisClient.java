@@ -10,6 +10,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -49,108 +51,88 @@ public class RedisClient {
         Duration.ofMillis(redisConfigurationProperties.getRetryMaxBackoffMillis());
   }
 
-  public Optional<String> get(String key) {
+  public <T> Optional<T> executeWithRetry(
+      Function<Jedis, T> operation, String errorMessage, String errorMessageArg) {
     return Mono.fromCallable(
             () -> {
               try (Jedis redisClient = this.redisPoolManager.getJedis()) {
-                return ofNullable(redisClient.get(key));
+                return ofNullable(operation.apply(redisClient));
               } catch (JedisException e) {
-                LOG.info("Unable to retrieve key from Redis: {}", key, e);
+                LOG.info(errorMessage, errorMessageArg, e);
                 throw e;
               }
             })
         .retryWhen(
-            Retry.backoff(this.maxRetries, (this.retryMinBackoff))
+            Retry.backoff(this.maxRetries, this.retryMinBackoff)
                 .maxBackoff(this.retryMaxBackoff)
                 .filter(e -> e instanceof JedisAccessControlException))
-        .doOnError(e -> LOG.error("Unable to retrieve key from Redis: {}", key, e))
+        .doOnError(e -> LOG.error(errorMessage, errorMessageArg, e))
         .onErrorReturn(empty())
         .block();
+  }
+
+  public void executeWithRetryVoid(
+      Consumer<Jedis> operation, String errorMessage, String errorMessageArg) {
+    Mono.fromRunnable(
+            () -> {
+              try (Jedis redisClient = this.redisPoolManager.getJedis()) {
+                operation.accept(redisClient);
+              } catch (JedisException e) {
+                LOG.info(errorMessage, errorMessageArg, e);
+                throw e;
+              }
+            })
+        .retryWhen(
+            Retry.backoff(this.maxRetries, this.retryMinBackoff)
+                .maxBackoff(this.retryMaxBackoff)
+                .filter(e -> e instanceof JedisAccessControlException))
+        .doOnError(e -> LOG.error(errorMessage, errorMessageArg, e))
+        .onErrorComplete()
+        .block();
+  }
+
+  public Optional<String> get(String key) {
+    return this.executeWithRetry(
+        (redisClient) -> redisClient.get(key), "Unable to retrieve key from Redis: {}", key);
   }
 
   public void put(String key, String value, Retention retention) {
-    Mono.fromRunnable(
-            () -> {
-              try (Jedis redisClient = this.redisPoolManager.getJedis()) {
-                if (retention == PERMANENT) {
-                  redisClient.set(key, value);
-                } else {
-                  redisClient.setex(key, ONE_DAY_IN_SECONDS, value);
-                }
-              } catch (JedisException e) {
-                LOG.info("Unable to save key to Redis: {}", key, e);
-                throw e;
-              }
-            })
-        .retryWhen(
-            Retry.backoff(this.maxRetries, (this.retryMinBackoff))
-                .maxBackoff(this.retryMaxBackoff)
-                .filter(e -> e instanceof JedisAccessControlException))
-        .doOnError(e -> LOG.error("Unable to save key to Redis: {}", key, e))
-        .onErrorComplete()
-        .block();
+    this.executeWithRetryVoid(
+        (redisClient) -> {
+          if (retention == PERMANENT) {
+            redisClient.set(key, value);
+          } else {
+            redisClient.setex(key, ONE_DAY_IN_SECONDS, value);
+          }
+        },
+        "Unable to save key to Redis: {}",
+        key);
   }
 
   public void delete(String key) {
-    Mono.fromRunnable(
-            () -> {
-              try (Jedis redisClient = this.redisPoolManager.getJedis()) {
-                redisClient.del(key);
-              } catch (JedisException e) {
-                LOG.info("Unable to delete key from Redis: {}", key, e);
-                throw e;
-              }
-            })
-        .retryWhen(
-            Retry.backoff(this.maxRetries, (this.retryMinBackoff))
-                .maxBackoff(this.retryMaxBackoff)
-                .filter(e -> e instanceof JedisAccessControlException))
-        .doOnError(e -> LOG.error("Unable to delete key from Redis: {}", key, e))
-        .onErrorComplete()
-        .block();
+    this.executeWithRetryVoid(
+        (redisClient) -> redisClient.del(key), "Unable to delete key from Redis: {}", key);
   }
 
   public Optional<byte[]> getBytes(String key) {
-    return Mono.fromCallable(
-            () -> {
-              try (Jedis redisClient = this.redisPoolManager.getJedis()) {
-                return ofNullable(redisClient.get(key.getBytes(StandardCharsets.UTF_8)));
-              } catch (JedisException e) {
-                LOG.info("Unable to retrieve binary key from Redis: {}", key, e);
-                throw e;
-              }
-            })
-        .retryWhen(
-            Retry.backoff(this.maxRetries, (this.retryMinBackoff))
-                .maxBackoff(this.retryMaxBackoff)
-                .filter(e -> e instanceof JedisAccessControlException))
-        .doOnError(e -> LOG.error("Unable to retrieve binary key from Redis: {}", key, e))
-        .onErrorReturn(empty())
-        .block();
+    return this.executeWithRetry(
+        (redisClient) -> redisClient.get(key.getBytes(StandardCharsets.UTF_8)),
+        "Unable to retrieve binary key from Redis: {}",
+        key);
   }
 
   public void put(String key, byte[] value, Retention retention) {
-    Mono.fromRunnable(
-            () -> {
-              try (Jedis redisClient = this.redisPoolManager.getJedis()) {
-                byte[] binaryKey = key.getBytes(StandardCharsets.UTF_8);
-                if (retention == PERMANENT) {
-                  redisClient.set(binaryKey, value);
-                } else {
-                  redisClient.setex(binaryKey, ONE_DAY_IN_SECONDS, value);
-                }
-              } catch (JedisException e) {
-                LOG.info("Unable to save key to Redis: {}", key, e);
-                throw e;
-              }
-            })
-        .retryWhen(
-            Retry.backoff(this.maxRetries, (this.retryMinBackoff))
-                .maxBackoff(this.retryMaxBackoff)
-                .filter(e -> e instanceof JedisAccessControlException))
-        .doOnError(e -> LOG.error("Unable to save key to Redis: {}", key, e))
-        .onErrorComplete()
-        .block();
+    this.executeWithRetryVoid(
+        (redisClient) -> {
+          byte[] binaryKey = key.getBytes(StandardCharsets.UTF_8);
+          if (retention == PERMANENT) {
+            redisClient.set(binaryKey, value);
+          } else {
+            redisClient.setex(binaryKey, ONE_DAY_IN_SECONDS, value);
+          }
+        },
+        "Unable to save key to Redis: {}",
+        key);
   }
 
   public Long executeRateLimitScript(RedisScript script, List<String> keys, List<String> args)
