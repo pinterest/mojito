@@ -26,6 +26,12 @@ public class RedisConfigurationProperties {
 
   private String password = "";
 
+  private int maxRetries = 2;
+
+  private int retryMinBackoffMillis = 100;
+
+  private int retryMaxBackoffMillis = 300;
+
   public String getEndpoint() {
     return endpoint;
   }
@@ -104,5 +110,29 @@ public class RedisConfigurationProperties {
 
   public void setPassword(String password) {
     this.password = password;
+  }
+
+  public int getMaxRetries() {
+    return maxRetries;
+  }
+
+  public void setMaxRetries(int maxRetries) {
+    this.maxRetries = maxRetries;
+  }
+
+  public int getRetryMinBackoffMillis() {
+    return retryMinBackoffMillis;
+  }
+
+  public void setRetryMinBackoffMillis(int retryMinBackoffMillis) {
+    this.retryMinBackoffMillis = retryMinBackoffMillis;
+  }
+
+  public int getRetryMaxBackoffMillis() {
+    return retryMaxBackoffMillis;
+  }
+
+  public void setRetryMaxBackoffMillis(int retryMaxBackoffMillis) {
+    this.retryMaxBackoffMillis = retryMaxBackoffMillis;
   }
 }

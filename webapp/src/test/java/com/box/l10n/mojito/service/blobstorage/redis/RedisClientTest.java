@@ -8,10 +8,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -22,6 +24,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.exceptions.JedisAccessControlException;
 import redis.clients.jedis.exceptions.JedisException;
 
 public class RedisClientTest {
@@ -41,13 +44,18 @@ public class RedisClientTest {
 
   RedisScriptManager redisScriptManagerMock;
 
+  RedisConfigurationProperties redisConfigurationProperties;
+
   @BeforeEach
   public void setUp() {
     this.redisPoolManagerMock = mock(RedisPoolManager.class);
     this.jedisMock = mock(Jedis.class);
     this.redisScriptManagerMock = mock(RedisScriptManager.class);
     when(this.redisPoolManagerMock.getJedis()).thenReturn(this.jedisMock);
-    this.redisClient = new RedisClient(redisPoolManagerMock, redisScriptManagerMock);
+    this.redisConfigurationProperties = new RedisConfigurationProperties();
+    this.redisClient =
+        new RedisClient(
+            redisPoolManagerMock, redisScriptManagerMock, this.redisConfigurationProperties);
   }
 
   @Test
@@ -58,6 +66,7 @@ public class RedisClientTest {
 
     assertTrue(value.isPresent());
     assertEquals(VALUE, value.get());
+    verify(this.jedisMock).get(anyString());
   }
 
   @Test
@@ -67,6 +76,7 @@ public class RedisClientTest {
     Optional<String> value = this.redisClient.get(KEY);
 
     assertTrue(value.isEmpty());
+    verify(this.jedisMock).get(anyString());
   }
 
   @Test
@@ -77,6 +87,7 @@ public class RedisClientTest {
     Optional<String> value = this.redisClient.get(KEY);
 
     assertTrue(value.isEmpty());
+    verify(this.jedisMock, times(0)).get(anyString());
 
     reset(this.redisPoolManagerMock);
     when(this.redisPoolManagerMock.getJedis()).thenReturn(this.jedisMock);
@@ -85,6 +96,20 @@ public class RedisClientTest {
     value = this.redisClient.get(KEY);
 
     assertTrue(value.isEmpty());
+    verify(this.jedisMock).get(anyString());
+  }
+
+  @Test
+  public void testGet_RetriesWhenThrowingException() {
+    when(this.redisPoolManagerMock.getJedis()).thenReturn(this.jedisMock);
+    when(this.jedisMock.get(anyString()))
+        .thenThrow(new JedisAccessControlException("jedis client exception"));
+
+    Optional<String> value = this.redisClient.get(KEY);
+
+    assertTrue(value.isEmpty());
+    verify(this.jedisMock, times(this.redisConfigurationProperties.getMaxRetries() + 1))
+        .get(anyString());
   }
 
   @Test
@@ -105,6 +130,9 @@ public class RedisClientTest {
 
     this.redisClient.put(KEY, VALUE, MIN_1_DAY);
 
+    verify(this.jedisMock, times(0)).set(anyString(), anyString());
+    verify(this.jedisMock, times(0)).setex(anyString(), anyLong(), anyString());
+
     reset(this.redisPoolManagerMock);
     when(this.redisPoolManagerMock.getJedis()).thenReturn(this.jedisMock);
     when(this.jedisMock.setex(anyString(), anyLong(), anyString()))
@@ -112,11 +140,27 @@ public class RedisClientTest {
 
     this.redisClient.put(KEY, VALUE, MIN_1_DAY);
 
+    verify(this.jedisMock).setex(anyString(), anyLong(), anyString());
+
     reset(this.jedisMock);
     when(this.jedisMock.set(anyString(), anyString()))
         .thenThrow(new JedisException("jedis client exception"));
 
     this.redisClient.put(KEY, VALUE, PERMANENT);
+
+    verify(this.jedisMock).set(anyString(), anyString());
+  }
+
+  @Test
+  public void testPut_RetriesWhenThrowingException() {
+    when(this.redisPoolManagerMock.getJedis()).thenReturn(this.jedisMock);
+    when(this.jedisMock.setex(anyString(), anyLong(), anyString()))
+        .thenThrow(new JedisAccessControlException("jedis client exception"));
+
+    this.redisClient.put(KEY, VALUE, MIN_1_DAY);
+
+    verify(this.jedisMock, times(this.redisConfigurationProperties.getMaxRetries() + 1))
+        .setex(anyString(), anyLong(), anyString());
   }
 
   @Test
@@ -133,11 +177,27 @@ public class RedisClientTest {
 
     this.redisClient.delete(KEY);
 
+    verify(this.jedisMock, times(0)).del(anyString());
+
     reset(this.redisPoolManagerMock);
     when(this.redisPoolManagerMock.getJedis()).thenReturn(this.jedisMock);
     when(this.jedisMock.del(anyString())).thenThrow(new JedisException("jedis client exception"));
 
     this.redisClient.delete(KEY);
+
+    verify(this.jedisMock).del(anyString());
+  }
+
+  @Test
+  public void testDelete_RetriesWhenThrowingException() {
+    when(this.redisPoolManagerMock.getJedis()).thenReturn(this.jedisMock);
+    when(this.jedisMock.del(anyString()))
+        .thenThrow(new JedisAccessControlException("jedis client exception"));
+
+    this.redisClient.delete(KEY);
+
+    verify(this.jedisMock, times(this.redisConfigurationProperties.getMaxRetries() + 1))
+        .del(anyString());
   }
 
   @Test
@@ -149,15 +209,17 @@ public class RedisClientTest {
 
     assertTrue(value.isPresent());
     assertArrayEquals(VALUE_BYTES, value.get());
+    verify(this.jedisMock).get(any(byte[].class));
   }
 
   @Test
   public void testGetBytes_ReturnsEmptyValue() {
     when(this.jedisMock.get(any(byte[].class))).thenReturn(null);
 
-    Optional<String> value = this.redisClient.get(KEY);
+    Optional<byte[]> value = this.redisClient.getBytes(KEY);
 
     assertTrue(value.isEmpty());
+    verify(this.jedisMock).get(any(byte[].class));
   }
 
   @Test
@@ -168,6 +230,7 @@ public class RedisClientTest {
     Optional<byte[]> value = this.redisClient.getBytes(KEY);
 
     assertTrue(value.isEmpty());
+    verify(this.jedisMock, times(0)).get(any(byte[].class));
 
     reset(this.redisPoolManagerMock);
     when(this.redisPoolManagerMock.getJedis()).thenReturn(this.jedisMock);
@@ -177,6 +240,20 @@ public class RedisClientTest {
     value = this.redisClient.getBytes(KEY);
 
     assertTrue(value.isEmpty());
+    verify(this.jedisMock).get(any(byte[].class));
+  }
+
+  @Test
+  public void testGetBytes_RetriesWhenThrowingException() {
+    when(this.redisPoolManagerMock.getJedis()).thenReturn(this.jedisMock);
+    when(this.jedisMock.get(any(byte[].class)))
+        .thenThrow(new JedisAccessControlException("jedis client exception"));
+
+    Optional<byte[]> value = this.redisClient.getBytes(KEY);
+
+    assertTrue(value.isEmpty());
+    verify(this.jedisMock, times(this.redisConfigurationProperties.getMaxRetries() + 1))
+        .get(any(byte[].class));
   }
 
   @Test
@@ -197,6 +274,9 @@ public class RedisClientTest {
 
     this.redisClient.put(KEY, VALUE_BYTES, MIN_1_DAY);
 
+    verify(this.jedisMock, times(0)).setex(any(byte[].class), anyLong(), any(byte[].class));
+    verify(this.jedisMock, times(0)).set(any(byte[].class), any(byte[].class));
+
     reset(this.redisPoolManagerMock);
     when(this.redisPoolManagerMock.getJedis()).thenReturn(this.jedisMock);
     when(this.jedisMock.setex(any(byte[].class), anyLong(), any(byte[].class)))
@@ -204,11 +284,36 @@ public class RedisClientTest {
 
     this.redisClient.put(KEY, VALUE_BYTES, MIN_1_DAY);
 
+    verify(this.jedisMock).setex(any(byte[].class), anyLong(), any(byte[].class));
+
     reset(this.jedisMock);
     when(this.jedisMock.set(any(byte[].class), any(byte[].class)))
         .thenThrow(new JedisException("jedis client exception"));
 
     this.redisClient.put(KEY, VALUE_BYTES, PERMANENT);
+
+    verify(this.jedisMock).set(any(byte[].class), any(byte[].class));
+  }
+
+  @Test
+  public void testPutBytes_RetriesWhenThrowingException() {
+    when(this.redisPoolManagerMock.getJedis()).thenReturn(this.jedisMock);
+    when(this.jedisMock.setex(any(byte[].class), anyLong(), any(byte[].class)))
+        .thenThrow(new JedisAccessControlException("jedis client exception"));
+
+    this.redisClient.put(KEY, VALUE_BYTES, MIN_1_DAY);
+
+    verify(this.jedisMock, times(this.redisConfigurationProperties.getMaxRetries() + 1))
+        .setex(any(byte[].class), anyLong(), any(byte[].class));
+
+    reset(this.jedisMock);
+    when(this.jedisMock.set(any(byte[].class), any(byte[].class)))
+        .thenThrow(new JedisAccessControlException("jedis client exception"));
+
+    this.redisClient.put(KEY, VALUE_BYTES, PERMANENT);
+
+    verify(this.jedisMock, times(this.redisConfigurationProperties.getMaxRetries() + 1))
+        .set(any(byte[].class), any(byte[].class));
   }
 
   @Test
@@ -319,5 +424,26 @@ public class RedisClientTest {
         () -> {
           this.redisClient.executeRateLimitScript(script, keys, args);
         });
+  }
+
+  @Test
+  public void testExecuteRateLimitScript_JedisEvalshaException_Retries() {
+    RedisScript script = RedisScript.SLIDING_WINDOW_RATE_LIMITER;
+    List<String> keys = Arrays.asList("key1");
+    List<String> args = Arrays.asList("arg1");
+    String scriptSHA = "test-sha-hash";
+
+    when(this.redisScriptManagerMock.isScriptLoaded(script)).thenReturn(true);
+    when(this.redisScriptManagerMock.getScriptSHA(script)).thenReturn(scriptSHA);
+    when(this.jedisMock.evalsha(scriptSHA, keys, args))
+        .thenThrow(new JedisAccessControlException("evalsha execution failed"));
+
+    assertThrows(
+        IllegalStateException.class,
+        () -> {
+          this.redisClient.executeRateLimitScript(script, keys, args);
+        });
+    verify(this.jedisMock, times(this.redisConfigurationProperties.getMaxRetries() + 1))
+        .evalsha(anyString(), anyList(), anyList());
   }
 }
