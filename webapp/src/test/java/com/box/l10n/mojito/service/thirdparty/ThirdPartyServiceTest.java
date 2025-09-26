@@ -16,6 +16,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.box.l10n.mojito.LocaleMappingHelper;
 import com.box.l10n.mojito.entity.Asset;
@@ -130,6 +131,8 @@ public class ThirdPartyServiceTest extends ServiceTestBase {
     doThrow(new RuntimeException("test must stub this"))
         .when(thirdPartyTMSMock)
         .createImageToTextUnitMappings(any(), any());
+
+    when(this.thirdPartyTMSMock.getPlaceholderConverter()).thenReturn(new NoPlaceholderConverter());
   }
 
   @Test
