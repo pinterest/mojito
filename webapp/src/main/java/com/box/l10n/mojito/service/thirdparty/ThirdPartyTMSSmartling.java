@@ -22,6 +22,7 @@ import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingOptions;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingResultProcessor;
 import com.box.l10n.mojito.service.thirdparty.smartling.quartz.SmartlingPullTranslationsJob;
 import com.box.l10n.mojito.service.thirdparty.smartling.quartz.SmartlingPullTranslationsJobInput;
+import com.box.l10n.mojito.service.tm.PlaceholderConverter;
 import com.box.l10n.mojito.service.tm.importer.TextUnitBatchImporterService;
 import com.box.l10n.mojito.service.tm.search.SearchType;
 import com.box.l10n.mojito.service.tm.search.StatusFilter;
@@ -1285,5 +1286,10 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
   private boolean isImageExtensionSupported(String name) {
     String extension = Files.getFileExtension(name).toLowerCase();
     return supportedImageExtensions.contains(extension);
+  }
+
+  @Override
+  public PlaceholderConverter getPlaceholderConverter() {
+    return new SmartlingPlaceholderConverter();
   }
 }

@@ -4,10 +4,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.box.l10n.mojito.service.thirdparty.NoPlaceholderConverter;
+import com.box.l10n.mojito.service.thirdparty.SmartlingPlaceholderConverter;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
+import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
@@ -25,17 +27,6 @@ public class TextUnitBatchMatcherTest {
   public void before() {
     textUnitBatchMatcher = new TextUnitBatchMatcher();
     textUnitBatchMatcher.pluralNameParser = new PluralNameParser();
-    PlaceholderRegexConfigurationProperties placeholderRegexConfigurationProperties =
-        new PlaceholderRegexConfigurationProperties();
-    placeholderRegexConfigurationProperties.setPlaceholderRegExps(
-        Map.of(
-            "ios",
-            "%[@dsfcxXopu]|%\\.\\d+[fs]",
-            "android",
-            "%[sdioxXeEfFgGaAcb]|%\\.\\d+[fFeEgGaA]|%\\d+[sdioxXeEfFgGaAcb]|%\\d+\\.\\d+[fFeEgGaA]"));
-    textUnitBatchMatcher.placeholderRegexConfigurationProperties =
-        placeholderRegexConfigurationProperties;
-    ;
   }
 
   @Test
@@ -417,7 +408,7 @@ public class TextUnitBatchMatcherTest {
 
     Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUsed =
         textUnitBatchMatcher.createMatchByNameSourceAndUsed(
-            existingTextUnitDTOs, existingTextUnitDTOs.getFirst().getRepositoryName());
+            existingTextUnitDTOs, new NoPlaceholderConverter(), ImmutableList.of());
 
     Optional<TextUnitDTO> textUnit =
         matchByNameSourceAndUsed.apply(createTextUnitForBatchMatcher("name-2", "Second source"));
@@ -435,7 +426,7 @@ public class TextUnitBatchMatcherTest {
 
     Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUsed =
         textUnitBatchMatcher.createMatchByNameSourceAndUsed(
-            existingTextUnitDTOs, existingTextUnitDTOs.getFirst().getRepositoryName());
+            existingTextUnitDTOs, new NoPlaceholderConverter(), ImmutableList.of());
 
     Optional<TextUnitDTO> textUnit =
         matchByNameSourceAndUsed.apply(createTextUnitForBatchMatcher("name-2", "Second source"));
@@ -453,7 +444,7 @@ public class TextUnitBatchMatcherTest {
 
     Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUsed =
         textUnitBatchMatcher.createMatchByNameSourceAndUsed(
-            existingTextUnitDTOs, existingTextUnitDTOs.getFirst().getRepositoryName());
+            existingTextUnitDTOs, new NoPlaceholderConverter(), ImmutableList.of());
 
     Optional<TextUnitDTO> textUnit =
         matchByNameSourceAndUsed.apply(createTextUnitForBatchMatcher("name-1", "Second source"));
@@ -474,7 +465,10 @@ public class TextUnitBatchMatcherTest {
             createTextUnitDTO("name-2", "Second source %d %@ %.2f"));
 
     Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUsed =
-        textUnitBatchMatcher.createMatchByNameSourceAndUsed(existingTextUnitDTOs, "ios");
+        textUnitBatchMatcher.createMatchByNameSourceAndUsed(
+            existingTextUnitDTOs,
+            new SmartlingPlaceholderConverter(),
+            ImmutableList.of("smartling-placeholder-format=IOS"));
 
     Optional<TextUnitDTO> textUnit =
         matchByNameSourceAndUsed.apply(
@@ -492,7 +486,10 @@ public class TextUnitBatchMatcherTest {
             createTextUnitDTO("name-2", "Second source %d %10s %.2f"));
 
     Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUsed =
-        textUnitBatchMatcher.createMatchByNameSourceAndUsed(existingTextUnitDTOs, "android");
+        textUnitBatchMatcher.createMatchByNameSourceAndUsed(
+            existingTextUnitDTOs,
+            new SmartlingPlaceholderConverter(),
+            ImmutableList.of("smartling-placeholder-format=JAVA"));
 
     Optional<TextUnitDTO> textUnit =
         matchByNameSourceAndUsed.apply(
@@ -552,7 +549,7 @@ public class TextUnitBatchMatcherTest {
 
     Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUnused =
         textUnitBatchMatcher.createMatchByNameSourceAndUnused(
-            existingTextUnitDTOs, existingTextUnitDTOs.getFirst().getRepositoryName());
+            existingTextUnitDTOs, new NoPlaceholderConverter(), ImmutableList.of());
 
     Optional<TextUnitDTO> textUnit =
         matchByNameSourceAndUnused.apply(createTextUnitForBatchMatcher("name-2", "Second string"));
@@ -570,7 +567,7 @@ public class TextUnitBatchMatcherTest {
 
     Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUnused =
         textUnitBatchMatcher.createMatchByNameSourceAndUnused(
-            existingTextUnitDTOs, existingTextUnitDTOs.getFirst().getRepositoryName());
+            existingTextUnitDTOs, new NoPlaceholderConverter(), ImmutableList.of());
 
     Optional<TextUnitDTO> textUnit =
         matchByNameSourceAndUnused.apply(createTextUnitForBatchMatcher("name-2", "Second source"));
@@ -588,7 +585,7 @@ public class TextUnitBatchMatcherTest {
 
     Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUnused =
         textUnitBatchMatcher.createMatchByNameSourceAndUnused(
-            existingTextUnitDTOs, existingTextUnitDTOs.getFirst().getRepositoryName());
+            existingTextUnitDTOs, new NoPlaceholderConverter(), ImmutableList.of());
 
     Optional<TextUnitDTO> textUnit =
         matchByNameSourceAndUnused.apply(createTextUnitForBatchMatcher("name-2", "First string"));
@@ -651,7 +648,11 @@ public class TextUnitBatchMatcherTest {
             createUnusedPluralTextUnitDTO("name-4", "many", "comment-4"));
 
     Function<TextUnitForBatchMatcher, List<TextUnitDTO>> textUnitForBatchMatcherListFunction =
-        textUnitBatchMatcher.matchByNameAndPluralPrefix(existingTextUnitDTOs, PLURAL_SEPARATOR);
+        textUnitBatchMatcher.matchByNameAndPluralPrefix(
+            existingTextUnitDTOs,
+            PLURAL_SEPARATOR,
+            new NoPlaceholderConverter(),
+            ImmutableList.of());
 
     List<TextUnitDTO> noMatchByNameSourceAndUsed =
         textUnitForBatchMatcherListFunction.apply(

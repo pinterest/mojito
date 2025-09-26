@@ -1,13 +1,11 @@
 package com.box.l10n.mojito.service.tm;
 
-import static com.box.l10n.mojito.service.tm.PlaceholderConverter.convertToPositionalPlaceholders;
 import static com.box.l10n.mojito.utils.Predicates.not;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.groupingBy;
 
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.box.l10n.mojito.utils.Optionals;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,8 +29,6 @@ public class TextUnitBatchMatcher {
   static Logger logger = LoggerFactory.getLogger(TextUnitBatchMatcher.class);
 
   @Autowired PluralNameParser pluralNameParser;
-
-  @Autowired PlaceholderRegexConfigurationProperties placeholderRegexConfigurationProperties;
 
   /**
    * Creates a function that matches a text unit to one of the provided text units.
@@ -67,20 +63,21 @@ public class TextUnitBatchMatcher {
   }
 
   public Function<TextUnitForBatchMatcher, List<TextUnitDTO>> matchByNameAndPluralPrefix(
-      List<TextUnitDTO> existingTextUnits, String pluralSeparator) {
-    String repositoryName =
-        existingTextUnits.stream().findFirst().map(TextUnitDTO::getRepositoryName).orElse(null);
+      List<TextUnitDTO> existingTextUnits,
+      String pluralSeparator,
+      PlaceholderConverter placeholderConverter,
+      List<String> options) {
     Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>>
         matchByPluralPrefixCommentAndUsed =
             createMatchByPluralPrefixCommentAndUsed(existingTextUnits, pluralSeparator);
     Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByNameSourceAndUsed =
-        createMatchByNameSourceAndUsed(existingTextUnits, repositoryName)
+        createMatchByNameSourceAndUsed(existingTextUnits, placeholderConverter, options)
             .andThen(Optionals::optionalToOptionalList);
     Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>>
         matchByPluralPrefixCommentAndUnused =
             createMatchByPluralPrefixCommentAndUnused(existingTextUnits, pluralSeparator);
     Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByNameSourceAndUnused =
-        createMatchByNameSourceAndUnused(existingTextUnits, repositoryName)
+        createMatchByNameSourceAndUnused(existingTextUnits, placeholderConverter, options)
             .andThen(Optionals::optionalToOptionalList);
     Predicate<List<TextUnitDTO>> notAlreadyMatchedInList = notAlreadyMatchedInList("global");
 
@@ -119,18 +116,6 @@ public class TextUnitBatchMatcher {
     };
   }
 
-  private String convertPlaceholders(String textUnitName, String repositoryName) {
-    Preconditions.checkNotNull(textUnitName);
-    Preconditions.checkNotNull(repositoryName);
-
-    Map<String, String> placeholderRegExps =
-        this.placeholderRegexConfigurationProperties.getPlaceholderRegExps();
-    if (placeholderRegExps.containsKey(repositoryName)) {
-      return convertToPositionalPlaceholders(placeholderRegExps.get(repositoryName), textUnitName);
-    }
-    return textUnitName;
-  }
-
   /**
    * Match used text units by name and source.
    *
@@ -142,7 +127,9 @@ public class TextUnitBatchMatcher {
    * @return
    */
   Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> createMatchByNameSourceAndUsed(
-      List<TextUnitDTO> existingTextUnits, String repositoryName) {
+      List<TextUnitDTO> existingTextUnits,
+      PlaceholderConverter placeholderConverter,
+      List<String> options) {
 
     logger.debug("Create the map to match by name, source and used text units");
     Map<String, List<TextUnitDTO>> nameToUsedTextUnitDTO =
@@ -155,7 +142,8 @@ public class TextUnitBatchMatcher {
                             "%s%s",
                             textUnitDTO.getName(),
                             DigestUtils.md5Hex(
-                                this.convertPlaceholders(textUnitDTO.getSource(), repositoryName)
+                                placeholderConverter
+                                    .convert(textUnitDTO.getSource(), options)
                                     .trim()))));
     Predicate<TextUnitDTO> byNameAndUsedNotAlreadyMatched = notAlreadyMatched("byNameAndUsed");
 
@@ -167,9 +155,7 @@ public class TextUnitBatchMatcher {
                       String.format(
                           "%s%s",
                           textUnitForBatchImport.getName(),
-                          DigestUtils.md5Hex(
-                              this.convertPlaceholders(
-                                  textUnitForBatchImport.getSource(), repositoryName)))))
+                          DigestUtils.md5Hex(textUnitForBatchImport.getSource()))))
               .orElseGet(ArrayList::new);
 
       if (textUnitDTOS.size() == 1) {
@@ -366,7 +352,9 @@ public class TextUnitBatchMatcher {
    * @return
    */
   Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> createMatchByNameSourceAndUnused(
-      List<TextUnitDTO> existingTextUnits, String repositoryName) {
+      List<TextUnitDTO> existingTextUnits,
+      PlaceholderConverter placeholderConverter,
+      List<String> options) {
 
     logger.debug("Create the map to match by name, source and unused text units");
     Map<String, List<TextUnitDTO>> nameToUnusedTextUnitDTO =
@@ -379,7 +367,8 @@ public class TextUnitBatchMatcher {
                             "%s%s",
                             textUnitDTO.getName(),
                             DigestUtils.md5Hex(
-                                this.convertPlaceholders(textUnitDTO.getSource(), repositoryName)
+                                placeholderConverter
+                                    .convert(textUnitDTO.getSource(), options)
                                     .trim()))));
 
     logger.debug("createMatchByNameSourceAndUnused");
@@ -390,9 +379,7 @@ public class TextUnitBatchMatcher {
                       String.format(
                           "%s%s",
                           textUnitForBatchMatcher.getName(),
-                          DigestUtils.md5Hex(
-                              this.convertPlaceholders(
-                                  textUnitForBatchMatcher.getSource(), repositoryName)))))
+                          DigestUtils.md5Hex(textUnitForBatchMatcher.getSource()))))
               .orElseGet(ArrayList::new);
 
       Optional<TextUnitDTO> textUnitDTO = Optional.empty();
