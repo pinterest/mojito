@@ -109,6 +109,6 @@ interface ThirdPartyTMS {
       List<String> optionList);
 
   default PlaceholderConverter getPlaceholderConverter() {
-    return new NoPlaceholderConverter();
+    return new NoOpPlaceholderConverter();
   }
 }

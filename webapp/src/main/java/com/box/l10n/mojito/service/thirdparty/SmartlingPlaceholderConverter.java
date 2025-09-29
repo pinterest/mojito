@@ -10,6 +10,35 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Converts sequential format placeholders in strings to positional placeholders for compatibility
+ * with Smartling.
+ *
+ * <p>This converter supports Java, iOS, and C-style format strings, transforming placeholders such
+ * as {@code %s}, {@code %d}, {@code %@}, {@code %10.2f}, etc., into their positional equivalents
+ * (e.g., {@code %1$s}, {@code %2$d}, etc.).
+ *
+ * <p>The conversion is controlled by the {@code SmartlingOptions} provided in the options list,
+ * specifically the {@code placeholderFormat} option, which determines the format style to use.
+ *
+ * <p>Supported formats:
+ *
+ * <ul>
+ *   <li>{@code java} - Java-style format strings
+ *   <li>{@code ios} - iOS-style format strings
+ *   <li>{@code c} - C-style format strings
+ * </ul>
+ *
+ * <p>If the format is not recognized or not specified, the input string is returned unchanged.
+ *
+ * <p>Example usage:
+ *
+ * <pre>
+ *   SmartlingPlaceholderConverter converter = new SmartlingPlaceholderConverter();
+ *   String result = converter.convert("Hello %s, you have %d messages", List.of("placeholderFormat=java"));
+ *   // result: "Hello %1$s, you have %2$d messages"
+ * </pre>
+ */
 public class SmartlingPlaceholderConverter implements PlaceholderConverter {
   private static final Map<String, String> REGEX_BY_FORMAT =
       Map.of(

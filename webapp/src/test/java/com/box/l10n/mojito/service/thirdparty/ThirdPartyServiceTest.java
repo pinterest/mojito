@@ -132,7 +132,8 @@ public class ThirdPartyServiceTest extends ServiceTestBase {
         .when(thirdPartyTMSMock)
         .createImageToTextUnitMappings(any(), any());
 
-    when(this.thirdPartyTMSMock.getPlaceholderConverter()).thenReturn(new NoPlaceholderConverter());
+    when(this.thirdPartyTMSMock.getPlaceholderConverter())
+        .thenReturn(new NoOpPlaceholderConverter());
   }
 
   @Test
