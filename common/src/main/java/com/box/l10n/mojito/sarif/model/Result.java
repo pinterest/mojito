@@ -1,7 +1,11 @@
 package com.box.l10n.mojito.sarif.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +19,9 @@ public class Result {
 
   @JsonInclude(JsonInclude.Include.NON_EMPTY)
   private Map<String, String> properties;
+
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
+  private Map<String, String> partialFingerprints;
 
   public Result(String ruleId, String text, ResultLevel level, Map<String, String> properties) {
     this.ruleId = ruleId;
@@ -35,6 +42,27 @@ public class Result {
 
   public void setLocations(List<Location> locations) {
     this.locations = locations;
+    try {
+      StringBuilder sb = new StringBuilder(this.ruleId);
+      sb.append(":\n");
+      locations.forEach(
+          location -> {
+            String uri = location.getPhysicalLocation().getArtifactLocation().getUri();
+            Region region = location.getPhysicalLocation().getRegion();
+            sb.append(uri);
+            sb.append(':');
+            sb.append(region.startLine);
+            sb.append('&');
+            sb.append(region.endLine);
+            sb.append('\n');
+          });
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      byte[] hash = digest.digest(sb.toString().getBytes(StandardCharsets.UTF_8));
+      String primaryLocationLineHash = HexFormat.of().formatHex(hash);
+      this.partialFingerprints = Map.of("primaryLocationLineHash", primaryLocationLineHash);
+    } catch (NoSuchAlgorithmException ignored) {
+
+    }
   }
 
   public String getRuleId() {
@@ -71,5 +99,9 @@ public class Result {
 
   public void setProperties(Map<String, String> properties) {
     this.properties = properties;
+  }
+
+  public Map<String, String> getPartialFingerprints() {
+    return this.partialFingerprints;
   }
 }

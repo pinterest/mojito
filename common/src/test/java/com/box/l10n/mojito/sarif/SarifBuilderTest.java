@@ -39,7 +39,7 @@ class SarifBuilderTest {
 
   @Test
   void testBuildSimpleRun() {
-    Sarif sarif = new SarifBuilder().addRun("MyTool", "https://tool.example").build();
+    Sarif sarif = new SarifBuilder().addRun("MyTool", "https://tool.example", "1.0.0").build();
 
     assertNotNull(sarif);
     assertEquals(1, sarif.runs.size());
@@ -55,7 +55,7 @@ class SarifBuilderTest {
   void testAddResultWithLocations_SingleLocation() {
     Sarif sarif =
         new SarifBuilder()
-            .addRun("MyTool", "https://tool.example")
+            .addRun("MyTool", "https://tool.example", "1.0.0")
             .addResultWithLocations(
                 "RULE_A",
                 ResultLevel.ERROR,
@@ -76,6 +76,9 @@ class SarifBuilderTest {
     assertEquals("src/Main.java", location.getPhysicalLocation().getArtifactLocation().getUri());
     assertEquals(101, location.getPhysicalLocation().getRegion().getStartLine());
     assertNull(location.getPhysicalLocation().getRegion().getEndLine());
+    assertNotNull(result.getPartialFingerprints());
+    assertFalse(result.getPartialFingerprints().isEmpty());
+    assertNotNull(result.getPartialFingerprints().get("primaryLocationLineHash"));
     assertDoesNotThrow(() -> validateSchema(sarif));
   }
 
@@ -83,7 +86,7 @@ class SarifBuilderTest {
   void testAddResultWithLocation_WithMultipleLocations() {
     Sarif sarif =
         new SarifBuilder()
-            .addRun("MyTool", "https://tool.example")
+            .addRun("MyTool", "https://tool.example", "1.0.0")
             .addResultWithLocations(
                 "RULE_B",
                 ResultLevel.WARNING,
@@ -123,7 +126,7 @@ class SarifBuilderTest {
   void testAddResultWithoutLocation() {
     SarifBuilder builder = new SarifBuilder();
     builder
-        .addRun("tool", "https://sometest.com")
+        .addRun("tool", "https://sometest.com", "1.0.0")
         .addResultWithoutLocation("RULE_X", ResultLevel.NOTE, "Note: <something_important>");
     Sarif sarif = builder.build();
     Run run = sarif.runs.get(0);
@@ -140,7 +143,7 @@ class SarifBuilderTest {
   void testCombinedUsage() {
     SarifBuilder builder = new SarifBuilder();
     builder
-        .addRun("tool", "uri")
+        .addRun("tool", "uri", "1.0.0")
         .addResultWithoutLocation("RULE_1", ResultLevel.NOTE, "Note 1")
         .addResultWithLocations(
             "RULE_2", ResultLevel.ERROR, "Error 2", List.of(new Location("src/Main.java", 101)));

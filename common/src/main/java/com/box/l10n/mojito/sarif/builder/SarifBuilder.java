@@ -18,8 +18,8 @@ public class SarifBuilder {
     sarif = new Sarif();
   }
 
-  public SarifBuilder addRun(String name, String infoUri) {
-    currentRun = new Run(new Tool(new Driver(name, infoUri)));
+  public SarifBuilder addRun(String name, String infoUri, String version) {
+    currentRun = new Run(new Tool(new Driver(name, infoUri, version)));
     sarif.runs.add(currentRun);
     return this;
   }
