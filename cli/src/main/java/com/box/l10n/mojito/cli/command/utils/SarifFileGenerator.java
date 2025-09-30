@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.cli.command.utils;
 
+import com.box.l10n.mojito.cli.GitInfo;
 import com.box.l10n.mojito.cli.command.checks.CliCheckResult;
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
@@ -22,13 +23,16 @@ public class SarifFileGenerator {
 
   static Logger logger = LoggerFactory.getLogger(SarifFileGenerator.class);
 
+  private GitInfo gitInfo;
+
   private final String infoUri;
 
-  private final String version = "1.0.0";
-
   @Autowired
-  SarifFileGenerator(@Value("${l10n.extraction-check.sarif.infoUri:}") String infoUri) {
+  SarifFileGenerator(
+      @Value("${l10n.extraction-check.sarif.infoUri:}") String infoUri,
+      @Autowired GitInfo gitInfo) {
     this.infoUri = infoUri;
+    this.gitInfo = gitInfo;
   }
 
   public Sarif generateSarifFile(
@@ -40,7 +44,7 @@ public class SarifFileGenerator {
             .collect(Collectors.toMap(AssetExtractorTextUnit::getName, x -> x));
     for (CliCheckResult checkFailure : cliCheckerFailures) {
       ResultLevel resultLevel = checkFailure.isHardFail() ? ResultLevel.ERROR : ResultLevel.WARNING;
-      sarifBuilder.addRun(checkFailure.getCheckName(), infoUri, this.version);
+      sarifBuilder.addRun(checkFailure.getCheckName(), infoUri, this.gitInfo.getCommit().getId());
       for (Map.Entry<String, CliCheckResult.CheckFailure> entry :
           checkFailure.getNameToFailuresMap().entrySet()) {
         String source = entry.getKey();

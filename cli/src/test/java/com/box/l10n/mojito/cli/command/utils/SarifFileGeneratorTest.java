@@ -2,6 +2,7 @@ package com.box.l10n.mojito.cli.command.utils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.box.l10n.mojito.cli.GitInfo;
 import com.box.l10n.mojito.cli.command.checks.CheckerRuleId;
 import com.box.l10n.mojito.cli.command.checks.CliCheckResult;
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
@@ -13,6 +14,7 @@ import com.box.l10n.mojito.sarif.model.Run;
 import com.box.l10n.mojito.sarif.model.Sarif;
 import java.util.*;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class SarifFileGeneratorTest {
@@ -32,10 +34,18 @@ class SarifFileGeneratorTest {
     return textUnit;
   }
 
+  private static GitInfo gitInfo;
+
+  @BeforeAll
+  public static void setup() {
+    gitInfo = new GitInfo();
+    gitInfo.getCommit().setId("commitId123");
+  }
+
   @Test
   void generateSarifFile_withUsagesAndNoUsages() {
     // Arrange
-    SarifFileGenerator generator = new SarifFileGenerator("infoUri");
+    SarifFileGenerator generator = new SarifFileGenerator("infoUri", gitInfo);
     AssetExtractorTextUnit textUnitWithUsage =
         createAssetExtractorTextUnit("source1", Set.of("file1.java:10", "file2.java:20"));
     AssetExtractorTextUnit textUnitNoUsage =
@@ -68,6 +78,7 @@ class SarifFileGeneratorTest {
     assertThat(sarif.getRuns()).hasSize(1);
     List<Run> runs = sarif.getRuns();
     Run run = runs.getFirst();
+    assertThat(run.getTool().getDriver().getVersion()).isEqualTo("commitId123");
     assertThat(run.getTool().getDriver().getName()).isEqualTo("TestCheck");
     assertThat(run.getResults()).hasSize(3);
 
@@ -114,7 +125,7 @@ class SarifFileGeneratorTest {
 
   @Test
   void generateSarifFile_warningLevel() {
-    SarifFileGenerator generator = new SarifFileGenerator("infoUri");
+    SarifFileGenerator generator = new SarifFileGenerator("infoUri", gitInfo);
 
     AssetExtractorTextUnit textUnit =
         createAssetExtractorTextUnit("sourceX", Set.of("fileX.java:42"));
@@ -144,7 +155,7 @@ class SarifFileGeneratorTest {
 
   @Test
   void getUsageLocations_handlesInvalidLineNumber() {
-    SarifFileGenerator generator = new SarifFileGenerator("infoUri");
+    SarifFileGenerator generator = new SarifFileGenerator("infoUri", gitInfo);
 
     AssetExtractorTextUnit textUnit =
         createAssetExtractorTextUnit(
