@@ -18,6 +18,7 @@ import com.box.l10n.mojito.service.pollableTask.Pollable;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.screenshot.ScreenshotRepository;
+import com.box.l10n.mojito.service.tm.PlaceholderConverter;
 import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.service.tm.TextUnitBatchMatcher;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
@@ -299,7 +300,12 @@ public class ThirdPartyService {
     logger.debug("Perform mapping by asset");
     thirdPartyTextUnitsByAsset.forEach(
         (asset, textUnits) ->
-            mapThirdPartyTextUnitsToTextUnitDTOs(asset, textUnits, pluralSeparator));
+            mapThirdPartyTextUnitsToTextUnitDTOs(
+                asset,
+                textUnits,
+                pluralSeparator,
+                this.thirdPartyTMS.getPlaceholderConverter(),
+                options));
   }
 
   @Pollable(message = "Push AI translations to third party service.")
@@ -325,7 +331,11 @@ public class ThirdPartyService {
   }
 
   void mapThirdPartyTextUnitsToTextUnitDTOs(
-      Asset asset, List<ThirdPartyTextUnit> thirdPartyTextUnitsToMap, String pluralSeparator) {
+      Asset asset,
+      List<ThirdPartyTextUnit> thirdPartyTextUnitsToMap,
+      String pluralSeparator,
+      PlaceholderConverter placeholderConverter,
+      List<String> options) {
     logger.debug("Map third party text units to text unit DTOs for asset: {}", asset.getId());
     Set<Long> alreadyMappedTmTextUnitId =
         thirdPartyTextUnitRepository.findTmTextUnitIdsByAsset(asset);
@@ -362,7 +372,11 @@ public class ThirdPartyService {
                         t.getTmTextUnitId() != null
                             ? ImmutableList.of(t.getTmTextUnitId())
                             : textUnitBatchMatcher
-                                .matchByNameAndPluralPrefix(notMappedTextUnitDTOs, pluralSeparator)
+                                .matchByNameAndPluralPrefix(
+                                    notMappedTextUnitDTOs,
+                                    pluralSeparator,
+                                    placeholderConverter,
+                                    options)
                                 .apply(t)
                                 .stream()
                                 .map(TextUnitDTO::getTmTextUnitId)

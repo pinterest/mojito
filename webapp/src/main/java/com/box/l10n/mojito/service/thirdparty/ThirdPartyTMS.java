@@ -3,6 +3,7 @@ package com.box.l10n.mojito.service.thirdparty;
 import com.box.l10n.mojito.entity.PollableTask;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
+import com.box.l10n.mojito.service.tm.PlaceholderConverter;
 import java.util.List;
 import java.util.Map;
 
@@ -106,4 +107,8 @@ interface ThirdPartyTMS {
       String skipAssetsWithPathPattern,
       String includeTextUnitsWithPattern,
       List<String> optionList);
+
+  default PlaceholderConverter getPlaceholderConverter() {
+    return new NoOpPlaceholderConverter();
+  }
 }
