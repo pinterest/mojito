@@ -45,7 +45,8 @@ class SarifFileGeneratorTest {
   @Test
   void generateSarifFile_withUsagesAndNoUsages() {
     // Arrange
-    SarifFileGenerator generator = new SarifFileGenerator("infoUri", gitInfo);
+    SarifFileGenerator generator = new SarifFileGenerator("infoUri", new String[] {}, gitInfo);
+
     AssetExtractorTextUnit textUnitWithUsage =
         createAssetExtractorTextUnit("source1", Set.of("file1.java:10", "file2.java:20"));
     AssetExtractorTextUnit textUnitNoUsage =
@@ -125,7 +126,7 @@ class SarifFileGeneratorTest {
 
   @Test
   void generateSarifFile_warningLevel() {
-    SarifFileGenerator generator = new SarifFileGenerator("infoUri", gitInfo);
+    SarifFileGenerator generator = new SarifFileGenerator("infoUri", new String[] {}, gitInfo);
 
     AssetExtractorTextUnit textUnit =
         createAssetExtractorTextUnit("sourceX", Set.of("fileX.java:42"));
@@ -155,40 +156,84 @@ class SarifFileGeneratorTest {
 
   @Test
   void getUsageLocations_handlesInvalidLineNumber() {
-    SarifFileGenerator generator = new SarifFileGenerator("infoUri", gitInfo);
+    List<Location> usageLocations =
+        SarifFileGenerator.getUsageLocations(
+            createAssetExtractorTextUnit(
+                "badSource",
+                Set.of(
+                    "badfile.java:notanumber",
+                    "goodfile.java:5",
+                    "badUsage.java",
+                    "noColon",
+                    "badUsage2.java",
+                    "")),
+            new String[] {},
+            false);
 
-    AssetExtractorTextUnit textUnit =
-        createAssetExtractorTextUnit(
-            "badSource",
-            Set.of(
-                "badfile.java:notanumber",
-                "goodfile.java:5",
-                "badUsage.java",
-                "noColon",
-                "badUsage2.java",
-                ""));
-
-    AssetExtractionDiff diff = new AssetExtractionDiff();
-    diff.setAddedTextunits(List.of(textUnit));
-
-    Map<String, CliCheckResult.CheckFailure> fieldFailures =
-        Map.of(
-            "badSource",
-            new CliCheckResult.CheckFailure(
-                CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Some failure"));
-
-    CliCheckResult checkResult = createCliCheckResult(true, "BadCheck", fieldFailures);
-
-    Sarif sarif = generator.generateSarifFile(List.of(checkResult), List.of(diff));
-
-    List<Run> runs = sarif.getRuns();
-    Run run = runs.getFirst();
-    Result result = run.getResults().getFirst();
-    assertThat(result.getLocations()).hasSize(1);
-    assertThat(
-            result.getLocations().getFirst().getPhysicalLocation().getArtifactLocation().getUri())
+    assertThat(usageLocations).hasSize(1);
+    assertThat(usageLocations.getFirst().getPhysicalLocation().getArtifactLocation().getUri())
         .isEqualTo("goodfile.java");
-    assertThat(result.getLocations().getFirst().getPhysicalLocation().getRegion().getStartLine())
+    assertThat(usageLocations.getFirst().getPhysicalLocation().getRegion().getStartLine())
+        .isEqualTo(5);
+  }
+
+  @Test
+  void getUsageLocations_decreasesLineNumber_WhenRelevantFileTypesAreFound() {
+    List<Location> usageLocations =
+        SarifFileGenerator.getUsageLocations(
+            createAssetExtractorTextUnit(
+                "badSource",
+                Set.of(
+                    "badfile.py:notanumber", "goodfile.py:5", "badUsage.py", "webapp.tsx:5", "")),
+            new String[] {"py"},
+            true);
+
+    assertThat(usageLocations).hasSize(2);
+    assertThat(usageLocations.getFirst().getPhysicalLocation().getArtifactLocation().getUri())
+        .isEqualTo("goodfile.py");
+    assertThat(usageLocations.getFirst().getPhysicalLocation().getRegion().getStartLine())
+        .isEqualTo(4);
+    assertThat(usageLocations.getLast().getPhysicalLocation().getArtifactLocation().getUri())
+        .isEqualTo("webapp.tsx");
+    assertThat(usageLocations.getLast().getPhysicalLocation().getRegion().getStartLine())
+        .isEqualTo(5);
+  }
+
+  @Test
+  void getUsageLocations_doesNotDecreaseLineNumber_whenNonCommentCheck() {
+
+    List<Location> usageLocations =
+        SarifFileGenerator.getUsageLocations(
+            createAssetExtractorTextUnit(
+                "badSource",
+                Set.of(
+                    "badfile.py:notanumber", "goodfile.py:5", "badUsage.py", "webapp.tsx:5", "")),
+            new String[] {"py"},
+            false);
+
+    assertThat(usageLocations).hasSize(2);
+    assertThat(usageLocations.getFirst().getPhysicalLocation().getArtifactLocation().getUri())
+        .isEqualTo("goodfile.py");
+    assertThat(usageLocations.getFirst().getPhysicalLocation().getRegion().getStartLine())
+        .isEqualTo(5);
+    assertThat(usageLocations.getLast().getPhysicalLocation().getArtifactLocation().getUri())
+        .isEqualTo("webapp.tsx");
+    assertThat(usageLocations.getLast().getPhysicalLocation().getRegion().getStartLine())
+        .isEqualTo(5);
+  }
+
+  @Test
+  void getUsageLocations_doesNotDecreaseLineNumber_whenNoFileTypeIsFound() {
+    List<Location> usageLocations =
+        SarifFileGenerator.getUsageLocations(
+            createAssetExtractorTextUnit("badSource", Set.of("filepy:5")),
+            new String[] {"py"},
+            false);
+
+    assertThat(usageLocations).hasSize(1);
+    assertThat(usageLocations.getFirst().getPhysicalLocation().getArtifactLocation().getUri())
+        .isEqualTo("filepy");
+    assertThat(usageLocations.getFirst().getPhysicalLocation().getRegion().getStartLine())
         .isEqualTo(5);
   }
 }

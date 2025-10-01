@@ -1,6 +1,7 @@
 package com.box.l10n.mojito.cli.command.utils;
 
 import com.box.l10n.mojito.cli.GitInfo;
+import com.box.l10n.mojito.cli.command.checks.CheckerRuleId;
 import com.box.l10n.mojito.cli.command.checks.CliCheckResult;
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
@@ -24,16 +25,22 @@ public class SarifFileGenerator {
 
   static Logger logger = LoggerFactory.getLogger(SarifFileGenerator.class);
 
-  private GitInfo gitInfo;
+  private final GitInfo gitInfo;
 
   private final String infoUri;
+
+  private final String[] supportedFileExtensions;
 
   @Autowired
   SarifFileGenerator(
       @Value("${l10n.extraction-check.sarif.infoUri:}") String infoUri,
+      @Value(
+              "#{'${l10n.extraction-check.sarif.commentsChecks.lineUpdate.supportedFileExtensions:py,xml}'.split(',')}")
+          String[] supportedFileExtensions,
       @Autowired GitInfo gitInfo) {
     this.infoUri = infoUri;
     this.gitInfo = gitInfo;
+    this.supportedFileExtensions = supportedFileExtensions;
   }
 
   public Sarif generateSarifFile(
@@ -51,16 +58,18 @@ public class SarifFileGenerator {
         String source = entry.getKey();
         CliCheckResult.CheckFailure resultCheckFailure = entry.getValue();
         AssetExtractorTextUnit assetExtractorTextUnit = nameToAssetTextUnitMap.get(source);
+        CheckerRuleId ruleId = resultCheckFailure.ruleId();
         if (hasUsages(assetExtractorTextUnit)) {
           sarifBuilder.addResultWithLocations(
-              resultCheckFailure.ruleId().toString(),
+              ruleId.toString(),
               resultLevel,
               convertToTitleCase(checkFailure.getCheckName()),
               resultCheckFailure.failureMessage(),
-              getUsageLocations(assetExtractorTextUnit));
+              getUsageLocations(
+                  assetExtractorTextUnit, supportedFileExtensions, ruleId.isCommentRelated()));
         } else {
           sarifBuilder.addResultWithoutLocation(
-              resultCheckFailure.ruleId().toString(),
+              ruleId.toString(),
               resultLevel,
               convertToTitleCase(checkFailure.getCheckName()),
               resultCheckFailure.failureMessage());
@@ -71,13 +80,16 @@ public class SarifFileGenerator {
     return sarifBuilder.build();
   }
 
-  private static boolean hasUsages(AssetExtractorTextUnit assetExtractorTextUnit) {
+  static boolean hasUsages(AssetExtractorTextUnit assetExtractorTextUnit) {
     return assetExtractorTextUnit != null
         && assetExtractorTextUnit.getUsages() != null
         && !assetExtractorTextUnit.getUsages().isEmpty();
   }
 
-  private static List<Location> getUsageLocations(AssetExtractorTextUnit assetExtractorTextUnit) {
+  static List<Location> getUsageLocations(
+      AssetExtractorTextUnit assetExtractorTextUnit,
+      String[] supportedFileExtensions,
+      boolean isCommentRelatedCheck) {
     return assetExtractorTextUnit.getUsages().stream()
         .map(
             usage -> {
@@ -88,8 +100,30 @@ public class SarifFileGenerator {
 
               try {
                 String fileUri = usage.substring(0, colonIndex);
-                Integer startLineNumber = Integer.parseInt(usage.substring(colonIndex + 1));
-                return new Location(fileUri, startLineNumber);
+                int startLineNumber = Integer.parseInt(usage.substring(colonIndex + 1));
+
+                if (!isCommentRelatedCheck) {
+                  return new Location(fileUri, startLineNumber);
+                }
+
+                int fullStopIndex = fileUri.lastIndexOf('.');
+                if (fullStopIndex == -1) {
+                  return new Location(fileUri, startLineNumber);
+                }
+
+                String fileExtension = fileUri.substring(fullStopIndex + 1);
+                if (Arrays.stream(supportedFileExtensions)
+                    .noneMatch(x -> x.equalsIgnoreCase(fileExtension))) {
+                  return new Location(fileUri, startLineNumber);
+                }
+
+                // If the comment is flagged, the usage only reports the line
+                // where the string is added
+                // If only a comment is changed, then the line number is off (GitHub only
+                // considers the line in PR diff as a valid source
+                // for a SARIF / security related comment)
+                return new Location(fileUri, startLineNumber - 1);
+
               } catch (NumberFormatException e) {
                 logger.warn(
                     "SARIF Generation - Unable to parse line number: {}",
@@ -103,7 +137,7 @@ public class SarifFileGenerator {
 
   // Converts a string to title case:
   // i.e EXAMPLE_CHECK_NAME -> Example check name
-  public static String convertToTitleCase(String input) {
+  static String convertToTitleCase(String input) {
     String result =
         Arrays.stream(input.split("_")).map(String::toLowerCase).collect(Collectors.joining(" "));
     return result.substring(0, 1).toUpperCase() + result.substring(1);
