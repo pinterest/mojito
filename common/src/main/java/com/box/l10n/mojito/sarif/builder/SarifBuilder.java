@@ -24,15 +24,16 @@ public class SarifBuilder {
     return this;
   }
 
-  public SarifBuilder addResultWithoutLocation(String ruleId, ResultLevel level, String message) {
-    Result result = new Result(ruleId, message, level, Map.of());
+  public SarifBuilder addResultWithoutLocation(
+      String ruleId, ResultLevel level, String message, String markdown) {
+    Result result = new Result(ruleId, message, markdown, level, Map.of());
     currentRun.addResult(result);
     return this;
   }
 
   public SarifBuilder addResultWithLocations(
-      String ruleId, ResultLevel level, String message, List<Location> locations) {
-    Result result = new Result(ruleId, message, level);
+      String ruleId, ResultLevel level, String message, String markdown, List<Location> locations) {
+    Result result = new Result(ruleId, message, markdown, level);
     result.setLocations(locations);
     currentRun.addResult(result);
     return this;

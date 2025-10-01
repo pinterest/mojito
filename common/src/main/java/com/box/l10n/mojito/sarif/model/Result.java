@@ -23,16 +23,21 @@ public class Result {
   @JsonInclude(JsonInclude.Include.NON_EMPTY)
   private Map<String, String> partialFingerprints;
 
-  public Result(String ruleId, String text, ResultLevel level, Map<String, String> properties) {
+  public Result(
+      String ruleId,
+      String text,
+      String markdown,
+      ResultLevel level,
+      Map<String, String> properties) {
     this.ruleId = ruleId;
-    this.message = new Message(text);
+    this.message = new Message(text, markdown);
     this.level = level;
     this.properties = properties;
   }
 
-  public Result(String ruleId, String text, ResultLevel level) {
+  public Result(String ruleId, String text, String markdown, ResultLevel level) {
     this.ruleId = ruleId;
-    this.message = new Message(text);
+    this.message = new Message(text, markdown);
     this.level = level;
   }
 

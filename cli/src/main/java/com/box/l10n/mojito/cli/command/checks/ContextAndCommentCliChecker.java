@@ -131,6 +131,7 @@ public class ContextAndCommentCliChecker extends AbstractCliChecker {
             assetExtractorTextUnit ->
                 getContextAndCommentCliCheckerResult(
                     assetExtractorTextUnit, checkTextUnit(assetExtractorTextUnit)))
+        .filter(result -> result.ruleId != null)
         .collect(Collectors.toList());
   }
 

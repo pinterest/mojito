@@ -8,6 +8,7 @@ import com.box.l10n.mojito.sarif.builder.SarifBuilder;
 import com.box.l10n.mojito.sarif.model.Location;
 import com.box.l10n.mojito.sarif.model.ResultLevel;
 import com.box.l10n.mojito.sarif.model.Sarif;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -54,12 +55,14 @@ public class SarifFileGenerator {
           sarifBuilder.addResultWithLocations(
               resultCheckFailure.ruleId().toString(),
               resultLevel,
+              convertToTitleCase(checkFailure.getCheckName()),
               resultCheckFailure.failureMessage(),
               getUsageLocations(assetExtractorTextUnit));
         } else {
           sarifBuilder.addResultWithoutLocation(
               resultCheckFailure.ruleId().toString(),
               resultLevel,
+              convertToTitleCase(checkFailure.getCheckName()),
               resultCheckFailure.failureMessage());
         }
       }
@@ -96,5 +99,13 @@ public class SarifFileGenerator {
             })
         .filter(Objects::nonNull)
         .toList();
+  }
+
+  // Converts a string to title case:
+  // i.e EXAMPLE_CHECK_NAME -> Example check name
+  public static String convertToTitleCase(String input) {
+    String result =
+        Arrays.stream(input.split("_")).map(String::toLowerCase).collect(Collectors.joining(" "));
+    return result.substring(0, 1).toUpperCase() + result.substring(1);
   }
 }

@@ -60,6 +60,7 @@ class SarifBuilderTest {
                 "RULE_A",
                 ResultLevel.ERROR,
                 "Critical error detected",
+                "markdown",
                 List.of(new Location("src/Main.java", 101)))
             .build();
 
@@ -70,6 +71,7 @@ class SarifBuilderTest {
     assertEquals("RULE_A", result.getRuleId());
     assertEquals(ResultLevel.ERROR, result.getLevel());
     assertEquals("Critical error detected", result.getMessage().getText());
+    assertEquals("markdown", result.getMessage().getMarkdown());
 
     assertEquals(1, result.getLocations().size());
     Location location = result.getLocations().get(0);
@@ -91,6 +93,7 @@ class SarifBuilderTest {
                 "RULE_B",
                 ResultLevel.WARNING,
                 "Check multi-line block",
+                "markdown",
                 List.of(
                     new Location("src/Main.java", 120, 125),
                     new Location("src/Util.java", 10),
@@ -104,6 +107,7 @@ class SarifBuilderTest {
     assertEquals("RULE_B", result.getRuleId());
     assertEquals(ResultLevel.WARNING, result.getLevel());
     assertEquals("Check multi-line block", result.getMessage().getText());
+    assertEquals("markdown", result.getMessage().getMarkdown());
 
     assertEquals(3, result.getLocations().size());
     Location location = result.getLocations().get(0);
@@ -127,7 +131,8 @@ class SarifBuilderTest {
     SarifBuilder builder = new SarifBuilder();
     builder
         .addRun("tool", "https://sometest.com", "1.0.0")
-        .addResultWithoutLocation("RULE_X", ResultLevel.NOTE, "Note: <something_important>");
+        .addResultWithoutLocation(
+            "RULE_X", ResultLevel.NOTE, "Note: <something_important>", "markdown");
     Sarif sarif = builder.build();
     Run run = sarif.runs.get(0);
     assertEquals(1, run.getResults().size());
@@ -135,6 +140,7 @@ class SarifBuilderTest {
     assertEquals("RULE_X", result.getRuleId());
     assertEquals(ResultLevel.NOTE, result.getLevel());
     assertEquals("Note: <something_important>", result.getMessage().getText());
+    assertEquals("markdown", result.getMessage().getMarkdown());
     assertTrue(result.getLocations() == null || result.getLocations().isEmpty());
     assertDoesNotThrow(() -> validateSchema(sarif));
   }
@@ -144,9 +150,13 @@ class SarifBuilderTest {
     SarifBuilder builder = new SarifBuilder();
     builder
         .addRun("tool", "uri", "1.0.0")
-        .addResultWithoutLocation("RULE_1", ResultLevel.NOTE, "Note 1")
+        .addResultWithoutLocation("RULE_1", ResultLevel.NOTE, "Note 1", "markdown")
         .addResultWithLocations(
-            "RULE_2", ResultLevel.ERROR, "Error 2", List.of(new Location("src/Main.java", 101)));
+            "RULE_2",
+            ResultLevel.ERROR,
+            "Error 2",
+            "markdown",
+            List.of(new Location("src/Main.java", 101)));
     Sarif sarif = builder.build();
     Run run = sarif.runs.get(0);
     assertEquals(2, run.getResults().size());

@@ -93,7 +93,7 @@ class SarifFileGeneratorTest {
             .findFirst()
             .orElseThrow();
     assertThat(resultWithUsage.getLevel()).isEqualTo(ResultLevel.ERROR);
-    assertThat(resultWithUsage.getMessage().getText()).isEqualTo("Failure message 1");
+    assertThat(resultWithUsage.getMessage().getMarkdown()).isEqualTo("Failure message 1");
     assertThat(resultWithUsage.getLocations()).hasSize(2);
     assertThat(resultWithUsage.getLocations())
         .extracting(Location::getPhysicalLocation)
@@ -150,7 +150,7 @@ class SarifFileGeneratorTest {
     Result result = run.getResults().getFirst();
     assertThat(result.getLevel()).isEqualTo(ResultLevel.WARNING);
     assertThat(result.getRuleId()).isEqualTo(CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT.toString());
-    assertThat(result.getMessage().getText()).isEqualTo("Warn message");
+    assertThat(result.getMessage().getMarkdown()).isEqualTo("Warn message");
   }
 
   @Test
