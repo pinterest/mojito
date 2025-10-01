@@ -12,7 +12,7 @@ public class RedisPoolConfigurationProperties {
 
   private int minIdle = 4;
 
-  private int timeoutMillis = 15000;
+  private int timeoutMillis = 15 * 60 * 1000; // 15 minutes
 
   public int getMaxTotal() {
     return maxTotal;
