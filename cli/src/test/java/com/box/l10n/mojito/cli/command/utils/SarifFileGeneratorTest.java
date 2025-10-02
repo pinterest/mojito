@@ -12,7 +12,12 @@ import com.box.l10n.mojito.sarif.model.Result;
 import com.box.l10n.mojito.sarif.model.ResultLevel;
 import com.box.l10n.mojito.sarif.model.Run;
 import com.box.l10n.mojito.sarif.model.Sarif;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -179,14 +184,24 @@ class SarifFileGeneratorTest {
 
   @Test
   void getUsageLocations_decreasesLineNumber_WhenRelevantFileTypesAreFound() {
+
     List<Location> usageLocations =
-        SarifFileGenerator.getUsageLocations(
-            createAssetExtractorTextUnit(
-                "badSource",
-                Set.of(
-                    "badfile.py:notanumber", "goodfile.py:5", "badUsage.py", "webapp.tsx:5", "")),
-            new String[] {"py"},
-            true);
+        new ArrayList<>(
+            SarifFileGenerator.getUsageLocations(
+                createAssetExtractorTextUnit(
+                    "badSource",
+                    Set.of(
+                        "badfile.py:notanumber",
+                        "goodfile.py:5",
+                        "badUsage.py",
+                        "webapp.tsx:5",
+                        "")),
+                new String[] {"py"},
+                true));
+
+    Collections.sort(
+        usageLocations,
+        Comparator.comparing(loc -> loc.getPhysicalLocation().getArtifactLocation().getUri()));
 
     assertThat(usageLocations).hasSize(2);
     assertThat(usageLocations.getFirst().getPhysicalLocation().getArtifactLocation().getUri())
@@ -203,13 +218,22 @@ class SarifFileGeneratorTest {
   void getUsageLocations_doesNotDecreaseLineNumber_whenNonCommentCheck() {
 
     List<Location> usageLocations =
-        SarifFileGenerator.getUsageLocations(
-            createAssetExtractorTextUnit(
-                "badSource",
-                Set.of(
-                    "badfile.py:notanumber", "goodfile.py:5", "badUsage.py", "webapp.tsx:5", "")),
-            new String[] {"py"},
-            false);
+        new ArrayList<>(
+            SarifFileGenerator.getUsageLocations(
+                createAssetExtractorTextUnit(
+                    "badSource",
+                    Set.of(
+                        "badfile.py:notanumber",
+                        "goodfile.py:5",
+                        "badUsage.py",
+                        "webapp.tsx:5",
+                        "")),
+                new String[] {"py"},
+                false));
+
+    Collections.sort(
+        usageLocations,
+        Comparator.comparing(loc -> loc.getPhysicalLocation().getArtifactLocation().getUri()));
 
     assertThat(usageLocations).hasSize(2);
     assertThat(usageLocations.getFirst().getPhysicalLocation().getArtifactLocation().getUri())
