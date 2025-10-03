@@ -9,13 +9,12 @@ import com.box.l10n.mojito.sarif.builder.SarifBuilder;
 import com.box.l10n.mojito.sarif.model.Location;
 import com.box.l10n.mojito.sarif.model.ResultLevel;
 import com.box.l10n.mojito.sarif.model.Sarif;
+import com.google.common.io.Files;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
