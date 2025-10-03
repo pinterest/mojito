@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,7 +113,7 @@ public class SarifFileGenerator {
                   return new Location(fileUri, startLineNumber);
                 }
 
-                String fileExtension = fileUri.substring(fullStopIndex + 1);
+                String fileExtension = Files.getFileExtension(fileUri);
                 if (Arrays.stream(supportedFileExtensions)
                     .noneMatch(x -> x.equalsIgnoreCase(fileExtension))) {
                   return new Location(fileUri, startLineNumber);
