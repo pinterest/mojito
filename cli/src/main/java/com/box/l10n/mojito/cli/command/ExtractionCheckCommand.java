@@ -334,16 +334,7 @@ public class ExtractionCheckCommand extends Command {
               getCheckerFailures(cliCheckerResults).collect(Collectors.toList());
 
           if (shouldGenerateSarifFile) {
-            Sarif sarif =
-                sarifFileGenerator.generateSarifFile(cliCheckerFailures, assetExtractionDiffs);
-            String fileName = "i18n-checks.sarif.json";
-            try {
-              Path filePath = Paths.get(".", fileName);
-              String sarifString = objectMapper.writeValueAsString(sarif);
-              Files.writeString(filePath, sarifString);
-            } catch (IOException e) {
-              throw new CommandException("Failed to write sarif file: " + fileName, e);
-            }
+            generateSarifFile(cliCheckerFailures, assetExtractionDiffs);
           }
           reportStatistics(cliCheckerResults);
           checkForHardFail(cliCheckerFailures);
@@ -362,6 +353,29 @@ public class ExtractionCheckCommand extends Command {
             "Can't compute extraction diffs", missingExtractionDirectoryException);
       }
       consoleWriter.fg(Ansi.Color.GREEN).newLine().a("Checks completed").println(2);
+    }
+  }
+
+  private void generateSarifFile(
+      List<CliCheckResult> cliCheckerFailures, List<AssetExtractionDiff> assetExtractionDiffs) {
+    if (cliCheckerFailures.isEmpty()) {
+      consoleWriter
+          .fg(Ansi.Color.CYAN)
+          .newLine()
+          .a("No CLI check failures, SARIF file was not generated")
+          .println();
+      return;
+    }
+
+    Sarif sarif = sarifFileGenerator.generateSarifFile(cliCheckerFailures, assetExtractionDiffs);
+    String fileName = "i18n-checks.sarif.json";
+    try {
+      Path filePath = Paths.get(".", fileName);
+      String sarifString = objectMapper.writeValueAsString(sarif);
+      Files.writeString(filePath, sarifString);
+      consoleWriter.fg(Ansi.Color.CYAN).newLine().a("SARIF file generated in cwd").println();
+    } catch (IOException e) {
+      throw new CommandException("Failed to write sarif file: " + fileName, e);
     }
   }
 

@@ -94,7 +94,7 @@ public class SarifFileGenerator {
 
   static List<Location> getUsageLocations(
       AssetExtractorTextUnit assetExtractorTextUnit,
-      String[] supportedFileExtensions,
+      String[] extractedCommentFileExtensions,
       boolean isCommentRelatedCheck) {
     return assetExtractorTextUnit.getUsages().stream()
         .map(
@@ -118,7 +118,7 @@ public class SarifFileGenerator {
                 }
 
                 String fileExtension = Files.getFileExtension(fileUri);
-                if (Arrays.stream(supportedFileExtensions)
+                if (Arrays.stream(extractedCommentFileExtensions)
                     .noneMatch(x -> x.equalsIgnoreCase(fileExtension))) {
                   return new Location(fileUri, startLineNumber);
                 }
