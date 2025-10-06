@@ -30,18 +30,21 @@ public class SarifFileGenerator {
 
   private final String infoUri;
 
-  private final String[] supportedFileExtensions;
+  // File extensions for where the comments are extracted from comments above the translation
+  // function call
+  // This is useful for adjusting the line number for comment related checks
+  private final String[] extractedCommentFileExtensions;
 
   @Autowired
   SarifFileGenerator(
       @Value("${l10n.extraction-check.sarif.infoUri:}") String infoUri,
       @Value(
-              "#{'${l10n.extraction-check.sarif.commentsChecks.lineUpdate.supportedFileExtensions:py,xml}'.split(',')}")
-          String[] supportedFileExtensions,
+              "#{'${l10n.extraction-check.sarif.extracted-comments.fileExtensions:py,xml}'.split(',')}")
+          String[] extractedCommentFileExtensions,
       @Autowired GitInfo gitInfo) {
     this.infoUri = infoUri;
     this.gitInfo = gitInfo;
-    this.supportedFileExtensions = supportedFileExtensions;
+    this.extractedCommentFileExtensions = extractedCommentFileExtensions;
   }
 
   public Sarif generateSarifFile(
@@ -67,7 +70,9 @@ public class SarifFileGenerator {
               convertToTitleCase(checkFailure.getCheckName()),
               resultCheckFailure.failureMessage(),
               getUsageLocations(
-                  assetExtractorTextUnit, supportedFileExtensions, ruleId.isCommentRelated()));
+                  assetExtractorTextUnit,
+                  extractedCommentFileExtensions,
+                  ruleId.isCommentRelated()));
         } else {
           sarifBuilder.addResultWithoutLocation(
               ruleId.toString(),
