@@ -9,7 +9,8 @@ public class DoubleBracesPlaceholderDescriptionChecker
   private static final String RIGHT_DOUBLE_BRACES_REGEX = "\\}\\}.*?";
 
   @Override
-  public Set<String> checkCommentForDescriptions(String source, String comment) {
+  public Set<CliCheckResult.CheckFailure> checkCommentForDescriptions(
+      String source, String comment) {
     return super.checkCommentForDescriptions(replaceDoubleBracesWithSingle(source), comment);
   }
 

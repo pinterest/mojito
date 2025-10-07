@@ -92,6 +92,32 @@ public class SpellCliChecker extends AbstractCliChecker {
     if (!failureMap.isEmpty()) {
       cliCheckResult.setSuccessful(false);
       cliCheckResult.setNotificationText(buildNotificationText(failureMap));
+      cliCheckResult.appendToFailuresMap(
+          failureMap.entrySet().stream()
+              .collect(
+                  Collectors.toMap(
+                      Map.Entry::getKey,
+                      entrySet -> {
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("Spelling errors were detected:");
+                        sb.append(System.lineSeparator());
+                        entrySet
+                            .getValue()
+                            .forEach(
+                                (misspeltWord, suggestions) -> {
+                                  sb.append(BULLET_POINT)
+                                      .append(QUOTE_MARKER)
+                                      .append(misspeltWord)
+                                      .append(QUOTE_MARKER)
+                                      .append(
+                                          " is spelt incorrectly. Suggested correct spellings are: ")
+                                      .append(String.join(", ", suggestions))
+                                      .append(System.lineSeparator());
+                                });
+
+                        return new CliCheckResult.CheckFailure(
+                            CheckerRuleId.AGGREGATE_SPELLING_SUGGESTIONS, sb.toString());
+                      })));
     }
 
     return cliCheckResult;
@@ -125,7 +151,7 @@ public class SpellCliChecker extends AbstractCliChecker {
   private Map<String, Map<String, List<String>>> spellCheck(List<String> sourceStrings) {
 
     return sourceStrings.stream()
-        .map(sourceString -> getSpellCliCheckerResult(sourceString))
+        .map(this::getSpellCliCheckerResult)
         .filter(result -> !result.isSuccessful())
         .distinct()
         .collect(

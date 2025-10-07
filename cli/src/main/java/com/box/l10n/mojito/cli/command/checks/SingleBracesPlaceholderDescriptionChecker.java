@@ -12,13 +12,14 @@ public class SingleBracesPlaceholderDescriptionChecker extends AbstractPlacehold
   static Logger logger = LoggerFactory.getLogger(SingleBracesPlaceholderDescriptionChecker.class);
 
   @Override
-  public Set<String> checkCommentForDescriptions(String source, String comment) {
+  public Set<CliCheckResult.CheckFailure> checkCommentForDescriptions(
+      String source, String comment) {
 
     try {
       MessageFormat messageFormat = new MessageFormat(source);
       return messageFormat.getArgumentNames().stream()
           .filter(placeholder -> isPlaceholderDescriptionMissingInComment(comment, placeholder))
-          .map(placeholder -> getFailureText(placeholder))
+          .map(this::getCheckFailure)
           .filter(Optional::isPresent)
           .map(Optional::get)
           .collect(Collectors.toSet());

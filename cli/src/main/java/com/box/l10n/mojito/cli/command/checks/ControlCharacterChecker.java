@@ -5,7 +5,9 @@ import static com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNot
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.google.common.base.CharMatcher;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ControlCharacterChecker extends AbstractCliChecker {
@@ -17,13 +19,25 @@ public class ControlCharacterChecker extends AbstractCliChecker {
 
   @Override
   public CliCheckResult run(List<AssetExtractionDiff> assetExtractionDiffs) {
+    final Map<String, CliCheckResult.CheckFailure> failedFeatureMap = new HashMap<>();
+    getAddedTextUnitsExcludingInconsistentComments(assetExtractionDiffs)
+        .forEach(
+            textUnit -> {
+              ControlCharacterCheckerResult checkerResult =
+                  getControlCharacterCheckerResult(textUnit.getSource());
+              if (!checkerResult.isSuccessful) {
+                failedFeatureMap.put(
+                    textUnit.getName(),
+                    new CliCheckResult.CheckFailure(
+                        CheckerRuleId.CONTROL_CHARACTER_DETECTED, checkerResult.failureText));
+              }
+            });
     List<String> failures =
-        getSourceStringsFromDiff(assetExtractionDiffs).stream()
-            .map(this::getControlCharacterCheckerResult)
-            .filter(result -> !result.isSuccessful)
-            .map(result -> result.failureText)
+        failedFeatureMap.values().stream()
+            .map(CliCheckResult.CheckFailure::failureMessage)
             .collect(Collectors.toList());
     CliCheckResult result = createCliCheckerResult();
+    result.appendToFailuresMap(failedFeatureMap);
     if (!failures.isEmpty()) {
       result.setSuccessful(false);
       result.setNotificationText(getNotificationText(failures));

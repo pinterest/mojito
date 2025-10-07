@@ -5,6 +5,7 @@ import static com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNot
 import com.box.l10n.mojito.regex.PlaceholderRegularExpressions;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,7 +26,11 @@ public class SimpleRegexPlaceholderDescriptionCheckerTest {
     String source = "There is %1 books on %1 shelves";
     String comment = "Test comment %1:The number of books and shelves";
     Set<String> failures =
-        simpleRegexPlaceholderDescriptionChecker.checkCommentForDescriptions(source, comment);
+        simpleRegexPlaceholderDescriptionChecker
+            .checkCommentForDescriptions(source, comment)
+            .stream()
+            .map(CliCheckResult.CheckFailure::failureMessage)
+            .collect(Collectors.toSet());
     Assert.assertTrue(failures.isEmpty());
   }
 
@@ -34,8 +39,12 @@ public class SimpleRegexPlaceholderDescriptionCheckerTest {
     String source = "There is %1 books";
     String comment = "Test comment";
     Set<String> failures =
-        simpleRegexPlaceholderDescriptionChecker.checkCommentForDescriptions(source, comment);
-    Assert.assertTrue(failures.size() == 1);
+        simpleRegexPlaceholderDescriptionChecker
+            .checkCommentForDescriptions(source, comment)
+            .stream()
+            .map(CliCheckResult.CheckFailure::failureMessage)
+            .collect(Collectors.toSet());
+    Assert.assertEquals(1, failures.size());
     Assert.assertTrue(
         failures.contains(
             "Missing description for placeholder with name "
@@ -50,8 +59,12 @@ public class SimpleRegexPlaceholderDescriptionCheckerTest {
     String source = "There is %1 books";
     String comment = null;
     Set<String> failures =
-        simpleRegexPlaceholderDescriptionChecker.checkCommentForDescriptions(source, comment);
-    Assert.assertTrue(failures.size() == 1);
+        simpleRegexPlaceholderDescriptionChecker
+            .checkCommentForDescriptions(source, comment)
+            .stream()
+            .map(CliCheckResult.CheckFailure::failureMessage)
+            .collect(Collectors.toSet());
+    Assert.assertEquals(1, failures.size());
     Assert.assertTrue(
         failures.contains(
             "Missing description for placeholder with name "
@@ -66,8 +79,12 @@ public class SimpleRegexPlaceholderDescriptionCheckerTest {
     String source = "There is %1 books and %2 shelves";
     String comment = "Test comment %1:The number of books";
     Set<String> failures =
-        simpleRegexPlaceholderDescriptionChecker.checkCommentForDescriptions(source, comment);
-    Assert.assertTrue(failures.size() == 1);
+        simpleRegexPlaceholderDescriptionChecker
+            .checkCommentForDescriptions(source, comment)
+            .stream()
+            .map(CliCheckResult.CheckFailure::failureMessage)
+            .collect(Collectors.toSet());
+    Assert.assertEquals(1, failures.size());
     Assert.assertTrue(
         failures.contains(
             "Missing description for placeholder with name "
@@ -84,7 +101,11 @@ public class SimpleRegexPlaceholderDescriptionCheckerTest {
     simpleRegexPlaceholderDescriptionChecker.setPattern(
         Pattern.compile(PlaceholderRegularExpressions.PLACEHOLDER_NO_SPECIFIER_REGEX.getRegex()));
     Set<String> failures =
-        simpleRegexPlaceholderDescriptionChecker.checkCommentForDescriptions(source, comment);
+        simpleRegexPlaceholderDescriptionChecker
+            .checkCommentForDescriptions(source, comment)
+            .stream()
+            .map(CliCheckResult.CheckFailure::failureMessage)
+            .collect(Collectors.toSet());
     Assert.assertTrue(failures.isEmpty());
   }
 
@@ -95,8 +116,12 @@ public class SimpleRegexPlaceholderDescriptionCheckerTest {
     simpleRegexPlaceholderDescriptionChecker.setPattern(
         Pattern.compile(PlaceholderRegularExpressions.PLACEHOLDER_NO_SPECIFIER_REGEX.getRegex()));
     Set<String> failures =
-        simpleRegexPlaceholderDescriptionChecker.checkCommentForDescriptions(source, comment);
-    Assert.assertTrue(failures.size() == 1);
+        simpleRegexPlaceholderDescriptionChecker
+            .checkCommentForDescriptions(source, comment)
+            .stream()
+            .map(CliCheckResult.CheckFailure::failureMessage)
+            .collect(Collectors.toSet());
+    Assert.assertEquals(1, failures.size());
     Assert.assertTrue(
         failures.contains(
             "Missing description for placeholder with name "
@@ -113,8 +138,12 @@ public class SimpleRegexPlaceholderDescriptionCheckerTest {
     simpleRegexPlaceholderDescriptionChecker.setPattern(
         Pattern.compile(PlaceholderRegularExpressions.PLACEHOLDER_NO_SPECIFIER_REGEX.getRegex()));
     Set<String> failures =
-        simpleRegexPlaceholderDescriptionChecker.checkCommentForDescriptions(source, comment);
-    Assert.assertTrue(failures.size() == 1);
+        simpleRegexPlaceholderDescriptionChecker
+            .checkCommentForDescriptions(source, comment)
+            .stream()
+            .map(CliCheckResult.CheckFailure::failureMessage)
+            .collect(Collectors.toSet());
+    Assert.assertEquals(1, failures.size());
     Assert.assertTrue(
         failures.contains(
             "Missing description for placeholder with name "
