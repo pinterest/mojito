@@ -4,13 +4,16 @@ import static com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNot
 
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
+import com.google.common.base.Optional;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
@@ -27,53 +30,60 @@ public class RecommendStringIdChecker extends AbstractCliChecker {
   @Override
   public CliCheckResult run(List<AssetExtractionDiff> assetExtractionDiffs) {
     CliCheckResult result = createCliCheckerResult();
-    List<String> recommendations = getRecommendedIdPrefixUpdates(assetExtractionDiffs);
+    Map<String, CliCheckResult.CheckFailure> recommendations =
+        getRecommendedIdPrefixUpdates(assetExtractionDiffs);
     if (!recommendations.isEmpty()) {
       result.setSuccessful(false);
       result.setNotificationText(buildNotificationText(recommendations));
+      result.appendToFailuresMap(recommendations);
     }
     return result;
   }
 
-  private String buildNotificationText(List<String> recommendations) {
+  private String buildNotificationText(Map<String, CliCheckResult.CheckFailure> recommendations) {
     StringBuilder sb = new StringBuilder();
     sb.append("Recommended id updates for the following strings:");
     sb.append(System.lineSeparator());
     sb.append(
-        recommendations.stream()
+        recommendations.values().stream()
+            .map(CliCheckResult.CheckFailure::failureMessage)
             .map(recommendation -> BULLET_POINT + recommendation)
             .collect(Collectors.joining(System.lineSeparator())));
     sb.append(System.lineSeparator());
     return sb.toString();
   }
 
-  private List<String> getRecommendedIdPrefixUpdates(
+  private Map<String, CliCheckResult.CheckFailure> getRecommendedIdPrefixUpdates(
       List<AssetExtractionDiff> assetExtractionDiffs) {
     return getAddedTextUnitsExcludingInconsistentComments(assetExtractionDiffs).stream()
-        .map(textUnit -> getRecommendStringIdCheckResult(textUnit))
-        .filter(recommendation -> recommendation.isRecommendedUpdate())
-        .map(
-            recommendation ->
-                String.format(
-                    "Please update id "
-                        + QUOTE_MARKER
-                        + "%s"
-                        + QUOTE_MARKER
-                        + " for string "
-                        + QUOTE_MARKER
-                        + "%s"
-                        + QUOTE_MARKER
-                        + " to be prefixed with '%s'",
-                    recommendation.getStringId(),
-                    recommendation.getSource(),
-                    recommendation.getRecommendedIdPrefix()))
-        .collect(Collectors.toList());
+        .map(this::getRecommendStringIdCheckResult)
+        .filter(RecommendStringIdCheckResult::isRecommendedUpdate)
+        .collect(
+            Collectors.toMap(
+                RecommendStringIdCheckResult::getName,
+                recommendation ->
+                    new CliCheckResult.CheckFailure(
+                        CheckerRuleId.RECOMMENDED_PREFIX_CHECK,
+                        String.format(
+                            "Please update id "
+                                + QUOTE_MARKER
+                                + "%s"
+                                + QUOTE_MARKER
+                                + " for string "
+                                + QUOTE_MARKER
+                                + "%s"
+                                + QUOTE_MARKER
+                                + " to be prefixed with '%s'",
+                            recommendation.getStringId(),
+                            recommendation.getSource(),
+                            recommendation.getRecommendedIdPrefix()))));
   }
 
   private RecommendStringIdCheckResult getRecommendStringIdCheckResult(
       AssetExtractorTextUnit textUnit) {
     RecommendStringIdCheckResult recommendation = new RecommendStringIdCheckResult();
     recommendation.setSource(textUnit.getSource());
+    recommendation.setName(textUnit.getName());
     recommendation.setRecommendedUpdate(false);
     return generateRecommendation(textUnit, recommendation);
   }
@@ -97,7 +107,7 @@ public class RecommendStringIdChecker extends AbstractCliChecker {
                 ? textUnit.getName().split(ID_SEPARATOR)[1]
                 : "");
     String cwd = Paths.get(".").toAbsolutePath().toString();
-    for (String filePath : textUnit.getUsages()) {
+    for (String filePath : Optional.fromNullable(textUnit.getUsages()).or(Collections.emptySet())) {
       if (Paths.get(filePath).isAbsolute()) {
         filePath =
             filePath.replace(
@@ -150,6 +160,7 @@ public class RecommendStringIdChecker extends AbstractCliChecker {
     String source;
     String stringId;
     String recommendedIdPrefix;
+    String name;
     boolean isRecommendedUpdate;
 
     public String getSource() {
@@ -182,6 +193,14 @@ public class RecommendStringIdChecker extends AbstractCliChecker {
 
     public void setStringId(String stringId) {
       this.stringId = stringId;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
     }
   }
 }

@@ -23,15 +23,22 @@ import com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificati
 import com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificationSenderPhabricator;
 import com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificationSenderSlack;
 import com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckThirdPartyNotificationService;
+import com.box.l10n.mojito.cli.command.utils.SarifFileGenerator;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.github.GithubClients;
 import com.box.l10n.mojito.github.GithubException;
+import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.regex.PlaceholderRegularExpressions;
+import com.box.l10n.mojito.sarif.model.Sarif;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.ibm.icu.text.MessageFormat;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -273,6 +280,16 @@ public class ExtractionCheckCommand extends Command {
       description = "Full git commit sha, used for setting a status on a commit in Github.")
   String commitSha;
 
+  @Parameter(
+      names = {"--generate-sarif-file", "-gsf"},
+      arity = 1,
+      description = "generates a SARIF file in the working directory")
+  Boolean shouldGenerateSarifFile = false;
+
+  @Autowired SarifFileGenerator sarifFileGenerator;
+
+  @Autowired ObjectMapper objectMapper;
+
   RestTemplate restTemplate;
 
   List<ExtractionCheckNotificationSender> extractionCheckNotificationSenders = new ArrayList<>();
@@ -283,7 +300,6 @@ public class ExtractionCheckCommand extends Command {
 
   @Override
   protected void execute() throws CommandException {
-
     initNotificationSenders();
 
     if (areChecksSkipped) {
@@ -307,7 +323,6 @@ public class ExtractionCheckCommand extends Command {
               .build();
 
       List<AssetExtractionDiff> assetExtractionDiffs;
-
       try {
         if (extractionDiffService.hasAddedTextUnits(extractionDiffPaths)) {
           assetExtractionDiffs =
@@ -317,6 +332,10 @@ public class ExtractionCheckCommand extends Command {
               executeChecks(cliCheckerExecutor, assetExtractionDiffs);
           List<CliCheckResult> cliCheckerFailures =
               getCheckerFailures(cliCheckerResults).collect(Collectors.toList());
+
+          if (shouldGenerateSarifFile) {
+            generateSarifFile(cliCheckerFailures, assetExtractionDiffs);
+          }
           reportStatistics(cliCheckerResults);
           checkForHardFail(cliCheckerFailures);
           if (!cliCheckerFailures.isEmpty()) {
@@ -334,6 +353,29 @@ public class ExtractionCheckCommand extends Command {
             "Can't compute extraction diffs", missingExtractionDirectoryException);
       }
       consoleWriter.fg(Ansi.Color.GREEN).newLine().a("Checks completed").println(2);
+    }
+  }
+
+  private void generateSarifFile(
+      List<CliCheckResult> cliCheckerFailures, List<AssetExtractionDiff> assetExtractionDiffs) {
+    if (cliCheckerFailures.isEmpty()) {
+      consoleWriter
+          .fg(Ansi.Color.CYAN)
+          .newLine()
+          .a("No CLI check failures, SARIF file was not generated")
+          .println();
+      return;
+    }
+
+    Sarif sarif = sarifFileGenerator.generateSarifFile(cliCheckerFailures, assetExtractionDiffs);
+    String fileName = "i18n-checks.sarif.json";
+    try {
+      Path filePath = Paths.get(".", fileName);
+      String sarifString = objectMapper.writeValueAsString(sarif);
+      Files.writeString(filePath, sarifString);
+      consoleWriter.fg(Ansi.Color.CYAN).newLine().a("SARIF file generated in cwd").println();
+    } catch (IOException e) {
+      throw new CommandException("Failed to write sarif file: " + fileName, e);
     }
   }
 
@@ -485,7 +527,7 @@ public class ExtractionCheckCommand extends Command {
   }
 
   private void checkForHardFail(List<CliCheckResult> results) {
-    if (getCheckerHardFailures(results).count() > 0) {
+    if (getCheckerHardFailures(results).findAny().isPresent()) {
       String cliFailureString =
           "The following checks had hard failures:"
               + System.lineSeparator()
