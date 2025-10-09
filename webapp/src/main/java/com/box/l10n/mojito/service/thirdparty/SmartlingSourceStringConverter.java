@@ -3,7 +3,7 @@ package com.box.l10n.mojito.service.thirdparty;
 import static java.util.Optional.ofNullable;
 
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingOptions;
-import com.box.l10n.mojito.service.tm.PlaceholderConverter;
+import com.box.l10n.mojito.service.tm.SourceStringConverter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -12,7 +12,8 @@ import java.util.regex.Pattern;
 
 /**
  * Converts sequential format placeholders in strings to positional placeholders for compatibility
- * with Smartling.
+ * with Smartling. It also trims whitespace and replaces multiple consecutive spaces with a single
+ * space.
  *
  * <p>This converter supports Java, iOS, and C-style format strings, transforming placeholders such
  * as {@code %s}, {@code %d}, {@code %@}, {@code %10.2f}, etc., into their positional equivalents
@@ -34,12 +35,12 @@ import java.util.regex.Pattern;
  * <p>Example usage:
  *
  * <pre>
- *   SmartlingPlaceholderConverter converter = new SmartlingPlaceholderConverter();
+ *   SmartlingSourceStringConverter converter = new SmartlingSourceStringConverter();
  *   String result = converter.convert("Hello %s, you have %d messages", List.of("placeholderFormat=java"));
  *   // result: "Hello %1$s, you have %2$d messages"
  * </pre>
  */
-public class SmartlingPlaceholderConverter implements PlaceholderConverter {
+public class SmartlingSourceStringConverter implements SourceStringConverter {
   private static final Map<String, String> REGEX_BY_FORMAT =
       Map.of(
           "java",
@@ -122,8 +123,7 @@ public class SmartlingPlaceholderConverter implements PlaceholderConverter {
     };
   }
 
-  @Override
-  public String convert(String input, List<String> options) {
+  private String convertPlaceholders(String input, List<String> options) {
     SmartlingOptions smartlingOptions = SmartlingOptions.parseList(options);
     Optional<String> smartlingPlaceholderFormat =
         ofNullable(smartlingOptions.getPlaceholderFormat()).map(String::toLowerCase);
@@ -149,5 +149,11 @@ public class SmartlingPlaceholderConverter implements PlaceholderConverter {
     matcher.appendTail(result);
 
     return result.toString();
+  }
+
+  @Override
+  public String convert(String input, List<String> options) {
+    String result = this.convertPlaceholders(input, options);
+    return result.trim().replaceAll("\\s{2,}", " ");
   }
 }

@@ -18,7 +18,7 @@ import com.box.l10n.mojito.service.pollableTask.Pollable;
 import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.screenshot.ScreenshotRepository;
-import com.box.l10n.mojito.service.tm.PlaceholderConverter;
+import com.box.l10n.mojito.service.tm.SourceStringConverter;
 import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.service.tm.TextUnitBatchMatcher;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
@@ -334,7 +334,7 @@ public class ThirdPartyService {
       Asset asset,
       List<ThirdPartyTextUnit> thirdPartyTextUnitsToMap,
       String pluralSeparator,
-      PlaceholderConverter placeholderConverter,
+      SourceStringConverter sourceStringConverter,
       List<String> options) {
     logger.debug("Map third party text units to text unit DTOs for asset: {}", asset.getId());
     Set<Long> alreadyMappedTmTextUnitId =
@@ -375,7 +375,7 @@ public class ThirdPartyService {
                                 .matchByNameAndPluralPrefix(
                                     notMappedTextUnitDTOs,
                                     pluralSeparator,
-                                    placeholderConverter,
+                                    sourceStringConverter,
                                     options)
                                 .apply(t)
                                 .stream()

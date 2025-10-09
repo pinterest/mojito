@@ -65,19 +65,19 @@ public class TextUnitBatchMatcher {
   public Function<TextUnitForBatchMatcher, List<TextUnitDTO>> matchByNameAndPluralPrefix(
       List<TextUnitDTO> existingTextUnits,
       String pluralSeparator,
-      PlaceholderConverter placeholderConverter,
+      SourceStringConverter sourceStringConverter,
       List<String> options) {
     Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>>
         matchByPluralPrefixCommentAndUsed =
             createMatchByPluralPrefixCommentAndUsed(existingTextUnits, pluralSeparator);
     Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByNameSourceAndUsed =
-        createMatchByNameSourceAndUsed(existingTextUnits, placeholderConverter, options)
+        createMatchByNameSourceAndUsed(existingTextUnits, sourceStringConverter, options)
             .andThen(Optionals::optionalToOptionalList);
     Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>>
         matchByPluralPrefixCommentAndUnused =
             createMatchByPluralPrefixCommentAndUnused(existingTextUnits, pluralSeparator);
     Function<TextUnitForBatchMatcher, Optional<List<TextUnitDTO>>> matchByNameSourceAndUnused =
-        createMatchByNameSourceAndUnused(existingTextUnits, placeholderConverter, options)
+        createMatchByNameSourceAndUnused(existingTextUnits, sourceStringConverter, options)
             .andThen(Optionals::optionalToOptionalList);
     Predicate<List<TextUnitDTO>> notAlreadyMatchedInList = notAlreadyMatchedInList("global");
 
@@ -128,7 +128,7 @@ public class TextUnitBatchMatcher {
    */
   Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> createMatchByNameSourceAndUsed(
       List<TextUnitDTO> existingTextUnits,
-      PlaceholderConverter placeholderConverter,
+      SourceStringConverter sourceStringConverter,
       List<String> options) {
 
     logger.debug("Create the map to match by name, source and used text units");
@@ -142,9 +142,7 @@ public class TextUnitBatchMatcher {
                             "%s%s",
                             textUnitDTO.getName(),
                             DigestUtils.md5Hex(
-                                placeholderConverter
-                                    .convert(textUnitDTO.getSource(), options)
-                                    .trim()))));
+                                sourceStringConverter.convert(textUnitDTO.getSource(), options)))));
     Predicate<TextUnitDTO> byNameAndUsedNotAlreadyMatched = notAlreadyMatched("byNameAndUsed");
 
     logger.debug("createMatchByNameSourceAndUsed");
@@ -353,7 +351,7 @@ public class TextUnitBatchMatcher {
    */
   Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> createMatchByNameSourceAndUnused(
       List<TextUnitDTO> existingTextUnits,
-      PlaceholderConverter placeholderConverter,
+      SourceStringConverter sourceStringConverter,
       List<String> options) {
 
     logger.debug("Create the map to match by name, source and unused text units");
@@ -367,9 +365,7 @@ public class TextUnitBatchMatcher {
                             "%s%s",
                             textUnitDTO.getName(),
                             DigestUtils.md5Hex(
-                                placeholderConverter
-                                    .convert(textUnitDTO.getSource(), options)
-                                    .trim()))));
+                                sourceStringConverter.convert(textUnitDTO.getSource(), options)))));
 
     logger.debug("createMatchByNameSourceAndUnused");
     return (textUnitForBatchMatcher) -> {
