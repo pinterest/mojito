@@ -3,6 +3,7 @@ package com.box.l10n.mojito.github;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.io.IOException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -44,6 +45,7 @@ public class GithubClient {
   private GithubJWT githubJWT;
   private PrivateKey signingKey;
   private final String endpoint;
+  private final MeterRegistry meterRegistry;
 
   protected GHAppInstallationToken githubAppInstallationToken;
   protected GitHub gitHubClient;
@@ -59,7 +61,8 @@ public class GithubClient {
       String endpoint,
       int maxRetries,
       Duration retryMinBackoff,
-      Duration retryMaxBackoff) {
+      Duration retryMaxBackoff,
+      MeterRegistry meterRegistry) {
     this.appId = appId;
     this.key = key;
     if (owner == null || owner.isEmpty()) {
@@ -73,9 +76,10 @@ public class GithubClient {
     this.maxRetries = maxRetries;
     this.retryMinBackoff = retryMinBackoff;
     this.retryMaxBackoff = retryMaxBackoff;
+    this.meterRegistry = meterRegistry;
   }
 
-  public GithubClient(String appId, String key, String owner) {
+  public GithubClient(String appId, String key, String owner, MeterRegistry meterRegistry) {
     this(
         appId,
         key,
@@ -84,7 +88,8 @@ public class GithubClient {
         "https://api.github.com",
         3,
         Duration.ofSeconds(5),
-        Duration.ofSeconds(60));
+        Duration.ofSeconds(60),
+        meterRegistry);
   }
 
   private PrivateKey createPrivateKey(String key)
@@ -423,10 +428,15 @@ public class GithubClient {
 
   protected GitHub createGithubClient(String repository)
       throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-    return new GitHubBuilder()
-        .withEndpoint(getEndpoint())
-        .withAppInstallationToken(getGithubAppInstallationToken(repository).getToken())
-        .build();
+    GitHubBuilder builder =
+        new GitHubBuilder()
+            .withEndpoint(getEndpoint())
+            .withAppInstallationToken(getGithubAppInstallationToken(repository).getToken());
+
+    if (meterRegistry != null)
+      builder = builder.withRateLimitChecker(new GithubRateLimitChecker(meterRegistry));
+
+    return builder.build();
   }
 
   private String getRepositoryPath(String repository) {

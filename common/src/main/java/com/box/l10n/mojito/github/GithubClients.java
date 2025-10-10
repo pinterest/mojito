@@ -1,14 +1,19 @@
 package com.box.l10n.mojito.github;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class GithubClients {
 
-  private Map<String, GithubClient> githubOwnerToClientsCache;
+  @Autowired(required = false)
+  private MeterRegistry meterRegistry;
+
+  private final Map<String, GithubClient> githubOwnerToClientsCache;
 
   public GithubClients(GithubClientsConfiguration githubClientsConfiguration) {
     githubOwnerToClientsCache = createGithubClients(githubClientsConfiguration);
@@ -29,7 +34,8 @@ public class GithubClients {
                         e.getValue().getEndpoint(),
                         e.getValue().getMaxRetries(),
                         Duration.ofSeconds(e.getValue().getRetryMinBackoffSecs()),
-                        Duration.ofSeconds(e.getValue().getRetryMaxBackoffSecs()))));
+                        Duration.ofSeconds(e.getValue().getRetryMaxBackoffSecs()),
+                        meterRegistry)));
   }
 
   public GithubClient getClient(String owner) {

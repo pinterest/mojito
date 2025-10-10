@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Lists;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -234,7 +235,9 @@ public class GithubClientTest {
 
     @Bean
     public GithubClient getGithubClient() throws NoSuchAlgorithmException, InvalidKeySpecException {
-      GithubClient ghClient = Mockito.spy(new GithubClient("testAppId", "someKey", "testOwner"));
+      MeterRegistry meterRegistryMock = Mockito.mock(MeterRegistry.class);
+      GithubClient ghClient =
+          Mockito.spy(new GithubClient("testAppId", "someKey", "testOwner", meterRegistryMock));
       PrivateKey privateKeyMock = Mockito.mock(PrivateKey.class);
       doReturn(privateKeyMock).when(ghClient).getSigningKey();
       return ghClient;
