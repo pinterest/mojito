@@ -12,13 +12,17 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Duration;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import org.apache.commons.codec.binary.Base64;
 import org.kohsuke.github.GHAppInstallationToken;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
+import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHPullRequestFileDetail;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
 import org.slf4j.Logger;
@@ -255,6 +259,36 @@ public class GithubClient {
                     e))
         .onErrorReturn("")
         .block();
+  }
+
+  public Map<String, String> getPrFilePatches(String repository, int prNumber) {
+    String repoFullPath = getRepositoryPath(repository);
+
+    Mono<Map<String, String>> stringMono =
+        Mono.fromCallable(
+            () -> {
+              GHPullRequest pr =
+                  getGithubClient(repository).getRepository(repoFullPath).getPullRequest(prNumber);
+
+              Map<String, String> patches = new HashMap<>();
+              for (GHPullRequestFileDetail changedFile : pr.listFiles()) {
+                patches.put(changedFile.getFilename(), changedFile.getPatch());
+              }
+              return patches;
+            });
+    stringMono.retryWhen(
+        Retry.backoff(maxRetries, (retryMinBackoff))
+            .maxBackoff(retryMaxBackoff)
+            .filter(e -> e instanceof IOException || e instanceof GithubException));
+    stringMono.doOnError(
+        e ->
+            logger.error(
+                String.format(
+                    "Error retrieving PR files patches for PR %d in repository '%s': %s",
+                    prNumber, repoFullPath, e.getMessage()),
+                e));
+    stringMono.onErrorReturn(new HashMap<>());
+    return stringMono.block();
   }
 
   public String getPRAuthorEmail(String repository, int prNumber) {
