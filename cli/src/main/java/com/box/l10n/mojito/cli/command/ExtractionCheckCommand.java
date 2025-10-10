@@ -24,9 +24,11 @@ import com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificati
 import com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificationSenderSlack;
 import com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckThirdPartyNotificationService;
 import com.box.l10n.mojito.cli.command.utils.SarifFileGenerator;
+import com.box.l10n.mojito.cli.command.utils.SarifUtils;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.github.GithubClients;
 import com.box.l10n.mojito.github.GithubException;
+import com.box.l10n.mojito.github.GithubPatchParser;
 import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.regex.PlaceholderRegularExpressions;
@@ -40,7 +42,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -69,6 +74,8 @@ public class ExtractionCheckCommand extends Command {
   @Autowired GithubClients githubClients;
 
   @Autowired ConsoleWriter consoleWriter;
+
+  @Autowired GithubPatchParser githubPatchParser;
 
   @Parameter(
       names = {"--checker-list", "-cl"},
@@ -286,6 +293,13 @@ public class ExtractionCheckCommand extends Command {
       description = "generates a SARIF file in the working directory")
   Boolean shouldGenerateSarifFile = false;
 
+  @Parameter(
+      names = {"--validate-sarif-file", "-gsf"},
+      arity = 1,
+      description =
+          "gets file diffs of PR and validates SARIF line numbers match. Generates a file showing line number discrepancies")
+  Boolean shouldValidateSarifOutput = false;
+
   @Autowired SarifFileGenerator sarifFileGenerator;
 
   @Autowired ObjectMapper objectMapper;
@@ -368,6 +382,43 @@ public class ExtractionCheckCommand extends Command {
     }
 
     Sarif sarif = sarifFileGenerator.generateSarifFile(cliCheckerFailures, assetExtractionDiffs);
+
+    if (shouldValidateSarifOutput && githubClients.isClientAvailable(githubOwner)) {
+      Map<String, Set<Integer>> githubFileToLineNumberMap =
+          githubClients
+              .getClient(githubOwner)
+              .getPrFilePatches(githubRepository, githubPRNumber)
+              .entrySet()
+              .stream()
+              .collect(
+                  Collectors.toMap(
+                      Map.Entry::getKey,
+                      entry -> githubPatchParser.getAddedLines(entry.getValue())));
+
+      Map<String, Set<Integer>> sarifFileToLineNumberMap =
+          SarifUtils.buildFileToLineNumberMap(sarif);
+      Map<String, Set<Integer>> misreportedLineNumbersPerFile =
+          getMismatchedFileWithLineNumbers(sarifFileToLineNumberMap, githubFileToLineNumberMap);
+
+      Map<String, Map<String, Set<Integer>>> serializableValidation = new HashMap<>();
+      serializableValidation.put("misreportedLineNumbersPerFile", misreportedLineNumbersPerFile);
+      serializableValidation.put("githubFileToLineNumberMap", githubFileToLineNumberMap);
+      serializableValidation.put("sarifFileToLineNumbers", sarifFileToLineNumberMap);
+      String fileName = "sarif-validation-output.json";
+      try {
+        Path filePath = Paths.get(".", fileName);
+        String sarifString = objectMapper.writeValueAsString(serializableValidation);
+        Files.writeString(filePath, sarifString);
+        consoleWriter
+            .fg(Ansi.Color.CYAN)
+            .newLine()
+            .a("SARIF line number validation complete. Generated File: " + filePath)
+            .println();
+      } catch (IOException e) {
+        throw new CommandException("Failed to write sarif validation file: " + fileName, e);
+      }
+    }
+
     String fileName = "i18n-checks.sarif.json";
     try {
       Path filePath = Paths.get(".", fileName);
@@ -377,6 +428,24 @@ public class ExtractionCheckCommand extends Command {
     } catch (IOException e) {
       throw new CommandException("Failed to write sarif file: " + fileName, e);
     }
+  }
+
+  public Map<String, Set<Integer>> getMismatchedFileWithLineNumbers(
+      Map<String, Set<Integer>> sarifFiles, Map<String, Set<Integer>> githubFiles) {
+
+    Map<String, Set<Integer>> misreportedLineNumbersPerFile = new HashMap<>();
+    for (Map.Entry<String, Set<Integer>> entry : sarifFiles.entrySet()) {
+      String fileName = entry.getKey();
+      Set<Integer> sarifLines = entry.getValue();
+      Set<Integer> githubLines = githubFiles.get(fileName);
+
+      Set<Integer> difference = new HashSet<>(sarifLines);
+      difference.removeAll(githubLines);
+      if (!difference.isEmpty()) {
+        misreportedLineNumbersPerFile.put(fileName, difference);
+      }
+    }
+    return misreportedLineNumbersPerFile;
   }
 
   private boolean isSetGithubStatus() {
