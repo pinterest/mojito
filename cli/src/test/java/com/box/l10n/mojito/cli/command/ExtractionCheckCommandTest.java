@@ -11,7 +11,11 @@ import com.box.l10n.mojito.cli.CLITestBase;
 import com.box.l10n.mojito.cli.command.checks.CliCheckResult;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.google.common.collect.Lists;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.fusesource.jansi.Ansi;
 import org.junit.Assert;
 import org.junit.Test;
@@ -850,6 +854,55 @@ public class ExtractionCheckCommandTest extends CLITestBase {
     extractionCheckCommand.reportStatistics(Lists.newArrayList(success, failure));
     verify(consoleWriter, times(1))
         .a("Error reporting statistics to http endpoint: test exception");
+  }
+
+  @Test
+  public void testGetMismatchedFileWithLineNumbers_emptyInputs() {
+    ExtractionCheckCommand command = new ExtractionCheckCommand();
+    Map<String, Set<Integer>> sarifFiles = new HashMap<>();
+    Map<String, Set<Integer>> githubFiles = new HashMap<>();
+    Map<String, Set<Integer>> result =
+        command.getMismatchedFileWithLineNumbers(sarifFiles, githubFiles);
+    Assert.assertTrue(result.isEmpty());
+  }
+
+  @Test
+  public void testGetMismatchedFileWithLineNumbers_noMismatches() {
+    ExtractionCheckCommand command = new ExtractionCheckCommand();
+    Map<String, Set<Integer>> sarifFiles = new HashMap<>();
+    Map<String, Set<Integer>> githubFiles = new HashMap<>();
+    sarifFiles.put("test.py", new HashSet<>(List.of(1, 2, 3)));
+    githubFiles.put("test.py", new HashSet<>(List.of(1, 2, 3)));
+    Map<String, Set<Integer>> result =
+        command.getMismatchedFileWithLineNumbers(sarifFiles, githubFiles);
+    Assert.assertTrue(result.isEmpty());
+  }
+
+  @Test
+  public void testGetMismatchedFileWithLineNumbers_withMismatches() {
+    ExtractionCheckCommand command = new ExtractionCheckCommand();
+    Map<String, Set<Integer>> sarifFiles = new HashMap<>();
+    Map<String, Set<Integer>> githubFiles = new HashMap<>();
+    sarifFiles.put("test.py", new HashSet<>(List.of(1, 2, 3)));
+    githubFiles.put("test.py", new HashSet<>(List.of(2, 3, 4)));
+    Map<String, Set<Integer>> result =
+        command.getMismatchedFileWithLineNumbers(sarifFiles, githubFiles);
+    Assert.assertEquals(result, Map.of("test.py", Set.of(1)));
+  }
+
+  @Test
+  public void testGetMismatchedFileWithLineNumbers_multipleFiles() {
+    ExtractionCheckCommand command = new ExtractionCheckCommand();
+    Map<String, Set<Integer>> sarifFiles = new HashMap<>();
+    Map<String, Set<Integer>> githubFiles = new HashMap<>();
+    sarifFiles.put("test.py", new HashSet<>(List.of(1, 2)));
+    sarifFiles.put("other.py", new HashSet<>(List.of(5, 6)));
+    githubFiles.put("test.py", new HashSet<>(List.of(1)));
+    githubFiles.put("other.py", new HashSet<>(List.of(5, 6, 7)));
+    Map<String, Set<Integer>> result =
+        command.getMismatchedFileWithLineNumbers(sarifFiles, githubFiles);
+    Assert.assertEquals(Set.of(2), result.get("test.py"));
+    Assert.assertNull(result.get("other.py"));
   }
 
   public void testPOMultiCommentForSameSourceAndTarget() {
