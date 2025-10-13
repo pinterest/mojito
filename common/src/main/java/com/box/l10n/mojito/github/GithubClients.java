@@ -3,6 +3,7 @@ package com.box.l10n.mojito.github;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -10,17 +11,20 @@ import org.springframework.stereotype.Component;
 @Component
 public class GithubClients {
 
-  @Autowired(required = false)
-  private MeterRegistry meterRegistry;
-
   private final Map<String, GithubClient> githubOwnerToClientsCache;
+  private final Optional<MeterRegistry> meterRegistry;
 
-  public GithubClients(GithubClientsConfiguration githubClientsConfiguration) {
+  @Autowired
+  public GithubClients(
+      GithubClientsConfiguration githubClientsConfiguration,
+      Optional<MeterRegistry> meterRegistry) {
     githubOwnerToClientsCache = createGithubClients(githubClientsConfiguration);
+    this.meterRegistry = meterRegistry;
   }
 
   private Map<String, GithubClient> createGithubClients(
       GithubClientsConfiguration githubClientsConfiguration) {
+
     return githubClientsConfiguration.getGithubClients().entrySet().stream()
         .collect(
             Collectors.toMap(
@@ -35,7 +39,9 @@ public class GithubClients {
                         e.getValue().getMaxRetries(),
                         Duration.ofSeconds(e.getValue().getRetryMinBackoffSecs()),
                         Duration.ofSeconds(e.getValue().getRetryMaxBackoffSecs()),
-                        meterRegistry)));
+                        meterRegistry != null && meterRegistry.isPresent()
+                            ? meterRegistry.get()
+                            : null)));
   }
 
   public GithubClient getClient(String owner) {
