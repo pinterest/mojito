@@ -294,7 +294,7 @@ public class ExtractionCheckCommand extends Command {
   Boolean shouldGenerateSarifFile = false;
 
   @Parameter(
-      names = {"--validate-sarif-file", "-gsf"},
+      names = {"--validate-sarif-file", "-vsf"},
       arity = 1,
       description =
           "gets file diffs of PR and validates SARIF line numbers match. Generates a file showing line number discrepancies")
@@ -373,6 +373,7 @@ public class ExtractionCheckCommand extends Command {
   private void generateSarifFile(
       List<CliCheckResult> cliCheckerFailures, List<AssetExtractionDiff> assetExtractionDiffs) {
     if (cliCheckerFailures.isEmpty()) {
+      logger.debug("No new strings in diff to be checked.");
       consoleWriter
           .fg(Ansi.Color.CYAN)
           .newLine()
@@ -384,6 +385,7 @@ public class ExtractionCheckCommand extends Command {
     Sarif sarif = sarifFileGenerator.generateSarifFile(cliCheckerFailures, assetExtractionDiffs);
 
     if (shouldValidateSarifOutput && githubClients.isClientAvailable(githubOwner)) {
+      logger.debug("Validating SARIF output");
       Map<String, Set<Integer>> githubFileToLineNumberMap =
           githubClients
               .getClient(githubOwner)
@@ -395,10 +397,16 @@ public class ExtractionCheckCommand extends Command {
                       Map.Entry::getKey,
                       entry -> githubPatchParser.getAddedLines(entry.getValue())));
 
+      logger.debug("GitHub file to line number map: {}", githubFileToLineNumberMap);
       Map<String, Set<Integer>> sarifFileToLineNumberMap =
           SarifUtils.buildFileToLineNumberMap(sarif);
+      logger.debug("Sarif file to line number map: {}", sarifFileToLineNumberMap);
       Map<String, Set<Integer>> misreportedLineNumbersPerFile =
           getMismatchedFileWithLineNumbers(sarifFileToLineNumberMap, githubFileToLineNumberMap);
+      logger.debug("MisreportedLineNumbersPerFile size: {}", misreportedLineNumbersPerFile.size());
+      logger.debug(
+          "MisreportedLineNumbersTotal: {}",
+          misreportedLineNumbersPerFile.values().stream().mapToInt(Set::size).sum());
 
       Map<String, Map<String, Set<Integer>>> serializableValidation = new HashMap<>();
       serializableValidation.put("misreportedLineNumbersPerFile", misreportedLineNumbersPerFile);
@@ -419,6 +427,7 @@ public class ExtractionCheckCommand extends Command {
       }
     }
 
+    logger.debug("Generating SARIF file");
     String fileName = "i18n-checks.sarif.json";
     try {
       Path filePath = Paths.get(".", fileName);

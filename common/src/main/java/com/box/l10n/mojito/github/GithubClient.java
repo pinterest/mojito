@@ -287,6 +287,7 @@ public class GithubClient {
 
               Map<String, String> patches = new HashMap<>();
               for (GHPullRequestFileDetail changedFile : pr.listFiles()) {
+                logger.debug("Processing file diff: {}", changedFile.getFilename());
                 patches.put(changedFile.getFilename(), changedFile.getPatch());
               }
               return patches;
@@ -298,9 +299,10 @@ public class GithubClient {
     stringMono.doOnError(
         e ->
             logger.error(
-                String.format(
-                    "Error retrieving PR files patches for PR %d in repository '%s': %s",
-                    prNumber, repoFullPath, e.getMessage()),
+                "Error retrieving PR files patches for PR {} in repository '{}': {}",
+                prNumber,
+                repoFullPath,
+                e.getMessage(),
                 e));
     stringMono.onErrorReturn(new HashMap<>());
     return stringMono.block();
