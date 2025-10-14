@@ -122,7 +122,7 @@ class SarifBuilderTest {
     assertEquals(
         "src/Text/Util.java", location.getPhysicalLocation().getArtifactLocation().getUri());
     assertEquals(1, location.getPhysicalLocation().getRegion().getStartLine());
-    assertNull(location.getPhysicalLocation().getRegion().getEndLine());
+    assertEquals(1, location.getPhysicalLocation().getRegion().getEndLine());
     assertDoesNotThrow(() -> validateSchema(sarif));
   }
 
