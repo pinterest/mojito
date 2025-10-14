@@ -10,20 +10,18 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class GithubClients {
-
   private final Map<String, GithubClient> githubOwnerToClientsCache;
-  private final Optional<MeterRegistry> meterRegistry;
 
   @Autowired
   public GithubClients(
       GithubClientsConfiguration githubClientsConfiguration,
       Optional<MeterRegistry> meterRegistry) {
-    githubOwnerToClientsCache = createGithubClients(githubClientsConfiguration);
-    this.meterRegistry = meterRegistry;
+    githubOwnerToClientsCache = createGithubClients(githubClientsConfiguration, meterRegistry);
   }
 
   private Map<String, GithubClient> createGithubClients(
-      GithubClientsConfiguration githubClientsConfiguration) {
+      GithubClientsConfiguration githubClientsConfiguration,
+      Optional<MeterRegistry> meterRegistry) {
 
     return githubClientsConfiguration.getGithubClients().entrySet().stream()
         .collect(
