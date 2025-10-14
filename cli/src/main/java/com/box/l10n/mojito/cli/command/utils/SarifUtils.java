@@ -2,6 +2,7 @@ package com.box.l10n.mojito.cli.command.utils;
 
 import com.box.l10n.mojito.sarif.model.Region;
 import com.box.l10n.mojito.sarif.model.Sarif;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -33,7 +34,7 @@ public class SarifUtils {
                 Map.Entry::getKey,
                 Map.Entry::getValue,
                 (set1, set2) -> {
-                  Set<Integer> merged = new java.util.HashSet<>(set1);
+                  Set<Integer> merged = new HashSet<>(set1);
                   merged.addAll(set2);
                   return merged;
                 }));
