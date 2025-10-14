@@ -428,14 +428,18 @@ public class GithubClient {
 
   protected GitHub createGithubClient(String repository)
       throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+    logger.debug("Creating GithubClient for repository: {}", repository);
     GitHubBuilder builder =
         new GitHubBuilder()
             .withEndpoint(getEndpoint())
             .withAppInstallationToken(getGithubAppInstallationToken(repository).getToken());
 
-    if (meterRegistry != null)
+    if (meterRegistry != null) {
+      logger.debug("Using MeterRegistry for GithubClient: {}", meterRegistry);
       builder = builder.withRateLimitChecker(new GithubRateLimitChecker(meterRegistry));
+    }
 
+    logger.debug("GithubClient Configured");
     return builder.build();
   }
 
