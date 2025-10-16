@@ -116,12 +116,21 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error adding comment to PR %d in repository '%s': %s",
-                        prNumber, repoFullPath, e.getMessage()),
-                    e))
+            e -> {
+              meterRegistry
+                  .counter(
+                      "Mojito.GitHubClient.RetriesExhausted",
+                      "repository",
+                      repository,
+                      "operation",
+                      "addCommentToPR")
+                  .increment();
+              logger.error(
+                  String.format(
+                      "Error adding comment to PR %d in repository '%s': %s",
+                      prNumber, repoFullPath, e.getMessage()),
+                  e);
+            })
         .block();
   }
 
@@ -153,12 +162,21 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error updating/adding a comment to PR %d in repository '%s': %s",
-                        prNumber, this.getRepositoryPath(repository), e.getMessage()),
-                    e))
+            e -> {
+              meterRegistry
+                  .counter(
+                      "Mojito.GitHubClient.RetriesExhausted",
+                      "repository",
+                      repository,
+                      "operation",
+                      "updateOrAddCommentToPR")
+                  .increment();
+              logger.error(
+                  String.format(
+                      "Error updating/adding a comment to PR %d in repository '%s': %s",
+                      prNumber, this.getRepositoryPath(repository), e.getMessage()),
+                  e);
+            })
         .block();
   }
 
@@ -192,12 +210,21 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error adding status to commit %s in repository '%s': %s",
-                        commitSha, repoFullPath, e.getMessage()),
-                    e))
+            e -> {
+              meterRegistry
+                  .counter(
+                      "Mojito.GitHubClient.RetriesExhausted",
+                      "repository",
+                      repository,
+                      "operation",
+                      "addStatusToCommit")
+                  .increment();
+              logger.error(
+                  String.format(
+                      "Error adding status to commit %s in repository '%s': %s",
+                      commitSha, repoFullPath, e.getMessage()),
+                  e);
+            })
         .block();
   }
 
@@ -225,12 +252,21 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error adding comment to commit %s in repository '%s': %s",
-                        commitSha1, repoFullPath, e.getMessage()),
-                    e))
+            e -> {
+              meterRegistry
+                  .counter(
+                      "Mojito.GitHubClient.RetriesExhausted",
+                      "repository",
+                      repository,
+                      "operation",
+                      "addCommentToCommit")
+                  .increment();
+              logger.error(
+                  String.format(
+                      "Error adding comment to commit %s in repository '%s': %s",
+                      commitSha1, repoFullPath, e.getMessage()),
+                  e);
+            })
         .block();
   }
 
@@ -249,12 +285,21 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error retrieving base commit for PR %d in repository '%s': %s",
-                        prNumber, repoFullPath, e.getMessage()),
-                    e))
+            e -> {
+              meterRegistry
+                  .counter(
+                      "Mojito.GitHubClient.RetriesExhausted",
+                      "repository",
+                      repository,
+                      "operation",
+                      "getPRBaseCommit")
+                  .increment();
+              logger.error(
+                  String.format(
+                      "Error retrieving base commit for PR %d in repository '%s': %s",
+                      prNumber, repoFullPath, e.getMessage()),
+                  e);
+            })
         .onErrorReturn("")
         .block();
   }
@@ -274,12 +319,21 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error getting author email for PR %d in repository '%s': %s",
-                        prNumber, repoFullPath, e.getMessage()),
-                    e))
+            e -> {
+              meterRegistry
+                  .counter(
+                      "Mojito.GitHubClient.RetriesExhausted",
+                      "repository",
+                      repository,
+                      "operation",
+                      "updateOrAddCommentToPR")
+                  .increment();
+              logger.error(
+                  String.format(
+                      "Error getting author email for PR %d in repository '%s': %s",
+                      prNumber, repoFullPath, e.getMessage()),
+                  e);
+            })
         .onErrorReturn("")
         .block();
   }
@@ -308,12 +362,21 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error adding label '%s' to PR %d in repository '%s': %s",
-                        labelName, prNumber, repoFullPath, e.getMessage()),
-                    e))
+            e -> {
+              meterRegistry
+                  .counter(
+                      "Mojito.GitHubClient.RetriesExhausted",
+                      "repository",
+                      repository,
+                      "operation",
+                      "addLabelToPR")
+                  .increment();
+              logger.error(
+                  String.format(
+                      "Error adding label '%s' to PR %d in repository '%s': %s",
+                      labelName, prNumber, repoFullPath, e.getMessage()),
+                  e);
+            })
         .block();
   }
 
@@ -341,12 +404,21 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error removing label '%s' from PR %d in repository '%s': %s",
-                        labelName, prNumber, repoFullPath, e.getMessage()),
-                    e))
+            e -> {
+              meterRegistry
+                  .counter(
+                      "Mojito.GitHubClient.RetriesExhausted",
+                      "repository",
+                      repository,
+                      "operation",
+                      "removeLabelFromPR")
+                  .increment();
+              logger.error(
+                  String.format(
+                      "Error removing label '%s' from PR %d in repository '%s': %s",
+                      labelName, prNumber, repoFullPath, e.getMessage()),
+                  e);
+            })
         .block();
   }
 
@@ -366,12 +438,21 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error reading labels for PR %d in repository '%s' : '%s'",
-                        prNumber, repoFullPath, e.getMessage()),
-                    e))
+            e -> {
+              meterRegistry
+                  .counter(
+                      "Mojito.GitHubClient.RetriesExhausted",
+                      "repository",
+                      repository,
+                      "operation",
+                      "isLabelAppliedToPR")
+                  .increment();
+              logger.error(
+                  String.format(
+                      "Error reading labels for PR %d in repository '%s' : '%s'",
+                      prNumber, repoFullPath, e.getMessage()),
+                  e);
+            })
         .onErrorReturn(false)
         .block();
   }
@@ -390,12 +471,21 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error retrieving comments for PR %d in repository '%s': %s",
-                        prNumber, repoFullPath, e.getMessage()),
-                    e))
+            e -> {
+              meterRegistry
+                  .counter(
+                      "Mojito.GitHubClient.RetriesExhausted",
+                      "repository",
+                      repository,
+                      "operation",
+                      "getPRComments")
+                  .increment();
+              logger.error(
+                  String.format(
+                      "Error retrieving comments for PR %d in repository '%s': %s",
+                      prNumber, repoFullPath, e.getMessage()),
+                  e);
+            })
         .onErrorReturn(List.of())
         .block();
   }
