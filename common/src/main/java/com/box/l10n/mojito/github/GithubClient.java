@@ -36,6 +36,8 @@ public class GithubClient {
    */
   private static final long MAX_GITHUB_JWT_TTL = 10 * 60000;
 
+  private static final long EXPIRY_REFRESH_THRESHOLD_MS = 30_000;
+
   private static Logger logger = LoggerFactory.getLogger(GithubClient.class);
 
   private final String appId;
@@ -410,11 +412,16 @@ public class GithubClient {
     return endpoint;
   }
 
+  public boolean shouldRefreshToken(long tokenExpires, long now) {
+    long refreshDeadlineMs = tokenExpires - EXPIRY_REFRESH_THRESHOLD_MS;
+    return now >= refreshDeadlineMs;
+  }
+
   public GHAppInstallationToken getGithubAppInstallationToken(String repository)
       throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
     if (githubAppInstallationToken == null
-        || githubAppInstallationToken.getExpiresAt().getTime()
-            <= System.currentTimeMillis() - 30000) {
+        || shouldRefreshToken(
+            githubAppInstallationToken.getExpiresAt().getTime(), System.currentTimeMillis())) {
       GitHub gitHub =
           new GitHubBuilder()
               .withEndpoint(getEndpoint())
@@ -452,7 +459,8 @@ public class GithubClient {
 
     Date now = new Date(System.currentTimeMillis());
 
-    if (githubJWT != null && now.getTime() <= (githubJWT.getExpiryTime().getTime() - 30000)) {
+    if (githubJWT != null
+        && !shouldRefreshToken(githubJWT.getExpiryTime().getTime(), now.getTime())) {
       return githubJWT;
     } else {
       githubJWT = createGithubJWT(ttlMillis, now);

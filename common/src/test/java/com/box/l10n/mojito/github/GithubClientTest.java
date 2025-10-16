@@ -17,9 +17,12 @@ import java.security.spec.InvalidKeySpecException;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.runner.RunWith;
 import org.kohsuke.github.GHAppInstallationToken;
 import org.kohsuke.github.GHCommit;
@@ -242,5 +245,19 @@ public class GithubClientTest {
       doReturn(privateKeyMock).when(ghClient).getSigningKey();
       return ghClient;
     }
+  }
+
+  @ParameterizedTest(name = "now={0}, expiresAt={1} -> refresh={2}")
+  @CsvSource({
+    "100, 131, false", // > 30s away
+    "100, 130, true", // exactly 30s away -> refresh
+    "100, 120, true", // 20s away -> refresh
+    "100,  90, true" // already expired -> refresh
+  })
+  void testShouldRefreshToken(long now, long expiry, boolean expected) {
+    long nowMs = TimeUnit.SECONDS.toMillis(now);
+    long expiryMs = TimeUnit.SECONDS.toMillis(expiry);
+    boolean requiresRefresh = githubClient.shouldRefreshToken(expiryMs, nowMs);
+    assertEquals(expected, requiresRefresh);
   }
 }
