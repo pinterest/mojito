@@ -23,6 +23,6 @@ public class GithubRateLimitChecker extends RateLimitChecker {
     meterRegistry.gauge("GithubRateLimitChecker.RateLimit.Limit", record.getLimit());
     logger.debug("Rate limit: {} / {}, remaining: {}", currentlyUsed, limit, remainingRequests);
 
-    return remainingRequests > 0;
+    return false;
   }
 }
