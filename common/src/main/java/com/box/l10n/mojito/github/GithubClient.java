@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import org.apache.commons.codec.binary.Base64;
 import org.kohsuke.github.GHAppInstallationToken;
@@ -34,9 +35,9 @@ public class GithubClient {
    * @see <a
    *     https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps#authenticating-as-a-github-app<a/>
    */
-  private static final long MAX_GITHUB_JWT_TTL = 10 * 60000;
+  private static final long MAX_GITHUB_JWT_TTL = TimeUnit.MINUTES.toMillis(10);
 
-  private static final long EXPIRY_REFRESH_THRESHOLD_MS = 30_000;
+  private static final long EXPIRY_REFRESH_THRESHOLD_MS = TimeUnit.SECONDS.toMillis(30);
 
   private static Logger logger = LoggerFactory.getLogger(GithubClient.class);
 
