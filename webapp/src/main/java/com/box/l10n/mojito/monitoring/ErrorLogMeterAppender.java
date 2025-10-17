@@ -7,16 +7,10 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 
 public class ErrorLogMeterAppender extends AppenderBase<ILoggingEvent> {
-  private Counter errorCounter;
-  private String metricName = "error_log_count";
+  private final Counter errorCounter;
 
-  public void setMeterRegistry(MeterRegistry meterRegistry) {
-    this.errorCounter =
-        Counter.builder(metricName).description("Number of error logs").register(meterRegistry);
-  }
-
-  public void setMetricName(String metricName) {
-    this.metricName = metricName;
+  public ErrorLogMeterAppender(MeterRegistry meterRegistry) {
+    this.errorCounter = meterRegistry.counter("error_log_count");
   }
 
   @Override
