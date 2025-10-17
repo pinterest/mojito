@@ -4,8 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.box.l10n.mojito.service.thirdparty.NoOpPlaceholderConverter;
-import com.box.l10n.mojito.service.thirdparty.SmartlingPlaceholderConverter;
+import com.box.l10n.mojito.service.thirdparty.NoOpSourceStringConverter;
+import com.box.l10n.mojito.service.thirdparty.SmartlingSourceStringConverter;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
@@ -408,7 +408,7 @@ public class TextUnitBatchMatcherTest {
 
     Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUsed =
         textUnitBatchMatcher.createMatchByNameSourceAndUsed(
-            existingTextUnitDTOs, new NoOpPlaceholderConverter(), ImmutableList.of());
+            existingTextUnitDTOs, new NoOpSourceStringConverter(), ImmutableList.of());
 
     Optional<TextUnitDTO> textUnit =
         matchByNameSourceAndUsed.apply(createTextUnitForBatchMatcher("name-2", "Second source"));
@@ -426,11 +426,73 @@ public class TextUnitBatchMatcherTest {
 
     Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUsed =
         textUnitBatchMatcher.createMatchByNameSourceAndUsed(
-            existingTextUnitDTOs, new NoOpPlaceholderConverter(), ImmutableList.of());
+            existingTextUnitDTOs, new SmartlingSourceStringConverter(), ImmutableList.of());
 
     Optional<TextUnitDTO> textUnit =
         matchByNameSourceAndUsed.apply(createTextUnitForBatchMatcher("name-2", "Second source"));
 
+    assertTrue(textUnit.isPresent());
+    assertEquals("name-2", textUnit.get().getName());
+  }
+
+  @Test
+  public void testCreateMatchByNameSourceAndUsed_DoesNotRemoveLeadingAndTrailingWhitespaces() {
+    List<TextUnitDTO> existingTextUnitDTOs =
+        Arrays.asList(
+            createTextUnitDTO("name-1", "First source"),
+            createTextUnitDTO("name-2", " Second source "));
+
+    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUsed =
+        textUnitBatchMatcher.createMatchByNameSourceAndUsed(
+            existingTextUnitDTOs, new NoOpSourceStringConverter(), ImmutableList.of());
+
+    Optional<TextUnitDTO> textUnit =
+        matchByNameSourceAndUsed.apply(createTextUnitForBatchMatcher("name-2", "Second source"));
+
+    assertTrue(textUnit.isEmpty());
+
+    textUnit =
+        matchByNameSourceAndUsed.apply(createTextUnitForBatchMatcher("name-2", " Second source "));
+    assertTrue(textUnit.isPresent());
+    assertEquals("name-2", textUnit.get().getName());
+  }
+
+  @Test
+  public void testCreateMatchByNameSourceAndUsed_ReplacesMultipleConsecutiveSpaces() {
+    List<TextUnitDTO> existingTextUnitDTOs =
+        Arrays.asList(
+            createTextUnitDTO("name-1", "First source"),
+            createTextUnitDTO("name-2", "Second  source"));
+
+    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUsed =
+        textUnitBatchMatcher.createMatchByNameSourceAndUsed(
+            existingTextUnitDTOs, new SmartlingSourceStringConverter(), ImmutableList.of());
+
+    Optional<TextUnitDTO> textUnit =
+        matchByNameSourceAndUsed.apply(createTextUnitForBatchMatcher("name-2", "Second source"));
+
+    assertTrue(textUnit.isPresent());
+    assertEquals("name-2", textUnit.get().getName());
+  }
+
+  @Test
+  public void testCreateMatchByNameSourceAndUsed_DoesNotReplaceMultipleConsecutiveSpaces() {
+    List<TextUnitDTO> existingTextUnitDTOs =
+        Arrays.asList(
+            createTextUnitDTO("name-1", "First source"),
+            createTextUnitDTO("name-2", "Second  source"));
+
+    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUsed =
+        textUnitBatchMatcher.createMatchByNameSourceAndUsed(
+            existingTextUnitDTOs, new NoOpSourceStringConverter(), ImmutableList.of());
+
+    Optional<TextUnitDTO> textUnit =
+        matchByNameSourceAndUsed.apply(createTextUnitForBatchMatcher("name-2", "Second source"));
+
+    assertTrue(textUnit.isEmpty());
+
+    textUnit =
+        matchByNameSourceAndUsed.apply(createTextUnitForBatchMatcher("name-2", "Second  source"));
     assertTrue(textUnit.isPresent());
     assertEquals("name-2", textUnit.get().getName());
   }
@@ -444,7 +506,7 @@ public class TextUnitBatchMatcherTest {
 
     Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUsed =
         textUnitBatchMatcher.createMatchByNameSourceAndUsed(
-            existingTextUnitDTOs, new NoOpPlaceholderConverter(), ImmutableList.of());
+            existingTextUnitDTOs, new NoOpSourceStringConverter(), ImmutableList.of());
 
     Optional<TextUnitDTO> textUnit =
         matchByNameSourceAndUsed.apply(createTextUnitForBatchMatcher("name-1", "Second source"));
@@ -467,7 +529,7 @@ public class TextUnitBatchMatcherTest {
     Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUsed =
         textUnitBatchMatcher.createMatchByNameSourceAndUsed(
             existingTextUnitDTOs,
-            new SmartlingPlaceholderConverter(),
+            new SmartlingSourceStringConverter(),
             ImmutableList.of("smartling-placeholder-format=IOS"));
 
     Optional<TextUnitDTO> textUnit =
@@ -488,7 +550,7 @@ public class TextUnitBatchMatcherTest {
     Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUsed =
         textUnitBatchMatcher.createMatchByNameSourceAndUsed(
             existingTextUnitDTOs,
-            new SmartlingPlaceholderConverter(),
+            new SmartlingSourceStringConverter(),
             ImmutableList.of("smartling-placeholder-format=JAVA"));
 
     Optional<TextUnitDTO> textUnit =
@@ -549,7 +611,7 @@ public class TextUnitBatchMatcherTest {
 
     Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUnused =
         textUnitBatchMatcher.createMatchByNameSourceAndUnused(
-            existingTextUnitDTOs, new NoOpPlaceholderConverter(), ImmutableList.of());
+            existingTextUnitDTOs, new NoOpSourceStringConverter(), ImmutableList.of());
 
     Optional<TextUnitDTO> textUnit =
         matchByNameSourceAndUnused.apply(createTextUnitForBatchMatcher("name-2", "Second string"));
@@ -567,11 +629,74 @@ public class TextUnitBatchMatcherTest {
 
     Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUnused =
         textUnitBatchMatcher.createMatchByNameSourceAndUnused(
-            existingTextUnitDTOs, new NoOpPlaceholderConverter(), ImmutableList.of());
+            existingTextUnitDTOs, new SmartlingSourceStringConverter(), ImmutableList.of());
 
     Optional<TextUnitDTO> textUnit =
         matchByNameSourceAndUnused.apply(createTextUnitForBatchMatcher("name-2", "Second source"));
 
+    assertTrue(textUnit.isPresent());
+    assertEquals("name-2", textUnit.get().getName());
+  }
+
+  @Test
+  public void testCreateMatchByNameSourceAndUnused_DoesNotRemoveLeadingAndTrailingWhitespaces() {
+    List<TextUnitDTO> existingTextUnitDTOs =
+        Arrays.asList(
+            createUnusedTextUnitDTO("name-1", "First source"),
+            createUnusedTextUnitDTO("name-2", " Second source "));
+
+    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUnused =
+        textUnitBatchMatcher.createMatchByNameSourceAndUnused(
+            existingTextUnitDTOs, new NoOpSourceStringConverter(), ImmutableList.of());
+
+    Optional<TextUnitDTO> textUnit =
+        matchByNameSourceAndUnused.apply(createTextUnitForBatchMatcher("name-2", "Second source"));
+
+    assertTrue(textUnit.isEmpty());
+
+    textUnit =
+        matchByNameSourceAndUnused.apply(
+            createTextUnitForBatchMatcher("name-2", " Second source "));
+    assertTrue(textUnit.isPresent());
+    assertEquals("name-2", textUnit.get().getName());
+  }
+
+  @Test
+  public void testCreateMatchByNameSourceAndUnused_ReplacesMultipleConsecutiveSpaces() {
+    List<TextUnitDTO> existingTextUnitDTOs =
+        Arrays.asList(
+            createUnusedTextUnitDTO("name-1", "First source"),
+            createUnusedTextUnitDTO("name-2", "Second  source"));
+
+    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUnused =
+        textUnitBatchMatcher.createMatchByNameSourceAndUnused(
+            existingTextUnitDTOs, new SmartlingSourceStringConverter(), ImmutableList.of());
+
+    Optional<TextUnitDTO> textUnit =
+        matchByNameSourceAndUnused.apply(createTextUnitForBatchMatcher("name-2", "Second source"));
+
+    assertTrue(textUnit.isPresent());
+    assertEquals("name-2", textUnit.get().getName());
+  }
+
+  @Test
+  public void testCreateMatchByNameSourceAndUnused_DoesNotReplaceMultipleConsecutiveSpaces() {
+    List<TextUnitDTO> existingTextUnitDTOs =
+        Arrays.asList(
+            createUnusedTextUnitDTO("name-1", "First source"),
+            createUnusedTextUnitDTO("name-2", "Second  source"));
+
+    Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUnused =
+        textUnitBatchMatcher.createMatchByNameSourceAndUnused(
+            existingTextUnitDTOs, new NoOpSourceStringConverter(), ImmutableList.of());
+
+    Optional<TextUnitDTO> textUnit =
+        matchByNameSourceAndUnused.apply(createTextUnitForBatchMatcher("name-2", "Second source"));
+
+    assertTrue(textUnit.isEmpty());
+
+    textUnit =
+        matchByNameSourceAndUnused.apply(createTextUnitForBatchMatcher("name-2", "Second  source"));
     assertTrue(textUnit.isPresent());
     assertEquals("name-2", textUnit.get().getName());
   }
@@ -585,7 +710,7 @@ public class TextUnitBatchMatcherTest {
 
     Function<TextUnitForBatchMatcher, Optional<TextUnitDTO>> matchByNameSourceAndUnused =
         textUnitBatchMatcher.createMatchByNameSourceAndUnused(
-            existingTextUnitDTOs, new NoOpPlaceholderConverter(), ImmutableList.of());
+            existingTextUnitDTOs, new NoOpSourceStringConverter(), ImmutableList.of());
 
     Optional<TextUnitDTO> textUnit =
         matchByNameSourceAndUnused.apply(createTextUnitForBatchMatcher("name-2", "First string"));
@@ -651,7 +776,7 @@ public class TextUnitBatchMatcherTest {
         textUnitBatchMatcher.matchByNameAndPluralPrefix(
             existingTextUnitDTOs,
             PLURAL_SEPARATOR,
-            new NoOpPlaceholderConverter(),
+            new NoOpSourceStringConverter(),
             ImmutableList.of());
 
     List<TextUnitDTO> noMatchByNameSourceAndUsed =
