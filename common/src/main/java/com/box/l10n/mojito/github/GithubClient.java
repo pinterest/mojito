@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import org.apache.commons.codec.binary.Base64;
 import org.kohsuke.github.GHAppInstallationToken;
@@ -34,7 +35,9 @@ public class GithubClient {
    * @see <a
    *     https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps#authenticating-as-a-github-app<a/>
    */
-  private static final long MAX_GITHUB_JWT_TTL = 10 * 60000;
+  private static final long MAX_GITHUB_JWT_TTL = TimeUnit.MINUTES.toMillis(10);
+
+  private static final long EXPIRY_REFRESH_THRESHOLD_MS = TimeUnit.SECONDS.toMillis(30);
 
   private static Logger logger = LoggerFactory.getLogger(GithubClient.class);
 
@@ -114,12 +117,15 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error adding comment to PR %d in repository '%s': %s",
-                        prNumber, repoFullPath, e.getMessage()),
-                    e))
+            e -> {
+              sendRetryExceededMetric(repository, "addCommentToPR");
+
+              logger.error(
+                  String.format(
+                      "Error adding comment to PR %d in repository '%s': %s",
+                      prNumber, repoFullPath, e.getMessage()),
+                  e);
+            })
         .block();
   }
 
@@ -151,12 +157,14 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error updating/adding a comment to PR %d in repository '%s': %s",
-                        prNumber, this.getRepositoryPath(repository), e.getMessage()),
-                    e))
+            e -> {
+              sendRetryExceededMetric(repository, "updateOrAddCommentToPR");
+              logger.error(
+                  String.format(
+                      "Error updating/adding a comment to PR %d in repository '%s': %s",
+                      prNumber, this.getRepositoryPath(repository), e.getMessage()),
+                  e);
+            })
         .block();
   }
 
@@ -190,12 +198,14 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error adding status to commit %s in repository '%s': %s",
-                        commitSha, repoFullPath, e.getMessage()),
-                    e))
+            e -> {
+              sendRetryExceededMetric(repository, "addStatusToCommit");
+              logger.error(
+                  String.format(
+                      "Error adding status to commit %s in repository '%s': %s",
+                      commitSha, repoFullPath, e.getMessage()),
+                  e);
+            })
         .block();
   }
 
@@ -223,12 +233,15 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error adding comment to commit %s in repository '%s': %s",
-                        commitSha1, repoFullPath, e.getMessage()),
-                    e))
+            e -> {
+              sendRetryExceededMetric(repository, "addCommentToCommit");
+
+              logger.error(
+                  String.format(
+                      "Error adding comment to commit %s in repository '%s': %s",
+                      commitSha1, repoFullPath, e.getMessage()),
+                  e);
+            })
         .block();
   }
 
@@ -247,12 +260,14 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error retrieving base commit for PR %d in repository '%s': %s",
-                        prNumber, repoFullPath, e.getMessage()),
-                    e))
+            e -> {
+              sendRetryExceededMetric(repository, "getPRBaseCommit");
+              logger.error(
+                  String.format(
+                      "Error retrieving base commit for PR %d in repository '%s': %s",
+                      prNumber, repoFullPath, e.getMessage()),
+                  e);
+            })
         .onErrorReturn("")
         .block();
   }
@@ -272,12 +287,14 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error getting author email for PR %d in repository '%s': %s",
-                        prNumber, repoFullPath, e.getMessage()),
-                    e))
+            e -> {
+              sendRetryExceededMetric(repository, "updateOrAddCommentToPR");
+              logger.error(
+                  String.format(
+                      "Error getting author email for PR %d in repository '%s': %s",
+                      prNumber, repoFullPath, e.getMessage()),
+                  e);
+            })
         .onErrorReturn("")
         .block();
   }
@@ -306,12 +323,14 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error adding label '%s' to PR %d in repository '%s': %s",
-                        labelName, prNumber, repoFullPath, e.getMessage()),
-                    e))
+            e -> {
+              sendRetryExceededMetric(repository, "addLabelToPR");
+              logger.error(
+                  String.format(
+                      "Error adding label '%s' to PR %d in repository '%s': %s",
+                      labelName, prNumber, repoFullPath, e.getMessage()),
+                  e);
+            })
         .block();
   }
 
@@ -339,12 +358,14 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error removing label '%s' from PR %d in repository '%s': %s",
-                        labelName, prNumber, repoFullPath, e.getMessage()),
-                    e))
+            e -> {
+              sendRetryExceededMetric(repository, "removeLabelFromPR");
+              logger.error(
+                  String.format(
+                      "Error removing label '%s' from PR %d in repository '%s': %s",
+                      labelName, prNumber, repoFullPath, e.getMessage()),
+                  e);
+            })
         .block();
   }
 
@@ -364,12 +385,14 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error reading labels for PR %d in repository '%s' : '%s'",
-                        prNumber, repoFullPath, e.getMessage()),
-                    e))
+            e -> {
+              sendRetryExceededMetric(repository, "isLabelAppliedToPR");
+              logger.error(
+                  String.format(
+                      "Error reading labels for PR %d in repository '%s' : '%s'",
+                      prNumber, repoFullPath, e.getMessage()),
+                  e);
+            })
         .onErrorReturn(false)
         .block();
   }
@@ -388,12 +411,14 @@ public class GithubClient {
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
-            e ->
-                logger.error(
-                    String.format(
-                        "Error retrieving comments for PR %d in repository '%s': %s",
-                        prNumber, repoFullPath, e.getMessage()),
-                    e))
+            e -> {
+              sendRetryExceededMetric(repository, "getPRComments");
+              logger.error(
+                  String.format(
+                      "Error retrieving comments for PR %d in repository '%s': %s",
+                      prNumber, repoFullPath, e.getMessage()),
+                  e);
+            })
         .onErrorReturn(List.of())
         .block();
   }
@@ -410,11 +435,16 @@ public class GithubClient {
     return endpoint;
   }
 
+  public boolean shouldRefreshToken(long tokenExpires, long now) {
+    long refreshDeadlineMs = tokenExpires - EXPIRY_REFRESH_THRESHOLD_MS;
+    return now >= refreshDeadlineMs;
+  }
+
   public GHAppInstallationToken getGithubAppInstallationToken(String repository)
       throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
     if (githubAppInstallationToken == null
-        || githubAppInstallationToken.getExpiresAt().getTime()
-            <= System.currentTimeMillis() - 30000) {
+        || shouldRefreshToken(
+            githubAppInstallationToken.getExpiresAt().getTime(), System.currentTimeMillis())) {
       GitHub gitHub =
           new GitHubBuilder()
               .withEndpoint(getEndpoint())
@@ -428,14 +458,18 @@ public class GithubClient {
 
   protected GitHub createGithubClient(String repository)
       throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+    logger.debug("Creating GithubClient for repository: {}", repository);
     GitHubBuilder builder =
         new GitHubBuilder()
             .withEndpoint(getEndpoint())
             .withAppInstallationToken(getGithubAppInstallationToken(repository).getToken());
 
-    if (meterRegistry != null)
+    if (meterRegistry != null) {
+      logger.debug("Using MeterRegistry for GithubClient: {}", meterRegistry);
       builder = builder.withRateLimitChecker(new GithubRateLimitChecker(meterRegistry));
+    }
 
+    logger.debug("GithubClient Configured");
     return builder.build();
   }
 
@@ -448,7 +482,8 @@ public class GithubClient {
 
     Date now = new Date(System.currentTimeMillis());
 
-    if (githubJWT != null && now.getTime() <= (githubJWT.getExpiryTime().getTime() - 30000)) {
+    if (githubJWT != null
+        && !shouldRefreshToken(githubJWT.getExpiryTime().getTime(), now.getTime())) {
       return githubJWT;
     } else {
       githubJWT = createGithubJWT(ttlMillis, now);
@@ -488,5 +523,16 @@ public class GithubClient {
       gitHubClient = createGithubClient(repository);
     }
     return gitHubClient;
+  }
+
+  private void sendRetryExceededMetric(String repository, String operationName) {
+    meterRegistry
+        .counter(
+            "Mojito.GitHubClient.RetriesExhausted",
+            "repository",
+            repository,
+            "operation",
+            operationName)
+        .increment();
   }
 }

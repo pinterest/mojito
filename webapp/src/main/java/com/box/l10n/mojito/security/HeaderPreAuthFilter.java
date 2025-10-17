@@ -33,7 +33,7 @@ public class HeaderPreAuthFilter extends AbstractPreAuthenticatedProcessingFilte
       }
     }
 
-    logger.info(
+    logger.debug(
         "No auth principal could be found using headers '{}' and '{}'",
         headerSecurityConfig.userIdentifyingHeader,
         headerSecurityConfig.serviceIdentifyingHeader);
