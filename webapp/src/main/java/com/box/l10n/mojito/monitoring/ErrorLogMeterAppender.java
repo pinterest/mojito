@@ -11,6 +11,7 @@ public class ErrorLogMeterAppender extends AppenderBase<ILoggingEvent> {
 
   public ErrorLogMeterAppender(MeterRegistry meterRegistry) {
     this.errorCounter = meterRegistry.counter("error_log_count");
+    this.name = "Mojito.Logs.ErrorCount";
   }
 
   @Override
