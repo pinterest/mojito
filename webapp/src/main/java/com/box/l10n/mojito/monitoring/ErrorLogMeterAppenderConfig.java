@@ -4,7 +4,6 @@ import ch.qos.logback.classic.Logger;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
@@ -13,13 +12,6 @@ public class ErrorLogMeterAppenderConfig {
 
   public ErrorLogMeterAppenderConfig(MeterRegistry meterRegistry) {
     this.meterRegistry = meterRegistry;
-  }
-
-  @Bean
-  public ErrorLogMeterAppender errorLogMeterAppender() {
-    ErrorLogMeterAppender appender = new ErrorLogMeterAppender(meterRegistry);
-    appender.start();
-    return appender;
   }
 
   @PostConstruct
