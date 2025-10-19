@@ -154,6 +154,6 @@ public class SmartlingSourceStringConverter implements SourceStringConverter {
   @Override
   public String convert(String input, List<String> options) {
     String result = this.convertPlaceholders(input, options);
-    return result.trim().replaceAll("\\s{2,}", " ");
+    return result.trim().replaceAll(" {2,}", " ");
   }
 }
