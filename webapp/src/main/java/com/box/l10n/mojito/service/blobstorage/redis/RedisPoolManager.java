@@ -4,6 +4,7 @@ import com.box.l10n.mojito.aws.elasticache.IAMAuthTokenRequest;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import java.time.Duration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -67,7 +68,7 @@ public class RedisPoolManager {
   }
 
   @VisibleForTesting
-  void refreshJedisPool() {
+  synchronized void refreshJedisPool() {
     LOG.info("Refreshing JedisPool");
     if (this.jedisPool != null) {
       this.jedisPool.close();
@@ -77,6 +78,14 @@ public class RedisPoolManager {
     poolConfig.setMaxTotal(this.redisPoolConfigurationProperties.getMaxTotal());
     poolConfig.setMaxIdle(this.redisPoolConfigurationProperties.getMaxIdle());
     poolConfig.setMinIdle(this.redisPoolConfigurationProperties.getMinIdle());
+
+    // Validate connection
+    poolConfig.setTestOnBorrow(this.redisPoolConfigurationProperties.isTestOnBorrow());
+    poolConfig.setTestOnReturn(this.redisPoolConfigurationProperties.isTestOnReturn());
+    poolConfig.setTestWhileIdle(this.redisPoolConfigurationProperties.isTestWhileIdle());
+    poolConfig.setTimeBetweenEvictionRuns(
+        Duration.ofMillis(
+            this.redisPoolConfigurationProperties.getTimeBetweenEvictionRunsMillis()));
 
     DefaultJedisClientConfig clientConfig;
 
@@ -133,7 +142,25 @@ public class RedisPoolManager {
 
   public Jedis getJedis() {
     LOG.debug("Getting Jedis");
-    return this.jedisPool.getResource();
+
+    if (this.jedisPool == null || this.jedisPool.isClosed()) {
+      LOG.warn("JedisPool is closed or null, refreshing pool");
+      synchronized (this) {
+        if (this.jedisPool == null || this.jedisPool.isClosed()) {
+          this.refreshJedisPool();
+        }
+      }
+    }
+
+    try {
+      return this.jedisPool.getResource();
+    } catch (IllegalStateException e) {
+      LOG.error("Pool not open, attempting pool refresh", e);
+      synchronized (this) {
+        this.refreshJedisPool();
+      }
+      return this.jedisPool.getResource();
+    }
   }
 
   @PreDestroy
