@@ -26,6 +26,7 @@ import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestFileDetail;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
+import org.kohsuke.github.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -445,7 +446,11 @@ public class GithubClient {
         .retryWhen(
             Retry.backoff(maxRetries, (retryMinBackoff))
                 .maxBackoff(retryMaxBackoff)
-                .filter(e -> e instanceof IOException || e instanceof GithubException))
+                .filter(
+                    e ->
+                        e instanceof IOException
+                            || e instanceof GithubException
+                            || e instanceof HttpException))
         .doOnError(
             e -> {
               sendRetryExceededMetric(repository, "getPRComments");

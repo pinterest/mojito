@@ -26,6 +26,7 @@ import com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckThirdParty
 import com.box.l10n.mojito.cli.command.utils.SarifFileGenerator;
 import com.box.l10n.mojito.cli.command.utils.SarifUtils;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
+import com.box.l10n.mojito.github.GithubClient;
 import com.box.l10n.mojito.github.GithubClients;
 import com.box.l10n.mojito.github.GithubException;
 import com.box.l10n.mojito.github.GithubPatchParser;
@@ -382,22 +383,33 @@ public class ExtractionCheckCommand extends Command {
       return;
     }
 
-    Sarif sarif = sarifFileGenerator.generateSarifFile(cliCheckerFailures, assetExtractionDiffs);
+    Map<String, Set<Integer>> githubFileToLineNumberMap = new HashMap<>();
+    try {
+      // TODO: Handle case where client is undefined
+      GithubClient githubClient = githubClients.getClient(githubOwner);
 
-    if (shouldValidateSarifOutput && githubClients.isClientAvailable(githubOwner)) {
-      logger.debug("Validating SARIF output");
-      Map<String, Set<Integer>> githubFileToLineNumberMap =
-          githubClients
-              .getClient(githubOwner)
-              .getPrFilePatches(githubRepository, githubPRNumber)
-              .entrySet()
-              .stream()
+      githubFileToLineNumberMap =
+          githubClient.getPrFilePatches(githubRepository, githubPRNumber).entrySet().stream()
               .collect(
                   Collectors.toMap(
                       Map.Entry::getKey,
                       entry -> githubPatchParser.getAddedLines(entry.getValue())));
+    } catch (GithubException e) {
+      logger.error("Failed to get modified lines from Github", e);
+      throw new CommandException("Failed to get modified lines from Github", e);
+    }
 
-      logger.debug("GitHub file to line number map: {}", githubFileToLineNumberMap);
+    logger.debug("GitHub file to line number map: {}", githubFileToLineNumberMap);
+    Sarif sarif =
+        sarifFileGenerator.generateSarifFile(
+            cliCheckerFailures, assetExtractionDiffs, githubFileToLineNumberMap);
+
+    if (shouldValidateSarifOutput
+        && githubRepository != null
+        && !githubRepository.isBlank()
+        && githubPRNumber != null
+        && githubClients.isClientAvailable(githubOwner)) {
+      logger.debug("Validating SARIF output");
       Map<String, Set<Integer>> sarifFileToLineNumberMap =
           SarifUtils.buildFileToLineNumberMap(sarif);
       logger.debug("Sarif file to line number map: {}", sarifFileToLineNumberMap);
