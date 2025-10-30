@@ -101,6 +101,7 @@ public class BranchNotificationService {
   public void sendMissingScreenshotNotificationForBranch(Long branchId, String notifierId) {
     logger.debug("sendMissingScreenshotNotificationForBranch, id: {}", branchId);
     BranchNotificationMessageSender branchNotificationMessageSender = findByNotifierId(notifierId);
+    meterRegistry.counter("branchNotificationJob.missingScreenshotNotif").increment();
     sendMissingScreenshotNotificationForBranchWithSender(branchNotificationMessageSender, branchId);
   }
 
@@ -185,10 +186,12 @@ public class BranchNotificationService {
     if (shouldSendNewMessage(branchNotification, branchNotificationInfo)) {
       sendNewMessage(
           branchNotificationMessageSender, branch, branchNotification, branchNotificationInfo);
+      meterRegistry.counter("branchNotificationJob.sendNotification", "type", "new").increment();
       scheduleMissingScreenshotNotificationsForBranch(branch, notifierId);
     } else if (shouldSendUpdatedMessage(branchNotification, branchNotificationInfo)) {
       sendUpdatedMessage(
           branchNotificationMessageSender, branch, branchNotification, branchNotificationInfo);
+      meterRegistry.counter("branchNotificationJob.sendNotification", "type", "update").increment();
       scheduleMissingScreenshotNotificationsForBranch(branch, notifierId);
     }
 
@@ -211,6 +214,14 @@ public class BranchNotificationService {
 
     if (isNotTargetingMainBranch(branchMergeTargetOptional)) {
       // Not tracked for safe i18n, send old notification
+      meterRegistry
+          .counter(
+              "branchNotificationJob.sendNotification",
+              "type",
+              "translated",
+              "subtype",
+              "notTargetingMain")
+          .increment();
       sendTranslatedMessage(branchNotificationMessageSender, branch, branchNotification, null);
       return;
     }
@@ -233,6 +244,14 @@ public class BranchNotificationService {
           "Branch '{}' has exceeded the safe I18N check in window. Falling back to the old notification flow to unblock.",
           branch.getName());
 
+      meterRegistry
+          .counter(
+              "branchNotificationJob.sendNotification",
+              "type",
+              "translated",
+              "subtype",
+              "waitTimeExpired")
+          .increment();
       sendTranslatedMessage(branchNotificationMessageSender, branch, branchNotification, null);
       return;
     }
@@ -245,6 +264,10 @@ public class BranchNotificationService {
           branch,
           branchNotification,
           branchMergeTarget.getCommit().getName());
+      meterRegistry
+          .counter(
+              "branchNotificationJob.sendNotification", "type", "translated", "subtype", "standard")
+          .increment();
     }
   }
 
