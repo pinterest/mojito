@@ -30,9 +30,12 @@ import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHLabel;
 import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHPullRequestFileDetail;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitHub;
+import org.kohsuke.github.PagedIterable;
+import org.kohsuke.github.PagedIterator;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,6 +102,17 @@ public class GithubClientTest {
     when(this.ghCommentMock2.getBody()).thenReturn("Test 2");
     when(this.ghPullRequestMock.getComments())
         .thenReturn(Arrays.asList(this.ghCommentMock1, this.ghCommentMock2));
+
+    GHPullRequestFileDetail file1 = Mockito.mock(GHPullRequestFileDetail.class);
+    GHPullRequestFileDetail file2 = Mockito.mock(GHPullRequestFileDetail.class);
+    List<GHPullRequestFileDetail> mockFiles = Arrays.asList(file1, file2);
+    PagedIterable<GHPullRequestFileDetail> pagedIterableMock = Mockito.mock(PagedIterable.class);
+    when(pagedIterableMock.asList()).thenReturn(mockFiles);
+    PagedIterator<GHPullRequestFileDetail> pagedIteratorMock = Mockito.mock(PagedIterator.class);
+    when(pagedIteratorMock.hasNext()).thenReturn(true, true, false);
+    when(pagedIteratorMock.next()).thenReturn(file1, file2);
+    when(pagedIterableMock.iterator()).thenReturn(pagedIteratorMock);
+    when(ghPullRequestMock.listFiles()).thenReturn(pagedIterableMock);
   }
 
   @Test
@@ -230,6 +244,14 @@ public class GithubClientTest {
         .thenThrow(new GithubException("some error"))
         .thenReturn(List.of(ghLabelMock));
     assertTrue(githubClient.isLabelAppliedToPR("testOwner/testRepo", 1, "bug"));
+  }
+
+  @Test
+  public void testgetPrFilePatches() throws IOException {
+    this.githubClient.getPrFilePatches("testRepo", 1);
+    verify(this.gitHubMock, times(1)).getRepository("testOwner/testRepo");
+    verify(this.ghRepoMock, times(1)).getPullRequest(1);
+    verify(this.ghPullRequestMock, times(1)).listFiles();
   }
 
   @Configuration

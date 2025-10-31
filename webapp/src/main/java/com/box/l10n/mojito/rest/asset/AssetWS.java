@@ -9,6 +9,7 @@ import com.box.l10n.mojito.entity.PushRun;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.entity.TMXliff;
+import com.box.l10n.mojito.github.GithubClients;
 import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.okapi.asset.UnsupportedAssetFilterTypeException;
 import com.box.l10n.mojito.quartz.QuartzJobInfo;
@@ -112,8 +113,12 @@ public class AssetWS {
       @RequestParam(value = "virtual", required = false) Boolean virtual,
       @RequestParam(value = "branchId", required = false) Long branchId) {
 
+    var a = githubClients.getClient("pinternal");
+    var b = a.getPrFilePatches("pinboard", 182092);
     return assetService.findAll(repositoryId, path, deleted, virtual, branchId);
   }
+
+  @Autowired GithubClients githubClients;
 
   /**
    * Creates the source asset and kicks off extraction process
