@@ -236,4 +236,31 @@ public class GlossaryCaseCheckerTest {
             + " contains glossary terms 'Event Manager' or 'Event manager' but does not exactly match one of the terms.",
         result.getNotificationText());
   }
+
+  @Test
+  public void testPlaceholderWithGlossaryTerm() {
+    List<AssetExtractorTextUnit> addedTUs = new ArrayList<>();
+    AssetExtractorTextUnit assetExtractorTextUnit = new AssetExtractorTextUnit();
+    assetExtractorTextUnit.setSource("Sent you {num_company} Company!");
+    addedTUs.add(assetExtractorTextUnit);
+    List<AssetExtractionDiff> assetExtractionDiffs = new ArrayList<>();
+    AssetExtractionDiff assetExtractionDiff = new AssetExtractionDiff();
+    assetExtractionDiff.setAddedTextunits(addedTUs);
+    assetExtractionDiffs.add(assetExtractionDiff);
+
+    CliCheckResult result = glossaryCaseChecker.run(assetExtractionDiffs);
+    Assert.assertTrue(result.getNotificationText().isEmpty());
+
+    addedTUs = new ArrayList<>();
+    assetExtractorTextUnit = new AssetExtractorTextUnit();
+    assetExtractorTextUnit.setSource("Sent you {num_company} company!");
+    addedTUs.add(assetExtractorTextUnit);
+    assetExtractionDiffs = new ArrayList<>();
+    assetExtractionDiff = new AssetExtractionDiff();
+    assetExtractionDiff.setAddedTextunits(addedTUs);
+    assetExtractionDiffs.add(assetExtractionDiff);
+
+    result = glossaryCaseChecker.run(assetExtractionDiffs);
+    Assert.assertFalse(result.getNotificationText().isEmpty());
+  }
 }

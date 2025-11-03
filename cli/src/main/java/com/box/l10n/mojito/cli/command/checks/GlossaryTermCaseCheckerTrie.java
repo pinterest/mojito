@@ -34,6 +34,7 @@ public class GlossaryTermCaseCheckerTrie {
 
   public GlossaryCaseCheckerSearchResult runGlossaryCaseCheck(String name, String source) {
     String sourceTrimmedWhitespace = source.trim().replaceAll(" +", " ");
+    String sourceWithoutPlaceholders = CheckerUtils.removePlaceholders(sourceTrimmedWhitespace);
     List<String> words = CheckerUtils.getWordsInString(source);
     GlossaryCaseCheckerSearchResult result = new GlossaryCaseCheckerSearchResult(source, name);
     List<String> failures = new ArrayList<>();
@@ -45,7 +46,7 @@ public class GlossaryTermCaseCheckerTrie {
           break;
         }
         if (!current.glossaryTerms.isEmpty()
-            && isGlossaryTermValid(sourceTrimmedWhitespace, current)) {
+            && isGlossaryTermValid(sourceWithoutPlaceholders, current)) {
           addFailureText(source, result, failures, current);
         }
       }

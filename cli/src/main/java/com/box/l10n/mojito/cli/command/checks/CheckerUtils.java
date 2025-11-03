@@ -77,6 +77,10 @@ public class CheckerUtils {
     return words;
   }
 
+  public static String removePlaceholders(String source) {
+    return source.replaceAll(PLACEHOLDER_PATTERN.pattern(), "");
+  }
+
   /**
    * Removes all the html tags present in a string, but keeping a wished attribute value (attached
    * at the end of the string) when applicable.
