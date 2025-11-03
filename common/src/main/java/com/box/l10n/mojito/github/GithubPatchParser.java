@@ -11,7 +11,7 @@ public class GithubPatchParser {
     Set<Integer> changedLines = new HashSet<>();
     if (patch == null) return changedLines;
 
-    String[] lines = patch.split("\n");
+    String[] lines = patch.lines().toArray(String[]::new);
     int newLineNum = 0;
 
     for (String line : lines) {

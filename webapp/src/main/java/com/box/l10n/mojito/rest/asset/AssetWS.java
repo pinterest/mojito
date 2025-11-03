@@ -111,6 +111,7 @@ public class AssetWS {
       @RequestParam(value = "deleted", required = false) Boolean deleted,
       @RequestParam(value = "virtual", required = false) Boolean virtual,
       @RequestParam(value = "branchId", required = false) Long branchId) {
+
     return assetService.findAll(repositoryId, path, deleted, virtual, branchId);
   }
 

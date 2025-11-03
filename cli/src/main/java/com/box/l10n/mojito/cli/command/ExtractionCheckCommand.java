@@ -409,16 +409,20 @@ public class ExtractionCheckCommand extends Command {
         && !githubRepository.isBlank()
         && githubPRNumber != null
         && githubClients.isClientAvailable(githubOwner)) {
-      logger.debug("Validating SARIF output");
+      logger.info("Validating SARIF output");
       Map<String, Set<Integer>> sarifFileToLineNumberMap =
           SarifUtils.buildFileToLineNumberMap(sarif);
       logger.debug("Sarif file to line number map: {}", sarifFileToLineNumberMap);
       Map<String, Set<Integer>> misreportedLineNumbersPerFile =
           getMismatchedFileWithLineNumbers(sarifFileToLineNumberMap, githubFileToLineNumberMap);
-      logger.debug("MisreportedLineNumbersPerFile size: {}", misreportedLineNumbersPerFile.size());
-      logger.debug(
-          "MisreportedLineNumbersTotal: {}",
-          misreportedLineNumbersPerFile.values().stream().mapToInt(Set::size).sum());
+
+      int misreportedFileCount = misreportedLineNumbersPerFile.size();
+      if (misreportedFileCount > 0) {
+        logger.info("MisreportedFileCount: {}", misreportedFileCount);
+        logger.info(
+            "MisreportedLineNumbersTotal: {}",
+            misreportedLineNumbersPerFile.values().stream().mapToInt(Set::size).sum());
+      }
 
       Map<String, Map<String, Set<Integer>>> serializableValidation = new HashMap<>();
       serializableValidation.put("misreportedLineNumbersPerFile", misreportedLineNumbersPerFile);
