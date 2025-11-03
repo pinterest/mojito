@@ -6,6 +6,7 @@ import static com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNot
 
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
+import com.box.l10n.mojito.regex.PlaceholderRegularExpressions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ public class GlossaryCaseCheckerTest {
     glossaryCaseChecker = new GlossaryCaseChecker();
     glossaryCaseChecker.setCliCheckerOptions(
         new CliCheckerOptions(
-            Sets.newHashSet(),
+            Sets.newHashSet(PlaceholderRegularExpressions.SINGLE_BRACE_REGEX),
             Sets.newHashSet(),
             ImmutableMap.<String, String>builder()
                 .put(
