@@ -10,10 +10,12 @@ import com.box.l10n.mojito.sarif.model.Location;
 import com.box.l10n.mojito.sarif.model.ResultLevel;
 import com.box.l10n.mojito.sarif.model.Sarif;
 import com.google.common.io.Files;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,20 +37,26 @@ public class SarifFileGenerator {
   // This is useful for adjusting the line number for comment related checks
   private final String[] extractedCommentFileExtensions;
 
+  private final MeterRegistry meterRegistry;
+
   @Autowired
   SarifFileGenerator(
       @Value("${l10n.extraction-check.sarif.infoUri:}") String infoUri,
       @Value(
               "#{'${l10n.extraction-check.sarif.extracted-comments.fileExtensions:py,xml}'.split(',')}")
           String[] extractedCommentFileExtensions,
-      @Autowired GitInfo gitInfo) {
+      GitInfo gitInfo,
+      MeterRegistry meterRegistry) {
     this.infoUri = infoUri;
     this.gitInfo = gitInfo;
     this.extractedCommentFileExtensions = extractedCommentFileExtensions;
+    this.meterRegistry = meterRegistry;
   }
 
   public Sarif generateSarifFile(
-      List<CliCheckResult> cliCheckerFailures, List<AssetExtractionDiff> assetExtractionDiffs) {
+      List<CliCheckResult> cliCheckerFailures,
+      List<AssetExtractionDiff> assetExtractionDiffs,
+      Map<String, Set<Integer>> githubModifiedLines) {
     SarifBuilder sarifBuilder = new SarifBuilder();
     Map<String, AssetExtractorTextUnit> nameToAssetTextUnitMap =
         assetExtractionDiffs.stream()
@@ -72,6 +80,7 @@ public class SarifFileGenerator {
               getUsageLocations(
                   assetExtractorTextUnit,
                   extractedCommentFileExtensions,
+                  githubModifiedLines,
                   ruleId.isCommentRelated()));
         } else {
           sarifBuilder.addResultWithoutLocation(
@@ -92,9 +101,10 @@ public class SarifFileGenerator {
         && !assetExtractorTextUnit.getUsages().isEmpty();
   }
 
-  static List<Location> getUsageLocations(
+  List<Location> getUsageLocations(
       AssetExtractorTextUnit assetExtractorTextUnit,
       String[] extractedCommentFileExtensions,
+      Map<String, Set<Integer>> githubModifiedLines,
       boolean isCommentRelatedCheck) {
     return assetExtractorTextUnit.getUsages().stream()
         .map(
@@ -128,7 +138,34 @@ public class SarifFileGenerator {
                 // If only a comment is changed, then the line number is off (GitHub only
                 // considers the line in PR diff as a valid source
                 // for a SARIF / security related comment)
-                return new Location(fileUri, startLineNumber - 1);
+
+                Set<Integer> modifiedLines = githubModifiedLines.get(fileUri);
+                if (modifiedLines == null || modifiedLines.isEmpty()) {
+                  return new Location(fileUri, startLineNumber);
+                }
+
+                if (modifiedLines.contains(startLineNumber)) {
+                  return new Location(fileUri, startLineNumber);
+                }
+
+                // Best effort to try find nearest line if the exact line is not available.
+                // This could happen if a comment is changed without changing the string, or vice
+                // versa. Django always reports the translation line number but GitHub will not
+                // accept a line number which was not modified in the PR.
+                Integer lineNumber = startLineNumber - 1;
+                if (modifiedLines.contains(lineNumber)) {
+                  return new Location(fileUri, lineNumber);
+                } else {
+                  lineNumber = startLineNumber + 1;
+                  if (modifiedLines.contains(lineNumber)) {
+                    return new Location(fileUri, lineNumber);
+                  }
+                }
+
+                meterRegistry
+                    .counter("SarifFileGenerator.Github.LineNumberMisreported")
+                    .increment();
+                return new Location(fileUri, startLineNumber);
 
               } catch (NumberFormatException e) {
                 logger.warn(

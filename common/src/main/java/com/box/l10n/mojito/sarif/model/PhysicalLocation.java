@@ -11,7 +11,7 @@ public class PhysicalLocation {
 
   PhysicalLocation(String uri, Integer startLine) {
     artifactLocation = new ArtifactLocation(uri);
-    region = new Region(startLine);
+    region = new Region(startLine, startLine);
   }
 
   PhysicalLocation(String uri, Integer startLine, Integer endLine) {

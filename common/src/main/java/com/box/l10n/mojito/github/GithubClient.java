@@ -12,7 +12,9 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Duration;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -20,8 +22,11 @@ import org.apache.commons.codec.binary.Base64;
 import org.kohsuke.github.GHAppInstallationToken;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
+import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHPullRequestFileDetail;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
+import org.kohsuke.github.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -272,6 +277,38 @@ public class GithubClient {
         .block();
   }
 
+  public Map<String, String> getPrFilePatches(String repository, int prNumber) {
+    String repoFullPath = getRepositoryPath(repository);
+
+    Mono<Map<String, String>> stringMono =
+        Mono.fromCallable(
+            () -> {
+              GHPullRequest pr =
+                  getGithubClient(repository).getRepository(repoFullPath).getPullRequest(prNumber);
+
+              Map<String, String> patches = new HashMap<>();
+              for (GHPullRequestFileDetail changedFile : pr.listFiles()) {
+                logger.debug("Processing file diff: {}", changedFile.getFilename());
+                patches.put(changedFile.getFilename(), changedFile.getPatch());
+              }
+              return patches;
+            });
+    stringMono.retryWhen(
+        Retry.backoff(maxRetries, (retryMinBackoff))
+            .maxBackoff(retryMaxBackoff)
+            .filter(e -> e instanceof IOException || e instanceof GithubException));
+    stringMono.doOnError(
+        e ->
+            logger.error(
+                "Error retrieving PR files patches for PR {} in repository '{}': {}",
+                prNumber,
+                repoFullPath,
+                e.getMessage(),
+                e));
+    stringMono.onErrorReturn(new HashMap<>());
+    return stringMono.block();
+  }
+
   public String getPRAuthorEmail(String repository, int prNumber) {
     String repoFullPath = getRepositoryPath(repository);
 
@@ -409,7 +446,11 @@ public class GithubClient {
         .retryWhen(
             Retry.backoff(maxRetries, (retryMinBackoff))
                 .maxBackoff(retryMaxBackoff)
-                .filter(e -> e instanceof IOException || e instanceof GithubException))
+                .filter(
+                    e ->
+                        e instanceof IOException
+                            || e instanceof GithubException
+                            || e instanceof HttpException))
         .doOnError(
             e -> {
               sendRetryExceededMetric(repository, "getPRComments");

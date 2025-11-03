@@ -77,7 +77,7 @@ class SarifBuilderTest {
     Location location = result.getLocations().get(0);
     assertEquals("src/Main.java", location.getPhysicalLocation().getArtifactLocation().getUri());
     assertEquals(101, location.getPhysicalLocation().getRegion().getStartLine());
-    assertNull(location.getPhysicalLocation().getRegion().getEndLine());
+    assertEquals(101, location.getPhysicalLocation().getRegion().getEndLine());
     assertNotNull(result.getPartialFingerprints());
     assertFalse(result.getPartialFingerprints().isEmpty());
     assertNotNull(result.getPartialFingerprints().get("primaryLocationLineHash"));
@@ -117,12 +117,12 @@ class SarifBuilderTest {
     location = result.getLocations().get(1);
     assertEquals("src/Util.java", location.getPhysicalLocation().getArtifactLocation().getUri());
     assertEquals(10, location.getPhysicalLocation().getRegion().getStartLine());
-    assertNull(location.getPhysicalLocation().getRegion().getEndLine());
+    assertEquals(10, location.getPhysicalLocation().getRegion().getEndLine());
     location = result.getLocations().get(2);
     assertEquals(
         "src/Text/Util.java", location.getPhysicalLocation().getArtifactLocation().getUri());
     assertEquals(1, location.getPhysicalLocation().getRegion().getStartLine());
-    assertNull(location.getPhysicalLocation().getRegion().getEndLine());
+    assertEquals(1, location.getPhysicalLocation().getRegion().getEndLine());
     assertDoesNotThrow(() -> validateSchema(sarif));
   }
 
