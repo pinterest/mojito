@@ -10,7 +10,6 @@ import com.box.l10n.mojito.sarif.model.Location;
 import com.box.l10n.mojito.sarif.model.ResultLevel;
 import com.box.l10n.mojito.sarif.model.Sarif;
 import com.google.common.io.Files;
-import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -37,20 +36,16 @@ public class SarifFileGenerator {
   // This is useful for adjusting the line number for comment related checks
   private final String[] extractedCommentFileExtensions;
 
-  private final MeterRegistry meterRegistry;
-
   @Autowired
   SarifFileGenerator(
       @Value("${l10n.extraction-check.sarif.infoUri:}") String infoUri,
       @Value(
               "#{'${l10n.extraction-check.sarif.extracted-comments.fileExtensions:py,xml}'.split(',')}")
           String[] extractedCommentFileExtensions,
-      GitInfo gitInfo,
-      MeterRegistry meterRegistry) {
+      GitInfo gitInfo) {
     this.infoUri = infoUri;
     this.gitInfo = gitInfo;
     this.extractedCommentFileExtensions = extractedCommentFileExtensions;
-    this.meterRegistry = meterRegistry;
   }
 
   public Sarif generateSarifFile(
@@ -162,9 +157,6 @@ public class SarifFileGenerator {
                   }
                 }
 
-                meterRegistry
-                    .counter("SarifFileGenerator.Github.LineNumberMisreported")
-                    .increment();
                 return new Location(fileUri, startLineNumber);
 
               } catch (NumberFormatException e) {

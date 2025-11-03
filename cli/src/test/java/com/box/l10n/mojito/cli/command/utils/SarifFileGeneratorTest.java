@@ -12,7 +12,6 @@ import com.box.l10n.mojito.sarif.model.Result;
 import com.box.l10n.mojito.sarif.model.ResultLevel;
 import com.box.l10n.mojito.sarif.model.Run;
 import com.box.l10n.mojito.sarif.model.Sarif;
-import io.micrometer.core.instrument.MeterRegistry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -23,7 +22,6 @@ import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 class SarifFileGeneratorTest {
 
@@ -53,9 +51,7 @@ class SarifFileGeneratorTest {
   @Test
   void generateSarifFile_withUsagesAndNoUsages() {
     // Arrange
-    SarifFileGenerator generator =
-        new SarifFileGenerator(
-            "infoUri", new String[] {}, gitInfo, Mockito.mock(MeterRegistry.class));
+    SarifFileGenerator generator = new SarifFileGenerator("infoUri", new String[] {}, gitInfo);
 
     AssetExtractorTextUnit textUnitWithUsage =
         createAssetExtractorTextUnit("source1", Set.of("file1.java:10", "file2.java:20"));
@@ -136,9 +132,7 @@ class SarifFileGeneratorTest {
 
   @Test
   void generateSarifFile_warningLevel() {
-    SarifFileGenerator generator =
-        new SarifFileGenerator(
-            "infoUri", new String[] {}, gitInfo, Mockito.mock(MeterRegistry.class));
+    SarifFileGenerator generator = new SarifFileGenerator("infoUri", new String[] {}, gitInfo);
     AssetExtractorTextUnit textUnit =
         createAssetExtractorTextUnit("sourceX", Set.of("fileX.java:42"));
     AssetExtractionDiff diff = new AssetExtractionDiff();
@@ -166,9 +160,7 @@ class SarifFileGeneratorTest {
 
   @Test
   void getUsageLocations_handlesInvalidLineNumber() {
-    SarifFileGenerator generator =
-        new SarifFileGenerator(
-            "infoUri", new String[] {}, gitInfo, Mockito.mock(MeterRegistry.class));
+    SarifFileGenerator generator = new SarifFileGenerator("infoUri", new String[] {}, gitInfo);
     List<Location> usageLocations =
         generator.getUsageLocations(
             createAssetExtractorTextUnit(
@@ -193,9 +185,7 @@ class SarifFileGeneratorTest {
 
   @Test
   void getUsageLocations_decreasesLineNumber_WhenRelevantFileTypesAreFound() {
-    SarifFileGenerator generator =
-        new SarifFileGenerator(
-            "infoUri", new String[] {}, gitInfo, Mockito.mock(MeterRegistry.class));
+    SarifFileGenerator generator = new SarifFileGenerator("infoUri", new String[] {}, gitInfo);
 
     List<Location> usageLocations =
         new ArrayList<>(
@@ -229,9 +219,7 @@ class SarifFileGeneratorTest {
 
   @Test
   void getUsageLocations_doesNotDecreaseLineNumber_whenNonCommentCheck() {
-    SarifFileGenerator generator =
-        new SarifFileGenerator(
-            "infoUri", new String[] {}, gitInfo, Mockito.mock(MeterRegistry.class));
+    SarifFileGenerator generator = new SarifFileGenerator("infoUri", new String[] {}, gitInfo);
     List<Location> usageLocations =
         new ArrayList<>(
             generator.getUsageLocations(
@@ -264,9 +252,7 @@ class SarifFileGeneratorTest {
 
   @Test
   void getUsageLocations_doesNotDecreaseLineNumber_whenNoFileTypeIsFound() {
-    SarifFileGenerator generator =
-        new SarifFileGenerator(
-            "infoUri", new String[] {}, gitInfo, Mockito.mock(MeterRegistry.class));
+    SarifFileGenerator generator = new SarifFileGenerator("infoUri", new String[] {}, gitInfo);
     List<Location> usageLocations =
         generator.getUsageLocations(
             createAssetExtractorTextUnit("badSource", Set.of("filepy:5")),
