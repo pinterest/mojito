@@ -30,6 +30,7 @@ public enum CheckerRuleId {
 
   public boolean isCommentRelated() {
     return this == CheckerRuleId.MISSING_DESCRIPTION_FOR_NUMERIC_PLACEHOLDER
+        || this == CheckerRuleId.AGGREGATE_GLOSSARY_CASE_CHECKER_RESULTS
         || this == CheckerRuleId.MISSING_NAMED_PLACEHOLDER_DESCRIPTION
         || this == CheckerRuleId.AGGREGATE_PLACEHOLDER_COMMENT_CHECKER_VIOLATION;
   }
