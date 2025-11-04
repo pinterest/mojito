@@ -10,6 +10,7 @@ import com.box.l10n.mojito.sarif.model.Location;
 import com.box.l10n.mojito.sarif.model.ResultLevel;
 import com.box.l10n.mojito.sarif.model.Sarif;
 import com.google.common.io.Files;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,8 @@ public class SarifFileGenerator {
 
   private final String infoUri;
 
+  private final MeterRegistry meterRegistry;
+
   // File extensions for where the comments are extracted from comments above the translation
   // function call
   // This is useful for adjusting the line number for comment related checks
@@ -42,16 +45,19 @@ public class SarifFileGenerator {
       @Value(
               "#{'${l10n.extraction-check.sarif.extracted-comments.fileExtensions:py,xml}'.split(',')}")
           String[] extractedCommentFileExtensions,
-      GitInfo gitInfo) {
+      GitInfo gitInfo,
+      MeterRegistry meterRegistry) {
     this.infoUri = infoUri;
     this.gitInfo = gitInfo;
     this.extractedCommentFileExtensions = extractedCommentFileExtensions;
+    this.meterRegistry = meterRegistry;
   }
 
   public Sarif generateSarifFile(
       List<CliCheckResult> cliCheckerFailures,
       List<AssetExtractionDiff> assetExtractionDiffs,
-      Map<String, Set<Integer>> githubModifiedLines) {
+      Map<String, Set<Integer>> githubModifiedLines,
+      String repoName) {
     SarifBuilder sarifBuilder = new SarifBuilder();
     Map<String, AssetExtractorTextUnit> nameToAssetTextUnitMap =
         assetExtractionDiffs.stream()
@@ -76,6 +82,7 @@ public class SarifFileGenerator {
                   assetExtractorTextUnit,
                   extractedCommentFileExtensions,
                   githubModifiedLines,
+                  repoName,
                   ruleId.isCommentRelated()));
         } else {
           sarifBuilder.addResultWithoutLocation(
@@ -100,6 +107,7 @@ public class SarifFileGenerator {
       AssetExtractorTextUnit assetExtractorTextUnit,
       String[] extractedCommentFileExtensions,
       Map<String, Set<Integer>> githubModifiedLines,
+      String repoName,
       boolean isCommentRelatedCheck) {
     return assetExtractorTextUnit.getUsages().stream()
         .map(
@@ -156,6 +164,11 @@ public class SarifFileGenerator {
                     return new Location(fileUri, lineNumber);
                   }
                 }
+
+                meterRegistry
+                    .counter(
+                        "SarifFileGenerator.Github.LineNumberMisreported", "repository", repoName)
+                    .increment();
 
                 return new Location(fileUri, startLineNumber);
 

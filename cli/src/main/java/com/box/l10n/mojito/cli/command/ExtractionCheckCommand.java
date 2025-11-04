@@ -422,7 +422,7 @@ public class ExtractionCheckCommand extends Command {
     logger.debug("GitHub file to line number map: {}", githubFileToLineNumberMap);
     Sarif sarif =
         sarifFileGenerator.generateSarifFile(
-            cliCheckerFailures, assetExtractionDiffs, githubFileToLineNumberMap);
+            cliCheckerFailures, assetExtractionDiffs, githubFileToLineNumberMap, githubRepository);
 
     if (shouldValidateSarifOutput
         && githubRepository != null
