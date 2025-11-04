@@ -385,7 +385,6 @@ public class ExtractionCheckCommand extends Command {
 
     Map<String, Set<Integer>> githubFileToLineNumberMap = new HashMap<>();
     try {
-      // TODO: Handle case where client is undefined
       GithubClient githubClient = githubClients.getClient(githubOwner);
 
       githubFileToLineNumberMap =
@@ -395,8 +394,29 @@ public class ExtractionCheckCommand extends Command {
                       Map.Entry::getKey,
                       entry -> githubPatchParser.getAddedLines(entry.getValue())));
     } catch (GithubException e) {
-      logger.error("Failed to get modified lines from Github", e);
-      throw new CommandException("Failed to get modified lines from Github", e);
+      boolean hasConfiguredGithubInfo =
+          githubOwner != null
+              && !githubOwner.isEmpty()
+              && githubRepository != null
+              && !githubRepository.isEmpty()
+              && githubPRNumber != null;
+      if (hasConfiguredGithubInfo) {
+        logger.error(
+            "Github configuration detected, but failed to get modified lines from Github", e);
+        consoleWriter
+            .fg(Ansi.Color.RED)
+            .newLine()
+            .a(
+                "Error: Unable to get modified lines from Github. SARIF file generated may be misaligned with Github's line numbers.")
+            .println();
+      }
+
+      consoleWriter
+          .fg(Ansi.Color.MAGENTA)
+          .newLine()
+          .a(
+              "Warning: Required GitHub parameters not provided. Unable to validate SARIF line numbers with Github, some error line numbers might be misreported")
+          .println();
     }
 
     logger.debug("GitHub file to line number map: {}", githubFileToLineNumberMap);
