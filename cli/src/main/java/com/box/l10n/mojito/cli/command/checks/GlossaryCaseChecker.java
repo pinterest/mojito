@@ -54,7 +54,9 @@ public class GlossaryCaseChecker extends AbstractCliChecker {
         .map(
             assetExtractorTextUnit ->
                 glossaryTermCaseCheckerTrie.runGlossaryCaseCheck(
-                    assetExtractorTextUnit.getName(), assetExtractorTextUnit.getSource()))
+                    assetExtractorTextUnit.getName(),
+                    assetExtractorTextUnit.getSource(),
+                    this.cliCheckerOptions.getParameterRegexSet()))
         .filter(result -> !result.isSuccess())
         .collect(Collectors.toList());
   }

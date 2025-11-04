@@ -2,10 +2,12 @@ package com.box.l10n.mojito.cli.command.checks;
 
 import static com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificationSender.QUOTE_MARKER;
 
+import com.box.l10n.mojito.regex.PlaceholderRegularExpressions;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
@@ -32,8 +34,14 @@ public class GlossaryTermCaseCheckerTrie {
     currentNode.glossaryTerms.add(term);
   }
 
-  public GlossaryCaseCheckerSearchResult runGlossaryCaseCheck(String name, String source) {
+  public GlossaryCaseCheckerSearchResult runGlossaryCaseCheck(
+      String name,
+      String source,
+      Set<PlaceholderRegularExpressions> placeholderRegularExpressions) {
     String sourceTrimmedWhitespace = source.trim().replaceAll(" +", " ");
+    String sourceWithoutPlaceholders =
+        CheckerUtils.removePlaceholdersFromString(
+            sourceTrimmedWhitespace, placeholderRegularExpressions);
     List<String> words = CheckerUtils.getWordsInString(source);
     GlossaryCaseCheckerSearchResult result = new GlossaryCaseCheckerSearchResult(source, name);
     List<String> failures = new ArrayList<>();
@@ -45,7 +53,7 @@ public class GlossaryTermCaseCheckerTrie {
           break;
         }
         if (!current.glossaryTerms.isEmpty()
-            && isGlossaryTermValid(sourceTrimmedWhitespace, current)) {
+            && isGlossaryTermValid(sourceWithoutPlaceholders, current)) {
           addFailureText(source, result, failures, current);
         }
       }

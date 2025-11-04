@@ -1,10 +1,14 @@
 package com.box.l10n.mojito.cli.command.checks;
 
+import com.box.l10n.mojito.cli.command.CommandException;
+import com.box.l10n.mojito.regex.PlaceholderRegularExpressions;
 import com.ibm.icu.text.BreakIterator;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
@@ -75,6 +79,63 @@ public class CheckerUtils {
       }
     }
     return words;
+  }
+
+  private static int getEndOfPlaceholderIndex(String str, int startIndex) {
+    ArrayDeque<Character> stack = new ArrayDeque<>();
+    int indexCount = startIndex;
+    for (Character c : str.substring(startIndex).toCharArray()) {
+      if (c.equals('{')) {
+        stack.push(c);
+        indexCount++;
+        continue;
+      } else if (c.equals('}')) {
+        if (stack.isEmpty()) {
+          throw new CommandException("Invalid number of opening brackets in string.");
+        }
+        stack.pop();
+        if (stack.isEmpty()) {
+          return indexCount;
+        }
+      }
+      indexCount++;
+    }
+    if (!stack.isEmpty()) {
+      throw new CommandException("Invalid number of closing brackets in string.");
+    }
+    return -1;
+  }
+
+  private static String removeBracketedPlaceholders(String stringWithoutPlaceholders) {
+    int index = stringWithoutPlaceholders.indexOf("{");
+    while (index != -1 && stringWithoutPlaceholders.contains("}")) {
+      int associatedClosingBraceIndex = getEndOfPlaceholderIndex(stringWithoutPlaceholders, index);
+      stringWithoutPlaceholders =
+          stringWithoutPlaceholders.substring(0, index)
+              + stringWithoutPlaceholders.substring(associatedClosingBraceIndex + 1);
+      index = stringWithoutPlaceholders.indexOf("{");
+    }
+    return stringWithoutPlaceholders;
+  }
+
+  private static String removePlaceholders(
+      String stringWithoutPlaceholders, PlaceholderRegularExpressions regex) {
+    if (regex.equals(PlaceholderRegularExpressions.SINGLE_BRACE_REGEX)
+        || regex.equals(PlaceholderRegularExpressions.DOUBLE_BRACE_REGEX)) {
+      stringWithoutPlaceholders = removeBracketedPlaceholders(stringWithoutPlaceholders);
+    } else {
+      stringWithoutPlaceholders = stringWithoutPlaceholders.replaceAll(regex.getRegex(), "");
+    }
+    return stringWithoutPlaceholders;
+  }
+
+  public static String removePlaceholdersFromString(
+      String sourceString, Set<PlaceholderRegularExpressions> placeholderRegularExpressions) {
+    String stringWithoutPlaceholders = sourceString;
+    for (PlaceholderRegularExpressions regex : placeholderRegularExpressions) {
+      stringWithoutPlaceholders = removePlaceholders(stringWithoutPlaceholders, regex);
+    }
+    return stringWithoutPlaceholders;
   }
 
   /**
