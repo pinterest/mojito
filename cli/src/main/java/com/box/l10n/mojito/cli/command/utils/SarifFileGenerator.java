@@ -121,56 +121,28 @@ public class SarifFileGenerator {
                 String fileUri = usage.substring(0, colonIndex);
                 int startLineNumber = Integer.parseInt(usage.substring(colonIndex + 1));
 
-                if (!isCommentRelatedCheck) {
-                  return new Location(fileUri, startLineNumber);
-                }
-
-                int fullStopIndex = fileUri.lastIndexOf('.');
-                if (fullStopIndex == -1) {
-                  return new Location(fileUri, startLineNumber);
-                }
-
-                String fileExtension = Files.getFileExtension(fileUri);
-                if (Arrays.stream(extractedCommentFileExtensions)
-                    .noneMatch(x -> x.equalsIgnoreCase(fileExtension))) {
-                  return new Location(fileUri, startLineNumber);
-                }
-
-                // If the comment is flagged, the usage only reports the line
-                // where the string is added
-                // If only a comment is changed, then the line number is off (GitHub only
-                // considers the line in PR diff as a valid source
-                // for a SARIF / security related comment)
-
                 Set<Integer> modifiedLines = githubModifiedLines.get(fileUri);
                 if (modifiedLines == null || modifiedLines.isEmpty()) {
                   return new Location(fileUri, startLineNumber);
                 }
 
-                if (modifiedLines.contains(startLineNumber)) {
+                if (!modifiedLines.contains(startLineNumber)) {
+                  meterRegistry
+                      .counter(
+                          "SarifFileGenerator.Github.LineNumberIncorrect", "repository", repoName)
+                      .increment();
+                }
+
+                if (!isCommentRelatedCheck) {
                   return new Location(fileUri, startLineNumber);
                 }
 
-                // Best effort to try find nearest line if the exact line is not available.
-                // This could happen if a comment is changed without changing the string, or vice
-                // versa. Django always reports the translation line number but GitHub will not
-                // accept a line number which was not modified in the PR.
-                Integer lineNumber = startLineNumber - 1;
-                if (modifiedLines.contains(lineNumber)) {
-                  return new Location(fileUri, lineNumber);
-                } else {
-                  lineNumber = startLineNumber + 1;
-                  if (modifiedLines.contains(lineNumber)) {
-                    return new Location(fileUri, lineNumber);
-                  }
-                }
-
-                meterRegistry
-                    .counter(
-                        "SarifFileGenerator.Github.LineNumberMisreported", "repository", repoName)
-                    .increment();
-
-                return new Location(fileUri, startLineNumber);
+                return estimateLocationLineNumber(
+                    modifiedLines,
+                    extractedCommentFileExtensions,
+                    repoName,
+                    fileUri,
+                    startLineNumber);
 
               } catch (NumberFormatException e) {
                 logger.warn(
@@ -181,6 +153,52 @@ public class SarifFileGenerator {
             })
         .filter(Objects::nonNull)
         .toList();
+  }
+
+  /***
+   * Github only accepts line numbers which were modified in the PR: all other lines are ignored.
+   * If a comment is flagged by the checker, the usage reported is the line where the string was added.
+   * Hence, if only a comment is changed, then the line number will be wrong.
+   * We try to add or subtract one to find a valid modified line (before or after the line) to
+   * get a line number Github will accept
+   */
+  private Location estimateLocationLineNumber(
+      Set<Integer> modifiedLines,
+      String[] extractedCommentFileExtensions,
+      String repoName,
+      String fileUri,
+      int startLineNumber) {
+
+    int fullStopIndex = fileUri.lastIndexOf('.');
+    if (fullStopIndex == -1) {
+      return new Location(fileUri, startLineNumber);
+    }
+
+    String fileExtension = Files.getFileExtension(fileUri);
+    if (Arrays.stream(extractedCommentFileExtensions)
+        .noneMatch(x -> x.equalsIgnoreCase(fileExtension))) {
+      return new Location(fileUri, startLineNumber);
+    }
+
+    if (modifiedLines.contains(startLineNumber)) {
+      return new Location(fileUri, startLineNumber);
+    }
+
+    Integer lineNumber = startLineNumber - 1;
+    if (modifiedLines.contains(lineNumber)) {
+      return new Location(fileUri, lineNumber);
+    } else {
+      lineNumber = startLineNumber + 1;
+      if (modifiedLines.contains(lineNumber)) {
+        return new Location(fileUri, lineNumber);
+      }
+    }
+
+    meterRegistry
+        .counter("SarifFileGenerator.Github.LineNumberVariationNotFound", "repository", repoName)
+        .increment();
+
+    return new Location(fileUri, startLineNumber);
   }
 
   // Converts a string to title case:

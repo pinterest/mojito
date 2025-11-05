@@ -1,6 +1,7 @@
 package com.box.l10n.mojito.cli.command.utils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import com.box.l10n.mojito.cli.GitInfo;
 import com.box.l10n.mojito.cli.command.checks.CheckerRuleId;
@@ -12,6 +13,7 @@ import com.box.l10n.mojito.sarif.model.Result;
 import com.box.l10n.mojito.sarif.model.ResultLevel;
 import com.box.l10n.mojito.sarif.model.Run;
 import com.box.l10n.mojito.sarif.model.Sarif;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -198,9 +200,14 @@ class SarifFileGeneratorTest {
 
   @Test
   void getUsageLocations_decreasesLineNumber_WhenRelevantFileTypesAreFound() {
+
+    MeterRegistry meterRegistryMock = Mockito.mock(MeterRegistry.class);
+    Counter counterMock = Mockito.mock(Counter.class);
+    when(meterRegistryMock.counter(Mockito.anyString(), Mockito.anyString(), Mockito.anyString()))
+        .thenReturn(counterMock);
+
     SarifFileGenerator generator =
-        new SarifFileGenerator(
-            "infoUri", new String[] {}, gitInfo, Mockito.mock(MeterRegistry.class));
+        new SarifFileGenerator("infoUri", new String[] {}, gitInfo, meterRegistryMock);
 
     List<Location> usageLocations =
         new ArrayList<>(
@@ -235,9 +242,12 @@ class SarifFileGeneratorTest {
 
   @Test
   void getUsageLocations_doesNotDecreaseLineNumber_whenNonCommentCheck() {
+    MeterRegistry meterRegistryMock = Mockito.mock(MeterRegistry.class);
+    Counter counterMock = Mockito.mock(Counter.class);
+    when(meterRegistryMock.counter(Mockito.anyString(), Mockito.anyString(), Mockito.anyString()))
+        .thenReturn(counterMock);
     SarifFileGenerator generator =
-        new SarifFileGenerator(
-            "infoUri", new String[] {}, gitInfo, Mockito.mock(MeterRegistry.class));
+        new SarifFileGenerator("infoUri", new String[] {}, gitInfo, meterRegistryMock);
     List<Location> usageLocations =
         new ArrayList<>(
             generator.getUsageLocations(
