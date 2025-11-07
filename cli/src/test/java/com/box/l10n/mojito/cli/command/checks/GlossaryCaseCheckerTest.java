@@ -6,6 +6,7 @@ import static com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNot
 
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
+import com.box.l10n.mojito.regex.PlaceholderRegularExpressions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ public class GlossaryCaseCheckerTest {
     glossaryCaseChecker = new GlossaryCaseChecker();
     glossaryCaseChecker.setCliCheckerOptions(
         new CliCheckerOptions(
-            Sets.newHashSet(),
+            Sets.newHashSet(PlaceholderRegularExpressions.SINGLE_BRACE_REGEX),
             Sets.newHashSet(),
             ImmutableMap.<String, String>builder()
                 .put(
@@ -235,5 +236,32 @@ public class GlossaryCaseCheckerTest {
             + QUOTE_MARKER
             + " contains glossary terms 'Event Manager' or 'Event manager' but does not exactly match one of the terms.",
         result.getNotificationText());
+  }
+
+  @Test
+  public void testPlaceholderWithGlossaryTerm() {
+    List<AssetExtractorTextUnit> addedTUs = new ArrayList<>();
+    AssetExtractorTextUnit assetExtractorTextUnit = new AssetExtractorTextUnit();
+    assetExtractorTextUnit.setSource("Sent you {num_company} Company!");
+    addedTUs.add(assetExtractorTextUnit);
+    List<AssetExtractionDiff> assetExtractionDiffs = new ArrayList<>();
+    AssetExtractionDiff assetExtractionDiff = new AssetExtractionDiff();
+    assetExtractionDiff.setAddedTextunits(addedTUs);
+    assetExtractionDiffs.add(assetExtractionDiff);
+
+    CliCheckResult result = glossaryCaseChecker.run(assetExtractionDiffs);
+    Assert.assertTrue(result.getNotificationText().isEmpty());
+
+    addedTUs = new ArrayList<>();
+    assetExtractorTextUnit = new AssetExtractorTextUnit();
+    assetExtractorTextUnit.setSource("Sent you {num_company} company!");
+    addedTUs.add(assetExtractorTextUnit);
+    assetExtractionDiffs = new ArrayList<>();
+    assetExtractionDiff = new AssetExtractionDiff();
+    assetExtractionDiff.setAddedTextunits(addedTUs);
+    assetExtractionDiffs.add(assetExtractionDiff);
+
+    result = glossaryCaseChecker.run(assetExtractionDiffs);
+    Assert.assertFalse(result.getNotificationText().isEmpty());
   }
 }
