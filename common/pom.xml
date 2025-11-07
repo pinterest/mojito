@@ -465,9 +465,15 @@
             <version>1.53</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-statsd</artifactId>
         </dependency>
     </dependencies>
     <build>

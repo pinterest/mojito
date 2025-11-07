@@ -58,7 +58,7 @@ public class PrefixHierarchicalNameMapper implements HierarchicalNameMapper {
 
   /**
    * Removes a list of characters from a String. Stripping does not depends on the ordering or
-   * format, it just removes all of the characters listed in {@link stripCharacters} from the input
+   * format, it just removes all the characters listed in {@link stripCharacters} from the input
    * String
    *
    * @param input the input String
