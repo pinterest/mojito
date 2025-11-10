@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
 /**
  * Command to export Github Pull Request info to a list of environment variables
@@ -147,7 +148,9 @@ public class GithubPRInfoCommand extends Command {
   private void addPushSkippedComment(List<GHIssueComment> prComments, GithubClient github) {
     if (!prComments.stream()
         .anyMatch(ghIssueComment -> ghIssueComment.getBody().contains(skipI18NPushComment))) {
-      github.addCommentToPR(repository, prNumber, skipI18NPushComment);
+      Mono<GHIssueComment> ghIssueCommentMono =
+          github.addCommentToPR(repository, prNumber, skipI18NPushComment);
+      ghIssueCommentMono.subscribe();
     }
   }
 

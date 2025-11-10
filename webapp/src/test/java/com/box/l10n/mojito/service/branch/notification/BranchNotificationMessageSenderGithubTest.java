@@ -1,5 +1,8 @@
 package com.box.l10n.mojito.service.branch.notification;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -14,7 +17,10 @@ import java.util.List;
 import java.util.regex.Pattern;
 import org.junit.Before;
 import org.junit.Test;
+import org.kohsuke.github.GHIssueComment;
 import org.mockito.Mockito;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 
 public class BranchNotificationMessageSenderGithubTest {
 
@@ -56,6 +62,13 @@ public class BranchNotificationMessageSenderGithubTest {
     when(githubClientMock.isLabelAppliedToPR(
             isA(String.class), isA(Integer.class), isA(String.class)))
         .thenReturn(true);
+    Mono<GHIssueComment> mono = Mockito.mock(Mono.class);
+    Mono<GHIssueComment> ghIssueCommentMono = Mockito.mock(Mono.class);
+    when(mono.subscribeOn(any(Scheduler.class))).thenReturn(ghIssueCommentMono);
+    when(this.githubClientMock.addCommentToPR(anyString(), anyInt(), anyString())).thenReturn(mono);
+    when(this.githubClientMock.updateOrAddCommentToPR(
+            anyString(), anyInt(), anyString(), anyString()))
+        .thenReturn(mono);
     branchNotificationMessageSenderGithub =
         new BranchNotificationMessageSenderGithub(
             "testId", githubClientMock, branchNotificationMessageBuilderGithubMock);

@@ -53,7 +53,7 @@ public class GithubClient {
   private GithubJWT githubJWT;
   private PrivateKey signingKey;
   private final String endpoint;
-  private final MeterRegistry meterRegistry;
+  protected MeterRegistry meterRegistry;
 
   protected GHAppInstallationToken githubAppInstallationToken;
   protected GitHub gitHubClient;
@@ -108,7 +108,7 @@ public class GithubClient {
     return keyFactory.generatePrivate(spec);
   }
 
-  public GHIssueComment addCommentToPR(String repository, int prNumber, String comment) {
+  public Mono<GHIssueComment> addCommentToPR(String repository, int prNumber, String comment) {
     String repoFullPath = getRepositoryPath(repository);
 
     return Mono.fromCallable(
@@ -130,35 +130,42 @@ public class GithubClient {
                       "Error adding comment to PR %d in repository '%s': %s",
                       prNumber, repoFullPath, e.getMessage()),
                   e);
-            })
-        .block();
+            });
   }
 
-  public GHIssueComment updateOrAddCommentToPR(
+  public Mono<GHIssueComment> updateOrAddCommentToPR(
       String repository, int prNumber, String comment, String commentRegex) {
     Pattern commentPattern = Pattern.compile(commentRegex, Pattern.DOTALL);
 
     return Mono.fromCallable(
-            () -> {
-              Optional<GHIssueComment> githubComment =
-                  this.getGithubClient(repository)
-                      .getRepository(this.getRepositoryPath(repository))
-                      .getPullRequest(prNumber)
-                      .getComments()
-                      .stream()
-                      .filter(
-                          actualComment ->
-                              commentPattern.matcher(actualComment.getBody()).matches())
+            () ->
+                this.getGithubClient(repository)
+                    .getRepository(this.getRepositoryPath(repository))
+                    .getPullRequest(prNumber)
+                    .getComments())
+        .subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic())
+        .flatMap(
+            comments -> {
+              Optional<GHIssueComment> existing =
+                  comments.stream()
+                      .filter(c -> commentPattern.matcher(c.getBody()).matches())
                       .findFirst();
-              if (githubComment.isPresent()) {
-                githubComment.get().update(comment);
-                return githubComment.get();
-              } else {
-                return this.addCommentToPR(repository, prNumber, comment);
-              }
+              return existing
+                  .map(
+                      ghIssueComment ->
+                          Mono.fromCallable(
+                                  () -> {
+                                    ghIssueComment.update(comment);
+                                    return ghIssueComment;
+                                  })
+                              .subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic()))
+                  .orElseGet(
+                      () ->
+                          this.addCommentToPR(repository, prNumber, comment)
+                              .subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic()));
             })
         .retryWhen(
-            Retry.backoff(maxRetries, (retryMinBackoff))
+            Retry.backoff(maxRetries, retryMinBackoff)
                 .maxBackoff(retryMaxBackoff)
                 .filter(e -> e instanceof IOException || e instanceof GithubException))
         .doOnError(
@@ -169,8 +176,7 @@ public class GithubClient {
                       "Error updating/adding a comment to PR %d in repository '%s': %s",
                       prNumber, this.getRepositoryPath(repository), e.getMessage()),
                   e);
-            })
-        .block();
+            });
   }
 
   public void addStatusToCommit(

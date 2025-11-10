@@ -8,8 +8,10 @@ import com.google.common.base.Strings;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.kohsuke.github.GHCommitState;
+import org.kohsuke.github.GHIssueComment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
+import reactor.core.publisher.Mono;
 
 @Configurable
 public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNotificationSender {
@@ -100,10 +102,12 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
               messageTemplate,
               "baseMessage",
               replaceQuoteMarkers(appendHardFailureMessage(hardFail, sb)));
-      githubClients
-          .getClient(githubOwner)
-          .updateOrAddCommentToPR(
-              githubRepo, prNumber, GithubIcon.WARNING + " " + message, this.messageRegex);
+      Mono<GHIssueComment> ghIssueCommentMono =
+          githubClients
+              .getClient(githubOwner)
+              .updateOrAddCommentToPR(
+                  githubRepo, prNumber, GithubIcon.WARNING + " " + message, this.messageRegex);
+      ghIssueCommentMono.subscribe();
       if (isSetCommitStatus) {
         githubClients
             .getClient(githubOwner)
@@ -132,9 +136,12 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
               commitStatusTargetUrl);
     }
     if (!Strings.isNullOrEmpty(checksSkippedMessage)) {
-      githubClients
-          .getClient(githubOwner)
-          .addCommentToPR(githubRepo, prNumber, GithubIcon.WARNING + " " + checksSkippedMessage);
+      Mono<GHIssueComment> ghIssueCommentMono =
+          githubClients
+              .getClient(githubOwner)
+              .addCommentToPR(
+                  githubRepo, prNumber, GithubIcon.WARNING + " " + checksSkippedMessage);
+      ghIssueCommentMono.subscribe();
     }
   }
 

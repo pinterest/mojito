@@ -1,5 +1,7 @@
 package com.box.l10n.mojito.cli.command;
 
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -16,6 +18,7 @@ import org.junit.Test;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.ReactionContent;
 import org.mockito.Mockito;
+import reactor.core.publisher.Mono;
 
 public class GithubPRInfoCommandTest {
 
@@ -48,6 +51,10 @@ public class GithubPRInfoCommandTest {
     List<GHIssueComment> mockComments = Lists.newArrayList(ghIssueCommentMock);
     when(ghIssueCommentMock.getBody()).thenReturn("some comment");
     when(githubMock.getPRComments("testRepo", 1)).thenReturn(mockComments);
+    Mono<GHIssueComment> ghIssueCommentMono = Mockito.mock(Mono.class);
+    when(ghIssueCommentMono.block()).thenReturn(new GHIssueComment());
+    when(githubMock.addCommentToPR(anyString(), anyInt(), anyString()))
+        .thenReturn(ghIssueCommentMono);
     when(consoleWriterMock.a(isA(String.class))).thenReturn(consoleWriterMock);
     when(consoleWriterMock.println()).thenReturn(consoleWriterMock);
   }
