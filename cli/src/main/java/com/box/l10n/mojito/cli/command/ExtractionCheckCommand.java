@@ -43,6 +43,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -479,10 +480,11 @@ public class ExtractionCheckCommand extends Command {
       Map<String, Set<Integer>> sarifFiles, Map<String, Set<Integer>> githubFiles) {
 
     Map<String, Set<Integer>> misreportedLineNumbersPerFile = new HashMap<>();
+    logger.debug("Evaluating files: {}", Arrays.toString(sarifFiles.keySet().toArray()));
     for (Map.Entry<String, Set<Integer>> entry : sarifFiles.entrySet()) {
       String fileName = entry.getKey();
       Set<Integer> sarifLines = entry.getValue();
-      Set<Integer> githubLines = githubFiles.get(fileName);
+      Set<Integer> githubLines = githubFiles.getOrDefault(fileName, new HashSet<>());
 
       Set<Integer> difference = new HashSet<>(sarifLines);
       difference.removeAll(githubLines);
