@@ -302,6 +302,14 @@ public class ExtractionCheckCommand extends Command {
           "gets file diffs of PR and validates SARIF line numbers match. Generates a file showing line number discrepancies")
   Boolean shouldValidateSarifOutput = false;
 
+  @Parameter(
+      names = {"--file-mount-path-prefix", "-fmpp"},
+      arity = 1,
+      required = false,
+      description =
+          "Strip away mount file path from filepaths to ensure filenames are correct when compared to GitHub's patches. Only applicable when using SARIF checks")
+  String fileMountPathPrefix = "";
+
   @Autowired SarifFileGenerator sarifFileGenerator;
 
   @Autowired ObjectMapper objectMapper;
@@ -379,7 +387,7 @@ public class ExtractionCheckCommand extends Command {
       consoleWriter
           .fg(Ansi.Color.CYAN)
           .newLine()
-          .a("No CLI check failures, SARIF file was not generated")
+          .a("No CLI check failures: SARIF file was not generated")
           .println();
       return;
     }
@@ -434,6 +442,11 @@ public class ExtractionCheckCommand extends Command {
       Map<String, Set<Integer>> sarifFileToLineNumberMap =
           SarifUtils.buildFileToLineNumberMap(sarif);
       logger.debug("Sarif file to line number map: {}", sarifFileToLineNumberMap);
+      sarifFileToLineNumberMap =
+          SarifUtils.removeFilePathPrefix(sarifFileToLineNumberMap, fileMountPathPrefix);
+      logger.debug(
+          "Sarif file (after removing mount path prefix) to line number map: {}",
+          sarifFileToLineNumberMap);
       Map<String, Set<Integer>> misreportedLineNumbersPerFile =
           getMismatchedFileWithLineNumbers(sarifFileToLineNumberMap, githubFileToLineNumberMap);
 
@@ -457,7 +470,7 @@ public class ExtractionCheckCommand extends Command {
         consoleWriter
             .fg(Ansi.Color.CYAN)
             .newLine()
-            .a("SARIF line number validation complete. Generated File: " + filePath)
+            .a("SARIF validation file generated: " + filePath)
             .println();
       } catch (IOException e) {
         throw new CommandException("Failed to write sarif validation file: " + fileName, e);
@@ -470,7 +483,7 @@ public class ExtractionCheckCommand extends Command {
       Path filePath = Paths.get(".", fileName);
       String sarifString = objectMapper.writeValueAsString(sarif);
       Files.writeString(filePath, sarifString);
-      consoleWriter.fg(Ansi.Color.CYAN).newLine().a("SARIF file generated in cwd").println();
+      consoleWriter.fg(Ansi.Color.CYAN).newLine().a("SARIF file generated: " + fileName).println();
     } catch (IOException e) {
       throw new CommandException("Failed to write sarif file: " + fileName, e);
     }
