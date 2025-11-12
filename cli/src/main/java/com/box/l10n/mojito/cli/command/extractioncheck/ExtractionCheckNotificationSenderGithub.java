@@ -107,7 +107,7 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
               .getClient(githubOwner)
               .updateOrAddCommentToPR(
                   githubRepo, prNumber, GithubIcon.WARNING + " " + message, this.messageRegex);
-      ghIssueCommentMono.subscribe();
+      ghIssueCommentMono.block();
       if (isSetCommitStatus) {
         githubClients
             .getClient(githubOwner)
@@ -141,7 +141,7 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
               .getClient(githubOwner)
               .addCommentToPR(
                   githubRepo, prNumber, GithubIcon.WARNING + " " + checksSkippedMessage);
-      ghIssueCommentMono.subscribe();
+      ghIssueCommentMono.block();
     }
   }
 

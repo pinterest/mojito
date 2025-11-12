@@ -150,7 +150,7 @@ public class GithubPRInfoCommand extends Command {
         .anyMatch(ghIssueComment -> ghIssueComment.getBody().contains(skipI18NPushComment))) {
       Mono<GHIssueComment> ghIssueCommentMono =
           github.addCommentToPR(repository, prNumber, skipI18NPushComment);
-      ghIssueCommentMono.subscribe();
+      ghIssueCommentMono.block();
     }
   }
 

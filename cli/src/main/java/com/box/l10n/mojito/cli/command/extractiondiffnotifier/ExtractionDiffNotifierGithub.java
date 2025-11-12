@@ -56,7 +56,7 @@ public class ExtractionDiffNotifierGithub implements ExtractionDiffNotifier {
     String message = extractionDiffNotifierMessageBuilder.getMessage(extractionDiffStatistics);
     Mono<GHIssueComment> ghIssueCommentMono =
         githubClient.updateOrAddCommentToPR(repository, prNumber, message, this.messageRegex);
-    ghIssueCommentMono.subscribe();
+    ghIssueCommentMono.block();
 
     if (extractionDiffStatistics.getAdded() > 0) {
       // For the initial string addition, the CLI will put the label, but for updates that creates
