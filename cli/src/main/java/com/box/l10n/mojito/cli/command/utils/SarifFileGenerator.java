@@ -57,7 +57,8 @@ public class SarifFileGenerator {
       List<CliCheckResult> cliCheckerFailures,
       List<AssetExtractionDiff> assetExtractionDiffs,
       Map<String, Set<Integer>> githubModifiedLines,
-      String repoName) {
+      String repoName,
+      String prefixToRemoveFromFileUris) {
     SarifBuilder sarifBuilder = new SarifBuilder();
     Map<String, AssetExtractorTextUnit> nameToAssetTextUnitMap =
         assetExtractionDiffs.stream()
@@ -83,6 +84,7 @@ public class SarifFileGenerator {
                   extractedCommentFileExtensions,
                   githubModifiedLines,
                   repoName,
+                  prefixToRemoveFromFileUris,
                   ruleId.isCommentRelated()));
         } else {
           sarifBuilder.addResultWithoutLocation(
@@ -108,6 +110,7 @@ public class SarifFileGenerator {
       String[] extractedCommentFileExtensions,
       Map<String, Set<Integer>> githubModifiedLines,
       String repoName,
+      String prefixToRemoveFromFileUri,
       boolean isCommentRelatedCheck) {
     return assetExtractorTextUnit.getUsages().stream()
         .map(
@@ -119,6 +122,11 @@ public class SarifFileGenerator {
 
               try {
                 String fileUri = usage.substring(0, colonIndex);
+                if (prefixToRemoveFromFileUri != null
+                    && !prefixToRemoveFromFileUri.isEmpty()
+                    && fileUri.startsWith(prefixToRemoveFromFileUri)) {
+                  fileUri = fileUri.substring(prefixToRemoveFromFileUri.length());
+                }
                 int startLineNumber = Integer.parseInt(usage.substring(colonIndex + 1));
 
                 Set<Integer> modifiedLines = githubModifiedLines.get(fileUri);
