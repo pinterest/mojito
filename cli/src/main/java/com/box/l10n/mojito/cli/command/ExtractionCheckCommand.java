@@ -431,7 +431,11 @@ public class ExtractionCheckCommand extends Command {
     logger.debug("GitHub file to line number map: {}", githubFileToLineNumberMap);
     Sarif sarif =
         sarifFileGenerator.generateSarifFile(
-            cliCheckerFailures, assetExtractionDiffs, githubFileToLineNumberMap, githubRepository);
+            cliCheckerFailures,
+            assetExtractionDiffs,
+            githubFileToLineNumberMap,
+            githubRepository,
+            fileMountPathPrefix);
 
     if (shouldValidateSarifOutput
         && githubRepository != null
@@ -442,11 +446,6 @@ public class ExtractionCheckCommand extends Command {
       Map<String, Set<Integer>> sarifFileToLineNumberMap =
           SarifUtils.buildFileToLineNumberMap(sarif);
       logger.debug("Sarif file to line number map: {}", sarifFileToLineNumberMap);
-      sarifFileToLineNumberMap =
-          SarifUtils.removeFilePathPrefix(sarifFileToLineNumberMap, fileMountPathPrefix);
-      logger.debug(
-          "Sarif file (after removing mount path prefix) to line number map: {}",
-          sarifFileToLineNumberMap);
       Map<String, Set<Integer>> misreportedLineNumbersPerFile =
           getMismatchedFileWithLineNumbers(sarifFileToLineNumberMap, githubFileToLineNumberMap);
 
