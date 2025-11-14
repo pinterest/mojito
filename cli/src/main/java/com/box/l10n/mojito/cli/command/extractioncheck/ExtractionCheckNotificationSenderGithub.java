@@ -6,7 +6,6 @@ import com.box.l10n.mojito.thirdpartynotification.github.GithubIcon;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,37 +70,35 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
         && !isNullOrEmpty(failures)
         && failures.stream().anyMatch(result -> !result.isSuccessful())) {
       StringBuilder sb = new StringBuilder();
-      sb.append("**i18n source string checks failed**" + getDoubleNewLines());
+
+      long totalFailureCount =
+          failures.stream().mapToLong(x -> x.getNameToFailuresMap().size()).sum();
+      long hardCheckFailureCount =
+          getCheckerHardFailures(failures).mapToLong(x -> x.getNameToFailuresMap().size()).sum();
+      long remainingFailureCount = totalFailureCount - hardCheckFailureCount;
+
+      sb.append("**i18n source string checks failed**").append(getDoubleNewLines());
+      sb.append(getDoubleNewLines());
       if (hardFail) {
-        sb.append(
-            "The following checks had hard failures:"
-                + System.lineSeparator()
-                + getCheckerHardFailures(failures)
-                    .map(failure -> "**" + failure.getCheckName() + "**")
-                    .collect(Collectors.joining(System.lineSeparator())));
+        if (!Strings.isNullOrEmpty(hardFailureMessage)) {
+          sb.append(getDoubleNewLines());
+          sb.append(hardFailureMessage);
+        }
+        sb.append("Hard check failure count: ")
+            .append(hardCheckFailureCount)
+            .append(getDoubleNewLines());
       }
       sb.append(getDoubleNewLines());
-      sb.append("**" + "Failed checks:" + "**" + getDoubleNewLines());
-      sb.append(
-          failures.stream()
-              .map(
-                  check -> {
-                    GithubIcon icon = check.isHardFail() ? GithubIcon.STOP : GithubIcon.WARNING;
-                    return icon
-                        + " **"
-                        + check.getCheckName()
-                        + "**"
-                        + getDoubleNewLines()
-                        + check.getNotificationText();
-                  })
-              .collect(Collectors.joining(System.lineSeparator())));
-      sb.append(
-          getDoubleNewLines() + "**" + "Please correct the above issues in a new commit." + "**");
+      sb.append("Warning check count: ").append(remainingFailureCount);
+      sb.append(getDoubleNewLines())
+          .append("**")
+          .append("Please correct the above issues in a new commit.")
+          .append("**");
       String message =
           getFormattedNotificationMessage(
               messageTemplate,
               "baseMessage",
-              replaceQuoteMarkers(appendHardFailureMessage(hardFail, sb)));
+              replaceQuoteMarkers(sb.toString()));
       Mono<GHIssueComment> ghIssueCommentMono =
           githubClients
               .getClient(githubOwner)
