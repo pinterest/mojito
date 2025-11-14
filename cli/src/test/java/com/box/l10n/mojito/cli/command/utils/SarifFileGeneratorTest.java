@@ -1,6 +1,7 @@
 package com.box.l10n.mojito.cli.command.utils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import com.box.l10n.mojito.cli.GitInfo;
@@ -87,7 +88,7 @@ class SarifFileGeneratorTest {
     // Act
     Sarif sarif =
         generator.generateSarifFile(
-            List.of(checkResult), List.of(diff), new HashMap<>(), "repoName");
+            List.of(checkResult), List.of(diff), new HashMap<>(), "repoName", "");
 
     // Assert
     assertThat(sarif.getRuns()).hasSize(1);
@@ -122,14 +123,14 @@ class SarifFileGeneratorTest {
         run.getResults().stream()
             .filter(r -> r.getLocations() == null || r.getLocations().isEmpty())
             .toList();
-    Assertions.assertTrue(
+    assertTrue(
         resultNoUsage.stream()
             .allMatch(
                 x ->
                     x.getRuleId()
                             .contains(CheckerRuleId.EMPTY_CONTEXT_AND_COMMENT_STRINGS.toString())
                         || x.getRuleId().contains(CheckerRuleId.EMPTY_COMMENT_STRING.toString())));
-    Assertions.assertTrue(
+    assertTrue(
         resultNoUsage.stream()
             .allMatch(
                 x ->
@@ -158,7 +159,7 @@ class SarifFileGeneratorTest {
 
     Sarif sarif =
         generator.generateSarifFile(
-            List.of(checkResult), List.of(diff), new HashMap<>(), "repoName");
+            List.of(checkResult), List.of(diff), new HashMap<>(), "repoName", "");
 
     assertThat(sarif.getRuns()).hasSize(1);
     List<Run> runs = sarif.getRuns();
@@ -168,6 +169,56 @@ class SarifFileGeneratorTest {
     assertThat(result.getLevel()).isEqualTo(ResultLevel.WARNING);
     assertThat(result.getRuleId()).isEqualTo(CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT.toString());
     assertThat(result.getMessage().getMarkdown()).isEqualTo("Warn message");
+  }
+
+  @Test
+  void generateSarifFile_withFileRemovalPrefix() {
+    // Arrange
+    SarifFileGenerator generator =
+        new SarifFileGenerator(
+            "infoUri", new String[] {}, gitInfo, Mockito.mock(MeterRegistry.class));
+
+    AssetExtractorTextUnit textUnitWithUsage =
+        createAssetExtractorTextUnit(
+            "source1", Set.of("mnt/folder1/file1.java:10", "mnt/folder2/file2.java:20"));
+
+    AssetExtractionDiff diff = new AssetExtractionDiff();
+    diff.setAddedTextunits(List.of(textUnitWithUsage));
+    Map<String, CliCheckResult.CheckFailure> fieldFailures =
+        Map.of(
+            "source1",
+            new CliCheckResult.CheckFailure(
+                CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Failure message 1"));
+
+    CliCheckResult checkResult = createCliCheckResult(true, "TestCheck", fieldFailures);
+
+    // Act
+    Sarif sarif =
+        generator.generateSarifFile(
+            List.of(checkResult), List.of(diff), new HashMap<>(), "repoName", "mnt/folder1/");
+
+    // Assert
+    assertThat(sarif.getRuns()).hasSize(1);
+    List<Run> runs = sarif.getRuns();
+    Run run = runs.getFirst();
+    assertThat(run.getResults()).hasSize(1);
+    Result resultWithUsage =
+        run.getResults().stream()
+            .filter(r -> CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT.toString().equals(r.getRuleId()))
+            .findFirst()
+            .orElseThrow();
+    assertThat(resultWithUsage.getLocations())
+        .extracting(Location::getPhysicalLocation)
+        .anyMatch(
+            loc ->
+                loc.getArtifactLocation().getUri().equals("file1.java")
+                    && loc.getRegion().getStartLine() == 10);
+    assertThat(resultWithUsage.getLocations())
+        .extracting(Location::getPhysicalLocation)
+        .anyMatch(
+            loc ->
+                loc.getArtifactLocation().getUri().equals("mnt/folder2/file2.java")
+                    && loc.getRegion().getStartLine() == 20);
   }
 
   @Test
@@ -189,6 +240,7 @@ class SarifFileGeneratorTest {
             new String[] {},
             new HashMap<>(),
             "repoName",
+            "",
             false);
 
     assertThat(usageLocations).hasSize(1);
@@ -223,6 +275,7 @@ class SarifFileGeneratorTest {
                 new String[] {"py"},
                 Map.of("goodfile.py", Set.of(8, 9, 10)),
                 "repoName",
+                "",
                 true));
 
     Collections.sort(
@@ -262,6 +315,7 @@ class SarifFileGeneratorTest {
                 new String[] {"py"},
                 Map.of("goodfile.py", Set.of(8, 9, 10)),
                 "repoName",
+                "",
                 false));
 
     Collections.sort(
@@ -290,6 +344,7 @@ class SarifFileGeneratorTest {
             new String[] {"py"},
             Map.of("filepy.py", Set.of(3, 4)),
             "repoName",
+            "",
             false);
 
     assertThat(usageLocations).hasSize(1);
@@ -297,5 +352,35 @@ class SarifFileGeneratorTest {
         .isEqualTo("filepy");
     assertThat(usageLocations.getFirst().getPhysicalLocation().getRegion().getStartLine())
         .isEqualTo(5);
+  }
+
+  @Test
+  void getUsageLocations_removesFilePrefixes_whenPrefixMatchesFiles() {
+    SarifFileGenerator generator =
+        new SarifFileGenerator(
+            "infoUri", new String[] {}, gitInfo, Mockito.mock(MeterRegistry.class));
+    List<Location> usageLocations =
+        generator.getUsageLocations(
+            createAssetExtractorTextUnit(
+                "badSource", Set.of("mnt/tmp/file.py:5", "mnt/otherFile.py:11")),
+            new String[] {"py"},
+            Map.of("filepy.py", Set.of(3, 4)),
+            "repoName",
+            "mnt/tmp/",
+            false);
+
+    assertThat(usageLocations).hasSize(2);
+    assertTrue(
+        usageLocations.stream()
+            .anyMatch(
+                loc -> loc.getPhysicalLocation().getArtifactLocation().getUri().equals("file.py")));
+    assertTrue(
+        usageLocations.stream()
+            .anyMatch(
+                loc ->
+                    loc.getPhysicalLocation()
+                        .getArtifactLocation()
+                        .getUri()
+                        .equals("mnt/otherFile.py")));
   }
 }
