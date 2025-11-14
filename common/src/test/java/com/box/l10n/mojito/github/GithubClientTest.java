@@ -1,7 +1,9 @@
 package com.box.l10n.mojito.github;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
@@ -9,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Lists;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -45,6 +48,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.junit4.SpringRunner;
+import reactor.core.publisher.Mono;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {GithubClientTest.class, GithubClientTest.TestConfig.class})
@@ -74,6 +78,10 @@ public class GithubClientTest {
 
   @Mock GHIssueComment ghCommentMock2;
 
+  @Mock MeterRegistry meterRegistryMock;
+
+  @Mock Counter counterMock;
+
   @Before
   public void setup() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
     Assume.assumeNotNull(githubClient);
@@ -82,6 +90,10 @@ public class GithubClientTest {
     githubClient.maxRetries = 3;
     githubClient.retryMinBackoff = Duration.ofMillis(1);
     githubClient.retryMaxBackoff = Duration.ofMillis(10);
+    when(this.meterRegistryMock.counter(
+            anyString(), anyString(), anyString(), anyString(), anyString()))
+        .thenReturn(this.counterMock);
+    githubClient.meterRegistry = meterRegistryMock;
     Mockito.reset(
         githubClient,
         gitHubMock,
@@ -124,7 +136,9 @@ public class GithubClientTest {
 
   @Test
   public void testAddCommentToPR() throws IOException {
-    githubClient.addCommentToPR("testRepo", 1, "Test comment");
+    Mono<GHIssueComment> ghIssueCommentMono =
+        githubClient.addCommentToPR("testRepo", 1, "Test comment");
+    ghIssueCommentMono.block();
     verify(gitHubMock, times(1)).getRepository("testOwner/testRepo");
     verify(ghRepoMock, times(1)).getPullRequest(1);
     verify(ghPullRequestMock, times(1)).comment("Test comment");
@@ -132,7 +146,10 @@ public class GithubClientTest {
 
   @Test
   public void testUpdateOrAddCommentToPRWhenUpdatingComment() throws IOException {
-    this.githubClient.updateOrAddCommentToPR("testRepo", 1, "Test comment", "[a-zA-Z]+\\s[\\d].*");
+    Mono<GHIssueComment> ghIssueCommentMono =
+        this.githubClient.updateOrAddCommentToPR(
+            "testRepo", 1, "Test comment", "[a-zA-Z]+\\s[\\d].*");
+    ghIssueCommentMono.block();
     verify(this.gitHubMock, times(1)).getRepository("testOwner/testRepo");
     verify(this.ghRepoMock, times(1)).getPullRequest(1);
     verify(this.ghPullRequestMock, times(1)).getComments();
@@ -144,7 +161,10 @@ public class GithubClientTest {
 
   @Test
   public void testUpdateOrAddCommentToPRWhenAddingComment() throws IOException {
-    this.githubClient.updateOrAddCommentToPR("testRepo", 1, "Test comment", "[a-z]+\\s[\\d]{2}.*");
+    Mono<GHIssueComment> ghIssueCommentMono =
+        this.githubClient.updateOrAddCommentToPR(
+            "testRepo", 1, "Test comment", "[a-z]+\\s[\\d]{2}.*");
+    ghIssueCommentMono.block();
     verify(this.gitHubMock, times(2)).getRepository("testOwner/testRepo");
     verify(this.ghRepoMock, times(2)).getPullRequest(1);
     verify(this.ghPullRequestMock, times(1)).getComments();
@@ -152,7 +172,6 @@ public class GithubClientTest {
     verify(this.ghCommentMock2, times(1)).getBody();
     verify(this.ghCommentMock1, times(0)).update("Test comment");
     verify(this.ghCommentMock2, times(0)).update("Test comment");
-    verify(this.githubClient, times(1)).addCommentToPR("testRepo", 1, "Test comment");
   }
 
   @Test
@@ -216,7 +235,9 @@ public class GithubClientTest {
         .thenThrow(new IOException("network issue"))
         .thenReturn(ghRepoMock);
 
-    githubClient.addCommentToPR("testRepo", 1, "Test comment");
+    Mono<GHIssueComment> ghIssueCommentMono =
+        githubClient.addCommentToPR("testRepo", 1, "Test comment");
+    ghIssueCommentMono.block();
 
     verify(gitHubMock, times(3)).getRepository("testOwner/testRepo");
     verify(ghPullRequestMock, times(1)).comment("Test comment");
@@ -252,6 +273,15 @@ public class GithubClientTest {
     verify(this.gitHubMock, times(1)).getRepository("testOwner/testRepo");
     verify(this.ghRepoMock, times(1)).getPullRequest(1);
     verify(this.ghPullRequestMock, times(1)).listFiles();
+  }
+
+  @Test
+  public void testAddCommentToPR_ThrowsException() throws IOException {
+    when(this.ghPullRequestMock.comment(anyString())).thenThrow(GithubException.class);
+
+    Mono<GHIssueComment> ghIssueCommentMono =
+        this.githubClient.addCommentToPR("testRepo", 1, "Test comment");
+    assertThrows(IllegalStateException.class, ghIssueCommentMono::block);
   }
 
   @Configuration

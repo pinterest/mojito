@@ -1,6 +1,9 @@
 package com.box.l10n.mojito.cli.command.extractioncheck;
 
 import static com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificationSender.QUOTE_MARKER;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -17,12 +20,15 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kohsuke.github.GHCommitState;
+import org.kohsuke.github.GHIssueComment;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = {ExtractionCheckNotificationSenderGithubTest.class})
@@ -48,6 +54,12 @@ public class ExtractionCheckNotificationSenderGithubTest {
     githubClientMock = Mockito.mock(GithubClient.class);
     when(githubClientsMock.getClient(isA(String.class))).thenReturn(githubClientMock);
     when(githubClientsMock.isClientAvailable(isA(String.class))).thenReturn(true);
+    Mono<GHIssueComment> mono = Mockito.mock(Mono.class);
+    Mono<GHIssueComment> ghIssueCommentMono = Mockito.mock(Mono.class);
+    when(mono.subscribeOn(any(Scheduler.class))).thenReturn(ghIssueCommentMono);
+    when(githubClientMock.addCommentToPR(anyString(), anyInt(), anyString())).thenReturn(mono);
+    when(githubClientMock.updateOrAddCommentToPR(anyString(), anyInt(), anyString(), anyString()))
+        .thenReturn(mono);
     extractionCheckNotificationSenderGithub =
         new ExtractionCheckNotificationSenderGithub(
             "{baseMessage}",

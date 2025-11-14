@@ -4,6 +4,7 @@ import static com.box.l10n.mojito.cli.command.extractiondiffnotifier.ExtractionD
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -25,8 +26,10 @@ import com.box.l10n.mojito.slack.request.Message;
 import java.util.List;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
+import org.kohsuke.github.GHIssueComment;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import reactor.core.publisher.Mono;
 
 public class ExtractionDiffNotificationCommandTest extends CLITestBase {
   private static final String MESSAGE_REGEX =
@@ -110,6 +113,9 @@ public class ExtractionDiffNotificationCommandTest extends CLITestBase {
 
     command.githubClients = mock(GithubClients.class);
     GithubClient mockGithubClient = mock(GithubClient.class);
+    Mono<GHIssueComment> ghIssueCommentMono = mock(Mono.class);
+    when(mockGithubClient.updateOrAddCommentToPR(anyString(), anyInt(), anyString(), anyString()))
+        .thenReturn(ghIssueCommentMono);
     when(command.githubClients.getClient("testowner1")).thenReturn(mockGithubClient);
 
     command.extractionDiffNotifiers = mock(ExtractionDiffNotifiers.class);

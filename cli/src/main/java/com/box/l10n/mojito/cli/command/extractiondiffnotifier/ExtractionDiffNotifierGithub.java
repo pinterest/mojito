@@ -9,7 +9,9 @@ import com.box.l10n.mojito.cli.command.extraction.ExtractionDiffStatistics;
 import com.box.l10n.mojito.github.GithubClient;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
+import org.kohsuke.github.GHIssueComment;
 import org.slf4j.Logger;
+import reactor.core.publisher.Mono;
 
 public class ExtractionDiffNotifierGithub implements ExtractionDiffNotifier {
 
@@ -52,7 +54,9 @@ public class ExtractionDiffNotifierGithub implements ExtractionDiffNotifier {
             .withRemovedStrings(new ArrayList<>());
 
     String message = extractionDiffNotifierMessageBuilder.getMessage(extractionDiffStatistics);
-    githubClient.updateOrAddCommentToPR(repository, prNumber, message, this.messageRegex);
+    Mono<GHIssueComment> ghIssueCommentMono =
+        githubClient.updateOrAddCommentToPR(repository, prNumber, message, this.messageRegex);
+    ghIssueCommentMono.block();
 
     if (extractionDiffStatistics.getAdded() > 0) {
       // For the initial string addition, the CLI will put the label, but for updates that creates
