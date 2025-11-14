@@ -58,17 +58,22 @@ public class ExtractionCheckNotificationSenderSlack extends ExtractionCheckNotif
 
   private String getMessageText(List<CliCheckResult> failures, boolean hardFail) {
     StringBuilder sb = new StringBuilder();
-    sb.append("*i18n source string checks failed*" + getDoubleNewLines());
+    sb.append("*i18n source string checks failed*").append(getDoubleNewLines());
     if (hardFail) {
-      sb.append(
-          "The following checks had hard failures:"
-              + System.lineSeparator()
-              + getCheckerHardFailures(failures)
+      if (!Strings.isNullOrEmpty(hardFailureMessage)) {
+        sb.append(hardFailureMessage);
+      }
+
+      sb.append(getDoubleNewLines());
+      sb.append("The following checks had hard failures:")
+          .append(System.lineSeparator())
+          .append(
+              getCheckerHardFailures(failures)
                   .map(failure -> "*" + failure.getCheckName() + "*")
                   .collect(Collectors.joining(System.lineSeparator())));
     }
     sb.append(getDoubleNewLines());
-    sb.append("*" + "Failed checks:" + "*" + getDoubleNewLines());
+    sb.append("*Failed checks:*").append(getDoubleNewLines());
     sb.append(
         failures.stream()
             .map(
@@ -83,13 +88,9 @@ public class ExtractionCheckNotificationSenderSlack extends ExtractionCheckNotif
                       + getDoubleNewLines();
                 })
             .collect(Collectors.joining(System.lineSeparator())));
-    sb.append(getDoubleNewLines() + "*" + "Please correct the above issues in a new commit." + "*");
-    String message =
-        getFormattedNotificationMessage(
-            messageTemplate,
-            "baseMessage",
-            replaceQuoteMarkers(appendHardFailureMessage(hardFail, sb)));
-    return message;
+    sb.append(getDoubleNewLines()).append("*Please correct the above issues in a new commit.*");
+    return getFormattedNotificationMessage(
+        messageTemplate, "baseMessage", replaceQuoteMarkers(sb.toString()));
   }
 
   @Override
