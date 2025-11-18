@@ -83,6 +83,7 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
         if (!Strings.isNullOrEmpty(hardFailureMessage)) {
           sb.append(getDoubleNewLines());
           sb.append(hardFailureMessage);
+          sb.append(getDoubleNewLines());
         }
         sb.append("Hard check failure count: ")
             .append(hardCheckFailureCount)

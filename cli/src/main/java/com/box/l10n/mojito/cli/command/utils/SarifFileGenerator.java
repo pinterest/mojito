@@ -3,6 +3,7 @@ package com.box.l10n.mojito.cli.command.utils;
 import com.box.l10n.mojito.cli.GitInfo;
 import com.box.l10n.mojito.cli.command.checks.CheckerRuleId;
 import com.box.l10n.mojito.cli.command.checks.CliCheckResult;
+import com.box.l10n.mojito.cli.command.checks.CliCheckerType;
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.sarif.builder.SarifBuilder;
@@ -55,6 +56,7 @@ public class SarifFileGenerator {
 
   public Sarif generateSarifFile(
       List<CliCheckResult> cliCheckerFailures,
+      List<CliCheckerType> configuredCheckerTypes,
       List<AssetExtractionDiff> assetExtractionDiffs,
       Map<String, Set<Integer>> githubModifiedLines,
       String repoName,
@@ -64,11 +66,22 @@ public class SarifFileGenerator {
         assetExtractionDiffs.stream()
             .flatMap(diff -> diff.getAddedTextunits().stream())
             .collect(Collectors.toMap(AssetExtractorTextUnit::getName, x -> x));
+
+    var failedCheckNames =
+        cliCheckerFailures.stream().map(CliCheckResult::getCheckName).collect(Collectors.toSet());
+    var configuredCheckNames =
+        configuredCheckerTypes.stream().map(Enum::name).collect(Collectors.toSet());
+    var passedChecks =
+        configuredCheckNames.stream()
+            .filter(x -> !failedCheckNames.contains(x))
+            .collect(Collectors.toSet());
+
     for (CliCheckResult checkFailure : cliCheckerFailures) {
       ResultLevel resultLevel = checkFailure.isHardFail() ? ResultLevel.ERROR : ResultLevel.WARNING;
       sarifBuilder.addRun(checkFailure.getCheckName(), infoUri, this.gitInfo.getCommit().getId());
       for (Map.Entry<String, CliCheckResult.CheckFailure> entry :
           checkFailure.getNameToFailuresMap().entrySet()) {
+
         String source = entry.getKey();
         CliCheckResult.CheckFailure resultCheckFailure = entry.getValue();
         AssetExtractorTextUnit assetExtractorTextUnit = nameToAssetTextUnitMap.get(source);
@@ -95,6 +108,11 @@ public class SarifFileGenerator {
         }
       }
     }
+
+    passedChecks.forEach(
+        checkName -> {
+          sarifBuilder.addRun(checkName, infoUri, this.gitInfo.getCommit().getId());
+        });
 
     return sarifBuilder.build();
   }

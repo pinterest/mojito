@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import com.box.l10n.mojito.cli.GitInfo;
 import com.box.l10n.mojito.cli.command.checks.CheckerRuleId;
 import com.box.l10n.mojito.cli.command.checks.CliCheckResult;
+import com.box.l10n.mojito.cli.command.checks.CliCheckerType;
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.sarif.model.Location;
@@ -88,7 +89,7 @@ class SarifFileGeneratorTest {
     // Act
     Sarif sarif =
         generator.generateSarifFile(
-            List.of(checkResult), List.of(diff), new HashMap<>(), "repoName", "");
+            List.of(checkResult), List.of(), List.of(diff), new HashMap<>(), "repoName", "");
 
     // Assert
     assertThat(sarif.getRuns()).hasSize(1);
@@ -159,7 +160,7 @@ class SarifFileGeneratorTest {
 
     Sarif sarif =
         generator.generateSarifFile(
-            List.of(checkResult), List.of(diff), new HashMap<>(), "repoName", "");
+            List.of(checkResult), List.of(), List.of(diff), new HashMap<>(), "repoName", "");
 
     assertThat(sarif.getRuns()).hasSize(1);
     List<Run> runs = sarif.getRuns();
@@ -195,7 +196,12 @@ class SarifFileGeneratorTest {
     // Act
     Sarif sarif =
         generator.generateSarifFile(
-            List.of(checkResult), List.of(diff), new HashMap<>(), "repoName", "mnt/folder1/");
+            List.of(checkResult),
+            List.of(),
+            List.of(diff),
+            new HashMap<>(),
+            "repoName",
+            "mnt/folder1/");
 
     // Assert
     assertThat(sarif.getRuns()).hasSize(1);
@@ -219,6 +225,40 @@ class SarifFileGeneratorTest {
             loc ->
                 loc.getArtifactLocation().getUri().equals("mnt/folder2/file2.java")
                     && loc.getRegion().getStartLine() == 20);
+  }
+
+  @Test
+  void generateSarifFile_withPassedCheckTypes() {
+    // Arrange
+    SarifFileGenerator generator =
+        new SarifFileGenerator(
+            "infoUri", new String[] {}, gitInfo, Mockito.mock(MeterRegistry.class));
+
+    var passedChecks =
+        Set.of(
+            CliCheckerType.CONTEXT_COMMENT_CHECKER,
+            CliCheckerType.AI_CHECKER,
+            CliCheckerType.GLOSSARY_CASE_CHECKER);
+
+    // Act
+    Sarif sarif =
+        generator.generateSarifFile(
+            List.of(),
+            passedChecks.stream().toList(),
+            List.of(),
+            new HashMap<>(),
+            "repoName",
+            "mnt/folder1/");
+
+    // Assert
+    assertThat(sarif.getRuns()).hasSize(3);
+    List<Run> runs = sarif.getRuns();
+    runs.forEach(
+        run -> {
+          var checkName = run.getTool().getDriver().getName();
+          assertThat(passedChecks).contains(CliCheckerType.valueOf(checkName));
+          assertThat(run.getResults().size()).isEqualTo(0);
+        });
   }
 
   @Test
