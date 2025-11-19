@@ -90,7 +90,7 @@ public class SarifFileGenerator {
           sarifBuilder.addResultWithLocations(
               ruleId.toString(),
               resultLevel,
-              convertToTitleCase(checkFailure.getCheckName()),
+              resultCheckFailure.failureMessage(),
               resultCheckFailure.failureMessage(),
               getUsageLocations(
                   assetExtractorTextUnit,
@@ -103,7 +103,7 @@ public class SarifFileGenerator {
           sarifBuilder.addResultWithoutLocation(
               ruleId.toString(),
               resultLevel,
-              convertToTitleCase(checkFailure.getCheckName()),
+              resultCheckFailure.failureMessage(),
               resultCheckFailure.failureMessage());
         }
       }
