@@ -96,7 +96,7 @@ class SarifFileGeneratorTest {
     List<Run> runs = sarif.getRuns();
     Run run = runs.getFirst();
     assertThat(run.getTool().getDriver().getVersion()).isEqualTo("commitId123");
-    assertThat(run.getTool().getDriver().getName()).isEqualTo("TestCheck");
+    assertThat(run.getTool().getDriver().getName()).isEqualTo("I18N_TestCheck");
     assertThat(run.getResults()).hasSize(3);
 
     // Check that source3 is not reported [because it had no failures]
@@ -255,7 +255,7 @@ class SarifFileGeneratorTest {
     List<Run> runs = sarif.getRuns();
     runs.forEach(
         run -> {
-          var checkName = run.getTool().getDriver().getName();
+          var checkName = run.getTool().getDriver().getName().replace("I18N_", "");
           assertThat(passedChecks).contains(CliCheckerType.valueOf(checkName));
           assertThat(run.getResults().size()).isEqualTo(0);
         });
