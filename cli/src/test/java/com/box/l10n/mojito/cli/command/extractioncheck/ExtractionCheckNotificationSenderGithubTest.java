@@ -1,6 +1,5 @@
 package com.box.l10n.mojito.cli.command.extractioncheck;
 
-import static com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificationSender.QUOTE_MARKER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -9,12 +8,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.box.l10n.mojito.cli.command.checks.CheckerRuleId;
 import com.box.l10n.mojito.cli.command.checks.CliCheckResult;
 import com.box.l10n.mojito.github.GithubClient;
 import com.box.l10n.mojito.github.GithubClients;
 import com.box.l10n.mojito.thirdpartynotification.github.GithubIcon;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -80,6 +81,11 @@ public class ExtractionCheckNotificationSenderGithubTest {
     List<CliCheckResult> results = new ArrayList<>();
     CliCheckResult result = new CliCheckResult(false, false, "Test Check");
     result.setNotificationText("Some notification text");
+    result.appendToFailuresMap(
+        Map.of(
+            "file.py",
+            new CliCheckResult.CheckFailure(
+                CheckerRuleId.AGGREGATE_GLOSSARY_CASE_CHECKER_RESULTS, "Some notification text")));
     results.add(result);
     extractionCheckNotificationSenderGithub.sendFailureNotification(results, false);
     verify(githubClientMock, times(1))
@@ -88,11 +94,10 @@ public class ExtractionCheckNotificationSenderGithubTest {
             prNumberCaptor.capture(),
             messageCaptor.capture(),
             keyMessageCaptor.capture());
-    Assert.assertTrue(repoNameCaptor.getValue().equals("testRepo"));
-    Assert.assertTrue(prNumberCaptor.getValue().equals(100));
+    Assert.assertEquals("testRepo", repoNameCaptor.getValue());
+    Assert.assertEquals(100, (int) prNumberCaptor.getValue());
     Assert.assertTrue(messageCaptor.getValue().contains(GithubIcon.WARNING.toString()));
-    Assert.assertTrue(messageCaptor.getValue().contains("Test Check"));
-    Assert.assertTrue(messageCaptor.getValue().contains("Some notification text"));
+    Assert.assertTrue(messageCaptor.getValue().contains("Warning check count: 1"));
     Assert.assertEquals(MESSAGE_REGEX, keyMessageCaptor.getValue());
     verify(githubClientMock, times(1))
         .addStatusToCommit(
@@ -122,7 +127,11 @@ public class ExtractionCheckNotificationSenderGithubTest {
     extractionCheckNotificationSenderGithub.githubClients = githubClientsMock;
     List<CliCheckResult> results = new ArrayList<>();
     CliCheckResult result = new CliCheckResult(false, false, "Test Check");
-    result.setNotificationText("Some notification text");
+    result.appendToFailuresMap(
+        Map.of(
+            "file1.py",
+            new CliCheckResult.CheckFailure(
+                CheckerRuleId.AGGREGATE_GLOSSARY_CASE_CHECKER_RESULTS, "Some failure occurred")));
     results.add(result);
     extractionCheckNotificationSenderGithub.sendFailureNotification(results, false);
     verify(githubClientMock, times(1))
@@ -131,20 +140,17 @@ public class ExtractionCheckNotificationSenderGithubTest {
             prNumberCaptor.capture(),
             messageCaptor.capture(),
             keyMessageCaptor.capture());
-    Assert.assertTrue(repoNameCaptor.getValue().equals("testRepo"));
-    Assert.assertTrue(prNumberCaptor.getValue().equals(100));
-    Assert.assertTrue(messageCaptor.getValue().contains(GithubIcon.WARNING.toString()));
-    Assert.assertTrue(messageCaptor.getValue().contains("Test Check"));
-    Assert.assertTrue(messageCaptor.getValue().contains("Some notification text"));
+    Assert.assertEquals("testRepo", repoNameCaptor.getValue());
+    Assert.assertEquals(100, (int) prNumberCaptor.getValue());
     Assert.assertEquals(MESSAGE_REGEX, keyMessageCaptor.getValue());
     verify(githubClientMock, times(0))
         .addStatusToCommit(
-            "testRepo",
-            "123456789",
-            GHCommitState.FAILURE,
-            "Checks failed, please see 'Details' link for information on resolutions.",
-            "I18N String Checks",
-            "https://somewebaddress.com/");
+            Mockito.anyString(),
+            Mockito.anyString(),
+            Mockito.any(),
+            Mockito.anyString(),
+            Mockito.anyString(),
+            Mockito.anyString());
   }
 
   @Test
@@ -152,8 +158,19 @@ public class ExtractionCheckNotificationSenderGithubTest {
     List<CliCheckResult> results = new ArrayList<>();
     CliCheckResult result = new CliCheckResult(false, false, "Test Check");
     result.setNotificationText("Some notification text");
+    result.appendToFailuresMap(
+        Map.of(
+            "fileA.py",
+            new CliCheckResult.CheckFailure(
+                CheckerRuleId.AGGREGATE_GLOSSARY_CASE_CHECKER_RESULTS, "Some notification text")));
     CliCheckResult result2 = new CliCheckResult(false, false, "Other Check");
     result2.setNotificationText("Some other notification text");
+    result2.appendToFailuresMap(
+        Map.of(
+            "file1.py",
+            new CliCheckResult.CheckFailure(
+                CheckerRuleId.AGGREGATE_GLOSSARY_CASE_CHECKER_RESULTS,
+                "Some other notification text")));
     results.add(result);
     results.add(result2);
     extractionCheckNotificationSenderGithub.sendFailureNotification(results, false);
@@ -163,13 +180,10 @@ public class ExtractionCheckNotificationSenderGithubTest {
             prNumberCaptor.capture(),
             messageCaptor.capture(),
             keyMessageCaptor.capture());
-    Assert.assertTrue(repoNameCaptor.getValue().equals("testRepo"));
-    Assert.assertTrue(prNumberCaptor.getValue().equals(100));
+    Assert.assertEquals("testRepo", repoNameCaptor.getValue());
+    Assert.assertEquals(100, (int) prNumberCaptor.getValue());
     Assert.assertTrue(messageCaptor.getValue().contains(GithubIcon.WARNING.toString()));
-    Assert.assertTrue(messageCaptor.getValue().contains("Test Check"));
-    Assert.assertTrue(messageCaptor.getValue().contains("Some notification text"));
-    Assert.assertTrue(messageCaptor.getValue().contains("Other Check"));
-    Assert.assertTrue(messageCaptor.getValue().contains("Some other notification text"));
+    Assert.assertTrue(messageCaptor.getValue().contains("Warning check count: 2"));
     Assert.assertEquals(MESSAGE_REGEX, keyMessageCaptor.getValue());
     verify(githubClientMock, times(1))
         .addStatusToCommit(
@@ -186,6 +200,11 @@ public class ExtractionCheckNotificationSenderGithubTest {
     List<CliCheckResult> results = new ArrayList<>();
     CliCheckResult result = new CliCheckResult(false, true, "Test Check");
     result.setNotificationText("Some notification text");
+    result.appendToFailuresMap(
+        Map.of(
+            "file.py",
+            new CliCheckResult.CheckFailure(
+                CheckerRuleId.EMPTY_COMMENT_STRING, "Some notification text")));
     results.add(result);
     extractionCheckNotificationSenderGithub.sendFailureNotification(results, true);
     verify(githubClientMock, times(1))
@@ -194,16 +213,13 @@ public class ExtractionCheckNotificationSenderGithubTest {
             prNumberCaptor.capture(),
             messageCaptor.capture(),
             keyMessageCaptor.capture());
-    Assert.assertTrue(repoNameCaptor.getValue().equals("testRepo"));
-    Assert.assertTrue(prNumberCaptor.getValue().equals(100));
+    Assert.assertEquals("testRepo", repoNameCaptor.getValue());
+    Assert.assertEquals(100, (int) prNumberCaptor.getValue());
     Assert.assertTrue(
         messageCaptor
             .getValue()
             .contains(GithubIcon.WARNING + " **i18n source string checks failed**"));
-    Assert.assertTrue(messageCaptor.getValue().contains("Test Check"));
-    Assert.assertTrue(messageCaptor.getValue().contains("Some notification text"));
-    Assert.assertTrue(messageCaptor.getValue().contains("This is a hard failure message"));
-    Assert.assertTrue(messageCaptor.getValue().contains(GithubIcon.STOP.toString()));
+    Assert.assertTrue(messageCaptor.getValue().contains("Hard check failure count: 1"));
     Assert.assertEquals(MESSAGE_REGEX, keyMessageCaptor.getValue());
     verify(githubClientMock, times(1))
         .addStatusToCommit(
@@ -287,32 +303,5 @@ public class ExtractionCheckNotificationSenderGithubTest {
   public void testExceptionThrownIfNoPRNumberProvided() {
     new ExtractionCheckNotificationSenderGithub(
         "", MESSAGE_REGEX, "some template", "", "testOwner", "testRepo", null, true, "", "");
-  }
-
-  @Test
-  public void testQuoteMarkersAreReplaced() {
-    List<CliCheckResult> results = new ArrayList<>();
-    CliCheckResult result = new CliCheckResult(false, true, "Test Check");
-    result.setNotificationText(
-        "Some notification text for " + QUOTE_MARKER + "some.text.id" + QUOTE_MARKER);
-    results.add(result);
-    extractionCheckNotificationSenderGithub.sendFailureNotification(results, true);
-    verify(githubClientMock, times(1))
-        .updateOrAddCommentToPR(
-            repoNameCaptor.capture(),
-            prNumberCaptor.capture(),
-            messageCaptor.capture(),
-            keyMessageCaptor.capture());
-    Assert.assertTrue(repoNameCaptor.getValue().equals("testRepo"));
-    Assert.assertTrue(prNumberCaptor.getValue().equals(100));
-    Assert.assertTrue(
-        messageCaptor
-            .getValue()
-            .contains(GithubIcon.WARNING + " **i18n source string checks failed**"));
-    Assert.assertTrue(messageCaptor.getValue().contains("Test Check"));
-    Assert.assertTrue(messageCaptor.getValue().contains("Some notification text"));
-    Assert.assertTrue(messageCaptor.getValue().contains("This is a hard failure message"));
-    Assert.assertTrue(messageCaptor.getValue().contains("`some.text.id`"));
-    Assert.assertEquals(MESSAGE_REGEX, keyMessageCaptor.getValue());
   }
 }

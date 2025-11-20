@@ -382,16 +382,6 @@ public class ExtractionCheckCommand extends Command {
 
   private void generateSarifFile(
       List<CliCheckResult> cliCheckerFailures, List<AssetExtractionDiff> assetExtractionDiffs) {
-    if (cliCheckerFailures.isEmpty()) {
-      logger.debug("No new strings in diff to be checked.");
-      consoleWriter
-          .fg(Ansi.Color.CYAN)
-          .newLine()
-          .a("No CLI check failures: SARIF file was not generated")
-          .println();
-      return;
-    }
-
     Map<String, Set<Integer>> githubFileToLineNumberMap = new HashMap<>();
     try {
       GithubClient githubClient = githubClients.getClient(githubOwner);
@@ -432,6 +422,7 @@ public class ExtractionCheckCommand extends Command {
     Sarif sarif =
         sarifFileGenerator.generateSarifFile(
             cliCheckerFailures,
+            checkerList,
             assetExtractionDiffs,
             githubFileToLineNumberMap,
             githubRepository,
