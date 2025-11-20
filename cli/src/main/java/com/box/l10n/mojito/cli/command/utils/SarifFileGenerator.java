@@ -78,7 +78,8 @@ public class SarifFileGenerator {
 
     for (CliCheckResult checkFailure : cliCheckerFailures) {
       ResultLevel resultLevel = checkFailure.isHardFail() ? ResultLevel.ERROR : ResultLevel.WARNING;
-      sarifBuilder.addRun(checkFailure.getCheckName(), infoUri, this.gitInfo.getCommit().getId());
+      sarifBuilder.addRun(
+          buildCheckDisplayName(checkFailure), infoUri, this.gitInfo.getCommit().getId());
       for (Map.Entry<String, CliCheckResult.CheckFailure> entry :
           checkFailure.getNameToFailuresMap().entrySet()) {
 
@@ -111,7 +112,8 @@ public class SarifFileGenerator {
 
     passedChecks.forEach(
         checkName -> {
-          sarifBuilder.addRun(checkName, infoUri, this.gitInfo.getCommit().getId());
+          sarifBuilder.addRun(
+              buildCheckDisplayName(checkName), infoUri, this.gitInfo.getCommit().getId());
         });
 
     return sarifBuilder.build();
@@ -227,11 +229,11 @@ public class SarifFileGenerator {
     return new Location(fileUri, startLineNumber);
   }
 
-  // Converts a string to title case:
-  // i.e EXAMPLE_CHECK_NAME -> Example check name
-  static String convertToTitleCase(String input) {
-    String result =
-        Arrays.stream(input.split("_")).map(String::toLowerCase).collect(Collectors.joining(" "));
-    return result.substring(0, 1).toUpperCase() + result.substring(1);
+  private String buildCheckDisplayName(String checkName) {
+    return "I18N_" + checkName;
+  }
+
+  private String buildCheckDisplayName(CliCheckResult checkResult) {
+    return buildCheckDisplayName(checkResult.getCheckName());
   }
 }
