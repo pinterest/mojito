@@ -97,9 +97,7 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
           .append("**");
       String message =
           getFormattedNotificationMessage(
-              messageTemplate,
-              "baseMessage",
-              replaceQuoteMarkers(sb.toString()));
+              messageTemplate, "baseMessage", replaceQuoteMarkers(sb.toString()));
       Mono<GHIssueComment> ghIssueCommentMono =
           githubClients
               .getClient(githubOwner)
