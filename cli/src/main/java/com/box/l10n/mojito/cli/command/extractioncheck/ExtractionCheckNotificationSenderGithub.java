@@ -79,7 +79,7 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
 
       sb.append("**i18n source string checks failed**").append(getDoubleNewLines());
       sb.append(getDoubleNewLines());
-      if (hardFail) {
+      if (hardFail && hardCheckFailureCount > 0) {
         if (!Strings.isNullOrEmpty(hardFailureMessage)) {
           sb.append(getDoubleNewLines());
           sb.append(hardFailureMessage);
@@ -89,12 +89,18 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
             .append(hardCheckFailureCount)
             .append(getDoubleNewLines());
       }
-      sb.append(getDoubleNewLines());
-      sb.append("Warning check count: ").append(remainingFailureCount);
-      sb.append(getDoubleNewLines())
-          .append("**")
-          .append("Please correct the above issues in a new commit.")
-          .append("**");
+
+      if (remainingFailureCount > 0) {
+        sb.append("Warning check count: ").append(remainingFailureCount);
+      }
+
+      if (totalFailureCount > 0) {
+        sb.append(getDoubleNewLines())
+            .append("**")
+            .append("Please correct the above issues in a new commit.")
+            .append("**");
+      }
+
       String message =
           getFormattedNotificationMessage(
               messageTemplate, "baseMessage", replaceQuoteMarkers(sb.toString()));
