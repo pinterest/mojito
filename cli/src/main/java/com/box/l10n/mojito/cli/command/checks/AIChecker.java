@@ -89,6 +89,7 @@ public class AIChecker extends AbstractCliChecker {
   private CliCheckResult executeChecks(AICheckRequest aiCheckRequest) {
     AICheckResponse response = aiServiceClient.executeAIChecks(aiCheckRequest);
 
+    logger.debug("AI checks returned: {}", response);
     if (response.isError()) {
       throw new CommandException("Failed to run AI checks: " + response.getErrorMessage());
     }
