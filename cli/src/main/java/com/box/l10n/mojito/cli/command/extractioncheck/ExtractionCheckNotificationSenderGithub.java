@@ -6,6 +6,8 @@ import com.box.l10n.mojito.thirdpartynotification.github.GithubIcon;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,8 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
 
   private final String messageRegex;
 
+  private final boolean usesSummaryNotification;
+
   public ExtractionCheckNotificationSenderGithub(
       String messageTemplate,
       String messageRegex,
@@ -41,7 +45,8 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
       Integer prNumber,
       Boolean isSetCommitStatus,
       String commitSha,
-      String commitStatusTargetUrl) {
+      String commitStatusTargetUrl,
+      Boolean usesSummaryNotification) {
     super(messageTemplate, hardFailureMessage, checksSkippedMessage);
     if (Strings.isNullOrEmpty(githubRepo)) {
       throw new ExtractionCheckNotificationSenderException(
@@ -57,15 +62,25 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
       throw new ExtractionCheckNotificationSenderException(
           "Github PR number must be provided if using Github notifications.");
     }
+
     this.prNumber = prNumber;
     this.isSetCommitStatus = isSetCommitStatus;
     this.commitSha = commitSha;
     this.commitStatusTargetUrl = commitStatusTargetUrl;
     this.messageRegex = Preconditions.checkNotNull(messageRegex);
+    this.usesSummaryNotification = Objects.requireNonNullElse(usesSummaryNotification, false);
   }
 
   @Override
   public void sendFailureNotification(List<CliCheckResult> failures, boolean hardFail) {
+    if (this.usesSummaryNotification) {
+      sendSummaryNotification(failures, hardFail);
+    } else {
+      sendFullFailureNotification(failures, hardFail);
+    }
+  }
+
+  protected void sendSummaryNotification(List<CliCheckResult> failures, boolean hardFail) {
     if (githubClients.isClientAvailable(githubOwner)
         && !isNullOrEmpty(failures)
         && failures.stream().anyMatch(result -> !result.isSuccessful())) {
@@ -101,6 +116,65 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
             .append("**");
       }
 
+      String message =
+          getFormattedNotificationMessage(
+              messageTemplate, "baseMessage", replaceQuoteMarkers(sb.toString()));
+      Mono<GHIssueComment> ghIssueCommentMono =
+          githubClients
+              .getClient(githubOwner)
+              .updateOrAddCommentToPR(
+                  githubRepo, prNumber, GithubIcon.WARNING + " " + message, this.messageRegex);
+      ghIssueCommentMono.block();
+      if (isSetCommitStatus) {
+        githubClients
+            .getClient(githubOwner)
+            .addStatusToCommit(
+                githubRepo,
+                commitSha,
+                GHCommitState.FAILURE,
+                "Checks failed, please see 'Details' link for information on resolutions.",
+                "I18N String Checks",
+                commitStatusTargetUrl);
+      }
+    }
+  }
+
+  protected void sendFullFailureNotification(List<CliCheckResult> failures, boolean hardFail) {
+    if (githubClients.isClientAvailable(githubOwner)
+        && !isNullOrEmpty(failures)
+        && failures.stream().anyMatch(result -> !result.isSuccessful())) {
+      StringBuilder sb = new StringBuilder();
+      sb.append("**i18n source string checks failed**").append(getDoubleNewLines());
+      if (hardFail) {
+        if (!Strings.isNullOrEmpty(hardFailureMessage)) {
+          sb.append(getDoubleNewLines());
+          sb.append(hardFailureMessage);
+          sb.append(getDoubleNewLines());
+        }
+
+        sb.append("The following checks had hard failures:")
+            .append(System.lineSeparator())
+            .append(
+                getCheckerHardFailures(failures)
+                    .map(failure -> "**" + failure.getCheckName() + "**")
+                    .collect(Collectors.joining(System.lineSeparator())));
+      }
+      sb.append(getDoubleNewLines());
+      sb.append("**Failed checks:**").append(getDoubleNewLines());
+      sb.append(
+          failures.stream()
+              .map(
+                  check -> {
+                    GithubIcon icon = check.isHardFail() ? GithubIcon.STOP : GithubIcon.WARNING;
+                    return icon
+                        + " **"
+                        + check.getCheckName()
+                        + "**"
+                        + getDoubleNewLines()
+                        + check.getNotificationText();
+                  })
+              .collect(Collectors.joining(System.lineSeparator())));
+      sb.append(getDoubleNewLines()).append("**Please correct the above issues in a new commit.**");
       String message =
           getFormattedNotificationMessage(
               messageTemplate, "baseMessage", replaceQuoteMarkers(sb.toString()));

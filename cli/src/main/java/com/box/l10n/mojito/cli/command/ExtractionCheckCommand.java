@@ -310,6 +310,14 @@ public class ExtractionCheckCommand extends Command {
           "Strip away mount file path from filepaths to ensure filenames are correct when compared to GitHub's patches. Only applicable when using SARIF checks")
   String fileMountPathPrefix = "";
 
+  @Parameter(
+      names = {"--uses-summary-message", "-usm"},
+      arity = 1,
+      required = false,
+      description =
+          "Use summarized message: count information without granular check details. Intended to be used with SARIF uploads")
+  Boolean usesSummaryMessage = false;
+
   @Autowired SarifFileGenerator sarifFileGenerator;
 
   @Autowired ObjectMapper objectMapper;
@@ -600,7 +608,8 @@ public class ExtractionCheckCommand extends Command {
                 githubPRNumber,
                 setGithubCommitStatus,
                 commitSha,
-                githubCommitStatusTargetUrl);
+                githubCommitStatusTargetUrl,
+                usesSummaryMessage);
         break;
       default:
         throw new CommandException(
