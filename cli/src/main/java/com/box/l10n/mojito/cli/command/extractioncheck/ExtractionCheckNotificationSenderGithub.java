@@ -146,6 +146,12 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
       StringBuilder sb = new StringBuilder();
       sb.append("**i18n source string checks failed**").append(getDoubleNewLines());
       if (hardFail) {
+        if (!Strings.isNullOrEmpty(hardFailureMessage)) {
+          sb.append(getDoubleNewLines());
+          sb.append(hardFailureMessage);
+          sb.append(getDoubleNewLines());
+        }
+
         sb.append("The following checks had hard failures:")
             .append(System.lineSeparator())
             .append(
@@ -171,9 +177,7 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
       sb.append(getDoubleNewLines()).append("**Please correct the above issues in a new commit.**");
       String message =
           getFormattedNotificationMessage(
-              messageTemplate,
-              "baseMessage",
-              replaceQuoteMarkers(appendHardFailureMessage(hardFail, sb)));
+              messageTemplate, "baseMessage", replaceQuoteMarkers(sb.toString()));
       Mono<GHIssueComment> ghIssueCommentMono =
           githubClients
               .getClient(githubOwner)
