@@ -79,16 +79,18 @@ public class AIChecker extends AbstractCliChecker {
     aiCheckRequest.setTextUnits(assetExtractorTextUnits);
     aiCheckRequest.setRepositoryName(repositoryName);
 
-    return Mono.fromCallable(() -> executeChecks(aiCheckRequest))
+    return Mono.fromCallable(() -> executeChecks(aiCheckRequest, textUnits))
         .retryWhen(retryConfiguration)
         .doOnError(ex -> logger.error("Failed to run AI checks: {}", ex.getMessage(), ex))
         .onErrorReturn(getRetriesExhaustedResult())
         .block();
   }
 
-  private CliCheckResult executeChecks(AICheckRequest aiCheckRequest) {
+  private CliCheckResult executeChecks(
+      AICheckRequest aiCheckRequest, List<AssetExtractorTextUnit> textUnits) {
     AICheckResponse response = aiServiceClient.executeAIChecks(aiCheckRequest);
 
+    logger.debug("AI checks returned: {}", response);
     if (response.isError()) {
       throw new CommandException("Failed to run AI checks: " + response.getErrorMessage());
     }
@@ -110,13 +112,20 @@ public class AIChecker extends AbstractCliChecker {
             });
 
     HashMap<String, CliCheckResult.CheckFailure> featureFailureMap = new HashMap<>();
+    Map<String, String> textUnitSourceToNameMap =
+        textUnits.stream()
+            .collect(
+                Collectors.toMap(
+                    AssetExtractorTextUnit::getSource, AssetExtractorTextUnit::getName));
     for (Map.Entry<String, List<AICheckResult>> failure : failureMap.entrySet()) {
       String suggestFixEntry =
           failure.getValue().stream()
               .map(AICheckResult::getSuggestedFix)
               .collect(Collectors.joining(System.lineSeparator()));
+      String textUnitName =
+          textUnitSourceToNameMap.getOrDefault(failure.getKey(), failure.getKey());
       featureFailureMap.put(
-          failure.getKey(),
+          textUnitName,
           new CliCheckResult.CheckFailure(CheckerRuleId.AI_CHECKER_SUGGESTION, suggestFixEntry));
     }
 

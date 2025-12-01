@@ -65,6 +65,14 @@ public class AICheckerTest {
                 .build()));
   }
 
+  private static AssetExtractorTextUnit buildTextUnit(String id, String source, String comment) {
+    AssetExtractorTextUnit tu1 = new AssetExtractorTextUnit();
+    tu1.setName(id);
+    tu1.setSource(source);
+    tu1.setComments(comment);
+    return tu1;
+  }
+
   @Test
   public void testCheckSuccess() {
     AICheckResponse aiCheckResponse = new AICheckResponse();
@@ -87,6 +95,44 @@ public class AICheckerTest {
     verify(aiServiceClient, times(1)).executeAIChecks(any());
     assertTrue(result.isSuccessful());
     assertTrue(result.getNotificationText().isEmpty());
+  }
+
+  @Test
+  public void testTextUnitSourceToNameMapping() {
+    List<AssetExtractorTextUnit> addedTUs =
+        List.of(
+            buildTextUnit("ID1 --- Context1", "Source string 1", "Comment1"),
+            buildTextUnit("ID2 --- Context2", "Source string 2", "Comment2"));
+
+    AssetExtractionDiff assetExtractionDiff = new AssetExtractionDiff();
+    assetExtractionDiff.setAddedTextunits(addedTUs);
+    List<AssetExtractionDiff> diffs = List.of(assetExtractionDiff);
+
+    // Prepare AI check response with failures for both sources
+    AICheckResponse aiCheckResponse = new AICheckResponse();
+    aiCheckResponse.setError(false);
+    aiCheckResponse.setErrorMessage(null);
+    Map<String, List<AICheckResult>> checkResults = new HashMap<>();
+
+    AICheckResult fail1 = new AICheckResult();
+    fail1.setSuccess(false);
+    fail1.setSuggestedFix("Issue in string 1");
+    checkResults.put("Source string 1", List.of(fail1));
+
+    AICheckResult fail2 = new AICheckResult();
+    fail2.setSuccess(false);
+    fail2.setSuggestedFix("Issue in string 2");
+    checkResults.put("Source string 2", List.of(fail2));
+
+    aiCheckResponse.setResults(checkResults);
+    when(aiServiceClient.executeAIChecks(any())).thenReturn(aiCheckResponse);
+
+    CliCheckResult result = AIChecker.run(diffs);
+
+    assertFalse(result.getNameToFailuresMap().containsKey("Source string 1"));
+    assertFalse(result.getNameToFailuresMap().containsKey("Source string 2"));
+    assertTrue(result.getNameToFailuresMap().containsKey("ID1 --- Context1"));
+    assertTrue(result.getNameToFailuresMap().containsKey("ID2 --- Context2"));
   }
 
   @Test
