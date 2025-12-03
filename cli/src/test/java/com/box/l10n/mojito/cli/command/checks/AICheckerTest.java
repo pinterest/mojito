@@ -136,6 +136,45 @@ public class AICheckerTest {
   }
 
   @Test
+  public void testTextUnitDuplicateSourceMapsToFirstTextUnit() {
+    List<AssetExtractorTextUnit> addedTUs =
+        List.of(
+            buildTextUnit("ID1 --- Context1", "Source string 1", "Comment1"),
+            buildTextUnit("ID2 --- Context1", "Source string 1", "Comment1"),
+            buildTextUnit("ID3 --- Context1", "Source string 1", "Comment1"));
+
+    AssetExtractionDiff assetExtractionDiff = new AssetExtractionDiff();
+    assetExtractionDiff.setAddedTextunits(addedTUs);
+    List<AssetExtractionDiff> diffs = List.of(assetExtractionDiff);
+
+    AICheckResponse aiCheckResponse = new AICheckResponse();
+    aiCheckResponse.setError(false);
+    aiCheckResponse.setErrorMessage(null);
+    Map<String, List<AICheckResult>> checkResults = new HashMap<>();
+
+    AICheckResult fail1 = new AICheckResult();
+    fail1.setSuccess(false);
+    fail1.setSuggestedFix("Issue in string 1");
+    checkResults.put("Source string 1", List.of(fail1));
+    AICheckResult fail2 = new AICheckResult();
+    fail2.setSuccess(false);
+    fail2.setSuggestedFix("Issue in string 2");
+    checkResults.put("Source string 1", List.of(fail2));
+    AICheckResult fail3 = new AICheckResult();
+    fail3.setSuccess(false);
+    fail3.setSuggestedFix("Issue in string 3");
+    checkResults.put("Source string 1", List.of(fail3));
+    aiCheckResponse.setResults(checkResults);
+    when(aiServiceClient.executeAIChecks(any())).thenReturn(aiCheckResponse);
+
+    CliCheckResult result = AIChecker.run(diffs);
+
+    assertTrue(result.getNameToFailuresMap().containsKey("ID1 --- Context1"));
+    assertFalse(result.getNameToFailuresMap().containsKey("ID2 --- Context1"));
+    assertFalse(result.getNameToFailuresMap().containsKey("ID3 --- Context1"));
+  }
+
+  @Test
   public void testCheckFailure() {
     AICheckResponse AICheckResponse = new AICheckResponse();
     AICheckResponse.setError(false);

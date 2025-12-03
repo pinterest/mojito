@@ -116,7 +116,10 @@ public class AIChecker extends AbstractCliChecker {
         textUnits.stream()
             .collect(
                 Collectors.toMap(
-                    AssetExtractorTextUnit::getSource, AssetExtractorTextUnit::getName));
+                    AssetExtractorTextUnit::getSource,
+                    AssetExtractorTextUnit::getName,
+                    (existing, replacement) -> existing));
+    logger.debug("Mapping created: {}", response);
     for (Map.Entry<String, List<AICheckResult>> failure : failureMap.entrySet()) {
       String suggestFixEntry =
           failure.getValue().stream()
