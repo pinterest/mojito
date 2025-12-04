@@ -6,6 +6,7 @@ import static java.util.stream.Collectors.toMap;
 
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
+import com.box.l10n.mojito.stream.StreamUtils;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import java.util.Arrays;
@@ -159,6 +160,7 @@ public abstract class AbstractCliChecker {
                   .collect(toList());
             })
         .flatMap(List::stream)
+        .filter(StreamUtils.distinctByKey(AssetExtractorTextUnit::getSource))
         .collect(toList());
   }
 
