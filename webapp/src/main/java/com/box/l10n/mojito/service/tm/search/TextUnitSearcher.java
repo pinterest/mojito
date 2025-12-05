@@ -10,10 +10,12 @@ import com.box.l10n.mojito.nativecriteria.NativeEqExpFix;
 import com.box.l10n.mojito.nativecriteria.NativeILikeExp;
 import com.box.l10n.mojito.nativecriteria.NativeInExpFix;
 import com.box.l10n.mojito.nativecriteria.NativeInSubQueryExp;
+import com.box.l10n.mojito.nativecriteria.NativeNotEqExpFix;
 import com.box.l10n.mojito.nativecriteria.NativeNotILikeExp;
 import com.github.pnowy.nc.core.CriteriaResult;
 import com.github.pnowy.nc.core.NativeCriteria;
 import com.github.pnowy.nc.core.NativeExps;
+import com.github.pnowy.nc.core.expressions.NativeDisjunctionExp;
 import com.github.pnowy.nc.core.expressions.NativeExp;
 import com.github.pnowy.nc.core.expressions.NativeIsNotNullExp;
 import com.github.pnowy.nc.core.expressions.NativeIsNullExp;
@@ -420,13 +422,21 @@ public class TextUnitSearcher {
           break;
         case NOT_REJECTED:
           conjunction.add(new NativeEqExpFix("tuv.included_in_localized_file", Boolean.TRUE));
+          conjunction.add(
+              new NativeNotEqExpFix("tuv.status", TMTextUnitVariant.Status.MANUALLY_REJECTED));
+          conjunction.add(
+              new NativeNotEqExpFix("tuv.status", TMTextUnitVariant.Status.INTEGRITY_FAILURE));
           break;
         case REJECTED:
           conjunction.add(new NativeEqExpFix("tuv.included_in_localized_file", Boolean.FALSE));
-          conjunction.add(
-              NativeExps.notEq("tuv.status", TMTextUnitVariant.Status.MT_TRANSLATED.toString()));
-          conjunction.add(
-              NativeExps.notEq("tuv.status", TMTextUnitVariant.Status.MT_REVIEW_NEEDED.toString()));
+          NativeDisjunctionExp disjunctionExp = new NativeDisjunctionExp();
+          disjunctionExp.add(
+              new NativeEqExpFix(
+                  "tuv.status", TMTextUnitVariant.Status.MANUALLY_REJECTED.toString()));
+          disjunctionExp.add(
+              new NativeEqExpFix(
+                  "tuv.status", TMTextUnitVariant.Status.INTEGRITY_FAILURE.toString()));
+          conjunction.add(disjunctionExp);
           break;
         case REVIEW_NEEDED:
           conjunction.add(

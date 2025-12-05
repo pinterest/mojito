@@ -80,7 +80,11 @@ public class TMTextUnitVariant extends SettableAuditableEntity {
     /** A string that doesn't need any work to be performed on it. */
     APPROVED,
     /** It was overridden in Mojito, so it won't be updated during third-party sync */
-    OVERRIDDEN;
+    OVERRIDDEN,
+    /** Indicates a variant has failed an integrity check */
+    INTEGRITY_FAILURE,
+    /** Indicates a variant has been rejected via the Mojito UI */
+    MANUALLY_REJECTED
   };
 
   @Column(name = "content", length = Integer.MAX_VALUE)

@@ -8,6 +8,7 @@ import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
+import com.box.l10n.mojito.entity.TMTUVIntegrityCheckFailure;
 import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant;
 import com.box.l10n.mojito.entity.TMTextUnitVariant.Status;
 import com.box.l10n.mojito.entity.TMTextUnitVariantComment;
@@ -27,9 +28,12 @@ import com.box.l10n.mojito.service.pollableTask.PollableFuture;
 import com.box.l10n.mojito.service.pollableTask.PollableFutureTaskResult;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.tm.AddTMTextUnitCurrentVariantResult;
+import com.box.l10n.mojito.service.tm.IntegrityCheckFailureService;
 import com.box.l10n.mojito.service.tm.TMService;
 import com.box.l10n.mojito.service.tm.TMTextUnitCurrentVariantRepository;
+import com.box.l10n.mojito.service.tm.TMTextUnitRepository;
 import com.box.l10n.mojito.service.tm.TMTextUnitVariantCommentService;
+import com.box.l10n.mojito.service.tm.TMTextUnitVariantRepository;
 import com.box.l10n.mojito.service.tm.TextUnitBatchMatcher;
 import com.box.l10n.mojito.service.tm.TextUnitForBatchMatcher;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
@@ -91,6 +95,12 @@ public class TextUnitBatchImporterService {
   @Autowired TMTextUnitVariantCommentService tmMTextUnitVariantCommentService;
 
   @Autowired MeterRegistry meterRegistry;
+
+  @Autowired TMTextUnitRepository textUnitRepository;
+
+  @Autowired TMTextUnitVariantRepository textUnitVariantRepository;
+
+  @Autowired IntegrityCheckFailureService integrityCheckFailureService;
 
   @Value("${l10n.textUnitBatchImporterService.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   String schedulerName;
@@ -274,6 +284,12 @@ public class TextUnitBatchImporterService {
                         .getTmTextUnitVariant()
                         .getId();
 
+                this.integrityCheckFailureService.updateIntegrityCheckFailures(
+                    currentTextUnit.getTmTextUnitId(),
+                    locale.getId(),
+                    textUnitForBatchImport.getIntegrityCheckFailures(),
+                    tmTextUnitVariantId);
+
                 for (TMTextUnitVariantComment tmTextUnitVariantComment :
                     textUnitForBatchImport.getTmTextUnitVariantComments()) {
                   tmMTextUnitVariantCommentService.addComment(
@@ -326,6 +342,7 @@ public class TextUnitBatchImporterService {
       textUnitForBatchImport.setIncludedInLocalizedFile(true);
       textUnitForBatchImport.setStatus(APPROVED);
 
+      boolean isFirstCheck = true;
       for (TextUnitIntegrityChecker textUnitChecker : textUnitCheckers) {
         try {
           textUnitChecker.setRepository(asset.getRepository());
@@ -348,16 +365,25 @@ public class TextUnitBatchImporterService {
                 textUnitForBatchImport.getContent(),
                 ice);
             textUnitForBatchImport.setIncludedInLocalizedFile(false);
-            textUnitForBatchImport.setStatus(Status.TRANSLATION_NEEDED);
+            textUnitForBatchImport.setStatus(Status.INTEGRITY_FAILURE);
 
-            TMTextUnitVariantComment tmTextUnitVariantComment = new TMTextUnitVariantComment();
-            tmTextUnitVariantComment.setSeverity(Severity.ERROR);
-            tmTextUnitVariantComment.setContent(ice.getMessage());
-            textUnitForBatchImport.getTmTextUnitVariantComments().add(tmTextUnitVariantComment);
+            if (isFirstCheck) {
+              TMTextUnitVariantComment tmTextUnitVariantComment = new TMTextUnitVariantComment();
+              tmTextUnitVariantComment.setSeverity(Severity.ERROR);
+              tmTextUnitVariantComment.setContent(ice.getMessage());
+              textUnitForBatchImport.getTmTextUnitVariantComments().add(tmTextUnitVariantComment);
+            }
+
+            TMTUVIntegrityCheckFailure integrityCheckFailure = new TMTUVIntegrityCheckFailure();
+            integrityCheckFailure.setTmTextUnit(
+                this.textUnitRepository.getReferenceById(currentTextUnit.getTmTextUnitId()));
+            integrityCheckFailure.setLocale(textUnitForBatchImport.getLocale());
+            integrityCheckFailure.setIntegrityFailureName(
+                textUnitChecker.getClass().getSimpleName());
+            textUnitForBatchImport.getIntegrityCheckFailures().add(integrityCheckFailure);
           }
-
-          break;
         }
+        isFirstCheck = false;
       }
     }
   }

@@ -215,7 +215,8 @@ class TextUnitsreviewModal extends React.Component {
             else if (textUnit.getStatus() === TextUnit.STATUS.MT_REVIEW_NEEDED) {
                 currentReviewState = this.MT_REVIEW;
             }
-            else if (!textUnit.isIncludedInLocalizedFile()) {
+            else if (textUnit.getStatus() === TextUnit.STATUS.MANUALLY_REJECTED
+                    || textUnit.getStatus() === TextUnit.STATUS.INTEGRITY_FAILURE) {
                 currentReviewState = this.REJECT;
             } else if (textUnit.getStatus() === TextUnit.STATUS.REVIEW_NEEDED) {
                 currentReviewState = this.REVIEW;

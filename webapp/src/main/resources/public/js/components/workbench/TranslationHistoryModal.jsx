@@ -20,7 +20,8 @@ class translationHistoryModal extends React.Component {
         const { textUnit, openTmTextUnitVariantId } = this.props;
         const rowClass = textUnit.getTmTextUnitVariantId() === item.id ? "history-current-variant" : "";
         const mtStatus = item.status === TextUnitSDK.STATUS.MACHINE_TRANSLATED || item.status === TextUnitSDK.STATUS.MT_REVIEW_NEEDED;
-        const status = item.id && !item.includedInLocalizedFile && !mtStatus ? TextUnitSDK.STATUS.REJECTED : item.status;
+        const status = item.id && item.status === TextUnitSDK.STATUS.MANUALLY_REJECTED
+                || item.status === TextUnitSDK.STATUS.INTEGRITY_FAILURE ? TextUnitSDK.STATUS.REJECTED : item.status;
         const isOpenTmTextUnitVariant = openTmTextUnitVariantId === item.id;
 
         return item ? (
