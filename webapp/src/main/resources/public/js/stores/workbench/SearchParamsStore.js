@@ -441,11 +441,11 @@ SearchParamsStore.STATUS = {
      */
     "REVIEW_NOT_NEEDED": "REVIEW_NOT_NEEDED",
     /**
-     * TextUnits that are rejected, ie includedInLocalizedFile is false.
+     * TextUnits that are rejected, ie status is either MANUALLY_REJECTED or INTEGRITY_FAILURE.
      */
     "REJECTED": "REJECTED",
     /**
-     * TextUnits that are not rejected, ie includedInLocalizedFile is true.
+     * TextUnits that are not rejected, ie status is neither MANUALLY_REJECTED nor INTEGRITY_FAILURE.
      */
     "NOT_REJECTED": "NOT_REJECTED",
     /**
