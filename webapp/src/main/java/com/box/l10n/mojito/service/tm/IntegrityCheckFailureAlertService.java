@@ -29,7 +29,7 @@ public class IntegrityCheckFailureAlertService {
   private static final Logger LOGGER =
       LoggerFactory.getLogger(IntegrityCheckFailureAlertService.class);
 
-  private static final String REJECTED_TRANSLATION_LABEL_FORMAT = "Rejected Translation %d";
+  static final String REJECTED_TRANSLATION_LABEL_FORMAT = "Rejected Translation %d";
 
   private static final String CUSTOM_DETAILS_FORMAT =
       "TM Text Unit ID: %d\nLocale: %s\nURL: %s\nIntegrity Check Failure:\n%s";
