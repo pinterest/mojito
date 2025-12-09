@@ -917,23 +917,31 @@ public class EvolveServiceTest extends ServiceTestBase {
         HttpClientErrorException.class, () -> this.evolveService.sync(repository.getId(), null));
   }
 
-  private void initStartCourseTranslationExceptionData() {
+  private void initStartCourseTranslationExceptionData() throws IOException {
     CourseDTO courseDTO1 = new CourseDTO();
     courseDTO1.setId(1);
     courseDTO1.setTranslationStatus(READY_FOR_TRANSLATION);
     courseDTO1.setType("CourseCurriculum");
 
+    CourseDTO courseDTO2 = new CourseDTO();
+    courseDTO2.setId(2);
+    courseDTO2.setTranslationStatus(READY_FOR_TRANSLATION);
+    courseDTO2.setType("CourseCurriculum");
+
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
-        .thenReturn(Stream.of(courseDTO1));
+        .thenReturn(Stream.of(courseDTO1, courseDTO2));
     when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
-        .thenThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)));
+        .thenThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)))
+        .thenThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)))
+        .thenThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)))
+        .thenReturn(this.getXliffContent());
 
     this.initEvolveService();
   }
 
   @Test
   public void testSyncForStartCourseTranslationWithException()
-      throws RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException {
+      throws RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException, IOException {
     Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
     RepositoryLocale esRepositoryLocale = new RepositoryLocale();
     esRepositoryLocale.setLocale(esLocale);
@@ -947,13 +955,12 @@ public class EvolveServiceTest extends ServiceTestBase {
             Sets.newHashSet(esRepositoryLocale));
     this.initStartCourseTranslationExceptionData();
 
-    EvolveSyncException exception =
-        assertThrows(
-            EvolveSyncException.class, () -> this.evolveService.sync(repository.getId(), null));
-    Throwable firstCauseException = exception.getCause();
-    Throwable secondCauseException = firstCauseException.getCause();
-    assertTrue(firstCauseException instanceof IllegalStateException);
-    assertTrue(secondCauseException instanceof HttpClientErrorException);
+    assertThrows(
+        EvolveSyncException.class, () -> this.evolveService.sync(repository.getId(), null));
+
+    verify(this.evolveClientMock, times(4)).startCourseTranslation(anyInt(), anyString(), anySet());
+    verify(this.evolveClientMock)
+        .updateCourse(anyInt(), eq(IN_TRANSLATION), any(ZonedDateTime.class));
   }
 
   private void initUpdateCourseExceptionData() throws IOException {
@@ -961,12 +968,19 @@ public class EvolveServiceTest extends ServiceTestBase {
     courseDTO1.setId(1);
     courseDTO1.setTranslationStatus(READY_FOR_TRANSLATION);
     courseDTO1.setType("CourseCurriculum");
+    CourseDTO courseDTO2 = new CourseDTO();
+    courseDTO2.setId(2);
+    courseDTO2.setTranslationStatus(READY_FOR_TRANSLATION);
+    courseDTO2.setType("CourseCurriculum");
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
-        .thenReturn(Stream.of(courseDTO1));
+        .thenReturn(Stream.of(courseDTO1, courseDTO2));
     when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
         .thenReturn(this.getXliffContent());
     doThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)))
+        .doThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)))
+        .doThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)))
+        .doNothing()
         .when(this.evolveClientMock)
         .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
 
@@ -990,7 +1004,9 @@ public class EvolveServiceTest extends ServiceTestBase {
     this.initUpdateCourseExceptionData();
 
     assertThrows(RuntimeException.class, () -> this.evolveService.sync(repository.getId(), null));
-    verify(this.evolveClientMock).startCourseTranslation(anyInt(), anyString(), anySet());
+    verify(this.evolveClientMock, times(2)).startCourseTranslation(anyInt(), anyString(), anySet());
+    verify(this.evolveClientMock, times(4))
+        .updateCourse(anyInt(), eq(IN_TRANSLATION), any(ZonedDateTime.class));
     verify(this.evolveClientMock, times(0)).syncEvolve(anyInt());
   }
 
