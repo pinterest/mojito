@@ -144,8 +144,8 @@ public class IntegrityCheckFailureAlertServiceTest extends ServiceTestBase {
     PagerDutyPayload pagerDutyPayload = this.pagerDutyPayloadArgumentCaptor.getValue();
     Map<String, String> customDetails = pagerDutyPayload.getCustomDetails();
     assertEquals(
-        pagerDutyPayload.getSource(),
-        "http://localhost/third-party-id-1\nhttp://localhost/third-party-id-1\nhttp://localhost/third-party-id-2\nhttp://localhost/third-party-id-3");
+        "http://localhost/third-party-id-1\nhttp://localhost/third-party-id-1\nhttp://localhost/third-party-id-2\nhttp://localhost/third-party-id-3",
+        pagerDutyPayload.getSource());
     assertEquals(4, customDetails.size());
     for (int i = 1; i <= customDetails.size(); i++) {
       String key = String.format(REJECTED_TRANSLATION_LABEL_FORMAT, i);

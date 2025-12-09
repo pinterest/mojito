@@ -513,30 +513,27 @@ public class EvolveService {
         this.getAdditionalTargetLocaleBcp47Tags(localeMappings, targetRepositoryLocales);
     ZonedDateTime startDateTime = ZonedDateTime.now();
     CoursesGetRequest request = new CoursesGetRequest(sourceLocaleBcp47Tag, startDateTime);
-    this.evolveClient
-        .getCourses(request)
-        .forEach(
-            courseDTO -> {
-              try {
-                if (courseDTO.getTranslationStatus() == READY_FOR_TRANSLATION) {
-                  this.syncReadyForTranslation(
-                      courseDTO,
-                      startDateTime,
-                      repository.getId(),
-                      targetLocaleBcp47Tag,
-                      additionalTargetLocaleBcp47Tags);
-                } else if (courseDTO.getTranslationStatus() == IN_TRANSLATION) {
-                  this.syncInTranslation(
-                      courseDTO,
-                      startDateTime,
-                      repository,
-                      localeMappings,
-                      targetRepositoryLocales);
-                }
-              } catch (Exception e) {
-                log.error("Course sync failed: " + courseDTO.getId(), e);
-                throw new EvolveSyncException(e.getMessage(), e);
-              }
-            });
+    int failureCount = 0;
+    for (CourseDTO courseDTO : this.evolveClient.getCourses(request).toList()) {
+      try {
+        if (courseDTO.getTranslationStatus() == READY_FOR_TRANSLATION) {
+          this.syncReadyForTranslation(
+              courseDTO,
+              startDateTime,
+              repository.getId(),
+              targetLocaleBcp47Tag,
+              additionalTargetLocaleBcp47Tags);
+        } else if (courseDTO.getTranslationStatus() == IN_TRANSLATION) {
+          this.syncInTranslation(
+              courseDTO, startDateTime, repository, localeMappings, targetRepositoryLocales);
+        }
+      } catch (Exception e) {
+        log.error("Course sync failed: {}", courseDTO.getId(), e);
+        failureCount++;
+      }
+    }
+    if (failureCount > 0) {
+      throw new EvolveSyncException(String.format("%d course(s) failed to sync", failureCount));
+    }
   }
 }
