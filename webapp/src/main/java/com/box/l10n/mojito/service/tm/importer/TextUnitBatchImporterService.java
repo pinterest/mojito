@@ -381,6 +381,10 @@ public class TextUnitBatchImporterService {
             integrityCheckFailure.setIntegrityFailureName(
                 textUnitChecker.getClass().getSimpleName());
             textUnitForBatchImport.getIntegrityCheckFailures().add(integrityCheckFailure);
+
+            this.meterRegistry
+                .counter("TextUnitBatchImporterService.applyIntegrityChecks.integrityCheckFailure")
+                .increment();
           }
         }
         isFirstCheck = false;

@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 
 import com.box.l10n.mojito.entity.TMTUVIntegrityCheckFailure;
+import com.box.l10n.mojito.entity.TMTextUnitCurrentVariant;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
 import com.box.l10n.mojito.test.TestIdWatcher;
@@ -48,16 +49,32 @@ public class IntegrityCheckFailureServiceTest extends ServiceTestBase {
   @Test
   public void testCleanUpAndAlertIntegrityCheckFailures() {
     TMTestData tmTestData = new TMTestData(this.testIdWatcher);
-    TMTextUnitVariant textUnitVariantFrFR = tmTestData.addCurrentTMTextUnitVariant1FrFR;
-    textUnitVariantFrFR.setStatus(TMTextUnitVariant.Status.INTEGRITY_FAILURE);
-    this.textUnitVariantRepository.save(textUnitVariantFrFR);
+    Long textUnitId = tmTestData.addCurrentTMTextUnitVariant1FrFR.getTmTextUnit().getId();
+    TMTextUnitCurrentVariant textUnitCurrentVariantFrFR =
+        tmService.addTMTextUnitCurrentVariant(
+            textUnitId,
+            tmTestData.addCurrentTMTextUnitVariant1FrFR.getLocale().getId(),
+            tmTestData.addCurrentTMTextUnitVariant1FrFR.getContent(),
+            "this translation fails compilation",
+            TMTextUnitVariant.Status.INTEGRITY_FAILURE,
+            false);
+    TMTextUnitVariant textUnitVariantFrFR = textUnitCurrentVariantFrFR.getTmTextUnitVariant();
     TMTUVIntegrityCheckFailure integrityCheckFailureFrFR = new TMTUVIntegrityCheckFailure();
     integrityCheckFailureFrFR.setTmTextUnit(textUnitVariantFrFR.getTmTextUnit());
     integrityCheckFailureFrFR.setLocale(textUnitVariantFrFR.getLocale());
     integrityCheckFailureFrFR.setTmTextUnitVariant(textUnitVariantFrFR);
     integrityCheckFailureFrFR.setIntegrityFailureName("Integrity Check 1");
     this.integrityCheckFailureRepository.save(integrityCheckFailureFrFR);
-    TMTextUnitVariant textUnitVariantKoKR = tmTestData.addCurrentTMTextUnitVariant1KoKR;
+    textUnitId = tmTestData.addCurrentTMTextUnitVariant1KoKR.getTmTextUnit().getId();
+    TMTextUnitCurrentVariant textUnitCurrentVariantKoKR =
+        tmService.addTMTextUnitCurrentVariant(
+            textUnitId,
+            tmTestData.addCurrentTMTextUnitVariant1KoKR.getLocale().getId(),
+            tmTestData.addCurrentTMTextUnitVariant1KoKR.getContent(),
+            "this translation fails compilation",
+            TMTextUnitVariant.Status.INTEGRITY_FAILURE,
+            false);
+    TMTextUnitVariant textUnitVariantKoKR = textUnitCurrentVariantKoKR.getTmTextUnitVariant();
     textUnitVariantKoKR.setStatus(TMTextUnitVariant.Status.INTEGRITY_FAILURE);
     this.textUnitVariantRepository.save(textUnitVariantKoKR);
     TMTUVIntegrityCheckFailure integrityCheckFailureKoKR = new TMTUVIntegrityCheckFailure();
@@ -66,18 +83,18 @@ public class IntegrityCheckFailureServiceTest extends ServiceTestBase {
     integrityCheckFailureKoKR.setTmTextUnitVariant(textUnitVariantKoKR);
     integrityCheckFailureKoKR.setIntegrityFailureName("Integrity Check 2");
     this.integrityCheckFailureRepository.save(integrityCheckFailureKoKR);
-    Long textUnitId = textUnitVariantFrFR.getTmTextUnit().getId();
-    tmService.addTMTextUnitCurrentVariant(
-        textUnitId,
-        textUnitVariantFrFR.getLocale().getId(),
-        textUnitVariantFrFR.getContent(),
-        "this translation fails compilation",
-        TMTextUnitVariant.Status.INTEGRITY_FAILURE,
-        false);
 
     List<TMTUVIntegrityCheckFailure> integrityCheckFailures =
         this.integrityCheckFailureRepository.findAll();
     assertEquals(2, integrityCheckFailures.size());
+
+    tmService.addTMTextUnitCurrentVariant(
+        textUnitId,
+        textUnitVariantKoKR.getLocale().getId(),
+        textUnitVariantKoKR.getContent(),
+        "this translation fails compilation",
+        TMTextUnitVariant.Status.APPROVED,
+        true);
 
     this.integrityCheckFailureService.cleanUpAndAlertIntegrityCheckFailures();
 
@@ -89,16 +106,16 @@ public class IntegrityCheckFailureServiceTest extends ServiceTestBase {
         .forEach(
             currentIntegrityCheckFailure -> {
               assertEquals(
-                  textUnitVariantKoKR.getTmTextUnit().getId(),
+                  textUnitVariantFrFR.getTmTextUnit().getId(),
                   currentIntegrityCheckFailure.getTmTextUnit().getId());
               assertEquals(
-                  textUnitVariantKoKR.getLocale().getId(),
+                  textUnitVariantFrFR.getLocale().getId(),
                   currentIntegrityCheckFailure.getLocale().getId());
               assertEquals(
-                  textUnitVariantKoKR.getId(),
+                  textUnitVariantFrFR.getId(),
                   currentIntegrityCheckFailure.getTmTextUnitVariant().getId());
               assertEquals(
-                  "Integrity Check 2", currentIntegrityCheckFailure.getIntegrityFailureName());
+                  "Integrity Check 1", currentIntegrityCheckFailure.getIntegrityFailureName());
             });
   }
 }
