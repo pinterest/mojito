@@ -612,6 +612,7 @@ public class TextUnitBatchImporterServiceTest extends ServiceTestBase {
 
   @Test
   public void testImportTextUnits_performsIntegrityChecks() {
+    this.textUnitBatchImporterService.integrityCheckFailureEnabled = true;
     TMTestData tmTestData = new TMTestData(this.testIdWatcher);
 
     AssetIntegrityChecker assetIntegrityChecker1 = new AssetIntegrityChecker();

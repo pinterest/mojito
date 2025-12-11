@@ -105,6 +105,9 @@ public class TextUnitBatchImporterService {
   @Value("${l10n.textUnitBatchImporterService.quartz.schedulerName:" + DEFAULT_SCHEDULER_NAME + "}")
   String schedulerName;
 
+  @Value("${l10n.integrity-check-failure.enabled:false}")
+  boolean integrityCheckFailureEnabled;
+
   /**
    * Imports a batch of text units.
    *
@@ -284,11 +287,13 @@ public class TextUnitBatchImporterService {
                         .getTmTextUnitVariant()
                         .getId();
 
-                this.integrityCheckFailureService.updateIntegrityCheckFailures(
-                    currentTextUnit.getTmTextUnitId(),
-                    locale.getId(),
-                    textUnitForBatchImport.getIntegrityCheckFailures(),
-                    tmTextUnitVariantId);
+                if (this.integrityCheckFailureEnabled) {
+                  this.integrityCheckFailureService.updateIntegrityCheckFailures(
+                      currentTextUnit.getTmTextUnitId(),
+                      locale.getId(),
+                      textUnitForBatchImport.getIntegrityCheckFailures(),
+                      tmTextUnitVariantId);
+                }
 
                 for (TMTextUnitVariantComment tmTextUnitVariantComment :
                     textUnitForBatchImport.getTmTextUnitVariantComments()) {
@@ -342,7 +347,6 @@ public class TextUnitBatchImporterService {
       textUnitForBatchImport.setIncludedInLocalizedFile(true);
       textUnitForBatchImport.setStatus(APPROVED);
 
-      boolean isFirstCheck = true;
       for (TextUnitIntegrityChecker textUnitChecker : textUnitCheckers) {
         try {
           textUnitChecker.setRepository(asset.getRepository());
@@ -367,27 +371,30 @@ public class TextUnitBatchImporterService {
             textUnitForBatchImport.setIncludedInLocalizedFile(false);
             textUnitForBatchImport.setStatus(Status.INTEGRITY_FAILURE);
 
-            if (isFirstCheck) {
-              TMTextUnitVariantComment tmTextUnitVariantComment = new TMTextUnitVariantComment();
-              tmTextUnitVariantComment.setSeverity(Severity.ERROR);
-              tmTextUnitVariantComment.setContent(ice.getMessage());
-              textUnitForBatchImport.getTmTextUnitVariantComments().add(tmTextUnitVariantComment);
+            TMTextUnitVariantComment tmTextUnitVariantComment = new TMTextUnitVariantComment();
+            tmTextUnitVariantComment.setSeverity(Severity.ERROR);
+            tmTextUnitVariantComment.setContent(ice.getMessage());
+            textUnitForBatchImport.getTmTextUnitVariantComments().add(tmTextUnitVariantComment);
+
+            if (this.integrityCheckFailureEnabled) {
+              TMTUVIntegrityCheckFailure integrityCheckFailure = new TMTUVIntegrityCheckFailure();
+              integrityCheckFailure.setTmTextUnit(
+                  this.textUnitRepository.getReferenceById(currentTextUnit.getTmTextUnitId()));
+              integrityCheckFailure.setLocale(textUnitForBatchImport.getLocale());
+              integrityCheckFailure.setIntegrityFailureName(
+                  textUnitChecker.getClass().getSimpleName());
+              textUnitForBatchImport.getIntegrityCheckFailures().add(integrityCheckFailure);
+
+              this.meterRegistry
+                  .counter(
+                      "TextUnitBatchImporterService.applyIntegrityChecks.integrityCheckFailures")
+                  .increment();
             }
-
-            TMTUVIntegrityCheckFailure integrityCheckFailure = new TMTUVIntegrityCheckFailure();
-            integrityCheckFailure.setTmTextUnit(
-                this.textUnitRepository.getReferenceById(currentTextUnit.getTmTextUnitId()));
-            integrityCheckFailure.setLocale(textUnitForBatchImport.getLocale());
-            integrityCheckFailure.setIntegrityFailureName(
-                textUnitChecker.getClass().getSimpleName());
-            textUnitForBatchImport.getIntegrityCheckFailures().add(integrityCheckFailure);
-
-            this.meterRegistry
-                .counter("TextUnitBatchImporterService.applyIntegrityChecks.integrityCheckFailure")
-                .increment();
           }
         }
-        isFirstCheck = false;
+        if (!this.integrityCheckFailureEnabled) {
+          break;
+        }
       }
     }
   }

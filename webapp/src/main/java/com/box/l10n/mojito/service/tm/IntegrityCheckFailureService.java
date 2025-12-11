@@ -102,10 +102,15 @@ public class IntegrityCheckFailureService {
     this.addIntegrityCheckFailures(updatedIntegrityCheckFailures, newIntegrityCheckFailures);
   }
 
-  private Optional<Long> getTextUnitVariantId(TMTextUnitCurrentVariant textUnitCurrentVariant) {
-    return ofNullable(textUnitCurrentVariant)
-        .map(TMTextUnitCurrentVariant::getTmTextUnitVariant)
-        .map(TMTextUnitVariant::getId);
+  private boolean shouldIntegrityCheckFailureBeDeleted(
+      TMTUVIntegrityCheckFailure integrityCheckFailure,
+      Optional<TMTextUnitVariant> textUnitVariantOptional) {
+    if (textUnitVariantOptional.isPresent()) {
+      TMTextUnitVariant textUnitVariant = textUnitVariantOptional.get();
+      return !textUnitVariant.getId().equals(integrityCheckFailure.getTmTextUnitVariant_Id())
+          || textUnitVariant.getStatus() != TMTextUnitVariant.Status.INTEGRITY_FAILURE;
+    }
+    return true;
   }
 
   @Transactional
@@ -119,11 +124,13 @@ public class IntegrityCheckFailureService {
           TMTextUnitCurrentVariant textUnitCurrentVariant =
               this.textUnitCurrentVariantRepository.findByLocale_IdAndTmTextUnit_Id(
                   integrityCheckFailure.getLocale_Id(), integrityCheckFailure.getTmTextUnit_Id());
-          Optional<Long> textUnitVariantId = this.getTextUnitVariantId(textUnitCurrentVariant);
-          if (textUnitVariantId.isEmpty()
-              || !textUnitVariantId.get().equals(integrityCheckFailure.getTmTextUnitVariant_Id())) {
+          Optional<TMTextUnitVariant> textUnitVariant =
+              ofNullable(textUnitCurrentVariant)
+                  .map(TMTextUnitCurrentVariant::getTmTextUnitVariant);
+          if (this.shouldIntegrityCheckFailureBeDeleted(integrityCheckFailure, textUnitVariant)) {
             integrityCheckFailuresToDelete.add(integrityCheckFailure);
-          } else if (integrityCheckFailure.isAutomaticallyRejected()) {
+          } else if (integrityCheckFailure.getTextUnitVariantStatus()
+              == TMTextUnitVariant.Status.INTEGRITY_FAILURE) {
             integrityCheckFailuresToAlert.add(integrityCheckFailure);
           }
         });
