@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties("l10n.integrity-check-failure")
 public class IntegrityCheckFailureConfigurationProperties {
   private String pagerDutyIncidentSummary =
-      "[Failed] One or more Text Unit Variants have failed one or more Integrity Checks";
+      "[Failed] Text Unit Variants have failed Integrity Checks";
 
   private String pagerDutyDedupKey = "f1f3ac7b-e183-4f2b-b7c6-e79ee709cf90";
 

@@ -66,26 +66,6 @@ public class TMTUVIntegrityCheckFailure extends SettableAuditableEntity {
     this.integrityFailureName = integrityFailureName;
   }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (obj == null) {
-      return false;
-    }
-    if (this.getClass() != obj.getClass()) {
-      return false;
-    }
-    TMTUVIntegrityCheckFailure other = (TMTUVIntegrityCheckFailure) obj;
-    return Objects.equals(this.getTmTextUnit().getId(), other.getTmTextUnit().getId())
-        && Objects.equals(this.getLocale().getId(), other.getLocale().getId())
-        && Objects.equals(this.getIntegrityFailureName(), other.getIntegrityFailureName());
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(
-        this.getTmTextUnit().getId(), this.getLocale().getId(), this.getIntegrityFailureName());
-  }
-
   public Long getLocale_Id() {
     return ofNullable(this.locale).map(Locale::getId).orElse(null);
   }
@@ -98,8 +78,31 @@ public class TMTUVIntegrityCheckFailure extends SettableAuditableEntity {
     return ofNullable(this.tmTextUnitVariant).map(TMTextUnitVariant::getId).orElse(null);
   }
 
-  public boolean isAutomaticallyRejected() {
-    return ofNullable(this.tmTextUnitVariant).map(TMTextUnitVariant::getStatus).stream()
-        .anyMatch(status -> status == TMTextUnitVariant.Status.INTEGRITY_FAILURE);
+  public TMTextUnitVariant.Status getTextUnitVariantStatus() {
+    return ofNullable(this.tmTextUnitVariant).map(TMTextUnitVariant::getStatus).orElse(null);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null) {
+      return false;
+    }
+    if (this.getClass() != obj.getClass()) {
+      return false;
+    }
+    TMTUVIntegrityCheckFailure other = (TMTUVIntegrityCheckFailure) obj;
+    return Objects.equals(this.getTmTextUnit_Id(), other.getTmTextUnit_Id())
+        && Objects.equals(this.getLocale(), other.getLocale())
+        && Objects.equals(this.getTmTextUnitVariant_Id(), other.getTmTextUnitVariant_Id())
+        && Objects.equals(this.getIntegrityFailureName(), other.getIntegrityFailureName());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        this.getTmTextUnit_Id(),
+        this.getLocale(),
+        this.getTmTextUnitVariant_Id(),
+        this.getIntegrityFailureName());
   }
 }
