@@ -12,6 +12,7 @@ import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.PollableTask;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
+import com.box.l10n.mojito.entity.TMTUVIntegrityCheckFailure;
 import com.box.l10n.mojito.entity.TMTextUnitVariant;
 import com.box.l10n.mojito.service.asset.VirtualAsset;
 import com.box.l10n.mojito.service.asset.VirtualAssetBadRequestException;
@@ -28,6 +29,7 @@ import com.box.l10n.mojito.service.repository.RepositoryLocaleCreationException;
 import com.box.l10n.mojito.service.repository.RepositoryNameAlreadyUsedException;
 import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.service.tm.TMService;
+import com.box.l10n.mojito.service.tm.TMTUVIntegrityCheckFailureRepository;
 import com.box.l10n.mojito.service.tm.TMTestData;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.box.l10n.mojito.service.tm.search.TextUnitSearcher;
@@ -73,6 +75,8 @@ public class TextUnitBatchImporterServiceTest extends ServiceTestBase {
   @Autowired AssetExtractionService assetExtractionService;
 
   @Autowired AssetMappingService assetMappingService;
+
+  @Autowired TMTUVIntegrityCheckFailureRepository integrityCheckFailureRepository;
 
   @Test
   public void testAsyncImportTextUnitsNameOnly() throws InterruptedException {
@@ -604,5 +608,78 @@ public class TextUnitBatchImporterServiceTest extends ServiceTestBase {
     assertEquals("TEST3", textUnitDTOsFromSearch.get(i).getName());
     assertEquals("The newest TEST3 translation for fr", textUnitDTOsFromSearch.get(i).getTarget());
     assertEquals(TMTextUnitVariant.Status.APPROVED, textUnitDTOsFromSearch.get(i).getStatus());
+  }
+
+  @Test
+  public void testImportTextUnits_performsIntegrityChecks() {
+    this.textUnitBatchImporterService.integrityCheckFailureEnabled = true;
+    TMTestData tmTestData = new TMTestData(this.testIdWatcher);
+
+    AssetIntegrityChecker assetIntegrityChecker1 = new AssetIntegrityChecker();
+    assetIntegrityChecker1.setAssetExtension("");
+    assetIntegrityChecker1.setIntegrityCheckerType(IntegrityCheckerType.WHITESPACE);
+    AssetIntegrityChecker assetIntegrityChecker2 = new AssetIntegrityChecker();
+    assetIntegrityChecker2.setAssetExtension("");
+    assetIntegrityChecker2.setIntegrityCheckerType(
+        IntegrityCheckerType.MESSAGE_FORMAT_DOUBLE_BRACES);
+    repositoryService.updateAssetIntegrityCheckers(
+        tmTestData.repository, Sets.newHashSet(assetIntegrityChecker1, assetIntegrityChecker2));
+
+    TextUnitDTO textUnitDTO = new TextUnitDTO();
+    textUnitDTO.setRepositoryName(tmTestData.repository.getName());
+    textUnitDTO.setTargetLocale(tmTestData.frFR.getBcp47Tag());
+    textUnitDTO.setAssetPath(tmTestData.asset.getPath());
+    textUnitDTO.setName("TEST2");
+    textUnitDTO.setTarget(" New TEST2 translation for fr {placeholder}");
+    textUnitDTO.setComment("Comment2");
+
+    TextUnitDTO textUnitDTO2 = new TextUnitDTO();
+    textUnitDTO2.setRepositoryName(tmTestData.repository.getName());
+    textUnitDTO2.setTargetLocale(tmTestData.frFR.getBcp47Tag());
+    textUnitDTO2.setAssetPath(tmTestData.asset.getPath());
+    textUnitDTO2.setName("TEST3");
+    textUnitDTO2.setComment("Comment3");
+    textUnitDTO2.setTarget("New TEST3 translation for fr");
+
+    List<TextUnitDTO> textUnitDTOsForImport = Arrays.asList(textUnitDTO, textUnitDTO2);
+
+    this.textUnitBatchImporterService.importTextUnits(textUnitDTOsForImport, false, true);
+
+    List<TMTUVIntegrityCheckFailure> integrityCheckFailures =
+        this.integrityCheckFailureRepository.findAll();
+
+    assertEquals(2, integrityCheckFailures.size());
+
+    textUnitDTO = new TextUnitDTO();
+    textUnitDTO.setRepositoryName(tmTestData.repository.getName());
+    textUnitDTO.setTargetLocale(tmTestData.frFR.getBcp47Tag());
+    textUnitDTO.setAssetPath(tmTestData.asset.getPath());
+    textUnitDTO.setName("TEST2");
+    textUnitDTO.setTarget("New TEST2 translation for fr ");
+    textUnitDTO.setComment("Comment2");
+
+    textUnitDTOsForImport = Arrays.asList(textUnitDTO);
+
+    this.textUnitBatchImporterService.importTextUnits(textUnitDTOsForImport, false, true);
+
+    integrityCheckFailures = this.integrityCheckFailureRepository.findAll();
+
+    assertEquals(1, integrityCheckFailures.size());
+
+    textUnitDTO = new TextUnitDTO();
+    textUnitDTO.setRepositoryName(tmTestData.repository.getName());
+    textUnitDTO.setTargetLocale(tmTestData.frFR.getBcp47Tag());
+    textUnitDTO.setAssetPath(tmTestData.asset.getPath());
+    textUnitDTO.setName("TEST2");
+    textUnitDTO.setTarget("New TEST2 translation for fr");
+    textUnitDTO.setComment("Comment2");
+
+    textUnitDTOsForImport = Arrays.asList(textUnitDTO);
+
+    this.textUnitBatchImporterService.importTextUnits(textUnitDTOsForImport, false, true);
+
+    integrityCheckFailures = this.integrityCheckFailureRepository.findAll();
+
+    assertEquals(0, integrityCheckFailures.size());
   }
 }

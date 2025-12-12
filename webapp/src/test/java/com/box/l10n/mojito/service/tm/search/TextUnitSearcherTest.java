@@ -358,7 +358,7 @@ public class TextUnitSearcherTest extends ServiceTestBase {
 
   @Transactional
   @Test
-  public void testIncludedInLocalizedFile() {
+  public void testRejectedTextUnitVariant() {
     TMTestData tmTestData = new TMTestData(testIdWatcher);
 
     List<TMTextUnitVariant> variants =
@@ -374,7 +374,7 @@ public class TextUnitSearcherTest extends ServiceTestBase {
         tmTestData.addCurrentTMTextUnitVariant1FrFR.getLocale().getId(),
         tmTestData.addCurrentTMTextUnitVariant1FrFR.getContent(),
         "this translation fails compilation",
-        TMTextUnitVariant.Status.REVIEW_NEEDED,
+        TMTextUnitVariant.Status.INTEGRITY_FAILURE,
         false);
 
     variants =

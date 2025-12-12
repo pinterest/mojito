@@ -345,7 +345,8 @@ let TextUnit = createReactClass({
         switch (modalData.textUnitAction) {
             case "reject":
                 textUnit.setIncludedInLocalizedFile(false);
-                textUnit.setStatus(TextUnitSDK.STATUS.TRANSLATION_NEEDED);
+                textUnit.setStatus(textUnit.getStatus() === TextUnitSDK.STATUS.INTEGRITY_FAILURE
+                    ? textUnit.getStatus() : TextUnitSDK.STATUS.MANUALLY_REJECTED);
                 break;
             case "review":
                 textUnit.setIncludedInLocalizedFile(true);
@@ -443,7 +444,8 @@ let TextUnit = createReactClass({
                 glyphTitle = this.props.intl.formatMessage({id: "textUnit.reviewModal.mtReview"});
                 tooltipDescriptor = "Machine Translated - Review Needed";
             }
-            else if (!this.props.textUnit.isIncludedInLocalizedFile()) {
+            else if (this.props.textUnit.getStatus() === TextUnitSDK.STATUS.MANUALLY_REJECTED
+                    || this.props.textUnit.getStatus() === TextUnitSDK.STATUS.INTEGRITY_FAILURE) {
                 glyphType = "alert";
                 glyphTitle = this.props.intl.formatMessage({id: "textUnit.reviewModal.rejected"});
                 tooltipDescriptor = "Rejected";
