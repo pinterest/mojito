@@ -32,7 +32,6 @@ public class IntegrityCheckFailureService {
     this.alertService = alertService;
   }
 
-  @Transactional
   private void removeIntegrityCheckFailures(
       List<TMTUVIntegrityCheckFailure> existingIntegrityCheckFailures,
       List<TMTUVIntegrityCheckFailure> newIntegrityCheckFailures) {
@@ -46,7 +45,6 @@ public class IntegrityCheckFailureService {
     this.integrityCheckFailureRepository.deleteAll(integrityCheckFailuresToDelete);
   }
 
-  @Transactional
   private List<TMTUVIntegrityCheckFailure> updateIntegrityCheckFailures(
       List<TMTUVIntegrityCheckFailure> existingIntegrityCheckFailures,
       List<TMTUVIntegrityCheckFailure> newIntegrityCheckFailures) {
@@ -69,7 +67,6 @@ public class IntegrityCheckFailureService {
     return integrityCheckFailuresToUpdate;
   }
 
-  @Transactional
   private void addIntegrityCheckFailures(
       List<TMTUVIntegrityCheckFailure> updatedIntegrityCheckFailures,
       List<TMTUVIntegrityCheckFailure> newIntegrityCheckFailures) {
