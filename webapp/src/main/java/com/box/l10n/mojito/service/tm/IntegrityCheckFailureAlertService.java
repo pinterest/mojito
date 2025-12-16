@@ -58,7 +58,7 @@ public class IntegrityCheckFailureAlertService {
         "%d_%d",
         integrityCheckFailure.getTmTextUnit_Id(),
         integrityCheckFailure.getLocale_Id(),
-        integrityCheckFailure.getTmTextUnitVariant_Id());
+        integrityCheckFailure.getTmTextUnitVariantId());
   }
 
   private Map<String, List<TMTUVIntegrityCheckFailure>> getIntegrityCheckFailuresByKey(

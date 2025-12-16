@@ -59,7 +59,7 @@ public class IntegrityCheckFailureService {
                 newIntegrityCheckFailure.getIntegrityFailureName());
             existingIntegrityCheckFailure.setTmTextUnitVariant(
                 this.textUnitVariantRepository.getReferenceById(
-                    newIntegrityCheckFailure.getTmTextUnitVariant_Id()));
+                    newIntegrityCheckFailure.getTmTextUnitVariantId()));
             integrityCheckFailuresToUpdate.add(existingIntegrityCheckFailure);
           }
         });
@@ -104,7 +104,7 @@ public class IntegrityCheckFailureService {
       Optional<TMTextUnitVariant> textUnitVariantOptional) {
     if (textUnitVariantOptional.isPresent()) {
       TMTextUnitVariant textUnitVariant = textUnitVariantOptional.get();
-      return !textUnitVariant.getId().equals(integrityCheckFailure.getTmTextUnitVariant_Id())
+      return !textUnitVariant.getId().equals(integrityCheckFailure.getTmTextUnitVariantId())
           || textUnitVariant.getStatus() != TMTextUnitVariant.Status.INTEGRITY_FAILURE;
     }
     return true;

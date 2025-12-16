@@ -66,15 +66,52 @@ public class TMTUVIntegrityCheckFailure extends SettableAuditableEntity {
     this.integrityFailureName = integrityFailureName;
   }
 
+  /**
+   * Returns the primary key of the associated {@link Locale}.
+   *
+   * <p>Null-safe convenience accessor: returns the {@link Locale#getId() id} of the current {@link
+   * #getLocale() locale} when present; otherwise returns {@code null}.
+   *
+   * <p><b>Why the underscore?</b> If this method were named {@code getLocaleId} (without the
+   * underscore), Spring Data JPA derived queries would try to resolve a non-existent entity
+   * attribute (e.g., {@code localeId}) and fail. For example, a repository method like {@code
+   * findByTmTextUnitIdAndLocaleId(Long, Long)} can result in:
+   *
+   * <pre>
+   * IllegalArgumentException: Failed to create query ... Could not resolve attribute 'tmTextUnitId'
+   * of 'com.box.l10n.mojito.entity.TMTUVIntegrityCheckFailure'
+   * </pre>
+   *
+   * @return the locale id, or {@code null} if no locale is associated
+   * @see #getLocale()
+   */
   public Long getLocale_Id() {
     return ofNullable(this.locale).map(Locale::getId).orElse(null);
   }
 
+  /**
+   * Returns the primary key of the associated {@link TMTextUnit}.
+   *
+   * <p>Null-safe convenience accessor: returns the {@link TMTextUnit#getId() id} of the current
+   * {@link #getTmTextUnit() text unit} when present; otherwise returns {@code null}.
+   *
+   * <p><b>Why the underscore?</b> Using {@code getTmTextUnitId} (without the underscore) causes
+   * Spring Data JPA derived queries to look for an entity attribute named {@code tmTextUnitId},
+   * which does not exist, leading to errors such as:
+   *
+   * <pre>
+   * IllegalArgumentException: Failed to create query ... Could not resolve attribute 'tmTextUnitId'
+   * of 'com.box.l10n.mojito.entity.TMTUVIntegrityCheckFailure'
+   * </pre>
+   *
+   * @return the text unit id, or {@code null} if no text unit is associated
+   * @see #getTmTextUnit()
+   */
   public Long getTmTextUnit_Id() {
     return ofNullable(this.tmTextUnit).map(TMTextUnit::getId).orElse(null);
   }
 
-  public Long getTmTextUnitVariant_Id() {
+  public Long getTmTextUnitVariantId() {
     return ofNullable(this.tmTextUnitVariant).map(TMTextUnitVariant::getId).orElse(null);
   }
 
@@ -93,7 +130,7 @@ public class TMTUVIntegrityCheckFailure extends SettableAuditableEntity {
     TMTUVIntegrityCheckFailure other = (TMTUVIntegrityCheckFailure) obj;
     return Objects.equals(this.getTmTextUnit_Id(), other.getTmTextUnit_Id())
         && Objects.equals(this.getLocale(), other.getLocale())
-        && Objects.equals(this.getTmTextUnitVariant_Id(), other.getTmTextUnitVariant_Id())
+        && Objects.equals(this.getTmTextUnitVariantId(), other.getTmTextUnitVariantId())
         && Objects.equals(this.getIntegrityFailureName(), other.getIntegrityFailureName());
   }
 
@@ -102,7 +139,7 @@ public class TMTUVIntegrityCheckFailure extends SettableAuditableEntity {
     return Objects.hash(
         this.getTmTextUnit_Id(),
         this.getLocale(),
-        this.getTmTextUnitVariant_Id(),
+        this.getTmTextUnitVariantId(),
         this.getIntegrityFailureName());
   }
 }
