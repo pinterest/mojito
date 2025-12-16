@@ -3751,6 +3751,8 @@ components:
           - MT_REVIEW_NEEDED
           - APPROVED
           - OVERRIDDEN
+          - INTEGRITY_FAILURE
+          - MANUALLY_REJECTED
       required:
       - dropId
       - repositoryId
@@ -3820,6 +3822,8 @@ components:
           - MT_REVIEW_NEEDED
           - APPROVED
           - OVERRIDDEN
+          - INTEGRITY_FAILURE
+          - MANUALLY_REJECTED
         repositoryId:
           type: integer
           format: int64
@@ -5125,6 +5129,8 @@ components:
           - MT_REVIEW_NEEDED
           - APPROVED
           - OVERRIDDEN
+          - INTEGRITY_FAILURE
+          - MANUALLY_REJECTED
         tmTextUnit:
           $ref: "#/components/schemas/TMTextUnit"
         tmTextUnitVariantComments:
@@ -5223,6 +5229,8 @@ components:
           - MT_REVIEW_NEEDED
           - APPROVED
           - OVERRIDDEN
+          - INTEGRITY_FAILURE
+          - MANUALLY_REJECTED
         tmTextUnitVariantComments:
           type: array
           items:
@@ -5354,6 +5362,8 @@ components:
           - MT_REVIEW_NEEDED
           - APPROVED
           - OVERRIDDEN
+          - INTEGRITY_FAILURE
+          - MANUALLY_REJECTED
         target:
           type: string
         targetComment:

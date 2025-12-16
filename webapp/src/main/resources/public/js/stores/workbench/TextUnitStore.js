@@ -142,7 +142,7 @@ class TextUnitStore {
             switch (textUnitAction) {
                 case "reject":
                     textUnit.setIncludedInLocalizedFile(false);
-                    textUnit.setStatus(TextUnit.STATUS.TRANSLATION_NEEDED);
+                    textUnit.setStatus(TextUnit.STATUS.MANUALLY_REJECTED);
                     break;
                 case "translate":
                     textUnit.setIncludedInLocalizedFile(true);
