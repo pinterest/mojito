@@ -348,6 +348,9 @@ public class TextUnitBatchImporterService {
       textUnitForBatchImport.setStatus(APPROVED);
 
       for (TextUnitIntegrityChecker textUnitChecker : textUnitCheckers) {
+        this.meterRegistry
+            .counter("TextUnitBatchImporterService.applyIntegrityChecks.integrityChecks")
+            .increment();
         try {
           textUnitChecker.setRepository(asset.getRepository());
           textUnitChecker.setTextUnitId(currentTextUnit.getTmTextUnitId());
