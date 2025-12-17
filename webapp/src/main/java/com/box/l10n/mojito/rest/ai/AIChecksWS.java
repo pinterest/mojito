@@ -26,7 +26,7 @@ public class AIChecksWS {
   @Operation(summary = "Execute AI checks")
   @RequestMapping(value = "/api/ai/checks", method = RequestMethod.POST)
   @Timed("AIWS.executeAIChecks")
-  @Cacheable(AI_CHECKS)
+  @Cacheable(value = AI_CHECKS, unless = "#result.error")
   public AICheckResponse executeAIChecks(@RequestBody AICheckRequest AICheckRequest) {
     logger.debug("Received request to execute AI checks");
     AICheckResponse response;
