@@ -6,10 +6,15 @@ import java.util.List;
 import net.sf.okapi.common.Event;
 import net.sf.okapi.common.MimeTypeMapper;
 import net.sf.okapi.common.filters.FilterConfiguration;
+import net.sf.okapi.common.filters.InlineCodeFinder;
 import net.sf.okapi.common.resource.DocumentPart;
+import net.sf.okapi.common.resource.ISegments;
 import net.sf.okapi.common.resource.ITextUnit;
 import net.sf.okapi.common.resource.Property;
 import net.sf.okapi.common.resource.RawDocument;
+import net.sf.okapi.common.resource.Segment;
+import net.sf.okapi.common.resource.TextContainer;
+import net.sf.okapi.common.resource.TextFragment;
 import net.sf.okapi.filters.html.Parameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +37,16 @@ public class HtmlFilter extends net.sf.okapi.filters.html.HtmlFilter {
   boolean processImageUrls;
 
   boolean markEmptyAndNbspAsNotTranslatable = true;
+
+  private final InlineCodeFinder inlineCodeFinder;
+
+  public HtmlFilter() {
+    super();
+    this.inlineCodeFinder = new InlineCodeFinder();
+    this.inlineCodeFinder.addRule("\\{\\{.*?\\}\\}"); // {{ variable }}
+    this.inlineCodeFinder.addRule("\\{%.*?%\\}"); // {% tag %}
+    this.inlineCodeFinder.compile();
+  }
 
   @Override
   public String getName() {
@@ -66,11 +81,21 @@ public class HtmlFilter extends net.sf.okapi.filters.html.HtmlFilter {
     applyFilterOptions(input);
   }
 
+  void processWithCustomInlineCodeFinder(ITextUnit textUnit) {
+    TextContainer container = textUnit.getSource();
+    ISegments segments = container.getSegments();
+    for (Segment segment : segments) {
+      TextFragment fragment = segment.getContent();
+      this.inlineCodeFinder.process(fragment);
+    }
+  }
+
   @Override
   public Event next() {
     Event next = super.next();
 
     if (next.isTextUnit()) {
+      this.processWithCustomInlineCodeFinder(next.getTextUnit());
       setEmptyAndNbspAsNotTranslatable(next.getTextUnit());
       setTextUnitName(next.getTextUnit());
     } else if (next.isDocumentPart()) {
