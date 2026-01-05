@@ -78,26 +78,8 @@ public class ReactAppController {
   @Value("${server.contextPath:}")
   String contextPath = "";
 
-  // TODO(P1) For now, client routes must be copied in this controller
-  @RequestMapping({
-    "/",
-    "/login",
-    "repositories",
-    "project-requests",
-    "workbench",
-    "branches",
-    "screenshots",
-    "settings",
-    "settings/user-management",
-    "settings/box",
-    "jobs"
-  })
-  ResponseEntity<String> getIndex(
-      HttpServletRequest httpServletRequest,
-      @CookieValue(value = "locale", required = false, defaultValue = "en")
-          String localeCookieValue)
-      throws MalformedURLException, IOException {
-
+  private ReactTemplateContext getReactTemplateContext(
+      HttpServletRequest httpServletRequest, String localeCookieValue) {
     ReactTemplateContext index = new ReactTemplateContext();
 
     ReactAppConfig reactAppConfig = new ReactAppConfig(reactStaticAppConfig, getReactUser());
@@ -119,11 +101,46 @@ public class ReactAppController {
     // great
     index.csrfToken = reactAppConfig.csrfToken;
 
+    return index;
+  }
+
+  @RequestMapping({
+    "/",
+    "/login",
+    "repositories",
+    "project-requests",
+    "workbench",
+    "branches",
+    "screenshots",
+    "settings",
+    "settings/user-management",
+    "settings/box",
+    "jobs"
+  })
+  ResponseEntity<String> getIndex(
+      HttpServletRequest httpServletRequest,
+      @CookieValue(value = "locale", required = false, defaultValue = "en")
+          String localeCookieValue)
+      throws MalformedURLException, IOException {
+    ReactTemplateContext reactTemplateContext =
+        getReactTemplateContext(httpServletRequest, localeCookieValue);
     HttpHeaders responseHeaders = new HttpHeaders();
     responseHeaders.setContentType(TEXT_HTML_UTF_8);
+    String body = mustacheTemplateEngine.render("index.html", reactTemplateContext);
+    return new ResponseEntity<>(body, responseHeaders, HttpStatus.OK);
+  }
 
-    String body = mustacheTemplateEngine.render("index.html", index);
-
+  @RequestMapping({"/branchDetails"})
+  ResponseEntity<String> getIndexNewWebapp(
+      HttpServletRequest httpServletRequest,
+      @CookieValue(value = "locale", required = false, defaultValue = "en")
+          String localeCookieValue)
+      throws MalformedURLException, IOException {
+    ReactTemplateContext reactTemplateContext =
+        getReactTemplateContext(httpServletRequest, localeCookieValue);
+    HttpHeaders responseHeaders = new HttpHeaders();
+    responseHeaders.setContentType(TEXT_HTML_UTF_8);
+    String body = mustacheTemplateEngine.render("webapp-ts/index.html", reactTemplateContext);
     return new ResponseEntity<>(body, responseHeaders, HttpStatus.OK);
   }
 

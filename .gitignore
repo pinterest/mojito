@@ -18,6 +18,9 @@ npm-debug.log
 /cli/nbproject/
 /webapp/nbproject/
 /webapp/Demo/
+/webapp/src/main/resources/static/assets/index*.css
+/webapp/src/main/resources/static/assets/index*.js
+/webapp/src/main/resources/templates/webapp-ts/index.html
 *.releaseBackup
 release.properties
 **/nb-configuration.xml
