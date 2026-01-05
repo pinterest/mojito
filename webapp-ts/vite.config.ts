@@ -5,16 +5,3 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
 })
-
-// Example configuring different routes
-// export default defineConfig({
-//   resolve: {
-//     alias: {
-//       '@': fileURLToPath(new URL('./src', import.meta.url))
-//     }
-//   },
-//   build: {
-//     outDir: Config.modulesDirRelativePath + "/react-ts-app"
-//   },
-//   base: "./"
-// })
