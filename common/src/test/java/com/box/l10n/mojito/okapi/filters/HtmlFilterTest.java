@@ -18,12 +18,12 @@ public class HtmlFilterTest {
     TextUnit textUnit2 = new TextUnit();
     textUnit2.setSource(new TextContainer("{{lba_username}}"));
     try (HtmlFilter htmlFilter = new HtmlFilter()) {
-      htmlFilter.processWithCustomInlineCodeFinder(textUnit1);
+      htmlFilter.processWithCustomInlineCodeFinder(textUnit1.getSource());
       htmlFilter.setEmptyAndNbspAsNotTranslatable(textUnit1);
 
       assertFalse(textUnit1.isTranslatable());
 
-      htmlFilter.processWithCustomInlineCodeFinder(textUnit2);
+      htmlFilter.processWithCustomInlineCodeFinder(textUnit2.getSource());
       htmlFilter.setEmptyAndNbspAsNotTranslatable(textUnit2);
 
       assertFalse(textUnit2.isTranslatable());
@@ -39,16 +39,24 @@ public class HtmlFilterTest {
 
     TextUnit textUnit2 = new TextUnit();
     textUnit2.setSource(new TextContainer("Example"));
+
+    TextUnit textUnit3 = new TextUnit();
+    textUnit3.setSource(new TextContainer("{% if show_cta %} Click here {% endif %}"));
     try (HtmlFilter htmlFilter = new HtmlFilter()) {
-      htmlFilter.processWithCustomInlineCodeFinder(textUnit1);
+      htmlFilter.processWithCustomInlineCodeFinder(textUnit1.getSource());
       htmlFilter.setEmptyAndNbspAsNotTranslatable(textUnit1);
 
       assertTrue(textUnit1.isTranslatable());
 
-      htmlFilter.processWithCustomInlineCodeFinder(textUnit2);
+      htmlFilter.processWithCustomInlineCodeFinder(textUnit2.getSource());
       htmlFilter.setEmptyAndNbspAsNotTranslatable(textUnit2);
 
       assertTrue(textUnit2.isTranslatable());
+
+      htmlFilter.processWithCustomInlineCodeFinder(textUnit3.getSource());
+      htmlFilter.setEmptyAndNbspAsNotTranslatable(textUnit3);
+
+      assertTrue(textUnit3.isTranslatable());
     }
   }
 }

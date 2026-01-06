@@ -81,21 +81,11 @@ public class HtmlFilter extends net.sf.okapi.filters.html.HtmlFilter {
     applyFilterOptions(input);
   }
 
-  void processWithCustomInlineCodeFinder(ITextUnit textUnit) {
-    TextContainer container = textUnit.getSource();
-    ISegments segments = container.getSegments();
-    for (Segment segment : segments) {
-      TextFragment fragment = segment.getContent();
-      this.inlineCodeFinder.process(fragment);
-    }
-  }
-
   @Override
   public Event next() {
     Event next = super.next();
 
     if (next.isTextUnit()) {
-      this.processWithCustomInlineCodeFinder(next.getTextUnit());
       setEmptyAndNbspAsNotTranslatable(next.getTextUnit());
       setTextUnitName(next.getTextUnit());
     } else if (next.isDocumentPart()) {
@@ -105,12 +95,24 @@ public class HtmlFilter extends net.sf.okapi.filters.html.HtmlFilter {
     return next;
   }
 
+  void processWithCustomInlineCodeFinder(TextContainer textContainer) {
+    ISegments segments = textContainer.getSegments();
+    for (Segment segment : segments) {
+      TextFragment fragment = segment.getContent();
+      this.inlineCodeFinder.process(fragment);
+      fragment.getCodes().forEach(code -> code.setDisplayText(code.getData()));
+    }
+  }
+
   void setEmptyAndNbspAsNotTranslatable(ITextUnit textUnit) {
     if (markEmptyAndNbspAsNotTranslatable) {
-      String source = textUnit.getSource().toString();
+      TextContainer sourceTextContainer = textUnit.getSource();
+      TextContainer textContainerClone = sourceTextContainer.clone();
+      this.processWithCustomInlineCodeFinder(textContainerClone);
+      String source = sourceTextContainer.toString();
       // whitespaces are collapsed by the filter so just checking for empty string & for the usage
       // of &nbsp;
-      if (source.isEmpty() || "\u00A0".equals(source) || !textUnit.getSource().hasText()) {
+      if (source.isEmpty() || "\u00A0".equals(source) || !textContainerClone.hasText()) {
         textUnit.setIsTranslatable(false);
       }
     }
