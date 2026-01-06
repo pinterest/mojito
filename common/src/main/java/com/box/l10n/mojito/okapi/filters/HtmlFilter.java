@@ -95,7 +95,7 @@ public class HtmlFilter extends net.sf.okapi.filters.html.HtmlFilter {
     return next;
   }
 
-  void processWithCustomInlineCodeFinder(TextContainer textContainer) {
+  private void processWithCustomInlineCodeFinder(TextContainer textContainer) {
     ISegments segments = textContainer.getSegments();
     for (Segment segment : segments) {
       TextFragment fragment = segment.getContent();
