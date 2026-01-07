@@ -6,10 +6,15 @@ import java.util.List;
 import net.sf.okapi.common.Event;
 import net.sf.okapi.common.MimeTypeMapper;
 import net.sf.okapi.common.filters.FilterConfiguration;
+import net.sf.okapi.common.filters.InlineCodeFinder;
 import net.sf.okapi.common.resource.DocumentPart;
+import net.sf.okapi.common.resource.ISegments;
 import net.sf.okapi.common.resource.ITextUnit;
 import net.sf.okapi.common.resource.Property;
 import net.sf.okapi.common.resource.RawDocument;
+import net.sf.okapi.common.resource.Segment;
+import net.sf.okapi.common.resource.TextContainer;
+import net.sf.okapi.common.resource.TextFragment;
 import net.sf.okapi.filters.html.Parameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +37,16 @@ public class HtmlFilter extends net.sf.okapi.filters.html.HtmlFilter {
   boolean processImageUrls;
 
   boolean markEmptyAndNbspAsNotTranslatable = true;
+
+  private final InlineCodeFinder inlineCodeFinder;
+
+  public HtmlFilter() {
+    super();
+    this.inlineCodeFinder = new InlineCodeFinder();
+    this.inlineCodeFinder.addRule("\\{\\{.*?\\}\\}"); // {{ variable }}
+    this.inlineCodeFinder.addRule("\\{%.*?%\\}"); // {% tag %}
+    this.inlineCodeFinder.compile();
+  }
 
   @Override
   public String getName() {
@@ -80,12 +95,24 @@ public class HtmlFilter extends net.sf.okapi.filters.html.HtmlFilter {
     return next;
   }
 
+  private void processWithCustomInlineCodeFinder(TextContainer textContainer) {
+    ISegments segments = textContainer.getSegments();
+    for (Segment segment : segments) {
+      TextFragment fragment = segment.getContent();
+      this.inlineCodeFinder.process(fragment);
+      fragment.getCodes().forEach(code -> code.setDisplayText(code.getData()));
+    }
+  }
+
   void setEmptyAndNbspAsNotTranslatable(ITextUnit textUnit) {
     if (markEmptyAndNbspAsNotTranslatable) {
-      String source = textUnit.getSource().toString();
+      TextContainer sourceTextContainer = textUnit.getSource();
+      TextContainer textContainerClone = sourceTextContainer.clone();
+      this.processWithCustomInlineCodeFinder(textContainerClone);
+      String source = sourceTextContainer.toString();
       // whitespaces are collapsed by the filter so just checking for empty string & for the usage
       // of &nbsp;
-      if (source.isEmpty() || "\u00A0".equals(source) || !textUnit.getSource().hasText()) {
+      if (source.isEmpty() || "\u00A0".equals(source) || !textContainerClone.hasText()) {
         textUnit.setIsTranslatable(false);
       }
     }
