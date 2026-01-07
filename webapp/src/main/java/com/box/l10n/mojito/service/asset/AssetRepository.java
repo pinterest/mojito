@@ -1,8 +1,10 @@
 package com.box.l10n.mojito.service.asset;
 
 import com.box.l10n.mojito.entity.Asset;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.EntityGraph.EntityGraphType;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -36,4 +38,8 @@ public interface AssetRepository
 
   @Query(value = "select a.id from Asset a where a.id IN ?1 and a.virtual = true")
   Set<Long> getVirtualAssetIds(@Param("assetId") Set<Long> assetIds);
+
+  @EntityGraph(value = "Asset.legacy", type = EntityGraphType.FETCH)
+  @Override
+  List<Asset> findAll(Specification<Asset> spec);
 }
