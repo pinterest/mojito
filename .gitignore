@@ -30,6 +30,10 @@ release.properties
 /restclient/target/
 /webapp/node
 /webapp/node_modules
+/webapp/src/main/frontend-v1/node
+/webapp/src/main/frontend-v1/node_modules
+/webapp/src/main/frontend-v2/node
+/webapp/src/main/frontend-v2/node_modules
 /webapp/src/main/resources/new/js/bundle.min.js
 /webapp/nbproject/
 /webapp/Demo/
