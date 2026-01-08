@@ -620,7 +620,7 @@
         </profile>
 
         <profile>
-            <id>frontend-ts</id>
+            <id>frontend-v2</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
@@ -659,7 +659,7 @@
                                 <goals>
                                     <goal>npm</goal>
                                 </goals>
-                                <phase>generate-resources</phase>
+                                <phase>compile</phase>
                                 <configuration>
                                     <arguments>--prefix ${new.frontend.directory} run build</arguments>
                                 </configuration>

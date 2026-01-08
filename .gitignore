@@ -33,6 +33,15 @@ release.properties
 /webapp/src/main/frontend-v2/node
 /webapp/src/main/frontend-v2/node_modules
 /webapp/src/main/resources/new/js/bundle.min.js
+# These are built files which are copied into the class path of the JAR.
+# Files should not be added here. Add them to the respective front-ends 
+# and they will be built and copied automatically.
+/webapp/src/main/resources/templates/index.html
+/webapp/src/main/resources/templates/frontend-v2/index.html
+/webapp/src/main/resources/static/assets/*.js
+/webapp/src/main/resources/static/assets/*.css
+/webapp/src/main/resources/static/assets/*
+/webapp/src/main/resources/public/*
 /webapp/nbproject/
 /webapp/Demo/
 /webapp/src/main/resources/static/assets/index*.css

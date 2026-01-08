@@ -8,17 +8,19 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+
 export default (env) => {
     env = env || {};
 
+    console.log();
     const isProdEnv = Boolean(env.production)
     const config = {
         entry: {
-            'ict-popup': path.resolve(__dirname, './src/main/resources/public/js/ict/chrome-ict-popup.jsx'),
-            'ict': path.resolve(__dirname, './src/main/resources/public/js/ict/chrome-ict.jsx')
+            'ict-popup': path.resolve(__dirname, './js/ict/chrome-ict-popup.jsx'),
+            'ict': path.resolve(__dirname, './js/ict/chrome-ict.jsx')
         },
         output: {
-            path: path.resolve(__dirname, '../chromeextension'),
+            path: path.resolve(__filename, '../../../../../chromeextension'),
             publicPath: '',
             filename: '[name]-bundle.js',
         },
@@ -79,7 +81,7 @@ export default (env) => {
                     exclude: /node_modules/,
                     use: [
                         {
-                            loader: path.resolve('src/main/webpackloader/properties.js')
+                            loader: path.resolve('./webpackloader/properties.js')
                         }
                     ],
                 },
