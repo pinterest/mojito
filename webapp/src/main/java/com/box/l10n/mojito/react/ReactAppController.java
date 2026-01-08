@@ -140,7 +140,7 @@ public class ReactAppController {
         getReactTemplateContext(httpServletRequest, localeCookieValue);
     HttpHeaders responseHeaders = new HttpHeaders();
     responseHeaders.setContentType(TEXT_HTML_UTF_8);
-    String body = mustacheTemplateEngine.render("webapp-ts/index.html", reactTemplateContext);
+    String body = mustacheTemplateEngine.render("frontend-v2/index.html", reactTemplateContext);
     return new ResponseEntity<>(body, responseHeaders, HttpStatus.OK);
   }
 

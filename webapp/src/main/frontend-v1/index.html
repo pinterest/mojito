@@ -1,2 +1,20 @@
-<!doctype html><html><head lang="{{locale}}"><title>Mojito</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/><script>APP_CONFIG = {{{appConfig}}};
-            CSRF_TOKEN = '{{csrfToken}}';</script><link rel="icon" href="/favicon.ico"><script defer="defer" src="/js/app-4267d7872102031e30af.js"></script><script defer="defer" src="/js/css-a0990249b83fa25891d3.js"></script></head><body>{{& analyticsHtmlInclude }}<div id="app"></div></body></html>
+<!DOCTYPE html>
+<html>
+    <head lang="{{locale}}">
+        <title>Mojito</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+        <script type="text/javascript">
+            APP_CONFIG = {{{appConfig}}};
+            CSRF_TOKEN = '{{csrfToken}}';
+        </script>
+        <%= htmlWebpackPlugin.tags.headTags %>
+    </head>
+
+    <body>
+        {{& analyticsHtmlInclude }}
+        <div id="app"></div>
+        <%= htmlWebpackPlugin.tags.bodyTags %>
+    </body>
+
+</html>

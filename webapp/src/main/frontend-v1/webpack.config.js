@@ -22,7 +22,7 @@ export default (env) => {
         },
         output: {
             // move generated files to where Spring expects them
-            path: path.resolve(__dirname, '../../../target/classes/public'),
+            path: path.resolve(__dirname, '../resources/public'),
             publicPath: '/',
             filename: 'js/[name]-[contenthash].js',
             chunkFilename: 'js/[name]-[chunkhash].js'
@@ -130,7 +130,7 @@ export default (env) => {
     };
 
     config.plugins.push(new HtmlWebpackPlugin({
-        filename: path.resolve(__dirname, '../../../target/classes/templates/index.html'),
+        filename: path.resolve(__dirname, '../resources/templates/index.html'),
         template: './index.html',
         favicon: './favicon.ico',
         inject: false

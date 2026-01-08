@@ -17,7 +17,8 @@
 
     <properties>
         <start-class>com.box.l10n.mojito.Application</start-class>
-        <frontend.directory>${project.build.directory}/../src/main/frontend-v1</frontend.directory>
+        <frontend.directory>${project.basedir}/src/main/frontend-v1</frontend.directory>
+        <new.frontend.directory>${project.basedir}/src/main/frontend-v2</new.frontend.directory>
         <frontend.maven.plugin.version>1.11.0</frontend.maven.plugin.version>
         <node.version>v20.18.0</node.version>
         <npm.version>8.2.0</npm.version>
@@ -631,7 +632,7 @@
                         <artifactId>frontend-maven-plugin</artifactId>
                         <version>${frontend.maven.plugin.version}</version>
                         <configuration>
-                            <workingDirectory>${project.basedir}/../webapp-ts</workingDirectory>
+                            <workingDirectory>${new.frontend.directory}</workingDirectory>
                         </configuration>
                         <executions>
                             <execution>
@@ -650,7 +651,7 @@
                                     <goal>npm</goal>
                                 </goals>
                                 <configuration>
-                                    <arguments>install</arguments>
+                                    <arguments> --prefix ${new.frontend.directory} install</arguments>
                                 </configuration>
                             </execution>
                             <execution>
@@ -660,46 +661,7 @@
                                 </goals>
                                 <phase>generate-resources</phase>
                                 <configuration>
-                                    <arguments>run build</arguments>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <!-- Copy dist output of webapp-ts into the webapp's resources to allow both front-ends to be accessible -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <version>3.1.0</version>
-                        <executions>
-                            <execution>
-                                <id>copy-webapp-ts-dist</id>
-                                <phase>process-resources</phase>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <configuration>
-                                    <target>
-                                        <!-- Clear old JS/CSS build relics -->
-                                        <delete>
-                                            <fileset dir="${project.basedir}/src/main/resources/static/assets" includes="**/*.js,**/*.css" erroronmissingdir="false"/>
-                                        </delete>
-                                        <delete file="${project.basedir}/src/main/resources/templates/webapp-ts" quiet="true"/>
-
-                                        <!-- Recreate directories if needed -->
-                                        <mkdir dir="${project.basedir}/src/main/resources/templates"/>
-                                        <mkdir dir="${project.basedir}/src/main/resources/static/assets"/>
-
-                                        <copy
-                                            file="${project.basedir}/../webapp-ts/dist/index.html"
-                                            tofile="${project.basedir}/src/main/resources/templates/webapp-ts/index.html"
-                                            overwrite="true"/>
-
-                                        <!-- Copy over built JS assets -->
-                                        <copy todir="${project.basedir}/src/main/resources/static/assets" overwrite="true">
-                                            <fileset dir="${project.basedir}/../webapp-ts/dist/assets"/>
-                                        </copy>
-                                    </target>
+                                    <arguments>--prefix ${new.frontend.directory} run build</arguments>
                                 </configuration>
                             </execution>
                         </executions>

@@ -28,8 +28,6 @@ release.properties
 /tmp/
 /test-common/target/
 /restclient/target/
-/webapp/node
-/webapp/node_modules
 /webapp/src/main/frontend-v1/node
 /webapp/src/main/frontend-v1/node_modules
 /webapp/src/main/frontend-v2/node
@@ -39,8 +37,4 @@ release.properties
 /webapp/Demo/
 /webapp/src/main/resources/static/assets/index*.css
 /webapp/src/main/resources/static/assets/index*.js
-/webapp/src/main/resources/templates/webapp-ts/index.html
 /webapp/target/
-/webapp-ts/node/**
-/webapp-ts/node_modules/**
-/webapp-ts/dist
