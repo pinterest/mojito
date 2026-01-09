@@ -169,6 +169,46 @@ class OpenAILLMServiceTest {
   }
 
   @Test
+  void executeAIChecks_fails_whenGetChatCompletionsThrowsException() {
+    AIPrompt prompt = new AIPrompt();
+    prompt.setId(1L);
+    prompt.setUserPrompt("Check strings for spelling");
+    prompt.setModelName("gtp-3.5-turbo");
+    prompt.setPromptTemperature(0.0F);
+    prompt.setContextMessages(new ArrayList<>());
+    List<AIPrompt> prompts = List.of(prompt);
+    AssetExtractorTextUnit assetExtractorTextUnit = new AssetExtractorTextUnit();
+    assetExtractorTextUnit.setSource("A tst string");
+    assetExtractorTextUnit.setName("A tst string --- A test context");
+    assetExtractorTextUnit.setComments("A test comment");
+    List<AssetExtractorTextUnit> textUnits = List.of(assetExtractorTextUnit);
+    AICheckRequest aiCheckRequest = new AICheckRequest();
+    aiCheckRequest.setRepositoryName("testRepo");
+    aiCheckRequest.setTextUnits(textUnits);
+    Repository repository = new Repository();
+    repository.setName("testRepo");
+    repository.setId(1L);
+    when(repositoryRepository.findByName("testRepo")).thenReturn(repository);
+    when(promptService.getPromptsByRepositoryAndPromptType(
+            repository, PromptType.SOURCE_STRING_CHECKER))
+        .thenReturn(prompts);
+
+    CompletableFuture<OpenAIClient.ChatCompletionsResponse> futureResponse =
+        CompletableFuture.supplyAsync(
+            () -> {
+              throw new RuntimeException("Something went wrong");
+            });
+    when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
+        .thenReturn(futureResponse);
+
+    AICheckResponse response = openAILLMService.executeAIChecks(aiCheckRequest);
+    assertNotNull(response);
+    assertEquals(0, response.getResults().size());
+    assertTrue(response.isError());
+    assertEquals("java.lang.RuntimeException: Something went wrong", response.getErrorMessage());
+  }
+
+  @Test
   void testJsonSerializationError() {
     AIPrompt prompt = new AIPrompt();
     prompt.setId(1L);

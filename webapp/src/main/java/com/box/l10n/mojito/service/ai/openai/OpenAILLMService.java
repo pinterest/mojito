@@ -131,7 +131,7 @@ public class OpenAILLMService implements LLMService {
                       checkResultFutureBySource.getKey(),
                       checkResultFutureBySource.getValue().get());
                 } catch (InterruptedException | ExecutionException e) {
-                  logger.error("Error while running a completable future", e);
+                  logger.error("OpenAI API request failed", e);
                 }
               }
               return allResultsList;
@@ -140,13 +140,17 @@ public class OpenAILLMService implements LLMService {
     Map<String, List<AICheckResult>> results = new HashMap<>();
     checkResults.thenAccept(results::putAll);
 
+    AICheckResponse aiCheckResponse = new AICheckResponse();
+
     try {
       checkResults.get();
     } catch (InterruptedException | ExecutionException e) {
-      logger.error("Error while running completable futures", e);
+      aiCheckResponse.setError(true);
+      aiCheckResponse.setErrorMessage(e.getMessage());
+      logger.error("OpenAI API requests failed", e);
+      this.meterRegistry.counter("OpenAILLMService.executeAIChecks.failedRequests").increment();
     }
 
-    AICheckResponse aiCheckResponse = new AICheckResponse();
     aiCheckResponse.setResults(results);
 
     return aiCheckResponse;
