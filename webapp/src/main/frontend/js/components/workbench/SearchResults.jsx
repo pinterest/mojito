@@ -26,7 +26,7 @@ import TextUnitSDK from "../../sdk/TextUnit";
 import AltContainer from "alt-container";
 import ViewModeStore from "../../stores/workbench/ViewModeStore";
 import ViewModeDropdown from "./ViewModeDropdown";
-import ViewModeActions from "../../actions/workbench/ViewModeActions.js";
+import ViewModeActions from "../../actions/workbench/ViewModeActions";
 import AuthorityService from "../../utils/AuthorityService";
 import DelayedSpinner from "../common/DelayedSpinner";
 import magnifyingGlassSvg from "../../../img/magnifying-glass.svg";

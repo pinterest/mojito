@@ -46,7 +46,7 @@ import pt from 'react-intl/locale-data/pt';
 import zh from 'react-intl/locale-data/zh';
 import BranchesPageActions from "./actions/branches/BranchesPageActions";
 import BranchesHistoryStore from "./stores/branches/BranchesHistoryStore";
-import enMessages from '../../properties/en.properties';
+import enMessages from '../../resources/properties/en.properties';
 import GoogleAnalytics from "./utils/GoogleAnalytics";
 import ShareSearchParamsModalActions from "./actions/workbench/ShareSearchParamsModalActions";
 import JobsPage from "./components/jobs/JobsPage";
@@ -59,7 +59,7 @@ const browserHistory = useRouterHistory(createHistory)({basename: APP_CONFIG.con
 
 import(
     /* webpackChunkName: "[request]", webpackMode: "lazy" */
-    `../../properties/${APP_CONFIG.locale}.properties`).then(({default: messages}) => {
+    `../../resources/properties/${APP_CONFIG.locale}.properties`).then(({default: messages}) => {
     startApp(getMergedMessages(messages));
 });
 

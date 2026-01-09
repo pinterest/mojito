@@ -78,7 +78,6 @@ public class ReactAppController {
   @Value("${server.contextPath:}")
   String contextPath = "";
 
-  // TODO(P1) For now, client routes must be copied in this controller
   @RequestMapping({
     "/",
     "/login",
@@ -97,7 +96,16 @@ public class ReactAppController {
       @CookieValue(value = "locale", required = false, defaultValue = "en")
           String localeCookieValue)
       throws MalformedURLException, IOException {
+    ReactTemplateContext reactTemplateContext =
+        getReactTemplateContext(httpServletRequest, localeCookieValue);
+    HttpHeaders responseHeaders = new HttpHeaders();
+    responseHeaders.setContentType(TEXT_HTML_UTF_8);
+    String body = mustacheTemplateEngine.render("index.html", reactTemplateContext);
+    return new ResponseEntity<>(body, responseHeaders, HttpStatus.OK);
+  }
 
+  private ReactTemplateContext getReactTemplateContext(
+      HttpServletRequest httpServletRequest, String localeCookieValue) {
     ReactTemplateContext index = new ReactTemplateContext();
 
     ReactAppConfig reactAppConfig = new ReactAppConfig(reactStaticAppConfig, getReactUser());
@@ -119,12 +127,7 @@ public class ReactAppController {
     // great
     index.csrfToken = reactAppConfig.csrfToken;
 
-    HttpHeaders responseHeaders = new HttpHeaders();
-    responseHeaders.setContentType(TEXT_HTML_UTF_8);
-
-    String body = mustacheTemplateEngine.render("index.html", index);
-
-    return new ResponseEntity<>(body, responseHeaders, HttpStatus.OK);
+    return index;
   }
 
   public static class ReactTemplateContext extends MustacheBaseContext {

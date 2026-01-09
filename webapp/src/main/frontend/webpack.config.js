@@ -1,28 +1,34 @@
 import path from 'path';
 import webpack from 'webpack';
-import TerserPlugin from 'terser-webpack-plugin';
+import TerserPluginImport from 'terser-webpack-plugin';
+const TerserPlugin = TerserPluginImport.default || TerserPluginImport;
+import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
-// Polyfill __dirname for ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export default (env) => {
     env = env || {};
-    
-    const isProdEnv = Boolean(env.production)
+
+    const isProdEnv = Boolean(env.production);
+    const inlineSourceMap = Boolean(env.inlineSourceMap);
+
     const config = {
         entry: {
-            'ict-popup': path.resolve(__dirname, './src/main/resources/public/js/ict/chrome-ict-popup.jsx'),
-            'ict': path.resolve(__dirname, './src/main/resources/public/js/ict/chrome-ict.jsx')
+            'app': path.resolve('./js/app.jsx'),
+            'css': path.resolve('./sass/mojito.scss')
         },
         output: {
-            path: path.resolve(__dirname, '../chromeextension'),
-            publicPath: '',
-            filename: '[name]-bundle.js',
+            // move generated files to where Spring expects them
+            path: path.resolve(__dirname, '../resources/public'),
+            publicPath: '/',
+            filename: 'js/[name]-[contenthash].js',
+            chunkFilename: 'js/[name]-[chunkhash].js'
         },
         mode: isProdEnv ? 'production' : 'development',
+        devtool: inlineSourceMap ? "inline-source-map" : false,
         module: {
             rules: [
                 {
@@ -79,7 +85,7 @@ export default (env) => {
                     exclude: /node_modules/,
                     use: [
                         {
-                            loader: path.resolve('src/main/webpackloader/properties.js')
+                            loader: path.resolve('./webpackloader/properties.js')
                         }
                     ],
                 },
@@ -113,26 +119,30 @@ export default (env) => {
             minimize: isProdEnv,
         },
         performance: {
-            maxEntrypointSize: 900_000, // 90KB
-            maxAssetSize: 900_000 // 90KB
+            hints: 'warning',
+            maxEntrypointSize: 1_800_000, // 1.8MB
+            maxAssetSize: 1_800_000 // 1.8MB
         },
         plugins: [],
         resolve: {
             extensions: ['.js', '.jsx']
         }
     };
-    
-    if (env.production) {
+
+    config.plugins.push(new HtmlWebpackPlugin({
+        filename: path.resolve(__dirname, '../resources/templates/index.html'),
+        template: './index.html',
+        favicon: './favicon.ico',
+        inject: false
+    }));
+
+    if (isProdEnv) {
         config.plugins.push(
                 new webpack.DefinePlugin({
                     'process.env': {
                         'NODE_ENV': JSON.stringify('production')
                     }
                 }));
-    }
-
-    if (env.inlineSourceMap) {
-        config.devtool = "inline-source-map";
     }
 
     return config;

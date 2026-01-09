@@ -1,33 +1,30 @@
 import path from 'path';
 import webpack from 'webpack';
-import TerserPluginImport from 'terser-webpack-plugin';
-const TerserPlugin = TerserPluginImport.default || TerserPluginImport;
-import HtmlWebpackPlugin from 'html-webpack-plugin';
+import TerserPlugin from 'terser-webpack-plugin';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
+// Polyfill __dirname for ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
 
 export default (env) => {
     env = env || {};
 
-    const isProdEnv = Boolean(env.production);
-    const inlineSourceMap = Boolean(env.inlineSourceMap);
-
+    console.log();
+    const isProdEnv = Boolean(env.production)
     const config = {
         entry: {
-            'app': path.resolve(__dirname, './src/main/resources/public/js/app.jsx'),
-            'css': path.resolve(__dirname, './src/main/resources/sass/mojito.scss')
+            'ict-popup': path.resolve(__dirname, './js/ict/chrome-ict-popup.jsx'),
+            'ict': path.resolve(__dirname, './js/ict/chrome-ict.jsx')
         },
         output: {
-            path: path.resolve(__dirname, './target/classes/public'),
-            publicPath: '/',
-            filename: 'js/[name]-[contenthash].js',
-            chunkFilename: 'js/[name]-[chunkhash].js'
+            path: path.resolve(__filename, '../../../../../chromeextension'),
+            publicPath: '',
+            filename: '[name]-bundle.js',
         },
         mode: isProdEnv ? 'production' : 'development',
-        devtool: inlineSourceMap ? "inline-source-map" : false,
         module: {
             rules: [
                 {
@@ -84,7 +81,7 @@ export default (env) => {
                     exclude: /node_modules/,
                     use: [
                         {
-                            loader: path.resolve('src/main/webpackloader/properties.js')
+                            loader: path.resolve('./webpackloader/properties.js')
                         }
                     ],
                 },
@@ -118,30 +115,26 @@ export default (env) => {
             minimize: isProdEnv,
         },
         performance: {
-            hints: 'warning',
-            maxEntrypointSize: 1_800_000, // 1.8MB
-            maxAssetSize: 1_800_000 // 1.8MB
+            maxEntrypointSize: 900_000, // 90KB
+            maxAssetSize: 900_000 // 90KB
         },
         plugins: [],
         resolve: {
             extensions: ['.js', '.jsx']
         }
     };
-    
-    config.plugins.push(new HtmlWebpackPlugin({
-        filename: path.resolve(__dirname, './target/classes/templates/index.html'),
-        template: 'src/main/resources/templates/index.html',
-        favicon: 'src/main/resources/favicon.ico',
-        inject: false
-    }));
 
-    if (isProdEnv) {
+    if (env.production) {
         config.plugins.push(
                 new webpack.DefinePlugin({
                     'process.env': {
                         'NODE_ENV': JSON.stringify('production')
                     }
                 }));
+    }
+
+    if (env.inlineSourceMap) {
+        config.devtool = "inline-source-map";
     }
 
     return config;

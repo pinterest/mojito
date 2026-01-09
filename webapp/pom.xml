@@ -17,6 +17,7 @@
 
     <properties>
         <start-class>com.box.l10n.mojito.Application</start-class>
+        <frontend.directory>${project.basedir}/src/main/frontend</frontend.directory>
         <frontend.maven.plugin.version>1.11.0</frontend.maven.plugin.version>
         <node.version>v20.18.0</node.version>
         <npm.version>8.2.0</npm.version>
@@ -572,6 +573,10 @@
                         <groupId>com.github.eirslett</groupId>
                         <artifactId>frontend-maven-plugin</artifactId>
                         <version>${frontend.maven.plugin.version}</version>
+                        <configuration>
+                            <workingDirectory>${frontend.directory}</workingDirectory>
+                        </configuration>
+
                         <executions>
                             <execution>
                                 <id>install node and npm</id>
@@ -589,7 +594,7 @@
                                     <goal>npm</goal>
                                 </goals>
                                 <configuration>
-                                    <arguments>install</arguments>
+                                    <arguments>--prefix ${frontend.directory} install</arguments>
                                 </configuration>
                             </execution>
                             <execution>
@@ -599,7 +604,7 @@
                                 </goals>
                                 <phase>compile</phase>
                                 <configuration>
-                                    <arguments>run build</arguments>
+                                    <arguments>--prefix ${frontend.directory} run build</arguments>
                                 </configuration>
                             </execution>
                         </executions>

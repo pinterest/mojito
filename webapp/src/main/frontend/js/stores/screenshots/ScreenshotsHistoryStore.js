@@ -5,8 +5,8 @@ import ScreenshotsPageActions from "../../actions/screenshots/ScreenshotsPageAct
 import ScreenshotsHistoryActions from "../../actions/screenshots/ScreenshotsHistoryActions.js";
 import ScreenshotsSearchTextActions from "../../actions/screenshots/ScreenshotsSearchTextActions.js";
 import ScreenshotsPaginatorActions from "../../actions/screenshots/ScreenshotsPaginatorActions.js";
-import ScreenshotsPaginatorStore from "../../stores/screenshots/ScreenshotsPaginatorStore.js";
-import ScreenshotsSearchTextStore from "../../stores/screenshots/ScreenshotsSearchTextStore.js";
+import ScreenshotsPaginatorStore from "./ScreenshotsPaginatorStore.js";
+import ScreenshotsSearchTextStore from "./ScreenshotsSearchTextStore.js";
 import SearchParamsStore from "../workbench/SearchParamsStore.js";
 import { StatusCommonTypes } from "../../components/screenshots/StatusCommon.jsx";
 

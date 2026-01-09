@@ -2,7 +2,7 @@ import alt from "../../alt.js";
 import ScreenshotsReviewModalActions from "../../actions/screenshots/ScreenshotsReviewModalActions.js";
 import ScreenshotsPageActions from "../../actions/screenshots/ScreenshotsPageActions.js";
 import ScreenshotDataSource from "../../actions/screenshots/ScreenshotDataSource.js";
-import ScreenshotsPageStore from "../../stores/screenshots/ScreenshotsPageStore.js";
+import ScreenshotsPageStore from "./ScreenshotsPageStore.js";
 import { StatusCommonTypes } from "../../components/screenshots/StatusCommon.jsx";
 
 class ScreenshotsReviewModalStore {
