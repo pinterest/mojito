@@ -1,4 +1,4 @@
-import ScreenshotsPageActions from "../screenshots/ScreenshotsPageActions.js";
+import ScreenshotsPageActions from "./ScreenshotsPageActions.js";
 import ScreenshotsRepositoryStore from "../../stores/screenshots/ScreenshotsRepositoryStore.js";
 import ScreenshotsLocaleStore from "../../stores/screenshots/ScreenshotsLocaleStore.js";
 import ScreenshotsSearchTextStore from "../../stores/screenshots/ScreenshotsSearchTextStore.js";

@@ -1,7 +1,7 @@
 import alt from "../../alt.js";
 import ScreenshotsSearchTextActions from "../../actions/screenshots/ScreenshotsSearchTextActions.js";
 import ScreenshotsPageActions from "../../actions/screenshots/ScreenshotsPageActions.js";
-import SearchParamsStore from "../../stores/workbench/SearchParamsStore.js";
+import SearchParamsStore from "../workbench/SearchParamsStore.js";
 import { StatusCommonTypes } from "../../components/screenshots/StatusCommon.jsx";
 
 class ScreenshotsSearchTextStore {
