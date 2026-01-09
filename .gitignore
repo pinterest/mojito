@@ -28,6 +28,8 @@ release.properties
 /tmp/
 /test-common/target/
 /restclient/target/
+/webapp/node
+/webapp/node_modules
 /webapp/src/main/frontend/node
 /webapp/src/main/frontend/node_modules
 /webapp/src/main/resources/new/js/bundle.min.js
