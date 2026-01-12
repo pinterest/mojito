@@ -1,6 +1,6 @@
 import alt from "../../alt.js";
 import BranchesDataSource from "../../actions/branches/BranchesHistoryActions.js";
-import BranchesPaginatorStore from "../../stores/branches/BranchesPaginatorStore.js";
+import BranchesPaginatorStore from "./BranchesPaginatorStore.js";
 import BranchesPageActions from "../../actions/branches/BranchesPageActions.js";
 import BranchesPaginatorActions from "../../actions/branches/BranchesPaginatorActions.js";
 import BranchesSearchParamsActions from "../../actions/branches/BranchesSearchParamsActions.js";

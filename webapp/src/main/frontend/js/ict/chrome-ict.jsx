@@ -1,7 +1,7 @@
 import Ict from "./Ict";
-import "../../../sass/ict.scss";
+import "../../sass/ict.scss";
 
-var enMessages = require(`../../../properties/en.properties`);
+import enMessages from '../../../resources/properties/en.properties';
 var ict = new Ict(enMessages, 'en');
 
 var config = {

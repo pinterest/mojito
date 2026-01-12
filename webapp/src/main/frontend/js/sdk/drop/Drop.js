@@ -1,5 +1,5 @@
 import User from "../entity/User.js";
-import DropExporterConfig from "../drop/DropExporterConfig.js";
+import DropExporterConfig from "./DropExporterConfig.js";
 import PollableTask from "../entity/PollableTask.js";
 import Repository from "../entity/Repository.js";
 import TranslationKit from "../entity/TranslationKit.js";
