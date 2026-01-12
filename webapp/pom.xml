@@ -602,7 +602,7 @@
                                 <goals>
                                     <goal>npm</goal>
                                 </goals>
-                                <phase>compile</phase>
+                                <phase>generate-resources</phase>
                                 <configuration>
                                     <arguments>--prefix ${frontend.directory} run build</arguments>
                                 </configuration>
