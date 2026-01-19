@@ -10,8 +10,6 @@ import com.box.l10n.mojito.security.Role;
 import com.box.l10n.mojito.service.security.user.AuthorityRepository;
 import com.box.l10n.mojito.service.security.user.UserService;
 import jakarta.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.util.IllformedLocaleException;
 import java.util.Locale;
@@ -78,6 +76,9 @@ public class ReactAppController {
   @Value("${server.contextPath:}")
   String contextPath = "";
 
+  @Value("${l10n.webapp.v2.enabled:true}")
+  private boolean isV2Enabled;
+
   @RequestMapping({
     "/",
     "/login",
@@ -94,13 +95,31 @@ public class ReactAppController {
   ResponseEntity<String> getIndex(
       HttpServletRequest httpServletRequest,
       @CookieValue(value = "locale", required = false, defaultValue = "en")
-          String localeCookieValue)
-      throws MalformedURLException, IOException {
+          String localeCookieValue) {
     ReactTemplateContext reactTemplateContext =
         getReactTemplateContext(httpServletRequest, localeCookieValue);
     HttpHeaders responseHeaders = new HttpHeaders();
     responseHeaders.setContentType(TEXT_HTML_UTF_8);
     String body = mustacheTemplateEngine.render("index.html", reactTemplateContext);
+    return new ResponseEntity<>(body, responseHeaders, HttpStatus.OK);
+  }
+
+  @RequestMapping({
+    "/v2", "/v2/*",
+  })
+  ResponseEntity<String> getIndexV2(
+      HttpServletRequest httpServletRequest,
+      @CookieValue(value = "locale", required = false, defaultValue = "en")
+          String localeCookieValue) {
+    if (!isV2Enabled) {
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    ReactTemplateContext reactTemplateContext =
+        getReactTemplateContext(httpServletRequest, localeCookieValue);
+    HttpHeaders responseHeaders = new HttpHeaders();
+    responseHeaders.setContentType(TEXT_HTML_UTF_8);
+    String body = mustacheTemplateEngine.render("frontend-v2/index.html", reactTemplateContext);
     return new ResponseEntity<>(body, responseHeaders, HttpStatus.OK);
   }
 

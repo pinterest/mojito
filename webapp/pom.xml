@@ -18,9 +18,13 @@
     <properties>
         <start-class>com.box.l10n.mojito.Application</start-class>
         <frontend.directory>${project.basedir}/src/main/frontend</frontend.directory>
-        <frontend.maven.plugin.version>1.11.0</frontend.maven.plugin.version>
+        <frontend.v2.directory>${project.basedir}/src/main/frontend-v2</frontend.v2.directory>
+        <frontend.maven.plugin.version>2.0.0</frontend.maven.plugin.version>
         <node.version>v20.18.0</node.version>
         <npm.version>8.2.0</npm.version>
+
+        <node.version.v2>v22.21.1</node.version.v2>
+        <pnpm.version.v2>10.28.0</pnpm.version.v2>
         <springdoc.version>2.6.0</springdoc.version>
         <micrometer.registry.atlas.version>1.11.0</micrometer.registry.atlas.version>
         <software.amazon.awssdk.version>2.20.40</software.amazon.awssdk.version>
@@ -605,6 +609,58 @@
                                 <phase>generate-resources</phase>
                                 <configuration>
                                     <arguments>--prefix ${frontend.directory} run build</arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>frontend-v2</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.eirslett</groupId>
+                        <artifactId>frontend-maven-plugin</artifactId>
+                        <version>${frontend.maven.plugin.version}</version>
+                        <configuration>
+                            <workingDirectory>${frontend.v2.directory}</workingDirectory>
+                        </configuration>
+
+                        <executions>
+                            <execution>
+                                <id>install node and pnpm</id>
+                                <goals>
+                                    <goal>install-node-and-pnpm</goal>
+                                </goals>
+                                <configuration>
+                                    <nodeVersion>${node.version.v2}</nodeVersion>
+                                    <pnpmVersion>${pnpm.version.v2}</pnpmVersion>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>pnpm install</id>
+                                <goals>
+                                    <goal>pnpm</goal>
+                                </goals>
+                                <configuration>
+                                    <arguments>--prefix ${frontend.v2.directory} install</arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>pnpm build</id>
+                                <goals>
+                                    <goal>pnpm</goal>
+                                </goals>
+                                <phase>generate-resources</phase>
+                                <configuration>
+                                    <arguments>--prefix ${frontend.v2.directory} run build</arguments>
                                 </configuration>
                             </execution>
                         </executions>

@@ -32,7 +32,14 @@ release.properties
 /webapp/node_modules
 /webapp/src/main/frontend/node
 /webapp/src/main/frontend/node_modules
+/webapp/src/main/frontend-v2/node
+/webapp/src/main/frontend-v2/dist
+/webapp/src/main/frontend-v2/node_modules
+/webapp/src/main/frontend-v2/.pnpm-debug.log
 /webapp/src/main/resources/new/js/bundle.min.js
+/webapp/src/main/resources/templates/frontend-v2/
+/webapp/src/main/resources/static/assets/
+/webapp/src/main/resources/static/
 # These are built files which are copied into the class path of the JAR.
 # Files should not be added here. Add them to the respective front-ends 
 # and they will be built and copied automatically.
