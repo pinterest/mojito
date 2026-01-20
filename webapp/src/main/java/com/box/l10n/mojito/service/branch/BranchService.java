@@ -139,4 +139,8 @@ public class BranchService {
           "Failed to save branch source for branch '{}' with url '{}'", branch.getName(), url, e);
     }
   }
+
+  public BranchTextUnitStatusDTO getBranchTextUnitStatuses(Long branchId) {
+    return new BranchTextUnitStatusDTO(branchRepository.findBranchWithTextUnitStatuses(branchId));
+  }
 }

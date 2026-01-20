@@ -610,6 +610,26 @@ paths:
           description: OK
       tags:
       - box-sdk-service-config-ws
+  /api/branch/textUnitStatus:
+    get:
+      operationId: getTextUnitStatus
+      parameters:
+      - in: query
+        name: branchId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: "#/components/schemas/BranchTextUnitStatusDTO"
+          description: OK
+      summary: Get Branch TextUnit translation status
+      tags:
+      - branch-ws
   /api/branchStatistics:
     get:
       operationId: getBranchesOfRepository_1
@@ -3253,6 +3273,19 @@ components:
         totalCount:
           type: integer
           format: int64
+    BranchTextUnitStatusDTO:
+      type: object
+      properties:
+        branchName:
+          type: string
+        localeTextUnitStatus:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: "#/components/schemas/TextUnitStatusDTO"
+        repositoryName:
+          type: string
     Branch_BranchStatistic:
       type: object
       properties:
@@ -5474,6 +5507,37 @@ components:
           enum:
           - USED
           - UNUSED
+    TextUnitStatusDTO:
+      type: object
+      properties:
+        comment:
+          type: string
+        content:
+          type: string
+        currentVariantId:
+          type: integer
+          format: int64
+        modifiedDate:
+          type: integer
+          format: int64
+          example: 1715699917000
+        status:
+          type: string
+          enum:
+          - TRANSLATION_NEEDED
+          - REVIEW_NEEDED
+          - MT_TRANSLATED
+          - MT_REVIEW_NEEDED
+          - APPROVED
+          - OVERRIDDEN
+          - INTEGRITY_FAILURE
+          - MANUALLY_REJECTED
+        textUnitId:
+          type: integer
+          format: int64
+        variantId:
+          type: integer
+          format: int64
     TextUnitVariantDeltaDTO:
       type: object
       properties:
