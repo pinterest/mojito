@@ -59,7 +59,7 @@ class SarifFileGeneratorTest {
     // Arrange
     SarifFileGenerator generator =
         new SarifFileGenerator(
-            "infoUri", new String[] {}, gitInfo, Mockito.mock(MeterRegistry.class));
+            "infoUri", new String[] {}, 1, gitInfo, Mockito.mock(MeterRegistry.class));
 
     AssetExtractorTextUnit textUnitWithUsage =
         createAssetExtractorTextUnit("source1", Set.of("file1.java:10", "file2.java:20"));
@@ -144,7 +144,7 @@ class SarifFileGeneratorTest {
   void generateSarifFile_warningLevel() {
     SarifFileGenerator generator =
         new SarifFileGenerator(
-            "infoUri", new String[] {}, gitInfo, Mockito.mock(MeterRegistry.class));
+            "infoUri", new String[] {}, 1, gitInfo, Mockito.mock(MeterRegistry.class));
     AssetExtractorTextUnit textUnit =
         createAssetExtractorTextUnit("sourceX", Set.of("fileX.java:42"));
     AssetExtractionDiff diff = new AssetExtractionDiff();
@@ -177,7 +177,7 @@ class SarifFileGeneratorTest {
     // Arrange
     SarifFileGenerator generator =
         new SarifFileGenerator(
-            "infoUri", new String[] {}, gitInfo, Mockito.mock(MeterRegistry.class));
+            "infoUri", new String[] {}, 1, gitInfo, Mockito.mock(MeterRegistry.class));
 
     AssetExtractorTextUnit textUnitWithUsage =
         createAssetExtractorTextUnit(
@@ -232,7 +232,7 @@ class SarifFileGeneratorTest {
     // Arrange
     SarifFileGenerator generator =
         new SarifFileGenerator(
-            "infoUri", new String[] {}, gitInfo, Mockito.mock(MeterRegistry.class));
+            "infoUri", new String[] {}, 1, gitInfo, Mockito.mock(MeterRegistry.class));
 
     var passedChecks =
         Set.of(
@@ -265,7 +265,7 @@ class SarifFileGeneratorTest {
   void getUsageLocations_handlesInvalidLineNumber() {
     SarifFileGenerator generator =
         new SarifFileGenerator(
-            "infoUri", new String[] {}, gitInfo, Mockito.mock(MeterRegistry.class));
+            "infoUri", new String[] {}, 1, gitInfo, Mockito.mock(MeterRegistry.class));
     List<Location> usageLocations =
         generator.getUsageLocations(
             createAssetExtractorTextUnit(
@@ -299,7 +299,7 @@ class SarifFileGeneratorTest {
         .thenReturn(counterMock);
 
     SarifFileGenerator generator =
-        new SarifFileGenerator("infoUri", new String[] {}, gitInfo, meterRegistryMock);
+        new SarifFileGenerator("infoUri", new String[] {}, 1, gitInfo, meterRegistryMock);
 
     List<Location> usageLocations =
         new ArrayList<>(
@@ -318,8 +318,7 @@ class SarifFileGeneratorTest {
                 "",
                 true));
 
-    Collections.sort(
-        usageLocations,
+    usageLocations.sort(
         Comparator.comparing(loc -> loc.getPhysicalLocation().getArtifactLocation().getUri()));
 
     assertThat(usageLocations).hasSize(2);
@@ -334,13 +333,67 @@ class SarifFileGeneratorTest {
   }
 
   @Test
+  void getUsageLocations_decreasesOrIncreasesLineNumber_WhenLineNumberIsNotFound() {
+    MeterRegistry meterRegistryMock = Mockito.mock(MeterRegistry.class);
+    Counter counterMock = Mockito.mock(Counter.class);
+    when(meterRegistryMock.counter(Mockito.anyString(), Mockito.anyString(), Mockito.anyString()))
+        .thenReturn(counterMock);
+
+    SarifFileGenerator generator =
+        new SarifFileGenerator("infoUri", new String[] {}, 1, gitInfo, meterRegistryMock);
+
+    List<Location> usageLocations =
+        new ArrayList<>(
+            generator.getUsageLocations(
+                createAssetExtractorTextUnit("badSource", Set.of("goodfile.py:11")),
+                new String[] {"py"},
+                Map.of("goodfile.py", Set.of(12, 13, 14)),
+                "repoName",
+                "",
+                true));
+
+    assertThat(usageLocations.getFirst().getPhysicalLocation().getArtifactLocation().getUri())
+        .isEqualTo("goodfile.py");
+    assertThat(usageLocations.getFirst().getPhysicalLocation().getRegion().getStartLine())
+        .isEqualTo(12);
+  }
+
+  @Test
+  void
+      getUsageLocations_decreasesOrIncreasesLineNumberWithinErrorAllowance_WhenLineNumberIsNotFound() {
+
+    MeterRegistry meterRegistryMock = Mockito.mock(MeterRegistry.class);
+    Counter counterMock = Mockito.mock(Counter.class);
+    when(meterRegistryMock.counter(Mockito.anyString(), Mockito.anyString(), Mockito.anyString()))
+        .thenReturn(counterMock);
+
+    SarifFileGenerator generator =
+        new SarifFileGenerator("infoUri", new String[] {}, 3, gitInfo, meterRegistryMock);
+
+    List<Location> usageLocations =
+        new ArrayList<>(
+            generator.getUsageLocations(
+                createAssetExtractorTextUnit("badSource", Set.of("goodfile.py:11")),
+                new String[] {"py"},
+                Map.of("goodfile.py", Set.of(14, 15, 16)),
+                "repoName",
+                "",
+                true));
+
+    assertThat(usageLocations.getFirst().getPhysicalLocation().getArtifactLocation().getUri())
+        .isEqualTo("goodfile.py");
+    assertThat(usageLocations.getFirst().getPhysicalLocation().getRegion().getStartLine())
+        .isEqualTo(14);
+  }
+
+  @Test
   void getUsageLocations_doesNotDecreaseLineNumber_whenNonCommentCheck() {
     MeterRegistry meterRegistryMock = Mockito.mock(MeterRegistry.class);
     Counter counterMock = Mockito.mock(Counter.class);
     when(meterRegistryMock.counter(Mockito.anyString(), Mockito.anyString(), Mockito.anyString()))
         .thenReturn(counterMock);
     SarifFileGenerator generator =
-        new SarifFileGenerator("infoUri", new String[] {}, gitInfo, meterRegistryMock);
+        new SarifFileGenerator("infoUri", new String[] {}, 1, gitInfo, meterRegistryMock);
     List<Location> usageLocations =
         new ArrayList<>(
             generator.getUsageLocations(
@@ -358,8 +411,7 @@ class SarifFileGeneratorTest {
                 "",
                 false));
 
-    Collections.sort(
-        usageLocations,
+    usageLocations.sort(
         Comparator.comparing(loc -> loc.getPhysicalLocation().getArtifactLocation().getUri()));
 
     assertThat(usageLocations).hasSize(2);
@@ -377,7 +429,7 @@ class SarifFileGeneratorTest {
   void getUsageLocations_doesNotDecreaseLineNumber_whenNoFileTypeIsFound() {
     SarifFileGenerator generator =
         new SarifFileGenerator(
-            "infoUri", new String[] {}, gitInfo, Mockito.mock(MeterRegistry.class));
+            "infoUri", new String[] {}, 1, gitInfo, Mockito.mock(MeterRegistry.class));
     List<Location> usageLocations =
         generator.getUsageLocations(
             createAssetExtractorTextUnit("badSource", Set.of("filepy:5")),
@@ -398,7 +450,7 @@ class SarifFileGeneratorTest {
   void getUsageLocations_removesFilePrefixes_whenPrefixMatchesFiles() {
     SarifFileGenerator generator =
         new SarifFileGenerator(
-            "infoUri", new String[] {}, gitInfo, Mockito.mock(MeterRegistry.class));
+            "infoUri", new String[] {}, 1, gitInfo, Mockito.mock(MeterRegistry.class));
     List<Location> usageLocations =
         generator.getUsageLocations(
             createAssetExtractorTextUnit(

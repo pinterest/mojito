@@ -40,18 +40,23 @@ public class SarifFileGenerator {
   // This is useful for adjusting the line number for comment related checks
   private final String[] extractedCommentFileExtensions;
 
+  private final int lineNumberErrorAllowance;
+
   @Autowired
   SarifFileGenerator(
       @Value("${l10n.extraction-check.sarif.infoUri:}") String infoUri,
       @Value(
               "#{'${l10n.extraction-check.sarif.extracted-comments.fileExtensions:py,xml}'.split(',')}")
           String[] extractedCommentFileExtensions,
+      @Value("${l10n.extraction-check.sarif.lineNumberErrorAllowance:2}")
+          int lineNumberErrorAllowance,
       GitInfo gitInfo,
       MeterRegistry meterRegistry) {
     this.infoUri = infoUri;
     this.gitInfo = gitInfo;
     this.extractedCommentFileExtensions = extractedCommentFileExtensions;
     this.meterRegistry = meterRegistry;
+    this.lineNumberErrorAllowance = lineNumberErrorAllowance;
   }
 
   public Sarif generateSarifFile(
@@ -212,13 +217,17 @@ public class SarifFileGenerator {
       return new Location(fileUri, startLineNumber);
     }
 
-    Integer lineNumber = startLineNumber - 1;
-    if (modifiedLines.contains(lineNumber)) {
-      return new Location(fileUri, lineNumber);
-    } else {
-      lineNumber = startLineNumber + 1;
+    // Find the first line which exists in the modified lines any range of line numbers
+    // up to a max (inclusive) of the lineNumberErrorAllowance
+    for (int i = 1; i < this.lineNumberErrorAllowance + 1; i++) {
+      Integer lineNumber = startLineNumber - i;
       if (modifiedLines.contains(lineNumber)) {
         return new Location(fileUri, lineNumber);
+      } else {
+        lineNumber = startLineNumber + i;
+        if (modifiedLines.contains(lineNumber)) {
+          return new Location(fileUri, lineNumber);
+        }
       }
     }
 
