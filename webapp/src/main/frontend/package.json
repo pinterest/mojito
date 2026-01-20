@@ -98,7 +98,7 @@
     "mojito-drop-export": "java -jar ../cli/target/mojito-cli-*.jar drop-export -r Mojito",
     "mojito-drop-import": "java -jar ../cli/target/mojito-cli-*.jar drop-import -r Mojito",
     "create-demo-data": "java -jar ../cli/target/mojito-cli-*-exec.jar demo-create -n Demo",
-    "preinstall": "node/node_modules/npm/bin/npx-cli.js npm-force-resolutions",
+    "preinstall": "npx npm-force-resolutions",
     "test": "jest --testPathIgnorePatterns=/node/"
   },
   "resolutions": {
