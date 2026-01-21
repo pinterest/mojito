@@ -15,6 +15,7 @@ import com.box.l10n.mojito.service.tm.BranchSourceRepository;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.text.MessageFormat;
+import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang.text.StrSubstitutor;
 import org.slf4j.Logger;
@@ -140,7 +141,15 @@ public class BranchService {
     }
   }
 
-  public BranchTextUnitStatusDTO getBranchTextUnitStatuses(Long branchId) {
-    return new BranchTextUnitStatusDTO(branchRepository.findBranchWithTextUnitStatuses(branchId));
+  public BranchTextUnitStatusDTO getBranchTextUnitStatuses(String branchName, String repoName)
+      throws BranchNotFoundException {
+    List<BranchTextUnitStatusDataModel> branchWithTextUnitStatuses =
+        branchRepository.findBranchWithTextUnitStatuses(branchName, repoName);
+    if (branchWithTextUnitStatuses == null || branchWithTextUnitStatuses.isEmpty()) {
+      throw new BranchNotFoundException("Branch could not be found with provided parameters");
+    }
+
+    return new BranchTextUnitStatusDTO(
+        branchRepository.findBranchWithTextUnitStatuses(branchName, repoName));
   }
 }

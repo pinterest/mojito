@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 public class BranchTextUnitStatusDTO {
 
+  private final Long branchId;
   private final String repositoryName;
   private final String branchName;
 
@@ -19,9 +20,11 @@ public class BranchTextUnitStatusDTO {
 
     this.branchName = branchTextUnitStatusDataModels.getFirst().getBranchName();
     this.repositoryName = branchTextUnitStatusDataModels.getFirst().getRepositoryName();
+    this.branchId = branchTextUnitStatusDataModels.getFirst().getBranchId();
 
     this.localeTextUnitStatus =
         branchTextUnitStatusDataModels.stream()
+            .filter(tu -> tu.getBcp47Tag() != null)
             .collect(
                 Collectors.groupingBy(
                     BranchTextUnitStatusDataModel::getBcp47Tag,
@@ -44,6 +47,10 @@ public class BranchTextUnitStatusDTO {
 
   public String getBranchName() {
     return branchName;
+  }
+
+  public Long getBranchId() {
+    return branchId;
   }
 
   public Map<String, List<TextUnitStatusDTO>> getLocaleTextUnitStatus() {

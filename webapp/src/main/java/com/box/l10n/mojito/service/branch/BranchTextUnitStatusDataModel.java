@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 
 public class BranchTextUnitStatusDataModel {
 
+  public Long branchId;
   private String bcp47Tag;
   private String tuContent;
   private String tuComment;
@@ -21,6 +22,7 @@ public class BranchTextUnitStatusDataModel {
   public BranchTextUnitStatusDataModel() {}
 
   public BranchTextUnitStatusDataModel(
+      Long branchId,
       String bcp47Tag,
       String tuContent,
       String tuComment,
@@ -33,6 +35,7 @@ public class BranchTextUnitStatusDataModel {
       Long variantId,
       Long currentVariantId,
       ZonedDateTime createdDate) {
+    this.branchId = branchId;
     this.bcp47Tag = bcp47Tag;
     this.tuContent = tuContent;
     this.tuComment = tuComment;
@@ -45,6 +48,10 @@ public class BranchTextUnitStatusDataModel {
     this.variantId = variantId;
     this.currentVariantId = currentVariantId;
     this.createdDate = createdDate;
+  }
+
+  public Long getBranchId() {
+    return branchId;
   }
 
   public String getBcp47Tag() {

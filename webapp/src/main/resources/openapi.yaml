@@ -615,11 +615,15 @@ paths:
       operationId: getTextUnitStatus
       parameters:
       - in: query
-        name: branchId
+        name: branchName
         required: true
         schema:
-          type: integer
-          format: int64
+          type: string
+      - in: query
+        name: repositoryName
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -627,7 +631,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/BranchTextUnitStatusDTO"
           description: OK
-      summary: Get Branch TextUnit translation status
+      summary: Get a Branch's TextUnit statuses
       tags:
       - branch-ws
   /api/branchStatistics:
@@ -3276,6 +3280,9 @@ components:
     BranchTextUnitStatusDTO:
       type: object
       properties:
+        branchId:
+          type: integer
+          format: int64
         branchName:
           type: string
         localeTextUnitStatus:

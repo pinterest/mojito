@@ -52,6 +52,7 @@ public interface BranchRepository
   @Query(
       """
       SELECT new com.box.l10n.mojito.service.branch.BranchTextUnitStatusDataModel(
+        b.id,
         l.bcp47Tag,
         tu.content,
         tu.comment,
@@ -75,9 +76,9 @@ public interface BranchRepository
       LEFT JOIN TMTextUnitCurrentVariant tucv ON tucv.tmTextUnit = tu AND tucv.locale = l
       LEFT JOIN tucv.tm tm
       LEFT JOIN tucv.tmTextUnitVariant ttuv
-      WHERE b.id = :branchId
+      WHERE b.name = :branchName AND r.name = :repoName
       ORDER BY tu.content ASC, l.bcp47Tag ASC
       """)
   List<BranchTextUnitStatusDataModel> findBranchWithTextUnitStatuses(
-      @Param("branchId") Long branchId);
+      @Param("branchName") String branchName, @Param("repoName") String repoName);
 }
