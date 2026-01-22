@@ -6,7 +6,7 @@ interface GoogleAnalytics {
     trackingId: string | null;
 }
 
-interface RepositorySummary {
+interface RepositoryLinkDetail {
     location: string | null;
     commit: string | null;
     thirdParty: {
@@ -27,7 +27,7 @@ export interface AppConfig {
     user: User;
     userMenuLogoutHidden: boolean;
     link: {
-        [repoName: string]: RepositorySummary;
+        [repoName: string]: RepositoryLinkDetail;
     };
     repositoryStatistics: {
         computeOutOfSla: boolean;
