@@ -28,7 +28,7 @@ const BranchPage: React.FC = () => {
     });
 
     const branchStatsQuery = useQuery<Page<BranchStatistics>>({
-        queryKey: ["branchStatistics", { createdByUserName }],
+        queryKey: ["branchStatistics", { createdByUserName, branchName }],
         queryFn: () =>
             getBranchStatistics({
                 createdByUserName,
@@ -52,6 +52,10 @@ const BranchPage: React.FC = () => {
         !branch ||
         !branchTextUnitStatus.data
     ) {
+        console.log({
+            branchStatsError: branchStatsQuery.error,
+            branchTextUnitStatusError: branchTextUnitStatus.error,
+        });
         return (
             <Result
                 status="500"

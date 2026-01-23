@@ -16,6 +16,8 @@ export async function getBranchStatistics({
 }): Promise<Page<BranchStatistics>> {
     const searchParams = new URLSearchParams();
     searchParams.append("branchId", branchId ? branchId.toString() : "");
+    searchParams.append("page", page.toString());
+    searchParams.append("size", size.toString());
 
     if (createdByUserName) {
         searchParams.append("createdByUserName", createdByUserName);
@@ -23,19 +25,15 @@ export async function getBranchStatistics({
     if (deleted !== undefined) {
         searchParams.append("deleted", deleted.toString());
     }
-    if (page !== undefined) {
-        searchParams.append("page", page.toString());
-    }
-    if (size !== undefined) {
-        searchParams.append("size", size.toString());
-    }
 
     const response = await fetch(
         `/api/branchStatistics?${searchParams.toString()}`,
     );
     if (!response.ok) {
         console.error("Failed to fetch branch statistics", response);
-        throw new Error("Error network response");
+        throw new Error(
+            `Error network response: ${response.status} ${response.statusText}`,
+        );
     }
     return response.json() satisfies Promise<Page<BranchStatistics>>;
 }

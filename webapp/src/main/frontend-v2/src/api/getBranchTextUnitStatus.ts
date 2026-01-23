@@ -16,7 +16,9 @@ export async function getBranchTextUnitStatus({
     );
     if (!response.ok) {
         console.error("Failed to fetch branch text unit status", response);
-        throw new Error("Error network response");
+        throw new Error(
+            `Error network response: ${response.status} ${response.statusText}`,
+        );
     }
     return response.json() satisfies Promise<BranchTextUnitStatusDto>;
 }
