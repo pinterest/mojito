@@ -31,6 +31,8 @@ const TextUnitStatusChart: React.FC<BranchDetailsProps> = ({
         {} as Record<TextUnitStatus, number>,
     );
 
+    const sortedStatuses = extractAvailableStatuses(branchTextUnitStatus);
+
     return (
         <div className={className}>
             <Typography.Title level={4} className="text-center">
@@ -39,14 +41,16 @@ const TextUnitStatusChart: React.FC<BranchDetailsProps> = ({
 
             <DoughnutGraph
                 data={{
-                    labels: extractAvailableStatuses(branchTextUnitStatus),
+                    labels: sortedStatuses,
                     datasets: [
                         {
                             label: "Translation Status",
-                            data: Object.values(textUnitStatusCountMap),
-                            backgroundColor: Object.keys(
-                                textUnitStatusCountMap,
-                            ).map(getColorForTextUnitStatus),
+                            data: sortedStatuses.map(
+                                (status) => textUnitStatusCountMap[status] || 0,
+                            ),
+                            backgroundColor: sortedStatuses.map(
+                                getColorForTextUnitStatus,
+                            ),
                         },
                     ],
                 }}
