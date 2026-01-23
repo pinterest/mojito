@@ -12,9 +12,8 @@ export async function getBranchTextUnitStatus({
     searchParams.append("repositoryName", repoName);
 
     const response = await fetch(
-        `/api/branch/textUnitStatus?${searchParams.toString()}`
+        `/api/branch/textUnitStatus?${searchParams.toString()}`,
     );
-    console.log({ response });
     if (!response.ok) {
         console.error("Failed to fetch branch text unit status", response);
         throw new Error("Error network response");

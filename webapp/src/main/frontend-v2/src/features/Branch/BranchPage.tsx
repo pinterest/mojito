@@ -55,7 +55,7 @@ const BranchPage: React.FC = () => {
         return (
             <Result
                 status="500"
-                subTitle="Sorry, error fetching Branch details"
+                subTitle="Branch details could not be loaded. Please try again later."
             />
         );
     }

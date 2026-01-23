@@ -1,8 +1,8 @@
 import React from "react";
 
 import BranchDetailCard from "./BranchDetailCard";
-import TextUnitStatusChart from "./Charts/TextUnitStatusChart";
 import LocaleStatusBarChart from "./Charts/LocaleStatusBarChart";
+import TextUnitStatusDoughnut from "./Charts/TextUnitStatusDoughnut";
 
 import type { BranchStatistics } from "@/types/branchStatistics";
 import type { BranchTextUnitStatusDto } from "@/types/branchTextUnitStatus";
@@ -21,7 +21,7 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
             <BranchDetailCard branchStats={branchStats}></BranchDetailCard>
 
             <div className="chart-container">
-                <TextUnitStatusChart
+                <TextUnitStatusDoughnut
                     className="doughnut-chart-container"
                     branchTextUnitStatus={branchTextUnitStatus}
                 />

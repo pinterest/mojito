@@ -4,7 +4,7 @@ import {
     getColorForTextUnitStatus,
     getLabelForTextUnitStatus,
     orderTextUnitStatuses,
-} from "@/features/Branch/Charts/textUnitStatusVisualization";
+} from "@/features/Branch/utils/textUnitStatusVisualization";
 
 export interface LocaleStatusMap {
     [locale: string]: {
@@ -38,6 +38,26 @@ export function extractAvailableStatuses(
 
     const uniqueStatuses = Array.from(new Set(allStatuses));
     return orderTextUnitStatuses(uniqueStatuses);
+}
+
+export type TextUnitStatusCountDict = {
+    [status in TextUnitStatus]: number;
+};
+
+export function buildTextUnitCountDictionary(
+    branchTextUnitStatus: BranchTextUnitStatusDto,
+): TextUnitStatusCountDict {
+    return Object.values(branchTextUnitStatus.localeTextUnitStatus).reduce(
+        (statusCountDict, textUnits) => {
+            textUnits.forEach((textUnit) => {
+                const status = textUnit?.status ?? "TRANSLATION_NEEDED";
+                statusCountDict[status] = (statusCountDict[status] || 0) + 1;
+            });
+
+            return statusCountDict;
+        },
+        {} as TextUnitStatusCountDict,
+    );
 }
 
 export function createLocaleToTextUnitStatusMap(

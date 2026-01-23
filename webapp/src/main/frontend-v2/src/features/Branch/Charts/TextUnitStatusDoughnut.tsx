@@ -1,11 +1,9 @@
 import { Typography } from "antd";
 import React, { memo } from "react";
 
-import {
-    getColorForTextUnitStatus,
-    getLabelForTextUnitStatus,
-} from "./textUnitStatusVisualization";
+import { getColorForTextUnitStatus } from "../utils/textUnitStatusVisualization";
 
+import { extractAvailableStatuses } from "../utils/localeStatusChartUtils";
 import type { BranchTextUnitStatusDto } from "@/types/branchTextUnitStatus";
 import type { TextUnitStatus } from "@/types/textUnitStatus";
 import DoughnutGraph from "@/components/visualization/DoughnutGraph";
@@ -41,9 +39,7 @@ const TextUnitStatusChart: React.FC<BranchDetailsProps> = ({
 
             <DoughnutGraph
                 data={{
-                    labels: Object.keys(textUnitStatusCountMap).map(
-                        getLabelForTextUnitStatus,
-                    ),
+                    labels: extractAvailableStatuses(branchTextUnitStatus),
                     datasets: [
                         {
                             label: "Translation Status",

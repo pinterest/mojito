@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+    buildTextUnitCountDictionary,
     createLocaleToTextUnitStatusMap,
     extractAvailableStatuses,
     extractLocales,
@@ -313,14 +314,12 @@ describe("localeStatusChartUtils", () => {
             expect(result.labels).toEqual(["en-US", "fr-FR"]);
             expect(result.datasets).toHaveLength(2);
 
-            // Check APPROVED dataset
             const approvedDataset = result.datasets.find(
                 (ds) => ds.label === "Approved",
             );
             expect(approvedDataset).toBeDefined();
             expect(approvedDataset?.data).toEqual([3, 2]);
 
-            // Check TRANSLATION_NEEDED dataset
             const translationDataset = result.datasets.find(
                 (ds) => ds.label === "Translation Needed",
             );
@@ -364,12 +363,146 @@ describe("localeStatusChartUtils", () => {
                 statuses,
                 localeStatusMap,
             );
-            console.log({ result: JSON.stringify(result) });
 
             const approvedDataset = result.datasets.find(
                 (ds) => ds.label === "Approved",
             );
             expect(approvedDataset?.data).toEqual([0]);
+        });
+    });
+
+    describe("buildTextUnitCountDictionary", () => {
+        it("should return empty dictionary when no locales exist", () => {
+            const mockData = {
+                ...DEFAULT_BRANCH_DATA,
+                localeTextUnitStatus: {},
+            };
+
+            const result = buildTextUnitCountDictionary(mockData);
+
+            expect(result).toEqual({});
+        });
+
+        it("should handle empty text units arrays", () => {
+            const mockData = {
+                ...DEFAULT_BRANCH_DATA,
+                localeTextUnitStatus: {
+                    "en-US": [],
+                    "fr-FR": [],
+                },
+            };
+
+            const result = buildTextUnitCountDictionary(mockData);
+
+            expect(result).toEqual({});
+        });
+
+        it("should count single text unit correctly", () => {
+            const mockData = {
+                ...DEFAULT_BRANCH_DATA,
+                localeTextUnitStatus: {
+                    "en-US": [generateTextUnit("APPROVED")],
+                },
+            };
+
+            const result = buildTextUnitCountDictionary(mockData);
+
+            expect(result).toEqual({
+                APPROVED: 1,
+            });
+        });
+
+        it("should count multiple text units of same status", () => {
+            const mockData = {
+                ...DEFAULT_BRANCH_DATA,
+                localeTextUnitStatus: {
+                    "en-US": [
+                        generateTextUnit("APPROVED"),
+                        generateTextUnit("APPROVED"),
+                        generateTextUnit("APPROVED"),
+                    ],
+                },
+            };
+
+            const result = buildTextUnitCountDictionary(mockData);
+
+            expect(result).toEqual({
+                APPROVED: 3,
+            });
+        });
+
+        it("should count multiple text units of different statuses", () => {
+            const mockData = {
+                ...DEFAULT_BRANCH_DATA,
+                localeTextUnitStatus: {
+                    "en-US": [
+                        generateTextUnit("APPROVED"),
+                        generateTextUnit("REVIEW_NEEDED"),
+                        generateTextUnit("APPROVED"),
+                        generateTextUnit("MT_TRANSLATED"),
+                    ],
+                },
+            };
+
+            const result = buildTextUnitCountDictionary(mockData);
+
+            expect(result).toEqual({
+                APPROVED: 2,
+                REVIEW_NEEDED: 1,
+                MT_TRANSLATED: 1,
+            });
+        });
+
+        it("should aggregate counts across multiple locales", () => {
+            const mockData = {
+                ...DEFAULT_BRANCH_DATA,
+                localeTextUnitStatus: {
+                    "en-US": [
+                        generateTextUnit("APPROVED"),
+                        generateTextUnit("REVIEW_NEEDED"),
+                    ],
+                    "fr-FR": [
+                        generateTextUnit("APPROVED"),
+                        generateTextUnit("MT_TRANSLATED"),
+                    ],
+                    "ja-JP": [
+                        generateTextUnit("REVIEW_NEEDED"),
+                        generateTextUnit("TRANSLATION_NEEDED"),
+                    ],
+                },
+            };
+
+            const result = buildTextUnitCountDictionary(mockData);
+
+            expect(result).toEqual({
+                APPROVED: 2,
+                REVIEW_NEEDED: 2,
+                MT_TRANSLATED: 1,
+                TRANSLATION_NEEDED: 1,
+            });
+        });
+
+        it("should handle convert null/undefined to TRANSLATION_NEEDED status count", () => {
+            const mockData = {
+                ...DEFAULT_BRANCH_DATA,
+                localeTextUnitStatus: {
+                    "en-US": [
+                        generateTextUnit("APPROVED"),
+                        generateTextUnit(null as unknown as TextUnitStatus),
+                        generateTextUnit("APPROVED"),
+                        generateTextUnit(
+                            undefined as unknown as TextUnitStatus,
+                        ),
+                    ],
+                },
+            };
+
+            const result = buildTextUnitCountDictionary(mockData);
+
+            expect(result).toEqual({
+                APPROVED: 2,
+                TRANSLATION_NEEDED: 2,
+            });
         });
     });
 });
