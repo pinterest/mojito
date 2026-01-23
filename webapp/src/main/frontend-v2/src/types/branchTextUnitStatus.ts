@@ -1,6 +1,6 @@
 import type { TextUnitStatus } from "./textUnitStatus";
 
-interface TextUnitStatusDto {
+export interface TextUnitStatusDto {
     textUnitId: number;
     variantId: number | null;
     currentVariantId: number | null;

@@ -2,3 +2,18 @@
   padding: 2em;
 }
 
+.w-100 {
+  width: 100%;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.p-0 {
+  padding: 0;
+}
+
+.m-0 {
+  margin: 0;
+}
