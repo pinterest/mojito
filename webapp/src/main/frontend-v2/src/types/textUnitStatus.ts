@@ -1,0 +1,9 @@
+export type TextUnitStatus =
+    | "TRANSLATION_NEEDED"
+    | "REVIEW_NEEDED"
+    | "MT_TRANSLATED"
+    | "MT_REVIEW_NEEDED"
+    | "APPROVED"
+    | "OVERRIDDEN"
+    | "INTEGRITY_FAILURE"
+    | "MANUALLY_REJECTED";

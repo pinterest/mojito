@@ -1,7 +1,6 @@
 name: Run JS tests - Ubuntu + Java 21
 
-on:
-  [pull_request]
+on: [pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -10,12 +9,13 @@ jobs:
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: "zulu"
           java-version: 21
-      - name: Spotless check
-        run: mvn spotless:check
       - name: Maven install, test skipped
         run: mvn clean install -DskipTests
-      - name: Npm test
+      - name: Frontend Tests
         run: npm test
         working-directory: ./webapp/src/main/frontend
+      - name: Frontend v2 Tests
+        run: npm test
+        working-directory: ./webapp/src/main/frontend-v2

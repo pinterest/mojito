@@ -12,7 +12,6 @@ const __dirname = dirname(__filename);
 export default (env) => {
     env = env || {};
 
-    console.log();
     const isProdEnv = Boolean(env.production)
     const config = {
         entry: {
@@ -95,18 +94,18 @@ export default (env) => {
                 {
                     test: /\.scss$/,
                     use: [{
-                            loader: "style-loader" // creates style nodes from JS strings
-                        }, {
-                            loader: "css-loader" // translates CSS into CommonJS
-                        }, {
-                            loader: "sass-loader",
-                            options: {
-                                sassOptions: {
-                                    precision: 8
-                                },
-                                sourceMap: true
-                            }
-                        }]
+                        loader: "style-loader" // creates style nodes from JS strings
+                    }, {
+                        loader: "css-loader" // translates CSS into CommonJS
+                    }, {
+                        loader: "sass-loader",
+                        options: {
+                            sassOptions: {
+                                precision: 8
+                            },
+                            sourceMap: true
+                        }
+                    }]
                 },
             ]
         },
@@ -126,11 +125,11 @@ export default (env) => {
 
     if (env.production) {
         config.plugins.push(
-                new webpack.DefinePlugin({
-                    'process.env': {
-                        'NODE_ENV': JSON.stringify('production')
-                    }
-                }));
+            new webpack.DefinePlugin({
+                'process.env': {
+                    'NODE_ENV': JSON.stringify('production')
+                }
+            }));
     }
 
     if (env.inlineSourceMap) {

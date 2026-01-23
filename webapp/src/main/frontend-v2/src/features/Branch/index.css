@@ -1,0 +1,27 @@
+.branch-header {
+    font-size: 2rem;
+}
+
+.m-1 {
+    margin: 1rem;
+}
+
+.chart-container {
+    display: flex;
+    flex-direction: row;
+    gap: 3rem;
+    flex-wrap: wrap;
+    padding: 1rem;
+    justify-content: space-evenly;
+}
+
+.doughnut-chart-container {
+    min-width: 20rem;
+    max-height: 22.5rem;
+}
+
+.bar-chart-container {
+    position: relative;
+    max-height: 22.5rem;
+    flex-basis: 40rem;
+}
