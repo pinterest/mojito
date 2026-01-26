@@ -7,13 +7,18 @@ interface GoogleAnalytics {
 }
 
 interface RepositoryLinkDetail {
-    location: string | null;
-    commit: string | null;
+    location: {
+        url: string | null;
+        extractorPrefixRegex: string | null;
+        label: string | null;
+        useUsage: boolean;
+    };
+    commit: { url: string | null; label: string | null };
     thirdParty: {
         url: string;
         label: string | null;
     };
-    pullRequest: string | null;
+    pullRequest: { url: string | null };
     textUnitNameToTextUnitNameInSource: string | null;
     customMd5: string | null;
 }
