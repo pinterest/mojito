@@ -14,8 +14,8 @@ const PullRequestLink: React.FC<PullRequestLinkProps> = ({
     className,
 }) => {
     const url = useMemo(() => {
-        return APP_CONFIG.link[repoName]?.pullRequest
-            ? APP_CONFIG.link[repoName].pullRequest!.replace(
+        return APP_CONFIG.link[repoName]?.pullRequest?.url
+            ? APP_CONFIG.link[repoName].pullRequest.url.replace(
                   "{branch}",
                   encodeURIComponent(branchName),
               )
