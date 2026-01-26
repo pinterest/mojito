@@ -2,7 +2,7 @@ import { Alert, Button, Card, Descriptions, Flex, Progress } from "antd";
 import React, { memo, useMemo } from "react";
 
 import type { BranchStatistics } from "@/types/branchStatistics";
-import PullRequestLink from "@/components/PullRequestLink";
+import PullRequestLink from "@/components/navigation/PullRequestLink";
 import { displayDate } from "@/utils/formatDate";
 
 interface BranchDetailsProps {

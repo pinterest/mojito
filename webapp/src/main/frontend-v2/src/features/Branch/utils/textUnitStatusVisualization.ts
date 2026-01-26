@@ -15,11 +15,11 @@ export const TEXT_UNIT_STATUS_TO_VISUAL_DETAIL: Record<
     OVERRIDDEN: { color: "#4caf50", label: "Overridden", order: 2 },
     // Info states
     MT_REVIEW_NEEDED: {
-        color: "#00f7ffff",
+        color: "#a5f4f7fb",
         label: "MT Review Needed",
         order: 3,
     },
-    MT_TRANSLATED: { color: "#00f7ffff", label: "MT Translated", order: 4 },
+    MT_TRANSLATED: { color: "#a5f4f7fb", label: "MT Translated", order: 4 },
     REVIEW_NEEDED: { color: "#00f7ff6b", label: "Review Needed", order: 5 },
     // Failure states
     MANUALLY_REJECTED: {

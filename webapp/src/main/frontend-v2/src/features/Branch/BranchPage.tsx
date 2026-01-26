@@ -14,7 +14,6 @@ import type { BranchTextUnitStatusDto } from "@/types/branchTextUnitStatus";
 import type { Page } from "@/types/page";
 
 const BranchPage: React.FC = () => {
-    const createdByUserName = APP_CONFIG.user?.username || "";
     const branchName = useBranchName();
     const repoName = useRepoName();
 
@@ -28,10 +27,9 @@ const BranchPage: React.FC = () => {
     });
 
     const branchStatsQuery = useQuery<Page<BranchStatistics>>({
-        queryKey: ["branchStatistics", { createdByUserName, branchName }],
+        queryKey: ["branchStatistics", { branchName }],
         queryFn: () =>
             getBranchStatistics({
-                createdByUserName,
                 branchId: branchTextUnitStatus.data!.branchId,
             }),
         enabled: branchTextUnitStatus.isSuccess,
