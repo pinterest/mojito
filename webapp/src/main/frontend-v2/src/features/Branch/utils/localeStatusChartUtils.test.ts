@@ -18,6 +18,7 @@ import type { BranchStatistics } from "@/types/branchStatistics";
 function generateTextUnit(status: TextUnitStatus): TextUnitStatusDto {
     return {
         textUnitId: 1,
+        textUnitName: "Sample Text Unit",
         variantId: null,
         currentVariantId: null,
         modifiedDate: null,
