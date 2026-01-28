@@ -9,5 +9,6 @@ public record TextUnitStatusDTO(
     Long currentVariantId,
     ZonedDateTime modifiedDate,
     TMTextUnitVariant.Status status,
+    String textUnitName,
     String content,
     String comment) {}

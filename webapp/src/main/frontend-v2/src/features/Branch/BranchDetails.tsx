@@ -1,8 +1,10 @@
+import { Flex } from "antd";
 import React from "react";
 
 import BranchDetailCard from "./BranchDetailCard";
 import LocaleStatusBarChart from "./Charts/LocaleStatusBarChart";
 import TextUnitStatusDoughnut from "./Charts/TextUnitStatusDoughnut";
+import BranchTextUnitStatusTable from "./BranchTextUnitStatusTable";
 
 import type { BranchStatistics } from "@/types/branchStatistics";
 import type { BranchTextUnitStatusDto } from "@/types/branchTextUnitStatus";
@@ -20,16 +22,25 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
         <>
             <BranchDetailCard branchStats={branchStats}></BranchDetailCard>
 
-            <div className="chart-container">
-                <TextUnitStatusDoughnut
-                    className="doughnut-chart-container"
-                    branchTextUnitStatus={branchTextUnitStatus}
-                />
-                <LocaleStatusBarChart
-                    className="bar-chart-container"
-                    branchTextUnitStatus={branchTextUnitStatus}
-                />
-            </div>
+            <Flex gap="large" orientation="vertical">
+                <div className="chart-container">
+                    <TextUnitStatusDoughnut
+                        className="doughnut-chart-container"
+                        branchTextUnitStatus={branchTextUnitStatus}
+                    />
+                    <LocaleStatusBarChart
+                        className="bar-chart-container"
+                        branchTextUnitStatus={branchTextUnitStatus}
+                    />
+                </div>
+
+                <div>
+                    <BranchTextUnitStatusTable
+                        branchTextUnitStatus={branchTextUnitStatus}
+                        branchStats={branchStats}
+                    />
+                </div>
+            </Flex>
         </>
     );
 };

@@ -7,15 +7,18 @@ import {
     type LocaleStatusMap,
     transformToChartData,
 } from "./localeStatusChartUtils";
+import { getTextUnitScreenshotMap } from "./textUnitStatusVisualization";
 import type {
     BranchTextUnitStatusDto,
     TextUnitStatusDto,
 } from "@/types/branchTextUnitStatus";
 import type { TextUnitStatus } from "@/types/textUnitStatus";
+import type { BranchStatistics } from "@/types/branchStatistics";
 
 function generateTextUnit(status: TextUnitStatus): TextUnitStatusDto {
     return {
         textUnitId: 1,
+        textUnitName: "Sample Text Unit",
         variantId: null,
         currentVariantId: null,
         modifiedDate: null,
@@ -503,6 +506,279 @@ describe("localeStatusChartUtils", () => {
                 APPROVED: 2,
                 TRANSLATION_NEEDED: 2,
             });
+        });
+    });
+
+    describe("getTextUnitScreenshots", () => {
+        const createMockBranchStatistics = (
+            screenshots: BranchStatistics["branch"]["screenshots"] = [],
+        ): BranchStatistics =>
+            ({
+                branch: {
+                    screenshots: screenshots,
+                },
+            }) as BranchStatistics;
+
+        const createMockScreenshot = (
+            id: number,
+            src: string,
+            createdDate: string,
+            textUnits: Array<{ id: number }>,
+        ): BranchStatistics["branch"]["screenshots"][0] => ({
+            id,
+            src,
+            createdDate: new Date(createdDate).getTime(),
+            textUnits: textUnits.map((tu, i) => {
+                return {
+                    id: i,
+                    tmTextUnit: {
+                        id: tu.id,
+                        createdDate: 0,
+                        name: "",
+                        content: "",
+                    },
+                };
+            }),
+        });
+
+        it("should return empty map when branchStats is undefined", () => {
+            const result = getTextUnitScreenshotMap(
+                undefined as unknown as BranchStatistics,
+            );
+
+            expect(result).toBeInstanceOf(Map);
+            expect(result.size).toBe(0);
+        });
+
+        it("should return empty map when branchStats is null", () => {
+            const result = getTextUnitScreenshotMap(
+                null as unknown as BranchStatistics,
+            );
+
+            expect(result).toBeInstanceOf(Map);
+            expect(result.size).toBe(0);
+        });
+
+        it("should return empty map when branch is undefined", () => {
+            const branchStats = {} as BranchStatistics;
+            const result = getTextUnitScreenshotMap(branchStats);
+
+            expect(result).toBeInstanceOf(Map);
+            expect(result.size).toBe(0);
+        });
+
+        it("should return empty map when screenshots array is undefined", () => {
+            const branchStats = createMockBranchStatistics();
+            branchStats.branch!.screenshots =
+                undefined as unknown as BranchStatistics["branch"]["screenshots"];
+            const result = getTextUnitScreenshotMap(branchStats);
+
+            expect(result).toBeInstanceOf(Map);
+            expect(result.size).toBe(0);
+        });
+
+        it("should return empty map when screenshots array is empty", () => {
+            const branchStats = createMockBranchStatistics([]);
+            const result = getTextUnitScreenshotMap(branchStats);
+
+            expect(result).toBeInstanceOf(Map);
+            expect(result.size).toBe(0);
+        });
+
+        it("should handle single screenshot with single text unit", () => {
+            const screenshot = createMockScreenshot(
+                1,
+                "screenshot1.png",
+                "2024-01-01T10:00:00Z",
+                [{ id: 101 }],
+            );
+            const branchStats = createMockBranchStatistics([screenshot]);
+
+            const result = getTextUnitScreenshotMap(branchStats);
+
+            expect(result.size).toBe(1);
+            expect(result.get(101)?.src).toBe("screenshot1.png");
+        });
+
+        it("should handle single screenshot with multiple text units", () => {
+            const screenshot = createMockScreenshot(
+                1,
+                "screenshot1.png",
+                "2024-01-01T10:00:00Z",
+                [{ id: 101 }, { id: 102 }, { id: 103 }],
+            );
+            const branchStats = createMockBranchStatistics([screenshot]);
+
+            const result = getTextUnitScreenshotMap(branchStats);
+
+            expect(result.size).toBe(3);
+            expect(result.get(101)?.src).toBe("screenshot1.png");
+            expect(result.get(102)?.src).toBe("screenshot1.png");
+            expect(result.get(103)?.src).toBe("screenshot1.png");
+        });
+
+        it("should handle multiple screenshots with different text units", () => {
+            const screenshots = [
+                createMockScreenshot(
+                    1,
+                    "screenshot1.png",
+                    "2024-01-01T10:00:00Z",
+                    [{ id: 101 }],
+                ),
+                createMockScreenshot(
+                    2,
+                    "screenshot2.png",
+                    "2024-01-01T11:00:00Z",
+                    [{ id: 102 }],
+                ),
+            ];
+            const branchStats = createMockBranchStatistics(screenshots);
+
+            const result = getTextUnitScreenshotMap(branchStats);
+
+            expect(result.size).toBe(2);
+            expect(result.get(101)?.src).toBe("screenshot1.png");
+            expect(result.get(102)?.src).toBe("screenshot2.png");
+        });
+
+        it("should keep most recent screenshot when same text unit appears in multiple screenshots", () => {
+            const screenshots = [
+                createMockScreenshot(
+                    1,
+                    "old-screenshot.png",
+                    "2024-01-01T10:00:00Z",
+                    [{ id: 101 }, { id: 102 }],
+                ),
+                createMockScreenshot(
+                    2,
+                    "new-screenshot.png",
+                    "2024-01-01T12:00:00Z",
+                    [{ id: 101 }],
+                ),
+            ];
+            const branchStats = createMockBranchStatistics(screenshots);
+
+            const result = getTextUnitScreenshotMap(branchStats);
+
+            expect(result.size).toBe(2);
+            expect(result.get(101)?.src).toBe("new-screenshot.png");
+            expect(result.get(102)?.src).toBe("old-screenshot.png");
+        });
+
+        it("should keep most recent screenshot when processing in reverse chronological order", () => {
+            const oldDate = "2024-01-01T10:00:00Z";
+            const newDate = new Date(
+                new Date(oldDate).getTime() + 2 * 60 * 60 * 1000, // +2 hours
+            ).toISOString();
+            const screenshots = [
+                createMockScreenshot(2, "newer-screenshot.png", newDate, [
+                    { id: 101 },
+                ]),
+                createMockScreenshot(1, "older-screenshot.png", oldDate, [
+                    { id: 101 },
+                ]),
+            ];
+            const branchStats = createMockBranchStatistics(screenshots);
+
+            const result = getTextUnitScreenshotMap(branchStats);
+
+            expect(result.size).toBe(1);
+            expect(result.get(101)?.src).toBe("newer-screenshot.png");
+        });
+
+        it("should handle complex scenario with multiple text units and overlapping screenshots", () => {
+            const screenshots = [
+                createMockScreenshot(
+                    1,
+                    "screenshot1.png",
+                    "2024-01-01T10:00:00Z",
+                    [{ id: 101 }, { id: 102 }],
+                ),
+                createMockScreenshot(
+                    2,
+                    "screenshot2.png",
+                    "2024-01-01T11:00:00Z",
+                    [
+                        { id: 102 }, // Overrides 102
+                        { id: 103 },
+                    ],
+                ),
+                createMockScreenshot(
+                    3,
+                    "screenshot3.png",
+                    "2024-01-01T09:00:00Z",
+                    [
+                        { id: 101 }, // Should not override 101 because it's older
+                        { id: 104 },
+                    ],
+                ),
+            ];
+            const branchStats = createMockBranchStatistics(screenshots);
+
+            const result = getTextUnitScreenshotMap(branchStats);
+
+            expect(result.size).toBe(4);
+            expect(result.get(101)?.src).toBe("screenshot1.png");
+            expect(result.get(102)?.src).toBe("screenshot2.png");
+            expect(result.get(103)?.src).toBe("screenshot2.png");
+            expect(result.get(104)?.src).toBe("screenshot3.png");
+        });
+
+        it("should ignore screenshots with empty textUnits arrays", () => {
+            const screenshots = [
+                createMockScreenshot(
+                    1,
+                    "screenshot1.png",
+                    "2024-01-01T10:00:00Z",
+                    [],
+                ),
+                createMockScreenshot(
+                    2,
+                    "screenshot2.png",
+                    "2024-01-01T11:00:00Z",
+                    [{ id: 101 }],
+                ),
+            ];
+            const branchStats = createMockBranchStatistics(screenshots);
+
+            const result = getTextUnitScreenshotMap(branchStats);
+
+            expect(result.size).toBe(1);
+            expect(result.get(101)?.src).toBe("screenshot2.png");
+        });
+
+        it("should handle date comparison with different date formats", () => {
+            const screenshots = [
+                createMockScreenshot(
+                    1,
+                    "first.png",
+                    "2024-01-01T10:00:00.000Z",
+                    [{ id: 101 }],
+                ),
+                createMockScreenshot(2, "second.png", "2024-01-01T10:00:01Z", [
+                    { id: 101 },
+                ]),
+            ];
+            const branchStats = createMockBranchStatistics(screenshots);
+
+            const result = getTextUnitScreenshotMap(branchStats);
+
+            expect(result.size).toBe(1);
+            expect(result.get(101)?.src).toBe("second.png");
+        });
+
+        it("should handle same timestamps by keeping the last processed", () => {
+            const timestamp = "2024-01-01T10:00:00Z";
+            const screenshots = [
+                createMockScreenshot(1, "first.png", timestamp, [{ id: 101 }]),
+                createMockScreenshot(2, "second.png", timestamp, [{ id: 101 }]),
+            ];
+            const branchStats = createMockBranchStatistics(screenshots);
+
+            const result = getTextUnitScreenshotMap(branchStats);
+
+            expect(result.size).toBe(1);
+            expect(result.get(101)?.src).toBe("second.png");
         });
     });
 });

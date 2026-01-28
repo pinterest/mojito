@@ -23,7 +23,7 @@
         <node.version>v20.18.0</node.version>
         <npm.version>8.2.0</npm.version>
 
-        <node.version.v2>v22.21.1</node.version.v2>
+        <node.version.v2>v24.11.0</node.version.v2>
         <pnpm.version.v2>10.28.0</pnpm.version.v2>
         <springdoc.version>2.6.0</springdoc.version>
         <micrometer.registry.atlas.version>1.11.0</micrometer.registry.atlas.version>

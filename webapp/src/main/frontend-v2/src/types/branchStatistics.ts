@@ -1,4 +1,3 @@
-
 interface BranchUser {
     id: number;
     createdDate: number;
@@ -35,7 +34,7 @@ interface TextUnit {
     tmTextUnit: TmTextUnit;
 }
 
-interface Screenshot {
+export interface Screenshot {
     id: number;
     createdDate: number;
     src: string;

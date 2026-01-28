@@ -6,6 +6,7 @@ export interface TextUnitStatusDto {
     currentVariantId: number | null;
     modifiedDate: string | null;
     status: TextUnitStatus | null;
+    textUnitName: string;
     content: string;
     comment: string | null;
 }
