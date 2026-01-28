@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { interpolateLink } from "./utils/interpolateLink";
 
 interface PullRequestLinkProps {
     repoName: string;
@@ -15,10 +16,9 @@ const PullRequestLink: React.FC<PullRequestLinkProps> = ({
 }) => {
     const url = useMemo(() => {
         return APP_CONFIG.link[repoName]?.pullRequest?.url
-            ? APP_CONFIG.link[repoName].pullRequest.url.replace(
-                  "{branch}",
-                  encodeURIComponent(branchName),
-              )
+            ? interpolateLink(APP_CONFIG.link[repoName].pullRequest.url, {
+                  branch: encodeURIComponent(branchName),
+              })
             : null;
     }, [repoName, branchName]);
 

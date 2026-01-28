@@ -3,7 +3,7 @@ import React, { memo, useMemo } from "react";
 
 import { getTextUnitScreenshotMap } from "./utils/textUnitStatusVisualization";
 import type { BranchStatistics } from "@/types/branchStatistics";
-import PullRequestLink from "@/components/PullRequestLink";
+import PullRequestLink from "@/components/navigation/PullRequestLink";
 import { displayDate } from "@/utils/formatDate";
 
 interface BranchDetailsProps {
