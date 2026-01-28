@@ -43,7 +43,7 @@ public class AICheckerTest {
   public void setup() {
     MockitoAnnotations.initMocks(this);
     AIChecker = new AIChecker();
-    AIChecker.aiServiceClient = aiServiceClient;
+    AIChecker.setAiServiceClient(aiServiceClient);
     List<AssetExtractorTextUnit> addedTUs = new ArrayList<>();
     AssetExtractorTextUnit assetExtractorTextUnit = new AssetExtractorTextUnit();
     assetExtractorTextUnit.setName("Some string id --- Test context");

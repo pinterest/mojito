@@ -1255,4 +1255,59 @@ class OpenAILLMServiceTest {
             eq("OpenAILLMService.translate.result"),
             eq(Tags.of("success", "false", "retryable", "true", "statusCode", "null")));
   }
+
+  @Test
+  void executeAIChecksSuccessTest_ChecksPromptTypes() {
+    AIPrompt prompt = new AIPrompt();
+    prompt.setId(1L);
+    prompt.setUserPrompt("Check strings for spelling");
+    prompt.setModelName("gtp-3.5-turbo");
+    prompt.setPromptTemperature(0.0F);
+    prompt.setContextMessages(new ArrayList<>());
+    List<AIPrompt> prompts = List.of(prompt);
+    List<AssetExtractorTextUnit> textUnits = List.of(new AssetExtractorTextUnit());
+    Repository repository = new Repository();
+    repository.setName("testRepo");
+    repository.setId(1L);
+    when(repositoryRepository.findByName("testRepo")).thenReturn(repository);
+    when(promptService.getPromptsByRepositoryAndPromptType(eq(repository), any(PromptType.class)))
+        .thenReturn(prompts);
+    List<OpenAIClient.ChatCompletionsResponse.Choice> choices =
+        List.of(
+            new OpenAIClient.ChatCompletionsResponse.Choice(
+                0,
+                new OpenAIClient.ChatCompletionsResponse.Choice.Message(
+                    "test", "{\"success\": true, \"suggestedFix\": \"\"}"),
+                null));
+    OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
+        new OpenAIClient.ChatCompletionsResponse(null, null, null, null, choices, null, null);
+    CompletableFuture<OpenAIClient.ChatCompletionsResponse> futureResponse =
+        CompletableFuture.completedFuture(chatCompletionsResponse);
+    when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
+        .thenReturn(futureResponse);
+    AICheckRequest aiCheckRequest = new AICheckRequest();
+    aiCheckRequest.setRepositoryName("testRepo");
+    aiCheckRequest.setTextUnits(textUnits);
+
+    this.openAILLMService.executeAIChecks(aiCheckRequest);
+
+    verify(this.promptService)
+        .getPromptsByRepositoryAndPromptType(eq(repository), eq(PromptType.SOURCE_STRING_CHECKER));
+
+    aiCheckRequest.setPromptTypeName(PromptType.PLURALIZATION_CHECKER.name());
+    reset(this.promptService);
+
+    this.openAILLMService.executeAIChecks(aiCheckRequest);
+
+    verify(this.promptService)
+        .getPromptsByRepositoryAndPromptType(eq(repository), eq(PromptType.PLURALIZATION_CHECKER));
+
+    aiCheckRequest.setPromptTypeName(PromptType.SOURCE_STRING_CHECKER.name());
+    reset(this.promptService);
+
+    this.openAILLMService.executeAIChecks(aiCheckRequest);
+
+    verify(this.promptService)
+        .getPromptsByRepositoryAndPromptType(eq(repository), eq(PromptType.SOURCE_STRING_CHECKER));
+  }
 }

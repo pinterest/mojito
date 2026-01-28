@@ -8,6 +8,7 @@ import static com.box.l10n.mojito.service.ai.openai.OpenAIPromptContextMessageTy
 
 import com.box.l10n.mojito.entity.AIPrompt;
 import com.box.l10n.mojito.entity.AIPromptContextMessage;
+import com.box.l10n.mojito.entity.PromptType;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.json.ObjectMapper;
@@ -96,7 +97,9 @@ public class OpenAILLMService implements LLMService {
     }
 
     List<AIPrompt> prompts =
-        LLMPromptService.getPromptsByRepositoryAndPromptType(repository, SOURCE_STRING_CHECKER);
+        LLMPromptService.getPromptsByRepositoryAndPromptType(
+            repository,
+            PromptType.fromName(aiCheckRequest.getPromptTypeName()).orElse(SOURCE_STRING_CHECKER));
 
     Map<String, AssetExtractorTextUnit> textUnitsUniqueSource =
         aiCheckRequest.getTextUnits().stream()

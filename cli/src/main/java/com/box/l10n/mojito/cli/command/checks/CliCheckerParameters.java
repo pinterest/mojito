@@ -10,7 +10,9 @@ public enum CliCheckerParameters {
   CONTEXT_COMMENT_PLURAL_SKIP("contextCommentSkipPlurals"),
   REPOSITORY_NAME("repositoryName"),
   OPEN_AI_RETRY_ERROR_MSG("openAIRetryErrorMessage"),
-  CONTEXT_COMMENT_EXCLUDE_FILES_PATTERN_KEY("contextCommentExcludeFilesPattern");
+  CONTEXT_COMMENT_EXCLUDE_FILES_PATTERN_KEY("contextCommentExcludeFilesPattern"),
+  PLURALIZATION_SUGGESTED_FIX("pluralizationSuggestedFix"),
+  ;
 
   private String key;
 

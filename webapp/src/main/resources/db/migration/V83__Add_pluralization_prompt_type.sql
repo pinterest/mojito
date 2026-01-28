@@ -1,0 +1,1 @@
+INSERT INTO ai_prompt_type (name) VALUES ('PLURALIZATION_CHECKER');

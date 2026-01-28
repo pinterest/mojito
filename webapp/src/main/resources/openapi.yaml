@@ -2759,6 +2759,8 @@ components:
     AICheckRequest:
       type: object
       properties:
+        promptTypeName:
+          type: string
         repositoryName:
           type: string
         textUnits:
