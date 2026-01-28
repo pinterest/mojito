@@ -36,6 +36,7 @@ public class BranchTextUnitStatusDTO {
                                 textUnitStatusDataModel.getCurrentVariantId(),
                                 textUnitStatusDataModel.getCreatedDate(),
                                 textUnitStatusDataModel.getStatus(),
+                                textUnitStatusDataModel.getTuName(),
                                 textUnitStatusDataModel.getContent(),
                                 textUnitStatusDataModel.getComment()),
                         Collectors.toList())));

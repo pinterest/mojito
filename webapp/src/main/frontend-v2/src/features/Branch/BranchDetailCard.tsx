@@ -1,6 +1,7 @@
 import { Alert, Button, Card, Descriptions, Flex, Progress } from "antd";
 import React, { memo, useMemo } from "react";
 
+import { getTextUnitScreenshotMap } from "./utils/textUnitStatusVisualization";
 import type { BranchStatistics } from "@/types/branchStatistics";
 import PullRequestLink from "@/components/PullRequestLink";
 import { displayDate } from "@/utils/formatDate";
@@ -36,7 +37,9 @@ const BranchDetailCard: React.FC<BranchDetailsProps> = ({ branchStats }) => {
         return lastUpdatedTimestamp ? new Date(lastUpdatedTimestamp) : null;
     }, [branchStats]);
 
-    const hasScreenshots = branchStats.branch.screenshots.length > 0;
+    const hasScreenshots =
+        getTextUnitScreenshotMap(branchStats).size ===
+        branchStats.branchTextUnitStatistics.length;
 
     return (
         <Flex orientation="vertical" gap="small">

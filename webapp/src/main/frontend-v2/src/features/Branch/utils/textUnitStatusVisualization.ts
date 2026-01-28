@@ -1,3 +1,4 @@
+import type { BranchStatistics, Screenshot } from "@/types/branchStatistics";
 import type { TextUnitStatus } from "@/types/textUnitStatus";
 
 interface TextUnitStatusVisualDetail {
@@ -68,4 +69,26 @@ export function orderTextUnitStatuses(
             TEXT_UNIT_STATUS_TO_VISUAL_DETAIL[b].order
         );
     });
+}
+
+export function getTextUnitScreenshotMap(
+    branchStats: BranchStatistics,
+): Map<number, Screenshot> {
+    const screenshotMap = new Map<number, Screenshot>();
+    branchStats?.branch?.screenshots?.forEach((screenshot) => {
+        screenshot.textUnits.forEach((textUnit) => {
+            const textUnitId = textUnit.tmTextUnit.id;
+            const existing = screenshotMap.get(textUnitId);
+
+            // Only most recent screenshot is kept
+            if (
+                !existing ||
+                new Date(screenshot.createdDate) >=
+                    new Date(existing.createdDate)
+            ) {
+                screenshotMap.set(textUnitId, screenshot);
+            }
+        });
+    });
+    return screenshotMap;
 }

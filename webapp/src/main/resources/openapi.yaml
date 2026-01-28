@@ -5542,6 +5542,8 @@ components:
         textUnitId:
           type: integer
           format: int64
+        textUnitName:
+          type: string
         variantId:
           type: integer
           format: int64
