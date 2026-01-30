@@ -5,10 +5,11 @@ import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.Cha
 import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.chatCompletionsRequest;
 import static com.box.l10n.mojito.service.ai.openai.OpenAIPromptContextMessageType.SYSTEM;
 import static com.box.l10n.mojito.service.ai.openai.OpenAIPromptContextMessageType.USER;
+import static java.util.Optional.ofNullable;
 
 import com.box.l10n.mojito.entity.AIPrompt;
 import com.box.l10n.mojito.entity.AIPromptContextMessage;
-import com.box.l10n.mojito.entity.PromptType;
+import com.box.l10n.mojito.entity.PromptTextUnitType;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.json.ObjectMapper;
@@ -97,9 +98,7 @@ public class OpenAILLMService implements LLMService {
     }
 
     List<AIPrompt> prompts =
-        LLMPromptService.getPromptsByRepositoryAndPromptType(
-            repository,
-            PromptType.fromName(aiCheckRequest.getPromptTypeName()).orElse(SOURCE_STRING_CHECKER));
+        LLMPromptService.getPromptsByRepositoryAndPromptType(repository, SOURCE_STRING_CHECKER);
 
     Map<String, AssetExtractorTextUnit> textUnitsUniqueSource =
         aiCheckRequest.getTextUnits().stream()
@@ -362,6 +361,18 @@ public class OpenAILLMService implements LLMService {
     return results;
   }
 
+  private boolean hasPromptTextUnitType(AssetExtractorTextUnit textUnit, AIPrompt prompt) {
+    boolean result =
+        ofNullable(prompt.getPromptTextUnitType())
+            .map(PromptTextUnitType::getChecker)
+            .map(checker -> checker.test(textUnit))
+            .orElse(true);
+    if (!result) {
+      logger.error("Skipping text unit {} for prompt id {}.", textUnit.getName(), prompt.getId());
+    }
+    return result;
+  }
+
   private void executePromptChecks(
       AssetExtractorTextUnit textUnit,
       List<AIPrompt> prompts,
@@ -372,6 +383,9 @@ public class OpenAILLMService implements LLMService {
       List<AICheckResult> results) {
 
     for (AIPrompt prompt : prompts) {
+      if (!this.hasPromptTextUnitType(textUnit, prompt)) {
+        continue;
+      }
       if ((!Strings.isNullOrEmpty(prompt.getSystemPrompt())
               && !prompt.getSystemPrompt().contains(SOURCE_STRING_PLACEHOLDER))
           && (!Strings.isNullOrEmpty(prompt.getUserPrompt())

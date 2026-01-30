@@ -2759,8 +2759,6 @@ components:
     AICheckRequest:
       type: object
       properties:
-        promptTypeName:
-          type: string
         repositoryName:
           type: string
         textUnits:
@@ -2828,6 +2826,11 @@ components:
         promptTemperature:
           type: number
           format: float
+        promptTextUnitType:
+          type: string
+          enum:
+          - SINGULAR
+          - PLURAL
         promptType:
           type: string
         repositoryName:

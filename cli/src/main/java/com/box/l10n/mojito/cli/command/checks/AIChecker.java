@@ -15,7 +15,6 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +26,7 @@ import reactor.util.retry.RetryBackoffSpec;
 
 @Configurable
 public class AIChecker extends AbstractCliChecker {
-  private static final String DEFAULT_PROMPT_NAME = "SOURCE_STRING_CHECKER";
+  static final String SUGGESTED_FIX_PLACEHOLDER = "[mojito_suggested_fix]";
 
   private static final int RETRY_MAX_ATTEMPTS = 10;
 
@@ -41,24 +40,7 @@ public class AIChecker extends AbstractCliChecker {
       Retry.backoff(RETRY_MAX_ATTEMPTS, Duration.ofSeconds(RETRY_MIN_DURATION_SECONDS))
           .maxBackoff(Duration.ofSeconds(RETRY_MAX_BACKOFF_DURATION_SECONDS));
 
-  @Autowired private AIServiceClient aiServiceClient;
-
-  private Function<List<AssetExtractionDiff>, List<AssetExtractorTextUnit>>
-      assetExtractorTextUnitFunction;
-
-  private String promptTypeName;
-
-  public AIChecker() {
-    this.assetExtractorTextUnitFunction = AIChecker::getAssetExtractorTextUnits;
-    this.promptTypeName = DEFAULT_PROMPT_NAME;
-  }
-
-  protected static List<AssetExtractorTextUnit> getAssetExtractorTextUnits(
-      List<AssetExtractionDiff> assetExtractionDiffs) {
-    return assetExtractionDiffs.stream()
-        .flatMap(diff -> diff.getAddedTextunits().stream())
-        .collect(toList());
-  }
+  @Autowired AIServiceClient aiServiceClient;
 
   @Override
   public CliCheckResult run(List<AssetExtractionDiff> assetExtractionDiffs) {
@@ -66,7 +48,9 @@ public class AIChecker extends AbstractCliChecker {
     logger.debug("Running AI checks");
 
     List<AssetExtractorTextUnit> textUnits =
-        this.assetExtractorTextUnitFunction.apply(assetExtractionDiffs);
+        assetExtractionDiffs.stream()
+            .flatMap(diff -> diff.getAddedTextunits().stream())
+            .collect(toList());
 
     String repositoryName = cliCheckerOptions.getRepositoryName();
 
@@ -95,7 +79,6 @@ public class AIChecker extends AbstractCliChecker {
     AICheckRequest aiCheckRequest = new AICheckRequest();
     aiCheckRequest.setTextUnits(assetExtractorTextUnits);
     aiCheckRequest.setRepositoryName(repositoryName);
-    aiCheckRequest.setPromptTypeName(this.promptTypeName);
 
     return Mono.fromCallable(() -> executeChecks(aiCheckRequest, textUnits))
         .retryWhen(retryConfiguration)
@@ -113,6 +96,7 @@ public class AIChecker extends AbstractCliChecker {
       throw new CommandException("Failed to run AI checks: " + response.getErrorMessage());
     }
 
+    String suggestedFixMessage = this.cliCheckerOptions.getSuggestedFixMessage();
     Map<String, List<AICheckResult>> failureMap = new HashMap<>();
 
     response
@@ -125,6 +109,14 @@ public class AIChecker extends AbstractCliChecker {
                       .collect(toList());
 
               if (!failures.isEmpty()) {
+                if (suggestedFixMessage != null) {
+                  failures.forEach(
+                      failure ->
+                          failure.setSuggestedFix(
+                              failure
+                                  .getSuggestedFix()
+                                  .replace(SUGGESTED_FIX_PLACEHOLDER, suggestedFixMessage)));
+                }
                 failureMap.put(sourceString, failures);
               }
             });
@@ -199,19 +191,5 @@ public class AIChecker extends AbstractCliChecker {
       cliCheckResult.setNotificationText("Failed to run AI checks.");
     }
     return cliCheckResult;
-  }
-
-  public void setAssetExtractorTextUnitFunction(
-      Function<List<AssetExtractionDiff>, List<AssetExtractorTextUnit>>
-          assetExtractorTextUnitFunction) {
-    this.assetExtractorTextUnitFunction = assetExtractorTextUnitFunction;
-  }
-
-  public void setPromptTypeName(String promptTypeName) {
-    this.promptTypeName = promptTypeName;
-  }
-
-  public void setAiServiceClient(AIServiceClient aiServiceClient) {
-    this.aiServiceClient = aiServiceClient;
   }
 }
