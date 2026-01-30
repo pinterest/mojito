@@ -50,10 +50,6 @@ const BranchPage: React.FC = () => {
         !branch ||
         !branchTextUnitStatus.data
     ) {
-        console.log({
-            branchStatsError: branchStatsQuery.error,
-            branchTextUnitStatusError: branchTextUnitStatus.error,
-        });
         return (
             <Result
                 status="500"

@@ -1,5 +1,6 @@
 import { Typography } from "antd";
 import React, { memo } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useLocaleTextUnitStatusChartData } from "../hooks/useLocaleStatusChartData";
 
@@ -15,6 +16,7 @@ const TextUnitStatusChart: React.FC<BranchDetailsProps> = ({
     branchTextUnitStatus,
     className,
 }) => {
+    const { t } = useTranslation("branch");
     const chartData = useLocaleTextUnitStatusChartData(branchTextUnitStatus);
 
     return (
@@ -25,7 +27,7 @@ const TextUnitStatusChart: React.FC<BranchDetailsProps> = ({
                 style={{ textAlign: "center" }}
                 className="text-center"
             >
-                Locale Text Unit Breakdown
+                {t("textUnitsByStatus")}
             </Typography.Title>
 
             <BarChartGraph

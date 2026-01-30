@@ -1,10 +1,12 @@
 import { Card, Progress, Result, Space, theme, Typography } from "antd";
 import { ToolOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 
 const { Title, Paragraph } = Typography;
 
 export default function WorkInProgress() {
     const { token } = theme.useToken();
+    const { t } = useTranslation("common");
 
     return (
         <Card
@@ -18,16 +20,13 @@ export default function WorkInProgress() {
         >
             <Result
                 icon={<ToolOutlined style={{ color: token.colorPrimary }} />}
-                title={<Title level={2}>Coming soon</Title>}
+                title={<Title level={2}>{t("comingSoon")}</Title>}
                 subTitle={
                     <Space orientation="vertical" size="large">
-                        <Paragraph>
-                            The site is currently under construction. We're
-                            working hard to bring you an incredible experience.
-                        </Paragraph>
+                        <Paragraph>{t("siteUnderConstruction")}</Paragraph>
 
                         <Paragraph className="text-sm text-gray-500 mb-2">
-                            Progress: Just started...
+                            {t("progressMessage")}
                         </Paragraph>
 
                         <Progress

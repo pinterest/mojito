@@ -1,8 +1,9 @@
+import type { TFunction } from "i18next";
 import type { BranchTextUnitStatusDto } from "@/types/branchTextUnitStatus";
 import type { TextUnitStatus } from "@/types/textUnitStatus";
 import {
     getColorForTextUnitStatus,
-    getLabelForTextUnitStatus,
+    geti18nKeyForTextUnitStatus,
     orderTextUnitStatuses,
 } from "@/features/Branch/utils/textUnitStatusVisualization";
 
@@ -86,15 +87,18 @@ export function transformToChartData(
     locales: string[],
     statuses: TextUnitStatus[],
     localeStatusMap: LocaleStatusMap,
+    t: TFunction<string, string>,
 ): ChartData {
     return {
         labels: locales,
-        datasets: statuses.map((status) => ({
-            label: getLabelForTextUnitStatus(status),
-            data: locales.map(
-                (locale) => localeStatusMap[locale]?.[status] ?? 0,
-            ),
-            backgroundColor: getColorForTextUnitStatus(status),
-        })),
+        datasets: statuses.map((status) => {
+            return {
+                label: t(geti18nKeyForTextUnitStatus(status)),
+                data: locales.map(
+                    (locale) => localeStatusMap[locale]?.[status] ?? 0,
+                ),
+                backgroundColor: getColorForTextUnitStatus(status),
+            };
+        }),
     };
 }

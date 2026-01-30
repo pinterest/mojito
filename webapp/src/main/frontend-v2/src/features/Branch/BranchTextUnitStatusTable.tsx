@@ -2,6 +2,7 @@ import { Button, Image, Table, type TableProps } from "antd";
 import { ZoomInOutlined } from "@ant-design/icons";
 import React, { useState } from "react";
 
+import { useTranslation } from "react-i18next";
 import { getTextUnitScreenshotMap } from "./utils/textUnitStatusVisualization";
 import type {
     BranchTextUnitStatusDto,
@@ -26,6 +27,7 @@ const TextUnitTable: React.FC<TextUnitTableProps> = ({
     branchTextUnitStatus,
     branchStats,
 }) => {
+    const { t } = useTranslation("branch");
     const [imagePreview, setImagePreview] = useState<string | undefined>();
 
     const screenshotMap = getTextUnitScreenshotMap(branchStats!);
@@ -69,12 +71,12 @@ const TextUnitTable: React.FC<TextUnitTableProps> = ({
 
     const columns: TableProps<TableDataType>["columns"] = [
         {
-            title: "Name",
+            title: t("name"),
             dataIndex: "name",
             key: "name",
         },
         {
-            title: "Screenshot",
+            title: t("screenshot"),
             dataIndex: "screenshot",
             key: "screenshot",
             render: (screenshot: string | undefined) => {
@@ -86,13 +88,13 @@ const TextUnitTable: React.FC<TextUnitTableProps> = ({
                         onClick={() => setImagePreview(screenshot)}
                         aria-label="Preview image"
                     >
-                        Preview
+                        {t("preview")}
                     </Button>
                 );
             },
         },
         {
-            title: "Translated Count",
+            title: t("translatedCount"),
             key: "translatedCount",
             render: (_, record) => (
                 <span>

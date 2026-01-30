@@ -24,6 +24,7 @@ export default defineConfig([
       globals: globals.browser,
     },
     rules: {
+      "no-console": ["error", { "allow": ["warn", "error"] }],
       "sort-imports":
         [
           "error",

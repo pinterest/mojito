@@ -1,7 +1,11 @@
 import { Typography } from "antd";
 import React, { memo } from "react";
+import { useTranslation } from "react-i18next";
 
-import { getColorForTextUnitStatus } from "../utils/textUnitStatusVisualization";
+import {
+    getColorForTextUnitStatus,
+    geti18nKeyForTextUnitStatus,
+} from "../utils/textUnitStatusVisualization";
 
 import { extractAvailableStatuses } from "../utils/localeStatusChartUtils";
 import type { BranchTextUnitStatusDto } from "@/types/branchTextUnitStatus";
@@ -18,6 +22,9 @@ const TextUnitStatusChart: React.FC<BranchDetailsProps> = ({
     branchTextUnitStatus,
     className,
 }) => {
+    const { t } = useTranslation("branch");
+    const sortedStatuses = extractAvailableStatuses(branchTextUnitStatus);
+
     const textUnitStatusCountMap = Object.values(
         branchTextUnitStatus.localeTextUnitStatus,
     ).reduce(
@@ -31,20 +38,20 @@ const TextUnitStatusChart: React.FC<BranchDetailsProps> = ({
         {} as Record<TextUnitStatus, number>,
     );
 
-    const sortedStatuses = extractAvailableStatuses(branchTextUnitStatus);
-
     return (
         <div className={className}>
             <Typography.Title level={4} className="text-center">
-                Text Units by Status
+                {t("textUnitsByStatus")}
             </Typography.Title>
 
             <DoughnutGraph
                 data={{
-                    labels: sortedStatuses,
+                    labels: sortedStatuses.map((status) =>
+                        t(geti18nKeyForTextUnitStatus(status)),
+                    ),
                     datasets: [
                         {
-                            label: "Translation Status",
+                            label: t("translationStatus"),
                             data: sortedStatuses.map(
                                 (status) => textUnitStatusCountMap[status] || 0,
                             ),

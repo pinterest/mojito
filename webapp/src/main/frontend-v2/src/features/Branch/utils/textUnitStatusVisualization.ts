@@ -3,7 +3,7 @@ import type { TextUnitStatus } from "@/types/textUnitStatus";
 
 interface TextUnitStatusVisualDetail {
     color: string;
-    label: string;
+    i18nKey: string;
     order: number;
 }
 
@@ -12,31 +12,31 @@ export const TEXT_UNIT_STATUS_TO_VISUAL_DETAIL: Record<
     TextUnitStatusVisualDetail
 > = {
     // Good states
-    APPROVED: { color: "#76e67aff", label: "Approved", order: 1 },
-    OVERRIDDEN: { color: "#4caf50", label: "Overridden", order: 2 },
+    APPROVED: { color: "#76e67aff", i18nKey: "approved", order: 1 },
+    OVERRIDDEN: { color: "#4caf50", i18nKey: "overridden", order: 2 },
     // Info states
     MT_REVIEW_NEEDED: {
-        color: "#a5f4f7fb",
-        label: "MT Review Needed",
+        color: "#00f7ffff",
+        i18nKey: "mtReviewNeeded",
         order: 3,
     },
-    MT_TRANSLATED: { color: "#a5f4f7fb", label: "MT Translated", order: 4 },
-    REVIEW_NEEDED: { color: "#00f7ff6b", label: "Review Needed", order: 5 },
+    MT_TRANSLATED: { color: "#00f7ffff", i18nKey: "mtTranslated", order: 4 },
+    REVIEW_NEEDED: { color: "#00f7ff6b", i18nKey: "reviewNeeded", order: 5 },
     // Failure states
     MANUALLY_REJECTED: {
         color: "#ff9800",
-        label: "Manually Rejected",
+        i18nKey: "manuallyRejected",
         order: 6,
     },
     INTEGRITY_FAILURE: {
         color: "#f44336",
-        label: "Integrity Failure",
+        i18nKey: "integrityFailure",
         order: 7,
     },
     // No progress state
     TRANSLATION_NEEDED: {
         color: "#a6a6a6ff",
-        label: "Translation Needed",
+        i18nKey: "translationNeeded",
         order: 8,
     },
 };
@@ -53,11 +53,11 @@ export function getColorForTextUnitStatus(status: string): string {
     return TEXT_UNIT_STATUS_TO_VISUAL_DETAIL[status].color;
 }
 
-export function getLabelForTextUnitStatus(status: string): string {
+export function geti18nKeyForTextUnitStatus(status: string): string {
     if (!isValidTextUnitStatus(status)) {
         throw new Error(`Unknown text unit status: ${status}`);
     }
-    return TEXT_UNIT_STATUS_TO_VISUAL_DETAIL[status].label;
+    return TEXT_UNIT_STATUS_TO_VISUAL_DETAIL[status].i18nKey;
 }
 
 export function orderTextUnitStatuses(
