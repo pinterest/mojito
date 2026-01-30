@@ -11,7 +11,7 @@ public enum CliCheckerParameters {
   REPOSITORY_NAME("repositoryName"),
   OPEN_AI_RETRY_ERROR_MSG("openAIRetryErrorMessage"),
   CONTEXT_COMMENT_EXCLUDE_FILES_PATTERN_KEY("contextCommentExcludeFilesPattern"),
-  PLURALIZATION_SUGGESTED_FIX("pluralizationSuggestedFix"),
+  SUGGESTED_FIX_MESSAGE("suggestedFixMessage"),
   ;
 
   private String key;

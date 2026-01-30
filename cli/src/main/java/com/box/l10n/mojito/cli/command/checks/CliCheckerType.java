@@ -11,8 +11,7 @@ public enum CliCheckerType {
   RECOMMEND_STRING_ID_CHECKER(RecommendStringIdChecker.class),
   CONTEXT_COMMENT_REJECT_PATTERN_CHECKER(ContextCommentRejectPatternChecker.class),
   CONTROL_CHARACTER_CHECKER(ControlCharacterChecker.class),
-  AI_CHECKER(AIChecker.class),
-  AI_PLURALIZATION_CHECKER(AIPluralizationChecker.class);
+  AI_CHECKER(AIChecker.class);
 
   Class<? extends AbstractCliChecker> type;
 

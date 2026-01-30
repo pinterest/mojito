@@ -10,7 +10,6 @@ public class AICheckRequest implements Serializable {
 
   private List<AssetExtractorTextUnit> textUnits;
   private String repositoryName;
-  private String promptTypeName;
 
   public String getRepositoryName() {
     return repositoryName;
@@ -26,13 +25,5 @@ public class AICheckRequest implements Serializable {
 
   public void setTextUnits(List<AssetExtractorTextUnit> textUnits) {
     this.textUnits = textUnits;
-  }
-
-  public String getPromptTypeName() {
-    return promptTypeName;
-  }
-
-  public void setPromptTypeName(String promptTypeName) {
-    this.promptTypeName = promptTypeName;
   }
 }
