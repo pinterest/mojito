@@ -74,6 +74,7 @@ const TextUnitTable: React.FC<TextUnitTableProps> = ({
             title: t("name"),
             dataIndex: "name",
             key: "name",
+            width: "60%",
         },
         {
             title: t("screenshot"),
@@ -92,10 +93,12 @@ const TextUnitTable: React.FC<TextUnitTableProps> = ({
                     </Button>
                 );
             },
+            width: "20%",
         },
         {
             title: t("translatedCount"),
             key: "translatedCount",
+            width: "20%",
             render: (_, record) => (
                 <span>
                     {record.translatedCount} / {record.totalCount}
