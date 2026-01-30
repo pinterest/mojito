@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import { describe, expect, it } from "vitest";
 import {
     buildTextUnitCountDictionary,
@@ -34,6 +35,8 @@ const DEFAULT_BRANCH_DATA: BranchTextUnitStatusDto = {
     branchName: "main",
     localeTextUnitStatus: {},
 };
+
+const identityFn = (x: string) => x;
 
 describe("localeStatusChartUtils", () => {
     describe("extractLocales", () => {
@@ -235,6 +238,7 @@ describe("localeStatusChartUtils", () => {
                 locales,
                 statuses,
                 localeStatusMap,
+                identityFn as TFunction<string, string>,
             );
 
             expect(result.labels).toEqual([]);
@@ -253,6 +257,7 @@ describe("localeStatusChartUtils", () => {
                 locales,
                 statuses,
                 localeStatusMap,
+                identityFn as TFunction<string, string>,
             );
 
             expect(result.labels).toEqual(["en-US"]);
@@ -277,16 +282,17 @@ describe("localeStatusChartUtils", () => {
                 locales,
                 statuses,
                 localeStatusMap,
+                identityFn as TFunction<string, string>,
             );
 
             // Should fill missing values with 0
             const approvedDataset = result.datasets.find(
-                (ds) => ds.label === "Approved",
+                (ds) => ds.label === "approved",
             );
             expect(approvedDataset?.data).toEqual([2, 0]);
 
             const reviewDataset = result.datasets.find(
-                (ds) => ds.label === "Review Needed",
+                (ds) => ds.label === "reviewNeeded",
             );
             expect(reviewDataset?.data).toEqual([0, 1]);
         });
@@ -312,19 +318,20 @@ describe("localeStatusChartUtils", () => {
                 locales,
                 statuses,
                 localeStatusMap,
+                identityFn as TFunction<string, string>,
             );
 
             expect(result.labels).toEqual(["en-US", "fr-FR"]);
             expect(result.datasets).toHaveLength(2);
 
             const approvedDataset = result.datasets.find(
-                (ds) => ds.label === "Approved",
+                (ds) => ds.label === "approved",
             );
             expect(approvedDataset).toBeDefined();
             expect(approvedDataset?.data).toEqual([3, 2]);
 
             const translationDataset = result.datasets.find(
-                (ds) => ds.label === "Translation Needed",
+                (ds) => ds.label === "translationNeeded",
             );
             expect(translationDataset).toBeDefined();
             expect(translationDataset?.data).toEqual([1, 4]);
@@ -344,10 +351,11 @@ describe("localeStatusChartUtils", () => {
                 locales,
                 statuses,
                 localeStatusMap,
+                identityFn as TFunction<string, string>,
             );
 
             const approvedDataset = result.datasets.find(
-                (ds) => ds.label === "Approved",
+                (ds) => ds.label === "approved",
             );
             expect(approvedDataset?.data).toEqual([3, 0]);
         });
@@ -365,10 +373,11 @@ describe("localeStatusChartUtils", () => {
                 locales,
                 statuses,
                 localeStatusMap,
+                identityFn as TFunction<string, string>,
             );
 
             const approvedDataset = result.datasets.find(
-                (ds) => ds.label === "Approved",
+                (ds) => ds.label === "approved",
             );
             expect(approvedDataset?.data).toEqual([0]);
         });
