@@ -99,6 +99,6 @@ public class CreateAIPromptCommand extends Command {
     aiPromptCreateRequest.setPromptTextUnitType(
         AIPromptCreateRequest.PromptTextUnitTypeEnum.fromValue(this.promptTextUnitType));
     long promptId = aiServiceClient.createPrompt(aiPromptCreateRequest);
-    consoleWriter.newLine().a("Prompt created with id: " + promptId).println();
+    consoleWriter.newLine().a("Prompt created with id: " + promptId + " - " + aiPromptCreateRequest.getPromptTextUnitType()).println();
   }
 }
