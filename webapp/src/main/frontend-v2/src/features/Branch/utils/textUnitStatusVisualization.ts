@@ -16,12 +16,16 @@ export const TEXT_UNIT_STATUS_TO_VISUAL_DETAIL: Record<
     OVERRIDDEN: { color: "#4caf50", i18nKey: "overridden", order: 2 },
     // Info states
     MT_REVIEW_NEEDED: {
-        color: "#00f7ffff",
+        color: "#1b4bcf",
         i18nKey: "mtReviewNeeded",
         order: 3,
     },
-    MT_TRANSLATED: { color: "#00f7ffff", i18nKey: "mtTranslated", order: 4 },
-    REVIEW_NEEDED: { color: "#00f7ff6b", i18nKey: "reviewNeeded", order: 5 },
+    MT_TRANSLATED: {
+        color: "#2ebec3",
+        i18nKey: "mtTranslated",
+        order: 4,
+    },
+    REVIEW_NEEDED: { color: "#3155ba", i18nKey: "reviewNeeded", order: 5 },
     // Failure states
     MANUALLY_REJECTED: {
         color: "#ff9800",
