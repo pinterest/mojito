@@ -7,9 +7,9 @@ export type DoughnutGraphProps = Omit<ChartProps<"doughnut">, "type">;
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const DoughnutGraph: React.FC<DoughnutGraphProps> = ({ data }) => {
-    const chartData = { ...data, type: "doughnut" };
+  const chartData = { ...data, type: "doughnut" };
 
-    return <Doughnut data={chartData} />;
+  return <Doughnut data={chartData} />;
 };
 
 export default memo(DoughnutGraph);
