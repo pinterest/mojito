@@ -6,9 +6,9 @@ import App from "./App.tsx";
 import "./i18n.ts";
 
 createRoot(document.getElementById("root")!).render(
-    <StrictMode>
-        <BrowserRouter basename={import.meta.env.PROD ? "/v2" : ""}>
-            <App />
-        </BrowserRouter>
-    </StrictMode>,
+  <StrictMode>
+    <BrowserRouter basename={import.meta.env.PROD ? "/v2" : ""}>
+      <App />
+    </BrowserRouter>
+  </StrictMode>,
 );

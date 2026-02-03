@@ -10,39 +10,39 @@ import type { BranchStatistics } from "@/types/branchStatistics";
 import type { BranchTextUnitStatusDto } from "@/types/branchTextUnitStatus";
 
 interface BranchDetailsProps {
-    branchStats: BranchStatistics;
-    branchTextUnitStatus: BranchTextUnitStatusDto;
+  branchStats: BranchStatistics;
+  branchTextUnitStatus: BranchTextUnitStatusDto;
 }
 
 const BranchDetails: React.FC<BranchDetailsProps> = ({
-    branchStats,
-    branchTextUnitStatus,
+  branchStats,
+  branchTextUnitStatus,
 }) => {
-    return (
-        <>
-            <BranchDetailCard branchStats={branchStats}></BranchDetailCard>
+  return (
+    <>
+      <BranchDetailCard branchStats={branchStats}></BranchDetailCard>
 
-            <Flex gap="large" orientation="vertical">
-                <div className="chart-container">
-                    <TextUnitStatusDoughnut
-                        className="doughnut-chart-container"
-                        branchTextUnitStatus={branchTextUnitStatus}
-                    />
-                    <LocaleStatusBarChart
-                        className="bar-chart-container"
-                        branchTextUnitStatus={branchTextUnitStatus}
-                    />
-                </div>
+      <Flex gap='large' orientation='vertical'>
+        <div className='chart-container'>
+          <TextUnitStatusDoughnut
+            className='doughnut-chart-container'
+            branchTextUnitStatus={branchTextUnitStatus}
+          />
+          <LocaleStatusBarChart
+            className='bar-chart-container'
+            branchTextUnitStatus={branchTextUnitStatus}
+          />
+        </div>
 
-                <div>
-                    <BranchTextUnitStatusTable
-                        branchTextUnitStatus={branchTextUnitStatus}
-                        branchStats={branchStats}
-                    />
-                </div>
-            </Flex>
-        </>
-    );
+        <div>
+          <BranchTextUnitStatusTable
+            branchTextUnitStatus={branchTextUnitStatus}
+            branchStats={branchStats}
+          />
+        </div>
+      </Flex>
+    </>
+  );
 };
 
 export default BranchDetails;

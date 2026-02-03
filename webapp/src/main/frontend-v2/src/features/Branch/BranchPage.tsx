@@ -14,56 +14,56 @@ import type { BranchTextUnitStatusDto } from "@/types/branchTextUnitStatus";
 import type { Page } from "@/types/page";
 
 const BranchPage: React.FC = () => {
-    const branchName = useBranchName();
-    const repoName = useRepoName();
+  const branchName = useBranchName();
+  const repoName = useRepoName();
 
-    const branchTextUnitStatus = useQuery<BranchTextUnitStatusDto>({
-        queryKey: ["branchTextUnitStatus", { branchName, repoName }],
-        queryFn: () =>
-            getBranchTextUnitStatus({
-                branchName,
-                repoName,
-            }),
-    });
+  const branchTextUnitStatus = useQuery<BranchTextUnitStatusDto>({
+    queryKey: ["branchTextUnitStatus", { branchName, repoName }],
+    queryFn: () =>
+      getBranchTextUnitStatus({
+        branchName,
+        repoName,
+      }),
+  });
 
-    const branchStatsQuery = useQuery<Page<BranchStatistics>>({
-        queryKey: ["branchStatistics", { branchName }],
-        queryFn: () =>
-            getBranchStatistics({
-                branchId: branchTextUnitStatus.data!.branchId,
-            }),
-        enabled: branchTextUnitStatus.isSuccess,
-    });
+  const branchStatsQuery = useQuery<Page<BranchStatistics>>({
+    queryKey: ["branchStatistics", { branchName }],
+    queryFn: () =>
+      getBranchStatistics({
+        branchId: branchTextUnitStatus.data!.branchId,
+      }),
+    enabled: branchTextUnitStatus.isSuccess,
+  });
 
-    if (branchStatsQuery.isLoading || branchTextUnitStatus.isLoading) {
-        return (
-            <Flex justify="center" style={{ margin: "2vh" }}>
-                <Spin />
-            </Flex>
-        );
-    }
-
-    const branch = branchStatsQuery.data?.content?.[0];
-    if (
-        branchStatsQuery.isError ||
-        branchTextUnitStatus.isError ||
-        !branch ||
-        !branchTextUnitStatus.data
-    ) {
-        return (
-            <Result
-                status="500"
-                subTitle="Branch details could not be loaded. Please try again later."
-            />
-        );
-    }
-
+  if (branchStatsQuery.isLoading || branchTextUnitStatus.isLoading) {
     return (
-        <BranchDetails
-            branchStats={branch}
-            branchTextUnitStatus={branchTextUnitStatus.data}
-        />
+      <Flex justify='center' style={{ margin: "2vh" }}>
+        <Spin />
+      </Flex>
     );
+  }
+
+  const branch = branchStatsQuery.data?.content?.[0];
+  if (
+    branchStatsQuery.isError ||
+    branchTextUnitStatus.isError ||
+    !branch ||
+    !branchTextUnitStatus.data
+  ) {
+    return (
+      <Result
+        status='500'
+        subTitle='Branch details could not be loaded. Please try again later.'
+      />
+    );
+  }
+
+  return (
+    <BranchDetails
+      branchStats={branch}
+      branchTextUnitStatus={branchTextUnitStatus.data}
+    />
+  );
 };
 
 export default BranchPage;
