@@ -95,6 +95,8 @@ public enum PoPluralRule {
     mappingForNonDefault.put("he", PoPluralRule.FOUR_FORMS_FRACTIONAL_DIGITS_OTHER);
     mappingForNonDefault.put("iw", PoPluralRule.FOUR_FORMS_FRACTIONAL_DIGITS_OTHER);
     mappingForNonDefault.put("ar", PoPluralRule.SIX_FORMS);
+    mappingForNonDefault.put("kk", PoPluralRule.TWO_FORMS_SINGULAR_FOR_ZERO_AND_ONE);
+    mappingForNonDefault.put("ky", PoPluralRule.TWO_FORMS_SINGULAR_FOR_ZERO_AND_ONE);
   }
 
   String rule;
