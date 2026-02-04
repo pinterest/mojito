@@ -26,6 +26,7 @@ import reactor.util.retry.RetryBackoffSpec;
 
 @Configurable
 public class AIChecker extends AbstractCliChecker {
+  static final String SUGGESTED_FIX_PLACEHOLDER = "[mojito_suggested_fix]";
 
   private static final int RETRY_MAX_ATTEMPTS = 10;
 
@@ -95,6 +96,7 @@ public class AIChecker extends AbstractCliChecker {
       throw new CommandException("Failed to run AI checks: " + response.getErrorMessage());
     }
 
+    String suggestedFixMessage = this.cliCheckerOptions.getSuggestedFixMessage();
     Map<String, List<AICheckResult>> failureMap = new HashMap<>();
 
     response
@@ -107,6 +109,14 @@ public class AIChecker extends AbstractCliChecker {
                       .collect(toList());
 
               if (!failures.isEmpty()) {
+                if (suggestedFixMessage != null) {
+                  failures.forEach(
+                      failure ->
+                          failure.setSuggestedFix(
+                              failure
+                                  .getSuggestedFix()
+                                  .replace(SUGGESTED_FIX_PLACEHOLDER, suggestedFixMessage)));
+                }
                 failureMap.put(sourceString, failures);
               }
             });

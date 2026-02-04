@@ -70,6 +70,11 @@ public class CreateAIPromptCommand extends Command {
       description = "The key to use to extract the translation from the JSON response")
   String jsonResponseKey;
 
+  @Parameter(
+      names = {"--prompt-text-unit-type", "-ptt"},
+      description = "The type of the text unit used in the prompt (PLURAL or SINGULAR).")
+  String promptTextUnitType;
+
   @Autowired private ConsoleWriter consoleWriter;
 
   @Override
@@ -91,6 +96,8 @@ public class CreateAIPromptCommand extends Command {
       throw new CommandException("jsonResponseKey is required when isJsonResponse is true");
     }
     aiPromptCreateRequest.setJsonResponseKey(jsonResponseKey);
+    aiPromptCreateRequest.setPromptTextUnitType(
+        AIPromptCreateRequest.PromptTextUnitTypeEnum.fromValue(this.promptTextUnitType));
     long promptId = aiServiceClient.createPrompt(aiPromptCreateRequest);
     consoleWriter.newLine().a("Prompt created with id: " + promptId).println();
   }

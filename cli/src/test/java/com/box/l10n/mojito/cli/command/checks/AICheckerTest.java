@@ -1,7 +1,9 @@
 package com.box.l10n.mojito.cli.command.checks;
 
+import static com.box.l10n.mojito.cli.command.checks.AIChecker.SUGGESTED_FIX_PLACEHOLDER;
 import static com.box.l10n.mojito.cli.command.checks.CliCheckerParameters.OPEN_AI_RETRY_ERROR_MSG;
 import static com.box.l10n.mojito.cli.command.checks.CliCheckerParameters.REPOSITORY_NAME;
+import static com.box.l10n.mojito.cli.command.checks.CliCheckerParameters.SUGGESTED_FIX_MESSAGE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
@@ -241,5 +243,33 @@ public class AICheckerTest {
     CliCheckResult result = AIChecker.run(assetExtractionDiffs);
     assertFalse(result.isSuccessful());
     assertTrue(result.getNotificationText().contains("Retries exhausted for OpenAI check"));
+  }
+
+  @Test
+  public void testRun_UpdatesSuggestedFix() {
+    this.AIChecker.setCliCheckerOptions(
+        new CliCheckerOptions(
+            Sets.newHashSet(),
+            Sets.newHashSet(),
+            ImmutableMap.<String, String>builder()
+                .put(REPOSITORY_NAME.getKey(), "test-repo")
+                .put(SUGGESTED_FIX_MESSAGE.getKey(), "New suggested fix")
+                .build()));
+    AIChecker.retryConfiguration =
+        Retry.backoff(1, Duration.ofMillis(1)).maxBackoff(Duration.ofMillis(1));
+    AICheckResponse aiCheckResponse = new AICheckResponse();
+    aiCheckResponse.setError(false);
+    aiCheckResponse.setErrorMessage(null);
+    AICheckResult aiCheckResult = new AICheckResult();
+    aiCheckResult.setSuccess(false);
+    aiCheckResult.setSuggestedFix(
+        String.format("Current suggested fix. %s", SUGGESTED_FIX_PLACEHOLDER));
+    aiCheckResponse.setResults(Map.of("source string", List.of(aiCheckResult)));
+    when(aiServiceClient.executeAIChecks(any())).thenReturn(aiCheckResponse);
+
+    CliCheckResult cliCheckResult = this.AIChecker.run(this.assetExtractionDiffs);
+
+    assertTrue(cliCheckResult.getNotificationText().contains("Current suggested fix"));
+    assertTrue(cliCheckResult.getNotificationText().contains("New suggested fix"));
   }
 }
