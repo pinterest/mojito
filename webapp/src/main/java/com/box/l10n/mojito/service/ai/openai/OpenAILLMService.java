@@ -368,7 +368,7 @@ public class OpenAILLMService implements LLMService {
             .map(checker -> checker.test(textUnit))
             .orElse(true);
     if (!result) {
-      logger.error("Skipping text unit {} for prompt id {}.", textUnit.getName(), prompt.getId());
+      logger.info("Skipping text unit {} for prompt id {}.", textUnit.getName(), prompt.getId());
     }
     return result;
   }
