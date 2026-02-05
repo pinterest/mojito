@@ -1,6 +1,6 @@
-import { Button, Image, Table, type TableProps } from "antd";
+import { Button, Table, type TableProps } from "antd";
 import { ZoomInOutlined } from "@ant-design/icons";
-import React, { useState } from "react";
+import React from "react";
 
 import { useTranslation } from "react-i18next";
 import { getTextUnitScreenshotMap } from "./utils/textUnitStatusVisualization";
@@ -21,14 +21,15 @@ interface TableDataType {
 interface TextUnitTableProps {
   branchTextUnitStatus?: BranchTextUnitStatusDto;
   branchStats?: BranchStatistics;
+  onPreviewImage?: (screenshotUrl: string) => void;
 }
 
 const TextUnitTable: React.FC<TextUnitTableProps> = ({
   branchTextUnitStatus,
   branchStats,
+  onPreviewImage,
 }) => {
   const { t } = useTranslation("branch");
-  const [imagePreview, setImagePreview] = useState<string | undefined>();
 
   const screenshotMap = getTextUnitScreenshotMap(branchStats!);
   const processedTextUnits = new Map<
@@ -85,7 +86,7 @@ const TextUnitTable: React.FC<TextUnitTableProps> = ({
         return (
           <Button
             icon={<ZoomInOutlined />}
-            onClick={() => setImagePreview(screenshot)}
+            onClick={() => screenshot && onPreviewImage?.(screenshot)}
             aria-label='Preview image'
           >
             {t("preview")}
@@ -108,14 +109,6 @@ const TextUnitTable: React.FC<TextUnitTableProps> = ({
 
   return (
     <div style={{ padding: "2rem" }}>
-      <Image
-        className='d-none'
-        src={imagePreview}
-        preview={{
-          open: Boolean(imagePreview),
-          onOpenChange: () => setImagePreview(undefined),
-        }}
-      />
       <Table<TableDataType> columns={columns} dataSource={tableData} />
     </div>
   );

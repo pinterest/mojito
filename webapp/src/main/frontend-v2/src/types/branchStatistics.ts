@@ -51,7 +51,7 @@ interface Branch {
   screenshots: Screenshot[];
 }
 
-interface BranchTextUnitStatistic {
+export interface BranchTextUnitStatistic {
   id: number;
   tmTextUnit: TmTextUnit;
   forTranslationCount: number;

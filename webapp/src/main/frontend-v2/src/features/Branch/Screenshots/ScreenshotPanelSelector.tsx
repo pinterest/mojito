@@ -1,0 +1,95 @@
+import React, { memo, useEffect, useMemo, useState } from "react";
+import type { RcFile } from "antd/es/upload";
+import { Image, Table, type TableProps } from "antd";
+import { useTranslation } from "react-i18next";
+
+interface ScreenshotPanelSelectorProps {
+  textUnits: { id: number; name: string }[];
+  file: RcFile;
+  textUnitToScreenshotNameMap: Map<number, string>;
+
+  onTextUnitScreenshotChange?: (textUnitIds: number[]) => void;
+}
+
+interface TableDataType {
+  key: number;
+  name: string;
+  screenshotName?: string | undefined;
+}
+
+const ScreenshotPanelSelector: React.FC<ScreenshotPanelSelectorProps> = ({
+  file,
+  textUnitToScreenshotNameMap,
+  textUnits,
+  onTextUnitScreenshotChange,
+}) => {
+  const { t } = useTranslation("branch");
+  const tableData: TableDataType[] = useMemo(
+    () =>
+      textUnits
+        .filter((textUnit) => {
+          return (
+            !textUnitToScreenshotNameMap.get(textUnit.id) ||
+            textUnitToScreenshotNameMap.get(textUnit.id) === file.name
+          );
+        })
+        .map((textUnit) => ({
+          key: textUnit.id,
+          name: textUnit.name,
+          screenshotName: textUnitToScreenshotNameMap.get(textUnit.id),
+        })),
+    [textUnits, textUnitToScreenshotNameMap, file],
+  );
+
+  const [selectedRowKeys, setSelectedRowKeys] = React.useState<number[]>([]);
+
+  const columns: TableProps<TableDataType>["columns"] = [
+    {
+      title: t("name"),
+      dataIndex: "name",
+      key: "name",
+    },
+    {
+      title: t("screenshot"),
+      dataIndex: "screenshot",
+      key: "screenshot",
+      width: "30%",
+      render: (_, record) => record.screenshotName || t("noScreenshot"),
+    },
+  ];
+
+  const [src, setSrc] = useState<string>("");
+
+  useEffect(() => {
+    if (!file || !(file instanceof Blob)) {
+      console.error("Not a Blob/File:", file);
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSrc(url);
+
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  return (
+    <div className='p-1'>
+      <Image src={src} />
+      <Table<TableDataType>
+        columns={columns}
+        dataSource={tableData}
+        pagination={{ pageSize: 5 }}
+        rowSelection={{
+          selectedRowKeys: selectedRowKeys,
+          onChange: (newSelectedRowKeys: React.Key[]) => {
+            setSelectedRowKeys(newSelectedRowKeys as number[]);
+            onTextUnitScreenshotChange?.(newSelectedRowKeys as number[]);
+          },
+        }}
+      />
+    </div>
+  );
+};
+
+export default memo(ScreenshotPanelSelector);

@@ -1,4 +1,4 @@
-import { Flex } from "antd";
+import { Flex, Image } from "antd";
 import React from "react";
 
 import BranchDetailCard from "./BranchDetailCard";
@@ -18,9 +18,14 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
   branchStats,
   branchTextUnitStatus,
 }) => {
+  const [imagePreview, setImagePreview] = React.useState<string | undefined>();
+
   return (
     <>
-      <BranchDetailCard branchStats={branchStats}></BranchDetailCard>
+      <BranchDetailCard
+        branchStats={branchStats}
+        onPreviewImage={setImagePreview}
+      />
 
       <Flex gap='large' orientation='vertical'>
         <div className='chart-container'>
@@ -34,10 +39,22 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
           />
         </div>
 
+        <Image
+          className='d-none'
+          src={imagePreview}
+          preview={{
+            open: Boolean(imagePreview),
+            onOpenChange: () => setImagePreview(undefined),
+          }}
+        />
+
         <div>
           <BranchTextUnitStatusTable
             branchTextUnitStatus={branchTextUnitStatus}
             branchStats={branchStats}
+            onPreviewImage={(url) => {
+              setImagePreview(url);
+            }}
           />
         </div>
       </Flex>

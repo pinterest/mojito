@@ -8,6 +8,7 @@ import WorkInProgress from "./components/WorkInProgress";
 import BranchPage from "@/features/Branch/BranchPage";
 
 const mojitoGreen = "#559745";
+const mojitoLightGreen = "#dbedd7";
 
 function App() {
   const queryClient = new QueryClient();
@@ -17,6 +18,16 @@ function App() {
       theme={{
         token: {
           colorPrimary: mojitoGreen,
+        },
+        components: {
+          Table: {
+            rowSelectedBg: mojitoLightGreen,
+            rowHoverBg: mojitoLightGreen,
+            rowSelectedHoverBg: mojitoLightGreen,
+          },
+          Select: {
+            optionSelectedBg: mojitoLightGreen,
+          },
         },
       }}
     >
