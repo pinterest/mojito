@@ -1,6 +1,6 @@
-import React, { memo, useEffect, useMemo, useState } from "react";
+import React, { memo, useMemo } from "react";
 import type { RcFile } from "antd/es/upload";
-import { Image, Table, type TableProps } from "antd";
+import { Empty, Table, type TableProps } from "antd";
 import { useTranslation } from "react-i18next";
 
 interface ScreenshotPanelSelectorProps {
@@ -58,28 +58,22 @@ const ScreenshotPanelSelector: React.FC<ScreenshotPanelSelectorProps> = ({
     },
   ];
 
-  const [src, setSrc] = useState<string>("");
-
-  useEffect(() => {
-    if (!file || !(file instanceof Blob)) {
-      console.error("Not a Blob/File:", file);
-      return;
-    }
-
-    const url = URL.createObjectURL(file);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSrc(url);
-
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
-
   return (
     <div className='p-1'>
-      <Image src={src} />
       <Table<TableDataType>
         columns={columns}
         dataSource={tableData}
         pagination={{ pageSize: 5 }}
+        locale={{
+          emptyText: () => {
+            return (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={t("noTextUnitsWithoutScreenshot")}
+              />
+            );
+          },
+        }}
         rowSelection={{
           selectedRowKeys: selectedRowKeys,
           onChange: (newSelectedRowKeys: React.Key[]) => {

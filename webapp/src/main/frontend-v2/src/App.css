@@ -29,3 +29,7 @@
 .d-none {
   display: none;
 }
+
+.ant-collapse >.ant-collapse-item >.ant-collapse-header {
+  align-items: center;
+}

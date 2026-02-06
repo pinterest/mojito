@@ -1,16 +1,18 @@
 import React, { memo, useMemo, useState } from "react";
-import { Collapse, type CollapseProps } from "antd";
+import { Button, Collapse, type CollapseProps } from "antd";
 import type { RcFile } from "antd/es/upload";
 
 import ScreenshotPanelSelector from "./ScreenshotPanelSelector";
 import { getTextUnitScreenshotMap } from "../utils/textUnitStatusVisualization";
 
 import type { BranchStatistics } from "@/types/branchStatistics";
+import { useTranslation } from "react-i18next";
 
 interface ScreenshotSelectorProps {
   branchStats?: BranchStatistics;
   files: RcFile[];
 
+  onPreviewImage?: (screenshot: RcFile) => void;
   onScreenshotTextUnitAssignment: (
     screenshotToTextUnitMap: Map<string, number[]>,
   ) => void;
@@ -20,7 +22,9 @@ const ScreenshotSelector: React.FC<ScreenshotSelectorProps> = ({
   branchStats,
   files,
   onScreenshotTextUnitAssignment,
+  onPreviewImage,
 }) => {
+  const { t } = useTranslation("branch");
   const textUnits: { id: number; name: string }[] = useMemo(() => {
     const uniqueTextUnits = new Map();
     (branchStats?.branchTextUnitStatistics ?? []).forEach((textUnitStat) => {
@@ -72,6 +76,16 @@ const ScreenshotSelector: React.FC<ScreenshotSelectorProps> = ({
   const collapseItems: CollapseProps["items"] = files.map((file) => ({
     key: file.name,
     label: file.name,
+    extra: (
+      <Button
+        onClick={(e) => {
+          e.stopPropagation();
+          onPreviewImage?.(file);
+        }}
+      >
+        {t("preview")}
+      </Button>
+    ),
     children: (
       <ScreenshotPanelSelector
         file={file}
@@ -85,7 +99,7 @@ const ScreenshotSelector: React.FC<ScreenshotSelectorProps> = ({
   }));
 
   return (
-    <div style={{ padding: "1rem" }}>
+    <div className='p-1'>
       <Collapse items={collapseItems}></Collapse>
     </div>
   );

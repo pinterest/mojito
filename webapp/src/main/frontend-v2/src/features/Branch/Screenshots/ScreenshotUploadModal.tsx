@@ -13,10 +13,9 @@ import { uploadScreenshot } from "@/api/uploadScreenshot";
 
 interface BranchDetailsProps {
   isOpen: boolean;
+  branchStats: BranchStatistics;
   setIsOpen: (open: boolean) => void;
   onPreviewImage?: (screenshotUrl: string) => void;
-
-  branchStats: BranchStatistics;
 }
 
 const ScreenshotUpload: React.FC<BranchDetailsProps> = ({
@@ -92,7 +91,6 @@ const ScreenshotUpload: React.FC<BranchDetailsProps> = ({
   };
 
   const handleDataStorage = (files: File[], map: Map<string, number[]>) => {
-    // console.log("Storing data in parent component", { files, map });
     dataToUpload.current = { files, screenshotToTextUnitMap: map };
   };
 

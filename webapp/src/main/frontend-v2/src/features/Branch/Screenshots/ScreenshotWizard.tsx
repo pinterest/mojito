@@ -1,6 +1,6 @@
-import { Form, Tabs, type TabsProps, Upload, type UploadProps } from "antd";
+import { Form, Image, Tabs, type TabsProps, Upload } from "antd";
 import { useTranslation } from "react-i18next";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { InboxOutlined } from "@ant-design/icons";
 import type { RcFile } from "antd/es/upload";
 
@@ -25,19 +25,25 @@ const ScreenshotWizard: React.FC<ScreenshotWizardProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<string>("ScreenshotUpload");
   const [files, setFiles] = useState<RcFile[]>([]);
+  const [previewImageSrc, setPreviewImageSrc] = useState<string>("");
+  const [previewFile, setPreviewFile] = useState<RcFile | null>(null);
 
   const { t } = useTranslation("branch");
 
-  const uploadProps: UploadProps = {
-    name: "file",
-    multiple: true,
-    onChange(info) {
-      setFiles(info.fileList.map((file) => file.originFileObj as RcFile));
-    },
-    beforeUpload: () => {
-      return false;
-    },
-  };
+  useEffect(() => {
+    if (!previewFile || !(previewFile instanceof Blob)) {
+      console.error("Not a Blob/File:", previewFile);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPreviewImageSrc("");
+      return;
+    }
+
+    const url = URL.createObjectURL(previewFile);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPreviewImageSrc(url);
+
+    return () => URL.revokeObjectURL(url);
+  }, [previewFile]);
 
   const items: TabsProps["items"] = [
     {
@@ -45,7 +51,18 @@ const ScreenshotWizard: React.FC<ScreenshotWizardProps> = ({
       label: t("screenshotUploadTabTitle"),
       children: (
         <>
-          <Dragger {...uploadProps}>
+          <Dragger
+            name='file'
+            multiple={true}
+            onChange={(info) => {
+              setFiles(
+                info.fileList.map((file) => file.originFileObj as RcFile),
+              );
+            }}
+            beforeUpload={() => {
+              return false;
+            }}
+          >
             <p className='ant-upload-drag-icon'>
               <InboxOutlined />
             </p>
@@ -63,6 +80,7 @@ const ScreenshotWizard: React.FC<ScreenshotWizardProps> = ({
           <ScreenshotSelector
             branchStats={branchStats}
             files={files}
+            onPreviewImage={setPreviewFile}
             onScreenshotTextUnitAssignment={(map) => {
               onDataChange?.(files, map);
             }}
@@ -74,7 +92,16 @@ const ScreenshotWizard: React.FC<ScreenshotWizardProps> = ({
 
   return (
     <Form>
-      <> {JSON.stringify(files)}</>
+      <Image
+        className='d-none'
+        src={previewImageSrc}
+        preview={{
+          open: Boolean(previewImageSrc),
+          onOpenChange: () => {
+            setPreviewFile(null);
+          },
+        }}
+      />
       <Tabs
         activeKey={activeTab}
         defaultActiveKey='ScreenshotUpload'
