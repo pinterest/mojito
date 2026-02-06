@@ -1,4 +1,4 @@
-import { Modal } from "antd";
+import { Button, Modal } from "antd";
 import React, { memo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -23,13 +23,14 @@ const ScreenshotUpload: React.FC<BranchDetailsProps> = ({
   setIsOpen,
   branchStats,
 }) => {
+  const { t } = useTranslation("branch");
   const [isUploading, setIsUploading] = useState(false);
   const dataToUpload = useRef<{
     files: File[];
     screenshotToTextUnitMap: Map<string, number[]>;
   }>({ files: [], screenshotToTextUnitMap: new Map() });
 
-  const { t } = useTranslation("branch");
+  const [canUpload, setCanUpload] = useState(false);
 
   const handleOk = async () => {
     setIsUploading(true);
@@ -92,16 +93,29 @@ const ScreenshotUpload: React.FC<BranchDetailsProps> = ({
 
   const handleDataStorage = (files: File[], map: Map<string, number[]>) => {
     dataToUpload.current = { files, screenshotToTextUnitMap: map };
+    setCanUpload(files.length > 0 && map.size > 0);
   };
 
   return (
     <Modal
       title={t("uploadScreenshot")}
       open={isOpen}
-      onOk={handleOk}
-      confirmLoading={isUploading}
       onCancel={handleCancel}
+      confirmLoading={isUploading}
       width='80vw'
+      footer={[
+        <Button key='back' onClick={handleCancel}>
+          {t("cancel")}
+        </Button>,
+        <Button
+          disabled={!canUpload}
+          key='submit'
+          type='primary'
+          onClick={handleOk}
+        >
+          {t("submit")}
+        </Button>,
+      ]}
     >
       <section className='m-1'>
         <ScreenshotWizard
