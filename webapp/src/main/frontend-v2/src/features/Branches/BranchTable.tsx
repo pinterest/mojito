@@ -1,6 +1,7 @@
 import React, { memo } from "react";
 import { Link } from "react-router";
-import { Table, type TableColumnsType } from "antd";
+import { useTranslation } from "react-i18next";
+import { ConfigProvider, Empty, Table, type TableColumnsType } from "antd";
 
 import type { BranchStatistics } from "@/types/branchStatistics";
 import { displayDate } from "@/utils/formatDate";
@@ -20,15 +21,17 @@ interface BranchTableProps {
 }
 
 const BranchTable: React.FC<BranchTableProps> = ({ isLoading, stats }) => {
+  const { t } = useTranslation("branch");
+
   const columns: TableColumnsType<BranchDatum> = [
     {
-      title: "Repository",
+      title: t("branches.repository"),
       dataIndex: "repo",
       key: "repo",
       sorter: (a, b) => a.repo.localeCompare(b.repo),
     },
     {
-      title: "Name",
+      title: t("branches.name"),
       dataIndex: "branchName",
       key: "branchName",
       render: (_, record) => (
@@ -41,7 +44,7 @@ const BranchTable: React.FC<BranchTableProps> = ({ isLoading, stats }) => {
       sorter: (a, b) => a.branchName.localeCompare(b.branchName),
     },
     {
-      title: "Created Date",
+      title: t("branches.createdDate"),
       dataIndex: "createdDate",
       key: "createdDate",
       sorter: (a, b) => {
@@ -51,13 +54,13 @@ const BranchTable: React.FC<BranchTableProps> = ({ isLoading, stats }) => {
       },
     },
     {
-      title: "Author",
+      title: t("branches.author"),
       dataIndex: "author",
       key: "author",
       sorter: (a, b) => a.author.localeCompare(b.author),
     },
     {
-      title: "Screenshot Count",
+      title: t("branches.screenshotCount"),
       dataIndex: "screenshotCount",
       key: "screenshotCount",
       sorter: (a, b) => (a.screenshotCount ?? 0) - (b.screenshotCount ?? 0),
@@ -78,17 +81,27 @@ const BranchTable: React.FC<BranchTableProps> = ({ isLoading, stats }) => {
   );
 
   return (
-    <Table
-      columns={columns}
-      dataSource={data}
-      loading={isLoading}
-      sortDirections={["descend", "ascend"]}
-      pagination={{
-        pageSize: 10,
-        showSizeChanger: true,
-        showQuickJumper: true,
+    <ConfigProvider
+      renderEmpty={() => {
+        return (
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={t("branches.noFilterResults")}
+          />
+        );
       }}
-    />
+    >
+      <Table
+        columns={columns}
+        dataSource={data}
+        loading={isLoading}
+        sortDirections={["descend", "ascend"]}
+        pagination={{
+          pageSize: 10,
+          showQuickJumper: true,
+        }}
+      />
+    </ConfigProvider>
   );
 };
 
