@@ -9,7 +9,7 @@ import {
   transformToChartData,
 } from "../utils/localeStatusChartUtils";
 
-import type { BranchTextUnitStatusDto } from "@/types/branchTextUnitStatus";
+import type { BranchTextUnitStatusDto } from "@/api/types/branchTextUnitStatus";
 
 export function useLocaleTextUnitStatusChartData(
   branchTextUnitStatus: BranchTextUnitStatusDto,

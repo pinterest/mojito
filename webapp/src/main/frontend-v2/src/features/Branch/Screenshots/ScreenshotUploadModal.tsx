@@ -105,7 +105,7 @@ const ScreenshotUpload: React.FC<BranchDetailsProps> = ({
     },
     onError: (error) => {
       console.error("Error uploading screenshots", error);
-      message.error(t("uploadFailed"));
+      message.error(t("schreenshotUploadFailed"));
     },
   });
 
@@ -125,14 +125,14 @@ const ScreenshotUpload: React.FC<BranchDetailsProps> = ({
 
   return (
     <Modal
-      title={t("uploadScreenshot")}
+      title={t("screenshotUploadModal.title")}
       open={isOpen}
       onCancel={handleCancel}
       confirmLoading={uploadScreenshotsMutation.status === "pending"}
       width='80vw'
       footer={[
         <Button key='back' onClick={handleCancel}>
-          {t("cancel")}
+          {t("screenshotUploadModal.cancel")}
         </Button>,
         <Button
           disabled={!canUpload}
@@ -141,7 +141,7 @@ const ScreenshotUpload: React.FC<BranchDetailsProps> = ({
           type='primary'
           onClick={handleOk}
         >
-          {t("submit")}
+          {t("screenshotUploadModal.submit")}
         </Button>,
       ]}
     >

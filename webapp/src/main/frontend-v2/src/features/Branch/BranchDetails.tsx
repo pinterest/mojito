@@ -6,8 +6,8 @@ import LocaleStatusBarChart from "./Charts/LocaleStatusBarChart";
 import TextUnitStatusDoughnut from "./Charts/TextUnitStatusDoughnut";
 import BranchTextUnitStatusTable from "./BranchTextUnitStatusTable";
 
+import type { BranchTextUnitStatusDto } from "@/api/types/branchTextUnitStatus";
 import type { BranchStatistics } from "@/types/branchStatistics";
-import type { BranchTextUnitStatusDto } from "@/types/branchTextUnitStatus";
 
 interface BranchDetailsProps {
   branchStats: BranchStatistics;

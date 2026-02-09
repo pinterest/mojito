@@ -39,7 +39,6 @@ const ScreenshotWizard: React.FC<ScreenshotWizardProps> = ({
     }
 
     const url = URL.createObjectURL(previewFile);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPreviewImageSrc(url);
 
     return () => URL.revokeObjectURL(url);
@@ -48,7 +47,7 @@ const ScreenshotWizard: React.FC<ScreenshotWizardProps> = ({
   const items: TabsProps["items"] = [
     {
       key: "ScreenshotUpload",
-      label: t("screenshotUploadTabTitle"),
+      label: t("screenshotUploadModal.screenshotUploadTabTitle"),
       children: (
         <>
           <Dragger
@@ -66,14 +65,16 @@ const ScreenshotWizard: React.FC<ScreenshotWizardProps> = ({
             <p className='ant-upload-drag-icon'>
               <InboxOutlined />
             </p>
-            <p className='ant-upload-text'>{t("screenshotDragUploadText")}</p>
+            <p className='ant-upload-text'>
+              {t("screenshotUploadModal.screenshotDragUploadText")}
+            </p>
           </Dragger>
         </>
       ),
     },
     {
       key: "TextUnitSelection",
-      label: t("textUnitSelectionTabTitle"),
+      label: t("screenshotUploadModal.textUnitSelectionTabTitle"),
       disabled: files.length === 0,
       children: (
         <>

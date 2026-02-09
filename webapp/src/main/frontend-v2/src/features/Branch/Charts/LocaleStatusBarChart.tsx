@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { useLocaleTextUnitStatusChartData } from "../hooks/useLocaleStatusChartData";
 
-import type { BranchTextUnitStatusDto } from "@/types/branchTextUnitStatus";
+import type { BranchTextUnitStatusDto } from "@/api/types/branchTextUnitStatus";
 import BarChartGraph from "@/components/visualization/BarChartGraph";
 
 interface BranchDetailsProps {
@@ -12,7 +12,7 @@ interface BranchDetailsProps {
   className?: string;
 }
 
-const TextUnitStatusChart: React.FC<BranchDetailsProps> = ({
+const LocaleStatusBarChart: React.FC<BranchDetailsProps> = ({
   branchTextUnitStatus,
   className,
 }) => {
@@ -27,7 +27,7 @@ const TextUnitStatusChart: React.FC<BranchDetailsProps> = ({
         style={{ textAlign: "center" }}
         className='text-center'
       >
-        {t("textUnitsByStatus")}
+        {t("graph.localeTextUnitBreakdown")}
       </Typography.Title>
 
       <BarChartGraph
@@ -40,4 +40,4 @@ const TextUnitStatusChart: React.FC<BranchDetailsProps> = ({
   );
 };
 
-export default memo(TextUnitStatusChart);
+export default memo(LocaleStatusBarChart);

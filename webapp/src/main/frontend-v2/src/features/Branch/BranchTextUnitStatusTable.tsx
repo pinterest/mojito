@@ -1,13 +1,14 @@
 import { Button, Table, type TableProps } from "antd";
 import { ZoomInOutlined } from "@ant-design/icons";
 import React from "react";
-
 import { useTranslation } from "react-i18next";
+
 import { getTextUnitScreenshotMap } from "./utils/textUnitStatusVisualization";
+
 import type {
   BranchTextUnitStatusDto,
   TextUnitStatusDto,
-} from "@/types/branchTextUnitStatus";
+} from "@/api/types/branchTextUnitStatus";
 import type { BranchStatistics } from "@/types/branchStatistics";
 
 interface TableDataType {
@@ -71,13 +72,13 @@ const TextUnitTable: React.FC<TextUnitTableProps> = ({
 
   const columns: TableProps<TableDataType>["columns"] = [
     {
-      title: t("name"),
+      title: t("textunit.name"),
       dataIndex: "name",
       key: "name",
       width: "60%",
     },
     {
-      title: t("screenshot"),
+      title: t("textunit.screenshot"),
       dataIndex: "screenshot",
       key: "screenshot",
       render: (screenshot: string | undefined) => {
@@ -89,14 +90,14 @@ const TextUnitTable: React.FC<TextUnitTableProps> = ({
             onClick={() => screenshot && onPreviewImage?.(screenshot)}
             aria-label='Preview image'
           >
-            {t("preview")}
+            {t("preview.screenshot")}
           </Button>
         );
       },
       width: "20%",
     },
     {
-      title: t("translatedCount"),
+      title: t("textunit.translatedCount"),
       key: "translatedCount",
       width: "20%",
       render: (_, record) => (

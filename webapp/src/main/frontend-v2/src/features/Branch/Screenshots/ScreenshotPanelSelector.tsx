@@ -45,16 +45,17 @@ const ScreenshotPanelSelector: React.FC<ScreenshotPanelSelectorProps> = ({
 
   const columns: TableProps<TableDataType>["columns"] = [
     {
-      title: t("name"),
+      title: t("textunit.name"),
       dataIndex: "name",
       key: "name",
     },
     {
-      title: t("screenshot"),
+      title: t("textunit.screenshot"),
       dataIndex: "screenshot",
       key: "screenshot",
       width: "30%",
-      render: (_, record) => record.screenshotName || t("noScreenshot"),
+      render: (_, record) =>
+        record.screenshotName || t("textunit.noScreenshot"),
     },
   ];
 
@@ -69,7 +70,9 @@ const ScreenshotPanelSelector: React.FC<ScreenshotPanelSelectorProps> = ({
             return (
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description={t("noTextUnitsWithoutScreenshot")}
+                description={t(
+                  "screenshotUploadModal.noTextUnitsWithoutScreenshot",
+                )}
               />
             );
           },

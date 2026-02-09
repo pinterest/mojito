@@ -1,4 +1,5 @@
 import React, { memo, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button, Collapse, type CollapseProps } from "antd";
 import type { RcFile } from "antd/es/upload";
 
@@ -6,7 +7,6 @@ import ScreenshotPanelSelector from "./ScreenshotPanelSelector";
 import { getTextUnitScreenshotMap } from "../utils/textUnitStatusVisualization";
 
 import type { BranchStatistics } from "@/types/branchStatistics";
-import { useTranslation } from "react-i18next";
 
 interface ScreenshotSelectorProps {
   branchStats?: BranchStatistics;
@@ -83,7 +83,7 @@ const ScreenshotSelector: React.FC<ScreenshotSelectorProps> = ({
           onPreviewImage?.(file);
         }}
       >
-        {t("preview")}
+        {t("preview.screenshot")}
       </Button>
     ),
     children: (

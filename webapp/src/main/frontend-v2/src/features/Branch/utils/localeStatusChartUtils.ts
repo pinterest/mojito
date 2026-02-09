@@ -1,5 +1,5 @@
 import type { TFunction } from "i18next";
-import type { BranchTextUnitStatusDto } from "@/types/branchTextUnitStatus";
+import type { BranchTextUnitStatusDto } from "@/api/types/branchTextUnitStatus";
 import type { TextUnitStatus } from "@/types/textUnitStatus";
 import {
   getColorForTextUnitStatus,
