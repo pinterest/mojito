@@ -1,13 +1,9 @@
 import React from "react";
 import { DatePicker, Flex, Input, Select } from "antd";
 import dayjs from "dayjs";
+import { useTranslation } from "react-i18next";
 
 export type StatusFilter = "empty" | "deleted";
-
-const branchStatusOptions: { label: string; value: StatusFilter }[] = [
-  { label: "Include empty", value: "empty" },
-  { label: "Include deleted", value: "deleted" },
-];
 
 export interface BranchFiltersProps {
   queryText: string;
@@ -32,10 +28,17 @@ const BranchFilters: React.FC<BranchFiltersProps> = ({
   onCreatedBeforeChange,
   onCreatedAfterChange,
 }) => {
+  const { t } = useTranslation("branch");
+
+  const branchStatusOptions: { label: string; value: StatusFilter }[] = [
+    { label: t("branches.status.empty"), value: "empty" },
+    { label: t("branches.status.deleted"), value: "deleted" },
+  ];
+
   return (
-    <Flex gap={16} className='m-1' justify='space-between'>
+    <Flex gap={16} className='m-1' justify='space-between' wrap={true}>
       <Input.Search
-        placeholder='Search by user name or branch name'
+        placeholder={t("branches.search")}
         value={queryText}
         loading={isLoading}
         allowClear={true}
@@ -43,15 +46,9 @@ const BranchFilters: React.FC<BranchFiltersProps> = ({
         onChange={(e) => onQueryTextChange(e.target.value)}
       />
 
-      <Flex
-        gap={8}
-        align='center'
-        justify='flex-end'
-        wrap={true}
-        style={{ flexGrow: 1 }}
-      >
+      <Flex gap={8} align='center' wrap={true} style={{ flexGrow: 1 }}>
         <Select
-          placeholder='Branch status'
+          placeholder={t("branches.status")}
           allowClear={true}
           mode='multiple'
           style={{ minWidth: "10rem" }}
@@ -60,7 +57,7 @@ const BranchFilters: React.FC<BranchFiltersProps> = ({
           options={branchStatusOptions}
         />
         <DatePicker
-          placeholder='Created before'
+          placeholder={t("branches.createdBefore")}
           style={{ width: "8rem" }}
           allowClear={true}
           value={createdBefore ? dayjs(createdBefore) : null}
@@ -74,7 +71,7 @@ const BranchFilters: React.FC<BranchFiltersProps> = ({
           }}
         />
         <DatePicker
-          placeholder='Created after'
+          placeholder={t("branches.createdAfter")}
           style={{ width: "8rem" }}
           value={createdAfter ? dayjs(createdAfter) : null}
           allowClear={true}

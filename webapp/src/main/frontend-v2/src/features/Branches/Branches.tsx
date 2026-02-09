@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Typography } from "antd";
 
@@ -17,6 +18,7 @@ const BranchesPage: React.FC = () => {
   const [createdAfter, setCreatedAfter] = useState<Date | null>(null);
 
   const queryTextDebounced = useDebouncedValue(queryText, 300);
+  const { t } = useTranslation("branch");
 
   const branchStatsQuery = useQuery<Page<BranchStatistics>>({
     queryKey: [
@@ -45,7 +47,7 @@ const BranchesPage: React.FC = () => {
 
   return (
     <div className='m-1'>
-      <Typography.Title level={3}>Branches</Typography.Title>
+      <Typography.Title level={3}>{t("branches.title")}</Typography.Title>
 
       <BranchFilters
         queryText={queryText}
