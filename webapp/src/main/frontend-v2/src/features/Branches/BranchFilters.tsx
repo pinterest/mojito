@@ -36,7 +36,12 @@ const BranchFilters: React.FC<BranchFiltersProps> = ({
   ];
 
   return (
-    <Flex gap={16} className='m-1' justify='space-between' wrap={true}>
+    <Flex
+      gap={16}
+      style={{ marginBottom: "1rem" }}
+      justify='space-between'
+      wrap={true}
+    >
       <Input.Search
         placeholder={t("branches.search")}
         value={queryText}
