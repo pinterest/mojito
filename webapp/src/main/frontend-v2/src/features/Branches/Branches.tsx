@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Flex, Input, Typography } from "antd";
+import { Typography } from "antd";
 
 import BranchTable from "./BranchTable";
+import BranchFilters, { type StatusFilter } from "./BranchFilters";
 
 import { getBranchStatistics } from "@/api/getBranchStatistics";
 import type { BranchStatistics } from "@/types/branchStatistics";
@@ -11,15 +12,33 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 const BranchesPage: React.FC = () => {
   const [queryText, setQueryText] = useState(() => APP_CONFIG.user.username);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter[]>([]);
+  const [createdBefore, setCreatedBefore] = useState<Date | null>(null);
+  const [createdAfter, setCreatedAfter] = useState<Date | null>(null);
 
   const queryTextDebounced = useDebouncedValue(queryText, 300);
 
   const branchStatsQuery = useQuery<Page<BranchStatistics>>({
-    queryKey: ["branchStatistics", { search: queryTextDebounced }],
-    queryFn: () =>
-      getBranchStatistics({
+    queryKey: [
+      "branchStatistics",
+      {
         search: queryTextDebounced,
-      }),
+        statusFilter,
+        createdBefore: createdBefore?.getTime(),
+        createdAfter: createdAfter?.getTime(),
+      },
+    ],
+    queryFn: () => {
+      const isEmptyIncluded = statusFilter.includes("empty");
+      const isDeletedIncluded = statusFilter.includes("deleted");
+      return getBranchStatistics({
+        search: queryTextDebounced,
+        deleted: isDeletedIncluded,
+        empty: isEmptyIncluded,
+        createdBefore: createdBefore || undefined,
+        createdAfter: createdAfter || undefined,
+      });
+    },
   });
 
   const isLoading = branchStatsQuery.isLoading || branchStatsQuery.isFetching;
@@ -28,14 +47,17 @@ const BranchesPage: React.FC = () => {
     <div className='m-1'>
       <Typography.Title level={3}>Branches</Typography.Title>
 
-      <Flex gap={16} className='m-1' justify='space-between'>
-        <Input.Search
-          placeholder='Search by user name or branch name'
-          value={queryText}
-          onChange={(e) => setQueryText(e.target.value)}
-          loading={isLoading}
-        />
-      </Flex>
+      <BranchFilters
+        queryText={queryText}
+        isLoading={isLoading}
+        statusFilter={statusFilter}
+        createdBefore={createdBefore}
+        createdAfter={createdAfter}
+        onQueryTextChange={setQueryText}
+        onStatusFilterChange={setStatusFilter}
+        onCreatedBeforeChange={setCreatedBefore}
+        onCreatedAfterChange={setCreatedAfter}
+      />
 
       <BranchTable
         isLoading={isLoading}
