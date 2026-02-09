@@ -41,7 +41,10 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
 
         <Image
           className='d-none'
-          src={imagePreview}
+          // Use absolute path to ensure requests hits the API instead of trying to load from the public folder
+          src={
+            imagePreview?.startsWith("/") ? imagePreview : `/${imagePreview}`
+          }
           preview={{
             open: Boolean(imagePreview),
             onOpenChange: () => setImagePreview(undefined),
