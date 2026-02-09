@@ -5,12 +5,14 @@ export async function getBranchStatistics({
   branchId,
   createdByUserName,
   deleted,
+  search,
   page = 0,
   size = 10,
 }: {
   branchId?: number;
   createdByUserName?: string;
   deleted?: boolean;
+  search?: string;
   page?: number;
   size?: number;
 }): Promise<Page<BranchStatistics>> {
@@ -24,6 +26,9 @@ export async function getBranchStatistics({
   }
   if (deleted !== undefined) {
     searchParams.append("deleted", deleted.toString());
+  }
+  if (search) {
+    searchParams.append("search", search);
   }
 
   const response = await fetch(
