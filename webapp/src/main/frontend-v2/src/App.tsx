@@ -5,6 +5,7 @@ import { App as AntApp, ConfigProvider } from "antd";
 import "./App.css";
 import Navbar from "./components/navigation/Navbar";
 import WorkInProgress from "./components/WorkInProgress";
+import BranchesPage from "./features/Branches/Branches";
 import BranchPage from "@/features/Branch/BranchPage";
 
 const mojitoGreen = "#559745";
@@ -38,6 +39,7 @@ function App() {
           <Routes>
             <Route path='/' element={<WorkInProgress />} />
             <Route path='/branch' element={<BranchPage />} />
+            <Route path='/branches' element={<BranchesPage />} />
           </Routes>
         </QueryClientProvider>
       </AntApp>

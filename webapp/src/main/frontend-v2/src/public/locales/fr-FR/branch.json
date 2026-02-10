@@ -30,5 +30,18 @@
   "screenshotUploadModal.submit": "Importer",
   "screenshotUploadModal.noTextUnitsWithoutScreenshot": "Aucun texte sans capture d'écran",
   "screenshotUploadModal.screenshotDragUploadText": "Glissez et déposez les fichiers pour les importer",
-  "schreenshotUploadFailed": "Échec de l'importation des captures d'écran"
+  "schreenshotUploadFailed": "Échec de l'importation des captures d'écran",
+  "branches.search": "Rechercher par nom de branche ou auteur",
+  "branches.name": "Nom",
+  "branches.createdDate": "Date de création",
+  "branches.author": "Auteur",
+  "branches.screenshotCount": "Nombre de captures d'écran",
+  "branches.title": "Branches",
+  "branches.repository": "Dépôt",
+  "branches.status": "Statut",
+  "branches.createdBefore": "Créé avant",
+  "branches.createdAfter": "Créé après",
+  "branches.status.empty": "Inclure vide",
+  "branches.status.deleted": "Inclure supprimé",
+  "branches.noFilterResults": "Aucune branche ne correspond aux filtres actuels"
 }
