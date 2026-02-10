@@ -12,11 +12,14 @@ import type { BranchStatistics } from "@/types/branchStatistics";
 interface BranchDetailsProps {
   branchStats: BranchStatistics;
   branchTextUnitStatus: BranchTextUnitStatusDto;
+
+  onBranchDelete?: (branchId: number, repositoryId: number) => void;
 }
 
 const BranchDetails: React.FC<BranchDetailsProps> = ({
   branchStats,
   branchTextUnitStatus,
+  onBranchDelete,
 }) => {
   const [imagePreview, setImagePreview] = React.useState<string | undefined>();
 
@@ -25,6 +28,7 @@ const BranchDetails: React.FC<BranchDetailsProps> = ({
       <BranchDetailCard
         branchStats={branchStats}
         onPreviewImage={setImagePreview}
+        onBranchDelete={onBranchDelete}
       />
 
       <Flex gap='large' orientation='vertical'>
