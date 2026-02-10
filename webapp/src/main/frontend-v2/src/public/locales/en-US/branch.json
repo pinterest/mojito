@@ -30,5 +30,18 @@
   "screenshotUploadModal.submit": "Submit",
   "screenshotUploadModal.noTextUnitsWithoutScreenshot": "No text units without screenshots",
   "screenshotUploadModal.screenshotDragUploadText": "Drag and drop files to upload",
-  "schreenshotUploadFailed": "Screenshot upload failed"
+  "schreenshotUploadFailed": "Screenshot upload failed",
+  "branches.search": "Search by branch name or author",
+  "branches.name": "Name",
+  "branches.createdDate": "Created Date",
+  "branches.author": "Author",
+  "branches.screenshotCount": "Screenshot Count",
+  "branches.title": "Branches",
+  "branches.repository": "Repository",
+  "branches.status": "Status",
+  "branches.createdBefore": "Created Before",
+  "branches.createdAfter": "Created After",
+  "branches.status.empty": "Include empty",
+  "branches.status.deleted": "Include deleted",
+  "branches.noFilterResults": "No branches match the current filters"
 }

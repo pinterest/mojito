@@ -5,14 +5,22 @@ export async function getBranchStatistics({
   branchId,
   createdByUserName,
   deleted,
+  search,
+  empty,
+  createdBefore,
+  createdAfter,
   page = 0,
   size = 10,
 }: {
   branchId?: number;
   createdByUserName?: string;
   deleted?: boolean;
+  search?: string;
   page?: number;
   size?: number;
+  empty?: boolean;
+  createdBefore?: Date;
+  createdAfter?: Date;
 }): Promise<Page<BranchStatistics>> {
   const searchParams = new URLSearchParams();
   searchParams.append("branchId", branchId ? branchId.toString() : "");
@@ -24,6 +32,18 @@ export async function getBranchStatistics({
   }
   if (deleted !== undefined) {
     searchParams.append("deleted", deleted.toString());
+  }
+  if (search) {
+    searchParams.append("search", search);
+  }
+  if (empty !== undefined) {
+    searchParams.append("empty", empty.toString());
+  }
+  if (createdBefore) {
+    searchParams.append("createdBefore", createdBefore.toISOString());
+  }
+  if (createdAfter) {
+    searchParams.append("createdAfter", createdAfter.toISOString());
   }
 
   const response = await fetch(
