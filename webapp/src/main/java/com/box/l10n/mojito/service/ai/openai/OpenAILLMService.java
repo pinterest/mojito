@@ -5,11 +5,10 @@ import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.Cha
 import static com.box.l10n.mojito.openai.OpenAIClient.ChatCompletionsRequest.chatCompletionsRequest;
 import static com.box.l10n.mojito.service.ai.openai.OpenAIPromptContextMessageType.SYSTEM;
 import static com.box.l10n.mojito.service.ai.openai.OpenAIPromptContextMessageType.USER;
-import static java.util.Optional.ofNullable;
 
 import com.box.l10n.mojito.entity.AIPrompt;
 import com.box.l10n.mojito.entity.AIPromptContextMessage;
-import com.box.l10n.mojito.entity.PromptTextUnitType;
+import com.box.l10n.mojito.entity.AIPromptToPromptTextUnitTypeChecker;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.json.ObjectMapper;
@@ -19,6 +18,7 @@ import com.box.l10n.mojito.rest.ai.AICheckRequest;
 import com.box.l10n.mojito.rest.ai.AICheckResponse;
 import com.box.l10n.mojito.rest.ai.AICheckResult;
 import com.box.l10n.mojito.rest.ai.AIException;
+import com.box.l10n.mojito.service.ai.AIPromptToPromptTextUnitTypeCheckerRepository;
 import com.box.l10n.mojito.service.ai.AIStringCheckRepository;
 import com.box.l10n.mojito.service.ai.LLMPromptService;
 import com.box.l10n.mojito.service.ai.LLMService;
@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -69,6 +70,9 @@ public class OpenAILLMService implements LLMService {
   @Autowired LLMPromptService LLMPromptService;
 
   @Autowired MeterRegistry meterRegistry;
+
+  @Autowired
+  AIPromptToPromptTextUnitTypeCheckerRepository aiPromptToPromptTextUnitTypeCheckerRepository;
 
   @Value("${l10n.ai.checks.persistResults:true}")
   boolean persistResults;
@@ -362,13 +366,21 @@ public class OpenAILLMService implements LLMService {
   }
 
   private boolean hasPromptTextUnitType(AssetExtractorTextUnit textUnit, AIPrompt prompt) {
-    boolean result =
-        ofNullable(prompt.getPromptTextUnitType())
-            .map(PromptTextUnitType::getChecker)
-            .map(checker -> checker.test(textUnit))
-            .orElse(true);
-    if (!result) {
-      logger.info("Skipping text unit {} for prompt id {}.", textUnit.getName(), prompt.getId());
+    Optional<AIPromptToPromptTextUnitTypeChecker> aiPromptToPromptTexUnitTypeChecker =
+        this.aiPromptToPromptTextUnitTypeCheckerRepository.findById(prompt.getId());
+    boolean result = true;
+    if (aiPromptToPromptTexUnitTypeChecker.isPresent()) {
+      result =
+          aiPromptToPromptTexUnitTypeChecker
+              .filter(Predicate.not(obj -> false))
+              .map(AIPromptToPromptTextUnitTypeChecker::getPromptTextUnitTypeChecker)
+              .map(
+                  promptTextUnitTypeChecker ->
+                      promptTextUnitTypeChecker.hasValidTextUnitType(textUnit))
+              .orElse(true);
+      if (!result) {
+        logger.info("Skipping text unit {} for prompt id {}.", textUnit.getName(), prompt.getId());
+      }
     }
     return result;
   }

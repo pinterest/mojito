@@ -2,8 +2,6 @@ package com.box.l10n.mojito.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -57,10 +55,6 @@ public class AIPrompt extends BaseEntity {
 
   @Column(name = "json_response_key")
   private String jsonResponseKey;
-
-  @Enumerated(EnumType.STRING)
-  @Column(name = "prompt_text_unit_type")
-  private PromptTextUnitType promptTextUnitType;
 
   public String getModelName() {
     return modelName;
@@ -148,13 +142,5 @@ public class AIPrompt extends BaseEntity {
 
   public void setJsonResponseKey(String jsonResponseKey) {
     this.jsonResponseKey = jsonResponseKey;
-  }
-
-  public PromptTextUnitType getPromptTextUnitType() {
-    return promptTextUnitType;
-  }
-
-  public void setPromptTextUnitType(PromptTextUnitType promptTextUnitType) {
-    this.promptTextUnitType = promptTextUnitType;
   }
 }

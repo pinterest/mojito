@@ -1,13 +1,15 @@
 package com.box.l10n.mojito.service.ai.openai;
 
+import static java.util.Optional.of;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.box.l10n.mojito.entity.AIPrompt;
 import com.box.l10n.mojito.entity.AIPromptContextMessage;
+import com.box.l10n.mojito.entity.AIPromptToPromptTextUnitTypeChecker;
 import com.box.l10n.mojito.entity.AIPromptType;
 import com.box.l10n.mojito.entity.PluralForm;
-import com.box.l10n.mojito.entity.PromptTextUnitType;
+import com.box.l10n.mojito.entity.PromptTextUnitTypeChecker;
 import com.box.l10n.mojito.entity.PromptType;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnit;
@@ -17,6 +19,7 @@ import com.box.l10n.mojito.openai.OpenAIClient;
 import com.box.l10n.mojito.rest.ai.AICheckRequest;
 import com.box.l10n.mojito.rest.ai.AICheckResponse;
 import com.box.l10n.mojito.rest.ai.AIException;
+import com.box.l10n.mojito.service.ai.AIPromptToPromptTextUnitTypeCheckerRepository;
 import com.box.l10n.mojito.service.ai.AIStringCheckRepository;
 import com.box.l10n.mojito.service.ai.LLMPromptService;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
@@ -48,6 +51,8 @@ class OpenAILLMServiceTest {
   @Mock LLMPromptService promptService;
 
   @Mock MeterRegistry meterRegistry;
+
+  @Mock AIPromptToPromptTextUnitTypeCheckerRepository aiPromptToPromptTextUnitTypeCheckerRepository;
 
   @Spy ObjectMapper objectMapper;
 
@@ -1325,7 +1330,6 @@ class OpenAILLMServiceTest {
     prompt.setModelName("gtp-3.5-turbo");
     prompt.setPromptTemperature(0.0F);
     prompt.setContextMessages(new ArrayList<>());
-    prompt.setPromptTextUnitType(PromptTextUnitType.SINGULAR);
     List<AIPrompt> prompts = List.of(prompt);
     Repository repository = new Repository();
     repository.setName("testRepo");
@@ -1333,6 +1337,11 @@ class OpenAILLMServiceTest {
     when(repositoryRepository.findByName("testRepo")).thenReturn(repository);
     when(promptService.getPromptsByRepositoryAndPromptType(eq(repository), any(PromptType.class)))
         .thenReturn(prompts);
+    when(this.aiPromptToPromptTextUnitTypeCheckerRepository.findById(prompt.getId()))
+        .thenReturn(
+            of(
+                new AIPromptToPromptTextUnitTypeChecker(
+                    prompt.getId(), PromptTextUnitTypeChecker.SINGULAR)));
     List<OpenAIClient.ChatCompletionsResponse.Choice> choices =
         List.of(
             new OpenAIClient.ChatCompletionsResponse.Choice(
@@ -1364,7 +1373,6 @@ class OpenAILLMServiceTest {
     prompt.setModelName("gtp-3.5-turbo");
     prompt.setPromptTemperature(0.0F);
     prompt.setContextMessages(new ArrayList<>());
-    prompt.setPromptTextUnitType(PromptTextUnitType.PLURAL);
     List<AIPrompt> prompts = List.of(prompt);
     Repository repository = new Repository();
     repository.setName("testRepo");
@@ -1372,6 +1380,11 @@ class OpenAILLMServiceTest {
     when(repositoryRepository.findByName("testRepo")).thenReturn(repository);
     when(promptService.getPromptsByRepositoryAndPromptType(eq(repository), any(PromptType.class)))
         .thenReturn(prompts);
+    when(this.aiPromptToPromptTextUnitTypeCheckerRepository.findById(prompt.getId()))
+        .thenReturn(
+            of(
+                new AIPromptToPromptTextUnitTypeChecker(
+                    prompt.getId(), PromptTextUnitTypeChecker.PLURAL)));
     List<OpenAIClient.ChatCompletionsResponse.Choice> choices =
         List.of(
             new OpenAIClient.ChatCompletionsResponse.Choice(

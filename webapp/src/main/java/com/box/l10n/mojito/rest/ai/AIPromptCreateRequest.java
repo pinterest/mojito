@@ -1,6 +1,6 @@
 package com.box.l10n.mojito.rest.ai;
 
-import com.box.l10n.mojito.entity.PromptTextUnitType;
+import com.box.l10n.mojito.entity.PromptTextUnitTypeChecker;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -15,7 +15,7 @@ public class AIPromptCreateRequest {
   private String promptType;
   private boolean isJsonResponse;
   private String jsonResponseKey;
-  private PromptTextUnitType promptTextUnitType;
+  private PromptTextUnitTypeChecker promptTextUnitTypeChecker;
 
   public boolean isDeleted() {
     return deleted;
@@ -89,11 +89,11 @@ public class AIPromptCreateRequest {
     this.jsonResponseKey = jsonResponseKey;
   }
 
-  public PromptTextUnitType getPromptTextUnitType() {
-    return promptTextUnitType;
+  public PromptTextUnitTypeChecker getPromptTexUnitTypeChecker() {
+    return promptTextUnitTypeChecker;
   }
 
-  public void setPromptTextUnitType(PromptTextUnitType promptTextUnitType) {
-    this.promptTextUnitType = promptTextUnitType;
+  public void setPromptTexUnitTypeChecker(PromptTextUnitTypeChecker promptTextUnitTypeChecker) {
+    this.promptTextUnitTypeChecker = promptTextUnitTypeChecker;
   }
 }

@@ -2826,11 +2826,12 @@ components:
         promptTemperature:
           type: number
           format: float
-        promptTextUnitType:
+        promptTexUnitTypeChecker:
           type: string
           enum:
           - SINGULAR
           - PLURAL
+          - ALL
         promptType:
           type: string
         repositoryName:

@@ -96,8 +96,8 @@ public class CreateAIPromptCommand extends Command {
       throw new CommandException("jsonResponseKey is required when isJsonResponse is true");
     }
     aiPromptCreateRequest.setJsonResponseKey(jsonResponseKey);
-    aiPromptCreateRequest.setPromptTextUnitType(
-        AIPromptCreateRequest.PromptTextUnitTypeEnum.fromValue(this.promptTextUnitType));
+    aiPromptCreateRequest.setPromptTexUnitTypeChecker(
+        AIPromptCreateRequest.PromptTexUnitTypeCheckerEnum.fromValue(this.promptTextUnitType));
     long promptId = aiServiceClient.createPrompt(aiPromptCreateRequest);
     consoleWriter.newLine().a("Prompt created with id: " + promptId).println();
   }
