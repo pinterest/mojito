@@ -8,7 +8,7 @@ import {
 } from "../utils/textUnitStatusVisualization";
 
 import { extractAvailableStatuses } from "../utils/localeStatusChartUtils";
-import type { BranchTextUnitStatusDto } from "@/types/branchTextUnitStatus";
+import type { BranchTextUnitStatusDto } from "@/api/types/branchTextUnitStatus";
 import type { TextUnitStatus } from "@/types/textUnitStatus";
 import DoughnutGraph from "@/components/visualization/DoughnutGraph";
 
@@ -41,7 +41,7 @@ const TextUnitStatusChart: React.FC<BranchDetailsProps> = ({
   return (
     <div className={className}>
       <Typography.Title level={4} className='text-center'>
-        {t("textUnitsByStatus")}
+        {t("graph.localeTextUnitBreakdown")}
       </Typography.Title>
 
       <DoughnutGraph
@@ -51,7 +51,7 @@ const TextUnitStatusChart: React.FC<BranchDetailsProps> = ({
           ),
           datasets: [
             {
-              label: t("translationStatus"),
+              label: t("graph.translationStatus"),
               data: sortedStatuses.map(
                 (status) => textUnitStatusCountMap[status] || 0,
               ),

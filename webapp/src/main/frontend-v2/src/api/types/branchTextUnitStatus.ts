@@ -1,4 +1,4 @@
-import type { TextUnitStatus } from "./textUnitStatus";
+import type { TextUnitStatus } from "@/types/textUnitStatus";
 
 export interface TextUnitStatusDto {
   textUnitId: number;

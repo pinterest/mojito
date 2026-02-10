@@ -6,11 +6,11 @@ import "./index.css";
 
 import { getBranchStatistics } from "@/api/getBranchStatistics";
 import { getBranchTextUnitStatus } from "@/api/getBranchTextUnitStatus";
+import type { BranchTextUnitStatusDto } from "@/api/types/branchTextUnitStatus";
 import BranchDetails from "@/features/Branch/BranchDetails";
 import { useBranchName } from "@/hooks/useBranchName";
 import { useRepoName } from "@/hooks/useRepoName";
 import type { BranchStatistics } from "@/types/branchStatistics";
-import type { BranchTextUnitStatusDto } from "@/types/branchTextUnitStatus";
 import type { Page } from "@/types/page";
 
 const BranchPage: React.FC = () => {
