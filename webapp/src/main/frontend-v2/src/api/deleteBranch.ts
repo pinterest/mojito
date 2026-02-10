@@ -11,7 +11,6 @@ export async function deleteBranch({
     `/api/repositories/${encodeURIComponent(repositoryId)}/branches?branchId=${encodeURIComponent(branchId)}`,
     {
       method: "DELETE",
-      body: JSON.stringify({ branchId, repositoryId }),
       headers: {
         "X-CSRF-TOKEN": APP_CONFIG.csrfToken,
       },
