@@ -12,35 +12,47 @@ export const TEXT_UNIT_STATUS_TO_VISUAL_DETAIL: Record<
   TextUnitStatusVisualDetail
 > = {
   // Good states
-  APPROVED: { color: "#76e67aff", i18nKey: "approved", order: 1 },
-  OVERRIDDEN: { color: "#4caf50", i18nKey: "overridden", order: 2 },
+  APPROVED: {
+    color: "#76e67aff",
+    i18nKey: "textunit.status.approved",
+    order: 1,
+  },
+  OVERRIDDEN: {
+    color: "#4caf50",
+    i18nKey: "textunit.status.overridden",
+    order: 2,
+  },
   // Info states
   MT_REVIEW_NEEDED: {
     color: "#1b4bcf",
-    i18nKey: "mtReviewNeeded",
+    i18nKey: "textunit.status.mtReviewNeeded",
     order: 3,
   },
   MT_TRANSLATED: {
     color: "#2ebec3",
-    i18nKey: "mtTranslated",
+    i18nKey: "textunit.status.mtTranslated",
     order: 4,
   },
-  REVIEW_NEEDED: { color: "#3155ba", i18nKey: "reviewNeeded", order: 5 },
+  REVIEW_NEEDED: {
+    color: "#3155ba",
+    i18nKey: "textunit.status.reviewNeeded",
+    order: 5,
+  },
   // Failure states
   MANUALLY_REJECTED: {
     color: "#ff9800",
-    i18nKey: "manuallyRejected",
+    i18nKey: "textunit.status.manuallyRejected",
     order: 6,
   },
   INTEGRITY_FAILURE: {
     color: "#f44336",
-    i18nKey: "integrityFailure",
+    i18nKey: "textunit.status.integrityFailure",
     order: 7,
   },
   // No progress state
   TRANSLATION_NEEDED: {
     color: "#a6a6a6ff",
-    i18nKey: "translationNeeded",
+    i18nKey: "textunit.status.translationNeeded",
     order: 8,
   },
 };

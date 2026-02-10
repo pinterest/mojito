@@ -1,7 +1,8 @@
 import { Alert, Button, Card, Descriptions, Flex, Progress } from "antd";
-import React, { memo, useMemo } from "react";
+import React, { memo, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import ScreenshotUploadModal from "./Screenshots/ScreenshotUploadModal";
 import { getTextUnitScreenshotMap } from "./utils/textUnitStatusVisualization";
 import type { BranchStatistics } from "@/types/branchStatistics";
 import PullRequestLink from "@/components/navigation/PullRequestLink";
@@ -11,10 +12,15 @@ import "@/i18n";
 
 interface BranchDetailsProps {
   branchStats: BranchStatistics;
+  onPreviewImage?: (screenshotUrl: string) => void;
 }
 
-const BranchDetailCard: React.FC<BranchDetailsProps> = ({ branchStats }) => {
+const BranchDetailCard: React.FC<BranchDetailsProps> = ({
+  branchStats,
+  onPreviewImage,
+}) => {
   const { t } = useTranslation("branch");
+  const [isScreenshotModalOpen, setIsScreenshotModalOpen] = useState(false);
 
   const progressPercent = useMemo(() => {
     if (!branchStats.branchTextUnitStatistics) return 0;
@@ -54,9 +60,22 @@ const BranchDetailCard: React.FC<BranchDetailsProps> = ({ branchStats }) => {
             title={t("screenshotsNotUploaded")}
             type='warning'
             showIcon={true}
-            action={<Button onClick={() => {}}>{t("uploadScreenshot")}</Button>}
+            action={
+              <Button onClick={() => setIsScreenshotModalOpen(true)}>
+                {t("uploadScreenshot")}
+              </Button>
+            }
           />
         </div>
+      )}
+
+      {isScreenshotModalOpen && (
+        <ScreenshotUploadModal
+          isOpen={isScreenshotModalOpen}
+          setIsOpen={setIsScreenshotModalOpen}
+          branchStats={branchStats}
+          onPreviewImage={onPreviewImage}
+        />
       )}
 
       <Card className='m-1'>

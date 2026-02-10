@@ -1,4 +1,4 @@
-import type { BranchTextUnitStatusDto } from "@/types/branchTextUnitStatus";
+import type { BranchTextUnitStatusDto } from "./types/branchTextUnitStatus";
 
 export async function getBranchTextUnitStatus({
   branchName,
