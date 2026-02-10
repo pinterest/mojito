@@ -43,5 +43,11 @@
   "branches.createdAfter": "Créé après",
   "branches.status.empty": "Inclure vide",
   "branches.status.deleted": "Inclure supprimé",
-  "branches.noFilterResults": "Aucune branche ne correspond aux filtres actuels"
+  "branches.noFilterResults": "Aucune branche ne correspond aux filtres actuels",
+  "branch.alert.deleted": "Cette branche est supprimée",
+  "branch.delete": "Supprimer la branche",
+  "branch.confirmDelete": "Êtes-vous sûr de vouloir supprimer cette branche ?",
+  "branch.delete.yes": "Supprimer",
+  "branch.delete.no": "Annuler",
+  "branch.delete.btn": "Supprimer"
 }
