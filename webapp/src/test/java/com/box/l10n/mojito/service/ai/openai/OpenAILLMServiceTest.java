@@ -37,6 +37,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
@@ -1313,6 +1314,25 @@ class OpenAILLMServiceTest {
     when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
         .thenReturn(futureResponse);
     AICheckRequest aiCheckRequest = getAiCheckRequest();
+
+    this.openAILLMService.executeAIChecks(aiCheckRequest);
+
+    verify(this.promptService)
+        .getPromptsByRepositoryAndPromptType(eq(repository), eq(PromptType.SOURCE_STRING_CHECKER));
+    verify(this.openAIClient, times(3))
+        .getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class));
+
+    Mockito.reset(this.promptService);
+    Mockito.reset(this.openAIClient);
+    when(promptService.getPromptsByRepositoryAndPromptType(eq(repository), any(PromptType.class)))
+        .thenReturn(prompts);
+    when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
+        .thenReturn(futureResponse);
+    when(this.aiPromptToPromptTextUnitTypeCheckerRepository.findById(prompt.getId()))
+        .thenReturn(
+            of(
+                new AIPromptToPromptTextUnitTypeChecker(
+                    prompt.getId(), PromptTextUnitTypeChecker.ALL)));
 
     this.openAILLMService.executeAIChecks(aiCheckRequest);
 

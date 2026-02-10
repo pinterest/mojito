@@ -71,9 +71,9 @@ public class CreateAIPromptCommand extends Command {
   String jsonResponseKey;
 
   @Parameter(
-      names = {"--prompt-text-unit-type", "-ptt"},
-      description = "The type of the text unit used in the prompt (PLURAL or SINGULAR).")
-  String promptTextUnitType;
+      names = {"--text-unit-type-checker", "-tutc"},
+      description = "The type of the text unit used in the prompt (PLURAL, SINGULAR or ALL).")
+  String promptTextUnitTypeChecker;
 
   @Autowired private ConsoleWriter consoleWriter;
 
@@ -97,7 +97,8 @@ public class CreateAIPromptCommand extends Command {
     }
     aiPromptCreateRequest.setJsonResponseKey(jsonResponseKey);
     aiPromptCreateRequest.setPromptTexUnitTypeChecker(
-        AIPromptCreateRequest.PromptTexUnitTypeCheckerEnum.fromValue(this.promptTextUnitType));
+        AIPromptCreateRequest.PromptTexUnitTypeCheckerEnum.fromValue(
+            this.promptTextUnitTypeChecker));
     long promptId = aiServiceClient.createPrompt(aiPromptCreateRequest);
     consoleWriter.newLine().a("Prompt created with id: " + promptId).println();
   }
