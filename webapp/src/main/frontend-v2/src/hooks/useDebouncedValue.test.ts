@@ -140,8 +140,12 @@ describe("useDebouncedValue", () => {
   });
 
   it("should handle null and undefined values", () => {
-    const { result, rerender } = renderHook(
-      ({ value }) => useDebouncedValue(value, 100),
+    type TestValue = undefined | null | string;
+    type TestValueProps = { value: undefined | null | string };
+    const { result, rerender } = renderHook<TestValue, TestValueProps>(
+      ({ value }) => {
+        return useDebouncedValue(value, 100);
+      },
       { initialProps: { value: null } },
     );
 
