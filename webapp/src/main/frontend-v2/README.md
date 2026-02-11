@@ -63,6 +63,37 @@ npm install
 npm run build
 ```
 
+
+## Troubleshooting
+
+### Common Issues
+
+#### `APP_CONFIG is not defined` when running locally
+
+The server injects the `APP_CONFIG` into the HTML template, so these values need to be mocked locally before the main code runs.
+
+**Solution:** Add the following script to your HTML template:
+
+```html
+<script type="text/javascript">
+    APP_CONFIG = {
+        link: {
+            "android": {
+                pullRequest: {
+                    url: "https://github.com/android/pull/${branch}"
+                }
+            }
+        },
+        user: {
+            username: "admin",
+            role: "ROLE_ADMIN"
+        }
+    };
+</script>
+```
+
+**Note:** Ensure this script runs before your main application code to prevent initialization errors.
+
 ## Localization
 
 The Frontend V2 application includes comprehensive internationalization (i18n) support:
