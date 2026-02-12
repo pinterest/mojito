@@ -46,7 +46,7 @@ interface Branch {
   createdDate: number;
   repository: Repository;
   name: string;
-  createdByUser: BranchUser;
+  createdByUser?: BranchUser;
   deleted: boolean;
   screenshots: Screenshot[];
 }

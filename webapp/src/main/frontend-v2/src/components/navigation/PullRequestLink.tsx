@@ -17,7 +17,7 @@ const PullRequestLink: React.FC<PullRequestLinkProps> = ({
   const url = useMemo(() => {
     return APP_CONFIG.link[repoName]?.pullRequest?.url
       ? interpolateLink(APP_CONFIG.link[repoName].pullRequest.url, {
-          branch: encodeURIComponent(branchName),
+          branchName: encodeURIComponent(branchName),
         })
       : null;
   }, [repoName, branchName]);

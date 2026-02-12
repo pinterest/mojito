@@ -144,7 +144,7 @@ const BranchDetailCard: React.FC<BranchDetailsProps> = ({
             )}
           </Descriptions.Item>
           <Descriptions.Item label={t("author")}>
-            {branchStats.branch.createdByUser.username}
+            {branchStats.branch?.createdByUser?.username ?? "N/A"}
           </Descriptions.Item>
 
           <Descriptions.Item label={t("progression")}>
