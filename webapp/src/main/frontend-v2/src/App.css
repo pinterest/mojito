@@ -33,3 +33,16 @@
 .ant-collapse >.ant-collapse-item >.ant-collapse-header {
   align-items: center;
 }
+
+.navbar {
+  flex-grow: 1;
+  border: 0;
+}
+
+.avatar-container {
+  padding: 0 0rem;
+}
+
+.nav-container {
+  border-bottom: 1px solid #F0F0F0
+}

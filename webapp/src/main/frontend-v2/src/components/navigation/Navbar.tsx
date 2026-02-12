@@ -1,10 +1,15 @@
-import { Menu, type MenuProps } from "antd";
+import { Avatar, Flex, Menu, type MenuProps } from "antd";
 import { memo, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router";
 
 import favicon from "@/assets/favicon.ico";
+import type { User } from "@/types/user";
 
 type MenuItem = Required<MenuProps>["items"][number];
+
+function getAccountName(user: User): string {
+  return user.username.charAt(0).toUpperCase();
+}
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -14,7 +19,7 @@ const Navbar: React.FC = () => {
     if (location.pathname === "/branches") return ["branches"];
   }, [location.pathname]);
 
-  const menuItems: MenuItem[] = [
+  const navItems: MenuItem[] = [
     {
       label: "Mojito",
       key: "home",
@@ -35,7 +40,23 @@ const Navbar: React.FC = () => {
   ];
 
   return (
-    <Menu selectedKeys={selectedKeys} items={menuItems} mode='horizontal' />
+    <Flex
+      orientation='horizontal'
+      className='nav-container'
+      justify='space-between'
+      align='center'
+    >
+      <Menu
+        className='navbar'
+        selectedKeys={selectedKeys}
+        items={navItems}
+        mode='horizontal'
+      />
+
+      <div className='avatar-container'>
+        <Avatar>{getAccountName(APP_CONFIG.user)}</Avatar>
+      </div>
+    </Flex>
   );
 };
 
