@@ -3,11 +3,11 @@ import { memo, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router";
 
 import favicon from "@/assets/favicon.ico";
-import type { User } from "@/types/user";
+import type { AppConfig } from "@/types/appConfig";
 
 type MenuItem = Required<MenuProps>["items"][number];
 
-function getAccountName(user: User): string {
+function getAccountName(user: AppConfig["user"]): string {
   return user?.username?.charAt(0).toUpperCase() ?? "";
 }
 
