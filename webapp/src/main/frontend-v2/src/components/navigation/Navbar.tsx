@@ -8,7 +8,7 @@ import type { User } from "@/types/user";
 type MenuItem = Required<MenuProps>["items"][number];
 
 function getAccountName(user: User): string {
-  return user.username.charAt(0).toUpperCase();
+  return user?.username?.charAt(0).toUpperCase() ?? "";
 }
 
 const Navbar: React.FC = () => {
