@@ -11,7 +11,7 @@ interface BranchDatum {
   branchName: string;
   createdDate: string;
   repo: string;
-  author: string;
+  author?: string;
   screenshotCount: number;
 }
 
@@ -57,7 +57,7 @@ const BranchTable: React.FC<BranchTableProps> = ({ isLoading, stats }) => {
       title: t("branches.author"),
       dataIndex: "author",
       key: "author",
-      sorter: (a, b) => a.author.localeCompare(b.author),
+      sorter: (a, b) => (a?.author ?? "").localeCompare(b?.author ?? ""),
     },
     {
       title: t("branches.screenshotCount"),
@@ -73,7 +73,7 @@ const BranchTable: React.FC<BranchTableProps> = ({ isLoading, stats }) => {
       branchName: stat.branch.name,
       repo: stat.branch.repository.name,
       createdDate: displayDate(new Date(stat.createdDate)),
-      author: stat.branch.createdByUser.username,
+      author: stat.branch?.createdByUser?.username,
       screenshotCount: stat.branch.screenshots.reduce((count, screenshot) => {
         return count + (screenshot.textUnits.length ? 1 : 0);
       }, 0),
