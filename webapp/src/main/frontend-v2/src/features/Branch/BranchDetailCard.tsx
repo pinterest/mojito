@@ -1,4 +1,13 @@
-import { Alert, Button, Card, Descriptions, Flex, Progress } from "antd";
+import { DeleteOutlined } from "@ant-design/icons";
+import {
+  Alert,
+  Button,
+  Card,
+  Descriptions,
+  Flex,
+  Popconfirm,
+  Progress,
+} from "antd";
 import React, { memo, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -8,16 +17,17 @@ import type { BranchStatistics } from "@/types/branchStatistics";
 import PullRequestLink from "@/components/navigation/PullRequestLink";
 import { displayDate } from "@/utils/formatDate";
 
-import "@/i18n";
-
 interface BranchDetailsProps {
   branchStats: BranchStatistics;
+
   onPreviewImage?: (screenshotUrl: string) => void;
+  onBranchDelete?: (branchId: number, repositoryId: number) => void;
 }
 
 const BranchDetailCard: React.FC<BranchDetailsProps> = ({
   branchStats,
   onPreviewImage,
+  onBranchDelete,
 }) => {
   const { t } = useTranslation("branch");
   const [isScreenshotModalOpen, setIsScreenshotModalOpen] = useState(false);
@@ -48,13 +58,23 @@ const BranchDetailCard: React.FC<BranchDetailsProps> = ({
     return lastUpdatedTimestamp ? new Date(lastUpdatedTimestamp) : null;
   }, [branchStats]);
 
-  const hasScreenshots =
-    getTextUnitScreenshotMap(branchStats).size ===
-    branchStats.branchTextUnitStatistics.length;
+  const isBranchDeletable =
+    !branchStats.branch.deleted && APP_CONFIG.user.role === "ROLE_ADMIN";
+
+  const needsScreenshotUpload =
+    !branchStats.branch.deleted &&
+    getTextUnitScreenshotMap(branchStats).size !==
+      branchStats.branchTextUnitStatistics.length;
 
   return (
-    <Flex orientation='vertical' gap='small'>
-      {!hasScreenshots && (
+    <Flex orientation='vertical'>
+      {branchStats.branch.deleted && (
+        <div className='m-1'>
+          <Alert title={t("branch.alert.deleted")} type='error' showIcon />
+        </div>
+      )}
+
+      {needsScreenshotUpload && (
         <div className='m-1'>
           <Alert
             title={t("screenshotsNotUploaded")}
@@ -79,7 +99,36 @@ const BranchDetailCard: React.FC<BranchDetailsProps> = ({
       )}
 
       <Card className='m-1'>
-        <Descriptions title={t("branchDetails")} bordered>
+        <Descriptions
+          bordered
+          title={
+            <>
+              <Flex justify='space-between' align='center'>
+                <span>{t("branchDetails")}</span>
+
+                {isBranchDeletable && (
+                  <Popconfirm
+                    title={t("branch.delete")}
+                    description={t("branch.confirmDelete")}
+                    onConfirm={() => {
+                      onBranchDelete?.(
+                        branchStats.branch.id,
+                        branchStats.branch.repository.id,
+                      );
+                    }}
+                    onCancel={() => {}}
+                    okText={t("branch.delete.yes")}
+                    cancelText={t("branch.delete.no")}
+                  >
+                    <Button danger icon={<DeleteOutlined />}>
+                      {t("branch.delete.btn")}
+                    </Button>
+                  </Popconfirm>
+                )}
+              </Flex>
+            </>
+          }
+        >
           <Descriptions.Item label={t("branch")}>
             <PullRequestLink
               repoName={branchStats.branch.repository.name}

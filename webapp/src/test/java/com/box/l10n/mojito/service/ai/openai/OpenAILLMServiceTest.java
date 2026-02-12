@@ -1,12 +1,15 @@
 package com.box.l10n.mojito.service.ai.openai;
 
+import static java.util.Optional.of;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.box.l10n.mojito.entity.AIPrompt;
 import com.box.l10n.mojito.entity.AIPromptContextMessage;
+import com.box.l10n.mojito.entity.AIPromptToPromptTextUnitTypeChecker;
 import com.box.l10n.mojito.entity.AIPromptType;
 import com.box.l10n.mojito.entity.PluralForm;
+import com.box.l10n.mojito.entity.PromptTextUnitTypeChecker;
 import com.box.l10n.mojito.entity.PromptType;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnit;
@@ -16,6 +19,7 @@ import com.box.l10n.mojito.openai.OpenAIClient;
 import com.box.l10n.mojito.rest.ai.AICheckRequest;
 import com.box.l10n.mojito.rest.ai.AICheckResponse;
 import com.box.l10n.mojito.rest.ai.AIException;
+import com.box.l10n.mojito.service.ai.AIPromptToPromptTextUnitTypeCheckerRepository;
 import com.box.l10n.mojito.service.ai.AIStringCheckRepository;
 import com.box.l10n.mojito.service.ai.LLMPromptService;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
@@ -33,6 +37,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
@@ -47,6 +52,8 @@ class OpenAILLMServiceTest {
   @Mock LLMPromptService promptService;
 
   @Mock MeterRegistry meterRegistry;
+
+  @Mock AIPromptToPromptTextUnitTypeCheckerRepository aiPromptToPromptTextUnitTypeCheckerRepository;
 
   @Spy ObjectMapper objectMapper;
 
@@ -1254,5 +1261,170 @@ class OpenAILLMServiceTest {
         .counter(
             eq("OpenAILLMService.translate.result"),
             eq(Tags.of("success", "false", "retryable", "true", "statusCode", "null")));
+  }
+
+  private static AICheckRequest getAiCheckRequest() {
+    AssetExtractorTextUnit assetExtractorTextUnit = new AssetExtractorTextUnit();
+    assetExtractorTextUnit.setSource("A test string");
+    assetExtractorTextUnit.setName("A test string --- A test context");
+    assetExtractorTextUnit.setComments("A test comment");
+    AssetExtractorTextUnit assetExtractorTextUnit2 = new AssetExtractorTextUnit();
+    assetExtractorTextUnit2.setSource("A test string 2");
+    assetExtractorTextUnit2.setName("A test string --- A test context 2");
+    assetExtractorTextUnit2.setComments("A test comment 2");
+    AssetExtractorTextUnit assetExtractorTextUnit3 = new AssetExtractorTextUnit();
+    assetExtractorTextUnit3.setSource("A test string 3");
+    assetExtractorTextUnit3.setName("A test string --- A test context 3");
+    assetExtractorTextUnit3.setComments("A test comment 3");
+    assetExtractorTextUnit3.setPluralForm("other");
+    List<AssetExtractorTextUnit> textUnits =
+        List.of(assetExtractorTextUnit, assetExtractorTextUnit2, assetExtractorTextUnit3);
+    AICheckRequest aiCheckRequest = new AICheckRequest();
+    aiCheckRequest.setRepositoryName("testRepo");
+    aiCheckRequest.setTextUnits(textUnits);
+    return aiCheckRequest;
+  }
+
+  @Test
+  void testExecuteAIChecksSuccess_DoesNotExcludeAnyTextUnits() {
+    AIPrompt prompt = new AIPrompt();
+    prompt.setId(1L);
+    prompt.setUserPrompt("Check strings for spelling");
+    prompt.setModelName("gtp-3.5-turbo");
+    prompt.setPromptTemperature(0.0F);
+    prompt.setContextMessages(new ArrayList<>());
+    List<AIPrompt> prompts = List.of(prompt);
+    Repository repository = new Repository();
+    repository.setName("testRepo");
+    repository.setId(1L);
+    when(repositoryRepository.findByName("testRepo")).thenReturn(repository);
+    when(promptService.getPromptsByRepositoryAndPromptType(eq(repository), any(PromptType.class)))
+        .thenReturn(prompts);
+    List<OpenAIClient.ChatCompletionsResponse.Choice> choices =
+        List.of(
+            new OpenAIClient.ChatCompletionsResponse.Choice(
+                0,
+                new OpenAIClient.ChatCompletionsResponse.Choice.Message(
+                    "test", "{\"success\": true, \"suggestedFix\": \"\"}"),
+                null));
+    OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
+        new OpenAIClient.ChatCompletionsResponse(null, null, null, null, choices, null, null);
+    CompletableFuture<OpenAIClient.ChatCompletionsResponse> futureResponse =
+        CompletableFuture.completedFuture(chatCompletionsResponse);
+    when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
+        .thenReturn(futureResponse);
+    AICheckRequest aiCheckRequest = getAiCheckRequest();
+
+    this.openAILLMService.executeAIChecks(aiCheckRequest);
+
+    verify(this.promptService)
+        .getPromptsByRepositoryAndPromptType(eq(repository), eq(PromptType.SOURCE_STRING_CHECKER));
+    verify(this.openAIClient, times(3))
+        .getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class));
+
+    Mockito.reset(this.promptService);
+    Mockito.reset(this.openAIClient);
+    when(promptService.getPromptsByRepositoryAndPromptType(eq(repository), any(PromptType.class)))
+        .thenReturn(prompts);
+    when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
+        .thenReturn(futureResponse);
+    when(this.aiPromptToPromptTextUnitTypeCheckerRepository.findById(prompt.getId()))
+        .thenReturn(
+            of(
+                new AIPromptToPromptTextUnitTypeChecker(
+                    prompt.getId(), PromptTextUnitTypeChecker.ALL)));
+
+    this.openAILLMService.executeAIChecks(aiCheckRequest);
+
+    verify(this.promptService)
+        .getPromptsByRepositoryAndPromptType(eq(repository), eq(PromptType.SOURCE_STRING_CHECKER));
+    verify(this.openAIClient, times(3))
+        .getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class));
+  }
+
+  @Test
+  void testExecuteAIChecksSuccess_ExcludesPluralTextUnits() {
+    AIPrompt prompt = new AIPrompt();
+    prompt.setId(1L);
+    prompt.setUserPrompt("Check strings for spelling");
+    prompt.setModelName("gtp-3.5-turbo");
+    prompt.setPromptTemperature(0.0F);
+    prompt.setContextMessages(new ArrayList<>());
+    List<AIPrompt> prompts = List.of(prompt);
+    Repository repository = new Repository();
+    repository.setName("testRepo");
+    repository.setId(1L);
+    when(repositoryRepository.findByName("testRepo")).thenReturn(repository);
+    when(promptService.getPromptsByRepositoryAndPromptType(eq(repository), any(PromptType.class)))
+        .thenReturn(prompts);
+    when(this.aiPromptToPromptTextUnitTypeCheckerRepository.findById(prompt.getId()))
+        .thenReturn(
+            of(
+                new AIPromptToPromptTextUnitTypeChecker(
+                    prompt.getId(), PromptTextUnitTypeChecker.SINGULAR)));
+    List<OpenAIClient.ChatCompletionsResponse.Choice> choices =
+        List.of(
+            new OpenAIClient.ChatCompletionsResponse.Choice(
+                0,
+                new OpenAIClient.ChatCompletionsResponse.Choice.Message(
+                    "test", "{\"success\": true, \"suggestedFix\": \"\"}"),
+                null));
+    OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
+        new OpenAIClient.ChatCompletionsResponse(null, null, null, null, choices, null, null);
+    CompletableFuture<OpenAIClient.ChatCompletionsResponse> futureResponse =
+        CompletableFuture.completedFuture(chatCompletionsResponse);
+    when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
+        .thenReturn(futureResponse);
+    AICheckRequest aiCheckRequest = getAiCheckRequest();
+
+    this.openAILLMService.executeAIChecks(aiCheckRequest);
+
+    verify(this.promptService)
+        .getPromptsByRepositoryAndPromptType(eq(repository), eq(PromptType.SOURCE_STRING_CHECKER));
+    verify(this.openAIClient, times(2))
+        .getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class));
+  }
+
+  @Test
+  void testExecuteAIChecksSuccess_ExcludesSingularTextUnits() {
+    AIPrompt prompt = new AIPrompt();
+    prompt.setId(1L);
+    prompt.setUserPrompt("Check strings for spelling");
+    prompt.setModelName("gtp-3.5-turbo");
+    prompt.setPromptTemperature(0.0F);
+    prompt.setContextMessages(new ArrayList<>());
+    List<AIPrompt> prompts = List.of(prompt);
+    Repository repository = new Repository();
+    repository.setName("testRepo");
+    repository.setId(1L);
+    when(repositoryRepository.findByName("testRepo")).thenReturn(repository);
+    when(promptService.getPromptsByRepositoryAndPromptType(eq(repository), any(PromptType.class)))
+        .thenReturn(prompts);
+    when(this.aiPromptToPromptTextUnitTypeCheckerRepository.findById(prompt.getId()))
+        .thenReturn(
+            of(
+                new AIPromptToPromptTextUnitTypeChecker(
+                    prompt.getId(), PromptTextUnitTypeChecker.PLURAL)));
+    List<OpenAIClient.ChatCompletionsResponse.Choice> choices =
+        List.of(
+            new OpenAIClient.ChatCompletionsResponse.Choice(
+                0,
+                new OpenAIClient.ChatCompletionsResponse.Choice.Message(
+                    "test", "{\"success\": true, \"suggestedFix\": \"\"}"),
+                null));
+    OpenAIClient.ChatCompletionsResponse chatCompletionsResponse =
+        new OpenAIClient.ChatCompletionsResponse(null, null, null, null, choices, null, null);
+    CompletableFuture<OpenAIClient.ChatCompletionsResponse> futureResponse =
+        CompletableFuture.completedFuture(chatCompletionsResponse);
+    when(openAIClient.getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class)))
+        .thenReturn(futureResponse);
+    AICheckRequest aiCheckRequest = getAiCheckRequest();
+
+    this.openAILLMService.executeAIChecks(aiCheckRequest);
+
+    verify(this.promptService)
+        .getPromptsByRepositoryAndPromptType(eq(repository), eq(PromptType.SOURCE_STRING_CHECKER));
+    verify(this.openAIClient, times(1))
+        .getChatCompletions(any(OpenAIClient.ChatCompletionsRequest.class));
   }
 }

@@ -3,6 +3,7 @@ package com.box.l10n.mojito.service.ai;
 import com.box.l10n.mojito.JSR310Migration;
 import com.box.l10n.mojito.entity.AIPrompt;
 import com.box.l10n.mojito.entity.AIPromptContextMessage;
+import com.box.l10n.mojito.entity.AIPromptToPromptTextUnitTypeChecker;
 import com.box.l10n.mojito.entity.AIPromptType;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.PromptType;
@@ -47,6 +48,9 @@ public class LLMPromptService implements PromptService {
 
   @Autowired LocaleRepository localeRepository;
 
+  @Autowired
+  AIPromptToPromptTextUnitTypeCheckerRepository aiPromptToPromptTextUnitTypeCheckerRepository;
+
   @Timed("LLMPromptService.createPrompt")
   @Transactional
   public Long createPrompt(AIPromptCreateRequest AIPromptCreateRequest) {
@@ -75,8 +79,14 @@ public class LLMPromptService implements PromptService {
     aiPrompt.setLastModifiedDate(now);
     aiPrompt.setJsonResponse(AIPromptCreateRequest.isJsonResponse());
     aiPrompt.setJsonResponseKey(AIPromptCreateRequest.getJsonResponseKey());
-    aiPromptRepository.save(aiPrompt);
+    AIPrompt savedAIPrompt = aiPromptRepository.save(aiPrompt);
     logger.debug("Created prompt with id: {}", aiPrompt.getId());
+    if (AIPromptCreateRequest.getPromptTexUnitTypeChecker() != null) {
+      AIPromptToPromptTextUnitTypeChecker aiPromptToPromptTextUnitTypeChecker =
+          new AIPromptToPromptTextUnitTypeChecker(
+              savedAIPrompt.getId(), AIPromptCreateRequest.getPromptTexUnitTypeChecker());
+      this.aiPromptToPromptTextUnitTypeCheckerRepository.save(aiPromptToPromptTextUnitTypeChecker);
+    }
 
     if (repository != null) {
       RepositoryLocaleAIPrompt repositoryLocaleAIPrompt =

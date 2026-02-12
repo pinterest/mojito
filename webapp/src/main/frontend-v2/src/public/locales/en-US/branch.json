@@ -43,5 +43,11 @@
   "branches.createdAfter": "Created After",
   "branches.status.empty": "Include empty",
   "branches.status.deleted": "Include deleted",
-  "branches.noFilterResults": "No branches match the current filters"
+  "branches.noFilterResults": "No branches match the current filters",
+  "branch.alert.deleted": "This branch is deleted",
+  "branch.delete": "Delete Branch",
+  "branch.confirmDelete": "Are you sure you want to delete this branch?",
+  "branch.delete.yes": "Delete",
+  "branch.delete.no": "Cancel",
+  "branch.delete.btn": "Delete"
 }

@@ -8,6 +8,7 @@ import static com.box.l10n.mojito.service.ai.openai.OpenAIPromptContextMessageTy
 
 import com.box.l10n.mojito.entity.AIPrompt;
 import com.box.l10n.mojito.entity.AIPromptContextMessage;
+import com.box.l10n.mojito.entity.AIPromptToPromptTextUnitTypeChecker;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnit;
 import com.box.l10n.mojito.json.ObjectMapper;
@@ -17,6 +18,7 @@ import com.box.l10n.mojito.rest.ai.AICheckRequest;
 import com.box.l10n.mojito.rest.ai.AICheckResponse;
 import com.box.l10n.mojito.rest.ai.AICheckResult;
 import com.box.l10n.mojito.rest.ai.AIException;
+import com.box.l10n.mojito.service.ai.AIPromptToPromptTextUnitTypeCheckerRepository;
 import com.box.l10n.mojito.service.ai.AIStringCheckRepository;
 import com.box.l10n.mojito.service.ai.LLMPromptService;
 import com.box.l10n.mojito.service.ai.LLMService;
@@ -37,6 +39,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -67,6 +70,9 @@ public class OpenAILLMService implements LLMService {
   @Autowired LLMPromptService LLMPromptService;
 
   @Autowired MeterRegistry meterRegistry;
+
+  @Autowired
+  AIPromptToPromptTextUnitTypeCheckerRepository aiPromptToPromptTextUnitTypeCheckerRepository;
 
   @Value("${l10n.ai.checks.persistResults:true}")
   boolean persistResults;
@@ -359,6 +365,26 @@ public class OpenAILLMService implements LLMService {
     return results;
   }
 
+  private boolean hasPromptTextUnitType(AssetExtractorTextUnit textUnit, AIPrompt prompt) {
+    Optional<AIPromptToPromptTextUnitTypeChecker> aiPromptToPromptTexUnitTypeChecker =
+        this.aiPromptToPromptTextUnitTypeCheckerRepository.findById(prompt.getId());
+    boolean result = true;
+    if (aiPromptToPromptTexUnitTypeChecker.isPresent()) {
+      result =
+          aiPromptToPromptTexUnitTypeChecker
+              .filter(Predicate.not(obj -> false))
+              .map(AIPromptToPromptTextUnitTypeChecker::getPromptTextUnitTypeChecker)
+              .map(
+                  promptTextUnitTypeChecker ->
+                      promptTextUnitTypeChecker.hasValidTextUnitType(textUnit))
+              .orElse(true);
+      if (!result) {
+        logger.info("Skipping text unit {} for prompt id {}.", textUnit.getName(), prompt.getId());
+      }
+    }
+    return result;
+  }
+
   private void executePromptChecks(
       AssetExtractorTextUnit textUnit,
       List<AIPrompt> prompts,
@@ -369,6 +395,9 @@ public class OpenAILLMService implements LLMService {
       List<AICheckResult> results) {
 
     for (AIPrompt prompt : prompts) {
+      if (!this.hasPromptTextUnitType(textUnit, prompt)) {
+        continue;
+      }
       if ((!Strings.isNullOrEmpty(prompt.getSystemPrompt())
               && !prompt.getSystemPrompt().contains(SOURCE_STRING_PLACEHOLDER))
           && (!Strings.isNullOrEmpty(prompt.getUserPrompt())
