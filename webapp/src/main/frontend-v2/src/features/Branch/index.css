@@ -25,3 +25,19 @@
     max-height: 22.5rem;
     flex-basis: 40rem;
 }
+
+.expanded-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.expanded-content p {
+    padding: 0;
+    margin: 0;
+}
+
+.expanded-content .comment {
+    font-style: italic;
+    color: #a1a1a1;
+}

@@ -1,6 +1,6 @@
 import { Button, Table, type TableProps } from "antd";
 import { ZoomInOutlined } from "@ant-design/icons";
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import { getTextUnitScreenshotMap } from "./utils/textUnitStatusVisualization";
@@ -37,6 +37,14 @@ const TextUnitTable: React.FC<TextUnitTableProps> = ({
     number,
     { name: string; translated: number; total: number }
   >();
+
+  const sourceTextUnits = useMemo(() => {
+    return (
+      branchTextUnitStatus?.localeTextUnitStatus[
+        branchTextUnitStatus.srcLocaleBcpTag
+      ] ?? []
+    );
+  }, [branchTextUnitStatus]);
 
   Object.values(branchTextUnitStatus?.localeTextUnitStatus ?? [])
     .flat()
@@ -108,9 +116,45 @@ const TextUnitTable: React.FC<TextUnitTableProps> = ({
     },
   ];
 
+  const isExpandable = useCallback(
+    (record: TableDataType) => {
+      const srcTextUnit = sourceTextUnits.find(
+        (tu) => tu.textUnitId === record.key,
+      );
+
+      return srcTextUnit !== undefined;
+    },
+    [sourceTextUnits],
+  );
+
+  const renderExpandableRow = useCallback(
+    (record: TableDataType) => {
+      const srcTextUnit = sourceTextUnits.find(
+        (tu) => tu.textUnitId === record.key,
+      );
+
+      return (
+        <div className='expanded-content'>
+          <p>{srcTextUnit?.content}</p>
+          {srcTextUnit?.comment && (
+            <p className='comment'>{srcTextUnit?.comment}</p>
+          )}
+        </div>
+      );
+    },
+    [sourceTextUnits],
+  );
+
   return (
     <div style={{ padding: "2rem" }}>
-      <Table<TableDataType> columns={columns} dataSource={tableData} />
+      <Table<TableDataType>
+        columns={columns}
+        dataSource={tableData}
+        expandable={{
+          expandedRowRender: renderExpandableRow,
+          rowExpandable: isExpandable,
+        }}
+      />
     </div>
   );
 };

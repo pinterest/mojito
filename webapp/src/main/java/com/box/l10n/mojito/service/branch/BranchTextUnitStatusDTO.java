@@ -9,6 +9,7 @@ public class BranchTextUnitStatusDTO {
   private final Long branchId;
   private final String repositoryName;
   private final String branchName;
+  private final String srcLocaleBcpTag;
 
   private final Map<String, List<TextUnitStatusDTO>> localeTextUnitStatus;
 
@@ -21,6 +22,7 @@ public class BranchTextUnitStatusDTO {
     this.branchName = branchTextUnitStatusDataModels.getFirst().getBranchName();
     this.repositoryName = branchTextUnitStatusDataModels.getFirst().getRepositoryName();
     this.branchId = branchTextUnitStatusDataModels.getFirst().getBranchId();
+    this.srcLocaleBcpTag = branchTextUnitStatusDataModels.getFirst().getSrcLocaleBcpTag();
 
     this.localeTextUnitStatus =
         branchTextUnitStatusDataModels.stream()
@@ -52,6 +54,10 @@ public class BranchTextUnitStatusDTO {
 
   public Long getBranchId() {
     return branchId;
+  }
+
+  public String getSrcLocaleBcpTag() {
+    return srcLocaleBcpTag;
   }
 
   public Map<String, List<TextUnitStatusDTO>> getLocaleTextUnitStatus() {
