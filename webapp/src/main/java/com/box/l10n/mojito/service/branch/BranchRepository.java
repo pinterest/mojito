@@ -59,6 +59,7 @@ public interface BranchRepository
         tu.comment,
         ttuv.content,
         ttuv.comment,
+        r.sourceLocale.bcp47Tag,
         ttuv.status,
         r.name,
         b.name,

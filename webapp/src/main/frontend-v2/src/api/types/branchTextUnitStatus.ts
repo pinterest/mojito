@@ -15,6 +15,7 @@ export interface BranchTextUnitStatusDto {
   branchId: number;
   repositoryName: string;
   branchName: string;
+  srcLocaleBcpTag: string;
   localeTextUnitStatus: {
     [locale: string]: TextUnitStatusDto[];
   };

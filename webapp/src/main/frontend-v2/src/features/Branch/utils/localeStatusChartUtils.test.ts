@@ -34,6 +34,7 @@ function generateTextUnit(status: TextUnitStatus): TextUnitStatusDto {
 const DEFAULT_BRANCH_DATA: BranchTextUnitStatusDto = {
   branchId: 1,
   repositoryName: "repo",
+  srcLocaleBcpTag: "en",
   branchName: "main",
   localeTextUnitStatus: {},
 };

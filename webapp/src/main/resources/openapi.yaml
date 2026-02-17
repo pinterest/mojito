@@ -3299,6 +3299,8 @@ components:
               $ref: "#/components/schemas/TextUnitStatusDTO"
         repositoryName:
           type: string
+        srcLocaleBcpTag:
+          type: string
     Branch_BranchStatistic:
       type: object
       properties:

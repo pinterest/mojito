@@ -19,6 +19,7 @@ public class BranchTextUnitStatusDataModel {
   private Long variantId;
   private Long currentVariantId;
   private ZonedDateTime createdDate;
+  private String srcLocaleBcpTag;
 
   public BranchTextUnitStatusDataModel() {}
 
@@ -30,6 +31,7 @@ public class BranchTextUnitStatusDataModel {
       String tuComment,
       String content,
       String comment,
+      String srcLocaleBcpTag,
       TMTextUnitVariant.Status status,
       String repositoryName,
       String branchName,
@@ -44,6 +46,7 @@ public class BranchTextUnitStatusDataModel {
     this.tuComment = tuComment;
     this.content = content;
     this.comment = comment;
+    this.srcLocaleBcpTag = srcLocaleBcpTag;
     this.status = status;
     this.repositoryName = repositoryName;
     this.branchName = branchName;
@@ -107,5 +110,9 @@ public class BranchTextUnitStatusDataModel {
 
   public ZonedDateTime getCreatedDate() {
     return createdDate;
+  }
+
+  public String getSrcLocaleBcpTag() {
+    return srcLocaleBcpTag;
   }
 }
