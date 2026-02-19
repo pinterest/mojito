@@ -98,6 +98,7 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
     List<ClientHttpRequestInterceptor> interceptors =
         Stream.of(
                 proxyOutboundRequestInterceptor,
+                createHeaderInjectionInterceptor(),
                 new ClientHttpRequestInterceptor() {
                   @Override
                   public ClientHttpResponse intercept(
@@ -142,6 +143,8 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
     } else {
       modifiedRequest = startAuthenticationAndInjectCsrfToken(request);
     }
+
+    modifiedRequest = injectCustomHeader(modifiedRequest);
 
     ClientHttpResponse clientHttpResponse = execution.execute(modifiedRequest, body);
 
@@ -249,6 +252,31 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
     }
 
     return null;
+  }
+
+  /**
+   * Injects the configured custom auth header (e.g. X-Forwarded-User) into the request when
+   * headerName is configured. Used for header-based pre-auth when form login is disabled.
+   */
+  private HttpRequest injectCustomHeader(HttpRequest request) {
+    String headerName = resttemplateConfig.getHeaderName();
+    if (headerName != null && !headerName.isEmpty()) {
+      String headerValue = resttemplateConfig.getHeaderValue();
+      if (headerValue != null) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(headerName, headerValue);
+        return new CustomHttpRequestWrapper(request, headers);
+      }
+    }
+    return request;
+  }
+
+  private ClientHttpRequestInterceptor createHeaderInjectionInterceptor() {
+    String headerName = resttemplateConfig.getHeaderName();
+    if (headerName == null || headerName.isEmpty()) {
+      return null;
+    }
+    return (request, body, execution) -> execution.execute(injectCustomHeader(request), body);
   }
 
   /**

@@ -18,6 +18,9 @@ public class ResttemplateConfig {
   String contextPath = "";
   boolean usesLoginAuthentication = true;
 
+  String headerName;
+  String headerValue;
+
   Authentication authentication = new Authentication();
 
   public static class Authentication {
@@ -103,5 +106,21 @@ public class ResttemplateConfig {
 
   public void setUsesLoginAuthentication(boolean usesLoginAuthentication) {
     this.usesLoginAuthentication = usesLoginAuthentication;
+  }
+
+  public String getHeaderName() {
+    return headerName;
+  }
+
+  public void setHeaderName(String headerName) {
+    this.headerName = headerName;
+  }
+
+  public String getHeaderValue() {
+    return headerValue;
+  }
+
+  public void setHeaderValue(String headerValue) {
+    this.headerValue = headerValue;
   }
 }

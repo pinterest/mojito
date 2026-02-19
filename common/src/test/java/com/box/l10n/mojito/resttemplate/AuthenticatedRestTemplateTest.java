@@ -226,6 +226,45 @@ public class AuthenticatedRestTemplateTest {
             .withHeader("X-CSRF-TOKEN", WireMock.matching("madeup-csrf-value")));
   }
 
+  @Test
+  public void testCustomHeaderInjectedOnAllRequests() {
+    resttemplateConfig.setHeaderName("X-Forwarded-User");
+    resttemplateConfig.setHeaderValue("testuser");
+
+    try {
+      authenticatedRestTemplate.restTemplate = new CookieStoreRestTemplate();
+      authenticatedRestTemplate.loginAuthenticationCsrfTokenInterceptor.init();
+      authenticatedRestTemplate.init();
+      resttemplateConfig.setPort(wireMockServer.port());
+
+      initialAuthenticationMock();
+      mockCsrfTokenEndpoint();
+
+      WireMock.stubFor(
+          WireMock.get(WireMock.urlEqualTo("/api/test-endpoint"))
+              .willReturn(
+                  WireMock.aResponse().withStatus(HttpStatus.OK.value()).withBody("success")));
+
+      String response = authenticatedRestTemplate.getForObject("/api/test-endpoint", String.class);
+      Assert.assertEquals("success", response);
+
+      WireMock.verify(
+          WireMock.getRequestedFor(WireMock.urlMatching("/api/test-endpoint"))
+              .withHeader("X-Forwarded-User", WireMock.equalTo("testuser")));
+
+      WireMock.verify(
+          WireMock.getRequestedFor(WireMock.urlMatching("/login"))
+              .withHeader("X-Forwarded-User", WireMock.equalTo("testuser")));
+
+      WireMock.verify(
+          WireMock.getRequestedFor(WireMock.urlMatching("/" + formLoginConfig.getCsrfTokenPath()))
+              .withHeader("X-Forwarded-User", WireMock.equalTo("testuser")));
+    } finally {
+      resttemplateConfig.setHeaderName(null);
+      resttemplateConfig.setHeaderValue(null);
+    }
+  }
+
   protected void initialAuthenticationMock() {
     String expectedResponse = "expected content";
 
