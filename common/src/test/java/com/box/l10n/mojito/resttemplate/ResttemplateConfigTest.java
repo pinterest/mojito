@@ -1,7 +1,7 @@
 package com.box.l10n.mojito.resttemplate;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,7 +35,6 @@ public class ResttemplateConfigTest {
     assertEquals("admin", resttemplateConfig.getAuthentication().getUsername());
     assertEquals("ChangeMe", resttemplateConfig.getAuthentication().getPassword());
     assertEquals("", resttemplateConfig.getContextPath());
-    assertNull(resttemplateConfig.getHeaderName());
-    assertNull(resttemplateConfig.getHeaderValue());
+    assertTrue(resttemplateConfig.getHeaders().isEmpty());
   }
 }

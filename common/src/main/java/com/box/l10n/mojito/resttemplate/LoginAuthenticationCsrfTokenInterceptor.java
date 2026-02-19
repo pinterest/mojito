@@ -5,6 +5,7 @@ import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -144,7 +145,7 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
       modifiedRequest = startAuthenticationAndInjectCsrfToken(request);
     }
 
-    modifiedRequest = injectCustomHeader(modifiedRequest);
+    modifiedRequest = injectCustomHeaders(modifiedRequest);
 
     ClientHttpResponse clientHttpResponse = execution.execute(modifiedRequest, body);
 
@@ -255,16 +256,20 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
   }
 
   /**
-   * Injects the configured custom auth header (e.g. X-Forwarded-User) into the request when
-   * headerName is configured. Used for header-based pre-auth when form login is disabled.
+   * Injects the configured custom headers (e.g. X-Forwarded-User) into the request when headers map
+   * is configured. Used for header-based pre-auth when form login is disabled.
    */
-  private HttpRequest injectCustomHeader(HttpRequest request) {
-    String headerName = resttemplateConfig.getHeaderName();
-    if (headerName != null && !headerName.isEmpty()) {
-      String headerValue = resttemplateConfig.getHeaderValue();
-      if (headerValue != null) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(headerName, headerValue);
+  private HttpRequest injectCustomHeaders(HttpRequest request) {
+    Map<String, String> customHeaders = resttemplateConfig.getHeaders();
+    if (customHeaders != null && !customHeaders.isEmpty()) {
+      HttpHeaders headers = new HttpHeaders();
+      customHeaders.forEach(
+          (name, value) -> {
+            if (name != null && !name.isEmpty() && value != null) {
+              headers.add(name, value);
+            }
+          });
+      if (!headers.isEmpty()) {
         return new CustomHttpRequestWrapper(request, headers);
       }
     }
@@ -272,11 +277,11 @@ public class LoginAuthenticationCsrfTokenInterceptor implements ClientHttpReques
   }
 
   private ClientHttpRequestInterceptor createHeaderInjectionInterceptor() {
-    String headerName = resttemplateConfig.getHeaderName();
-    if (headerName == null || headerName.isEmpty()) {
+    Map<String, String> customHeaders = resttemplateConfig.getHeaders();
+    if (customHeaders == null || customHeaders.isEmpty()) {
       return null;
     }
-    return (request, body, execution) -> execution.execute(injectCustomHeader(request), body);
+    return (request, body, execution) -> execution.execute(injectCustomHeaders(request), body);
   }
 
   /**

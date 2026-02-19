@@ -228,8 +228,8 @@ public class AuthenticatedRestTemplateTest {
 
   @Test
   public void testCustomHeaderInjectedOnAllRequests() {
-    resttemplateConfig.setHeaderName("X-Forwarded-User");
-    resttemplateConfig.setHeaderValue("testuser");
+    resttemplateConfig.setHeaders(
+        Map.of("X-Forwarded-User", "testuser", "X-Custom-Header", "customvalue"));
 
     try {
       authenticatedRestTemplate.restTemplate = new CookieStoreRestTemplate();
@@ -250,18 +250,20 @@ public class AuthenticatedRestTemplateTest {
 
       WireMock.verify(
           WireMock.getRequestedFor(WireMock.urlMatching("/api/test-endpoint"))
-              .withHeader("X-Forwarded-User", WireMock.equalTo("testuser")));
+              .withHeader("X-Forwarded-User", WireMock.equalTo("testuser"))
+              .withHeader("X-Custom-Header", WireMock.equalTo("customvalue")));
 
       WireMock.verify(
           WireMock.getRequestedFor(WireMock.urlMatching("/login"))
-              .withHeader("X-Forwarded-User", WireMock.equalTo("testuser")));
+              .withHeader("X-Forwarded-User", WireMock.equalTo("testuser"))
+              .withHeader("X-Custom-Header", WireMock.equalTo("customvalue")));
 
       WireMock.verify(
           WireMock.getRequestedFor(WireMock.urlMatching("/" + formLoginConfig.getCsrfTokenPath()))
-              .withHeader("X-Forwarded-User", WireMock.equalTo("testuser")));
+              .withHeader("X-Forwarded-User", WireMock.equalTo("testuser"))
+              .withHeader("X-Custom-Header", WireMock.equalTo("customvalue")));
     } finally {
-      resttemplateConfig.setHeaderName(null);
-      resttemplateConfig.setHeaderValue(null);
+      resttemplateConfig.setHeaders(new HashMap<>());
     }
   }
 
