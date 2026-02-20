@@ -269,7 +269,9 @@ public class BranchNotificationMessageSenders {
                           messages.getNoMoreStrings(),
                           messages.getTranslationsReady(),
                           messages.getScreenshotsMissing(),
-                          messages.getSafeTranslationsReady());
+                          messages.getSafeTranslationsReady(),
+                          branchNotificationMessageSendersConfigurationProperties
+                              .getUsesV2BranchLink());
 
                   BranchNotificationMessageSenderGithub branchNotificationMessageSenderGithub =
                       new BranchNotificationMessageSenderGithub(

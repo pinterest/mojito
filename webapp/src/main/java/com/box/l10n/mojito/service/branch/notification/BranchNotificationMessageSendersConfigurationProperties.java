@@ -18,6 +18,8 @@ public class BranchNotificationMessageSendersConfigurationProperties {
 
   Map<String, GithubConfigurationProperties> github = new HashMap<>();
 
+  boolean usesV2BranchLink = false;
+
   public Map<String, NoopConfigurationProperties> getNoop() {
     return noop;
   }
@@ -40,6 +42,14 @@ public class BranchNotificationMessageSendersConfigurationProperties {
 
   public void setPhabricator(Map<String, PhabricatorConfigurationProperties> phabricator) {
     this.phabricator = phabricator;
+  }
+
+  public void setUsesV2BranchLink(boolean value) {
+    usesV2BranchLink = value;
+  }
+
+  public boolean getUsesV2BranchLink() {
+    return usesV2BranchLink;
   }
 
   public Map<String, GithubConfigurationProperties> getGithub() {

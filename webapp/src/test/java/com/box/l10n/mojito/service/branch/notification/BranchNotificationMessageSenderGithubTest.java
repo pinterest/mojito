@@ -34,6 +34,7 @@ public class BranchNotificationMessageSenderGithubTest {
   List<String> sourceStrings;
 
   String branchName = "testOwner/testRepo/pulls/1";
+  String repoName = "testRepo";
 
   GithubBranchDetails githubBranchDetails = new GithubBranchDetails(branchName);
 
@@ -45,9 +46,11 @@ public class BranchNotificationMessageSenderGithubTest {
     final String updatedStringMsg = "Test updated message";
     sourceStrings = new ArrayList<>();
     sourceStrings.add("Test string");
-    when(branchNotificationMessageBuilderGithubMock.getNewMessage(branchName, sourceStrings))
+    when(branchNotificationMessageBuilderGithubMock.getNewMessage(
+            branchName, repoName, sourceStrings))
         .thenReturn(newStringMsg);
-    when(branchNotificationMessageBuilderGithubMock.getUpdatedMessage(branchName, sourceStrings))
+    when(branchNotificationMessageBuilderGithubMock.getUpdatedMessage(
+            branchName, repoName, sourceStrings))
         .thenReturn(updatedStringMsg);
     when(branchNotificationMessageBuilderGithubMock.getTranslatedMessage(
             branchName, githubBranchDetails, null))
@@ -81,7 +84,8 @@ public class BranchNotificationMessageSenderGithubTest {
     when(githubClientMock.isLabelAppliedToPR(
             isA(String.class), isA(Integer.class), isA(String.class)))
         .thenReturn(false);
-    branchNotificationMessageSenderGithub.sendNewMessage(branchName, "testUser", sourceStrings);
+    branchNotificationMessageSenderGithub.sendNewMessage(
+        branchName, "testRepo", "testUser", sourceStrings);
     verify(githubClientMock, times(1)).addCommentToPR("testRepo", 1, "Test new message");
     verify(githubClientMock, times(0))
         .removeLabelFromPR(isA(String.class), isA(Integer.class), isA(String.class));
@@ -95,7 +99,7 @@ public class BranchNotificationMessageSenderGithubTest {
     when(githubClientMock.isLabelAppliedToPR("testRepo", 1, "skip-translations-required"))
         .thenReturn(false);
     branchNotificationMessageSenderGithub.sendUpdatedMessage(
-        branchName, "testUser", "1", sourceStrings);
+        branchName, "testRepo", "testUser", "1", sourceStrings);
     verify(githubClientMock, times(1))
         .updateOrAddCommentToPR("testRepo", 1, "Test updated message", this.commentRegex);
     verify(githubClientMock, times(1)).removeLabelFromPR("testRepo", 1, "translations-ready");
@@ -110,7 +114,7 @@ public class BranchNotificationMessageSenderGithubTest {
     when(githubClientMock.isLabelAppliedToPR("testRepo", 1, "skip-translations-required"))
         .thenReturn(true);
     branchNotificationMessageSenderGithub.sendUpdatedMessage(
-        branchName, "testUser", "1", sourceStrings);
+        branchName, "testRepo", "testUser", "1", sourceStrings);
     verify(githubClientMock, times(1))
         .updateOrAddCommentToPR("testRepo", 1, "Test updated message", this.commentRegex);
     verify(githubClientMock, times(1)).removeLabelFromPR("testRepo", 1, "translations-ready");
@@ -141,6 +145,6 @@ public class BranchNotificationMessageSenderGithubTest {
   @Test(expected = BranchNotificationMessageSenderException.class)
   public void testInvalidBranchNameFormat() throws BranchNotificationMessageSenderException {
     branchNotificationMessageSenderGithub.sendNewMessage(
-        "branchName-in-invalid-format", "testUser", sourceStrings);
+        "branchName-in-invalid-format", "testRepo", "testUser", sourceStrings);
   }
 }

@@ -37,7 +37,8 @@ public class BranchNotificationMessageSenderGithub implements BranchNotification
   }
 
   @Override
-  public String sendNewMessage(String branchName, String username, List<String> sourceStrings)
+  public String sendNewMessage(
+      String branchName, String repoName, String username, List<String> sourceStrings)
       throws BranchNotificationMessageSenderException {
     logger.debug("sendNewMessage to: {}", githubClient.getEndpoint() + "/" + branchName);
 
@@ -46,9 +47,10 @@ public class BranchNotificationMessageSenderGithub implements BranchNotification
       Mono<GHIssueComment> addedCommentMono =
           githubClient
               .addCommentToPR(
-                  branchDetails.getRepository(),
+                  repoName,
                   branchDetails.getPrNumber(),
-                  branchNotificationMessageBuilderGithub.getNewMessage(branchName, sourceStrings))
+                  branchNotificationMessageBuilderGithub.getNewMessage(
+                      branchName, repoName, sourceStrings))
               .subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic());
       updatePRLabel(
           githubClient,
@@ -67,7 +69,11 @@ public class BranchNotificationMessageSenderGithub implements BranchNotification
 
   @Override
   public String sendUpdatedMessage(
-      String branchName, String username, String messageId, List<String> sourceStrings)
+      String branchName,
+      String repoName,
+      String username,
+      String messageId,
+      List<String> sourceStrings)
       throws BranchNotificationMessageSenderException {
     logger.debug("sendNewMessage to: {}", githubClient.getEndpoint() + "/" + branchName);
     try {
@@ -78,7 +84,7 @@ public class BranchNotificationMessageSenderGithub implements BranchNotification
                   branchDetails.getRepository(),
                   branchDetails.getPrNumber(),
                   branchNotificationMessageBuilderGithub.getUpdatedMessage(
-                      branchName, sourceStrings),
+                      branchName, branchDetails.getRepository(), sourceStrings),
                   String.format(
                       "(%s|%s).*",
                       Pattern.quote(this.branchNotificationMessageBuilderGithub.getNewStringMsg()),
