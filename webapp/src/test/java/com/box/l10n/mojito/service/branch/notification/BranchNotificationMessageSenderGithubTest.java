@@ -34,6 +34,7 @@ public class BranchNotificationMessageSenderGithubTest {
   List<String> sourceStrings;
 
   String branchName = "testOwner/testRepo/pulls/1";
+  String repoName = "testRepo";
 
   GithubBranchDetails githubBranchDetails = new GithubBranchDetails(branchName);
 
@@ -45,9 +46,11 @@ public class BranchNotificationMessageSenderGithubTest {
     final String updatedStringMsg = "Test updated message";
     sourceStrings = new ArrayList<>();
     sourceStrings.add("Test string");
-    when(branchNotificationMessageBuilderGithubMock.getNewMessage(branchName, sourceStrings))
+    when(branchNotificationMessageBuilderGithubMock.getNewMessage(
+            branchName, repoName, sourceStrings))
         .thenReturn(newStringMsg);
-    when(branchNotificationMessageBuilderGithubMock.getUpdatedMessage(branchName, sourceStrings))
+    when(branchNotificationMessageBuilderGithubMock.getUpdatedMessage(
+            branchName, repoName, sourceStrings))
         .thenReturn(updatedStringMsg);
     when(branchNotificationMessageBuilderGithubMock.getTranslatedMessage(
             branchName, githubBranchDetails, null))

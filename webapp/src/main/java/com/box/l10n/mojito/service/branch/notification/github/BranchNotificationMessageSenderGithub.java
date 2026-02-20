@@ -48,7 +48,8 @@ public class BranchNotificationMessageSenderGithub implements BranchNotification
               .addCommentToPR(
                   branchDetails.getRepository(),
                   branchDetails.getPrNumber(),
-                  branchNotificationMessageBuilderGithub.getNewMessage(branchName, sourceStrings))
+                  branchNotificationMessageBuilderGithub.getNewMessage(
+                      branchName, branchDetails.getRepository(), sourceStrings))
               .subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic());
       updatePRLabel(
           githubClient,
@@ -78,7 +79,7 @@ public class BranchNotificationMessageSenderGithub implements BranchNotification
                   branchDetails.getRepository(),
                   branchDetails.getPrNumber(),
                   branchNotificationMessageBuilderGithub.getUpdatedMessage(
-                      branchName, sourceStrings),
+                      branchName, branchDetails.getRepository(), sourceStrings),
                   String.format(
                       "(%s|%s).*",
                       Pattern.quote(this.branchNotificationMessageBuilderGithub.getNewStringMsg()),
