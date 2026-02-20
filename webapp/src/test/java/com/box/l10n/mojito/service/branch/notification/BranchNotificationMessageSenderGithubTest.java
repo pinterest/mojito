@@ -85,7 +85,7 @@ public class BranchNotificationMessageSenderGithubTest {
             isA(String.class), isA(Integer.class), isA(String.class)))
         .thenReturn(false);
     branchNotificationMessageSenderGithub.sendNewMessage(
-        branchName, "repo", "testUser", sourceStrings);
+        branchName, "testRepo", "testUser", sourceStrings);
     verify(githubClientMock, times(1)).addCommentToPR("testRepo", 1, "Test new message");
     verify(githubClientMock, times(0))
         .removeLabelFromPR(isA(String.class), isA(Integer.class), isA(String.class));
@@ -99,7 +99,7 @@ public class BranchNotificationMessageSenderGithubTest {
     when(githubClientMock.isLabelAppliedToPR("testRepo", 1, "skip-translations-required"))
         .thenReturn(false);
     branchNotificationMessageSenderGithub.sendUpdatedMessage(
-        branchName, "repo", "testUser", "1", sourceStrings);
+        branchName, "testRepo", "testUser", "1", sourceStrings);
     verify(githubClientMock, times(1))
         .updateOrAddCommentToPR("testRepo", 1, "Test updated message", this.commentRegex);
     verify(githubClientMock, times(1)).removeLabelFromPR("testRepo", 1, "translations-ready");
@@ -114,7 +114,7 @@ public class BranchNotificationMessageSenderGithubTest {
     when(githubClientMock.isLabelAppliedToPR("testRepo", 1, "skip-translations-required"))
         .thenReturn(true);
     branchNotificationMessageSenderGithub.sendUpdatedMessage(
-        branchName, "repo", "testUser", "1", sourceStrings);
+        branchName, "testRepo", "testUser", "1", sourceStrings);
     verify(githubClientMock, times(1))
         .updateOrAddCommentToPR("testRepo", 1, "Test updated message", this.commentRegex);
     verify(githubClientMock, times(1)).removeLabelFromPR("testRepo", 1, "translations-ready");
@@ -145,6 +145,6 @@ public class BranchNotificationMessageSenderGithubTest {
   @Test(expected = BranchNotificationMessageSenderException.class)
   public void testInvalidBranchNameFormat() throws BranchNotificationMessageSenderException {
     branchNotificationMessageSenderGithub.sendNewMessage(
-        "branchName-in-invalid-format", "repo", "testUser", sourceStrings);
+        "branchName-in-invalid-format", "testRepo", "testUser", sourceStrings);
   }
 }
