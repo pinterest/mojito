@@ -37,6 +37,7 @@ import org.springframework.data.annotation.CreatedBy;
       @NamedAttributeNode(value = "notifiers"),
       @NamedAttributeNode(value = "screenshots", subgraph = "Branch.legacy.screenshots"),
       @NamedAttributeNode("createdByUser"),
+      @NamedAttributeNode("repository"),
     },
     subgraphs = {
       @NamedSubgraph(
