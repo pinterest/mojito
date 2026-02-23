@@ -19,4 +19,13 @@ public class BranchUrlBuilder {
         .build()
         .toUriString();
   }
+
+  public String getV2BranchDashboardUrl(String branchName, String repoName) {
+    return UriComponentsBuilder.fromHttpUrl(serverConfig.getUrl())
+        .path("/v2/branch")
+        .queryParam("branchName", branchName)
+        .queryParam("repoName", repoName)
+        .build()
+        .toUriString();
+  }
 }

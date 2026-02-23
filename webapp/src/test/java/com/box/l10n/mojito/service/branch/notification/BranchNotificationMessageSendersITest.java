@@ -31,10 +31,10 @@ public class BranchNotificationMessageSendersITest extends ServiceTestBase {
 
     String messageId =
         github.sendNewMessage(
-            branchName, username, Arrays.asList("test 1 string", "test 2 string"));
+            branchName, "repo", username, Arrays.asList("test 1 string", "test 2 string"));
 
     github.sendUpdatedMessage(
-        branchName, username, messageId, Arrays.asList("test 1 string", "test 2 string"));
+        branchName, "repo", username, messageId, Arrays.asList("test 1 string", "test 2 string"));
 
     github.sendScreenshotMissingMessage(branchName, messageId, username);
     github.sendTranslatedMessage(branchName, username, messageId, null);
@@ -52,10 +52,11 @@ public class BranchNotificationMessageSendersITest extends ServiceTestBase {
     Assume.assumeNotNull(slack);
 
     String messageId =
-        slack.sendNewMessage(branchName, username, Arrays.asList("test 1 string", "test 2 string"));
+        slack.sendNewMessage(
+            branchName, "repo", username, Arrays.asList("test 1 string", "test 2 string"));
 
     slack.sendUpdatedMessage(
-        branchName, username, messageId, Arrays.asList("test 1 string", "test 2 string"));
+        branchName, "repo", username, messageId, Arrays.asList("test 1 string", "test 2 string"));
 
     slack.sendScreenshotMissingMessage(branchName, messageId, username);
     slack.sendTranslatedMessage(branchName, username, messageId, null);

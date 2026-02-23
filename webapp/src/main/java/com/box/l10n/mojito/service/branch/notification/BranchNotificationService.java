@@ -317,7 +317,10 @@ public class BranchNotificationService {
     try {
       String messageId =
           branchNotificationMessageSender.sendNewMessage(
-              branch.getName(), getUsername(branch), branchNotificationInfo.getSourceStrings());
+              branch.getName(),
+              branch.getRepository().getName(),
+              getUsername(branch),
+              branchNotificationInfo.getSourceStrings());
 
       branchNotification.setNewMsgSentAt(dateTimeUtils.now());
       branchNotification.setMessageId(messageId);
@@ -344,6 +347,7 @@ public class BranchNotificationService {
       String messageId =
           branchNotificationMessageSender.sendUpdatedMessage(
               branch.getName(),
+              branch.getRepository().getName(),
               getUsername(branch),
               branchNotification.getMessageId(),
               branchNotificationInfo.getSourceStrings());

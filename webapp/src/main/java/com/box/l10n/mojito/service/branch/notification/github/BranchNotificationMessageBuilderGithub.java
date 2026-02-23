@@ -32,6 +32,8 @@ public class BranchNotificationMessageBuilderGithub {
 
   String safeTranslationsReadyMsg;
 
+  boolean usesV2BranchLink;
+
   public BranchNotificationMessageBuilderGithub(
       BranchUrlBuilder branchUrlBuilder,
       String newNotificationMsgFormat,
@@ -41,7 +43,8 @@ public class BranchNotificationMessageBuilderGithub {
       String noMoreStringsMsg,
       String translationsReadyMsg,
       String screenshotsMissingMsg,
-      String safeTranslationsReadyMsg) {
+      String safeTranslationsReadyMsg,
+      boolean usesV2BranchLink) {
     this.branchUrlBuilder = branchUrlBuilder;
     this.newNotificationMsgFormat = newNotificationMsgFormat;
     this.updatedNotificationMsgFormat = updatedNotificationMsgFormat;
@@ -51,20 +54,21 @@ public class BranchNotificationMessageBuilderGithub {
     this.translationsReadyMsg = translationsReadyMsg;
     this.screenshotsMissingMsg = screenshotsMissingMsg;
     this.safeTranslationsReadyMsg = safeTranslationsReadyMsg;
+    this.usesV2BranchLink = usesV2BranchLink;
   }
 
-  public String getNewMessage(String branchName, List<String> sourceStrings) {
+  public String getNewMessage(String branchName, String repoName, List<String> sourceStrings) {
     MessageFormat messageFormat = new MessageFormat(newNotificationMsgFormat);
     ImmutableMap<String, Object> messageParamMap =
         ImmutableMap.<String, Object>builder()
             .put("message", newStringMsg)
-            .put("link", getLinkGoToMojito(branchName))
+            .put("link", getLinkGoToMojito(branchName, repoName))
             .put("strings", getFormattedSourceStrings(sourceStrings))
             .build();
     return messageFormat.format(messageParamMap);
   }
 
-  public String getUpdatedMessage(String branchName, List<String> sourceStrings) {
+  public String getUpdatedMessage(String branchName, String repoName, List<String> sourceStrings) {
 
     String msg = null;
 
@@ -77,7 +81,7 @@ public class BranchNotificationMessageBuilderGithub {
       messageParamMap =
           ImmutableMap.<String, Object>builder()
               .put("message", updatedStringMsg)
-              .put("link", getLinkGoToMojito(branchName))
+              .put("link", getLinkGoToMojito(branchName, repoName))
               .put("strings", getFormattedSourceStrings(sourceStrings))
               .build();
     }
@@ -111,8 +115,13 @@ public class BranchNotificationMessageBuilderGithub {
         + sourceStrings.stream().map(t -> " - " + t).collect(Collectors.joining("\n"));
   }
 
-  String getLinkGoToMojito(String branchName) {
-    return "[→ Go to Mojito](" + branchUrlBuilder.getBranchDashboardUrl(branchName) + ")";
+  String getLinkGoToMojito(String branchName, String repoName) {
+    String branchUrl =
+        usesV2BranchLink
+            ? branchUrlBuilder.getV2BranchDashboardUrl(branchName, repoName)
+            : branchUrlBuilder.getBranchDashboardUrl(branchName);
+
+    return "[→ Go to Mojito](" + branchUrl + ")";
   }
 
   public String getNewStringMsg() {

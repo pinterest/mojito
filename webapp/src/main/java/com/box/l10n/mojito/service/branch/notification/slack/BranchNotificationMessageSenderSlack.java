@@ -53,7 +53,8 @@ public class BranchNotificationMessageSenderSlack implements BranchNotificationM
   }
 
   @Override
-  public String sendNewMessage(String branchName, String username, List<String> sourceStrings)
+  public String sendNewMessage(
+      String branchName, String repoName, String username, List<String> sourceStrings)
       throws BranchNotificationMessageSenderException {
     logger.debug("sendNewMessage to: {}", username);
 
@@ -74,7 +75,11 @@ public class BranchNotificationMessageSenderSlack implements BranchNotificationM
 
   @Override
   public String sendUpdatedMessage(
-      String branchName, String username, String messageId, List<String> sourceStrings)
+      String branchName,
+      String repoName,
+      String username,
+      String messageId,
+      List<String> sourceStrings)
       throws BranchNotificationMessageSenderException {
     logger.debug("sendUpdatedMessage to: {}", username);
 

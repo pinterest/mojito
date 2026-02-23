@@ -19,15 +19,20 @@ public class BranchNotificationMessageSenderNoop implements BranchNotificationMe
   }
 
   @Override
-  public String sendNewMessage(String branchName, String username, List<String> sourceStrings)
+  public String sendNewMessage(
+      String branchName, String repoName, String username, List<String> sourceStrings)
       throws BranchNotificationMessageSenderException {
-    logger.debug("noop sendNewMessage to: {}", username);
+    logger.debug("noop sendNewMessage to: {}. Repo:{} ", username, repoName);
     return "noop-message-id";
   }
 
   @Override
   public String sendUpdatedMessage(
-      String branchName, String username, String messageId, List<String> sourceStrings)
+      String branchName,
+      String repoName,
+      String username,
+      String messageId,
+      List<String> sourceStrings)
       throws BranchNotificationMessageSenderException {
     logger.debug("noop sendUpdatedMessage to: {}", username);
     return "noop-message-id";

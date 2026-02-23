@@ -119,14 +119,18 @@ public class BranchNotificationServiceTest extends ServiceTestBase {
         new BranchNotificationMessageSenderNoop(branchNotifierId) {
           @Override
           public String sendNewMessage(
-              String branchName, String username, List<String> sourceStrings)
+              String branchName, String repo, String username, List<String> sourceStrings)
               throws BranchNotificationMessageSenderException {
             throw new BranchNotificationMessageSenderException(exceptionMessage);
           }
 
           @Override
           public String sendUpdatedMessage(
-              String branchName, String username, String messageId, List<String> sourceStrings)
+              String branchName,
+              String repoName,
+              String username,
+              String messageId,
+              List<String> sourceStrings)
               throws BranchNotificationMessageSenderException {
             throw new BranchNotificationMessageSenderException(exceptionMessage);
           }
