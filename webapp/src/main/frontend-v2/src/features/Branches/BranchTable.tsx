@@ -5,6 +5,7 @@ import { ConfigProvider, Empty, Table, type TableColumnsType } from "antd";
 
 import type { BranchStatistics } from "@/types/branchStatistics";
 import { displayDate } from "@/utils/formatDate";
+import type { Page } from "@/types/page";
 
 interface BranchDatum {
   key: string;
@@ -17,10 +18,18 @@ interface BranchDatum {
 
 interface BranchTableProps {
   isLoading: boolean;
-  stats: BranchStatistics[];
+  statsPage?: Page<BranchStatistics> | undefined;
+
+  onPageChange?: (page: number, pageSize: number) => void;
 }
 
-const BranchTable: React.FC<BranchTableProps> = ({ isLoading, stats }) => {
+const PAGE_SIZE_OPTIONS = ["10", "20", "50", "100"];
+
+const BranchTable: React.FC<BranchTableProps> = ({
+  isLoading,
+  statsPage,
+  onPageChange,
+}) => {
   const { t } = useTranslation("branch");
 
   const columns: TableColumnsType<BranchDatum> = [
@@ -67,18 +76,19 @@ const BranchTable: React.FC<BranchTableProps> = ({ isLoading, stats }) => {
     },
   ];
 
-  const data: BranchDatum[] = stats.map(
-    (stat): BranchDatum => ({
-      key: String(stat.branch.id),
-      branchName: stat.branch.name,
-      repo: stat.branch.repository.name,
-      createdDate: displayDate(new Date(stat.createdDate)),
-      author: stat.branch?.createdByUser?.username,
-      screenshotCount: stat.branch.screenshots.reduce((count, screenshot) => {
-        return count + (screenshot.textUnits.length ? 1 : 0);
-      }, 0),
-    }),
-  );
+  const data: BranchDatum[] =
+    statsPage?.content.map(
+      (stat): BranchDatum => ({
+        key: String(stat.branch.id),
+        branchName: stat.branch.name,
+        repo: stat.branch.repository.name,
+        createdDate: displayDate(new Date(stat.createdDate)),
+        author: stat.branch?.createdByUser?.username,
+        screenshotCount: stat.branch.screenshots.reduce((count, screenshot) => {
+          return count + (screenshot.textUnits.length ? 1 : 0);
+        }, 0),
+      }),
+    ) ?? [];
 
   return (
     <ConfigProvider
@@ -97,8 +107,13 @@ const BranchTable: React.FC<BranchTableProps> = ({ isLoading, stats }) => {
         loading={isLoading}
         sortDirections={["descend", "ascend"]}
         pagination={{
-          pageSize: 10,
-          showQuickJumper: true,
+          pageSizeOptions: PAGE_SIZE_OPTIONS,
+          pageSize: statsPage?.size,
+          total: statsPage?.totalElements ?? 0,
+          showSizeChanger: true,
+          onChange: (page, pageSize) => {
+            onPageChange?.(page, pageSize);
+          },
         }}
       />
     </ConfigProvider>

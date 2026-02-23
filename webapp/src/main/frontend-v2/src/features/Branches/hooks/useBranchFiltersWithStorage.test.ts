@@ -109,6 +109,7 @@ describe("useBranchFiltersWithStorage", () => {
       const { result } = renderHook(() =>
         useBranchFiltersWithStorage(testUsername),
       );
+      mockSessionStorage.setItem.mockClear();
 
       act(() => {
         result.current.setQueryText("new-query");
@@ -121,6 +122,8 @@ describe("useBranchFiltersWithStorage", () => {
           statusFilter: [],
           createdBefore: undefined,
           createdAfter: undefined,
+          pageSize: 10,
+          page: 0,
         }),
       );
     });
@@ -261,6 +264,8 @@ describe("useBranchFiltersWithStorage", () => {
           statusFilter: [],
           createdBefore: "2024-01-01T10:00:00.000Z",
           createdAfter: "2024-02-01T15:30:00.000Z",
+          pageSize: 10,
+          page: 0,
         }),
       );
     });
@@ -332,6 +337,89 @@ describe("useBranchFiltersWithStorage", () => {
         new Date("2024-01-01T00:00:00.000Z"),
       );
       expect(result.current.createdAfter).toBeNull();
+    });
+  });
+
+  describe("paging details", () => {
+    it("should initialize with default pagination values", () => {
+      mockSessionStorage.getItem.mockReturnValue(null);
+
+      const { result } = renderHook(() =>
+        useBranchFiltersWithStorage(testUsername),
+      );
+
+      expect(result.current.page).toBe(0);
+      expect(result.current.pageSize).toBe(10);
+    });
+
+    it("should load pagination from session storage when available", () => {
+      const storedData = {
+        queryText: "test",
+        statusFilter: [],
+        createdBefore: null,
+        createdAfter: null,
+        page: 2,
+        pageSize: 50,
+      };
+
+      mockSessionStorage.getItem.mockReturnValue(JSON.stringify(storedData));
+
+      const { result } = renderHook(() =>
+        useBranchFiltersWithStorage(testUsername),
+      );
+
+      expect(result.current.page).toBe(2);
+      expect(result.current.pageSize).toBe(50);
+    });
+
+    it("should update page when setPage is called", () => {
+      mockSessionStorage.getItem.mockReturnValue(null);
+
+      const { result } = renderHook(() =>
+        useBranchFiltersWithStorage(testUsername),
+      );
+
+      act(() => {
+        result.current.setPage(5);
+      });
+
+      expect(result.current.page).toBe(5);
+    });
+
+    it("should update pageSize when setPageSize is called", () => {
+      mockSessionStorage.getItem.mockReturnValue(null);
+
+      const { result } = renderHook(() =>
+        useBranchFiltersWithStorage(testUsername),
+      );
+
+      act(() => {
+        result.current.setPageSize(100);
+      });
+
+      expect(result.current.pageSize).toBe(100);
+    });
+
+    it("should persist pagination state to session storage", () => {
+      mockSessionStorage.getItem.mockReturnValue(null);
+
+      const { result } = renderHook(() =>
+        useBranchFiltersWithStorage(testUsername),
+      );
+
+      act(() => {
+        result.current.setPage(3);
+        result.current.setPageSize(25);
+      });
+
+      expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
+        "branchFilters",
+        expect.stringContaining('"page":3'),
+      );
+      expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
+        "branchFilters",
+        expect.stringContaining('"pageSize":25'),
+      );
     });
   });
 });
