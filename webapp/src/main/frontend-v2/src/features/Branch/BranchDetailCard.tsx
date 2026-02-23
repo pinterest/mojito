@@ -61,10 +61,13 @@ const BranchDetailCard: React.FC<BranchDetailsProps> = ({
   const isBranchDeletable =
     !branchStats.branch.deleted && APP_CONFIG.user.role === "ROLE_ADMIN";
 
+  const totalBranchTextUnits =
+    branchStats.branchTextUnitStatistics?.length ?? 0;
+
   const needsScreenshotUpload =
     !branchStats.branch.deleted &&
-    getTextUnitScreenshotMap(branchStats).size !==
-      branchStats.branchTextUnitStatistics.length;
+    totalBranchTextUnits > 0 &&
+    getTextUnitScreenshotMap(branchStats).size !== totalBranchTextUnits;
 
   return (
     <Flex orientation='vertical'>
