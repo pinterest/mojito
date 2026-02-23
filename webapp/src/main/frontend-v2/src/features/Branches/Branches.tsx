@@ -18,10 +18,14 @@ const BranchesPage: React.FC = () => {
     statusFilter,
     createdBefore,
     createdAfter,
+    pageSize,
+    page,
     setQueryText,
     setStatusFilter,
     setCreatedBefore,
     setCreatedAfter,
+    setPageSize,
+    setPage,
   } = useBranchFiltersWithStorage(APP_CONFIG.user.username);
 
   const queryTextDebounced = useDebouncedValue(queryText, 300);
@@ -35,6 +39,8 @@ const BranchesPage: React.FC = () => {
         statusFilter,
         createdBefore: createdBefore?.getTime(),
         createdAfter: createdAfter?.getTime(),
+        page,
+        pageSize,
       },
     ],
     queryFn: () => {
@@ -46,9 +52,16 @@ const BranchesPage: React.FC = () => {
         empty: isEmptyIncluded,
         createdBefore: createdBefore || undefined,
         createdAfter: createdAfter || undefined,
+        page,
+        size: pageSize,
       });
     },
   });
+
+  const handlePageChange = (page: number, pageSize: number) => {
+    setPage(page - 1);
+    setPageSize(pageSize);
+  };
 
   const isLoading = branchStatsQuery.isLoading || branchStatsQuery.isFetching;
 
@@ -70,7 +83,8 @@ const BranchesPage: React.FC = () => {
 
       <BranchTable
         isLoading={isLoading}
-        stats={branchStatsQuery.data?.content || []}
+        statsPage={branchStatsQuery.data}
+        onPageChange={handlePageChange}
       />
     </div>
   );

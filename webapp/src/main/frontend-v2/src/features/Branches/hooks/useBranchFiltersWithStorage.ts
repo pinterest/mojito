@@ -6,6 +6,8 @@ interface BranchFiltersState {
   statusFilter: StatusFilter[];
   createdBefore: Date | null;
   createdAfter: Date | null;
+  pageSize: number;
+  page: number;
 }
 
 interface BranchFiltersActions {
@@ -13,6 +15,8 @@ interface BranchFiltersActions {
   setStatusFilter: (value: StatusFilter[]) => void;
   setCreatedBefore: (value: Date | null) => void;
   setCreatedAfter: (value: Date | null) => void;
+  setPageSize: (value: number) => void;
+  setPage: (value: number) => void;
 }
 
 interface BranchFiltersActions {
@@ -20,6 +24,8 @@ interface BranchFiltersActions {
   setStatusFilter: (value: StatusFilter[]) => void;
   setCreatedBefore: (value: Date | null) => void;
   setCreatedAfter: (value: Date | null) => void;
+  setPageSize: (value: number) => void;
+  setPage: (value: number) => void;
 }
 
 type UseBranchFiltersReturn = BranchFiltersState & BranchFiltersActions;
@@ -31,14 +37,17 @@ const getDefaultFiltersState = (username: string): BranchFiltersState => ({
   statusFilter: [],
   createdBefore: null,
   createdAfter: null,
+  pageSize: 10,
+  page: 0,
 });
 
 const loadFiltersFromStorage = (username: string): BranchFiltersState => {
   try {
     const storedData = sessionStorage.getItem(STORAGE_KEY);
 
+    const defaultState = getDefaultFiltersState(username);
     if (!storedData) {
-      return getDefaultFiltersState(username);
+      return defaultState;
     }
 
     const parsedData = JSON.parse(storedData);
@@ -54,6 +63,8 @@ const loadFiltersFromStorage = (username: string): BranchFiltersState => {
       createdAfter: parsedData.createdAfter
         ? new Date(parsedData.createdAfter)
         : null,
+      pageSize: parsedData.pageSize ?? defaultState.pageSize,
+      page: parsedData.page ?? defaultState.page,
     };
   } catch (error) {
     console.warn("Failed to load branch filters from session storage:", error);
@@ -68,6 +79,8 @@ const saveFiltersToStorage = (filters: BranchFiltersState): void => {
       statusFilter: filters.statusFilter,
       createdBefore: filters.createdBefore?.toISOString(),
       createdAfter: filters.createdAfter?.toISOString(),
+      pageSize: filters.pageSize,
+      page: filters.page,
     };
 
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(dataToStore));
@@ -103,11 +116,21 @@ export const useBranchFiltersWithStorage = (
     setFiltersState((prev) => ({ ...prev, createdAfter }));
   };
 
+  const setPageSize = (pageSize: number) => {
+    setFiltersState((prev) => ({ ...prev, pageSize }));
+  };
+
+  const setPage = (page: number) => {
+    setFiltersState((prev) => ({ ...prev, page }));
+  };
+
   const actions: BranchFiltersActions = {
     setQueryText,
     setStatusFilter,
     setCreatedBefore,
     setCreatedAfter,
+    setPageSize,
+    setPage,
   };
 
   return { ...filtersState, ...actions };

@@ -37,6 +37,8 @@ describe("useBranchFiltersWithStorage", () => {
       expect(result.current.statusFilter).toEqual([]);
       expect(result.current.createdBefore).toBeNull();
       expect(result.current.createdAfter).toBeNull();
+      expect(result.current.page).toBe(0);
+      expect(result.current.pageSize).toBe(10);
     });
 
     it("should load state from session storage when available", () => {
@@ -109,9 +111,11 @@ describe("useBranchFiltersWithStorage", () => {
       const { result } = renderHook(() =>
         useBranchFiltersWithStorage(testUsername),
       );
+      mockSessionStorage.setItem.mockClear();
 
       act(() => {
         result.current.setQueryText("new-query");
+        result.current.setPageSize(20);
       });
 
       expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
@@ -121,6 +125,8 @@ describe("useBranchFiltersWithStorage", () => {
           statusFilter: [],
           createdBefore: undefined,
           createdAfter: undefined,
+          pageSize: 20,
+          page: 0,
         }),
       );
     });
@@ -216,6 +222,34 @@ describe("useBranchFiltersWithStorage", () => {
       expect(result.current.createdAfter).toBe(newDate);
     });
 
+    it("should update page", () => {
+      mockSessionStorage.getItem.mockReturnValue(null);
+
+      const { result } = renderHook(() =>
+        useBranchFiltersWithStorage(testUsername),
+      );
+
+      act(() => {
+        result.current.setPage(5);
+      });
+
+      expect(result.current.page).toBe(5);
+    });
+
+    it("should update pageSize", () => {
+      mockSessionStorage.getItem.mockReturnValue(null);
+
+      const { result } = renderHook(() =>
+        useBranchFiltersWithStorage(testUsername),
+      );
+
+      act(() => {
+        result.current.setPageSize(100);
+      });
+
+      expect(result.current.pageSize).toBe(100);
+    });
+
     it("should handle null values for date setters", () => {
       mockSessionStorage.getItem.mockReturnValue(null);
 
@@ -261,6 +295,8 @@ describe("useBranchFiltersWithStorage", () => {
           statusFilter: [],
           createdBefore: "2024-01-01T10:00:00.000Z",
           createdAfter: "2024-02-01T15:30:00.000Z",
+          pageSize: 10,
+          page: 0,
         }),
       );
     });
