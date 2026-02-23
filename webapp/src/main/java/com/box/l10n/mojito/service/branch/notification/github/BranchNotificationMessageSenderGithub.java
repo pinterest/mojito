@@ -81,7 +81,7 @@ public class BranchNotificationMessageSenderGithub implements BranchNotification
       Mono<GHIssueComment> addedCommentMono =
           githubClient
               .updateOrAddCommentToPR(
-                  branchDetails.getRepository(),
+                  repoName,
                   branchDetails.getPrNumber(),
                   branchNotificationMessageBuilderGithub.getUpdatedMessage(
                       branchName, branchDetails.getRepository(), sourceStrings),

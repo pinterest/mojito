@@ -9,8 +9,8 @@ public interface BranchNotificationMessageSender {
 
   String sendUpdatedMessage(
       String branchName,
-      String username,
       String repoName,
+      String username,
       String messageId,
       List<String> sourceStrings)
       throws BranchNotificationMessageSenderException;

@@ -34,7 +34,7 @@ public class BranchNotificationMessageSendersITest extends ServiceTestBase {
             branchName, "repo", username, Arrays.asList("test 1 string", "test 2 string"));
 
     github.sendUpdatedMessage(
-        branchName, username, "repo", messageId, Arrays.asList("test 1 string", "test 2 string"));
+        branchName, "repo", username, messageId, Arrays.asList("test 1 string", "test 2 string"));
 
     github.sendScreenshotMissingMessage(branchName, messageId, username);
     github.sendTranslatedMessage(branchName, username, messageId, null);
