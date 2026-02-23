@@ -47,7 +47,7 @@ public class BranchNotificationMessageSenderGithub implements BranchNotification
       Mono<GHIssueComment> addedCommentMono =
           githubClient
               .addCommentToPR(
-                  repoName,
+                  branchDetails.getRepository(),
                   branchDetails.getPrNumber(),
                   branchNotificationMessageBuilderGithub.getNewMessage(
                       branchName, repoName, sourceStrings))
@@ -81,10 +81,10 @@ public class BranchNotificationMessageSenderGithub implements BranchNotification
       Mono<GHIssueComment> addedCommentMono =
           githubClient
               .updateOrAddCommentToPR(
-                  repoName,
+                  branchDetails.getRepository(),
                   branchDetails.getPrNumber(),
                   branchNotificationMessageBuilderGithub.getUpdatedMessage(
-                      branchName, branchDetails.getRepository(), sourceStrings),
+                      branchName, repoName, sourceStrings),
                   String.format(
                       "(%s|%s).*",
                       Pattern.quote(this.branchNotificationMessageBuilderGithub.getNewStringMsg()),
