@@ -64,5 +64,5 @@ export interface BranchStatistics {
   totalCount: number;
   forTranslationCount: number;
   branch: Branch;
-  branchTextUnitStatistics: BranchTextUnitStatistic[];
+  branchTextUnitStatistics?: BranchTextUnitStatistic[] | null;
 }
