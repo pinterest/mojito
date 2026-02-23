@@ -1,5 +1,7 @@
 package com.box.l10n.mojito.resttemplate;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +19,8 @@ public class ResttemplateConfig {
   String scheme = "http";
   String contextPath = "";
   boolean usesLoginAuthentication = true;
+
+  Map<String, String> headers = new HashMap<>();
 
   Authentication authentication = new Authentication();
 
@@ -103,5 +107,13 @@ public class ResttemplateConfig {
 
   public void setUsesLoginAuthentication(boolean usesLoginAuthentication) {
     this.usesLoginAuthentication = usesLoginAuthentication;
+  }
+
+  public Map<String, String> getHeaders() {
+    return headers;
+  }
+
+  public void setHeaders(Map<String, String> headers) {
+    this.headers = headers;
   }
 }
