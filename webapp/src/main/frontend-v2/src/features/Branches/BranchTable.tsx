@@ -107,6 +107,7 @@ const BranchTable: React.FC<BranchTableProps> = ({
         loading={isLoading}
         sortDirections={["descend", "ascend"]}
         pagination={{
+          current: (statsPage?.number ?? 0) + 1,
           pageSizeOptions: PAGE_SIZE_OPTIONS,
           pageSize: statsPage?.size,
           total: statsPage?.totalElements ?? 0,
