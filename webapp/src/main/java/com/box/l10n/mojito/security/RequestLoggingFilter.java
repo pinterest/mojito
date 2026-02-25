@@ -28,7 +28,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
 
     if (requestLoggingConfig.isLoggingEnabled() && requestLoggerHelper != null) {
       String msg = requestLoggerHelper.summarizeRequest(request, requestLoggingConfig);
-      logger.info(msg);
+      logger.debug(msg);
     }
 
     filterChain.doFilter(request, response);
