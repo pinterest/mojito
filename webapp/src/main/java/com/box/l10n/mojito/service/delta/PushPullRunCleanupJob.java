@@ -36,8 +36,9 @@ public class PushPullRunCleanupJob implements Job {
 
   @Override
   public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-    logger.debug("Running Push and Pull run retention cleanup job.");
+    logger.info("Running Push and Pull run retention cleanup job.");
     pushPullRunCleanupService.cleanOldPushPullData(this.configurationProperties);
+    logger.info("Push and Pull run retention cleanup job finished.");
   }
 
   @Bean(name = "jobDetailPushPullRunCleanupJob")
