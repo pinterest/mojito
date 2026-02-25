@@ -176,7 +176,8 @@ public class WebSecurityConfig {
                     "/js/**",
                     "/css/**",
                     "/error",
-                    "/v3/api-docs.yaml")
+                    "/v3/api-docs.yaml",
+                    "/api/csrf-token")
                 .permitAll()
                 . // always accessible to serve the frontend
                 requestMatchers(getHeathcheckPatterns())
