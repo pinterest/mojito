@@ -269,9 +269,13 @@ public class WebSecurityConfig {
     logger.debug("For APIs, we don't redirect to login page. Instead we return a 401");
     http.exceptionHandling(
         exceptionHandlingConfigurer ->
-            exceptionHandlingConfigurer.defaultAuthenticationEntryPointFor(
-                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-                new AntPathRequestMatcher("/api/*")));
+            exceptionHandlingConfigurer
+                .defaultAuthenticationEntryPointFor(
+                    new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                    new AntPathRequestMatcher("/api/*"))
+                .defaultAuthenticationEntryPointFor(
+                    new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                    new AntPathRequestMatcher("/auth/*")));
 
     if (securityConfig.getUnauthRedirectTo() != null) {
       logger.debug(

@@ -2707,6 +2707,19 @@ paths:
       summary: Update Text Units for a specific Virtual Asset asynchronously
       tags:
       - virtual-asset-ws
+  /auth/csrf-token:
+    get:
+      operationId: getCsrfToken_1
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                type: string
+          description: OK
+      summary: Get a CSRF Token
+      tags:
+      - csrf-token-controller
   /cli/install.sh:
     get:
       operationId: getInstallCliScript
