@@ -26,9 +26,12 @@ public class CsrfTokenController {
   static Logger logger = getLogger(CsrfTokenController.class);
 
   public static final String CSRF_TOKEN_PATH = "/api/csrf-token";
+  public static final String AUTH_CSRF_TOKEN_PATH = "/auth/csrf-token";
 
   @Operation(summary = "Get a CSRF Token")
-  @RequestMapping(method = RequestMethod.GET, value = CSRF_TOKEN_PATH)
+  @RequestMapping(
+      method = RequestMethod.GET,
+      value = {CSRF_TOKEN_PATH, AUTH_CSRF_TOKEN_PATH})
   @ResponseStatus(HttpStatus.OK)
   public String getCsrfToken(HttpServletRequest httpServletRequest) {
 
