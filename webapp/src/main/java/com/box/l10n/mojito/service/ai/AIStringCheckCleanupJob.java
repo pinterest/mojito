@@ -6,6 +6,8 @@ import org.quartz.Job;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +25,8 @@ import org.springframework.stereotype.Component;
 @DisallowConcurrentExecution
 @ConditionalOnProperty(value = "l10n.ai-string-check.cleanup-job.enabled", havingValue = "true")
 public class AIStringCheckCleanupJob implements Job {
+  private static final Logger LOGGER = LoggerFactory.getLogger(AIStringCheckCleanupJob.class);
+
   @Value("${l10n.ai-string-check.cleanup-job.retention-period:P6M}")
   private Period retentionPeriod;
 
@@ -33,7 +37,9 @@ public class AIStringCheckCleanupJob implements Job {
 
   @Override
   public void execute(JobExecutionContext context) throws JobExecutionException {
+    LOGGER.info("Cleanup job started");
     this.aiStringCheckCleanupService.cleanup(this.retentionPeriod);
+    LOGGER.info("Cleanup job finished");
   }
 
   @Bean(name = "jobDetailAIStringCheckCleanupJob")
