@@ -8,6 +8,8 @@ import com.box.l10n.mojito.apiclient.model.MultiLocalizedAssetBody;
 import com.box.l10n.mojito.apiclient.model.PollableTask;
 import com.box.l10n.mojito.apiclient.model.SourceAsset;
 import com.box.l10n.mojito.apiclient.model.XliffExportBody;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +86,8 @@ public class AssetClient {
   public List<AssetAssetSummary> getAssets(
       Long repositoryId, String path, Boolean deleted, Boolean virtual, Long branchId) {
     logger.debug("Get assets by path = {} repo id = {} deleted = {}", path, repositoryId, deleted);
-    return this.assetWsApi.getAssets(repositoryId, path, deleted, virtual, branchId);
+    String encodedPath = path != null ? URLEncoder.encode(path, StandardCharsets.UTF_8) : null;
+    return this.assetWsApi.getAssets(repositoryId, encodedPath, deleted, virtual, branchId);
   }
 
   public XliffExportBody xliffExportAsync(XliffExportBody body, String bcp47tag, Long assetId) {
