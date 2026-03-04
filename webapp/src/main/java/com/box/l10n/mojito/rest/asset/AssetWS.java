@@ -39,6 +39,8 @@ import io.micrometer.core.instrument.Tags;
 import io.swagger.v3.oas.annotations.Operation;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -111,8 +113,8 @@ public class AssetWS {
       @RequestParam(value = "deleted", required = false) Boolean deleted,
       @RequestParam(value = "virtual", required = false) Boolean virtual,
       @RequestParam(value = "branchId", required = false) Long branchId) {
-
-    return assetService.findAll(repositoryId, path, deleted, virtual, branchId);
+    String decodedPath = path != null ? URLDecoder.decode(path, StandardCharsets.UTF_8) : null;
+    return assetService.findAll(repositoryId, decodedPath, deleted, virtual, branchId);
   }
 
   /**
