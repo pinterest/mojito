@@ -228,4 +228,38 @@ public class AssetWSTest extends WSTestBase {
     String xliff = assetClient.xliffExport(assetId, xliffExportBody.getTmXliffId()).getContent();
     assertTrue(xliff.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"));
   }
+
+  protected SourceAsset createSourceAsset(Repository repository, String path) {
+    SourceAsset sourceAsset = new SourceAsset();
+    sourceAsset.setRepositoryId(repository.getId());
+    sourceAsset.setPath(path);
+    sourceAsset.setContent(testDataFactory.getTestSourceAssetContent());
+
+    return sourceAsset;
+  }
+
+  @Test
+  @Category({IntegrationTest.class})
+  public void testGetAssets() throws RepositoryNameAlreadyUsedException {
+
+    final String path = "/path/to/fake/file1+test.xliff";
+
+    Repository repository = testDataFactory.createRepository(testIdWatcher);
+    SourceAsset sourceAsset = createSourceAsset(repository, path);
+    SourceAsset sourceAssetAfterPost = assetClient.importSourceAsset(sourceAsset);
+
+    pollableTaskClient.waitForPollableTask(sourceAssetAfterPost.getPollableTask().getId(), 5000L);
+
+    Asset addedAsset =
+        assetRepository.findById(sourceAssetAfterPost.getAddedAssetId()).orElse(null);
+    assertNotNull("The asset should have been created", addedAsset);
+
+    assertEquals(sourceAsset.getRepositoryId(), addedAsset.getRepository().getId());
+    assertEquals(sourceAsset.getPath(), addedAsset.getPath());
+
+    List<AssetAssetSummary> assets =
+        this.assetClient.getAssets(repository.getId(), path, null, null, null);
+
+    assertEquals(1, assets.size());
+  }
 }

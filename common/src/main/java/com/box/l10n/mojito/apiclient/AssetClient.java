@@ -84,7 +84,9 @@ public class AssetClient {
   public List<AssetAssetSummary> getAssets(
       Long repositoryId, String path, Boolean deleted, Boolean virtual, Long branchId) {
     logger.debug("Get assets by path = {} repo id = {} deleted = {}", path, repositoryId, deleted);
-    return this.assetWsApi.getAssets(repositoryId, path, deleted, virtual, branchId);
+    String pathWithPlusReplaced = path != null ? path.replace("+", "__plus__") : null;
+    return this.assetWsApi.getAssets(
+        repositoryId, pathWithPlusReplaced, deleted, virtual, branchId);
   }
 
   public XliffExportBody xliffExportAsync(XliffExportBody body, String bcp47tag, Long assetId) {
