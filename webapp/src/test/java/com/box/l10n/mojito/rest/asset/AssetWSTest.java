@@ -202,6 +202,33 @@ public class AssetWSTest extends WSTestBase {
             || assetIds.iterator().next().equals(sourceAssetAfterPost3.getAddedAssetId()));
   }
 
+  protected SourceAsset createSourceAsset(Repository repository) {
+    SourceAsset sourceAsset = new SourceAsset();
+    sourceAsset.setRepositoryId(repository.getId());
+    sourceAsset.setPath("/path/to/fake/file.xliff");
+    sourceAsset.setContent(testDataFactory.getTestSourceAssetContent());
+
+    return sourceAsset;
+  }
+
+  @Test
+  @Category({IntegrationTest.class})
+  public void testExportSourceAsset() throws RepositoryNameAlreadyUsedException {
+
+    Repository repository = testDataFactory.createRepository(testIdWatcher);
+    SourceAsset sourceAsset = createSourceAsset(repository);
+    SourceAsset sourceAssetAfterPost = assetClient.importSourceAsset(sourceAsset);
+    pollableTaskClient.waitForPollableTask(sourceAssetAfterPost.getPollableTask().getId(), 5000L);
+
+    Long assetId = sourceAssetAfterPost.getAddedAssetId();
+    XliffExportBody xliffExportBody =
+        assetClient.xliffExportAsync(new XliffExportBody(), "en", assetId);
+    pollableTaskClient.waitForPollableTask(xliffExportBody.getPollableTask().getId(), 5000L);
+
+    String xliff = assetClient.xliffExport(assetId, xliffExportBody.getTmXliffId()).getContent();
+    assertTrue(xliff.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"));
+  }
+
   protected SourceAsset createSourceAsset(Repository repository, String path) {
     SourceAsset sourceAsset = new SourceAsset();
     sourceAsset.setRepositoryId(repository.getId());
@@ -234,32 +261,5 @@ public class AssetWSTest extends WSTestBase {
         this.assetClient.getAssets(repository.getId(), path, null, null, null);
 
     assertEquals(1, assets.size());
-  }
-
-  protected SourceAsset createSourceAsset(Repository repository) {
-    SourceAsset sourceAsset = new SourceAsset();
-    sourceAsset.setRepositoryId(repository.getId());
-    sourceAsset.setPath("/path/to/fake/file.xliff");
-    sourceAsset.setContent(testDataFactory.getTestSourceAssetContent());
-
-    return sourceAsset;
-  }
-
-  @Test
-  @Category({IntegrationTest.class})
-  public void testExportSourceAsset() throws RepositoryNameAlreadyUsedException {
-
-    Repository repository = testDataFactory.createRepository(testIdWatcher);
-    SourceAsset sourceAsset = createSourceAsset(repository);
-    SourceAsset sourceAssetAfterPost = assetClient.importSourceAsset(sourceAsset);
-    pollableTaskClient.waitForPollableTask(sourceAssetAfterPost.getPollableTask().getId(), 5000L);
-
-    Long assetId = sourceAssetAfterPost.getAddedAssetId();
-    XliffExportBody xliffExportBody =
-        assetClient.xliffExportAsync(new XliffExportBody(), "en", assetId);
-    pollableTaskClient.waitForPollableTask(xliffExportBody.getPollableTask().getId(), 5000L);
-
-    String xliff = assetClient.xliffExport(assetId, xliffExportBody.getTmXliffId()).getContent();
-    assertTrue(xliff.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"));
   }
 }
