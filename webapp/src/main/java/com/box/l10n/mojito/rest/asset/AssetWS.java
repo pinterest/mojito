@@ -111,6 +111,8 @@ public class AssetWS {
       @RequestParam(value = "deleted", required = false) Boolean deleted,
       @RequestParam(value = "virtual", required = false) Boolean virtual,
       @RequestParam(value = "branchId", required = false) Long branchId) {
+    // Spring treats + as a space during request decoding, so the fix replaces + with __plus__ in
+    // asset paths to prevent lookup failures.
     String pathWithPlusRestored = path != null ? path.replace("__plus__", "+") : null;
     return assetService.findAll(repositoryId, pathWithPlusRestored, deleted, virtual, branchId);
   }

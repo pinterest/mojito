@@ -84,6 +84,8 @@ public class AssetClient {
   public List<AssetAssetSummary> getAssets(
       Long repositoryId, String path, Boolean deleted, Boolean virtual, Long branchId) {
     logger.debug("Get assets by path = {} repo id = {} deleted = {}", path, repositoryId, deleted);
+    // Spring treats + as a space during request decoding, so the fix replaces + with __plus__ in
+    // asset paths to prevent lookup failures.
     String pathWithPlusReplaced = path != null ? path.replace("+", "__plus__") : null;
     return this.assetWsApi.getAssets(
         repositoryId, pathWithPlusReplaced, deleted, virtual, branchId);
