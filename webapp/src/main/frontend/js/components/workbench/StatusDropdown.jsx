@@ -254,12 +254,17 @@ let StatusDropdown = createReactClass({
     },
 
     render() {  
-        
+        const isFiltered = this.state.status !== SearchParamsStore.STATUS.ALL;
+        const title = isFiltered
+            ? this.getMessageForStatus(this.state.status)
+            : this.props.intl.formatMessage({ id: "search.statusDropdown.title" });
+
         return (
                 
             <DropdownButton  
                     id="WorkbenchStatusDropdown" 
-                    title={this.props.intl.formatMessage({ id: "search.statusDropdown.title" })}
+                    title={title}
+                    bsStyle={isFiltered ? "primary" : "default"}
                     >
 
                 <MenuItem header><FormattedMessage id="search.statusDropdown.status" /></MenuItem>
