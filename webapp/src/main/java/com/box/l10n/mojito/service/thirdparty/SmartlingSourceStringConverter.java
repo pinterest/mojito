@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.text.StringEscapeUtils;
 
 /**
  * Converts sequential format placeholders in strings to positional placeholders for compatibility
@@ -151,9 +152,87 @@ public class SmartlingSourceStringConverter implements SourceStringConverter {
     return result.toString();
   }
 
+  private boolean hasDoubleQuotedAttributes(String tag) {
+    return tag.contains("\"");
+  }
+
+  /**
+   * Processes an HTML tag to apply space replacement to its content (tag name and attributes) while
+   * preserving the tag structure itself.
+   *
+   * @param tag the HTML tag to process (e.g., "<div class='foo'>")
+   * @return the tag with space replacement applied
+   */
+  private String processHtmlTagContent(String tag) {
+    int closePos = tag.indexOf('>');
+    if (closePos == -1) {
+      return tag;
+    }
+
+    String tagStart = tag.substring(0, 1); // "<"
+    String tagEnd = tag.substring(closePos); // ">"
+    String content = tag.substring(1, closePos); // Everything between < and >
+
+    // Apply space replacement to the content (tag name + attributes)
+    String processedContent = content.replaceAll(" {2,}", " ");
+
+    return tagStart + processedContent + tagEnd;
+  }
+
+  /**
+   * Applies space replacement intelligently: replaces multiple consecutive spaces with single space
+   * in text outside HTML tags and inside tags without double-quoted attributes, while preserving
+   * the structure of tags with double-quoted attributes.
+   *
+   * @param input the input string potentially containing HTML tags
+   * @return the input with spaces normalized appropriately
+   */
+  private String replaceMultipleSpacesSmart(String input) {
+    // Pattern to match HTML tags
+    Pattern htmlTagPattern = Pattern.compile("<[^>]*>");
+    Matcher htmlTagMatcher = htmlTagPattern.matcher(input);
+
+    // Skip HTML escaping when there are no HTML tags in the input.
+    if (!htmlTagMatcher.find()) {
+      return input.replaceAll(" {2,}", " ");
+    }
+    htmlTagMatcher.reset();
+
+    StringBuilder result = new StringBuilder();
+    int lastEnd = 0;
+
+    while (htmlTagMatcher.find()) {
+      int tagStart = htmlTagMatcher.start();
+      int tagEnd = htmlTagMatcher.end();
+
+      // Apply space replacement to text before the tag (outside HTML)
+      String textBefore = input.substring(lastEnd, tagStart);
+      result.append(StringEscapeUtils.escapeHtml4(textBefore.replaceAll(" {2,}", " ")));
+
+      // Process the HTML tag
+      String tag = htmlTagMatcher.group();
+      if (!this.hasDoubleQuotedAttributes(tag)) {
+        // Skip space replacement for tags with double-quoted attributes
+        result.append(tag);
+      } else {
+        // Apply space replacement to tag content
+        String processedTag = this.processHtmlTagContent(tag);
+        result.append(processedTag);
+      }
+
+      lastEnd = tagEnd;
+    }
+
+    // Apply space replacement to remaining text after the last tag (outside HTML)
+    String remainingText = input.substring(lastEnd);
+    result.append(StringEscapeUtils.escapeHtml4(remainingText.replaceAll(" {2,}", " ")));
+
+    return result.toString();
+  }
+
   @Override
   public String convert(String input, List<String> options) {
     String result = this.convertPlaceholders(input, options);
-    return result.trim().replaceAll(" {2,}", " ");
+    return this.replaceMultipleSpacesSmart(result.trim());
   }
 }
