@@ -109,7 +109,8 @@
     "yargs-parser": "18.1.2",
     "ansi-regex": "5.0.1",
     "strip-ansi": "6.0.1",
-    "string-length": "4.0.2"
+    "string-length": "4.0.2",
+    "axios": "1.13.2"
   },
   "author": "Moji Webapp Team"
 }
