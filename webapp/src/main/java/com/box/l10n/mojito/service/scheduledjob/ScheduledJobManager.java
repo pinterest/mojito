@@ -4,7 +4,6 @@ import static com.box.l10n.mojito.quartz.QuartzSchedulerManager.DEFAULT_SCHEDULE
 
 import com.box.l10n.mojito.entity.ScheduledJob;
 import com.box.l10n.mojito.quartz.QuartzSchedulerManager;
-import com.box.l10n.mojito.retry.DeadLockLoserExceptionRetryTemplate;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import com.box.l10n.mojito.service.scheduledjob.jobs.ScheduledThirdPartySyncProperties;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartySyncJobConfig;
@@ -53,7 +52,6 @@ public class ScheduledJobManager {
   private final ScheduledJobStatusRepository scheduledJobStatusRepository;
   private final ScheduledJobTypeRepository scheduledJobTypeRepository;
   private final RepositoryRepository repositoryRepository;
-  private final DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate;
 
   /* Quartz scheduler dedicated to scheduled jobs using in memory data source.
    * The value is also set using equals as this is not managed by Spring Boot in the tests. */
@@ -74,15 +72,13 @@ public class ScheduledJobManager {
       ScheduledJobRepository scheduledJobRepository,
       ScheduledJobStatusRepository scheduledJobStatusRepository,
       ScheduledJobTypeRepository scheduledJobTypeRepository,
-      RepositoryRepository repositoryRepository,
-      DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate) {
+      RepositoryRepository repositoryRepository) {
     this.thirdPartySyncJobsConfig = thirdPartySyncJobConfig;
     this.schedulerManager = schedulerManager;
     this.scheduledJobRepository = scheduledJobRepository;
     this.scheduledJobStatusRepository = scheduledJobStatusRepository;
     this.scheduledJobTypeRepository = scheduledJobTypeRepository;
     this.repositoryRepository = repositoryRepository;
-    this.deadlockRetryTemplate = deadlockRetryTemplate;
   }
 
   @PostConstruct
@@ -92,8 +88,7 @@ public class ScheduledJobManager {
     getScheduler()
         .getListenerManager()
         .addJobListener(
-            new ScheduledJobListener(
-                scheduledJobRepository, scheduledJobStatusRepository, deadlockRetryTemplate));
+            new ScheduledJobListener(scheduledJobRepository, scheduledJobStatusRepository));
     // Add Trigger Listener
     getScheduler()
         .getListenerManager()
@@ -127,12 +122,6 @@ public class ScheduledJobManager {
       } else {
         getScheduler().scheduleJob(job, trigger);
       }
-
-      deadlockRetryTemplate.execute(
-          c -> {
-            scheduledJobRepository.save(scheduledJob);
-            return null;
-          });
     }
   }
 
@@ -215,13 +204,9 @@ public class ScheduledJobManager {
           getScheduler().deleteJob(jobKey);
         }
 
-        deadlockRetryTemplate.execute(
-            c -> {
-              scheduledJobRepository
-                  .findByUuid(jobKey.getName())
-                  .ifPresent(scheduledJobRepository::delete);
-              return null;
-            });
+        scheduledJobRepository
+            .findByUuid(jobKey.getName())
+            .ifPresent(scheduledJobRepository::delete);
 
         logger.info(
             "Removed job with id: '{}' as it is no longer in the data source.", jobKey.getName());
