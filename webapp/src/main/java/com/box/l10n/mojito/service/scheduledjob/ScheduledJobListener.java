@@ -1,7 +1,6 @@
 package com.box.l10n.mojito.service.scheduledjob;
 
 import com.box.l10n.mojito.entity.ScheduledJob;
-import com.box.l10n.mojito.retry.DeadLockLoserExceptionRetryTemplate;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import org.quartz.JobExecutionContext;
@@ -24,15 +23,12 @@ public class ScheduledJobListener extends JobListenerSupport {
 
   private final ScheduledJobRepository scheduledJobRepository;
   private final ScheduledJobStatusRepository scheduledJobStatusRepository;
-  private final DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate;
 
   public ScheduledJobListener(
       ScheduledJobRepository scheduledJobRepository,
-      ScheduledJobStatusRepository scheduledJobStatusRepository,
-      DeadLockLoserExceptionRetryTemplate deadlockRetryTemplate) {
+      ScheduledJobStatusRepository scheduledJobStatusRepository) {
     this.scheduledJobRepository = scheduledJobRepository;
     this.scheduledJobStatusRepository = scheduledJobStatusRepository;
-    this.deadlockRetryTemplate = deadlockRetryTemplate;
   }
 
   @Override
@@ -40,10 +36,7 @@ public class ScheduledJobListener extends JobListenerSupport {
     return "ScheduledJobListener";
   }
 
-  /**
-   * The job is about to be executed, set the status and start date. Do not mark as @Transactional
-   * otherwise a deadlock will occur at the method level not at the save().
-   */
+  /** The job is about to be executed, set the status and start date. */
   @Override
   public void jobToBeExecuted(JobExecutionContext context) {
     /* If multi quartz scheduler is not being used, the listener will
@@ -64,14 +57,7 @@ public class ScheduledJobListener extends JobListenerSupport {
     scheduledJob.setStartDate(ZonedDateTime.now());
     scheduledJob.setEndDate(null);
 
-    // This had a deadlock due to the audited table being updated by other jobs are the same time,
-    // the rev and revend columns are incremental meaning a lock is needed to increment the next
-    // row.
-    deadlockRetryTemplate.execute(
-        c -> {
-          scheduledJobRepository.save(scheduledJob);
-          return null;
-        });
+    scheduledJobRepository.save(scheduledJob);
 
     logger.debug(
         "Job {} for repository {} is now in progress.",
@@ -108,11 +94,7 @@ public class ScheduledJobListener extends JobListenerSupport {
       jobInstance.onFailure(context, jobException);
     }
 
-    deadlockRetryTemplate.execute(
-        c -> {
-          scheduledJobRepository.save(scheduledJob);
-          return null;
-        });
+    scheduledJobRepository.save(scheduledJob);
 
     logger.debug(
         "Saved results for job {} for repository {}",
