@@ -157,6 +157,43 @@ public class SmartlingSourceStringConverter implements SourceStringConverter {
   }
 
   /**
+   * Replaces real newline characters (LF/CRLF/CR) that appear inside single-quoted HTML attribute
+   * values with a literal {@code \n} sequence.
+   *
+   * <p>This is intentionally scoped to single-quoted attribute values to avoid changing tag
+   * structure or whitespace semantics elsewhere.
+   */
+  private String escapeNewlines(String tag) {
+    if (tag.indexOf('\'') < 0 || tag.indexOf('\n') < 0) {
+      return tag;
+    }
+    StringBuilder result = new StringBuilder(tag.length() + 8);
+    boolean inSingleQuotedValue = false;
+    boolean inDoubleQuotedValue = false;
+    for (int i = 0; i < tag.length(); i++) {
+      char c = tag.charAt(i);
+      if (c == '"' && !inSingleQuotedValue) {
+        inDoubleQuotedValue = !inDoubleQuotedValue;
+        result.append(c);
+        continue;
+      }
+      if (c == '\'' && !inDoubleQuotedValue) {
+        inSingleQuotedValue = !inSingleQuotedValue;
+        result.append(c);
+        continue;
+      }
+      if (inSingleQuotedValue) {
+        if (c == '\n') {
+          result.append("\\n");
+          continue;
+        }
+      }
+      result.append(c);
+    }
+    return result.toString();
+  }
+
+  /**
    * Processes an HTML tag to apply space replacement to its content (tag name and attributes) while
    * preserving the tag structure itself.
    *
@@ -213,7 +250,7 @@ public class SmartlingSourceStringConverter implements SourceStringConverter {
       String tag = htmlTagMatcher.group();
       if (!this.hasDoubleQuotedAttributes(tag)) {
         // Skip space replacement for tags with double-quoted attributes
-        result.append(tag);
+        result.append(this.escapeNewlines(tag));
       } else {
         // Apply space replacement to tag content
         String processedTag = this.processHtmlTagContent(tag);
