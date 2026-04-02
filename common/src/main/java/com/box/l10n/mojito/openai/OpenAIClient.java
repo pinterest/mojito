@@ -327,7 +327,7 @@ public class OpenAIClient {
       private boolean stream = false;
       private float temperature;
       private Integer maxTokens = null;
-      private float topP;
+      private float topP = 0.5f;
       private float frequencyPenalty;
       private float presencePenalty;
       private ResponseFormat responseFormat =
