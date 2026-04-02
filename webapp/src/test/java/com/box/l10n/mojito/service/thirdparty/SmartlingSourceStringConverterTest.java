@@ -106,4 +106,29 @@ public class SmartlingSourceStringConverterTest {
 
     assertThat(converter.convert(input, Collections.emptyList())).isEqualTo(expected);
   }
+
+  @Test
+  public void testConvert_ConvertsNewlinesInSingleQuotedAttributeValuesToLiteralBackslashN() {
+    SmartlingSourceStringConverter converter = new SmartlingSourceStringConverter();
+
+    String input =
+        "<img src='https://i.image.com/c701359316f68ba1ea145dd251fd3571.png' "
+            + "style='display: block;\n"
+            + "                width:auto;\n"
+            + "                max-width: 70%;\n"
+            + "                height:auto;\n"
+            + "                margin-left: auto;\n"
+            + "               margin-right: auto;'>";
+
+    String expected =
+        "<img src='https://i.image.com/c701359316f68ba1ea145dd251fd3571.png' "
+            + "style='display: block;\\n"
+            + "                width:auto;\\n"
+            + "                max-width: 70%;\\n"
+            + "                height:auto;\\n"
+            + "                margin-left: auto;\\n"
+            + "               margin-right: auto;'>";
+
+    assertThat(converter.convert(input, Collections.emptyList())).isEqualTo(expected);
+  }
 }

@@ -14,10 +14,8 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import java.text.ParseException;
 import java.time.ZonedDateTime;
-import org.hibernate.envers.Audited;
 import org.quartz.CronExpression;
 
-@Audited
 @Entity
 @Table(name = "scheduled_job")
 public class ScheduledJob extends BaseEntity {
