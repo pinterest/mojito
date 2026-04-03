@@ -12,6 +12,8 @@ public class AssetAppenderFactory {
     switch (extension.toLowerCase()) {
       case "pot":
         return Optional.of(new POTAssetAppender(sourceConent));
+      case "properties":
+        return Optional.of(new PropertiesAssetAppender(sourceConent));
       default:
         return Optional.empty();
     }

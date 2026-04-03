@@ -111,7 +111,7 @@ public class AssetAppenderService {
 
     if (assetAppender.isEmpty()) {
       logger.error(
-          "Attempted to append branch text units to a source asset with an extension that did not map to a valid asset appender. No appending has taken place, returning original source asset.");
+          "Attempted to append branch text units to a source asset with an extension that did not map to a valid asset appender. No appending has taken place, returning original source asset. Extension: {}", extension);
       return sourceContent;
     }
 
