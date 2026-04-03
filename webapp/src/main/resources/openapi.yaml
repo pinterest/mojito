@@ -2808,6 +2808,9 @@ components:
         promptTemperature:
           type: number
           format: float
+        promptTopP:
+          type: number
+          format: float
         systemPrompt:
           type: string
         userPrompt:
@@ -2845,6 +2848,9 @@ components:
           - SINGULAR
           - PLURAL
           - ALL
+        promptTopP:
+          type: number
+          format: float
         promptType:
           type: string
         repositoryName:

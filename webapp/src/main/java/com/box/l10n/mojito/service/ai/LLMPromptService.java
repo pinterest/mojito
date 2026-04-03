@@ -72,6 +72,7 @@ public class LLMPromptService implements PromptService {
     aiPrompt.setSystemPrompt(AIPromptCreateRequest.getSystemPrompt());
     aiPrompt.setUserPrompt(AIPromptCreateRequest.getUserPrompt());
     aiPrompt.setPromptTemperature(AIPromptCreateRequest.getPromptTemperature());
+    aiPrompt.setPromptTopP(AIPromptCreateRequest.getPromptTopP());
     aiPrompt.setModelName(AIPromptCreateRequest.getModelName());
     aiPrompt.setPromptType(aiPromptType);
     ZonedDateTime now = JSR310Migration.dateTimeNow();
