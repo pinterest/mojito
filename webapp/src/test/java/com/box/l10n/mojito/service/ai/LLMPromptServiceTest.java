@@ -141,12 +141,14 @@ public class LLMPromptServiceTest {
     aiPrompt.setUserPrompt("Check strings for spelling");
     aiPrompt.setModelName("gtp-3.5-turbo");
     aiPrompt.setPromptTemperature(0.0F);
+    aiPrompt.setPromptTopP(1.0F);
     when(aiPromptRepository.findById(1L)).thenReturn(Optional.of(aiPrompt));
     AIPrompt openAIPrompt = LLMPromptService.getPrompt(1L);
     assertNotNull(openAIPrompt);
     assertEquals("Check strings for spelling", openAIPrompt.getUserPrompt());
     assertEquals("gtp-3.5-turbo", openAIPrompt.getModelName());
     assertEquals(0.0F, openAIPrompt.getPromptTemperature());
+    assertEquals(1.0F, openAIPrompt.getPromptTopP());
   }
 
   @Test
