@@ -9,6 +9,7 @@ public class AIPrompt {
   private String userPrompt;
   private String modelName;
   private float promptTemperature;
+  private float promptTopP;
   private boolean deleted;
 
   public String getSystemPrompt() {
@@ -41,6 +42,14 @@ public class AIPrompt {
 
   public void setPromptTemperature(float promptTemperature) {
     this.promptTemperature = promptTemperature;
+  }
+
+  public float getPromptTopP() {
+    return promptTopP;
+  }
+
+  public void setPromptTopP(float promptTopP) {
+    this.promptTopP = promptTopP;
   }
 
   public boolean isDeleted() {

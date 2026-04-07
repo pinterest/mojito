@@ -10,6 +10,7 @@ public class AIPromptCreateRequest {
   private String userPrompt;
   private String modelName;
   private float promptTemperature;
+  private float promptTopP;
   private boolean deleted;
   private String repositoryName;
   private String promptType;
@@ -39,6 +40,14 @@ public class AIPromptCreateRequest {
 
   public void setPromptTemperature(float promptTemperature) {
     this.promptTemperature = promptTemperature;
+  }
+
+  public float getPromptTopP() {
+    return promptTopP;
+  }
+
+  public void setPromptTopP(float promptTopP) {
+    this.promptTopP = promptTopP;
   }
 
   public String getSystemPrompt() {

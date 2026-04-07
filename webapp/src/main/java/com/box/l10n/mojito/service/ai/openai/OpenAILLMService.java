@@ -607,6 +607,7 @@ public class OpenAILLMService implements LLMService {
       boolean isJsonResponseType) {
     return chatCompletionsRequest()
         .temperature(prompt.getPromptTemperature())
+        .topP(prompt.getPromptTopP())
         .model(prompt.getModelName())
         .messages(buildPromptMessages(systemPrompt, userPrompt, contextMessages))
         .jsonResponseType(isJsonResponseType)

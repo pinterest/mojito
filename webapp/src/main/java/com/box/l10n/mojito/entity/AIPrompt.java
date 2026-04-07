@@ -30,6 +30,9 @@ public class AIPrompt extends BaseEntity {
   @Column(name = "prompt_temperature")
   private float promptTemperature;
 
+  @Column(name = "prompt_top_p")
+  private float promptTopP;
+
   @Column(name = "deleted")
   private boolean deleted;
 
@@ -86,6 +89,14 @@ public class AIPrompt extends BaseEntity {
 
   public void setPromptTemperature(float promptTemperature) {
     this.promptTemperature = promptTemperature;
+  }
+
+  public float getPromptTopP() {
+    return promptTopP;
+  }
+
+  public void setPromptTopP(float promptTopP) {
+    this.promptTopP = promptTopP;
   }
 
   public boolean isDeleted() {

@@ -136,6 +136,7 @@ public class AIPromptWS {
     AIPrompt.setUserPrompt(prompt.getUserPrompt());
     AIPrompt.setModelName(prompt.getModelName());
     AIPrompt.setPromptTemperature(prompt.getPromptTemperature());
+    AIPrompt.setPromptTopP(prompt.getPromptTopP());
     AIPrompt.setDeleted(prompt.isDeleted());
     return AIPrompt;
   }

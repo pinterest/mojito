@@ -59,6 +59,11 @@ public class CreateAIPromptCommand extends Command {
   float promptTemperature = 0.0F;
 
   @Parameter(
+      names = {"--prompt-top-p", "-ptp"},
+      description = "The Top-P parameter to use for the prompt")
+  float promptTopP = 0.0F;
+
+  @Parameter(
       names = {"--is-json-response", "-ijr"},
       required = false,
       description = "The prompt response is expected to be in JSON format from the LLM")
@@ -91,6 +96,7 @@ public class CreateAIPromptCommand extends Command {
     aiPromptCreateRequest.setModelName(modelName);
     aiPromptCreateRequest.setPromptType(promptType);
     aiPromptCreateRequest.setPromptTemperature(promptTemperature);
+    aiPromptCreateRequest.setPromptTopP(promptTopP);
     aiPromptCreateRequest.setJsonResponse(isJsonResponse);
     if (isJsonResponse && jsonResponseKey == null) {
       throw new CommandException("jsonResponseKey is required when isJsonResponse is true");
