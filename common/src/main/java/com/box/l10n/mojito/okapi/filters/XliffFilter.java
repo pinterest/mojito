@@ -16,7 +16,7 @@ public class XliffFilter extends XLIFFFilter {
 
   private String usagesKeyRegex;
 
-  boolean markEmptyAndNbspAsNotTranslatable = true;
+  boolean markBlankOrNoTextAsNotTranslatable = true;
 
   @Override
   public String getName() {
@@ -30,7 +30,7 @@ public class XliffFilter extends XLIFFFilter {
     if (filterOptions != null) {
       filterOptions.getString("usagesKeyRegexp", s -> usagesKeyRegex = s);
       filterOptions.getBoolean(
-          "emptyAndNbspNotTranslatable", b -> this.markEmptyAndNbspAsNotTranslatable = b);
+          "blankOrNoTextNotTranslatable", b -> this.markBlankOrNoTextAsNotTranslatable = b);
     }
   }
 
@@ -45,7 +45,7 @@ public class XliffFilter extends XLIFFFilter {
   }
 
   void markNotTranslatableIfBlankOrNoText(ITextUnit textUnit) {
-    if (this.markEmptyAndNbspAsNotTranslatable) {
+    if (this.markBlankOrNoTextAsNotTranslatable) {
       TextContainer sourceTextContainer = textUnit.getSource();
       TextContainer textContainerClone = sourceTextContainer.clone();
       String source = sourceTextContainer.toString();
