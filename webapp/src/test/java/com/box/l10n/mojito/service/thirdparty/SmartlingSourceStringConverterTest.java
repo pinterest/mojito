@@ -131,4 +131,53 @@ public class SmartlingSourceStringConverterTest {
 
     assertThat(converter.convert(input, Collections.emptyList())).isEqualTo(expected);
   }
+
+  @Test
+  public void testConvert_EscapesNewlinesInSingleQuotedAttributesEvenIfValueContainsDoubleQuote() {
+    SmartlingSourceStringConverter converter = new SmartlingSourceStringConverter();
+
+    String input = "<img style='foo\"bar\n    baz'>";
+    String expected = "<img style='foo\"bar\\n    baz'>";
+
+    assertThat(converter.convert(input, Collections.emptyList())).isEqualTo(expected);
+  }
+
+  @Test
+  public void testConvert_DoesNotDoubleEscapeHtmlEntities() {
+    SmartlingSourceStringConverter converter = new SmartlingSourceStringConverter();
+
+    String input = "<p>&quot;&quot;</p>";
+
+    assertThat(converter.convert(input, Collections.emptyList())).isEqualTo(input);
+  }
+
+  @Test
+  public void testConvert_UnescapesNbspEntities() {
+    SmartlingSourceStringConverter converter = new SmartlingSourceStringConverter();
+
+    String input = "<p>&nbsp;&nbsp;</p>";
+    String expected = "<p>\u00A0\u00A0</p>";
+
+    assertThat(converter.convert(input, Collections.emptyList())).isEqualTo(expected);
+  }
+
+  @Test
+  public void testConvert_UnescapesNbspButKeepsOtherEntities() {
+    SmartlingSourceStringConverter converter = new SmartlingSourceStringConverter();
+
+    String input = "<p>&nbsp;&quot;</p>";
+    String expected = "<p>\u00A0&quot;</p>";
+
+    assertThat(converter.convert(input, Collections.emptyList())).isEqualTo(expected);
+  }
+
+  @Test
+  public void testConvert_UnescapesNbspButKeepsOtherEntitiesInPlainText() {
+    SmartlingSourceStringConverter converter = new SmartlingSourceStringConverter();
+
+    String input = "Company&nbsp;&amp;&nbsp;  Co";
+    String expected = "Company\u00A0&amp;\u00A0 Co";
+
+    assertThat(converter.convert(input, Collections.emptyList())).isEqualTo(expected);
+  }
 }

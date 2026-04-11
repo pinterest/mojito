@@ -45,10 +45,11 @@ public class SmartlingSourceStringConverter implements SourceStringConverter {
   private static final Map<String, String> REGEX_BY_FORMAT =
       Map.of(
           "java",
-              "%[sdioxXeEfFgGaAcb]|%\\.\\d+[fFeEgGaA]|%\\d+[sdioxXeEfFgGaAcb]|%\\d+\\.\\d+[fFeEgGaA]",
-          "ios", "%[@dsfcxXopu]|%\\.\\d+[fs]",
+          "%[sdioxXeEfFgGaAcb]|%\\.\\d+[fFeEgGaA]|%\\d+[sdioxXeEfFgGaAcb]|%\\d+\\.\\d+[fFeEgGaA]",
+          "ios",
+          "%[@dsfcxXopu]|%\\.\\d+[fs]",
           "c",
-              "%[sdioxXeEfFgGaAcb]|%\\.\\d+[fFeEgGaA]|%\\d+[sdioxXeEfFgGaAcb]|%\\d+\\.\\d+[fFeEgGaA]|%[hlL]*[dioxXeEfFgGaAcbsp]");
+          "%[sdioxXeEfFgGaAcb]|%\\.\\d+[fFeEgGaA]|%\\d+[sdioxXeEfFgGaAcb]|%\\d+\\.\\d+[fFeEgGaA]|%[hlL]*[dioxXeEfFgGaAcbsp]");
 
   private String convertJavaToPositional(String placeholder, int position) {
     // Handle Java width+precision format like %10.2f -> %1$10.2f
@@ -153,7 +154,77 @@ public class SmartlingSourceStringConverter implements SourceStringConverter {
   }
 
   private boolean hasDoubleQuotedAttributes(String tag) {
-    return tag.contains("\"");
+    // We only consider *attribute delimiters* that use literal double-quotes, i.e. name="value".
+    // This must not be triggered by:
+    // - a literal '"' inside a single-quoted attribute value
+    // - HTML entities like &quot; that represent quotes in escaped content
+    boolean inSingleQuotedValue = false;
+    boolean inDoubleQuotedValue = false;
+
+    for (int i = 0; i < tag.length(); i++) {
+      char c = tag.charAt(i);
+
+      if (c == '"' && !inSingleQuotedValue) {
+        inDoubleQuotedValue = !inDoubleQuotedValue;
+        continue;
+      }
+      if (c == '\'' && !inDoubleQuotedValue) {
+        inSingleQuotedValue = !inSingleQuotedValue;
+        continue;
+      }
+
+      if (c == '=' && !inSingleQuotedValue && !inDoubleQuotedValue) {
+        int j = i + 1;
+        while (j < tag.length() && Character.isWhitespace(tag.charAt(j))) {
+          j++;
+        }
+        if (j < tag.length() && tag.charAt(j) == '"') {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private String convertNbspEntityToUnicodeNbsp(String input) {
+    if (input == null || input.indexOf('&') < 0) {
+      return input;
+    }
+    return input.replace("&nbsp;", "\u00A0");
+  }
+
+  private boolean isAlreadyHtml4Escaped(String input) {
+    if (input.indexOf('&') < 0) {
+      return false;
+    }
+    String unescaped = StringEscapeUtils.unescapeHtml4(input);
+    String escaped = StringEscapeUtils.escapeHtml4(unescaped);
+    return this.convertNbspEntityToUnicodeNbsp(escaped).equals(input);
+  }
+
+  /**
+   * Escapes HTML entities only when the input is not already escaped.
+   *
+   * <p>This avoids double-escaping sequences like {@code &lt;} into {@code &amp;lt;}.
+   */
+  private String escapeHtml4IfNotEscaped(String input) {
+    if (input == null || input.isEmpty()) {
+      return input;
+    }
+    // Fast-path: if there is nothing that escapeHtml4 would change, keep as-is.
+    // (escapeHtml4 primarily targets & < > " ')
+    if (input.indexOf('&') < 0
+        && input.indexOf('<') < 0
+        && input.indexOf('>') < 0
+        && input.indexOf('"') < 0
+        && input.indexOf('\'') < 0) {
+      return input;
+    }
+    if (this.isAlreadyHtml4Escaped(input)) {
+      return input;
+    }
+    return StringEscapeUtils.escapeHtml4(input);
   }
 
   /**
@@ -216,22 +287,45 @@ public class SmartlingSourceStringConverter implements SourceStringConverter {
     return tagStart + processedContent + tagEnd;
   }
 
+  private String normalizeSpaces(String input) {
+    String inputWithUnicodeNbsp = this.convertNbspEntityToUnicodeNbsp(input);
+    return inputWithUnicodeNbsp.replaceAll(" {2,}", " ");
+  }
+
+  private String normalizeOutsideHtmlTagsText(String input) {
+    String inputWithSpacesNormalized = this.normalizeSpaces(input);
+    return this.escapeHtml4IfNotEscaped(inputWithSpacesNormalized);
+  }
+
   /**
-   * Applies space replacement intelligently: replaces multiple consecutive spaces with single space
-   * in text outside HTML tags and inside tags without double-quoted attributes, while preserving
-   * the structure of tags with double-quoted attributes.
+   * Normalizes an input string for Smartling in an HTML-aware way.
    *
-   * @param input the input string potentially containing HTML tags
-   * @return the input with spaces normalized appropriately
+   * <p>Splits the input into HTML tags ({@code <...>}) and plain-text segments. For plain-text
+   * segments (outside tags), it:
+   *
+   * <ul>
+   *   <li>converts {@code &nbsp;} to the Unicode non-breaking space ({@code \u00A0})
+   *   <li>collapses runs of literal space characters ({@code ' '}) to a single space
+   *   <li>HTML-escapes the text (unless it is already HTML4-escaped) to avoid double-escaping
+   * </ul>
+   *
+   * <p>For tag segments, it preserves the tag structure and:
+   *
+   * <ul>
+   *   <li>escapes real newlines inside single-quoted attribute values as the literal sequence
+   *       {@code \n}
+   *   <li>if the tag contains double-quoted attributes, it also collapses runs of literal spaces
+   *       inside the tag content (tag name + attributes)
+   * </ul>
    */
-  private String replaceMultipleSpacesSmart(String input) {
+  private String normalizeSpacesAndEscapeHtml(String input) {
     // Pattern to match HTML tags
     Pattern htmlTagPattern = Pattern.compile("<[^>]*>");
     Matcher htmlTagMatcher = htmlTagPattern.matcher(input);
 
     // Skip HTML escaping when there are no HTML tags in the input.
     if (!htmlTagMatcher.find()) {
-      return input.replaceAll(" {2,}", " ");
+      return this.normalizeSpaces(input);
     }
     htmlTagMatcher.reset();
 
@@ -244,7 +338,7 @@ public class SmartlingSourceStringConverter implements SourceStringConverter {
 
       // Apply space replacement to text before the tag (outside HTML)
       String textBefore = input.substring(lastEnd, tagStart);
-      result.append(StringEscapeUtils.escapeHtml4(textBefore.replaceAll(" {2,}", " ")));
+      result.append(this.normalizeOutsideHtmlTagsText(textBefore));
 
       // Process the HTML tag
       String tag = htmlTagMatcher.group();
@@ -262,7 +356,7 @@ public class SmartlingSourceStringConverter implements SourceStringConverter {
 
     // Apply space replacement to remaining text after the last tag (outside HTML)
     String remainingText = input.substring(lastEnd);
-    result.append(StringEscapeUtils.escapeHtml4(remainingText.replaceAll(" {2,}", " ")));
+    result.append(this.normalizeOutsideHtmlTagsText(remainingText));
 
     return result.toString();
   }
@@ -270,6 +364,6 @@ public class SmartlingSourceStringConverter implements SourceStringConverter {
   @Override
   public String convert(String input, List<String> options) {
     String result = this.convertPlaceholders(input, options);
-    return this.replaceMultipleSpacesSmart(result.trim());
+    return this.normalizeSpacesAndEscapeHtml(result.trim());
   }
 }
