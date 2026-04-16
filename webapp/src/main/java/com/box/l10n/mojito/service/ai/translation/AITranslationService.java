@@ -111,23 +111,31 @@ public class AITranslationService {
 
   private void addVariantComments(List<Long> updateBatch) {
     String sql =
-        "INSERT INTO tm_text_unit_variant_comment (tm_text_unit_variant_id, severity, type, content, created_date, last_modified_date)  VALUES (?, ?, ?, ?, ?, ?)";
+        "INSERT INTO tm_text_unit_variant_comment "
+            + "(tm_text_unit_variant_id, severity, type, content, created_date, last_modified_date) "
+            + "SELECT tucv.tm_text_unit_variant_id, ?, ?, ?, ?, ? "
+            + "FROM tm_text_unit_current_variant tucv "
+            + "WHERE tucv.id = ?";
 
-    List<Object[]> batchArgs =
-        updateBatch.stream()
-            .map(
-                variantId ->
-                    new Object[] {
-                      variantId,
-                      TMTextUnitVariantComment.Severity.INFO.toString(),
-                      TMTextUnitVariantComment.Type.AI_TRANSLATION.toString(),
-                      "AI translation sent for human review",
-                      Timestamp.from(JSR310Migration.newDateTimeEmptyCtor().toInstant()),
-                      Timestamp.from(JSR310Migration.newDateTimeEmptyCtor().toInstant())
-                    })
-            .collect(Collectors.toList());
+    jdbcTemplate.batchUpdate(
+        sql,
+        new BatchPreparedStatementSetter() {
+          @Override
+          public void setValues(PreparedStatement ps, int i) throws SQLException {
+            Timestamp now = Timestamp.from(JSR310Migration.newDateTimeEmptyCtor().toInstant());
+            ps.setString(1, TMTextUnitVariantComment.Severity.INFO.toString());
+            ps.setString(2, TMTextUnitVariantComment.Type.AI_TRANSLATION.toString());
+            ps.setString(3, "AI translation sent for human review");
+            ps.setTimestamp(4, now);
+            ps.setTimestamp(5, now);
+            ps.setLong(6, updateBatch.get(i));
+          }
 
-    jdbcTemplate.batchUpdate(sql, batchArgs);
+          @Override
+          public int getBatchSize() {
+            return updateBatch.size();
+          }
+        });
   }
 
   private void createPendingMTEntitiesInBatches(Set<Long> tmTextUnitIds) {

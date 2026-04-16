@@ -108,7 +108,7 @@ public class AITranslationServiceTest {
     verify(jdbcTemplate, times(1))
         .batchUpdate(
             eq(
-                "INSERT INTO tm_text_unit_variant_comment (tm_text_unit_variant_id, severity, type, content, created_date, last_modified_date)  VALUES (?, ?, ?, ?, ?, ?)"),
-            any(List.class));
+                "INSERT INTO tm_text_unit_variant_comment (tm_text_unit_variant_id, severity, type, content, created_date, last_modified_date) SELECT tucv.tm_text_unit_variant_id, ?, ?, ?, ?, ? FROM tm_text_unit_current_variant tucv WHERE tucv.id = ?"),
+            any(BatchPreparedStatementSetter.class));
   }
 }
