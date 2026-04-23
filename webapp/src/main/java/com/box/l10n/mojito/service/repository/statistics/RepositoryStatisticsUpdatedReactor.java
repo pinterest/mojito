@@ -51,22 +51,12 @@ public class RepositoryStatisticsUpdatedReactor {
         .subscribe(
             repositoryIds -> {
               for (Long repositoryId : Sets.newHashSet(repositoryIds)) {
-                try {
-                  meterRegistry
-                      .counter(
-                          "repositoryStatisticsUpdatedReactor.scheduleRepoStatsJob",
-                          Tags.of("repositoryId", String.valueOf(repositoryId)))
-                      .increment();
-                  repositoryStatisticsJobScheduler.schedule(repositoryId);
-                } catch (Exception e) {
-                  meterRegistry
-                      .counter(
-                          "repositoryStatisticsUpdatedReactor.scheduleRepoStatsJobException",
-                          Tags.of("repositoryId", String.valueOf(repositoryId)))
-                      .increment();
-                  logger.error(
-                      "Failed to schedule repo stats job for repositoryId={}", repositoryId, e);
-                }
+                meterRegistry
+                    .counter(
+                        "repositoryStatisticsUpdatedReactor.scheduleRepoStatsJob",
+                        Tags.of("repositoryId", String.valueOf(repositoryId)))
+                    .increment();
+                repositoryStatisticsJobScheduler.schedule(repositoryId);
               }
             });
   }
