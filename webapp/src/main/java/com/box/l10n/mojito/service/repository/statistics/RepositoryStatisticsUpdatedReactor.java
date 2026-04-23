@@ -30,7 +30,7 @@ public class RepositoryStatisticsUpdatedReactor {
 
   @Autowired MeterRegistry meterRegistry;
 
-  @Value("${l10n.repositoryStatisticsUpdatedReactor.bufferDuration:PT10S}")
+  @Value("${l10n.repositoryStatisticsUpdatedReactor.bufferDuration:PT1S}")
   Duration bufferDuration;
 
   @Autowired
@@ -56,7 +56,6 @@ public class RepositoryStatisticsUpdatedReactor {
                         "repositoryStatisticsUpdatedReactor.scheduleRepoStatsJob",
                         Tags.of("repositoryId", String.valueOf(repositoryId)))
                     .increment();
-                logger.info("Running replay processor for repo id {}", repositoryId);
                 repositoryStatisticsJobScheduler.schedule(repositoryId);
               }
             });
