@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.ReplayProcessor;
+import reactor.core.publisher.Sinks;
 
 /**
  * This class aggregates events that requires repository statistics re-computation and saves at most
@@ -26,7 +26,7 @@ public class RepositoryStatisticsUpdatedReactor {
 
   RepositoryStatisticsJobScheduler repositoryStatisticsJobScheduler;
 
-  ReplayProcessor<Long> replayProcessor;
+  Sinks.Many<Long> sink;
 
   @Autowired MeterRegistry meterRegistry;
 
@@ -45,8 +45,8 @@ public class RepositoryStatisticsUpdatedReactor {
   }
 
   void createProcessor() {
-    replayProcessor = ReplayProcessor.create();
-    replayProcessor
+    sink = Sinks.many().unicast().onBackpressureBuffer();
+    sink.asFlux()
         .buffer(bufferDuration)
         .subscribe(
             repositoryIds -> {
@@ -67,6 +67,6 @@ public class RepositoryStatisticsUpdatedReactor {
    * @param repositoryId
    */
   public synchronized void generateEvent(Long repositoryId) {
-    replayProcessor.onNext(repositoryId);
+    sink.emitNext(repositoryId, Sinks.EmitFailureHandler.FAIL_FAST);
   }
 }
