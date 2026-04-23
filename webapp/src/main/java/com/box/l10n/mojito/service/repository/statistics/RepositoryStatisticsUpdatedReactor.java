@@ -45,7 +45,7 @@ public class RepositoryStatisticsUpdatedReactor {
   }
 
   void createProcessor() {
-    sink = Sinks.many().multicast().onBackpressureBuffer();
+    sink = Sinks.many().unicast().onBackpressureBuffer();
     sink.asFlux()
         .buffer(bufferDuration)
         .subscribe(
@@ -59,6 +59,11 @@ public class RepositoryStatisticsUpdatedReactor {
                       .increment();
                   repositoryStatisticsJobScheduler.schedule(repositoryId);
                 } catch (Exception e) {
+                  meterRegistry
+                      .counter(
+                          "repositoryStatisticsUpdatedReactor.scheduleRepoStatsJobException",
+                          Tags.of("repositoryId", String.valueOf(repositoryId)))
+                      .increment();
                   logger.error(
                       "Failed to schedule repo stats job for repositoryId={}", repositoryId, e);
                 }
