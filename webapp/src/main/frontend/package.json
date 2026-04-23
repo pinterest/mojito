@@ -110,7 +110,7 @@
     "ansi-regex": "5.0.1",
     "strip-ansi": "6.0.1",
     "string-length": "4.0.2",
-    "axios": "1.13.2"
+    "axios": "1.15.0"
   },
   "author": "Moji Webapp Team"
 }
