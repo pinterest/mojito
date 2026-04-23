@@ -105,7 +105,7 @@ const ScreenshotUpload: React.FC<BranchDetailsProps> = ({
     },
     onError: (error) => {
       console.error("Error uploading screenshots", error);
-      message.error(t("schreenshotUploadFailed"));
+      message.error(t("screenshotUploadFailed"));
     },
   });
 

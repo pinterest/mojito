@@ -5,15 +5,16 @@ import { App as AntApp, ConfigProvider } from "antd";
 import "./App.css";
 import Navbar from "./components/navigation/Navbar";
 import WorkInProgress from "./components/WorkInProgress";
-import BranchesPage from "./features/Branches/Branches";
-import BranchPage from "@/features/Branch/BranchPage";
+import BranchesPage from "./features/branches/Branches";
+import BranchPage from "./features/branch/BranchPage";
 
 const mojitoGreen = "#559745";
 const mojitoLightGreen = "#dbedd7";
 
-function App() {
-  const queryClient = new QueryClient();
+// Create queryClient outside of the App component to avoid re-creating it on every render, which would invalidate the cache
+const queryClient = new QueryClient();
 
+function App() {
   return (
     <ConfigProvider
       theme={{

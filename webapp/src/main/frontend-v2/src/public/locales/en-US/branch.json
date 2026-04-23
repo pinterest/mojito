@@ -30,7 +30,7 @@
   "screenshotUploadModal.submit": "Submit",
   "screenshotUploadModal.noTextUnitsWithoutScreenshot": "No text units without screenshots",
   "screenshotUploadModal.screenshotDragUploadText": "Drag and drop files to upload",
-  "schreenshotUploadFailed": "Screenshot upload failed",
+  "screenshotUploadFailed": "Screenshot upload failed",
   "branches.search": "Search by branch name or author",
   "branches.name": "Name",
   "branches.createdDate": "Created Date",
