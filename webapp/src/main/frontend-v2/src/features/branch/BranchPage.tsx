@@ -7,7 +7,7 @@ import "./index.css";
 import { getBranchStatistics } from "@/api/getBranchStatistics";
 import { getBranchTextUnitStatus } from "@/api/getBranchTextUnitStatus";
 import type { BranchTextUnitStatusDto } from "@/api/types/branchTextUnitStatus";
-import BranchDetails from "@/features/Branch/BranchDetails";
+import BranchDetails from "@/features/branch/BranchDetails";
 import { useBranchName } from "@/hooks/useBranchName";
 import { useRepoName } from "@/hooks/useRepoName";
 import type { BranchStatistics } from "@/types/branchStatistics";

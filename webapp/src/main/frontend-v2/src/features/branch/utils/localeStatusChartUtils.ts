@@ -5,7 +5,7 @@ import {
   getColorForTextUnitStatus,
   geti18nKeyForTextUnitStatus,
   orderTextUnitStatuses,
-} from "@/features/Branch/utils/textUnitStatusVisualization";
+} from "@/features/branch/utils/textUnitStatusVisualization";
 
 export interface LocaleStatusMap {
   [locale: string]: {
