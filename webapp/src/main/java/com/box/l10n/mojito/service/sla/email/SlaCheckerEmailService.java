@@ -32,7 +32,8 @@ public class SlaCheckerEmailService {
 
   @Autowired SlaCheckerEmailConfig slaCheckerEmailConfig;
 
-  @Autowired JavaMailSender emailSender;
+  @Autowired(required = false)
+  JavaMailSender emailSender;
 
   @Autowired ServerConfig serverConfig;
 
@@ -69,6 +70,14 @@ public class SlaCheckerEmailService {
   }
 
   void sendEmail(long incidentId, String message) {
+    if (emailSender == null) {
+      logger.warn(
+          "No JavaMailSender bean is configured, skipping SLA email for incident #{}. "
+              + "Configure spring.mail.* (and do not exclude MailSenderAutoConfiguration) to enable email.",
+          incidentId);
+      return;
+    }
+
     MimeMessage mailMessage = emailSender.createMimeMessage();
 
     try {
