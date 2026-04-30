@@ -14,7 +14,6 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
@@ -22,7 +21,6 @@ import org.springframework.stereotype.Component;
 /**
  * @author jeanaurambault
  */
-@ConditionalOnBean(JavaMailSender.class)
 @Component
 public class SlaCheckerEmailService {
 
@@ -34,7 +32,8 @@ public class SlaCheckerEmailService {
 
   @Autowired SlaCheckerEmailConfig slaCheckerEmailConfig;
 
-  @Autowired JavaMailSender emailSender;
+  @Autowired(required = false)
+  JavaMailSender emailSender;
 
   @Autowired ServerConfig serverConfig;
 
@@ -71,6 +70,14 @@ public class SlaCheckerEmailService {
   }
 
   void sendEmail(long incidentId, String message) {
+    if (emailSender == null) {
+      logger.warn(
+          "No JavaMailSender bean is configured, skipping SLA email for incident #{}. "
+              + "Configure spring.mail.* (and do not exclude MailSenderAutoConfiguration) to enable email.",
+          incidentId);
+      return;
+    }
+
     MimeMessage mailMessage = emailSender.createMimeMessage();
 
     try {
