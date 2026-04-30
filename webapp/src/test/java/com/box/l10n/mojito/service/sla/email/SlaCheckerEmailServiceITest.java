@@ -12,12 +12,10 @@ import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.TestPropertySource;
 
 /**
  * @author jeanaurambault
  */
-@TestPropertySource(properties = {"l10n.sla-checker.incident-check.cron=0 0/5 * * * ?"})
 public class SlaCheckerEmailServiceITest extends ServiceTestBase {
 
   @Autowired SlaCheckerEmailService slaCheckerEmailService;
