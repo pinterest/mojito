@@ -17,6 +17,7 @@ import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.exceptions.JedisAccessControlException;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
@@ -154,6 +155,12 @@ public class RedisPoolManager {
 
     try {
       return this.jedisPool.getResource();
+    } catch (JedisAccessControlException e) {
+      LOG.warn("Redis authentication failed, refreshing pool to renew IAM token", e);
+      synchronized (this) {
+        this.refreshJedisPool();
+      }
+      throw e;
     } catch (IllegalStateException e) {
       LOG.error("Pool not open, attempting pool refresh", e);
       synchronized (this) {
