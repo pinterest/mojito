@@ -180,4 +180,34 @@ public class SmartlingSourceStringConverterTest {
 
     assertThat(converter.convert(input, Collections.emptyList())).isEqualTo(expected);
   }
+
+  @Test
+  public void testConvert_UnescapesRsquo() {
+    SmartlingSourceStringConverter converter = new SmartlingSourceStringConverter();
+
+    String input = "<p>These ads won&rsquo;t show to people.</p>";
+    String expected = "<p>These ads won’t show to people.</p>";
+
+    assertThat(converter.convert(input, Collections.emptyList())).isEqualTo(expected);
+  }
+
+  @Test
+  public void testConvert_UnescapesDecimalNumericCharacterReference() {
+    SmartlingSourceStringConverter converter = new SmartlingSourceStringConverter();
+
+    String input = "<p>That&#39;s a wrap.</p>";
+    String expected = "<p>That's a wrap.</p>";
+
+    assertThat(converter.convert(input, Collections.emptyList())).isEqualTo(expected);
+  }
+
+  @Test
+  public void testConvert_UnescapesHexNumericCharacterReference() {
+    SmartlingSourceStringConverter converter = new SmartlingSourceStringConverter();
+
+    String input = "<p>That&#x27;s a wrap.</p>";
+    String expected = "<p>That's a wrap.</p>";
+
+    assertThat(converter.convert(input, Collections.emptyList())).isEqualTo(expected);
+  }
 }

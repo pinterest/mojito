@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.text.StringEscapeUtils;
+import org.apache.commons.text.translate.NumericEntityUnescaper;
 
 /**
  * Converts sequential format placeholders in strings to positional placeholders for compatibility
@@ -42,6 +43,9 @@ import org.apache.commons.text.StringEscapeUtils;
  * </pre>
  */
 public class SmartlingSourceStringConverter implements SourceStringConverter {
+  private static final NumericEntityUnescaper NUMERIC_ENTITY_UNESCAPER =
+      new NumericEntityUnescaper();
+
   private static final Map<String, String> REGEX_BY_FORMAT =
       Map.of(
           "java",
@@ -194,39 +198,6 @@ public class SmartlingSourceStringConverter implements SourceStringConverter {
     return input.replace("&nbsp;", "\u00A0");
   }
 
-  private boolean isAlreadyHtml4Escaped(String input) {
-    if (input.indexOf('&') < 0) {
-      return false;
-    }
-    String unescaped = StringEscapeUtils.unescapeHtml4(input);
-    String escaped = StringEscapeUtils.escapeHtml4(unescaped);
-    return this.convertNbspEntityToUnicodeNbsp(escaped).equals(input);
-  }
-
-  /**
-   * Escapes HTML entities only when the input is not already escaped.
-   *
-   * <p>This avoids double-escaping sequences like {@code &lt;} into {@code &amp;lt;}.
-   */
-  private String escapeHtml4IfNotEscaped(String input) {
-    if (input == null || input.isEmpty()) {
-      return input;
-    }
-    // Fast-path: if there is nothing that escapeHtml4 would change, keep as-is.
-    // (escapeHtml4 primarily targets & < > " ')
-    if (input.indexOf('&') < 0
-        && input.indexOf('<') < 0
-        && input.indexOf('>') < 0
-        && input.indexOf('"') < 0
-        && input.indexOf('\'') < 0) {
-      return input;
-    }
-    if (this.isAlreadyHtml4Escaped(input)) {
-      return input;
-    }
-    return StringEscapeUtils.escapeHtml4(input);
-  }
-
   /**
    * Replaces real newline characters (LF/CRLF/CR) that appear inside single-quoted HTML attribute
    * values with a literal {@code \n} sequence.
@@ -292,33 +263,59 @@ public class SmartlingSourceStringConverter implements SourceStringConverter {
     return inputWithUnicodeNbsp.replaceAll(" {2,}", " ");
   }
 
+  private String unescapeNumericCharacterReferences(String input) {
+    if (input == null || input.indexOf('&') < 0 || input.indexOf('#') < 0) {
+      return input;
+    }
+    return NUMERIC_ENTITY_UNESCAPER.translate(input);
+  }
+
+  private String unescapeHtml4OnlyEntities(String input) {
+    if (input == null || input.isEmpty()) {
+      return input;
+    }
+    // Fast-path: if there is nothing that escapeHtml4 would change, keep as-is.
+    // (escapeHtml4 primarily targets & < > " ')
+    if (input.indexOf('&') < 0
+        && input.indexOf('<') < 0
+        && input.indexOf('>') < 0
+        && input.indexOf('"') < 0
+        && input.indexOf('\'') < 0) {
+      return input;
+    }
+    // Decode all HTML4 entities, then re-escape only HTML3 entities.
+    // Result: entities supported by HTML4 but not HTML3 remain as Unicode characters.
+    String html4Unescaped = StringEscapeUtils.unescapeHtml4(input);
+    String html3Escaped = StringEscapeUtils.escapeHtml3(html4Unescaped);
+
+    // Keep named entities escaped but decode numeric references (e.g. &#39;, &#x27;).
+    String unescapedNumericCharacterReferences =
+        this.unescapeNumericCharacterReferences(html3Escaped);
+    return this.convertNbspEntityToUnicodeNbsp(unescapedNumericCharacterReferences);
+  }
+
   private String normalizeOutsideHtmlTagsText(String input) {
     String inputWithSpacesNormalized = this.normalizeSpaces(input);
-    return this.escapeHtml4IfNotEscaped(inputWithSpacesNormalized);
+    return this.unescapeHtml4OnlyEntities(inputWithSpacesNormalized);
   }
 
   /**
-   * Normalizes an input string for Smartling in an HTML-aware way.
+   * Normalizes text for Smartling while treating HTML tags and non-tag text differently.
    *
-   * <p>Splits the input into HTML tags ({@code <...>}) and plain-text segments. For plain-text
-   * segments (outside tags), it:
-   *
-   * <ul>
-   *   <li>converts {@code &nbsp;} to the Unicode non-breaking space ({@code \u00A0})
-   *   <li>collapses runs of literal space characters ({@code ' '}) to a single space
-   *   <li>HTML-escapes the text (unless it is already HTML4-escaped) to avoid double-escaping
-   * </ul>
-   *
-   * <p>For tag segments, it preserves the tag structure and:
+   * <p>The input is split into HTML tag segments ({@code <...>}) and non-tag segments.
    *
    * <ul>
-   *   <li>escapes real newlines inside single-quoted attribute values as the literal sequence
-   *       {@code \n}
-   *   <li>if the tag contains double-quoted attributes, it also collapses runs of literal spaces
-   *       inside the tag content (tag name + attributes)
+   *   <li>If no tags are found, only space normalization is applied.
+   *   <li>For non-tag segments, runs of literal spaces are collapsed and HTML4-only entities are
+   *       normalized via {@link #unescapeHtml4OnlyEntities(String)}.
+   *   <li>For tag segments, tag structure is preserved.
+   *   <li>Tags with no double-quoted attributes have newlines in single-quoted attribute values
+   *       escaped as literal {@code \n} via {@link #escapeNewlines(String)}.
+   *   <li>Tags with double-quoted attributes have repeated spaces in tag content collapsed via
+   *       {@link #processHtmlTagContent(String)}.
    * </ul>
    */
-  private String normalizeSpacesAndEscapeHtml(String input) {
+  private String normalizeSmartlingTextHtmlAware(String input) {
     // Pattern to match HTML tags
     Pattern htmlTagPattern = Pattern.compile("<[^>]*>");
     Matcher htmlTagMatcher = htmlTagPattern.matcher(input);
@@ -364,6 +361,6 @@ public class SmartlingSourceStringConverter implements SourceStringConverter {
   @Override
   public String convert(String input, List<String> options) {
     String result = this.convertPlaceholders(input, options);
-    return this.normalizeSpacesAndEscapeHtml(result.trim());
+    return this.normalizeSmartlingTextHtmlAware(result.trim());
   }
 }
