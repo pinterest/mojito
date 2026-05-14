@@ -21,7 +21,7 @@
         <frontend.v2.directory>${project.basedir}/src/main/frontend-v2</frontend.v2.directory>
         <frontend.maven.plugin.version>2.0.0</frontend.maven.plugin.version>
         <frontend.npm.install.subcommand>install</frontend.npm.install.subcommand>
-        <frontend.v2.pnpm.install.args></frontend.v2.pnpm.install.args>
+        <frontend.v2.pnpm.install.args/>
         <node.version>v20.18.0</node.version>
         <npm.version>8.2.0</npm.version>
 
