@@ -20,6 +20,8 @@
         <frontend.directory>${project.basedir}/src/main/frontend</frontend.directory>
         <frontend.v2.directory>${project.basedir}/src/main/frontend-v2</frontend.v2.directory>
         <frontend.maven.plugin.version>2.0.0</frontend.maven.plugin.version>
+        <frontend.npm.install.subcommand>install</frontend.npm.install.subcommand>
+        <frontend.v2.pnpm.install.args/>
         <node.version>v20.18.0</node.version>
         <npm.version>8.2.0</npm.version>
 
@@ -598,7 +600,7 @@
                                     <goal>npm</goal>
                                 </goals>
                                 <configuration>
-                                    <arguments>--prefix ${frontend.directory} install</arguments>
+                                    <arguments>--prefix ${frontend.directory} ${frontend.npm.install.subcommand}</arguments>
                                 </configuration>
                             </execution>
                             <execution>
@@ -650,7 +652,7 @@
                                     <goal>pnpm</goal>
                                 </goals>
                                 <configuration>
-                                    <arguments>--prefix ${frontend.v2.directory} install</arguments>
+                                    <arguments>--prefix ${frontend.v2.directory} install ${frontend.v2.pnpm.install.args}</arguments>
                                 </configuration>
                             </execution>
                             <execution>
