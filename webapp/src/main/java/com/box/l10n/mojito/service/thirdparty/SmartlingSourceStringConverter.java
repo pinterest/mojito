@@ -45,6 +45,8 @@ import org.apache.commons.text.translate.NumericEntityUnescaper;
 public class SmartlingSourceStringConverter implements SourceStringConverter {
   private static final NumericEntityUnescaper NUMERIC_ENTITY_UNESCAPER =
       new NumericEntityUnescaper();
+  private static final Pattern NUMERIC_CHARACTER_REFERENCE_PATTERN =
+      Pattern.compile("&#(?:\\d+|[xX][0-9a-fA-F]+);");
 
   private static final Map<String, String> REGEX_BY_FORMAT =
       Map.of(
@@ -299,6 +301,26 @@ public class SmartlingSourceStringConverter implements SourceStringConverter {
     return this.unescapeHtml4OnlyEntities(inputWithSpacesNormalized);
   }
 
+  private boolean hasHtml4OnlyEntityOrNumericCharacterReference(String input) {
+    if (input == null || input.isEmpty() || input.indexOf('&') < 0) {
+      return false;
+    }
+
+    // Numeric references are unescaped in a later stage and should trigger entity-aware
+    // normalization in plain text.
+    if (NUMERIC_CHARACTER_REFERENCE_PATTERN.matcher(input).find()) {
+      return true;
+    }
+
+    // Detect entities that HTML4 decodes but HTML3 does not.
+    String html4Unescaped = StringEscapeUtils.unescapeHtml4(input);
+    if (html4Unescaped.equals(input)) {
+      return false;
+    }
+    String html3Unescaped = StringEscapeUtils.unescapeHtml3(input);
+    return !html4Unescaped.equals(html3Unescaped);
+  }
+
   /**
    * Normalizes text for Smartling while treating HTML tags and non-tag text differently.
    *
@@ -320,8 +342,11 @@ public class SmartlingSourceStringConverter implements SourceStringConverter {
     Pattern htmlTagPattern = Pattern.compile("<[^>]*>");
     Matcher htmlTagMatcher = htmlTagPattern.matcher(input);
 
-    // Skip HTML escaping when there are no HTML tags in the input.
+    // For plain text, run entity-aware normalization only for HTML4-only entities or numeric NCRs.
     if (!htmlTagMatcher.find()) {
+      if (this.hasHtml4OnlyEntityOrNumericCharacterReference(input)) {
+        return this.normalizeOutsideHtmlTagsText(input);
+      }
       return this.normalizeSpaces(input);
     }
     htmlTagMatcher.reset();

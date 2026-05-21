@@ -182,6 +182,36 @@ public class SmartlingSourceStringConverterTest {
   }
 
   @Test
+  public void testConvert_NormalizesPlainTextWithHtml4OnlyEntity() {
+    SmartlingSourceStringConverter converter = new SmartlingSourceStringConverter();
+
+    String input = "Company&rsquo;  team";
+    String expected = "Company’ team";
+
+    assertThat(converter.convert(input, Collections.emptyList())).isEqualTo(expected);
+  }
+
+  @Test
+  public void testConvert_UnescapesHexNumericCharacterReferenceInPlainText() {
+    SmartlingSourceStringConverter converter = new SmartlingSourceStringConverter();
+
+    String input = "That&#x27;s  a wrap.";
+    String expected = "That's a wrap.";
+
+    assertThat(converter.convert(input, Collections.emptyList())).isEqualTo(expected);
+  }
+
+  @Test
+  public void testConvert_UnescapesDecimalNumericCharacterReferenceInPlainText() {
+    SmartlingSourceStringConverter converter = new SmartlingSourceStringConverter();
+
+    String input = "That&#39;s  a wrap.";
+    String expected = "That's a wrap.";
+
+    assertThat(converter.convert(input, Collections.emptyList())).isEqualTo(expected);
+  }
+
+  @Test
   public void testConvert_UnescapesRsquo() {
     SmartlingSourceStringConverter converter = new SmartlingSourceStringConverter();
 
