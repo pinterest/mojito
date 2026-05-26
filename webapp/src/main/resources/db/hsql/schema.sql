@@ -23,3 +23,13 @@ CREATE TABLE SPRING_SESSION_V2_ATTRIBUTES (
                                               CONSTRAINT SPRING_SESSION_V2_ATTRIBUTES_PK PRIMARY KEY (SESSION_PRIMARY_ID, ATTRIBUTE_NAME),
                                               CONSTRAINT SPRING_SESSION_V2_ATTRIBUTES_FK FOREIGN KEY (SESSION_PRIMARY_ID) REFERENCES SPRING_SESSION_V2(PRIMARY_ID) ON DELETE CASCADE
 );
+
+ALTER TABLE rewrite_rules
+    ADD COLUMN repository_id_scope BIGINT GENERATED ALWAYS AS (COALESCE(repository_id, 0));
+
+ALTER TABLE rewrite_rules
+    ADD COLUMN active_rewrite_from VARCHAR(512)
+        GENERATED ALWAYS AS (CASE WHEN enabled THEN rewrite_from END);
+
+CREATE UNIQUE INDEX I__REWRITE_RULES__REPO_ID_SCOPE__LOCALE_ID__ACTIVE_REWRITE_FROM
+    ON rewrite_rules (repository_id_scope, locale_id, active_rewrite_from);

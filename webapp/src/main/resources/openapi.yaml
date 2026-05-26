@@ -1917,6 +1917,170 @@ paths:
       summary: Import an entire Repository given an XLIFF
       tags:
       - repository-ws
+  /api/rewrite-rules:
+    get:
+      operationId: getRewriteRules
+      parameters:
+      - in: query
+        name: repositoryId
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - in: query
+        name: localeId
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - in: query
+        name: enabled
+        required: false
+        schema:
+          type: boolean
+      - in: query
+        name: scope
+        required: false
+        schema:
+          type: string
+          enum:
+          - REPOSITORY
+          - GLOBAL
+      - description: Zero-based page index (0..N)
+        in: query
+        name: page
+        required: false
+        schema:
+          type: integer
+          default: 0
+          minimum: 0
+      - description: The size of the page to be returned
+        in: query
+        name: size
+        required: false
+        schema:
+          type: integer
+          default: 10
+          minimum: 1
+      - description: "Sorting criteria in the format: property,(asc|desc). Default\
+          \ sort order is ascending. Multiple sort criteria are supported."
+        in: query
+        name: sort
+        required: false
+        schema:
+          type: array
+          default:
+          - "id,ASC"
+          items:
+            type: string
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: "#/components/schemas/PageRewriteRuleDTO"
+          description: OK
+      summary: Get paginated rewrite rules
+      tags:
+      - rewrite-rule-ws
+    post:
+      operationId: createRewriteRule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewriteRuleBody"
+        required: true
+      responses:
+        "201":
+          content:
+            application/hal+json:
+              schema:
+                $ref: "#/components/schemas/RewriteRuleDTO"
+          description: Created
+      tags:
+      - rewrite-rule-ws
+  /api/rewrite-rules/{id}:
+    get:
+      operationId: getRewriteRuleById
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: "#/components/schemas/RewriteRuleDTO"
+          description: OK
+      tags:
+      - rewrite-rule-ws
+    put:
+      operationId: updateRewriteRule
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewriteRuleBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: "#/components/schemas/RewriteRuleDTO"
+          description: OK
+      tags:
+      - rewrite-rule-ws
+  /api/rewrite-rules/{id}/disable:
+    patch:
+      operationId: disableRewriteRule
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: "#/components/schemas/RewriteRuleDTO"
+          description: OK
+      tags:
+      - rewrite-rule-ws
+  /api/rewrite-rules/{id}/enable:
+    patch:
+      operationId: enableRewriteRule
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: "#/components/schemas/RewriteRuleDTO"
+          description: OK
+      tags:
+      - rewrite-rule-ws
   /api/rotation:
     post:
       operationId: setRotation
@@ -4198,6 +4362,38 @@ components:
         totalPages:
           type: integer
           format: int32
+    PageRewriteRuleDTO:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/RewriteRuleDTO"
+        empty:
+          type: boolean
+        first:
+          type: boolean
+        last:
+          type: boolean
+        number:
+          type: integer
+          format: int32
+        numberOfElements:
+          type: integer
+          format: int32
+        pageable:
+          $ref: "#/components/schemas/PageableObject"
+        size:
+          type: integer
+          format: int32
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
     PageTextUnitVariantDeltaDTO:
       type: object
       properties:
@@ -4749,6 +4945,48 @@ components:
           $ref: "#/components/schemas/Locale_Repository"
         tm:
           $ref: "#/components/schemas/TM_Repository"
+    RewriteRuleBody:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        localeId:
+          type: integer
+          format: int64
+        repositoryId:
+          type: integer
+          format: int64
+        rewriteFrom:
+          type: string
+        rewriteTo:
+          type: string
+    RewriteRuleDTO:
+      type: object
+      properties:
+        createdByUserId:
+          type: integer
+          format: int64
+        createdByUserName:
+          type: string
+        enabled:
+          type: boolean
+        id:
+          type: integer
+          format: int64
+        lastModifiedDate:
+          type: integer
+          format: int64
+          example: 1715699917000
+        localeId:
+          type: integer
+          format: int64
+        repositoryId:
+          type: integer
+          format: int64
+        rewriteFrom:
+          type: string
+        rewriteTo:
+          type: string
     ScheduledJobDTO:
       type: object
       properties:

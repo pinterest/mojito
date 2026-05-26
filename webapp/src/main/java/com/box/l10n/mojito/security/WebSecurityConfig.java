@@ -235,6 +235,9 @@ public class WebSecurityConfig {
                 . // USERs are not allowed to change translations
                 requestMatchers("/api/textunits/**")
                 .hasAnyRole("TRANSLATOR", "PM", "ADMIN")
+                . // rewrite-rules are available to Translator, PM and ADMIN
+                requestMatchers("/api/rewrite-rules/**")
+                .hasAnyRole("TRANSLATOR", "PM", "ADMIN")
                 . // Read-only is OK for everyone
                 requestMatchers(HttpMethod.GET, "/api/**")
                 .authenticated()
