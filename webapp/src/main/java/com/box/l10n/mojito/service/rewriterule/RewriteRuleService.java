@@ -16,7 +16,6 @@ import com.box.l10n.mojito.service.repository.RepositoryLocaleRepository;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,13 +29,24 @@ public class RewriteRuleService {
   private static final String ACTIVE_REWRITE_FROM_UNIQUE_INDEX =
       "I__REWRITE_RULES__REPO_ID_SCOPE__LOCALE_ID__ACTIVE_REWRITE_FROM";
 
-  @Autowired RewriteRuleRepository rewriteRuleRepository;
+  private final RewriteRuleRepository rewriteRuleRepository;
 
-  @Autowired RepositoryRepository repositoryRepository;
+  private final RepositoryRepository repositoryRepository;
 
-  @Autowired LocaleRepository localeRepository;
+  private final LocaleRepository localeRepository;
 
-  @Autowired RepositoryLocaleRepository repositoryLocaleRepository;
+  private final RepositoryLocaleRepository repositoryLocaleRepository;
+
+  public RewriteRuleService(
+      RewriteRuleRepository rewriteRuleRepository,
+      RepositoryRepository repositoryRepository,
+      LocaleRepository localeRepository,
+      RepositoryLocaleRepository repositoryLocaleRepository) {
+    this.rewriteRuleRepository = rewriteRuleRepository;
+    this.repositoryRepository = repositoryRepository;
+    this.localeRepository = localeRepository;
+    this.repositoryLocaleRepository = repositoryLocaleRepository;
+  }
 
   public Page<RewriteRule> findRewriteRules(
       Long repositoryId,
@@ -127,7 +137,7 @@ public class RewriteRuleService {
 
     RewriteRule rewriteRule = new RewriteRule();
     applyBody(rewriteRule, body);
-    assertNoActiveRewriteFromConflict(rewriteRule.getId(), rewriteRule);
+    assertNoActiveRewriteFromConflict(null, rewriteRule);
     return saveWithActiveConflictHandling(rewriteRule);
   }
 

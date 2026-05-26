@@ -5,7 +5,6 @@ import com.box.l10n.mojito.rest.EntityWithIdNotFoundException;
 import com.box.l10n.mojito.service.rewriterule.RewriteRuleService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -22,7 +21,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class RewriteRuleWS {
 
-  @Autowired RewriteRuleService rewriteRuleService;
+  private final RewriteRuleService rewriteRuleService;
+
+  public RewriteRuleWS(RewriteRuleService rewriteRuleService) {
+    this.rewriteRuleService = rewriteRuleService;
+  }
 
   @Operation(summary = "Get paginated rewrite rules")
   @RequestMapping(value = "/api/rewrite-rules", method = RequestMethod.GET)
@@ -73,7 +76,7 @@ public class RewriteRuleWS {
   @RequestMapping(value = "/api/rewrite-rules/{id}/disable", method = RequestMethod.PATCH)
   @ResponseStatus(HttpStatus.OK)
   public RewriteRuleDTO disableRewriteRule(@PathVariable Long id)
-      throws RewriteRuleWithIdNotFoundException, ActiveRewriteRuleWithSameRewriteFromException {
+      throws RewriteRuleWithIdNotFoundException {
     RewriteRule rewriteRule = rewriteRuleService.setRewriteRuleEnabled(id, false);
     return RewriteRuleDTO.fromEntity(rewriteRule);
   }
