@@ -1998,6 +1998,20 @@ paths:
       tags:
       - rewrite-rule-ws
   /api/rewrite-rules/{id}:
+    delete:
+      operationId: deleteRewriteRule
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - rewrite-rule-ws
     get:
       operationId: getRewriteRuleById
       parameters:

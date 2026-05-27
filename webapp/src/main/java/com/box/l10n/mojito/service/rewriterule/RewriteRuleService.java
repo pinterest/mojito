@@ -11,6 +11,7 @@ import com.box.l10n.mojito.rest.rewriterule.RepositoryLocaleForRepositoryAndLoca
 import com.box.l10n.mojito.rest.rewriterule.RewriteRuleBody;
 import com.box.l10n.mojito.rest.rewriterule.RewriteRuleScope;
 import com.box.l10n.mojito.rest.rewriterule.RewriteRuleWithIdNotFoundException;
+import com.box.l10n.mojito.rest.rewriterule.RootRepositoryLocaleNotAllowedForRewriteRuleException;
 import com.box.l10n.mojito.service.locale.LocaleRepository;
 import com.box.l10n.mojito.service.repository.RepositoryLocaleRepository;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
@@ -111,6 +112,12 @@ public class RewriteRuleService {
       if (repositoryLocale == null) {
         throw new RepositoryLocaleForRepositoryAndLocaleNotFoundException(
             body.getRepositoryId(), body.getLocaleId());
+      } else if (repositoryLocale.getParentLocale() == null) {
+        throw new RootRepositoryLocaleNotAllowedForRewriteRuleException(
+            "Root Repository Locale is not valid for rewrite rules. Repository ID: "
+                + body.getRepositoryId()
+                + ", Locale ID: "
+                + body.getLocaleId());
       }
     }
 
@@ -123,7 +130,7 @@ public class RewriteRuleService {
 
   private RewriteRule saveWithActiveConflictHandling(RewriteRule rewriteRule) {
     try {
-      return rewriteRuleRepository.save(rewriteRule);
+      return rewriteRuleRepository.saveAndFlush(rewriteRule);
     } catch (DataIntegrityViolationException ex) {
       if (isActiveRewriteFromUniqueConstraintViolation(ex)) {
         throw new ActiveRewriteRuleWithSameRewriteFromException(rewriteRule.getRewriteFrom());
@@ -175,6 +182,12 @@ public class RewriteRuleService {
     rewriteRule.setEnabled(enabled);
 
     return saveWithActiveConflictHandling(rewriteRule);
+  }
+
+  @Transactional
+  public void deleteRewriteRule(Long id) throws RewriteRuleWithIdNotFoundException {
+    RewriteRule rewriteRule = getRewriteRuleById(id);
+    rewriteRuleRepository.delete(rewriteRule);
   }
 
   private boolean isActiveRewriteFromUniqueConstraintViolation(Throwable throwable) {

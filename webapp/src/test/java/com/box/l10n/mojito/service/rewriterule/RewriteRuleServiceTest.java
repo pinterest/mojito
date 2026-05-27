@@ -14,9 +14,12 @@ import com.box.l10n.mojito.rest.rewriterule.ActiveRewriteRuleWithSameRewriteFrom
 import com.box.l10n.mojito.rest.rewriterule.RepositoryLocaleForRepositoryAndLocaleNotFoundException;
 import com.box.l10n.mojito.rest.rewriterule.RewriteRuleBody;
 import com.box.l10n.mojito.rest.rewriterule.RewriteRuleScope;
+import com.box.l10n.mojito.rest.rewriterule.RewriteRuleWithIdNotFoundException;
 import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
 import com.box.l10n.mojito.service.locale.LocaleRepository;
 import com.box.l10n.mojito.service.locale.LocaleService;
+import com.box.l10n.mojito.service.repository.RepositoryLocaleCreationException;
+import com.box.l10n.mojito.service.repository.RepositoryNameAlreadyUsedException;
 import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.test.TestIdWatcher;
 import com.google.common.collect.Sets;
@@ -49,8 +52,7 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
 
   @Test
   public void testCreateRewriteRule_failsWhenRepositoryLocaleIsMissing() throws Exception {
-    Repository repository =
-        repositoryService.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
+    Repository repository = this.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
 
     Locale localeNotInRepository = new Locale();
     localeNotInRepository.setBcp47Tag(testIdWatcher.getEntityName("es-locale"));
@@ -71,10 +73,23 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
     }
   }
 
+  private Repository createRepository(String repositoryId)
+      throws RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException {
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
+    RepositoryLocale esRepositoryLocale = new RepositoryLocale();
+    esRepositoryLocale.setLocale(esLocale);
+    return repositoryService.createRepository(
+        repositoryId,
+        "",
+        this.localeService.getDefaultLocale(),
+        false,
+        Sets.newHashSet(),
+        Sets.newHashSet(esRepositoryLocale));
+  }
+
   @Test
   public void testCreateRewriteRule_failsWhenAnotherActiveHasSameRewriteFrom() throws Exception {
-    Repository repository =
-        repositoryService.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
+    Repository repository = this.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
     String rewriteFromText = "same-rewrite-from";
     RewriteRuleBody firstRuleBody =
         newRewriteRuleBody(repository.getId(), rewriteFromText, "target-a", true);
@@ -119,8 +134,7 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
   @Test
   public void testSetRewriteRuleEnabled_failsWhenAnotherActiveHasSameRewriteFrom()
       throws Exception {
-    Repository repository =
-        repositoryService.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
+    Repository repository = this.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
 
     String rewriteFromText = "same-rewrite-from";
     rewriteRuleService.createRewriteRule(
@@ -168,8 +182,7 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
 
   @Test
   public void testSetRewriteRuleEnabled_allowsDisablingRule() throws Exception {
-    Repository repository =
-        repositoryService.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
+    Repository repository = this.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
 
     RewriteRule enabledRule =
         rewriteRuleService.createRewriteRule(
@@ -185,8 +198,8 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
   public void testCreateRewriteRule_allowsSameRewriteFromAcrossDifferentRepositories()
       throws Exception {
     String repositoryName = testIdWatcher.getEntityName("rewrite-rule-repo");
-    Repository firstRepository = repositoryService.createRepository(repositoryName);
-    Repository secondRepository = repositoryService.createRepository(repositoryName + "-2");
+    Repository firstRepository = this.createRepository(repositoryName);
+    Repository secondRepository = this.createRepository(repositoryName + "-2");
 
     String rewriteFromText = "same-rewrite-from";
     RewriteRule firstRule =
@@ -238,8 +251,7 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
   public void
       testCreateRewriteRule_createsEnabledGlobalAndRepositoryRewriteRulesWithSameRewriteFrom()
           throws Exception {
-    Repository repository =
-        repositoryService.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
+    Repository repository = this.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
 
     String rewriteFromText = "same-rewrite-from";
     RewriteRule globalRule =
@@ -258,8 +270,7 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
 
   @Test
   public void testUpdateRewriteRule_FailsWhenAnotherActiveHasSameRewriteFrom() throws Exception {
-    Repository repository =
-        repositoryService.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
+    Repository repository = this.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
 
     String rewriteFromText = "same-rewrite-from";
 
@@ -317,8 +328,7 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
 
   @Test
   public void testUpdateRewriteRule_allowsKeepingSameRewriteFromOnSameEntity() throws Exception {
-    Repository repository =
-        repositoryService.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
+    Repository repository = this.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
 
     String rewriteFromText = "same-rewrite-from";
 
@@ -356,8 +366,7 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
 
   @Test
   public void testFindRewriteRules_filtersByScopeAndEnabled() throws Exception {
-    Repository repository =
-        repositoryService.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
+    Repository repository = this.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
 
     rewriteRuleService.createRewriteRule(
         newRewriteRuleBody(null, "global-enabled", "target-a", true));
@@ -414,10 +423,6 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
             false,
             Sets.newHashSet(),
             Sets.newHashSet(esRepositoryLocale));
-    ;
-
-    rewriteRuleService.createRewriteRule(
-        newRewriteRuleBody(firstRepository.getId(), "r1-default", "target-a", true));
 
     rewriteRuleService.createRewriteRule(
         newRewriteRuleBody(
@@ -436,10 +441,31 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
     assertEquals(esLocale.getId(), filtered.getContent().getFirst().getLocale().getId());
   }
 
+  @Test
+  public void testDeleteRewriteRule_deletesExistingRule() throws Exception {
+    Repository repository = this.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
+
+    RewriteRule rewriteRule =
+        rewriteRuleService.createRewriteRule(
+            newRewriteRuleBody(repository.getId(), "to-delete", "target", true));
+
+    rewriteRuleService.deleteRewriteRule(rewriteRule.getId());
+
+    try {
+      rewriteRuleService.getRewriteRuleById(rewriteRule.getId());
+      fail("Expected deleted rewrite rule to be missing");
+    } catch (RewriteRuleWithIdNotFoundException expected) {
+    }
+  }
+
   private RewriteRuleBody newRewriteRuleBody(
       Long repositoryId, String rewriteFrom, String rewriteTo, boolean enabled) {
     return newRewriteRuleBody(
-        repositoryId, localeService.getDefaultLocale().getId(), rewriteFrom, rewriteTo, enabled);
+        repositoryId,
+        localeService.findByBcp47Tag("es-ES").getId(),
+        rewriteFrom,
+        rewriteTo,
+        enabled);
   }
 
   private RewriteRuleBody newRewriteRuleBody(

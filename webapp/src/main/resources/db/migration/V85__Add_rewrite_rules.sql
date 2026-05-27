@@ -10,7 +10,7 @@ CREATE TABLE rewrite_rules (
     created_by_user_id BIGINT NOT NULL,
     repository_id_scope BIGINT GENERATED ALWAYS AS (IFNULL(repository_id, 0)) STORED,
     active_rewrite_from VARCHAR(512)
-        GENERATED ALWAYS AS (CASE WHEN enabled = 1 THEN rewrite_from ELSE NULL END) STORED,
+        GENERATED ALWAYS AS (CASE WHEN enabled = 1 THEN rewrite_from END) STORED,
     PRIMARY KEY(id)
 );
 

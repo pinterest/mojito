@@ -69,6 +69,12 @@ public class RewriteRuleWS {
     return RewriteRuleDTO.fromEntity(rewriteRule);
   }
 
+  @RequestMapping(value = "/api/rewrite-rules/{id}", method = RequestMethod.DELETE)
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void deleteRewriteRule(@PathVariable Long id) throws RewriteRuleWithIdNotFoundException {
+    rewriteRuleService.deleteRewriteRule(id);
+  }
+
   @RequestMapping(value = "/api/rewrite-rules/{id}/enable", method = RequestMethod.PATCH)
   @ResponseStatus(HttpStatus.OK)
   public RewriteRuleDTO enableRewriteRule(@PathVariable Long id)
