@@ -1,5 +1,7 @@
 package com.box.l10n.mojito.service.ai.translation;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +25,8 @@ public class AITranslationFilterConfiguration {
     private boolean excludePlaceholders;
     private boolean excludeHtmlTags;
     private String excludePlaceholdersRegex = "\\{[^\\}]*\\}";
+    private boolean excludeStringNamePatterns;
+    private List<String> excludeStringNamePatternsRegex = new ArrayList<>();
 
     public boolean shouldExcludePlurals() {
       return excludePlurals;
@@ -54,6 +58,22 @@ public class AITranslationFilterConfiguration {
 
     public void setExcludePlaceholdersRegex(String excludePlaceholdersRegex) {
       this.excludePlaceholdersRegex = excludePlaceholdersRegex;
+    }
+
+    public boolean shouldExcludeStringNamePatterns() {
+      return excludeStringNamePatterns;
+    }
+
+    public void setExcludeStringNamePatterns(boolean excludeStringNamePatterns) {
+      this.excludeStringNamePatterns = excludeStringNamePatterns;
+    }
+
+    public List<String> getExcludeStringNamePatternsRegex() {
+      return excludeStringNamePatternsRegex;
+    }
+
+    public void setExcludeStringNamePatternsRegex(List<String> excludeStringNamePatternsRegex) {
+      this.excludeStringNamePatternsRegex = excludeStringNamePatternsRegex;
     }
   }
 }
