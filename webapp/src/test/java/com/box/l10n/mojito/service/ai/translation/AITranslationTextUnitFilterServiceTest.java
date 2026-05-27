@@ -8,7 +8,6 @@ import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.PluralForm;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnit;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.Collections;
 import java.util.List;
@@ -177,7 +176,8 @@ public class AITranslationTextUnitFilterServiceTest {
 
   private void setTestParameters(
       boolean excludePlurals, boolean excludePlaceholders, boolean excludeHtmlTags) {
-    setTestParameters(excludePlurals, excludePlaceholders, excludeHtmlTags, false, Collections.emptyList());
+    setTestParameters(
+        excludePlurals, excludePlaceholders, excludeHtmlTags, false, Collections.emptyList());
   }
 
   private void setTestParameters(
