@@ -1943,9 +1943,6 @@ paths:
         required: false
         schema:
           type: string
-          enum:
-          - REPOSITORY
-          - GLOBAL
       - description: Zero-based page index (0..N)
         in: query
         name: page

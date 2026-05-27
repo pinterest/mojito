@@ -89,7 +89,8 @@ public class RewriteRuleService {
   }
 
   private void applyBody(RewriteRule rewriteRule, RewriteRuleBody body)
-      throws EntityWithIdNotFoundException {
+      throws EntityWithIdNotFoundException,
+          RepositoryLocaleForRepositoryAndLocaleNotFoundException {
 
     Locale locale =
         localeRepository
@@ -122,7 +123,7 @@ public class RewriteRuleService {
 
   private RewriteRule saveWithActiveConflictHandling(RewriteRule rewriteRule) {
     try {
-      return rewriteRuleRepository.saveAndFlush(rewriteRule);
+      return rewriteRuleRepository.save(rewriteRule);
     } catch (DataIntegrityViolationException ex) {
       if (isActiveRewriteFromUniqueConstraintViolation(ex)) {
         throw new ActiveRewriteRuleWithSameRewriteFromException(rewriteRule.getRewriteFrom());
@@ -133,7 +134,9 @@ public class RewriteRuleService {
   }
 
   @Transactional
-  public RewriteRule createRewriteRule(RewriteRuleBody body) throws EntityWithIdNotFoundException {
+  public RewriteRule createRewriteRule(RewriteRuleBody body)
+      throws EntityWithIdNotFoundException,
+          RepositoryLocaleForRepositoryAndLocaleNotFoundException {
 
     RewriteRule rewriteRule = new RewriteRule();
     applyBody(rewriteRule, body);
@@ -143,7 +146,8 @@ public class RewriteRuleService {
 
   @Transactional
   public RewriteRule updateRewriteRule(Long id, RewriteRuleBody body)
-      throws EntityWithIdNotFoundException {
+      throws EntityWithIdNotFoundException,
+          RepositoryLocaleForRepositoryAndLocaleNotFoundException {
 
     RewriteRule rewriteRule = getRewriteRuleById(id);
 

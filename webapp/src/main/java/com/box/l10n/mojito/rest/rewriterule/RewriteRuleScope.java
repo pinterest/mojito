@@ -1,5 +1,7 @@
 package com.box.l10n.mojito.rest.rewriterule;
 
+import org.springframework.util.Assert;
+
 public enum RewriteRuleScope {
   REPOSITORY("repository"),
   GLOBAL("global");
@@ -15,9 +17,7 @@ public enum RewriteRuleScope {
   }
 
   public static RewriteRuleScope fromValue(String value) {
-    if (value == null) {
-      return null;
-    }
+    Assert.notNull(value, "Scope value cannot be null");
 
     for (RewriteRuleScope scope : values()) {
       if (scope.value.equalsIgnoreCase(value.trim())) {

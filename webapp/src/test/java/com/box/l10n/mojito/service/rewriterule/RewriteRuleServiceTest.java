@@ -20,6 +20,7 @@ import com.box.l10n.mojito.service.locale.LocaleService;
 import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.test.TestIdWatcher;
 import com.google.common.collect.Sets;
+import java.text.MessageFormat;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -61,8 +62,12 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
               repository.getId(), localeNotInRepository.getId(), "source", "target", true));
       fail("Expected missing RepositoryLocale exception");
     } catch (RepositoryLocaleForRepositoryAndLocaleNotFoundException ex) {
-      assertTrue(ex.getMessage().contains("localeId: " + localeNotInRepository.getId()));
-      assertTrue(ex.getMessage().contains("id: " + repository.getId()));
+      assertTrue(
+          ex.getMessage()
+              .contains(MessageFormat.format("locale id: {0}", localeNotInRepository.getId())));
+      assertTrue(
+          ex.getMessage()
+              .contains(MessageFormat.format("repository with id: {0}", repository.getId())));
     }
   }
 

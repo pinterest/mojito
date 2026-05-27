@@ -34,11 +34,13 @@ public class RewriteRuleWS {
       @RequestParam(required = false) Long repositoryId,
       @RequestParam(required = false) Long localeId,
       @RequestParam(required = false) Boolean enabled,
-      @RequestParam(required = false) RewriteRuleScope scope,
+      @RequestParam(required = false) String scope,
       @ParameterObject @PageableDefault(sort = "id", direction = Sort.Direction.ASC)
           Pageable pageable) {
+    RewriteRuleScope parsedScope = scope != null ? RewriteRuleScope.fromValue(scope) : null;
+
     return rewriteRuleService
-        .findRewriteRules(repositoryId, localeId, enabled, scope, pageable)
+        .findRewriteRules(repositoryId, localeId, enabled, parsedScope, pageable)
         .map(RewriteRuleDTO::fromEntity);
   }
 
@@ -52,7 +54,8 @@ public class RewriteRuleWS {
   @RequestMapping(value = "/api/rewrite-rules", method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.CREATED)
   public RewriteRuleDTO createRewriteRule(@RequestBody RewriteRuleBody body)
-      throws EntityWithIdNotFoundException {
+      throws EntityWithIdNotFoundException,
+          RepositoryLocaleForRepositoryAndLocaleNotFoundException {
     RewriteRule rewriteRule = rewriteRuleService.createRewriteRule(body);
     return RewriteRuleDTO.fromEntity(rewriteRule);
   }
@@ -60,7 +63,8 @@ public class RewriteRuleWS {
   @RequestMapping(value = "/api/rewrite-rules/{id}", method = RequestMethod.PUT)
   @ResponseStatus(HttpStatus.OK)
   public RewriteRuleDTO updateRewriteRule(@PathVariable Long id, @RequestBody RewriteRuleBody body)
-      throws EntityWithIdNotFoundException {
+      throws EntityWithIdNotFoundException,
+          RepositoryLocaleForRepositoryAndLocaleNotFoundException {
     RewriteRule rewriteRule = rewriteRuleService.updateRewriteRule(id, body);
     return RewriteRuleDTO.fromEntity(rewriteRule);
   }
