@@ -8,8 +8,12 @@ import com.box.l10n.mojito.entity.Asset;
 import com.box.l10n.mojito.entity.PluralForm;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnit;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -29,11 +33,13 @@ public class AITranslationTextUnitFilterServiceTest {
     when(testAsset.getRepository()).thenReturn(repository);
     when(repository.getName()).thenReturn("test");
     textUnitFilterService = new AITranslationTextUnitFilterService();
+    textUnitFilterService.meterRegistry = new SimpleMeterRegistry();
     AITranslationFilterConfiguration translationFilterConfiguration =
         new AITranslationFilterConfiguration();
-    setTestParameters(true, true, true);
+    setTestParameters(true, true, true, false, Collections.emptyList());
     textUnitFilterService.excludePlaceholdersPatternMap =
         Map.of("test", Pattern.compile("\\{[^\\}]*\\}"));
+    textUnitFilterService.excludeStringNamePatternsMap = Map.of();
   }
 
   @Test
@@ -128,8 +134,58 @@ public class AITranslationTextUnitFilterServiceTest {
     assertTrue(textUnitFilterService.isTranslatable(tmTextUnit, repository));
   }
 
+  @Test
+  public void testIsTranslatableWithExcludedStringNamePattern() {
+    setTestParameters(false, false, false, true, List.of(".*_legal_.*"));
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setName("tos_legal_disclaimer");
+    tmTextUnit.setContent("some content");
+    tmTextUnit.setAsset(testAsset);
+    assertFalse(textUnitFilterService.isTranslatable(tmTextUnit, repository));
+  }
+
+  @Test
+  public void testIsTranslatableWithNonMatchingStringNamePattern() {
+    setTestParameters(false, false, false, true, List.of(".*_legal_.*"));
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setName("homepage_title");
+    tmTextUnit.setContent("some content");
+    tmTextUnit.setAsset(testAsset);
+    assertTrue(textUnitFilterService.isTranslatable(tmTextUnit, repository));
+  }
+
+  @Test
+  public void testIsTranslatableWithMultipleStringNamePatterns() {
+    setTestParameters(false, false, false, true, List.of(".*_legal_.*", ".*_brand_.*"));
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setName("pinterest_brand_name");
+    tmTextUnit.setContent("some content");
+    tmTextUnit.setAsset(testAsset);
+    assertFalse(textUnitFilterService.isTranslatable(tmTextUnit, repository));
+  }
+
+  @Test
+  public void testIsTranslatableStringNamePatternsDisabled() {
+    setTestParameters(false, false, false, false, List.of(".*_legal_.*"));
+    TMTextUnit tmTextUnit = new TMTextUnit();
+    tmTextUnit.setName("tos_legal_disclaimer");
+    tmTextUnit.setContent("some content");
+    tmTextUnit.setAsset(testAsset);
+    assertTrue(textUnitFilterService.isTranslatable(tmTextUnit, repository));
+  }
+
   private void setTestParameters(
       boolean excludePlurals, boolean excludePlaceholders, boolean excludeHtmlTags) {
+    setTestParameters(
+        excludePlurals, excludePlaceholders, excludeHtmlTags, false, Collections.emptyList());
+  }
+
+  private void setTestParameters(
+      boolean excludePlurals,
+      boolean excludePlaceholders,
+      boolean excludeHtmlTags,
+      boolean excludeStringNamePatterns,
+      List<String> excludeStringNamePatternsRegex) {
     AITranslationFilterConfiguration translationFilterConfiguration =
         new AITranslationFilterConfiguration();
     AITranslationFilterConfiguration.RepositoryConfig repositoryConfig =
@@ -138,10 +194,22 @@ public class AITranslationTextUnitFilterServiceTest {
     repositoryConfig.setExcludePlaceholders(excludePlaceholders);
     repositoryConfig.setExcludeHtmlTags(excludeHtmlTags);
     repositoryConfig.setExcludePlaceholdersRegex("\\{[^\\}]*\\}");
+    repositoryConfig.setExcludeStringNamePatterns(excludeStringNamePatterns);
+    repositoryConfig.setExcludeStringNamePatternsRegex(excludeStringNamePatternsRegex);
     translationFilterConfiguration.setRepositoryConfig(Map.of("test", repositoryConfig));
 
     textUnitFilterService.aiTranslationFilterConfiguration = translationFilterConfiguration;
     textUnitFilterService.excludePlaceholdersPatternMap =
         Map.of("test", Pattern.compile("\\{[^\\}]*\\}"));
+    if (excludeStringNamePatterns && !excludeStringNamePatternsRegex.isEmpty()) {
+      textUnitFilterService.excludeStringNamePatternsMap =
+          Map.of(
+              "test",
+              excludeStringNamePatternsRegex.stream()
+                  .map(Pattern::compile)
+                  .collect(Collectors.toList()));
+    } else {
+      textUnitFilterService.excludeStringNamePatternsMap = Map.of();
+    }
   }
 }

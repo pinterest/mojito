@@ -4,10 +4,13 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.TMTextUnit;
 import com.google.common.collect.Maps;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import jakarta.annotation.PostConstruct;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +25,7 @@ public class AITranslationTextUnitFilterService {
   private static final Pattern HTML_TAG_PATTERN = Pattern.compile(HTML_TAG_REGEX);
 
   protected Map<String, Pattern> excludePlaceholdersPatternMap;
+  protected Map<String, List<Pattern>> excludeStringNamePatternsMap;
 
   @Autowired AITranslationFilterConfiguration aiTranslationFilterConfiguration;
 
@@ -75,6 +79,20 @@ public class AITranslationTextUnitFilterService {
       }
     }
 
+    if (repositoryConfig.shouldExcludeStringNamePatterns()) {
+      if (matchesExcludedStringNamePattern(repository.getName(), tmTextUnit)) {
+        logger.debug(
+            "Text unit with name: {}, matches excluded string name pattern, AI translation will be skipped",
+            tmTextUnit.getName());
+        meterRegistry
+            .counter(
+                "AITranslationTextUnitFilterService.excludedByStringNamePattern",
+                Tags.of("repository", repository.getName()))
+            .increment();
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -99,9 +117,22 @@ public class AITranslationTextUnitFilterService {
     return matcher.find();
   }
 
+  private boolean matchesExcludedStringNamePattern(String repositoryName, TMTextUnit tmTextUnit) {
+    List<Pattern> patterns = excludeStringNamePatternsMap.get(repositoryName);
+    if (patterns != null) {
+      for (Pattern pattern : patterns) {
+        if (pattern.matcher(tmTextUnit.getName()).find()) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   @PostConstruct
   public void init() {
     excludePlaceholdersPatternMap = Maps.newHashMap();
+    excludeStringNamePatternsMap = Maps.newHashMap();
     if (aiTranslationFilterConfiguration.getRepositoryConfig() != null) {
       for (Map.Entry<String, AITranslationFilterConfiguration.RepositoryConfig> entry :
           aiTranslationFilterConfiguration.getRepositoryConfig().entrySet()) {
@@ -109,6 +140,13 @@ public class AITranslationTextUnitFilterService {
         if (repositoryConfig.shouldExcludePlaceholders()) {
           excludePlaceholdersPatternMap.put(
               entry.getKey(), Pattern.compile(repositoryConfig.getExcludePlaceholdersRegex()));
+        }
+        if (repositoryConfig.shouldExcludeStringNamePatterns()) {
+          excludeStringNamePatternsMap.put(
+              entry.getKey(),
+              repositoryConfig.getExcludeStringNamePatternsRegex().stream()
+                  .map(Pattern::compile)
+                  .collect(Collectors.toList()));
         }
       }
     }
