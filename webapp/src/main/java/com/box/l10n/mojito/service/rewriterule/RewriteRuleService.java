@@ -17,12 +17,14 @@ import com.box.l10n.mojito.service.repository.RepositoryLocaleRepository;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
+import java.util.List;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 @Service
 public class RewriteRuleService {
@@ -81,6 +83,29 @@ public class RewriteRuleService {
         };
 
     return rewriteRuleRepository.findAll(spec, pageable);
+  }
+
+  public List<RewriteRule> findActiveRewriteRules(Long localeId, Long repositoryId) {
+
+    Assert.notNull(repositoryId, "repositoryId must not be null");
+    Assert.notNull(localeId, "localeId must not be null");
+
+    Specification<RewriteRule> spec =
+        (root, query, builder) -> {
+          var predicates = new ArrayList<Predicate>();
+
+          predicates.add(builder.equal(root.get("enabled"), true));
+          predicates.add(builder.equal(root.get("locale").get("id"), localeId));
+
+          predicates.add(
+              builder.or(
+                  builder.isNull(root.get("repository")),
+                  builder.equal(root.get("repository").get("id"), repositoryId)));
+
+          return builder.and(predicates.toArray(new Predicate[0]));
+        };
+
+    return rewriteRuleRepository.findAll(spec);
   }
 
   public RewriteRule getRewriteRuleById(Long id) throws RewriteRuleWithIdNotFoundException {
