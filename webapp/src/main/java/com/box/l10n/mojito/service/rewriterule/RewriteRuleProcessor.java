@@ -37,22 +37,6 @@ public class RewriteRuleProcessor {
         .replace("$locale", localeTag);
   }
 
-  private boolean overlaps(boolean[] occupiedIndexes, int start, int end) {
-    for (int index = start; index <= end; index++) {
-      if (occupiedIndexes[index]) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private void markAsOccupied(boolean[] occupiedIndexes, int start, int end) {
-    for (int index = start; index <= end; index++) {
-      occupiedIndexes[index] = true;
-    }
-  }
-
   private boolean isRepositorySpecific(RewriteRule rewriteRule) {
     return rewriteRule.getRepository() != null;
   }
@@ -60,44 +44,6 @@ public class RewriteRuleProcessor {
   private int getRulePriority(RewriteRule rewriteRule) {
     // Rewrite rules currently only model scope-based precedence.
     return this.isRepositorySpecific(rewriteRule) ? 1 : 0;
-  }
-
-  private int compare(MatchCandidate left, MatchCandidate right) {
-    int lengthCompare = Integer.compare(right.length(), left.length());
-    if (lengthCompare != 0) {
-      return lengthCompare;
-    }
-
-    RewriteRule rightRule = right.rule();
-    RewriteRule leftRule = left.rule();
-    int priorityCompare =
-        Integer.compare(this.getRulePriority(rightRule), this.getRulePriority(leftRule));
-    if (priorityCompare != 0) {
-      return priorityCompare;
-    }
-
-    int startCompare = Integer.compare(left.start(), right.start());
-    if (startCompare != 0) {
-      return startCompare;
-    }
-
-    return Integer.compare(left.end(), right.end());
-  }
-
-  private List<MatchCandidate> selectCandidates(
-      List<MatchCandidate> candidates, int contentLength) {
-    List<MatchCandidate> selectedCandidates = new ArrayList<>();
-    candidates.sort(this::compare);
-
-    boolean[] occupiedIndexes = new boolean[contentLength];
-    for (MatchCandidate candidate : candidates) {
-      if (!this.overlaps(occupiedIndexes, candidate.start(), candidate.end())) {
-        this.markAsOccupied(occupiedIndexes, candidate.start(), candidate.end());
-        selectedCandidates.add(candidate);
-      }
-    }
-
-    return selectedCandidates;
   }
 
   public String processExactMatches(
@@ -120,7 +66,7 @@ public class RewriteRuleProcessor {
     }
 
     Map<String, List<RewriteRule>> rulesByRewriteFrom = new HashMap<>();
-    Trie.TrieBuilder trieBuilder = Trie.builder();
+    Trie.TrieBuilder trieBuilder = Trie.builder().ignoreOverlaps();
 
     rewriteRules.forEach(
         rewriteRule -> {
@@ -137,24 +83,22 @@ public class RewriteRuleProcessor {
       return content;
     }
 
-    List<MatchCandidate> matchCandidates = new ArrayList<>();
+    List<Match> matches = new ArrayList<>();
     for (Emit emit : emits) {
       List<RewriteRule> emitRules = rulesByRewriteFrom.get(emit.getKeyword());
-
-      for (RewriteRule emitRule : emitRules) {
-        matchCandidates.add(new MatchCandidate(emit.getStart(), emit.getEnd(), emitRule));
-      }
+      emitRules.sort(
+          (leftRule, rightRule) ->
+              Integer.compare(this.getRulePriority(rightRule), this.getRulePriority(leftRule)));
+      RewriteRule emitRule = emitRules.getFirst();
+      matches.add(new Match(emit.getStart(), emit.getEnd(), emitRule));
     }
 
-    List<MatchCandidate> selectedCandidates =
-        this.selectCandidates(matchCandidates, content.length());
-
-    selectedCandidates.sort(Comparator.comparingInt(MatchCandidate::start));
+    matches.sort(Comparator.comparingInt(Match::start));
 
     StringBuilder rewrittenContent = new StringBuilder();
     int currentIndex = 0;
 
-    for (MatchCandidate selectedCandidate : selectedCandidates) {
+    for (Match selectedCandidate : matches) {
       rewrittenContent.append(content, currentIndex, selectedCandidate.start());
       rewrittenContent.append(resolveVariables(selectedCandidate.rule().getRewriteTo(), localeTag));
       currentIndex = selectedCandidate.end() + 1;
@@ -164,9 +108,5 @@ public class RewriteRuleProcessor {
     return rewrittenContent.toString();
   }
 
-  private record MatchCandidate(int start, int end, RewriteRule rule) {
-    int length() {
-      return end - start + 1;
-    }
-  }
+  private record Match(int start, int end, RewriteRule rule) {}
 }
