@@ -17,6 +17,7 @@ public class SmartlingClientConfiguration {
   String accessTokenUri = "https://api.smartling.com/auth-api/v2/authenticate";
   String refreshTokenUri = "https://api.smartling.com/auth-api/v2/authenticate/refresh";
 
+  String baseUrl;
   String clientID;
   String clientSecret;
   int retryMaxAttempts = 10;
@@ -31,13 +32,21 @@ public class SmartlingClientConfiguration {
         Retry.backoff(getRetryMaxAttempts(), Duration.ofSeconds(getRetryMinDurationSeconds()))
             .maxBackoff(Duration.ofSeconds(getRetryMaxBackoffDurationSeconds()));
 
-    return new SmartlingClient(smartlingOAuth2TokenService, retryConfiguration);
+    return new SmartlingClient(smartlingOAuth2TokenService, retryConfiguration, baseUrl);
   }
 
   @ConditionalOnProperty("l10n.smartling.clientID")
   @Bean
   public SmartlingOAuth2TokenService smartlingOAuth2TokenService() {
     return new SmartlingOAuth2TokenService(clientID, clientSecret, accessTokenUri, refreshTokenUri);
+  }
+
+  public String getBaseUrl() {
+    return baseUrl;
+  }
+
+  public void setBaseUrl(String baseUrl) {
+    this.baseUrl = baseUrl;
   }
 
   public String getAccessTokenUri() {
