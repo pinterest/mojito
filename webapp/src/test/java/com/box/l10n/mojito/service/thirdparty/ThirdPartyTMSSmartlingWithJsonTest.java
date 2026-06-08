@@ -16,8 +16,10 @@ import com.box.l10n.mojito.service.assetExtraction.ServiceTestBase;
 import com.box.l10n.mojito.service.assetcontent.AssetContentService;
 import com.box.l10n.mojito.service.pollableTask.PollableTaskService;
 import com.box.l10n.mojito.service.repository.RepositoryService;
+import com.box.l10n.mojito.service.rewriterule.RewriteRuleProcessor;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingJsonConverter;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingOptions;
+import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingParsedFileResponse;
 import com.box.l10n.mojito.service.tm.importer.TextUnitBatchImporterService;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
 import com.box.l10n.mojito.service.tm.search.TextUnitSearcher;
@@ -65,6 +67,8 @@ public class ThirdPartyTMSSmartlingWithJsonTest extends ServiceTestBase {
   @Mock ThirdPartyTMSSmartlingWithJson thirdPartyTMSSmartlingWithJsonMock;
 
   @Mock MeterRegistry meterRegistryMock;
+
+  @Mock RewriteRuleProcessor rewriteRuleProcessorMock;
 
   @Autowired(required = false)
   ThirdPartyService thirdPartyService;
@@ -271,6 +275,7 @@ public class ThirdPartyTMSSmartlingWithJsonTest extends ServiceTestBase {
             meterRegistryMock,
             thirdPartyFileChecksumRepositoryMock,
             aiTranslationConfiguration,
+            null,
             aiTranslationService);
 
     ImmutableList<TextUnitDTO> result =
@@ -379,6 +384,9 @@ public class ThirdPartyTMSSmartlingWithJsonTest extends ServiceTestBase {
             thirdPartyTMSSmartlingWithJsonMock.getSmartlingLocale(
                 localeMapping, repositoryLocaleFrFR))
         .thenReturn(smartlingLocale);
+    when(this.rewriteRuleProcessorMock.processExactMatches(
+            anyString(), anyLong(), anyLong(), anyString()))
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
     thirdPartyTMSSmartlingWithJsonMock.smartlingJsonConverter = smartlingJsonConverter;
     thirdPartyTMSSmartlingWithJsonMock.textUnitBatchImporterService =
@@ -386,10 +394,11 @@ public class ThirdPartyTMSSmartlingWithJsonTest extends ServiceTestBase {
     thirdPartyTMSSmartlingWithJsonMock.thirdPartyFileChecksumRepository =
         thirdPartyFileChecksumRepositoryMock;
     thirdPartyTMSSmartlingWithJsonMock.smartlingClient = smartlingClient;
+    this.thirdPartyTMSSmartlingWithJsonMock.rewriteRuleProcessor = this.rewriteRuleProcessorMock;
 
     Mockito.when(
             thirdPartyTMSSmartlingWithJsonMock.getLocalizedFileContent(
-                any(), any(), any(), anyBoolean()))
+                any(), any(), any(), anyBoolean(), anyLong(), any(Locale.class)))
         .thenCallRealMethod();
 
     when(smartlingClient.getRetryConfiguration())
@@ -526,14 +535,103 @@ public class ThirdPartyTMSSmartlingWithJsonTest extends ServiceTestBase {
 
     Mockito.when(
             thirdPartyTMSSmartlingWithJsonMock.getLocalizedFileContent(
-                any(), any(), any(), anyBoolean()))
+                any(), any(), any(), anyBoolean(), anyLong(), any(Locale.class)))
+        .thenCallRealMethod();
+    when(this.rewriteRuleProcessorMock.processExactMatches(
+            anyString(), anyLong(), anyLong(), anyString()))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    thirdPartyTMSSmartlingWithJsonMock.smartlingJsonConverter = smartlingJsonConverter;
+    thirdPartyTMSSmartlingWithJsonMock.smartlingClient = smartlingClient;
+    this.thirdPartyTMSSmartlingWithJsonMock.rewriteRuleProcessor = this.rewriteRuleProcessorMock;
+
+    Locale locale = new Locale();
+    locale.setId(1L);
+    locale.setBcp47Tag("es-ES");
+    thirdPartyTMSSmartlingWithJsonMock.getLocalizedFileContent(
+        "test", new File(), "fr-FR", false, 1L, locale);
+    Mockito.verify(smartlingClient, times(4))
+        .downloadPublishedFile(any(), any(), any(), anyBoolean());
+  }
+
+  @Test
+  public void testProcessExactMatchesRewritesContent() {
+    Mockito.reset(smartlingClient);
+
+    String smartlingJsonResponse =
+        ""
+            + "{\n"
+            + "  \"smartling\" : {\n"
+            + "    \"translate_paths\" : {\n"
+            + "      \"path\" : \"*/string\",\n"
+            + "      \"instruction\" : \"*/note\",\n"
+            + "      \"key\" : \"*/key\"\n"
+            + "    },\n"
+            + "    \"string_format\" : \"icu\",\n"
+            + "    \"variants_enabled\" : \"true\"\n"
+            + "  },\n"
+            + "  \"strings\" : [\n"
+            + "  {\n"
+            + "    \"key\" : \"helpLink\",\n"
+            + "    \"tmTextUnitId\" : 1,\n"
+            + "    \"assetPath\" : \"en.properties\",\n"
+            + "    \"name\" : \"help.link\",\n"
+            + "    \"string\" : \"Visit https://example.com/help for more info\",\n"
+            + "    \"note\" : \"help link note\"\n"
+            + "  },\n"
+            + "\n"
+            + "  {\n"
+            + "    \"key\" : \"homeLink\",\n"
+            + "    \"tmTextUnitId\" : 2,\n"
+            + "    \"assetPath\" : \"en.properties\",\n"
+            + "    \"name\" : \"home.link\",\n"
+            + "    \"string\" : \"Go to https://example.com/home\",\n"
+            + "    \"note\" : \"home link note\"\n"
+            + "  }"
+            + "]}";
+
+    when(smartlingClient.downloadPublishedFile(any(), any(), any(), anyBoolean()))
+        .thenReturn(smartlingJsonResponse);
+
+    when(smartlingClient.getRetryConfiguration())
+        .thenReturn(Retry.backoff(10, Duration.ofMillis(1)).maxBackoff(Duration.ofMillis(10)));
+
+    when(this.rewriteRuleProcessorMock.processExactMatches(
+            anyString(), eq(10L), eq(5L), eq("fr-FR")))
+        .thenAnswer(
+            invocation -> {
+              String content = invocation.getArgument(0);
+              return content
+                  .replace("https://example.com/help", "https://fr.example.com/aide")
+                  .replace("https://example.com/home", "https://fr.example.com/accueil");
+            });
+
+    Mockito.when(
+            thirdPartyTMSSmartlingWithJsonMock.getLocalizedFileContent(
+                any(), any(), any(), anyBoolean(), anyLong(), any(Locale.class)))
         .thenCallRealMethod();
 
     thirdPartyTMSSmartlingWithJsonMock.smartlingJsonConverter = smartlingJsonConverter;
     thirdPartyTMSSmartlingWithJsonMock.smartlingClient = smartlingClient;
+    thirdPartyTMSSmartlingWithJsonMock.rewriteRuleProcessor = this.rewriteRuleProcessorMock;
 
-    thirdPartyTMSSmartlingWithJsonMock.getLocalizedFileContent("test", new File(), "fr-FR", false);
-    Mockito.verify(smartlingClient, times(4))
-        .downloadPublishedFile(any(), any(), any(), anyBoolean());
+    Locale locale = new Locale();
+    locale.setId(5L);
+    locale.setBcp47Tag("fr-FR");
+
+    SmartlingParsedFileResponse<ImmutableList<TextUnitDTO>> result =
+        thirdPartyTMSSmartlingWithJsonMock.getLocalizedFileContent(
+            "testProject", new File(), "fr-FR", false, 10L, locale);
+
+    ImmutableList<TextUnitDTO> textUnits = result.data();
+    assertThat(textUnits).hasSize(2);
+    assertThat(textUnits)
+        .extracting(TextUnitDTO::getName, TextUnitDTO::getTarget)
+        .containsExactly(
+            tuple("help.link", "Visit https://fr.example.com/aide for more info"),
+            tuple("home.link", "Go to https://fr.example.com/accueil"));
+
+    Mockito.verify(rewriteRuleProcessorMock)
+        .processExactMatches(anyString(), eq(10L), eq(5L), eq("fr-FR"));
   }
 }

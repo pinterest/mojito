@@ -20,6 +20,7 @@ import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.ThirdPartyFileChecksum;
 import com.box.l10n.mojito.service.locale.LocaleRepository;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
+import com.box.l10n.mojito.service.rewriterule.RewriteRuleProcessor;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartyFileChecksumRepository;
 import com.box.l10n.mojito.service.tm.importer.TextUnitBatchImporterService;
 import com.box.l10n.mojito.service.tm.search.TextUnitDTO;
@@ -53,6 +54,8 @@ public class SmartlingPullLocaleFileJobTest {
   @Mock RepositoryRepository repositoryRepositoryMock;
 
   @Mock LocaleRepository localeRepositoryMock;
+
+  @Mock RewriteRuleProcessor rewriteRuleProcessorMock;
 
   @Captor ArgumentCaptor<List<TextUnitDTO>> textUnitListCaptor;
 
@@ -94,6 +97,7 @@ public class SmartlingPullLocaleFileJobTest {
 
     smartlingPullLocaleFileJobInput = new SmartlingPullLocaleFileJobInput();
     smartlingPullLocaleFileJobInput.setRepositoryName("testRepo");
+    smartlingPullLocaleFileJobInput.setRepositoryId(7L);
     smartlingPullLocaleFileJobInput.setLocaleBcp47Tag("fr-CA");
     smartlingPullLocaleFileJobInput.setSmartlingLocale("fr-CA");
     smartlingPullLocaleFileJobInput.setFileName("testFile");
@@ -112,7 +116,11 @@ public class SmartlingPullLocaleFileJobTest {
     smartlingPullLocaleFileJob.textUnitBatchImporterService = textUnitBatchImporterServiceMock;
     smartlingPullLocaleFileJob.thirdPartyFileChecksumRepository =
         thirdPartyFileChecksumRepositoryMock;
+    smartlingPullLocaleFileJob.rewriteRuleProcessor = rewriteRuleProcessorMock;
     smartlingPullLocaleFileJob.meterRegistry = new SimpleMeterRegistry();
+
+    when(rewriteRuleProcessorMock.processExactMatches(anyString(), any(), any(), anyString()))
+        .thenAnswer(invocation -> invocation.getArgument(0));
   }
 
   @Test
@@ -374,6 +382,44 @@ public class SmartlingPullLocaleFileJobTest {
         .importTextUnits(textUnitListCaptor.capture(), eq(false), eq(true));
 
     verify(thirdPartyFileChecksumRepositoryMock, times(0)).save(any(ThirdPartyFileChecksum.class));
+  }
+
+  @Test
+  public void testPullAppliesRewriteRulesBeforeParsing() throws Exception {
+    Repository testRepo = new Repository();
+    testRepo.setId(7L);
+    testRepo.setName("testRepo");
+    when(repositoryRepositoryMock.findByName(eq("testRepo"))).thenReturn(testRepo);
+
+    String pullResponse =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>\n"
+            + "<string name=\"src/main/res/values/strings.xml#@#help\" tmTextUnitId=\"1\">https://example.com/help/article</string>\n"
+            + "</resources>\n";
+
+    String rewrittenResponse =
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>\n"
+            + "<string name=\"src/main/res/values/strings.xml#@#help\" tmTextUnitId=\"1\">https://example.com/help/article-fr-CA</string>\n"
+            + "</resources>\n";
+
+    doReturn(pullResponse)
+        .when(smartlingClientMock)
+        .downloadPublishedFile(eq("testProjectId"), eq("fr-CA"), eq("testFile"), eq(false));
+
+    when(rewriteRuleProcessorMock.processExactMatches(
+            eq(pullResponse), eq(7L), eq(1L), eq("fr-CA")))
+        .thenReturn(rewrittenResponse);
+
+    smartlingPullLocaleFileJob.call(smartlingPullLocaleFileJobInput);
+
+    verify(rewriteRuleProcessorMock, times(1))
+        .processExactMatches(eq(pullResponse), eq(7L), eq(1L), eq("fr-CA"));
+
+    verify(textUnitBatchImporterServiceMock, times(1))
+        .importTextUnits(textUnitListCaptor.capture(), eq(false), eq(true));
+
+    List<TextUnitDTO> captured = textUnitListCaptor.getValue();
+    assertThat(captured).hasSize(1);
+    assertThat(captured.getFirst().getTarget()).isEqualTo("https://example.com/help/article-fr-CA");
   }
 
   @Test

@@ -24,6 +24,7 @@ import com.box.l10n.mojito.service.repository.RepositoryService;
 import com.box.l10n.mojito.test.TestIdWatcher;
 import com.google.common.collect.Sets;
 import java.text.MessageFormat;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -456,6 +457,85 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
       fail("Expected deleted rewrite rule to be missing");
     } catch (RewriteRuleWithIdNotFoundException expected) {
     }
+  }
+
+  @Test
+  public void testFindActiveRewriteRules_filtersByScopeRepositoryAndLocale() throws Exception {
+    Locale defaultLocale = localeService.getDefaultLocale();
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
+
+    RepositoryLocale esRepositoryLocale = new RepositoryLocale();
+    esRepositoryLocale.setLocale(esLocale);
+
+    Repository firstRepository =
+        repositoryService.createRepository(
+            testIdWatcher.getEntityName("rewrite-rule-repo"),
+            "",
+            defaultLocale,
+            false,
+            Sets.newHashSet(),
+            Sets.newHashSet(esRepositoryLocale));
+
+    Repository secondRepository =
+        repositoryService.createRepository(
+            testIdWatcher.getEntityName("rewrite-rule-repo-2"),
+            "",
+            defaultLocale,
+            false,
+            Sets.newHashSet(),
+            Sets.newHashSet(esRepositoryLocale));
+
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(null, esLocale.getId(), "global-es", "global", true));
+
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(firstRepository.getId(), esLocale.getId(), "repo-es", "repo", true));
+
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(secondRepository.getId(), esLocale.getId(), "repo2-es", "repo2", true));
+
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(
+            firstRepository.getId(), esLocale.getId(), "repo-disabled", "repo-disabled", false));
+
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(null, esLocale.getId(), "global2-es", "global-es", true));
+
+    List<RewriteRule> allRulesForRepositoryAndLocale =
+        rewriteRuleService.findActiveRewriteRules(esLocale.getId(), firstRepository.getId());
+
+    List<RewriteRule> globalRulesForLocale =
+        allRulesForRepositoryAndLocale.stream()
+            .filter(rewriteRule -> rewriteRule.getRepository() == null)
+            .toList();
+
+    List<RewriteRule> repositoryRulesForLocale =
+        allRulesForRepositoryAndLocale.stream()
+            .filter(rewriteRule -> rewriteRule.getRepository() != null)
+            .toList();
+    ;
+
+    assertEquals(3, allRulesForRepositoryAndLocale.size());
+    assertTrue(
+        allRulesForRepositoryAndLocale.stream()
+            .anyMatch(rule -> "global-es".equals(rule.getRewriteFrom())));
+    assertTrue(
+        allRulesForRepositoryAndLocale.stream()
+            .anyMatch(
+                rule ->
+                    "repo-es".equals(rule.getRewriteFrom())
+                        && rule.getRepository() != null
+                        && firstRepository.getId().equals(rule.getRepository().getId())));
+
+    assertEquals(2, globalRulesForLocale.size());
+    assertNull(globalRulesForLocale.getFirst().getRepository());
+    assertEquals("global-es", globalRulesForLocale.getFirst().getRewriteFrom());
+
+    assertEquals(1, repositoryRulesForLocale.size());
+    assertNotNull(repositoryRulesForLocale.getFirst().getRepository());
+    assertEquals(
+        firstRepository.getId(), repositoryRulesForLocale.getFirst().getRepository().getId());
+    assertEquals("repo-es", repositoryRulesForLocale.getFirst().getRewriteFrom());
   }
 
   private RewriteRuleBody newRewriteRuleBody(

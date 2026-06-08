@@ -4,6 +4,8 @@ public class SmartlingPullLocaleFileJobInput {
 
   String repositoryName;
 
+  long repositoryId;
+
   long localeId;
 
   String localeBcp47Tag;
@@ -86,6 +88,14 @@ public class SmartlingPullLocaleFileJobInput {
 
   public void setDryRun(boolean dryRun) {
     isDryRun = dryRun;
+  }
+
+  public long getRepositoryId() {
+    return repositoryId;
+  }
+
+  public void setRepositoryId(long repositoryId) {
+    this.repositoryId = repositoryId;
   }
 
   public long getLocaleId() {
