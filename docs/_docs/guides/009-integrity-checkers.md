@@ -67,12 +67,18 @@ Printf-like integrity checker validates that the placeholders in the source stri
 
 The translation gets rejected if any placeholder in the source string is missing in the translation or the specifier is modified.  There can be multiple placeholders in the source string.  The order of the placeholders can change in the translation.
 
+**Positional Placeholder Normalization:** The checker automatically normalizes non-positional placeholders (e.g., `%s`, `%d`, `%.1f`) to positional format (e.g., `%1$s`, `%1$d`, `%1$.1f`) before comparison. This ensures compatibility with translation management systems like Smartling that automatically add position specifiers to translations to avoid ambiguity.
+
 | Source String                                          | Translation                                               | Checker           |
 |:-------------------------------------------------------|:----------------------------------------------------------|:------------------|
 | <small>Hello %@!</small>                               | <small>¡Hola %@!</small>                                  | <small>OK</small> |
 | <small>%1$s of %2$s</small>                            | <small>%2$s의 %1$s</small>                                 | <small>OK</small> |
 | <small>%1$d files and %2$d folders</small>             | <small>%1$d fichiers et dossiers</small>                  | <small>FAIL missing placeholder</small> |
 | <small>%1$d files and %2$d folders</small>&nbsp;&nbsp; | <small>%1$d fichiers et %2$s dossiers</small>&nbsp;&nbsp; | <small>FAIL modified placeholder</small> |
+| <small>Select %s answers</small>                       | <small>Kies %1$s antwoorde</small>                        | <small>OK (normalized)</small> |
+| <small>Battery: %.1f percent</small>                   | <small>Batterie: %1$.1f prozent</small>                   | <small>OK (normalized)</small> |
+
+**Note:** When the source contains multiple identical non-positional placeholders (e.g., `%s %s`), they normalize to the same placeholder (e.g., `%1$s %1$s`). If the target uses distinct position specifiers (e.g., `%1$s %2$s`), the check will fail. For sources with multiple placeholders, use positional format from the start.
 
 
 
