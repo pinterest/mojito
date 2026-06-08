@@ -24,9 +24,9 @@ import java.util.regex.Pattern;
  *
  * <p><strong>Important:</strong> When the source contains multiple identical non-positional
  * placeholders (e.g., "%s %s"), they will all normalize to the same positional placeholder (e.g.,
- * "%1$s %1$s"). If the target uses distinct position specifiers (e.g., "%1$s %2$s"), the check
- * will fail. This is expected behavior and indicates the source should use positional format from
- * the start.
+ * "%1$s %1$s"). If the target uses distinct position specifiers (e.g., "%1$s %2$s"), the check will
+ * fail. This is expected behavior and indicates the source should use positional format from the
+ * start.
  *
  * @author wyau
  */
