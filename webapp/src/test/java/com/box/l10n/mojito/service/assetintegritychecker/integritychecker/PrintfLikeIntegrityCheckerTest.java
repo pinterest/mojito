@@ -285,4 +285,112 @@ public class PrintfLikeIntegrityCheckerTest {
       assertEquals(e.getMessage(), "Placeholders in source and target are different");
     }
   }
+
+  @Test
+  public void testSourceNonPositionalMatchesTargetPositional_SingleString()
+      throws PrintfLikeIntegrityCheckerException {
+
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "Select %s answers to proceed";
+    String target = "Kies %1$s antwoorde om voort te gaan";
+
+    checker.check(source, target);
+  }
+
+  @Test
+  public void testSourceNonPositionalMatchesTargetPositional_SingleInteger()
+      throws PrintfLikeIntegrityCheckerException {
+
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "You have %d messages";
+    String target = "Du har %1$d beskeder";
+
+    checker.check(source, target);
+  }
+
+  @Test
+  public void testSourceNonPositionalMatchesTargetPositional_WithPrecision()
+      throws PrintfLikeIntegrityCheckerException {
+
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "Battery: %.1f percent";
+    String target = "Batterie: %1$.1f prozent";
+
+    checker.check(source, target);
+  }
+
+  @Test
+  public void testSourcePositionalMatchesTargetNonPositional()
+      throws PrintfLikeIntegrityCheckerException {
+
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "Select %1$s answers";
+    String target = "Kies %s antwoorde";
+
+    checker.check(source, target);
+  }
+
+  @Test
+  public void testNonPositionalSourceWithWrongTypeInTarget()
+      throws PrintfLikeIntegrityCheckerException {
+
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "Select %s answers";
+    String target = "Kies %1$d antwoorde";
+
+    try {
+      checker.check(source, target);
+      fail("PrintfLikeIntegrityCheckerException must be thrown");
+    } catch (PrintfLikeIntegrityCheckerException e) {
+      assertEquals(e.getMessage(), "Placeholders in source and target are different");
+    }
+  }
+
+  @Test
+  public void testNonPositionalSourceWithMissingPlaceholderInTarget()
+      throws PrintfLikeIntegrityCheckerException {
+
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "Select %s answers";
+    String target = "Kies antwoorde";
+
+    try {
+      checker.check(source, target);
+      fail("PrintfLikeIntegrityCheckerException must be thrown");
+    } catch (PrintfLikeIntegrityCheckerException e) {
+      assertEquals(e.getMessage(), "Placeholders in source and target are different");
+    }
+  }
+
+  @Test
+  public void testNonPositionalSourceWithExtraPlaceholderInTarget()
+      throws PrintfLikeIntegrityCheckerException {
+
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "Select answers";
+    String target = "Kies %1$s antwoorde";
+
+    try {
+      checker.check(source, target);
+      fail("PrintfLikeIntegrityCheckerException must be thrown");
+    } catch (PrintfLikeIntegrityCheckerException e) {
+      assertEquals(e.getMessage(), "Placeholders in source and target are different");
+    }
+  }
+
+  @Test
+  public void testMultipleNonPositionalPlaceholdersCountMismatch()
+      throws PrintfLikeIntegrityCheckerException {
+
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "There are %s files and %d folders";
+    String target = "Il y a %1$s fichiers";
+
+    try {
+      checker.check(source, target);
+      fail("PrintfLikeIntegrityCheckerException must be thrown");
+    } catch (PrintfLikeIntegrityCheckerException e) {
+      assertEquals(e.getMessage(), "Placeholders in source and target are different");
+    }
+  }
 }
