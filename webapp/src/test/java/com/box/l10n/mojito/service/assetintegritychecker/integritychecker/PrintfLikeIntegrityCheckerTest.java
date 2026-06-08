@@ -393,4 +393,70 @@ public class PrintfLikeIntegrityCheckerTest {
       assertEquals(e.getMessage(), "Placeholders in source and target are different");
     }
   }
+
+  @Test
+  public void testRawPercentageSymbolInText() throws PrintfLikeIntegrityCheckerException {
+    // Raw percentage at end of string (no conversion character after %)
+    // This should not be treated as a placeholder
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "Progress: 95%";
+    String target = "Progrès: 95%";
+
+    checker.check(source, target);
+  }
+
+  @Test
+  public void testRawPercentageWithPlaceholder() throws PrintfLikeIntegrityCheckerException {
+    // Combination of real placeholder (%s) and raw percentage (95%)
+    // The 95% has ')' after it which is not a valid conversion character
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "Loading %s... (95%)";
+    String target = "Chargement %1$s... (95%)";
+
+    checker.check(source, target);
+  }
+
+  @Test
+  public void testEscapedPercentage() throws PrintfLikeIntegrityCheckerException {
+    // Double %% is the escaped form and should be treated as a placeholder
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "95%% complete";
+    String target = "95%% terminé";
+
+    checker.check(source, target);
+  }
+
+  @Test
+  public void testPercentageFollowedByPunctuation() throws PrintfLikeIntegrityCheckerException {
+    // Percentage followed by punctuation (not a conversion character)
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "Discount: 50%!";
+    String target = "Réduction: 50%!";
+
+    checker.check(source, target);
+  }
+
+  @Test
+  public void testKnownLimitationPercentageSpaceLetter() {
+    // KNOWN LIMITATION (pre-existing issue, not introduced by normalization):
+    // The printf regex matches patterns like "% o", "% d", "% c" (space flag + conversion char)
+    // This causes strings like "95% of" to be interpreted as containing placeholder "% o"
+    // When source and target use different words, they extract different placeholders and fail
+    // Example: "95% of users" → "% o" but "95% des utilisateurs" → "% d"
+    // In practice, this is rare because:
+    // 1. Most resource files escape percentages as "%%"
+    // 2. The space flag in printf is uncommon
+    // 3. When both source and target have the same pattern, they match correctly
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "95% of users";
+    String target = "95% des utilisateurs";
+
+    try {
+      checker.check(source, target);
+      fail("Expected failure due to regex matching '% o' vs '% d'");
+    } catch (PrintfLikeIntegrityCheckerException e) {
+      // This is expected behavior - documenting the known limitation
+      assertEquals(e.getMessage(), "Placeholders in source and target are different");
+    }
+  }
 }
