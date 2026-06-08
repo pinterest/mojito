@@ -58,7 +58,9 @@ public class SmartlingClient {
   /** logger */
   static Logger logger = LoggerFactory.getLogger(SmartlingClient.class);
 
-  static final String BASE_URL = "https://api.smartling.com/";
+  static final String DEFAULT_BASE_URL = "https://api.smartling.com/";
+
+  final String baseUrl;
   static final String API_SOURCE_STRINGS =
       "strings-api/v2/projects/{projectId}/source-strings?fileUri={fileUri}&offset={offset}&offset={limit}";
   static final String API_FILES_LIST = "files-api/v2/projects/{projectId}/files/list";
@@ -117,7 +119,15 @@ public class SmartlingClient {
   public SmartlingClient(
       SmartlingOAuth2TokenService smartlingOAuth2TokenService,
       RetryBackoffSpec retryConfiguration) {
+    this(smartlingOAuth2TokenService, retryConfiguration, DEFAULT_BASE_URL);
+  }
+
+  public SmartlingClient(
+      SmartlingOAuth2TokenService smartlingOAuth2TokenService,
+      RetryBackoffSpec retryConfiguration,
+      String baseUrl) {
     this.smartlingOAuth2TokenService = smartlingOAuth2TokenService;
+    this.baseUrl = baseUrl != null && !baseUrl.isBlank() ? baseUrl : DEFAULT_BASE_URL;
     objectMapper = new ObjectMapper();
     objectMapper.configure(DeserializationFeature.UNWRAP_ROOT_VALUE, true);
     objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -147,7 +157,7 @@ public class SmartlingClient {
     try {
       HttpRequest request =
           HttpRequest.newBuilder()
-              .uri(URI.create(BASE_URL + API_FILES_LIST.replace("{projectId}", projectId)))
+              .uri(URI.create(baseUrl + API_FILES_LIST.replace("{projectId}", projectId)))
               .header("Authorization", "Bearer " + smartlingOAuth2TokenService.getAccessToken())
               .build();
 
@@ -173,7 +183,7 @@ public class SmartlingClient {
       RetrievalType retrievalType) {
     try {
       String url =
-          BASE_URL
+          baseUrl
               + API_FILES_DOWNLOAD
                   .replace("{projectId}", projectId)
                   .replace("{locale_id}", locale)
@@ -199,7 +209,7 @@ public class SmartlingClient {
   public String downloadGlossaryFile(String accountId, String glossaryId) {
     try {
       String url =
-          BASE_URL
+          baseUrl
               + API_GLOSSARY_DOWNLOAD_TBX
                   .replace("{accountId}", accountId)
                   .replace("{glossaryId}", glossaryId);
@@ -222,7 +232,7 @@ public class SmartlingClient {
   public String downloadSourceGlossaryFile(String accountId, String glossaryId, String locale) {
     try {
       String url =
-          BASE_URL
+          baseUrl
               + API_GLOSSARY_SOURCE_TBX_DOWNLOAD
                   .replace("{accountId}", accountId)
                   .replace("{glossaryId}", glossaryId)
@@ -248,7 +258,7 @@ public class SmartlingClient {
       String accountId, String glossaryId, String locale, String sourceLocale) {
     try {
       String url =
-          BASE_URL
+          baseUrl
               + API_GLOSSARY_TRANSLATED_TBX_DOWNLOAD
                   .replace("{accountId}", accountId)
                   .replace("{glossaryId}", glossaryId)
@@ -280,7 +290,7 @@ public class SmartlingClient {
   public void deleteFile(String projectId, String fileUri) {
     try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
 
-      String url = BASE_URL + API_FILES_DELETE.replace("{projectId}", projectId);
+      String url = baseUrl + API_FILES_DELETE.replace("{projectId}", projectId);
       HttpPost deleteFileMethod = new HttpPost(url);
 
       deleteFileMethod.setHeader(
@@ -314,7 +324,7 @@ public class SmartlingClient {
 
     try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
       HttpPost uploadFileMethod =
-          new HttpPost(BASE_URL + API_FILES_UPLOAD.replace("{projectId}", projectId));
+          new HttpPost(baseUrl + API_FILES_UPLOAD.replace("{projectId}", projectId));
       uploadFileMethod.setHeader(
           "Authorization", "Bearer " + smartlingOAuth2TokenService.getAccessToken());
 
@@ -393,7 +403,7 @@ public class SmartlingClient {
     try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
       HttpPost uploadFileMethod =
           new HttpPost(
-              BASE_URL
+              baseUrl
                   + API_FILES_UPLOAD_LOCALIZED
                       .replace("{projectId}", projectId)
                       .replace("{localeId}", localeId));
@@ -442,7 +452,7 @@ public class SmartlingClient {
       String projectId, String fileUri, Integer offset, Integer limit) {
     try {
       String url =
-          BASE_URL
+          baseUrl
               + API_SOURCE_STRINGS
                   .replace("{projectId}", projectId)
                   .replace("{fileUri}", fileUri)
@@ -471,7 +481,7 @@ public class SmartlingClient {
   public Context uploadContext(String projectId, String name, byte[] content) {
     try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
       HttpPost uploadContextMethod =
-          new HttpPost(BASE_URL + API_CONTEXTS.replace("{projectId}", projectId));
+          new HttpPost(baseUrl + API_CONTEXTS.replace("{projectId}", projectId));
       uploadContextMethod.setHeader(
           "Authorization", "Bearer " + smartlingOAuth2TokenService.getAccessToken());
 
@@ -499,7 +509,7 @@ public class SmartlingClient {
 
   public void createBindings(Bindings bindings, String projectId) {
     try {
-      String url = BASE_URL + API_BINDINGS.replace("{projectId}", projectId);
+      String url = baseUrl + API_BINDINGS.replace("{projectId}", projectId);
       String requestBody = objectMapper.writeValueAsString(bindings);
 
       HttpRequest request =
@@ -523,7 +533,7 @@ public class SmartlingClient {
   public GlossaryDetails getGlossaryDetails(String accountId, String glossaryId) {
     try {
       String url =
-          BASE_URL
+          baseUrl
               + API_GLOSSARY_DETAILS
                   .replace("{accountId}", accountId)
                   .replace("{glossaryId}", glossaryId);
@@ -609,7 +619,7 @@ public class SmartlingClient {
   public void deleteContext(String projectId, String contextId) {
     try {
       String url =
-          BASE_URL
+          baseUrl
               + API_CONTEXTS_DETAILS
                   .replace("{projectId}", projectId)
                   .replace("{contextId}", contextId);
@@ -634,7 +644,7 @@ public class SmartlingClient {
   public Context getContext(String projectId, String contextId) {
     try {
       String url =
-          BASE_URL
+          baseUrl
               + API_CONTEXTS_DETAILS
                   .replace("{projectId}", projectId)
                   .replace("{contextId}", contextId);
