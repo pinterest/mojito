@@ -10,6 +10,10 @@ import java.util.regex.Pattern;
  * strings to use a placeholder with parameter specifier '%1$[type]' before executing the {@link
  * PrintfLikeIntegrityChecker} checks.
  *
+ * <p><strong>Note:</strong> As of the positional placeholder normalization update, the base {@link
+ * PrintfLikeIntegrityChecker} class now performs the same normalization by default. This class is
+ * kept for backward compatibility and now has identical behavior to its parent class.
+ *
  * @author mallen
  */
 public class PrintfLikeAddParameterSpecifierIntegrityChecker extends PrintfLikeIntegrityChecker {
