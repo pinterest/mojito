@@ -11,8 +11,7 @@ import java.util.regex.Pattern;
  *
  * <p>This checker normalizes non-positional placeholders (e.g., %s, %d, %f) to positional format
  * (e.g., %1$s, %1$d, %1$f) before comparison. This ensures compatibility with translation
- * management systems like Smartling that automatically add position specifiers to translations to
- * avoid ambiguity.
+ * management systems that automatically add position specifiers to translations to avoid ambiguity.
  *
  * <p>Examples of valid translations:
  *

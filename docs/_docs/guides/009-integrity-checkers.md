@@ -67,7 +67,7 @@ Printf-like integrity checker validates that the placeholders in the source stri
 
 The translation gets rejected if any placeholder in the source string is missing in the translation or the specifier is modified.  There can be multiple placeholders in the source string.  The order of the placeholders can change in the translation.
 
-**Positional Placeholder Normalization:** The checker automatically normalizes non-positional placeholders (e.g., `%s`, `%d`, `%.1f`) to positional format (e.g., `%1$s`, `%1$d`, `%1$.1f`) before comparison. This ensures compatibility with translation management systems like Smartling that automatically add position specifiers to translations to avoid ambiguity.
+**Positional Placeholder Normalization:** The checker automatically normalizes non-positional placeholders (e.g., `%s`, `%d`, `%.1f`) to positional format (e.g., `%1$s`, `%1$d`, `%1$.1f`) before comparison. This ensures compatibility with translation management systems that automatically add position specifiers to translations to avoid ambiguity.
 
 | Source String                                          | Translation                                               | Checker           |
 |:-------------------------------------------------------|:----------------------------------------------------------|:------------------|
