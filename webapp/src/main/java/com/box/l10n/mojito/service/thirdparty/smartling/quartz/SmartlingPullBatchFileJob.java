@@ -55,7 +55,8 @@ public class SmartlingPullBatchFileJob
     String fileName =
         getOutputSourceFile(input.getBatchNumber(), repository.getName(), input.getFilePrefix());
     smartlingPullLocaleFileJobInput.setRepositoryName(input.getRepositoryName());
-    smartlingPullLocaleFileJobInput.setLocaleId(locale.getId());
+    smartlingPullLocaleFileJobInput.setRepositoryId(repository.getId());
+    smartlingPullLocaleFileJobInput.setLocaleId(locale.getLocale().getId());
     smartlingPullLocaleFileJobInput.setSmartlingFilePrefix(input.getFilePrefix());
     smartlingPullLocaleFileJobInput.setFileName(fileName);
     smartlingPullLocaleFileJobInput.setPluralSeparator(input.getPluralSeparator());

@@ -59,11 +59,13 @@ public class SmartlingPullBatchFileJobTest {
     enRepoLocale.setLocale(english);
     enRepoLocale.setId(1L);
     Locale french = new Locale();
+    french.setId(1L);
     french.setBcp47Tag("fr");
     RepositoryLocale frRepoLocale = new RepositoryLocale();
     frRepoLocale.setLocale(french);
     frRepoLocale.setId(2L);
     Locale gaelic = new Locale();
+    gaelic.setId(2L);
     gaelic.setBcp47Tag("ga");
     RepositoryLocale gaRepoLocale = new RepositoryLocale();
     gaRepoLocale.setLocale(gaelic);
@@ -115,7 +117,7 @@ public class SmartlingPullBatchFileJobTest {
         .containsExactlyInAnyOrder(
             tuple(
                 "testRepo",
-                2L,
+                1L,
                 "singular",
                 "testRepo/00001_singular_source.xml",
                 null,
@@ -128,7 +130,7 @@ public class SmartlingPullBatchFileJobTest {
                 "fr"),
             tuple(
                 "testRepo",
-                3L,
+                2L,
                 "singular",
                 "testRepo/00001_singular_source.xml",
                 null,

@@ -5,12 +5,14 @@ import static com.box.l10n.mojito.service.thirdparty.ThirdPartyTMSSmartling.PUBL
 import static com.box.l10n.mojito.service.thirdparty.ThirdPartyTMSUtils.isFileEqualToPreviousRun;
 import static com.box.l10n.mojito.service.thirdparty.smartling.SmartlingFileUtils.isPluralFile;
 
+import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
 import com.box.l10n.mojito.iterators.PageFetcherOffsetAndLimitSplitIterator;
 import com.box.l10n.mojito.iterators.Spliterators;
 import com.box.l10n.mojito.service.ai.translation.AITranslationConfiguration;
 import com.box.l10n.mojito.service.ai.translation.AITranslationService;
+import com.box.l10n.mojito.service.rewriterule.RewriteRuleProcessor;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingJsonConverter;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingOptions;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingParsedFileResponse;
@@ -72,6 +74,8 @@ public class ThirdPartyTMSSmartlingWithJson {
 
   AITranslationService aiTranslationService;
 
+  RewriteRuleProcessor rewriteRuleProcessor;
+
   int batchSize = 5000;
 
   public ThirdPartyTMSSmartlingWithJson(
@@ -83,6 +87,7 @@ public class ThirdPartyTMSSmartlingWithJson {
       MeterRegistry meterRegistry,
       ThirdPartyFileChecksumRepository thirdPartyFileChecksumRepository,
       AITranslationConfiguration aiTranslationConfiguration,
+      RewriteRuleProcessor rewriteRuleProcessor,
       @Autowired(required = false) AITranslationService aiTranslationService) {
     this.smartlingClient = smartlingClient;
     this.smartlingJsonConverter = smartlingJsonConverter;
@@ -92,6 +97,7 @@ public class ThirdPartyTMSSmartlingWithJson {
     this.meterRegistry = meterRegistry;
     this.thirdPartyFileChecksumRepository = thirdPartyFileChecksumRepository;
     this.aiTranslationConfiguration = aiTranslationConfiguration;
+    this.rewriteRuleProcessor = rewriteRuleProcessor;
     this.aiTranslationService = aiTranslationService;
   }
 
@@ -218,7 +224,13 @@ public class ThirdPartyTMSSmartlingWithJson {
                   repositoryLocale -> {
                     String smartlingLocale = getSmartlingLocale(localeMapping, repositoryLocale);
                     SmartlingParsedFileResponse<ImmutableList<TextUnitDTO>> parsedFile =
-                        getLocalizedFileContent(projectId, file, smartlingLocale, false);
+                        getLocalizedFileContent(
+                            projectId,
+                            file,
+                            smartlingLocale,
+                            false,
+                            repository.getId(),
+                            repositoryLocale.getLocale());
 
                     if (isDeltaPull
                         && isFileEqualToPreviousRun(
@@ -248,7 +260,14 @@ public class ThirdPartyTMSSmartlingWithJson {
                     // call to Smartling with includeOriginalStrings set to true and compare the
                     // results.
                     if (hasEmptyTranslations(textUnitDTOS)) {
-                      parsedFile = getLocalizedFileContent(projectId, file, smartlingLocale, true);
+                      parsedFile =
+                          getLocalizedFileContent(
+                              projectId,
+                              file,
+                              smartlingLocale,
+                              true,
+                              repository.getId(),
+                              repositoryLocale.getLocale());
                       ImmutableList<TextUnitDTO> textUnitDTOSWithOriginalStrings =
                           parsedFile.data();
                       textUnitDTOS =
@@ -643,12 +662,20 @@ public class ThirdPartyTMSSmartlingWithJson {
   }
 
   SmartlingParsedFileResponse<ImmutableList<TextUnitDTO>> getLocalizedFileContent(
-      String projectId, File file, String smartlingLocale, boolean includeOriginalStrings) {
+      String projectId,
+      File file,
+      String smartlingLocale,
+      boolean includeOriginalStrings,
+      Long repositoryId,
+      Locale locale) {
     return Mono.fromCallable(
             () -> {
               String content =
                   smartlingClient.downloadPublishedFile(
                       projectId, smartlingLocale, file.getFileUri(), includeOriginalStrings);
+              content =
+                  rewriteRuleProcessor.processExactMatches(
+                      content, repositoryId, locale.getId(), locale.getBcp47Tag());
               ImmutableList<TextUnitDTO> textUnitDTOS =
                   smartlingJsonConverter.jsonStringToTextUnitDTOs(content, TextUnitDTO::setTarget);
               return new SmartlingParsedFileResponse<>(content, textUnitDTOS);

@@ -9,6 +9,7 @@ import com.box.l10n.mojito.android.strings.AndroidStringDocumentReader;
 import com.box.l10n.mojito.quartz.QuartzPollableJob;
 import com.box.l10n.mojito.service.locale.LocaleRepository;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
+import com.box.l10n.mojito.service.rewriterule.RewriteRuleProcessor;
 import com.box.l10n.mojito.service.thirdparty.ThirdPartyFileChecksumRepository;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingParsedFileResponse;
 import com.box.l10n.mojito.service.thirdparty.smartling.SmartlingPluralFix;
@@ -41,6 +42,8 @@ public class SmartlingPullLocaleFileJob
 
   @Autowired SmartlingClient smartlingClient;
 
+  @Autowired RewriteRuleProcessor rewriteRuleProcessor;
+
   @Autowired LocaleMappingHelper localeMappingHelper;
 
   @Override
@@ -70,6 +73,11 @@ public class SmartlingPullLocaleFileJob
                     String content =
                         smartlingClient.downloadPublishedFile(
                             input.getSmartlingProjectId(), smartlingLocale, fileName, false);
+
+                    content =
+                        rewriteRuleProcessor.processExactMatches(
+                            content, input.getRepositoryId(), input.getLocaleId(), localeTag);
+
                     return new SmartlingParsedFileResponse<AndroidStringDocument>(
                         content, AndroidStringDocumentReader.fromText(content));
                   })
