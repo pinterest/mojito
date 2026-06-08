@@ -1,6 +1,8 @@
 package com.box.l10n.mojito.service.rewriterule;
 
 import com.box.l10n.mojito.entity.RewriteRule;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -10,6 +12,8 @@ import java.util.Locale;
 import java.util.Map;
 import org.ahocorasick.trie.Emit;
 import org.ahocorasick.trie.Trie;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -17,10 +21,14 @@ import org.springframework.util.StringUtils;
 @Service
 public class RewriteRuleProcessor {
 
-  private final RewriteRuleService rewriteRuleService;
+  private static final Logger logger = LoggerFactory.getLogger(RewriteRuleProcessor.class);
 
-  public RewriteRuleProcessor(RewriteRuleService rewriteRuleService) {
+  private final RewriteRuleService rewriteRuleService;
+  private final MeterRegistry meterRegistry;
+
+  public RewriteRuleProcessor(RewriteRuleService rewriteRuleService, MeterRegistry meterRegistry) {
     this.rewriteRuleService = rewriteRuleService;
+    this.meterRegistry = meterRegistry;
   }
 
   private String resolveVariables(String rewriteTo, String localeTag) {
@@ -56,14 +64,37 @@ public class RewriteRuleProcessor {
       return content;
     }
 
+    Timer.Sample timerSample = Timer.start(meterRegistry);
+
+    logger.debug(
+        "Processing exact matches for repositoryId={}, localeId={}, localeTag={}, contentLength={}",
+        repositoryId,
+        localeId,
+        localeTag,
+        content.length());
+
     List<RewriteRule> rewriteRules =
         rewriteRuleService.findActiveRewriteRules(localeId, repositoryId).stream()
             .filter(rewriteRule -> StringUtils.hasLength(rewriteRule.getRewriteFrom()))
             .toList();
 
     if (rewriteRules.isEmpty()) {
+      logger.debug(
+          "No active rewrite rules found for repositoryId={}, localeId={}", repositoryId, localeId);
+      timerSample.stop(
+          Timer.builder("RewriteRuleProcessor.processExactMatches")
+              .tag("repositoryId", repositoryId.toString())
+              .tag("localeTag", localeTag)
+              .tag("matched", "false")
+              .register(meterRegistry));
       return content;
     }
+
+    logger.debug(
+        "Found {} active rewrite rules for repositoryId={}, localeId={}",
+        rewriteRules.size(),
+        repositoryId,
+        localeId);
 
     Map<String, List<RewriteRule>> rulesByRewriteFrom = new HashMap<>();
     Trie.TrieBuilder trieBuilder = Trie.builder().ignoreOverlaps();
@@ -80,6 +111,14 @@ public class RewriteRuleProcessor {
     Collection<Emit> emits = trie.parseText(content);
 
     if (emits.isEmpty()) {
+      logger.debug(
+          "No matches found in content for repositoryId={}, localeId={}", repositoryId, localeId);
+      timerSample.stop(
+          Timer.builder("RewriteRuleProcessor.processExactMatches")
+              .tag("repositoryId", repositoryId.toString())
+              .tag("localeTag", localeTag)
+              .tag("matched", "false")
+              .register(meterRegistry));
       return content;
     }
 
@@ -105,6 +144,32 @@ public class RewriteRuleProcessor {
     }
 
     rewrittenContent.append(content, currentIndex, content.length());
+
+    timerSample.stop(
+        Timer.builder("RewriteRuleProcessor.processExactMatches")
+            .tag("repositoryId", repositoryId.toString())
+            .tag("localeTag", localeTag)
+            .tag("matched", "true")
+            .register(meterRegistry));
+
+    meterRegistry
+        .counter(
+            "RewriteRuleProcessor.replacements",
+            "repositoryId",
+            repositoryId.toString(),
+            "localeTag",
+            localeTag)
+        .increment(matches.size());
+
+    logger.debug(
+        "Completed rewrite processing for repositoryId={}, localeId={}, localeTag={}: "
+            + "rulesEvaluated={}, matches={}",
+        repositoryId,
+        localeId,
+        localeTag,
+        rewriteRules.size(),
+        matches.size());
+
     return rewrittenContent.toString();
   }
 

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RewriteRule;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,11 +22,13 @@ public class RewriteRuleProcessorTest {
 
   @Mock RewriteRuleService rewriteRuleService;
 
+  @Mock MeterRegistry meterRegistry;
+
   RewriteRuleProcessor rewriteRuleProcessor;
 
   @BeforeEach
   public void before() {
-    rewriteRuleProcessor = new RewriteRuleProcessor(rewriteRuleService);
+    rewriteRuleProcessor = new RewriteRuleProcessor(rewriteRuleService, meterRegistry);
   }
 
   @Test
