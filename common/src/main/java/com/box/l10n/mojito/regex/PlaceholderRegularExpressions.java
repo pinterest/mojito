@@ -7,10 +7,18 @@ public enum PlaceholderRegularExpressions {
    * 0,(\\<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%])";
    * (%[argument_index$][flags][width][.precision][t]conversion)
    *
+   * <p>Updated to exclude percentage symbols preceded by digits (e.g., "95% of") to prevent false
+   * positives where text percentages are incorrectly matched as printf placeholders. The negative
+   * lookbehinds (?<!\\d)(?<!\\d ) ensure % is not matched when immediately preceded by a digit or
+   * when preceded by digit-space pattern, while preserving valid space flag formats like "% d".
+   *
+   * <p>The regex also matches escaped percentage symbols (%%) as a separate alternative, allowing
+   * the normalization logic to handle them correctly by leaving them unchanged.
+   *
    * @return
    */
   PRINTF_LIKE_REGEX(
-      "%(\\d+\\$)?([-#+ 0,(\\<]*)?(\\d+)?(\\.\\d+)?([tT])?(hh|h|l|ll|j|z|t|L)?(%|d|i|u|o|x|X|f|F|e|E|g|G|a|A|c|s|p|n|@)"),
+      "(?:%%|(?<!\\d)(?<!\\d )%(\\d+\\$)?([-#+ 0,(\\<]*)?(\\d+)?(\\.\\d+)?([tT])?(hh|h|l|ll|j|z|t|L)?(%|d|i|u|o|x|X|f|F|e|E|g|G|a|A|c|s|p|n|@))"),
 
   /** Regex checks for strings in the format %([variable_name])[conversion flags][type] */
   PRINTF_LIKE_VARIABLE_TYPE_REGEX(

@@ -437,26 +437,123 @@ public class PrintfLikeIntegrityCheckerTest {
   }
 
   @Test
-  public void testKnownLimitationPercentageSpaceLetter() {
-    // KNOWN LIMITATION (pre-existing issue, not introduced by normalization):
-    // The printf regex matches patterns like "% o", "% d", "% c" (space flag + conversion char)
-    // This causes strings like "95% of" to be interpreted as containing placeholder "% o"
-    // When source and target use different words, they extract different placeholders and fail
-    // Example: "95% of users" → "% o" but "95% des utilisateurs" → "% d"
-    // In practice, this is rare because:
-    // 1. Most resource files escape percentages as "%%"
-    // 2. The space flag in printf is uncommon
-    // 3. When both source and target have the same pattern, they match correctly
+  public void testDigitPercentageNoLongerMatchesAsPlaceholder()
+      throws PrintfLikeIntegrityCheckerException {
+    // Fixed: "95% of" should NOT extract "% o" anymore
     PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
     String source = "95% of users";
     String target = "95% des utilisateurs";
 
-    try {
-      checker.check(source, target);
-      fail("Expected failure due to regex matching '% o' vs '% d'");
-    } catch (PrintfLikeIntegrityCheckerException e) {
-      // This is expected behavior - documenting the known limitation
-      assertEquals(e.getMessage(), "Placeholders in source and target are different");
+    checker.check(source, target); // NOW PASSES
+  }
+
+  @Test
+  public void testEuropeanPercentageFormat() throws PrintfLikeIntegrityCheckerException {
+    // Fixed: European format with space before % should not match
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "Progress: 95 % done";
+    String target = "Progrès: 95 % fait";
+
+    checker.check(source, target); // NOW PASSES
+  }
+
+  @Test
+  public void testCommonPercentagePhrases() throws PrintfLikeIntegrityCheckerException {
+    // Real-world phrases that were causing false positives
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String[][] tests = {
+      {"95% complete", "95% terminé"},
+      {"100% done", "100% fait"},
+      {"50% of files", "50% des fichiers"},
+      {"Battery: 85% charged", "Batterie: 85% chargée"}
+    };
+
+    for (String[] test : tests) {
+      checker.check(test[0], test[1]); // All PASS
     }
+  }
+
+  @Test
+  public void testFloatingPointPercentage() throws PrintfLikeIntegrityCheckerException {
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "Loading 3.14% of data";
+    String target = "Chargement 3.14% des données";
+
+    checker.check(source, target); // PASSES
+  }
+
+  @Test
+  public void testMultiplePercentagesInText() throws PrintfLikeIntegrityCheckerException {
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "Between 50% and 75% complete";
+    String target = "Entre 50% et 75% complet";
+
+    checker.check(source, target); // PASSES
+  }
+
+  @Test
+  public void testDigitPercentageMixedWithPlaceholder() throws PrintfLikeIntegrityCheckerException {
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "Loading %s... 95% complete";
+    String target = "Chargement %1$s... 95% complet";
+
+    checker.check(source, target); // PASSES - only %s matched
+  }
+
+  @Test
+  public void testSpaceFlagStillWorks() throws PrintfLikeIntegrityCheckerException {
+    // REGRESSION: Space flag must still work
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "Value: % d";
+    String target = "Valor: % d";
+
+    checker.check(source, target); // MUST PASS
+  }
+
+  @Test
+  public void testSpaceFlagAtStartStillWorks() throws PrintfLikeIntegrityCheckerException {
+    // REGRESSION: Space flag at start must still work
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "% d items";
+    String target = "% d elementos";
+
+    checker.check(source, target); // MUST PASS
+  }
+
+  @Test
+  public void testSpaceFlagInContextStillWorks() throws PrintfLikeIntegrityCheckerException {
+    // REGRESSION: Space flag in context must still work
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "Test % d value";
+    String target = "Prueba % d valor";
+
+    checker.check(source, target); // MUST PASS
+  }
+
+  @Test
+  public void testNegativePercentage() throws PrintfLikeIntegrityCheckerException {
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "Change: -5% decrease";
+    String target = "Changement: -5% diminution";
+
+    checker.check(source, target); // PASSES
+  }
+
+  @Test
+  public void testPercentageWithCurrencySymbol() throws PrintfLikeIntegrityCheckerException {
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "Price: $95% off";
+    String target = "Prix: $95% de rabais";
+
+    checker.check(source, target); // PASSES
+  }
+
+  @Test
+  public void testZeroPercentage() throws PrintfLikeIntegrityCheckerException {
+    PrintfLikeIntegrityChecker checker = new PrintfLikeIntegrityChecker();
+    String source = "0% complete";
+    String target = "0% completo";
+
+    checker.check(source, target); // PASSES
   }
 }
