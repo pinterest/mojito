@@ -61,7 +61,8 @@ public class PrintfLikeIntegrityChecker extends RegexIntegrityChecker {
   /**
    * Replace all instances of non-positional placeholders with positional format. For example: '%s'
    * → '%1$s', '%.1f' → '%1$.1f', '%10s' → '%1$10s' Placeholders that already have positional
-   * specifiers (e.g., '%1$s', '%2$d') are left unchanged.
+   * specifiers (e.g., '%1$s', '%2$d') are left unchanged. Escaped percentages ('%%') are also left
+   * unchanged.
    *
    * @param str the string to normalize
    * @return the string with non-positional placeholders converted to positional format
@@ -76,9 +77,13 @@ public class PrintfLikeIntegrityChecker extends RegexIntegrityChecker {
 
     while (matcher.find()) {
       String placeholder = matcher.group();
+      // Skip normalization for escaped percentage (%%)
+      if (placeholder.equals("%%")) {
+        matcher.appendReplacement(result, Matcher.quoteReplacement(placeholder));
+      }
       // Check if placeholder already has positional specifier (contains digit followed by $)
       // Examples: %1$s, %2$d, %3$.2f already have positional specifiers
-      if (!placeholder.matches("%\\d+\\$.*")) {
+      else if (!placeholder.matches("%\\d+\\$.*")) {
         // No positional specifier, add %1$ after the %
         // Examples: %s → %1$s, %.1f → %1$.1f, %10s → %1$10s
         String normalized = placeholder.replaceFirst("%", "%1\\$");
