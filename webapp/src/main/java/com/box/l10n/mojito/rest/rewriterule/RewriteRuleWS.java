@@ -4,6 +4,7 @@ import com.box.l10n.mojito.entity.RewriteRule;
 import com.box.l10n.mojito.rest.EntityWithIdNotFoundException;
 import com.box.l10n.mojito.service.rewriterule.RewriteRuleService;
 import io.swagger.v3.oas.annotations.Operation;
+import java.util.List;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,16 +32,17 @@ public class RewriteRuleWS {
   @RequestMapping(value = "/api/rewrite-rules", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
   public Page<RewriteRuleDTO> getRewriteRules(
-      @RequestParam(required = false) Long repositoryId,
-      @RequestParam(required = false) Long localeId,
+      @RequestParam(required = false) List<Long> repositoryIds,
+      @RequestParam(required = false) List<Long> localeIds,
       @RequestParam(required = false) Boolean enabled,
       @RequestParam(required = false) String scope,
+      @RequestParam(required = false) String rewriteFrom,
       @ParameterObject @PageableDefault(sort = "id", direction = Sort.Direction.ASC)
           Pageable pageable) {
     RewriteRuleScope parsedScope = scope != null ? RewriteRuleScope.fromValue(scope) : null;
 
     return rewriteRuleService
-        .findRewriteRules(repositoryId, localeId, enabled, parsedScope, pageable)
+        .findRewriteRules(repositoryIds, localeIds, enabled, parsedScope, rewriteFrom, pageable)
         .map(RewriteRuleDTO::fromEntity);
   }
 

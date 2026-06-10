@@ -380,15 +380,15 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
 
     Page<RewriteRule> globalEnabled =
         rewriteRuleService.findRewriteRules(
-            null, null, true, RewriteRuleScope.GLOBAL, PageRequest.of(0, 10));
+            null, null, true, RewriteRuleScope.GLOBAL, null, PageRequest.of(0, 10));
 
     Page<RewriteRule> repositoryEnabled =
         rewriteRuleService.findRewriteRules(
-            null, null, true, RewriteRuleScope.REPOSITORY, PageRequest.of(0, 10));
+            null, null, true, RewriteRuleScope.REPOSITORY, null, PageRequest.of(0, 10));
 
     Page<RewriteRule> repositoryDisabled =
         rewriteRuleService.findRewriteRules(
-            null, null, false, RewriteRuleScope.REPOSITORY, PageRequest.of(0, 10));
+            null, null, false, RewriteRuleScope.REPOSITORY, null, PageRequest.of(0, 10));
 
     assertEquals(1, globalEnabled.getTotalElements());
     assertNull(globalEnabled.getContent().get(0).getRepository());
@@ -435,11 +435,151 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
 
     Page<RewriteRule> filtered =
         rewriteRuleService.findRewriteRules(
-            firstRepository.getId(), esLocale.getId(), true, null, PageRequest.of(0, 10));
+            List.of(firstRepository.getId()),
+            List.of(esLocale.getId()),
+            true,
+            null,
+            null,
+            PageRequest.of(0, 10));
 
     assertEquals(1, filtered.getTotalElements());
     assertEquals(firstRepository.getId(), filtered.getContent().getFirst().getRepository().getId());
     assertEquals(esLocale.getId(), filtered.getContent().getFirst().getLocale().getId());
+  }
+
+  @Test
+  public void testFindRewriteRules_filtersByMultipleRepositoryIds() throws Exception {
+    String repositoryName = testIdWatcher.getEntityName("rewrite-rule-repo");
+    Repository firstRepository = this.createRepository(repositoryName);
+    Repository secondRepository = this.createRepository(repositoryName + "-2");
+    Repository thirdRepository = this.createRepository(repositoryName + "-3");
+
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(firstRepository.getId(), "first-repo-rule", "target-a", true));
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(secondRepository.getId(), "second-repo-rule", "target-b", true));
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(thirdRepository.getId(), "third-repo-rule", "target-c", true));
+
+    Page<RewriteRule> filtered =
+        rewriteRuleService.findRewriteRules(
+            List.of(firstRepository.getId(), secondRepository.getId()),
+            null,
+            null,
+            null,
+            null,
+            PageRequest.of(0, 10));
+
+    assertEquals(2, filtered.getTotalElements());
+    assertTrue(
+        filtered.getContent().stream()
+            .allMatch(
+                rule ->
+                    rule.getRepository().getId().equals(firstRepository.getId())
+                        || rule.getRepository().getId().equals(secondRepository.getId())));
+  }
+
+  @Test
+  public void testFindRewriteRules_filtersByMultipleLocaleIds() throws Exception {
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
+    Locale frLocale = this.localeService.findByBcp47Tag("fr-FR");
+    Locale jaLocale = this.localeService.findByBcp47Tag("ja-JP");
+
+    RepositoryLocale esRepositoryLocale = new RepositoryLocale();
+    esRepositoryLocale.setLocale(esLocale);
+    RepositoryLocale frRepositoryLocale = new RepositoryLocale();
+    frRepositoryLocale.setLocale(frLocale);
+    RepositoryLocale jaRepositoryLocale = new RepositoryLocale();
+    jaRepositoryLocale.setLocale(jaLocale);
+
+    Repository repository =
+        repositoryService.createRepository(
+            testIdWatcher.getEntityName("rewrite-rule-repo"),
+            "",
+            this.localeService.getDefaultLocale(),
+            false,
+            Sets.newHashSet(),
+            Sets.newHashSet(esRepositoryLocale, frRepositoryLocale, jaRepositoryLocale));
+
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(repository.getId(), esLocale.getId(), "es-rule", "target-es", true));
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(repository.getId(), frLocale.getId(), "fr-rule", "target-fr", true));
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(repository.getId(), jaLocale.getId(), "ja-rule", "target-ja", true));
+
+    Page<RewriteRule> filtered =
+        rewriteRuleService.findRewriteRules(
+            null,
+            List.of(esLocale.getId(), frLocale.getId()),
+            null,
+            null,
+            null,
+            PageRequest.of(0, 10));
+
+    assertEquals(2, filtered.getTotalElements());
+    assertTrue(
+        filtered.getContent().stream()
+            .allMatch(
+                rule ->
+                    rule.getLocale().getId().equals(esLocale.getId())
+                        || rule.getLocale().getId().equals(frLocale.getId())));
+  }
+
+  @Test
+  public void testFindRewriteRules_filtersByRewriteFromPartialMatch() throws Exception {
+    Repository repository = this.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
+
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(repository.getId(), "hello-world-greeting", "target-a", true));
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(repository.getId(), "goodbye-world-farewell", "target-b", true));
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(repository.getId(), "something-else", "target-c", true));
+
+    Page<RewriteRule> filtered =
+        rewriteRuleService.findRewriteRules(null, null, null, null, "world", PageRequest.of(0, 10));
+
+    assertEquals(2, filtered.getTotalElements());
+    assertTrue(
+        filtered.getContent().stream().allMatch(rule -> rule.getRewriteFrom().contains("world")));
+  }
+
+  @Test
+  public void testFindRewriteRules_rewriteFromFilterReturnsEmptyWhenNoMatch() throws Exception {
+    Repository repository = this.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
+
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(repository.getId(), "hello-world", "target-a", true));
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(repository.getId(), "goodbye-world", "target-b", true));
+
+    Page<RewriteRule> filtered =
+        rewriteRuleService.findRewriteRules(
+            null, null, null, null, "nonexistent", PageRequest.of(0, 10));
+
+    assertEquals(0, filtered.getTotalElements());
+  }
+
+  @Test
+  public void testFindRewriteRules_combinesRewriteFromWithOtherFilters() throws Exception {
+    Repository repository = this.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
+
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(repository.getId(), "common-prefix-enabled", "target-a", true));
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(repository.getId(), "common-prefix-disabled", "target-b", false));
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(null, "common-prefix-global", "target-c", true));
+
+    Page<RewriteRule> filtered =
+        rewriteRuleService.findRewriteRules(
+            List.of(repository.getId()), null, true, null, "common-prefix", PageRequest.of(0, 10));
+
+    assertEquals(1, filtered.getTotalElements());
+    assertEquals("common-prefix-enabled", filtered.getContent().getFirst().getRewriteFrom());
+    assertTrue(filtered.getContent().getFirst().isEnabled());
+    assertEquals(repository.getId(), filtered.getContent().getFirst().getRepository().getId());
   }
 
   @Test
