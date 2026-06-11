@@ -1922,17 +1922,21 @@ paths:
       operationId: getRewriteRules
       parameters:
       - in: query
-        name: repositoryId
+        name: repositoryIds
         required: false
         schema:
-          type: integer
-          format: int64
+          type: array
+          items:
+            type: integer
+            format: int64
       - in: query
-        name: localeId
+        name: localeIds
         required: false
         schema:
-          type: integer
-          format: int64
+          type: array
+          items:
+            type: integer
+            format: int64
       - in: query
         name: enabled
         required: false
@@ -1940,6 +1944,11 @@ paths:
           type: boolean
       - in: query
         name: scope
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: rewriteFrom
         required: false
         schema:
           type: string

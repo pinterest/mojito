@@ -52,21 +52,22 @@ public class RewriteRuleService {
   }
 
   public Page<RewriteRule> findRewriteRules(
-      Long repositoryId,
-      Long localeId,
+      List<Long> repositoryIds,
+      List<Long> localeIds,
       Boolean enabled,
       RewriteRuleScope scope,
+      String rewriteFrom,
       Pageable pageable) {
     Specification<RewriteRule> spec =
         (root, query, builder) -> {
           var predicates = new ArrayList<Predicate>();
 
-          if (repositoryId != null) {
-            predicates.add(builder.equal(root.get("repository").get("id"), repositoryId));
+          if (repositoryIds != null && !repositoryIds.isEmpty()) {
+            predicates.add(root.get("repository").get("id").in(repositoryIds));
           }
 
-          if (localeId != null) {
-            predicates.add(builder.equal(root.get("locale").get("id"), localeId));
+          if (localeIds != null && !localeIds.isEmpty()) {
+            predicates.add(root.get("locale").get("id").in(localeIds));
           }
 
           if (enabled != null) {
@@ -77,6 +78,10 @@ public class RewriteRuleService {
             predicates.add(builder.isNotNull(root.get("repository")));
           } else if (scope == RewriteRuleScope.GLOBAL) {
             predicates.add(builder.isNull(root.get("repository")));
+          }
+
+          if (rewriteFrom != null && !rewriteFrom.isEmpty()) {
+            predicates.add(builder.like(root.get("rewriteFrom"), "%" + rewriteFrom + "%"));
           }
 
           return builder.and(predicates.toArray(new Predicate[0]));
