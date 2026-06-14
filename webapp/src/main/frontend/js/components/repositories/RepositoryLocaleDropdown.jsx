@@ -101,7 +101,7 @@ class RepositoryLocaleDropdown extends React.Component {
             <div ref={this.dropdownRef} className="locale-dropdown-root">
                 <input
                     type="text"
-                    className="form-control locale-dropdown-input"
+                    className="form-control searchable-dropdown-input"
                     placeholder="Choose a locale"
                     value={this.getInputValue()}
                     onChange={this.handleInputChange}
@@ -111,13 +111,13 @@ class RepositoryLocaleDropdown extends React.Component {
                 />
                 {this.state.isOpen && (
                     <ul
-                        className="dropdown-menu locale-dropdown-menu"
+                        className="dropdown-menu searchable-dropdown-menu"
                     >
                         {filteredLocales.length > 0 ? (
                             filteredLocales.map(locale => (
                                 <li
                                     key={locale.id}
-                                    className="locale-dropdown-item"
+                                    className="searchable-dropdown-item"
                                     onClick={() => this.handleSelect(locale)}
                                 >
                                     <a>
@@ -126,7 +126,7 @@ class RepositoryLocaleDropdown extends React.Component {
                                 </li>
                             ))
                         ) : (
-                            <li className="disabled locale-dropdown-item-disabled">
+                            <li className="disabled searchable-dropdown-item-disabled">
                                 <a>No results</a>
                             </li>
                         )}

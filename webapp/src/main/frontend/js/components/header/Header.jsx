@@ -121,6 +121,11 @@ class Header extends React.Component {
                             <FormattedMessage id="header.jobs"/>
                         </NavItem>
                     </LinkContainer>
+                    <LinkContainer to="/rewrite-rules">
+                        <NavItem>
+                            <FormattedMessage id="header.rewriteRules"/>
+                        </NavItem>
+                    </LinkContainer>
                 </Nav>
                 <Nav pullRight={true}>
                     <NavDropdown title={this.getUsernameDisplay()} id="user-menu">

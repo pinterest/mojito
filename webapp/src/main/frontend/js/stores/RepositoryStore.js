@@ -165,6 +165,32 @@ class RepositoryStore {
     static getAllBcp47TagsForAllRepositories() {
         return this.getAllBcp47TagsForRepositories(this.getState().repositories);
     }
+
+    static getAllLocalesForRepositories(repositories, filteredByFullyTranslated = false) {
+        const locales = {};
+        repositories.forEach(repository => {
+            if (repository) {
+                repository.repositoryLocales.forEach(repositoryLocale => {
+                    if (!RepositoryLocale.isRootLocale(repositoryLocale)) {
+                        if (filteredByFullyTranslated) {
+                            if (repositoryLocale.toBeFullyTranslated) {
+                                locales[repositoryLocale.locale.bcp47Tag] = repositoryLocale.locale;
+                            }
+                        } else {
+                            locales[repositoryLocale.locale.bcp47Tag] = repositoryLocale.locale;
+                        }
+                    }
+                });
+            }
+        });
+        return Object.entries(locales).sort(([a], [b]) => a.localeCompare(b)).map(([, value]) => value);
+    }
+
+    static getAllLocalesForRepositoryIds(repositoryIds, filteredByFullyTranslated = false) {
+        const repositories = [];
+        repositoryIds.forEach(repositoryId => repositories.push(this.getRepositoryById(repositoryId)));
+        return this.getAllLocalesForRepositories(repositories, filteredByFullyTranslated);
+    }
 }
 
 export default alt.createStore(RepositoryStore, 'RepositoryStore');

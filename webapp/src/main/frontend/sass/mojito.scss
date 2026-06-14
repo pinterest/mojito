@@ -1201,7 +1201,7 @@ label.current-pageNumber {
   width: 260px;
 }
 
-.locale-dropdown-input {
+.searchable-dropdown-input {
   cursor: pointer;
   background-color: #fff;
   border-radius: 4px;
@@ -1210,12 +1210,12 @@ label.current-pageNumber {
   box-shadow: none;
 }
 
-.locale-dropdown-input:focus {
+.searchable-dropdown-input:focus {
   box-shadow: 0 4px 8px rgba(0,0,0,0.07);
   border-color: #ccc;
 }
 
-.locale-dropdown-menu {
+.searchable-dropdown-menu {
   display: block;
   position: absolute;
   width: 100%;
@@ -1225,11 +1225,11 @@ label.current-pageNumber {
   margin-top: 2px;
 }
 
-.locale-dropdown-item {
+.searchable-dropdown-item {
   cursor: pointer;
 }
 
-.locale-dropdown-item-disabled {
+.searchable-dropdown-item-disabled {
   cursor: not-allowed;
 }
 
@@ -1255,4 +1255,15 @@ label.current-pageNumber {
 
 .justify-end {
     justify-content: flex-end;
+}
+
+.modal-dropdown-root {
+    position: relative;
+}
+
+.pagination-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
 }
