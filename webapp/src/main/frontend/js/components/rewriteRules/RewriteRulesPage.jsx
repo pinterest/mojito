@@ -12,6 +12,7 @@ import SearchText from "./SearchText";
 import RepositoryStore from "../../stores/RepositoryStore";
 import Locales from "../../utils/Locales.js";
 import Paginator from "../widgets/Paginator";
+import AuthorityService from "../../utils/AuthorityService";
 
 let RewriteRulesPage = createReactClass({
     displayName: 'RewriteRulesPage',
@@ -153,6 +154,10 @@ let RewriteRulesPage = createReactClass({
     },
 
     render() {
+        if (!AuthorityService.canViewRewriteRules()) {
+            return <h3 className="text-center mtl"><FormattedMessage id="rewriteRules.forbidden"/></h3>;
+        }
+
         const {rules, scope, isLoading, showDeleteConfirm, deletingRule, page, pageSize, totalElements} = this.state;
         const totalPages = Math.ceil(totalElements / pageSize);
 
