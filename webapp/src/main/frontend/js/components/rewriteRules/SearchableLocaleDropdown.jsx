@@ -2,11 +2,13 @@ import React from "react";
 import PropTypes from "prop-types";
 import {injectIntl, FormattedMessage} from 'react-intl';
 import Locales from "../../utils/Locales";
+import RepositoryStore from "../../stores/RepositoryStore";
 
 class SearchableLocaleDropdown extends React.Component {
     static propTypes = {
         onSelect: PropTypes.func.isRequired,
         selectedLocaleId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        repositoryId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         localeOptions: PropTypes.arrayOf(
             PropTypes.shape({
                 bcp47Tag: PropTypes.string,
@@ -22,7 +24,7 @@ class SearchableLocaleDropdown extends React.Component {
             isOpen: false,
         };
         this.dropdownRef = React.createRef();
-        this._filteredCache = { localeOptions: null, searchTerm: null, result: [] };
+        this._filteredCache = { localeOptions: null, searchTerm: null, repositoryId: null, result: [] };
     }
 
     componentDidMount() {
@@ -39,10 +41,17 @@ class SearchableLocaleDropdown extends React.Component {
                 this.setState({ searchTerm: "" });
             }
         }
+        if (prevProps.repositoryId !== this.props.repositoryId && this.props.repositoryId && this.props.selectedLocaleId) {
+            const baseLocales = RepositoryStore.getAllLocalesForRepositoryIds([Number(this.props.repositoryId)]);
+            if (!baseLocales.some(locale => locale.id === Number(this.props.selectedLocaleId))) {
+                this.setState({ searchTerm: "" });
+                this.props.onSelect(null);
+            }
+        }
     }
 
     getLocaleDisplayName = (bcp47Tag) => {
-        return `${Locales.getDisplayName(bcp47Tag)} (${bcp47Tag})`;
+        return Locales.getDisplayName(bcp47Tag);
     };
 
     getSelectedLocale = () => {
@@ -98,17 +107,25 @@ class SearchableLocaleDropdown extends React.Component {
     };
 
     getFilteredLocales = () => {
-        const { localeOptions } = this.props;
+        const { localeOptions, repositoryId } = this.props;
         const { searchTerm } = this.state;
-        if (this._filteredCache.localeOptions === localeOptions && this._filteredCache.searchTerm === searchTerm) {
+
+        let baseLocales = localeOptions;
+        if (repositoryId) {
+            baseLocales = RepositoryStore.getAllLocalesForRepositoryIds([Number(repositoryId)]);
+        }
+
+        const cacheHit = repositoryId
+            ? this._filteredCache.repositoryId === repositoryId && this._filteredCache.searchTerm === searchTerm
+            : this._filteredCache.localeOptions === baseLocales && this._filteredCache.searchTerm === searchTerm;
+        if (cacheHit) {
             return this._filteredCache.result;
         }
-        const result = localeOptions.filter(locale => {
-            return this.getLocaleDisplayName(locale.bcp47Tag)
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase());
-        });
-        this._filteredCache = { localeOptions, searchTerm, result };
+        const term = searchTerm.toLowerCase();
+        const result = baseLocales.filter(locale =>
+            this.getLocaleDisplayName(locale.bcp47Tag).toLowerCase().includes(term)
+        );
+        this._filteredCache = { localeOptions: baseLocales, searchTerm, repositoryId, result };
         return result;
     };
 

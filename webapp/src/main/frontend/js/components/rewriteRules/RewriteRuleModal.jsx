@@ -136,6 +136,7 @@ let RewriteRuleModal = createReactClass({
                             <SearchableLocaleDropdown
                                 id="rewriteRuleLocale"
                                 localeOptions={this.props.locales || []}
+                                repositoryId={this.state.repositoryId}
                                 selectedLocaleId={this.state.localeId}
                                 onSelect={(locale) => this.setState({localeId: locale ? String(locale.id) : ""})}
                             />
