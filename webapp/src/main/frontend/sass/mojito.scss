@@ -1267,3 +1267,13 @@ label.current-pageNumber {
     justify-content: flex-end;
     gap: 10px;
 }
+
+.rewrite-rules-table {
+    table-layout: fixed;
+}
+
+.rewrite-rules-cell {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

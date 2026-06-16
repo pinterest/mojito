@@ -228,14 +228,14 @@ let RewriteRulesPage = createReactClass({
                                     shown={true}
                                 />
                             </div>
-                            <Table>
+                            <Table className="rewrite-rules-table">
                                 <thead>
                                 <tr>
-                                    <th className={scope === "global" ? "col-xs-3" : "col-xs-2"}><FormattedMessage id="rewriteRules.table.rewriteFrom"/>
+                                    <th className="col-xs-3"><FormattedMessage id="rewriteRules.table.rewriteFrom"/>
                                     </th>
-                                    <th className={scope === "global" ? "col-xs-3" : "col-xs-2"}><FormattedMessage id="rewriteRules.table.rewriteTo"/></th>
+                                    <th className="col-xs-3"><FormattedMessage id="rewriteRules.table.rewriteTo"/></th>
                                     <th className="col-xs-1"><FormattedMessage id="rewriteRules.table.status"/></th>
-                                    {scope !== "global" && <th className="col-xs-3"><FormattedMessage id="rewriteRules.table.repository"/></th>}
+                                    {scope !== "global" && <th className="col-xs-1"><FormattedMessage id="rewriteRules.table.repository"/></th>}
                                     <th className="col-xs-1"><FormattedMessage id="rewriteRules.table.locale"/></th>
                                     <th className="col-xs-1"><FormattedMessage id="rewriteRules.table.createdBy"/></th>
                                     <th className="col-xs-1"><FormattedMessage id="rewriteRules.table.lastModified"/></th>
@@ -245,18 +245,18 @@ let RewriteRulesPage = createReactClass({
                                 <tbody>
                                 {rules.map(rule => (
                                     <tr key={rule.id}>
-                                        <td><code>{rule.rewriteFrom}</code></td>
-                                        <td><code>{rule.rewriteTo}</code></td>
+                                        <td className="rewrite-rules-cell" title={rule.rewriteFrom}>{rule.rewriteFrom}</td>
+                                        <td className="rewrite-rules-cell" title={rule.rewriteTo}>{rule.rewriteTo}</td>
                                         <td>
                                             {rule.enabled
                                                 ? <Label bsStyle="success"><FormattedMessage id="rewriteRules.status.enabled"/></Label>
                                                 : <Label bsStyle="default"><FormattedMessage id="rewriteRules.status.disabled"/></Label>
                                             }
                                         </td>
-                                        {scope !== "global" && <td>{this.getRepositoryName(rule.repositoryId)}</td>}
-                                        <td>{this.getLocaleDisplayName(rule.localeId)}</td>
-                                        <td>{rule.createdByUserName}</td>
-                                        <td>{rule.lastModifiedDate ? new Date(rule.lastModifiedDate).toLocaleDateString() : ""}</td>
+                                        {scope !== "global" && <td className="rewrite-rules-cell" title={this.getRepositoryName(rule.repositoryId)}>{this.getRepositoryName(rule.repositoryId)}</td>}
+                                        <td className="rewrite-rules-cell" title={this.getLocaleDisplayName(rule.localeId)}>{this.getLocaleDisplayName(rule.localeId)}</td>
+                                        <td className="rewrite-rules-cell" title={rule.createdByUserName}>{rule.createdByUserName}</td>
+                                        <td className="rewrite-rules-cell">{rule.lastModifiedDate ? new Date(rule.lastModifiedDate).toLocaleDateString() : ""}</td>
                                         <td>
                                             <ButtonGroup bsSize="xsmall">
                                                 <Button
