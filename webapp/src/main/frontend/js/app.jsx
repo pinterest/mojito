@@ -50,6 +50,7 @@ import enMessages from '../../resources/properties/en.properties';
 import GoogleAnalytics from "./utils/GoogleAnalytics";
 import ShareSearchParamsModalActions from "./actions/workbench/ShareSearchParamsModalActions";
 import JobsPage from "./components/jobs/JobsPage";
+import RewriteRulesPage from "./components/rewriteRules/RewriteRulesPage";
 
 addLocaleData([...en, ...fr, ...be, ...ko, ...ru, ...de, ...es, ...it, ...ja, ...pt, ...zh]);
 
@@ -107,10 +108,10 @@ function startApp(messages) {
                         <Route path="/" component={App}
                                onEnter={onEnterRoot}>
                             <Route path="workbench" component={Workbench}
-                                   onEnter={getAllRepositoriesDeffered}
+                                   onEnter={getAllRepositoriesDeferred}
                                    onLeave={onLeaveWorkbench}/>
                             <Route path="repositories" component={Repositories}
-                                   onEnter={getAllRepositoriesDeffered}/>
+                                   onEnter={getAllRepositoriesDeferred}/>
                             <Route path="project-requests" component={Drops}/>
                             <Route path="branches" component={BranchesPage}
                                    onEnter={onEnterBranches}
@@ -119,6 +120,8 @@ function startApp(messages) {
                                    onEnter={onEnterScreenshots}
                                    onLeave={ScreenshotsPageActions.resetScreenshotSearchParams}/>
                             <Route path="jobs" component={JobsPage}/>
+                            <Route path="rewrite-rules" component={RewriteRulesPage}
+                                   onEnter={getAllRepositoriesDeferred}/>
                             <Route path="settings" component={Settings} onEnter={onEnterSettings} onChange={onChangeSettings}>
                                 <Route path="user-management" component={UserManagement}/>
                                 <Route path="box" component={BoxSettings}/>
@@ -196,7 +199,7 @@ function onLeaveWorkbench() {
     }, 1);
 }
 
-function getAllRepositoriesDeffered() {
+function getAllRepositoriesDeferred() {
     setTimeout(() => {
         RepositoryActions.getAllRepositories();
     }, 1);

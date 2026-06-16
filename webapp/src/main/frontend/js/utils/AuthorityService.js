@@ -21,6 +21,7 @@ class AuthorityService {
                 level.push(admin, pm);
                 break;
             case "edit-translations":
+            case "rewrite-rules":
                 level.push(translator, admin, pm);
                 break;
             case "delete-restore-jobs":
@@ -53,6 +54,10 @@ class AuthorityService {
 
     static canDeleteRestoreJobs() {
         return this.userHasPermission("delete-restore-jobs");
+    }
+
+    static canViewRewriteRules() {
+        return this.userHasPermission("rewrite-rules");
     }
 }
 

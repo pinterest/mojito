@@ -14,6 +14,7 @@ import WorkbenchActions from "../../actions/workbench/WorkbenchActions";
 import ScreenshotsPageActions from "../../actions/screenshots/ScreenshotsPageActions";
 import ScreenshotsRepositoryActions from "../../actions/screenshots/ScreenshotsRepositoryActions";
 import SearchConstants from "../../utils/SearchConstants";
+import AuthorityService from "../../utils/AuthorityService";
 
 import {FormControl, Glyphicon, MenuItem, Nav, Navbar, NavDropdown, NavItem} from 'react-bootstrap';
 import BranchesPageActions from "../../actions/branches/BranchesPageActions";
@@ -121,6 +122,13 @@ class Header extends React.Component {
                             <FormattedMessage id="header.jobs"/>
                         </NavItem>
                     </LinkContainer>
+                    {AuthorityService.canViewRewriteRules() && (
+                        <LinkContainer to="/rewrite-rules">
+                            <NavItem>
+                                <FormattedMessage id="header.rewriteRules"/>
+                            </NavItem>
+                        </LinkContainer>
+                    )}
                 </Nav>
                 <Nav pullRight={true}>
                     <NavDropdown title={this.getUsernameDisplay()} id="user-menu">
