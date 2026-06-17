@@ -74,7 +74,20 @@ let LocalesDropDown = createReactClass({
         this.setState({
             locales,
             selectedLocaleIds: this.getSortedSelectedLocaleIdsFromStore(locales)
-        });
+        }, this.initializeLocaleSelectionIfNeeded);
+    },
+
+    initializeLocaleSelectionIfNeeded() {
+        if (this.state.hasInitializedLocaleSelection || this.state.locales.length === 0) {
+            return;
+        }
+
+        const storeSelectedLocaleIds = RewriteRuleStore.getState().localeIds;
+        if (storeSelectedLocaleIds.length === 0) {
+            setTimeout(() => this.setSelectedLocaleIds(this.state.locales.map(locale => locale.id)), 0);
+        }
+
+        this.setState({hasInitializedLocaleSelection: true});
     },
 
     /**
@@ -87,6 +100,7 @@ let LocalesDropDown = createReactClass({
             "isDropdownOpened": false,
             "repoIds": [],
             "scope": RewriteRuleStore.getState().scope,
+            "hasInitializedLocaleSelection": false,
         };
     },
 
