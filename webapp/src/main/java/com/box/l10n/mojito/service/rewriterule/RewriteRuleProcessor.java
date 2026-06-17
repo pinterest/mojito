@@ -31,20 +31,6 @@ public class RewriteRuleProcessor {
     this.meterRegistry = meterRegistry;
   }
 
-  private String resolveVariables(String rewriteTo, String localeTag) {
-    Assert.notNull(rewriteTo, "rewriteTo must not be null");
-    Assert.notNull(localeTag, "localeTag must not be null");
-
-    Locale locale = Locale.forLanguageTag(localeTag);
-    String languageValue = locale.getLanguage() == null ? "" : locale.getLanguage();
-    String countryValue = locale.getCountry() == null ? "" : locale.getCountry();
-
-    return rewriteTo
-        .replace("$language", languageValue)
-        .replace("$country", countryValue)
-        .replace("$locale", localeTag);
-  }
-
   private boolean isRepositorySpecific(RewriteRule rewriteRule) {
     return rewriteRule.getRepository() != null;
   }
@@ -52,6 +38,29 @@ public class RewriteRuleProcessor {
   private int getRulePriority(RewriteRule rewriteRule) {
     // Rewrite rules currently only model scope-based precedence.
     return this.isRepositorySpecific(rewriteRule) ? 1 : 0;
+  }
+
+  private void applyMatches(
+      StringBuilder rewrittenContent, String content, List<Match> matches, String localeTag) {
+    Locale locale = Locale.forLanguageTag(localeTag);
+    String localeValue = localeTag.toLowerCase(Locale.ROOT);
+    String languageValue = locale.getLanguage() == null ? "" : locale.getLanguage();
+    String countryValue =
+        locale.getCountry() == null ? "" : locale.getCountry().toLowerCase(Locale.ROOT);
+    int currentIndex = 0;
+    for (Match selectedCandidate : matches) {
+      rewrittenContent.append(content, currentIndex, selectedCandidate.start());
+      String rewriteTo =
+          selectedCandidate
+              .rule()
+              .getRewriteTo()
+              .replace("$language", languageValue)
+              .replace("$country", countryValue)
+              .replace("$locale", localeValue);
+      rewrittenContent.append(rewriteTo);
+      currentIndex = selectedCandidate.end() + 1;
+    }
+    rewrittenContent.append(content, currentIndex, content.length());
   }
 
   public String processExactMatches(
@@ -125,25 +134,15 @@ public class RewriteRuleProcessor {
     List<Match> matches = new ArrayList<>();
     for (Emit emit : emits) {
       List<RewriteRule> emitRules = rulesByRewriteFrom.get(emit.getKeyword());
-      emitRules.sort(
-          (leftRule, rightRule) ->
-              Integer.compare(this.getRulePriority(rightRule), this.getRulePriority(leftRule)));
-      RewriteRule emitRule = emitRules.getFirst();
+      RewriteRule emitRule =
+          emitRules.stream().max(Comparator.comparingInt(this::getRulePriority)).orElseThrow();
       matches.add(new Match(emit.getStart(), emit.getEnd(), emitRule));
     }
 
     matches.sort(Comparator.comparingInt(Match::start));
 
     StringBuilder rewrittenContent = new StringBuilder();
-    int currentIndex = 0;
-
-    for (Match selectedCandidate : matches) {
-      rewrittenContent.append(content, currentIndex, selectedCandidate.start());
-      rewrittenContent.append(resolveVariables(selectedCandidate.rule().getRewriteTo(), localeTag));
-      currentIndex = selectedCandidate.end() + 1;
-    }
-
-    rewrittenContent.append(content, currentIndex, content.length());
+    this.applyMatches(rewrittenContent, content, matches, localeTag);
 
     timerSample.stop(
         Timer.builder("RewriteRuleProcessor.processExactMatches")

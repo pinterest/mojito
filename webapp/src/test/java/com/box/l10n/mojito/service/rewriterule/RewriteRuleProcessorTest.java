@@ -46,7 +46,7 @@ public class RewriteRuleProcessorTest {
         rewriteRuleProcessor.processExactMatches(
             "Go to https://example.com/home now", 10L, localeId, "fr-CA");
 
-    assertThat(rewritten).isEqualTo("Go to https://example.com/fr/CA/fr-CA/home now");
+    assertThat(rewritten).isEqualTo("Go to https://example.com/fr/ca/fr-ca/home now");
   }
 
   @Test
