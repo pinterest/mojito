@@ -204,6 +204,7 @@ let RewriteRulesPage = createReactClass({
                     {rules.length > 0 && (
                         <>
                             <div className="pagination-toolbar mrm mtm mbm">
+                                <div><FormattedMessage id="rewriteRules.totalElements" values={{totalElements}}/></div>
                                 <DropdownButton
                                     id="rewrite-rules-page-size"
                                     title={this.props.intl.formatMessage({id: "rewriteRules.pageSize"}, {pageSize})}
