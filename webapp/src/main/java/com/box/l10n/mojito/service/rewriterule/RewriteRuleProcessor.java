@@ -12,6 +12,7 @@ import java.util.Locale;
 import java.util.Map;
 import org.ahocorasick.trie.Emit;
 import org.ahocorasick.trie.Trie;
+import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,10 @@ public class RewriteRuleProcessor {
     return this.isRepositorySpecific(rewriteRule) ? 1 : 0;
   }
 
+  private String escapeXml(String xml) {
+    return StringEscapeUtils.escapeXml10(StringEscapeUtils.unescapeXml(xml));
+  }
+
   private void applyMatches(
       StringBuilder rewrittenContent, String content, List<Match> matches, String localeTag) {
     Locale locale = Locale.forLanguageTag(localeTag);
@@ -57,7 +62,7 @@ public class RewriteRuleProcessor {
               .replace("$language", languageValue)
               .replace("$country", countryValue)
               .replace("$locale", localeValue);
-      rewrittenContent.append(rewriteTo);
+      rewrittenContent.append(this.escapeXml(rewriteTo));
       currentIndex = selectedCandidate.end() + 1;
     }
     rewrittenContent.append(content, currentIndex, content.length());
@@ -110,9 +115,10 @@ public class RewriteRuleProcessor {
 
     rewriteRules.forEach(
         rewriteRule -> {
-          trieBuilder.addKeyword(rewriteRule.getRewriteFrom());
+          String rewriteFrom = this.escapeXml(rewriteRule.getRewriteFrom());
+          trieBuilder.addKeyword(rewriteFrom);
           rulesByRewriteFrom
-              .computeIfAbsent(rewriteRule.getRewriteFrom(), key -> new ArrayList<>())
+              .computeIfAbsent(rewriteFrom, key -> new ArrayList<>())
               .add(rewriteRule);
         });
 
