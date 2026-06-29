@@ -156,6 +156,49 @@ public class RewriteRuleProcessorTest {
   }
 
   @Test
+  public void testProcessExactMatches_escapesXmlSpecialCharactersInRewriteFrom() {
+    when(rewriteRuleService.findActiveRewriteRules(eq(5L), eq(10L)))
+        .thenReturn(
+            List.of(
+                newRule(
+                    1L,
+                    10L,
+                    5L,
+                    "https://example.com/help?lang=fr&country=ca&locale=fr-ca&token=<xml>",
+                    "https://repo/help?lang=fr")));
+
+    String rewritten =
+        rewriteRuleProcessor.processExactMatches(
+            "Visit https://example.com/help?lang=fr&amp;country=ca&amp;locale=fr-ca&amp;token=&lt;xml&gt;",
+            10L,
+            5L,
+            "fr-CA");
+
+    assertThat(rewritten).isEqualTo("Visit https://repo/help?lang=fr");
+  }
+
+  @Test
+  public void testProcessExactMatches_escapesXmlSpecialCharactersInRewriteTo() {
+    when(rewriteRuleService.findActiveRewriteRules(eq(5L), eq(10L)))
+        .thenReturn(
+            List.of(
+                newRule(
+                    1L,
+                    10L,
+                    5L,
+                    "https://example.com/help",
+                    "https://repo/help?lang=fr&country=ca&locale=fr-ca&token=<xml>")));
+
+    String rewritten =
+        rewriteRuleProcessor.processExactMatches(
+            "Visit https://example.com/help", 10L, 5L, "fr-CA");
+
+    assertThat(rewritten)
+        .isEqualTo(
+            "Visit https://repo/help?lang=fr&amp;country=ca&amp;locale=fr-ca&amp;token=&lt;xml&gt;");
+  }
+
+  @Test
   public void testProcessExactMatches_throwsWhenRepositoryIdIsNull() {
     assertThatThrownBy(
             () ->
