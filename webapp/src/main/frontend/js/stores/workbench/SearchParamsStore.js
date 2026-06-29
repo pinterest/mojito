@@ -125,6 +125,7 @@ class SearchParamsStore {
             case SearchConstants.REPOSITORIES_CHANGED:
 
                 this.setFirstPageAsCurrent();
+                this.clearTmTextUnitIds();
                 this.repoIds = paramData.repoIds;
                 this.filterBcp47TagsForSelectedRepositories();
                 break;
@@ -132,12 +133,14 @@ class SearchParamsStore {
             case SearchConstants.LOCALES_CHANGED:
 
                 this.setFirstPageAsCurrent();
+                this.clearTmTextUnitIds();
                 this.bcp47Tags = paramData.bcp47Tags;
                 break;
 
             case SearchConstants.SEARCHTEXT_CHANGED:
 
                 this.setFirstPageAsCurrent();
+                this.clearTmTextUnitIds();
                 this.searchText = paramData.data.searchText;
                 this.searchAttribute = paramData.data.searchAttribute;
                 this.searchType = paramData.data.searchType;
@@ -146,6 +149,7 @@ class SearchParamsStore {
             case SearchConstants.SEARCHFILTER_CHANGED:
 
                 this.setFirstPageAsCurrent();
+                this.clearTmTextUnitIds();
                 this[paramData.searchFilterParam] = paramData.searchFilterParamValue;
                 break;
 
@@ -358,6 +362,11 @@ class SearchParamsStore {
 
     updatePageOffset() {
         this.pageOffset = (this.currentPageNumber - 1) * this.pageSize;
+    }
+
+    clearTmTextUnitIds() {
+        this.tmTextUnitIds = [];
+        this.branchId = null;
     }
 
     setFirstPageAsCurrent() {
