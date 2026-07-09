@@ -343,21 +343,17 @@ public class EvolveClientTest {
             this.retryMinBackoffSecs,
             this.retryMaxBackoffSecs);
 
-    this.evolveClient.updateCourseTranslation(1, "content");
+    this.evolveClient.updateCourseTranslation(1, null, "content");
 
     verify(this.mockRestTemplate, times(1))
-        .put(
-            this.urlCaptor.capture(),
-            this.httpEntityCaptor.capture(),
-            this.courseIdCaptor.capture());
+        .put(this.urlCaptor.capture(), this.httpEntityCaptor.capture());
 
-    assertEquals(this.apiPath + "course_translations/{courseId}", this.urlCaptor.getValue());
+    assertEquals(this.apiPath + "course_translations/1", this.urlCaptor.getValue());
     HttpEntity<Object> httpEntity = this.httpEntityCaptor.getValue();
     assertEquals(
         MediaType.valueOf("application/xml;charset=UTF-8"),
         httpEntity.getHeaders().getContentType());
     assertEquals("content", httpEntity.getBody());
-    assertEquals(1, (int) courseIdCaptor.getValue());
   }
 
   @Test

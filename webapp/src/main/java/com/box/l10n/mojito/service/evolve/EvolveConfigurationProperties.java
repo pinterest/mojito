@@ -36,6 +36,11 @@ public class EvolveConfigurationProperties {
 
   private String courseUrlTemplate;
 
+  private String refreshWithParentAssetsAndStructureText =
+      "Refresh with parent assets and structure";
+
+  private String preserveAssetsAndStructureText = "Preserve assets and structure";
+
   public String getApiUid() {
     return apiUid;
   }
@@ -154,5 +159,22 @@ public class EvolveConfigurationProperties {
 
   public void setCourseUrlTemplate(String courseUrlTemplate) {
     this.courseUrlTemplate = courseUrlTemplate;
+  }
+
+  public String getRefreshWithParentAssetsAndStructureText() {
+    return refreshWithParentAssetsAndStructureText;
+  }
+
+  public void setRefreshWithParentAssetsAndStructureText(
+      String refreshWithParentAssetsAndStructureText) {
+    this.refreshWithParentAssetsAndStructureText = refreshWithParentAssetsAndStructureText;
+  }
+
+  public String getPreserveAssetsAndStructureText() {
+    return preserveAssetsAndStructureText;
+  }
+
+  public void setPreserveAssetsAndStructureText(String preserveAssetsAndStructureText) {
+    this.preserveAssetsAndStructureText = preserveAssetsAndStructureText;
   }
 }

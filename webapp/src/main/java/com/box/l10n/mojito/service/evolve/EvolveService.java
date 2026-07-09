@@ -93,6 +93,8 @@ public class EvolveService {
 
   private final Optional<ContentService> contentService;
 
+  private final TranslationModeMapper translationModeMapper;
+
   private final Duration retryMinBackoff;
 
   private final Duration retryMaxBackoff;
@@ -118,6 +120,7 @@ public class EvolveService {
       BranchService branchService,
       AssetExtractionByBranchRepository assetExtractionByBranchRepository,
       LocaleMappingHelper localeMappingHelper,
+      TranslationModeMapper translationModeMapper,
       @Autowired(required = false) ContentService contentService,
       EvolveSlackNotificationSender evolveSlackNotificationSender) {
     this.evolveConfigurationProperties = evolveConfigurationProperties;
@@ -133,6 +136,7 @@ public class EvolveService {
     this.branchService = branchService;
     this.assetExtractionByBranchRepository = assetExtractionByBranchRepository;
     this.localeMappingHelper = localeMappingHelper;
+    this.translationModeMapper = translationModeMapper;
     this.contentService = ofNullable(contentService);
     this.retryMinBackoff =
         Duration.ofSeconds(evolveConfigurationProperties.getRetryMinBackoffSecs());
@@ -291,7 +295,7 @@ public class EvolveService {
   }
 
   private void updateCourseTranslations(
-      int courseId,
+      CourseDTO courseDTO,
       Asset asset,
       String content,
       Map<String, String> localeMappings,
@@ -316,11 +320,18 @@ public class EvolveService {
           } catch (UnsupportedAssetFilterTypeException e) {
             throw new EvolveSyncException(e.getMessage(), e);
           }
+          Boolean replaceLegacyEvolveLocaleContent =
+              this.translationModeMapper
+                  .mapTranslationModeToReplaceLegacyEvolveLocaleContent(
+                      courseDTO.getTranslationMode())
+                  .orElse(null);
           Mono.fromRunnable(
                   () -> {
                     try {
                       this.evolveClient.updateCourseTranslation(
-                          courseId, this.xliffUtils.removeElement(generateLocalized, "bin-unit"));
+                          courseDTO.getId(),
+                          replaceLegacyEvolveLocaleContent,
+                          this.xliffUtils.removeElement(generateLocalized, "bin-unit"));
                     } catch (ParserConfigurationException
                         | IOException
                         | SAXException
@@ -452,7 +463,7 @@ public class EvolveService {
           "Couldn't find asset content for course with id: " + courseDTO.getId());
     }
     this.updateCourseTranslations(
-        courseDTO.getId(), asset, content.get(), localeMappings, targetRepositoryLocales);
+        courseDTO, asset, content.get(), localeMappings, targetRepositoryLocales);
     if (branchStatistic != null
         && branchStatistic.getTotalCount() > 0
         && branchStatistic.getForTranslationCount() == 0) {

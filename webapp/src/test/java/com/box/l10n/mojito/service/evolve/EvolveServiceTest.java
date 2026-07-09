@@ -124,6 +124,8 @@ public class EvolveServiceTest extends ServiceTestBase {
 
   @Captor ArgumentCaptor<Integer> integerCaptor;
 
+  @Captor ArgumentCaptor<Boolean> booleanCaptor;
+
   @Captor ArgumentCaptor<String> stringCaptor;
 
   @Captor ArgumentCaptor<Set<String>> additionalLocalesCaptor;
@@ -162,6 +164,7 @@ public class EvolveServiceTest extends ServiceTestBase {
             this.branchService,
             this.assetExtractionByBranchRepository,
             this.localeMappingHelper,
+            new TranslationModeMapper(this.evolveConfigurationProperties),
             null,
             this.evolveSlackNotificationSenderMock);
   }
@@ -323,8 +326,10 @@ public class EvolveServiceTest extends ServiceTestBase {
     assertFalse(branch.getDeleted());
 
     verify(this.evolveClientMock)
-        .updateCourseTranslation(integerCaptor.capture(), stringCaptor.capture());
+        .updateCourseTranslation(
+            integerCaptor.capture(), booleanCaptor.capture(), stringCaptor.capture());
     assertEquals(courseId, (int) integerCaptor.getValue());
+    assertNull(booleanCaptor.getValue());
     assertTrue(stringCaptor.getValue().contains("target-language=\"es-ES\""));
     verify(this.evolveClientMock, times(0))
         .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
@@ -412,8 +417,10 @@ public class EvolveServiceTest extends ServiceTestBase {
     assertTrue(branch.getDeleted());
 
     verify(this.evolveClientMock)
-        .updateCourseTranslation(integerCaptor.capture(), stringCaptor.capture());
+        .updateCourseTranslation(
+            integerCaptor.capture(), booleanCaptor.capture(), stringCaptor.capture());
     assertEquals(courseId, (int) integerCaptor.getValue());
+    assertNull(this.booleanCaptor.getValue());
     assertTrue(stringCaptor.getValue().contains("target-language=\"es-ES\""));
     verify(this.evolveClientMock)
         .updateCourse(
@@ -494,7 +501,7 @@ public class EvolveServiceTest extends ServiceTestBase {
             this.evolveService.getBranchName(courseId), repository);
     assertFalse(branch.getDeleted());
 
-    verify(this.evolveClientMock).updateCourseTranslation(eq(courseId), anyString());
+    verify(this.evolveClientMock).updateCourseTranslation(eq(courseId), any(), anyString());
     verify(this.evolveClientMock, times(0))
         .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
     verify(this.evolveSlackNotificationSenderMock, times(0))
@@ -563,7 +570,7 @@ public class EvolveServiceTest extends ServiceTestBase {
             this.evolveService.getBranchName(courseId), repository);
     assertFalse(branch.getDeleted());
 
-    verify(this.evolveClientMock).updateCourseTranslation(eq(courseId), anyString());
+    verify(this.evolveClientMock).updateCourseTranslation(eq(courseId), any(), anyString());
 
     verify(this.evolveClientMock, times(0))
         .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
@@ -649,7 +656,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     verify(this.evolveClientMock, times(1)).startCourseTranslation(anyInt(), anyString(), anySet());
     verify(this.evolveClientMock, times(1))
         .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
-    verify(this.evolveClientMock, times(1)).updateCourseTranslation(eq(2), anyString());
+    verify(this.evolveClientMock, times(1)).updateCourseTranslation(eq(2), any(), anyString());
     verify(this.evolveClientMock, times(0)).syncEvolve(anyInt());
 
     branch =
@@ -732,7 +739,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     verify(this.evolveClientMock, times(1)).startCourseTranslation(anyInt(), anyString(), anySet());
     verify(this.evolveClientMock, times(2))
         .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
-    verify(this.evolveClientMock, times(1)).updateCourseTranslation(anyInt(), anyString());
+    verify(this.evolveClientMock, times(1)).updateCourseTranslation(anyInt(), any(), anyString());
     verify(this.evolveClientMock, times(0)).syncEvolve(anyInt());
 
     verify(this.evolveSlackNotificationSenderMock, times(0))
@@ -886,7 +893,7 @@ public class EvolveServiceTest extends ServiceTestBase {
 
     this.evolveService.sync(repository.getId(), null);
 
-    verify(this.evolveClientMock, times(3)).updateCourseTranslation(anyInt(), anyString());
+    verify(this.evolveClientMock, times(3)).updateCourseTranslation(anyInt(), any(), anyString());
     verify(this.evolveClientMock, times(1))
         .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
 
@@ -1019,7 +1026,7 @@ public class EvolveServiceTest extends ServiceTestBase {
         .thenReturn(Stream.of(courseDTO1));
     doThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)))
         .when(this.evolveClientMock)
-        .updateCourseTranslation(anyInt(), anyString());
+        .updateCourseTranslation(anyInt(), any(), anyString());
 
     this.initEvolveService();
   }
@@ -1188,7 +1195,7 @@ public class EvolveServiceTest extends ServiceTestBase {
 
     assertThrows(RuntimeException.class, () -> this.evolveService.sync(repository.getId(), null));
 
-    verify(this.evolveClientMock, times(1)).updateCourseTranslation(anyInt(), anyString());
+    verify(this.evolveClientMock, times(1)).updateCourseTranslation(anyInt(), any(), anyString());
     verify(this.evolveClientMock, times(3)).updateCourse(anyInt(), any(), any());
   }
 
@@ -1294,8 +1301,10 @@ public class EvolveServiceTest extends ServiceTestBase {
     this.evolveService.sync(repository.getId(), "es-MX:es-419");
 
     verify(this.evolveClientMock)
-        .updateCourseTranslation(integerCaptor.capture(), stringCaptor.capture());
+        .updateCourseTranslation(
+            integerCaptor.capture(), booleanCaptor.capture(), stringCaptor.capture());
     assertEquals(courseId, (int) integerCaptor.getValue());
+    assertNull(booleanCaptor.getValue());
     assertTrue(stringCaptor.getValue().contains("target-language=\"es-419\""));
   }
 
