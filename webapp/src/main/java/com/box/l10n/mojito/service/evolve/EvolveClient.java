@@ -26,6 +26,9 @@ import reactor.util.retry.Retry;
 public class EvolveClient {
   static Logger logger = LoggerFactory.getLogger(EvolveClient.class);
 
+  private static final String REPLACE_LEGACY_EVOLVE_LOCALE_CONTENT_QUERY_PARAM =
+      "replace_legacy_evolve_locale_content";
+
   private final String apiPath;
 
   private final RestTemplate restTemplate;
@@ -136,13 +139,21 @@ public class EvolveClient {
         courseId);
   }
 
-  public void updateCourseTranslation(int courseId, String translatedCourse) {
+  public void updateCourseTranslation(
+      int courseId, Boolean replaceLegacyEvolveLocaleContent, String translatedCourse) {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.valueOf("application/xml;charset=UTF-8"));
     headers.setAccept(List.of(MediaType.APPLICATION_XML));
+
+    UriComponentsBuilder builder =
+        UriComponentsBuilder.fromPath(this.getFullEndpointPath("course_translations/{courseId}"));
+    if (replaceLegacyEvolveLocaleContent != null) {
+      builder.queryParam(
+          REPLACE_LEGACY_EVOLVE_LOCALE_CONTENT_QUERY_PARAM, replaceLegacyEvolveLocaleContent);
+    }
+
     this.restTemplate.put(
-        this.getFullEndpointPath("course_translations/{courseId}"),
-        new HttpEntity<>(translatedCourse, headers),
-        courseId);
+        builder.buildAndExpand(courseId).toUriString(),
+        new HttpEntity<>(translatedCourse, headers));
   }
 }
