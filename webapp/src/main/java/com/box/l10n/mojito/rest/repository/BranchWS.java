@@ -47,9 +47,7 @@ public class BranchWS {
   @Operation(summary = "Get a Branch's overall status and text unit translation status")
   @RequestMapping(value = "/api/branch/status", method = RequestMethod.GET)
   @StopWatch
-  public BranchStatusDTO getBranchStatus(
-      @RequestParam(value = "branchName") String branchName) {
-
+  public BranchStatusDTO getBranchStatus(@RequestParam(value = "branchName") String branchName) {
     try {
       return branchService.getBranchStatus(branchName);
     } catch (BranchNotFoundException branchNotFoundException) {
