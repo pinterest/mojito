@@ -610,6 +610,25 @@ paths:
           description: OK
       tags:
       - box-sdk-service-config-ws
+  /api/branch/status:
+    get:
+      operationId: getBranchStatus
+      parameters:
+      - in: query
+        name: branchName
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/hal+json:
+              schema:
+                $ref: "#/components/schemas/BranchStatusDTO"
+          description: OK
+      summary: Get a Branch's overall status and text unit translation status
+      tags:
+      - branch-ws
   /api/branch/textUnitStatus:
     get:
       operationId: getTextUnitStatus
@@ -3442,6 +3461,58 @@ components:
           type: integer
           format: int64
         totalCount:
+          type: integer
+          format: int64
+    BranchStatusDTO:
+      type: object
+      properties:
+        branchId:
+          type: integer
+          format: int64
+        branchName:
+          type: string
+        createdDate:
+          type: integer
+          format: int64
+          example: 1715699917000
+        forTranslationCount:
+          type: integer
+          format: int64
+        mergeTargetCommitName:
+          type: string
+        repositoryName:
+          type: string
+        safeI18nEnabled:
+          type: boolean
+        textUnits:
+          type: array
+          items:
+            $ref: "#/components/schemas/BranchStatusTextUnitDTO"
+        translatedDate:
+          type: integer
+          format: int64
+          example: 1715699917000
+    BranchStatusTextUnitDTO:
+      type: object
+      properties:
+        comment:
+          type: string
+        content:
+          type: string
+        createdDate:
+          type: integer
+          format: int64
+          example: 1715699917000
+        forTranslationCount:
+          type: integer
+          format: int64
+        missingLocales:
+          type: array
+          items:
+            type: string
+        name:
+          type: string
+        tmTextUnitId:
           type: integer
           format: int64
     BranchTextUnitStatistic:
