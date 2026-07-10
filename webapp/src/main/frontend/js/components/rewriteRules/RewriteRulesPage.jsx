@@ -24,6 +24,8 @@ let RewriteRulesPage = createReactClass({
             page: 0,
             pageSize: 10,
             scope: "all",
+            sortField: "rewriteFrom",
+            sortDirection: "asc",
             locales: [],
             repositories: [],
             isLoading: false,
@@ -66,6 +68,8 @@ let RewriteRulesPage = createReactClass({
             page: storeState.page,
             pageSize: storeState.pageSize,
             scope: storeState.scope,
+            sortField: storeState.sortField,
+            sortDirection: storeState.sortDirection,
             isLoading: storeState.isLoading,
             error: storeState.error,
         };
@@ -88,6 +92,36 @@ let RewriteRulesPage = createReactClass({
 
     handlePageChange(newPage) {
         RewriteRuleActions.setPage({page: newPage, pageSize: this.state.pageSize});
+    },
+
+    handleSort(field) {
+        const isSameField = this.state.sortField === field;
+        const nextDirection = isSameField && this.state.sortDirection === "asc" ? "desc" : "asc";
+        RewriteRuleActions.setSort({field, direction: nextDirection});
+    },
+
+    renderSortIcon(field) {
+        if (this.state.sortField !== field) {
+            return null;
+        }
+
+        return (
+            <Glyphicon
+                className="mls"
+                glyph={this.state.sortDirection === "asc" ? "triangle-top" : "triangle-bottom"}
+            />
+        );
+    },
+
+    renderSortableHeader(field, messageId, className) {
+        return (
+            <th className={className}>
+                <Button bsStyle="link" className="table-sort-btn" onClick={() => this.handleSort(field)}>
+                    <FormattedMessage id={messageId}/>
+                    {this.renderSortIcon(field)}
+                </Button>
+            </th>
+        );
     },
 
     handleCreate() {
@@ -232,14 +266,13 @@ let RewriteRulesPage = createReactClass({
                             <Table className="rewrite-rules-table">
                                 <thead>
                                 <tr>
-                                    <th className="col-xs-3"><FormattedMessage id="rewriteRules.table.rewriteFrom"/>
-                                    </th>
-                                    <th className="col-xs-3"><FormattedMessage id="rewriteRules.table.rewriteTo"/></th>
+                                    {this.renderSortableHeader("rewriteFrom", "rewriteRules.table.rewriteFrom", "col-xs-3")}
+                                    {this.renderSortableHeader("rewriteTo", "rewriteRules.table.rewriteTo", "col-xs-3")}
                                     <th className="col-xs-1"><FormattedMessage id="rewriteRules.table.status"/></th>
                                     {scope !== "global" && <th className="col-xs-1"><FormattedMessage id="rewriteRules.table.repository"/></th>}
                                     <th className="col-xs-1"><FormattedMessage id="rewriteRules.table.locale"/></th>
                                     <th className="col-xs-1"><FormattedMessage id="rewriteRules.table.createdBy"/></th>
-                                    <th className="col-xs-1"><FormattedMessage id="rewriteRules.table.lastModified"/></th>
+                                    {this.renderSortableHeader("lastModifiedDate", "rewriteRules.table.lastModified", "col-xs-1")}
                                     <th className={scope === 'global' ? 'col-xs-2' : 'col-xs-1'}><FormattedMessage id="rewriteRules.table.actions"/></th>
                                 </tr>
                                 </thead>

@@ -23,6 +23,7 @@ class RewriteRuleActions {
             "disableRewriteRuleError",
             "setScope",
             "setPage",
+            "setSort",
             "setSelectedRepoIds",
             "setSelectedLocaleIds",
             "setRewriteFrom",

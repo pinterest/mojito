@@ -11,7 +11,7 @@ const RewriteRuleDataSource = {
                 repositoryIds: state.scope === 'repository' ? state.repoIds : null,
                 localeIds: state.localeIds,
                 rewriteFrom: state.rewriteFrom,
-                sort: 'rewriteFrom,asc',
+                sort: `${state.sortField || 'rewriteFrom'},${state.sortDirection || 'asc'}`,
             };
             return RewriteRuleClient.getRewriteRules(params);
         },
