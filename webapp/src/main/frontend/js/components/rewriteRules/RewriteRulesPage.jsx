@@ -32,6 +32,7 @@ let RewriteRulesPage = createReactClass({
             error: null,
             showModal: false,
             editingRule: null,
+            prefillRule: null,
             isSubmitting: false,
             showDeleteConfirm: false,
             deletingRule: null,
@@ -78,6 +79,7 @@ let RewriteRulesPage = createReactClass({
         if (this.state.isSubmitting && !storeState.isMutating && !storeState.error) {
             newState.showModal = false;
             newState.editingRule = null;
+            newState.prefillRule = null;
             newState.isSubmitting = false;
         } else if (this.state.isSubmitting && storeState.error) {
             newState.isSubmitting = false;
@@ -125,15 +127,19 @@ let RewriteRulesPage = createReactClass({
     },
 
     handleCreate() {
-        this.setState({showModal: true, editingRule: null});
+        this.setState({showModal: true, editingRule: null, prefillRule: null});
+    },
+
+    handleCopy(rule) {
+        this.setState({showModal: true, editingRule: null, prefillRule: rule});
     },
 
     handleEdit(rule) {
-        this.setState({showModal: true, editingRule: rule});
+        this.setState({showModal: true, editingRule: rule, prefillRule: null});
     },
 
     handleModalClose() {
-        this.setState({showModal: false, editingRule: null, isSubmitting: false});
+        this.setState({showModal: false, editingRule: null, prefillRule: null, isSubmitting: false});
         RewriteRuleActions.resetError();
     },
 
@@ -299,10 +305,13 @@ let RewriteRulesPage = createReactClass({
                                                 >
                                                     {rule.enabled ? <FormattedMessage id="rewriteRules.action.disable"/> : <FormattedMessage id="rewriteRules.action.enable"/>}
                                                 </Button>
-                                                <Button onClick={() => this.handleEdit(rule)}>
+                                                <Button onClick={() => this.handleEdit(rule)} title={this.props.intl.formatMessage({ id: "rewriteRules.action.edit" })}>
                                                     <Glyphicon glyph="pencil"/>
                                                 </Button>
-                                                <Button bsStyle="danger" onClick={() => this.handleDelete(rule)}>
+                                                <Button onClick={() => this.handleCopy(rule)} title={this.props.intl.formatMessage({ id: "rewriteRules.action.copy" })}>
+                                                    <Glyphicon glyph="duplicate"/>
+                                                </Button>
+                                                <Button bsStyle="danger" onClick={() => this.handleDelete(rule)} title={this.props.intl.formatMessage({ id: "rewriteRules.action.delete" })}>
                                                     <Glyphicon glyph="trash"/>
                                                 </Button>
                                             </ButtonGroup>
@@ -318,6 +327,7 @@ let RewriteRulesPage = createReactClass({
                 <RewriteRuleModal
                     show={this.state.showModal}
                     rule={this.state.editingRule}
+                    prefillRule={this.state.prefillRule}
                     scope={scope}
                     locales={this.state.locales}
                     repositories={this.state.repositories}
