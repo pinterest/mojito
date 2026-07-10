@@ -5,6 +5,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.box.l10n.mojito.aspect.StopWatch;
 import com.box.l10n.mojito.service.branch.BranchNotFoundException;
 import com.box.l10n.mojito.service.branch.BranchService;
+import com.box.l10n.mojito.service.branch.BranchStatusDTO;
 import com.box.l10n.mojito.service.branch.BranchTextUnitStatusDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
@@ -36,6 +37,21 @@ public class BranchWS {
 
     try {
       return branchService.getBranchTextUnitStatuses(branchName, repoName);
+    } catch (BranchNotFoundException branchNotFoundException) {
+      logger.info(branchNotFoundException.getMessage(), branchNotFoundException);
+      throw new ResponseStatusException(
+          HttpStatus.NOT_FOUND, branchNotFoundException.getMessage(), branchNotFoundException);
+    }
+  }
+
+  @Operation(summary = "Get a Branch's overall status and text unit translation status")
+  @RequestMapping(value = "/api/branch/status", method = RequestMethod.GET)
+  @StopWatch
+  public BranchStatusDTO getBranchStatus(
+      @RequestParam(value = "branchName") String branchName) {
+
+    try {
+      return branchService.getBranchStatus(branchName);
     } catch (BranchNotFoundException branchNotFoundException) {
       logger.info(branchNotFoundException.getMessage(), branchNotFoundException);
       throw new ResponseStatusException(

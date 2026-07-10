@@ -26,6 +26,8 @@ public interface BranchRepository
 
   Branch findByNameAndRepository(String name, Repository repository);
 
+  Branch findFirstByNameAndDeletedFalse(String name);
+
   List<Branch> findByRepositoryIdAndDeletedFalseAndNameNotNullAndNameNot(
       Long repositoryId, String primaryBranch);
 
