@@ -26,6 +26,8 @@ public interface BranchRepository
 
   Branch findByNameAndRepository(String name, Repository repository);
 
+  Branch findFirstByNameAndDeletedFalse(String name);
+
   List<Branch> findByRepositoryIdAndDeletedFalseAndNameNotNullAndNameNot(
       Long repositoryId, String primaryBranch);
 
@@ -54,6 +56,7 @@ public interface BranchRepository
       SELECT new com.box.l10n.mojito.service.branch.BranchTextUnitStatusDataModel(
         b.id,
         l.bcp47Tag,
+        rl.toBeFullyTranslated,
         tu.name,
         tu.content,
         tu.comment,
@@ -75,10 +78,12 @@ public interface BranchRepository
       LEFT JOIN b.branchStatistic bs
       LEFT JOIN bs.branchTextUnitStatistics btus
       LEFT JOIN btus.tmTextUnit tu
+      LEFT JOIN PluralFormForLocale pffl ON pffl.locale = l AND pffl.pluralForm = tu.pluralForm
       LEFT JOIN TMTextUnitCurrentVariant tucv ON tucv.tmTextUnit = tu AND tucv.locale = l
       LEFT JOIN tucv.tm tm
       LEFT JOIN tucv.tmTextUnitVariant ttuv
       WHERE b.name = :branchName AND r.name = :repoName
+      AND (tu.pluralForm IS NULL OR pffl.id IS NOT NULL)
       ORDER BY tu.content ASC, l.bcp47Tag ASC
       """)
   List<BranchTextUnitStatusDataModel> findBranchWithTextUnitStatuses(
