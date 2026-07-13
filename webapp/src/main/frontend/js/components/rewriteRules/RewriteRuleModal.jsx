@@ -24,13 +24,14 @@ let RewriteRuleModal = createReactClass({
 
     componentDidUpdate(prevProps) {
         if (this.props.show && !prevProps.show) {
-            if (this.props.rule) {
+            const rule = this.props.rule || this.props.prefillRule;
+            if (rule) {
                 this.setState({
-                    rewriteFrom: this.props.rule.rewriteFrom || "",
-                    rewriteTo: this.props.rule.rewriteTo || "",
-                    repositoryId: this.props.rule.repositoryId || "",
-                    localeId: this.props.rule.localeId || "",
-                    enabled: this.props.rule.enabled,
+                    rewriteFrom: rule.rewriteFrom || "",
+                    rewriteTo: rule.rewriteTo || "",
+                    repositoryId: rule.repositoryId || "",
+                    localeId: rule.localeId || "",
+                    enabled: rule.enabled,
                 });
             } else {
                 this.setState(this.getDefaultState());
