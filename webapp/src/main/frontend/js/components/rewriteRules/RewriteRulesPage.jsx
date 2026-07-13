@@ -296,7 +296,9 @@ let RewriteRulesPage = createReactClass({
                                         {scope !== "global" && <td className="rewrite-rules-cell" title={this.getRepositoryName(rule.repositoryId)}>{this.getRepositoryName(rule.repositoryId)}</td>}
                                         <td className="rewrite-rules-cell" title={this.getLocaleDisplayName(rule.localeId)}>{this.getLocaleDisplayName(rule.localeId)}</td>
                                         <td className="rewrite-rules-cell" title={rule.createdByUserName}>{rule.createdByUserName}</td>
-                                        <td className="rewrite-rules-cell">{rule.lastModifiedDate ? new Date(rule.lastModifiedDate).toLocaleDateString() : ""}</td>
+                                        <td className="rewrite-rules-cell" title={rule.lastModifiedDate ? new Date(rule.lastModifiedDate).toLocaleString() : ""}>
+                                            {rule.lastModifiedDate ? new Date(rule.lastModifiedDate).toLocaleDateString() : ""}
+                                        </td>
                                         <td>
                                             <ButtonGroup bsSize="xsmall">
                                                 <Button
