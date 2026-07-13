@@ -56,6 +56,7 @@ public interface BranchRepository
       SELECT new com.box.l10n.mojito.service.branch.BranchTextUnitStatusDataModel(
         b.id,
         l.bcp47Tag,
+        rl.toBeFullyTranslated,
         tu.name,
         tu.content,
         tu.comment,

@@ -223,6 +223,7 @@ public class BranchService {
         .filter(dm -> dm.getTextUnitId() != null)
         .filter(dm -> dm.getBcp47Tag() != null)
         .filter(dm -> !dm.getBcp47Tag().equals(srcLocale))
+        .filter(BranchTextUnitStatusDataModel::isToBeFullyTranslated)
         .collect(
             Collectors.groupingBy(
                 dm ->
