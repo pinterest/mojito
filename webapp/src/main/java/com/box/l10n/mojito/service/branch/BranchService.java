@@ -8,6 +8,7 @@ import com.box.l10n.mojito.entity.BranchMergeTarget;
 import com.box.l10n.mojito.entity.BranchSource;
 import com.box.l10n.mojito.entity.BranchStatistic;
 import com.box.l10n.mojito.entity.Repository;
+import com.box.l10n.mojito.entity.TMTextUnitVariant;
 import com.box.l10n.mojito.entity.security.user.User;
 import com.box.l10n.mojito.quartz.QuartzJobInfo;
 import com.box.l10n.mojito.quartz.QuartzPollableTaskScheduler;
@@ -196,7 +197,7 @@ public class BranchService {
     return dto;
   }
 
-  private List<BranchStatusTextUnitDTO> buildTextUnitDTOs(
+  List<BranchStatusTextUnitDTO> buildTextUnitDTOs(
       List<BranchTextUnitStatusDataModel> dataModels, Branch branch) {
 
     if (dataModels == null || dataModels.isEmpty()) {
@@ -237,7 +238,7 @@ public class BranchService {
 
               List<String> missingLocales =
                   localeEntries.stream()
-                      .filter(dm -> dm.getCurrentVariantId() == null)
+                      .filter(dm -> !TMTextUnitVariant.Status.APPROVED.equals(dm.getStatus()))
                       .map(BranchTextUnitStatusDataModel::getBcp47Tag)
                       .sorted()
                       .collect(Collectors.toList());
