@@ -7,6 +7,7 @@ public class BranchTextUnitStatusDataModel {
 
   public Long branchId;
   private String bcp47Tag;
+  private boolean toBeFullyTranslated;
   private String tuName;
   private String tuContent;
   private String tuComment;
@@ -26,6 +27,7 @@ public class BranchTextUnitStatusDataModel {
   public BranchTextUnitStatusDataModel(
       Long branchId,
       String bcp47Tag,
+      boolean toBeFullyTranslated,
       String tuName,
       String tuContent,
       String tuComment,
@@ -41,6 +43,7 @@ public class BranchTextUnitStatusDataModel {
       ZonedDateTime createdDate) {
     this.branchId = branchId;
     this.bcp47Tag = bcp47Tag;
+    this.toBeFullyTranslated = toBeFullyTranslated;
     this.tuName = tuName;
     this.tuContent = tuContent;
     this.tuComment = tuComment;
@@ -62,6 +65,10 @@ public class BranchTextUnitStatusDataModel {
 
   public String getBcp47Tag() {
     return bcp47Tag;
+  }
+
+  public boolean isToBeFullyTranslated() {
+    return toBeFullyTranslated;
   }
 
   public String getTuName() {
