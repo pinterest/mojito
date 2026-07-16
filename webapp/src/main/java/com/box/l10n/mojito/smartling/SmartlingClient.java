@@ -22,6 +22,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
@@ -57,6 +59,8 @@ public class SmartlingClient {
 
   /** logger */
   static Logger logger = LoggerFactory.getLogger(SmartlingClient.class);
+
+  static final int ERROR_RESPONSE_SNIPPET_MAX_BYTES = 1000;
 
   static final String DEFAULT_BASE_URL = "https://api.smartling.com/";
 
@@ -450,6 +454,7 @@ public class SmartlingClient {
 
   public Items<StringInfo> getSourceStrings(
       String projectId, String fileUri, Integer offset, Integer limit) {
+    String responseBody = "";
     try {
       String url =
           baseUrl
@@ -468,13 +473,26 @@ public class SmartlingClient {
       HttpResponse<String> response =
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
+      responseBody = response.body();
       SourceStringsResponse sourceStringsResponse =
-          objectMapper.readValue(response.body(), SourceStringsResponse.class);
+          objectMapper.readValue(responseBody, SourceStringsResponse.class);
 
       throwExceptionOnError(sourceStringsResponse, ERROR_CANT_GET_SOURCE_STRINGS);
       return sourceStringsResponse.getData();
     } catch (Exception e) {
-      throw wrapIntoSmartlingException(e, ERROR_CANT_GET_SOURCE_STRINGS);
+      String truncatedResponseBody =
+          new String(
+              Arrays.copyOf(
+                  responseBody.getBytes(StandardCharsets.UTF_8),
+                  Math.min(
+                      responseBody.getBytes(StandardCharsets.UTF_8).length,
+                      ERROR_RESPONSE_SNIPPET_MAX_BYTES)),
+              StandardCharsets.UTF_8);
+      throw wrapIntoSmartlingException(
+          e,
+          ERROR_CANT_GET_SOURCE_STRINGS
+              + "; response body (first 1000 bytes): "
+              + truncatedResponseBody);
     }
   }
 

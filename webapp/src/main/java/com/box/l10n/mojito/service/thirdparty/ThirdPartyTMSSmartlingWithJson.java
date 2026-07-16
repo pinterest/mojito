@@ -598,60 +598,65 @@ public class ThirdPartyTMSSmartlingWithJson {
 
     List<ThirdPartyTextUnit> thirdPartyTextUnits =
         files.stream()
-            .flatMap(
-                file -> {
-                  Stream<StringInfo> stringInfos =
-                      Mono.fromCallable(
-                              () -> smartlingClient.getStringInfos(projectId, file.getFileUri()))
-                          .retryWhen(
-                              smartlingClient
-                                  .getRetryConfiguration()
-                                  .doBeforeRetry(
-                                      e ->
-                                          logger.info(
-                                              String.format(
-                                                  "Retrying after failure to get string information from Smartling for project %s, file %s",
-                                                  projectId, file.getFileUri()))))
-                          .doOnError(
-                              e -> {
-                                String msg =
+            .map(
+                file ->
+                    Mono.fromCallable(
+                            () -> {
+                              Stream<StringInfo> stringInfos =
+                                  smartlingClient.getStringInfos(projectId, file.getFileUri());
+                              return stringInfos
+                                  .map(
+                                      stringInfo -> {
+                                        logger.debug(
+                                            "hashcode: {}\nvariant: {}\nparsed string: {}",
+                                            stringInfo.getHashcode(),
+                                            stringInfo.getStringVariant(),
+                                            stringInfo.getParsedStringText());
+
+                                        Preconditions.checkNotNull(
+                                            stringInfo.getStringVariant(),
+                                            "Variant must be enabled in Smartling for properly synchronizing");
+                                        SmartlingJsonKeys.Key key =
+                                            smartlingJsonKeys.parse(stringInfo.getStringVariant());
+                                        ThirdPartyTextUnit thirdPartyTextUnit =
+                                            new ThirdPartyTextUnit();
+                                        thirdPartyTextUnit.setId(stringInfo.getHashcode());
+                                        thirdPartyTextUnit.setTmTextUnitId(key.getTmTextUnitd());
+                                        thirdPartyTextUnit.setAssetPath(key.getAssetPath());
+                                        thirdPartyTextUnit.setName(key.getTextUnitName());
+                                        thirdPartyTextUnit.setNamePluralPrefix(
+                                            isPluralFile(file.getFileUri()));
+
+                                        return thirdPartyTextUnit;
+                                      })
+                                  .collect(Collectors.toList());
+                            })
+                        .retryWhen(
+                            smartlingClient
+                                .getRetryConfiguration()
+                                .doBeforeRetry(
+                                    e ->
+                                        logger.info(
+                                            String.format(
+                                                "Retrying after failure to get string information from Smartling for project %s, file %s",
+                                                projectId, file.getFileUri()))))
+                        .doOnError(
+                            e -> {
+                              String msg =
+                                  String.format(
+                                      "Error getting string information for file %s in project %s",
+                                      file.getFileUri(), projectId);
+                              logger.error(msg, e);
+                              throw new SmartlingClientException(msg, e);
+                            })
+                        .blockOptional()
+                        .orElseThrow(
+                            () ->
+                                new SmartlingClientException(
                                     String.format(
                                         "Error getting string information for file %s in project %s",
-                                        file.getFileUri(), projectId);
-                                logger.error(msg, e);
-                                throw new SmartlingClientException(msg, e);
-                              })
-                          .blockOptional()
-                          .orElseThrow(
-                              () ->
-                                  new SmartlingClientException(
-                                      String.format(
-                                          "Error getting string information for file %s in project %s",
-                                          file.getFileUri(), projectId)));
-
-                  return stringInfos.map(
-                      stringInfo -> {
-                        logger.debug(
-                            "hashcode: {}\nvariant: {}\nparsed string: {}",
-                            stringInfo.getHashcode(),
-                            stringInfo.getStringVariant(),
-                            stringInfo.getParsedStringText());
-
-                        Preconditions.checkNotNull(
-                            stringInfo.getStringVariant(),
-                            "Variant must be enabled in Smartling for properly synchronizing");
-                        SmartlingJsonKeys.Key key =
-                            smartlingJsonKeys.parse(stringInfo.getStringVariant());
-                        ThirdPartyTextUnit thirdPartyTextUnit = new ThirdPartyTextUnit();
-                        thirdPartyTextUnit.setId(stringInfo.getHashcode());
-                        thirdPartyTextUnit.setTmTextUnitId(key.getTmTextUnitd());
-                        thirdPartyTextUnit.setAssetPath(key.getAssetPath());
-                        thirdPartyTextUnit.setName(key.getTextUnitName());
-                        thirdPartyTextUnit.setNamePluralPrefix(isPluralFile(file.getFileUri()));
-
-                        return thirdPartyTextUnit;
-                      });
-                })
+                                        file.getFileUri(), projectId))))
+            .flatMap(List::stream)
             .collect(Collectors.toList());
 
     return thirdPartyTextUnits;
