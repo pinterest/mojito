@@ -307,64 +307,72 @@ public class ThirdPartyTMSSmartling implements ThirdPartyTMS {
 
     List<ThirdPartyTextUnit> thirdPartyTextUnits =
         files.stream()
-            .flatMap(
-                file -> {
-                  Stream<StringInfo> stringInfos =
-                      Mono.fromCallable(
-                              () -> smartlingClient.getStringInfos(projectId, file.getFileUri()))
-                          .retryWhen(
-                              smartlingClient
-                                  .getRetryConfiguration()
-                                  .doBeforeRetry(
-                                      e ->
-                                          logger.info(
-                                              String.format(
-                                                  "Retrying after failure to get string information from Smartling for project id: %s, file: %s",
-                                                  projectId, file.getFileUri()),
-                                              e.failure())))
-                          .doOnError(
-                              e -> {
-                                String msg =
+            .map(
+                file ->
+                    Mono.fromCallable(
+                            () -> {
+                              Stream<StringInfo> stringInfos =
+                                  smartlingClient.getStringInfos(projectId, file.getFileUri());
+                              return stringInfos
+                                  .map(
+                                      stringInfo -> {
+                                        logger.debug(
+                                            "hashcode: {}\nvariant: {}\nparsed string: {}",
+                                            stringInfo.getHashcode(),
+                                            stringInfo.getStringVariant(),
+                                            stringInfo.getParsedStringText());
+
+                                        AssetPathAndTextUnitNameKeys.Key key =
+                                            assetPathAndTextUnitNameKeys.parse(
+                                                stringInfo.getStringVariant());
+                                        ThirdPartyTextUnit thirdPartyTextUnit =
+                                            new ThirdPartyTextUnit();
+                                        thirdPartyTextUnit.setId(stringInfo.getHashcode());
+                                        thirdPartyTextUnit.setAssetPath(key.getAssetPath());
+                                        thirdPartyTextUnit.setName(key.getTextUnitName());
+                                        thirdPartyTextUnit.setNamePluralPrefix(
+                                            isPluralFile(file.getFileUri()));
+                                        thirdPartyTextUnit.setUploadedFileUri(file.getFileUri());
+                                        thirdPartyTextUnit.setSource(
+                                            stringInfo.getParsedStringText());
+                                        thirdPartyTextUnit.setComment(
+                                            stringInfo.getContentFileStringInstructions().stream()
+                                                .reduce((first, second) -> second)
+                                                .map(
+                                                    ContentFileStringInstruction
+                                                        ::getContentFileStringInstruction)
+                                                .orElse(null));
+
+                                        return thirdPartyTextUnit;
+                                      })
+                                  .collect(Collectors.toList());
+                            })
+                        .retryWhen(
+                            smartlingClient
+                                .getRetryConfiguration()
+                                .doBeforeRetry(
+                                    e ->
+                                        logger.info(
+                                            String.format(
+                                                "Retrying after failure to get string information from Smartling for project id: %s, file: %s",
+                                                projectId, file.getFileUri()))))
+                        .doOnError(
+                            e -> {
+                              String msg =
+                                  String.format(
+                                      "Error getting string information from Smartling for project id: %s, file: %s",
+                                      projectId, file.getFileUri());
+                              logger.error(msg, e);
+                              throw new SmartlingClientException(msg, e);
+                            })
+                        .blockOptional()
+                        .orElseThrow(
+                            () ->
+                                new SmartlingClientException(
                                     String.format(
-                                        "Error getting string information from Smartling for project id: %s, file: %s",
-                                        projectId, file.getFileUri());
-                                logger.error(msg, e);
-                                throw new SmartlingClientException(msg, e);
-                              })
-                          .blockOptional()
-                          .orElseThrow(
-                              () ->
-                                  new SmartlingClientException(
-                                      String.format(
-                                          "Error getting string information from Smartling for projectId: %s, string infos stream is not present",
-                                          projectId)));
-
-                  return stringInfos.map(
-                      stringInfo -> {
-                        logger.debug(
-                            "hashcode: {}\nvariant: {}\nparsed string: {}",
-                            stringInfo.getHashcode(),
-                            stringInfo.getStringVariant(),
-                            stringInfo.getParsedStringText());
-
-                        AssetPathAndTextUnitNameKeys.Key key =
-                            assetPathAndTextUnitNameKeys.parse(stringInfo.getStringVariant());
-                        ThirdPartyTextUnit thirdPartyTextUnit = new ThirdPartyTextUnit();
-                        thirdPartyTextUnit.setId(stringInfo.getHashcode());
-                        thirdPartyTextUnit.setAssetPath(key.getAssetPath());
-                        thirdPartyTextUnit.setName(key.getTextUnitName());
-                        thirdPartyTextUnit.setNamePluralPrefix(isPluralFile(file.getFileUri()));
-                        thirdPartyTextUnit.setUploadedFileUri(file.getFileUri());
-                        thirdPartyTextUnit.setSource(stringInfo.getParsedStringText());
-                        thirdPartyTextUnit.setComment(
-                            stringInfo.getContentFileStringInstructions().stream()
-                                .reduce((first, second) -> second)
-                                .map(ContentFileStringInstruction::getContentFileStringInstruction)
-                                .orElse(null));
-
-                        return thirdPartyTextUnit;
-                      });
-                })
+                                        "Error getting string information from Smartling for projectId: %s, string infos stream is not present",
+                                        projectId))))
+            .flatMap(List::stream)
             .collect(Collectors.toList());
 
     return thirdPartyTextUnits;

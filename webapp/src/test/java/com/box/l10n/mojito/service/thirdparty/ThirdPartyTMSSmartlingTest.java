@@ -66,6 +66,9 @@ import com.box.l10n.mojito.service.tm.search.UsedFilter;
 import com.box.l10n.mojito.smartling.AssetPathAndTextUnitNameKeys;
 import com.box.l10n.mojito.smartling.SmartlingClient;
 import com.box.l10n.mojito.smartling.SmartlingClientException;
+import com.box.l10n.mojito.smartling.response.File;
+import com.box.l10n.mojito.smartling.response.Items;
+import com.box.l10n.mojito.smartling.response.StringInfo;
 import com.box.l10n.mojito.test.TestIdWatcher;
 import com.box.l10n.mojito.utils.PollableTaskJobMatcher;
 import com.box.l10n.mojito.utils.TestingJobListener;
@@ -74,6 +77,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -81,6 +85,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -276,6 +281,103 @@ public class ThirdPartyTMSSmartlingTest extends ServiceTestBase {
     tmsSmartling.removeImage(projectId, contextId);
 
     verify(smartlingClient, times(1)).deleteContext(projectId, contextId);
+  }
+
+  @Test
+  public void testRetryDuringGetThirdPartyTextUnitsGetStringInfos()
+      throws RepositoryNameAlreadyUsedException {
+    Repository repository = repositoryService.createRepository(testIdWatcher.getEntityName("repo"));
+
+    File file = new File();
+    file.setFileUri(repository.getName() + "/00000_singular_source.xml");
+
+    Items<File> files = new Items<>();
+    files.setItems(List.of(file));
+
+    StringInfo stringInfo = new StringInfo();
+    stringInfo.setHashcode("hash-1");
+    stringInfo.setStringVariant("asset/path.xml#@#hello");
+    stringInfo.setParsedStringText("Hello");
+    stringInfo.setContentFileStringInstructions(Collections.emptyList());
+
+    SmartlingClientException lazyFailure =
+        new SmartlingClientException(new HttpServerErrorException(HttpStatus.GATEWAY_TIMEOUT));
+    AtomicInteger attempts = new AtomicInteger();
+
+    when(smartlingClient.getFiles("projectId")).thenReturn(files);
+    when(smartlingClient.getStringInfos("projectId", file.getFileUri()))
+        .thenAnswer(
+            invocation ->
+                attempts.getAndIncrement() == 0
+                    ? streamThatFailsOnConsumption(stringInfo, lazyFailure)
+                    : Stream.of(stringInfo));
+
+    List<com.box.l10n.mojito.service.thirdparty.ThirdPartyTextUnit> thirdPartyTextUnits =
+        tmsSmartling.getThirdPartyTextUnits(repository, "projectId", Collections.emptyList());
+
+    assertThat(thirdPartyTextUnits).hasSize(1);
+    assertThat(thirdPartyTextUnits.getFirst().getId()).isEqualTo("hash-1");
+    assertThat(thirdPartyTextUnits.getFirst().getAssetPath()).isEqualTo("asset/path.xml");
+    assertThat(thirdPartyTextUnits.getFirst().getName()).isEqualTo("hello");
+    assertThat(thirdPartyTextUnits.getFirst().getSource()).isEqualTo("Hello");
+
+    verify(smartlingClient, times(1)).getFiles("projectId");
+    verify(smartlingClient, times(2)).getStringInfos("projectId", file.getFileUri());
+  }
+
+  @Test
+  public void testRetriesExhaustedDuringGetThirdPartyTextUnitsGetStringInfos()
+      throws RepositoryNameAlreadyUsedException {
+    Repository repository = repositoryService.createRepository(testIdWatcher.getEntityName("repo"));
+
+    File file = new File();
+    file.setFileUri(repository.getName() + "/00000_singular_source.xml");
+
+    Items<File> files = new Items<>();
+    files.setItems(List.of(file));
+
+    String responseBody = "a".repeat(1000) + "b".repeat(200);
+    String includedBodySnippet = responseBody.substring(0, 1000);
+    String truncatedTail = responseBody.substring(1000);
+    SmartlingClientException lazyFailure =
+        new SmartlingClientException(
+            new HttpServerErrorException(
+                HttpStatus.GATEWAY_TIMEOUT,
+                "Gateway Timeout; response body (first 1000 bytes): " + includedBodySnippet,
+                responseBody.getBytes(StandardCharsets.UTF_8),
+                StandardCharsets.UTF_8));
+
+    when(smartlingClient.getFiles("projectId")).thenReturn(files);
+    when(smartlingClient.getStringInfos("projectId", file.getFileUri()))
+        .thenAnswer(invocation -> streamThatFailsOnConsumption(lazyFailure));
+
+    RuntimeException exception =
+        assertThrows(
+            SmartlingClientException.class,
+            () ->
+                tmsSmartling.getThirdPartyTextUnits(
+                    repository, "projectId", Collections.emptyList()));
+
+    String retriesExhaustedMessage = exception.getCause().getMessage();
+    String originalErrorMessage = exception.getCause().getCause().getMessage();
+    assertTrue(retriesExhaustedMessage.contains("Retries exhausted: 10/10"));
+    assertTrue(
+        originalErrorMessage.contains("response body (first 1000 bytes): " + includedBodySnippet));
+    assertThat(originalErrorMessage).doesNotContain(truncatedTail);
+    verify(smartlingClient, times(1)).getFiles("projectId");
+    verify(smartlingClient, times(11)).getStringInfos("projectId", file.getFileUri());
+  }
+
+  private Stream<StringInfo> streamThatFailsOnConsumption(
+      StringInfo firstItem, RuntimeException failure) {
+    return Stream.concat(Stream.of(firstItem), streamThatFailsOnConsumption(failure));
+  }
+
+  private Stream<StringInfo> streamThatFailsOnConsumption(RuntimeException failure) {
+    return Stream.generate(
+        () -> {
+          throw failure;
+        });
   }
 
   @Test

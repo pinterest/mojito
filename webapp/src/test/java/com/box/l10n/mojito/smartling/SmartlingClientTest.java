@@ -3,6 +3,9 @@ package com.box.l10n.mojito.smartling;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 import com.box.l10n.mojito.smartling.request.Binding;
 import com.box.l10n.mojito.smartling.request.Bindings;
@@ -13,9 +16,15 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.stream.Stream;
 import org.junit.*;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
+import org.mockito.MockedStatic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +32,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.test.context.junit4.SpringRunner;
+import reactor.util.retry.Retry;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(
@@ -60,6 +70,44 @@ public class SmartlingClientTest {
             smartlingTestConfig.projectId, smartlingTestConfig.fileUri, 0, 500);
 
     sourceStrings.getItems().stream().map(item -> item.getHashcode()).forEach(logger::debug);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testGetSourceStringsTruncatesResponseBodyOnError() throws Exception {
+    HttpClient httpClient = mock(HttpClient.class);
+    HttpResponse<String> httpResponse = (HttpResponse<String>) mock(HttpResponse.class);
+    SmartlingOAuth2TokenService tokenService = mock(SmartlingOAuth2TokenService.class);
+
+    String responseBody = "x".repeat(SmartlingClient.ERROR_RESPONSE_SNIPPET_MAX_BYTES + 250);
+    String truncatedResponseBody =
+        responseBody.substring(0, SmartlingClient.ERROR_RESPONSE_SNIPPET_MAX_BYTES);
+
+    when(tokenService.getAccessToken()).thenReturn("token");
+    when(httpResponse.body()).thenReturn(responseBody);
+    when(httpClient.send(
+            ArgumentMatchers.any(HttpRequest.class),
+            ArgumentMatchers.<HttpResponse.BodyHandler<String>>any()))
+        .thenReturn(httpResponse);
+
+    try (MockedStatic<HttpClient> mockedHttpClient = mockStatic(HttpClient.class)) {
+      mockedHttpClient.when(HttpClient::newHttpClient).thenReturn(httpClient);
+
+      SmartlingClient testSmartlingClient =
+          new SmartlingClient(tokenService, Retry.backoff(1, Duration.ofMillis(1)));
+
+      SmartlingClientException exception =
+          Assert.assertThrows(
+              SmartlingClientException.class,
+              () -> testSmartlingClient.getSourceStrings("projectId", "fileUri", 0, 500));
+
+      assertThat(exception.getMessage()).contains("Can't get source strings");
+      assertThat(exception.getMessage())
+          .contains("response body (first 1000 bytes): " + truncatedResponseBody);
+      assertThat(truncatedResponseBody).hasSize(SmartlingClient.ERROR_RESPONSE_SNIPPET_MAX_BYTES);
+      assertThat(exception.getMessage())
+          .contains(responseBody.substring(SmartlingClient.ERROR_RESPONSE_SNIPPET_MAX_BYTES));
+    }
   }
 
   @Test
