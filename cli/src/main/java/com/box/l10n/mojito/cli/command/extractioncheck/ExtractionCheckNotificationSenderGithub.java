@@ -207,7 +207,7 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
               githubRepo,
               commitSha,
               GHCommitState.SUCCESS,
-              "Checks disabled as SKIP_I18N_CHECKS was applied in comments.",
+              "Checks disabled because a SKIP_I18N_CHECKS comment or label was found.",
               "I18N String Checks",
               commitStatusTargetUrl);
     }

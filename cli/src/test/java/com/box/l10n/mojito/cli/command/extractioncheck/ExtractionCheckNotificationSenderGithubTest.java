@@ -251,7 +251,7 @@ public class ExtractionCheckNotificationSenderGithubTest {
             "testRepo",
             "123456789",
             GHCommitState.SUCCESS,
-            "Checks disabled as SKIP_I18N_CHECKS was applied in comments.",
+            "Checks disabled because a SKIP_I18N_CHECKS comment or label was found.",
             "I18N String Checks",
             "https://somewebaddress.com/");
   }

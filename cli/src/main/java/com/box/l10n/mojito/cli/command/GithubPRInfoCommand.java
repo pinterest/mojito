@@ -67,6 +67,13 @@ public class GithubPRInfoCommand extends Command {
   String owner;
 
   @Parameter(
+      names = {"--skip-i18n-checks-label"},
+      arity = 1,
+      required = false,
+      description = "Github label name that is used to trigger skipping i18n checks")
+  String skipI18NChecksLabel = "skip-i18n-checks";
+
+  @Parameter(
       names = {"--skip-i18n-push-label"},
       arity = 1,
       required = false,
@@ -115,8 +122,13 @@ public class GithubPRInfoCommand extends Command {
           .a(getUsernameForAuthorEmail(authorEmail))
           .println();
       List<GHIssueComment> prComments = github.getPRComments(repository, prNumber);
-      if (isSkipChecks(prComments)) {
-        addReactionToSkipChecksComment(prComments);
+      boolean skipChecksViaComment = isSkipChecks(prComments);
+      boolean skipChecksViaLabel =
+          github.isLabelAppliedToPR(repository, prNumber, skipI18NChecksLabel);
+      if (skipChecksViaComment || skipChecksViaLabel) {
+        if (skipChecksViaComment) {
+          addReactionToSkipChecksComment(prComments);
+        }
         consoleWriterAnsiCodeEnabledFalse.a("MOJITO_SKIP_I18N_CHECKS=true").println();
       } else {
         consoleWriterAnsiCodeEnabledFalse.a("MOJITO_SKIP_I18N_CHECKS=false").println();
