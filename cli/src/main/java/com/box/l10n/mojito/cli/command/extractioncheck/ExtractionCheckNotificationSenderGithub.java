@@ -1,12 +1,17 @@
 package com.box.l10n.mojito.cli.command.extractioncheck;
 
 import com.box.l10n.mojito.cli.command.checks.CliCheckResult;
+import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
+import com.box.l10n.mojito.cli.command.utils.GithubReviewCommentService;
+import com.box.l10n.mojito.github.GithubClient;
 import com.box.l10n.mojito.github.GithubClients;
 import com.box.l10n.mojito.thirdpartynotification.github.GithubIcon;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
@@ -18,6 +23,8 @@ import reactor.core.publisher.Mono;
 public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNotificationSender {
 
   @Autowired GithubClients githubClients;
+
+  @Autowired GithubReviewCommentService githubReviewCommentService;
 
   private final String githubRepo;
 
@@ -77,6 +84,51 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
       sendSummaryNotification(failures, hardFail);
     } else {
       sendFullFailureNotification(failures, hardFail);
+    }
+  }
+
+  /**
+   * Adds inline PR review comments for check failures using the GithubReviewCommentService. This
+   * method will only post comments if all required data is available.
+   *
+   * @param failures the check failures to create review comments for
+   * @return the review comments that were generated (and posted), or an empty list if none were
+   *     generated or required data was missing
+   */
+  public List<GithubClient.ReviewComment> addInlineReviewComments(
+      List<CliCheckResult> failures,
+      List<AssetExtractionDiff> assetExtractionDiffs,
+      Map<String, Set<Integer>> githubModifiedLines,
+      String prefixToRemoveFromFileUris) {
+    if (assetExtractionDiffs == null
+        || assetExtractionDiffs.isEmpty()
+        || githubModifiedLines == null
+        || commitSha == null
+        || commitSha.isEmpty()) {
+      return List.of();
+    }
+
+    try {
+      List<GithubClient.ReviewComment> reviewComments =
+          githubReviewCommentService.generateReviewComments(
+              failures,
+              assetExtractionDiffs,
+              githubModifiedLines,
+              githubRepo,
+              prefixToRemoveFromFileUris);
+
+      if (!reviewComments.isEmpty()) {
+        githubClients
+            .getClient(githubOwner)
+            .addReviewCommentsToPR(githubRepo, prNumber, reviewComments, commitSha);
+      }
+
+      return reviewComments;
+    } catch (Exception e) {
+      // Log error but don't fail the notification process
+      // The summary comment has already been posted
+      throw new ExtractionCheckNotificationSenderException(
+          "Failed to add inline review comments to PR", e);
     }
   }
 

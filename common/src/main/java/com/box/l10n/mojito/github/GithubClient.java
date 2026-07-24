@@ -582,4 +582,99 @@ public class GithubClient {
             operationName)
         .increment();
   }
+
+  /**
+   * Posts review comments to a pull request. These are inline comments on specific lines of code.
+   *
+   * @param repository The repository name
+   * @param prNumber The pull request number
+   * @param reviewComments List of review comments to post
+   * @param commitSha The commit SHA to attach the review to
+   */
+  public void addReviewCommentsToPR(
+      String repository, int prNumber, List<ReviewComment> reviewComments, String commitSha) {
+    String repoFullPath = getRepositoryPath(repository);
+
+    if (reviewComments == null || reviewComments.isEmpty()) {
+      logger.debug(
+          "No review comments to post for PR {} in repository '{}'", prNumber, repoFullPath);
+      return;
+    }
+
+    Mono.fromRunnable(
+            () -> {
+              try {
+                GHPullRequest pullRequest =
+                    getGithubClient(repository)
+                        .getRepository(repoFullPath)
+                        .getPullRequest(prNumber);
+
+                // Create a review with comments
+                var reviewBuilder =
+                    pullRequest
+                        .createReview()
+                        .commitId(commitSha)
+                        .body("I18N source string validation findings:");
+
+                for (ReviewComment comment : reviewComments) {
+                  reviewBuilder.comment(comment.getBody(), comment.getPath(), comment.getLine());
+                }
+
+                reviewBuilder.create();
+
+                logger.info(
+                    "Successfully posted {} review comments to PR {} in repository '{}'",
+                    reviewComments.size(),
+                    prNumber,
+                    repoFullPath);
+
+              } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+                String message =
+                    String.format(
+                        "Error adding review comments to PR %d in repository '%s': %s",
+                        prNumber, repoFullPath, e.getMessage());
+                logger.error(message, e);
+                throw new GithubException(message, e);
+              }
+            })
+        .retryWhen(
+            Retry.backoff(maxRetries, (retryMinBackoff))
+                .maxBackoff(retryMaxBackoff)
+                .filter(e -> e instanceof IOException || e instanceof GithubException))
+        .doOnError(
+            e -> {
+              sendRetryExceededMetric(repository, "addReviewCommentsToPR");
+              logger.error(
+                  String.format(
+                      "Error adding review comments to PR %d in repository '%s': %s",
+                      prNumber, repoFullPath, e.getMessage()),
+                  e);
+            })
+        .block();
+  }
+
+  /** Data class representing a pull request review comment */
+  public static class ReviewComment {
+    private final String body;
+    private final String path;
+    private final int line;
+
+    public ReviewComment(String body, String path, int line) {
+      this.body = body;
+      this.path = path;
+      this.line = line;
+    }
+
+    public String getBody() {
+      return body;
+    }
+
+    public String getPath() {
+      return path;
+    }
+
+    public int getLine() {
+      return line;
+    }
+  }
 }
