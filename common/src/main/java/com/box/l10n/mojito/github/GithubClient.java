@@ -24,6 +24,7 @@ import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestFileDetail;
+import org.kohsuke.github.GHPullRequestReviewEvent;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
 import org.kohsuke.github.HttpException;
@@ -589,7 +590,7 @@ public class GithubClient {
    * @param repository The repository name
    * @param prNumber The pull request number
    * @param reviewComments List of review comments to post
-   * @param commitSha The commit SHA to attach the review to
+   * @param commitSha The commit SHA to attach the review to (must be the HEAD commit of the PR)
    */
   public void addReviewCommentsToPR(
       String repository, int prNumber, List<ReviewComment> reviewComments, String commitSha) {
@@ -609,15 +610,33 @@ public class GithubClient {
                         .getRepository(repoFullPath)
                         .getPullRequest(prNumber);
 
+                // Validate that commitSha is the HEAD commit of the PR
+                String headCommitSha = pullRequest.getHead().getSha();
+                String effectiveCommitSha = commitSha;
+                if (!headCommitSha.equals(effectiveCommitSha)) {
+                  logger.warn(
+                      "Provided commit SHA {} does not match PR head commit {}. "
+                          + "Using PR head commit for review comments.",
+                      effectiveCommitSha,
+                      headCommitSha);
+                  // Use the actual HEAD commit of the PR
+                  effectiveCommitSha = headCommitSha;
+                }
+
                 // Create a review with comments
                 var reviewBuilder =
                     pullRequest
                         .createReview()
-                        .commitId(commitSha)
-                        .body("I18N source string validation findings:");
+                        .commitId(effectiveCommitSha)
+                        .body("I18N source string validation findings:")
+                        .event(GHPullRequestReviewEvent.COMMENT);
 
                 for (ReviewComment comment : reviewComments) {
-                  reviewBuilder.comment(comment.getBody(), comment.getPath(), comment.getLine());
+                  // Use the line-based API (serializes "line", defaults side to RIGHT) rather than
+                  // the legacy comment(...) overload, which sends a diff "position" and anchors the
+                  // comment to the left/base side of the diff.
+                  reviewBuilder.singleLineComment(
+                      comment.getBody(), comment.getPath(), comment.getLine());
                 }
 
                 reviewBuilder.create();

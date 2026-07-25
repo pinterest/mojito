@@ -872,7 +872,8 @@ public class ExtractionCheckCommand extends Command {
                         cliCheckerFailures,
                         assetExtractionDiffs,
                         githubModifiedLines,
-                        fileMountPathPrefix);
+                        fileMountPathPrefix,
+                        consoleWriter);
                 consoleWriter
                     .fg(Ansi.Color.GREEN)
                     .newLine()

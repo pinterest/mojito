@@ -3,6 +3,7 @@ package com.box.l10n.mojito.cli.command.extractioncheck;
 import com.box.l10n.mojito.cli.command.checks.CliCheckResult;
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.cli.command.utils.GithubReviewCommentService;
+import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.github.GithubClient;
 import com.box.l10n.mojito.github.GithubClients;
 import com.box.l10n.mojito.thirdpartynotification.github.GithubIcon;
@@ -15,12 +16,17 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import reactor.core.publisher.Mono;
 
 @Configurable
 public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNotificationSender {
+
+  private static final Logger logger =
+      LoggerFactory.getLogger(ExtractionCheckNotificationSenderGithub.class);
 
   @Autowired GithubClients githubClients;
 
@@ -99,7 +105,8 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
       List<CliCheckResult> failures,
       List<AssetExtractionDiff> assetExtractionDiffs,
       Map<String, Set<Integer>> githubModifiedLines,
-      String prefixToRemoveFromFileUris) {
+      String prefixToRemoveFromFileUris,
+      ConsoleWriter consoleWriter) {
     if (assetExtractionDiffs == null
         || assetExtractionDiffs.isEmpty()
         || githubModifiedLines == null
@@ -109,26 +116,48 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
     }
 
     try {
-      List<GithubClient.ReviewComment> reviewComments =
+      /*List<GithubClient.ReviewComment> reviewComments =
           githubReviewCommentService.generateReviewComments(
               failures,
               assetExtractionDiffs,
               githubModifiedLines,
               githubRepo,
-              prefixToRemoveFromFileUris);
+              prefixToRemoveFromFileUris);*/
 
-      if (!reviewComments.isEmpty()) {
-        githubClients
-            .getClient(githubOwner)
-            .addReviewCommentsToPR(githubRepo, prNumber, reviewComments, commitSha);
+      List<GithubClient.ReviewComment> reviewComments = List.of(new GithubClient.ReviewComment("TEST 1", "locale/Messages.properties",  2));
+
+      if (reviewComments.isEmpty()) {
+        return reviewComments;
       }
+
+      consoleWriter
+          .newLine()
+          .a("Adding ")
+          .a(reviewComments.size())
+          .a(" review comment(s) to ")
+          .a(githubOwner + "/" + githubRepo)
+          .a(" PR #")
+          .a(prNumber)
+          .a(" @ ")
+          .a(commitSha)
+          .println();
+      reviewComments.forEach(
+          comment ->
+              consoleWriter
+                  .a("  - ")
+                  .a(comment.getPath() + ":" + comment.getLine())
+                  .println());
+
+      githubClients
+          .getClient(githubOwner)
+          .addReviewCommentsToPR(githubRepo, prNumber, reviewComments, commitSha);
 
       return reviewComments;
     } catch (Exception e) {
-      // Log error but don't fail the notification process
-      // The summary comment has already been posted
-      throw new ExtractionCheckNotificationSenderException(
-          "Failed to add inline review comments to PR", e);
+      // Log the error but don't fail the notification process: the summary comment has already been
+      // posted, and inline review comments are a best-effort enhancement.
+      logger.error("Failed to add inline review comments to PR {}", prNumber, e);
+      return List.of();
     }
   }
 
