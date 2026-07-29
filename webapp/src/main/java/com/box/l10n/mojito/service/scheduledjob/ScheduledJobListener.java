@@ -85,7 +85,7 @@ public class ScheduledJobListener extends JobListenerSupport {
         scheduledJob.getRepository().getName());
   }
 
-  /** The job finished execution, if an error occurred jobException will not be null. */
+  /** The job finished execution, if an error occurred jobException will not be null */
   @Override
   public void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
     // This method must never throw an exception. If it does, Quartz will abort the remaining
