@@ -8,6 +8,9 @@ import org.quartz.JobExecutionException;
 import org.quartz.listeners.JobListenerSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.retry.backoff.ExponentialBackOffPolicy;
+import org.springframework.retry.policy.SimpleRetryPolicy;
+import org.springframework.retry.support.RetryTemplate;
 
 /**
  * Listener that listens for Quartz job events, this listener is attached to the 'scheduledJobs'
@@ -23,12 +26,29 @@ public class ScheduledJobListener extends JobListenerSupport {
 
   private final ScheduledJobRepository scheduledJobRepository;
   private final ScheduledJobStatusRepository scheduledJobStatusRepository;
+  private final RetryTemplate retryTemplate;
 
   public ScheduledJobListener(
       ScheduledJobRepository scheduledJobRepository,
-      ScheduledJobStatusRepository scheduledJobStatusRepository) {
+      ScheduledJobStatusRepository scheduledJobStatusRepository,
+      ScheduledJobListenerRetryConfiguration retryConfiguration) {
     this.scheduledJobRepository = scheduledJobRepository;
     this.scheduledJobStatusRepository = scheduledJobStatusRepository;
+    this.retryTemplate = buildRetryTemplate(retryConfiguration);
+  }
+
+  private static RetryTemplate buildRetryTemplate(
+      ScheduledJobListenerRetryConfiguration retryConfiguration) {
+    SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy(retryConfiguration.getMaxAttempts());
+
+    ExponentialBackOffPolicy backOffPolicy = new ExponentialBackOffPolicy();
+    backOffPolicy.setInitialInterval(retryConfiguration.getInitialInterval());
+    backOffPolicy.setMultiplier(retryConfiguration.getMultiplier());
+
+    RetryTemplate retryTemplate = new RetryTemplate();
+    retryTemplate.setRetryPolicy(retryPolicy);
+    retryTemplate.setBackOffPolicy(backOffPolicy);
+    return retryTemplate;
   }
 
   @Override
@@ -65,9 +85,28 @@ public class ScheduledJobListener extends JobListenerSupport {
         scheduledJob.getRepository().getName());
   }
 
-  /** The job finished execution, if an error occurred jobException will not be null */
+  /** The job finished execution, if an error occurred jobException will not be null. */
   @Override
   public void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
+    // This method must never throw an exception. If it does, Quartz will abort the remaining
+    // listener notifications - including the one that informs the DB that the job completed
+    // successfully. Skipping that notification will leave the job stuck in a BLOCKED state.
+    try {
+      retryTemplate.execute(
+          retryContext -> {
+            handleJobWasExecuted(context, jobException);
+            return null;
+          });
+    } catch (Exception e) {
+      logger.error(
+          "Failed to handle post execution for job {} after retries",
+          context.getJobDetail().getKey().getName(),
+          e);
+    }
+  }
+
+  private void handleJobWasExecuted(
+      JobExecutionContext context, JobExecutionException jobException) {
 
     Optional<ScheduledJob> optScheduledJob =
         scheduledJobRepository.findByUuid(context.getJobDetail().getKey().getName());
