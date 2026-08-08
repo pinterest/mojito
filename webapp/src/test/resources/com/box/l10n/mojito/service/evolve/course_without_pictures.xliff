@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+    <file additional-languages="fr" code="evolve-course-en" course-type="CourseEvolve" datatype="plaintext" evolve-draft-id="123abc" evolve-locale-id="" original="course[1]" rtl="false" source-language="en">
+        <body>
+            <trans-unit datatype="plaintext" id="course[1].name">
+                <source>Media Planner Practice Exam</source>
+                <target/>
+                <note>The name of the course</note>
+            </trans-unit>
+            <trans-unit evolve-path="_videos.gifPlayButtonAriaLabel" evolve-ref-id="67901d791b22e91f45a711c9" evolve-translation-type="String" evolve-type="course" id="335">
+                <source>start animation</source>
+                <target/>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

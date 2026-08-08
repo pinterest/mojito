@@ -37,7 +37,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = {EvolveClientTest.class})
@@ -117,10 +116,10 @@ public class EvolveClientTest {
 
     assertEquals(urlCaptor.getAllValues().size(), 2);
     assertEquals(
-        this.apiPath + "courses?locale=en&is_active=true&page=1",
+        this.apiPath + "courses?is_active=true&locale=en&page=1",
         urlCaptor.getAllValues().getFirst());
     assertEquals(
-        this.apiPath + "courses?locale=en&is_active=true&page=2",
+        this.apiPath + "courses?is_active=true&locale=en&page=2",
         urlCaptor.getAllValues().getLast());
 
     for (CourseDTO courseDTO : courses) {
@@ -153,6 +152,90 @@ public class EvolveClientTest {
             this.retryMaxBackoffSecs);
   }
 
+  private void initDataWithSinglePage() {
+    CourseDTO courseDTO = new CourseDTO();
+    courseDTO.setId(1);
+    courseDTO.setTranslationStatus(READY_FOR_TRANSLATION);
+    courseDTO.setType("CourseEvolve");
+
+    CoursesDTO coursesDTO = new CoursesDTO();
+    coursesDTO.setCourses(ImmutableList.of(courseDTO));
+    PaginationDTO pagination = new PaginationDTO();
+    pagination.setCurrentPage(1);
+    pagination.setTotalPages(1);
+    coursesDTO.setPagination(pagination);
+    when(this.mockRestTemplate.getForObject(anyString(), any())).thenReturn(coursesDTO);
+    this.evolveClient =
+        new EvolveClient(
+            this.mockRestTemplate,
+            this.apiPath,
+            this.maxRetries,
+            this.retryMinBackoffSecs,
+            this.retryMaxBackoffSecs);
+  }
+
+  @Test
+  public void testGetCoursesWithSingleCode() {
+    this.initDataWithSinglePage();
+
+    CoursesGetRequest coursesGetRequest = new CoursesGetRequest(Sets.newHashSet("COURSE_A"), null);
+
+    List<CourseDTO> courses = this.evolveClient.getCourses(coursesGetRequest).toList();
+
+    verify(this.mockRestTemplate, times(1)).getForObject(urlCaptor.capture(), any());
+
+    assertEquals(1, courses.size());
+    assertEquals(
+        this.apiPath + "courses?is_active=true&code[]=COURSE_A&page=1", urlCaptor.getValue());
+  }
+
+  @Test
+  public void testGetCoursesWithMultipleCodes() {
+    this.initDataWithSinglePage();
+
+    CoursesGetRequest coursesGetRequest =
+        new CoursesGetRequest(Sets.newTreeSet(Sets.newHashSet("COURSE_A", "COURSE_B")), null);
+
+    this.evolveClient.getCourses(coursesGetRequest).count();
+
+    verify(this.mockRestTemplate, times(1)).getForObject(urlCaptor.capture(), any());
+
+    String capturedUrl = urlCaptor.getValue();
+    assertTrue(capturedUrl.startsWith(this.apiPath + "courses?is_active=true"));
+    assertTrue(capturedUrl.contains("code[]=COURSE_A"));
+    assertTrue(capturedUrl.contains("code[]=COURSE_B"));
+    assertTrue(capturedUrl.endsWith("&page=1"));
+  }
+
+  @Test
+  public void testGetCoursesWithNullCodesUsesLocaleInstead() {
+    this.initEmptyCoursesData();
+
+    CoursesGetRequest coursesGetRequest = new CoursesGetRequest((java.util.Set<String>) null, null);
+
+    this.evolveClient.getCourses(coursesGetRequest).count();
+
+    verify(this.mockRestTemplate, times(1)).getForObject(urlCaptor.capture(), any());
+
+    String capturedUrl = urlCaptor.getValue();
+    assertTrue(capturedUrl.startsWith(this.apiPath + "courses?is_active=true"));
+    assertTrue(!capturedUrl.contains("code%5B%5D"));
+  }
+
+  @Test
+  public void testGetCoursesWithEmptyCodesDoesNotAddCodeParam() {
+    this.initEmptyCoursesData();
+
+    CoursesGetRequest coursesGetRequest = new CoursesGetRequest(Sets.newHashSet(), null);
+
+    this.evolveClient.getCourses(coursesGetRequest).count();
+
+    verify(this.mockRestTemplate, times(1)).getForObject(urlCaptor.capture(), any());
+
+    String capturedUrl = urlCaptor.getValue();
+    assertTrue(!capturedUrl.contains("code%5B%5D"));
+  }
+
   @Test
   public void testGetCoursesWithUpdatedOnToDate() {
     this.initEmptyCoursesData();
@@ -168,8 +251,7 @@ public class EvolveClientTest {
     assertEquals(
         this.apiPath
             + String.format(
-                "courses?locale=en&is_active=true&updated_on_to=%s&page=1",
-                UriComponentsBuilder.fromPath(updatedOnTo.toString()).toUriString()),
+                "courses?is_active=true&locale=en&updated_on_to=%s&page=1", updatedOnTo),
         urlCaptor.getValue());
   }
 

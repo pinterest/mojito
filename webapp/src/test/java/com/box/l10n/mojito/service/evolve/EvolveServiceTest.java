@@ -116,6 +116,8 @@ public class EvolveServiceTest extends ServiceTestBase {
 
   @Autowired GitBlameService gitBlameService;
 
+  @Autowired EvolveCoursePictureService evolveCoursePictureService;
+
   @Rule public TestIdWatcher testIdWatcher = new TestIdWatcher();
 
   @Mock EvolveClient evolveClientMock;
@@ -131,6 +133,8 @@ public class EvolveServiceTest extends ServiceTestBase {
   @Captor ArgumentCaptor<Set<String>> additionalLocalesCaptor;
 
   @Captor ArgumentCaptor<TranslationStatusType> translationStatusTypeCaptor;
+
+  @Captor ArgumentCaptor<CoursesGetRequest> coursesGetRequestCaptor;
 
   EvolveService evolveService;
 
@@ -165,6 +169,7 @@ public class EvolveServiceTest extends ServiceTestBase {
             this.assetExtractionByBranchRepository,
             this.localeMappingHelper,
             new TranslationModeMapper(this.evolveConfigurationProperties),
+            this.evolveCoursePictureService,
             null,
             this.evolveSlackNotificationSenderMock);
   }
@@ -183,11 +188,61 @@ public class EvolveServiceTest extends ServiceTestBase {
     courseDTO1.setType("CourseCurriculum");
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
-        .thenReturn(Stream.of(courseDTO1));
+        .thenAnswer(invocation -> Stream.of(courseDTO1));
     when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
         .thenReturn(this.getXliffContent());
 
     this.initEvolveService();
+  }
+
+  @Test
+  public void testSyncReadyForTranslationFetchesLocalizedCoursesAndUpsertsPictures()
+      throws RepositoryNameAlreadyUsedException, RepositoryLocaleCreationException, IOException {
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
+    RepositoryLocale esRepositoryLocale = new RepositoryLocale();
+    esRepositoryLocale.setLocale(esLocale);
+    Repository repository =
+        repositoryService.createRepository(
+            testIdWatcher.getEntityName("test"),
+            "",
+            this.localeService.getDefaultLocale(),
+            false,
+            Sets.newHashSet(),
+            Sets.newHashSet(esRepositoryLocale));
+
+    CourseDTO courseDTO = new CourseDTO();
+    courseDTO.setId(1);
+    courseDTO.setCode("COURSE_A");
+    courseDTO.setTranslationStatus(READY_FOR_TRANSLATION);
+    courseDTO.setType("CourseCurriculum");
+
+    CourseDTO localizedCourseDTO = new CourseDTO();
+    localizedCourseDTO.setId(2);
+    localizedCourseDTO.setLocale("es-ES");
+    com.box.l10n.mojito.service.evolve.dto.PictureDTO picture =
+        new com.box.l10n.mojito.service.evolve.dto.PictureDTO();
+    picture.setTargetUrl("https://cdn.example.com/es.jpg");
+    localizedCourseDTO.setPicture(picture);
+
+    when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
+        .thenAnswer(invocation -> Stream.of(courseDTO))
+        .thenAnswer(invocation -> Stream.of(localizedCourseDTO));
+    when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
+        .thenReturn(this.getXliffContent());
+    this.initEvolveService();
+
+    this.evolveService.sync(repository.getId(), null);
+
+    verify(this.evolveClientMock, times(2)).getCourses(this.coursesGetRequestCaptor.capture());
+    CoursesGetRequest localizedCoursesRequest = this.coursesGetRequestCaptor.getAllValues().get(1);
+    assertEquals(Set.of("COURSE_A-es-ES"), localizedCoursesRequest.codes());
+    assertNull(localizedCoursesRequest.locale());
+
+    assertTrue(
+        this.evolveCoursePictureService
+            .findByCourseIdAndLocaleBcp47Tag(courseDTO.getId(), "es-ES")
+            .map(p -> "https://cdn.example.com/es.jpg".equals(p.getPictureUrl()))
+            .orElse(false));
   }
 
   @Test
@@ -243,7 +298,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     courseDTO1.setTranslationStatus(IN_TRANSLATION);
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
-        .thenReturn(Stream.of(courseDTO1));
+        .thenAnswer(invocation -> Stream.of(courseDTO1));
 
     this.initEvolveService();
   }
@@ -587,7 +642,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     courseDTO2.setTranslationStatus(IN_TRANSLATION);
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
-        .thenReturn(Stream.of(courseDTO1, courseDTO2));
+        .thenAnswer(invocation -> Stream.of(courseDTO1, courseDTO2));
     when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
         .thenReturn(this.getXliffContent());
 
@@ -936,7 +991,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     courseDTO2.setType("CourseCurriculum");
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
-        .thenReturn(Stream.of(courseDTO1, courseDTO2));
+        .thenAnswer(invocation -> Stream.of(courseDTO1, courseDTO2));
     when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
         .thenThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)))
         .thenThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)))
@@ -981,7 +1036,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     courseDTO2.setType("CourseCurriculum");
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
-        .thenReturn(Stream.of(courseDTO1, courseDTO2));
+        .thenAnswer(invocation -> Stream.of(courseDTO1, courseDTO2));
     when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
         .thenReturn(this.getXliffContent());
     doThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)))
@@ -1023,7 +1078,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     courseDTO1.setTranslationStatus(IN_TRANSLATION);
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
-        .thenReturn(Stream.of(courseDTO1));
+        .thenAnswer(invocation -> Stream.of(courseDTO1));
     doThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)))
         .when(this.evolveClientMock)
         .updateCourseTranslation(anyInt(), any(), anyString());
@@ -1114,7 +1169,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     courseDTO1.setTranslationStatus(IN_TRANSLATION);
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
-        .thenReturn(Stream.of(courseDTO1));
+        .thenAnswer(invocation -> Stream.of(courseDTO1));
     doThrow(new HttpClientErrorException(HttpStatusCode.valueOf(400)))
         .when(this.evolveClientMock)
         .updateCourse(anyInt(), any(TranslationStatusType.class), any(ZonedDateTime.class));
@@ -1315,7 +1370,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     courseDTO1.setType("CourseEvolve");
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
-        .thenReturn(Stream.of(courseDTO1));
+        .thenAnswer(invocation -> Stream.of(courseDTO1));
     when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
         .thenThrow(
             new HttpClientErrorException(
@@ -1374,7 +1429,7 @@ public class EvolveServiceTest extends ServiceTestBase {
     courseDTO1.setType("CourseEvolve");
 
     when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
-        .thenReturn(Stream.of(courseDTO1));
+        .thenAnswer(invocation -> Stream.of(courseDTO1));
     when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
         .thenThrow(
             new HttpClientErrorException(

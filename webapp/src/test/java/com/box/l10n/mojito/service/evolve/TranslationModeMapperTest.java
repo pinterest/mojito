@@ -24,8 +24,7 @@ class TranslationModeMapperTest {
         this.createMapper(
             "Refresh with parent assets and structure", "Preserve assets and structure");
 
-    assertEquals(
-        empty(), translationModeMapper.mapTranslationModeToReplaceLegacyEvolveLocaleContent(null));
+    assertEquals(empty(), translationModeMapper.toRefreshWithParentAssetsAndStructure(null));
   }
 
   @Test
@@ -34,8 +33,7 @@ class TranslationModeMapperTest {
         this.createMapper(
             "Refresh with parent assets and structure", "Preserve assets and structure");
 
-    assertEquals(
-        empty(), translationModeMapper.mapTranslationModeToReplaceLegacyEvolveLocaleContent(""));
+    assertEquals(empty(), translationModeMapper.toRefreshWithParentAssetsAndStructure(""));
   }
 
   @Test
@@ -46,7 +44,7 @@ class TranslationModeMapperTest {
 
     assertEquals(
         of(true),
-        translationModeMapper.mapTranslationModeToReplaceLegacyEvolveLocaleContent(
+        translationModeMapper.toRefreshWithParentAssetsAndStructure(
             "refresh WITH parent ASSETS and structure"));
   }
 
@@ -58,7 +56,7 @@ class TranslationModeMapperTest {
 
     assertEquals(
         of(false),
-        translationModeMapper.mapTranslationModeToReplaceLegacyEvolveLocaleContent(
+        translationModeMapper.toRefreshWithParentAssetsAndStructure(
             "preserve ASSETS and structure"));
   }
 
@@ -69,9 +67,7 @@ class TranslationModeMapperTest {
             "Refresh with parent assets and structure", "Preserve assets and structure");
 
     assertEquals(
-        empty(),
-        translationModeMapper.mapTranslationModeToReplaceLegacyEvolveLocaleContent(
-            "unmapped value"));
+        empty(), translationModeMapper.toRefreshWithParentAssetsAndStructure("unmapped value"));
   }
 
   @Test
@@ -80,8 +76,6 @@ class TranslationModeMapperTest {
 
     assertThrows(
         EvolveSyncException.class,
-        () ->
-            translationModeMapper.mapTranslationModeToReplaceLegacyEvolveLocaleContent(
-                "same value"));
+        () -> translationModeMapper.toRefreshWithParentAssetsAndStructure("same value"));
   }
 }
