@@ -15,8 +15,23 @@ public class TranslationModeMapper {
     this.evolveConfigurationProperties = evolveConfigurationProperties;
   }
 
-  public Optional<Boolean> mapTranslationModeToReplaceLegacyEvolveLocaleContent(
-      String translationMode) {
+  /**
+   * Maps an Evolve course translation mode string to the {@code
+   * refreshWithParentAssetsAndStructure} flag used when pushing translations back.
+   *
+   * <ul>
+   *   <li>{@code true} – when {@code translationMode} matches {@link
+   *       EvolveConfigurationProperties#getRefreshWithParentAssetsAndStructureText()}
+   *   <li>{@code false} – when it matches {@link
+   *       EvolveConfigurationProperties#getPreserveAssetsAndStructureText()}
+   *   <li>empty – when {@code translationMode} is {@code null} or matches neither value
+   * </ul>
+   *
+   * @param translationMode the raw translation mode string from the course DTO, may be {@code null}
+   * @return the mapped flag, or empty if the mode is unrecognised
+   * @throws EvolveSyncException if {@code translationMode} matches both configured values
+   */
+  public Optional<Boolean> toRefreshWithParentAssetsAndStructure(String translationMode) {
     if (translationMode == null) {
       return empty();
     }
