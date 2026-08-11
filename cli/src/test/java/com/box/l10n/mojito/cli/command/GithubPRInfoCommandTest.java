@@ -69,6 +69,8 @@ public class GithubPRInfoCommandTest {
     verify(consoleWriterMock, times(1)).a("MOJITO_GITHUB_AUTHOR_USERNAME=");
     verify(consoleWriterMock, times(1)).a("some");
     verify(consoleWriterMock, times(1)).a("MOJITO_SKIP_I18N_CHECKS=false");
+    verify(this.consoleWriterMock, times(1))
+        .a(String.format("%s=false", GithubPRInfoCommand.SKIP_I18N_CHECKS_LABEL_FLAG));
     verify(consoleWriterMock, times(1)).a("MOJITO_SKIP_I18N_PUSH=false");
     verify(this.consoleWriterMock, times(1))
         .a(String.format("%s=false", GithubPRInfoCommand.SKIP_MAX_STRINGS_BLOCK_FLAG));
@@ -85,6 +87,8 @@ public class GithubPRInfoCommandTest {
     verify(consoleWriterMock, times(1)).a("MOJITO_GITHUB_AUTHOR_USERNAME=");
     verify(consoleWriterMock, times(1)).a("some");
     verify(consoleWriterMock, times(1)).a("MOJITO_SKIP_I18N_CHECKS=true");
+    verify(this.consoleWriterMock, times(1))
+        .a(String.format("%s=false", GithubPRInfoCommand.SKIP_I18N_CHECKS_LABEL_FLAG));
     verify(ghIssueCommentMock, times(1)).createReaction(ReactionContent.PLUS_ONE);
     verify(consoleWriterMock, times(1)).a("MOJITO_SKIP_I18N_PUSH=false");
     verify(this.consoleWriterMock, times(1))
@@ -102,6 +106,8 @@ public class GithubPRInfoCommandTest {
     verify(consoleWriterMock, times(1)).a("MOJITO_GITHUB_AUTHOR_USERNAME=");
     verify(consoleWriterMock, times(1)).a("some");
     verify(consoleWriterMock, times(1)).a("MOJITO_SKIP_I18N_CHECKS=false");
+    verify(this.consoleWriterMock, times(1))
+        .a(String.format("%s=false", GithubPRInfoCommand.SKIP_I18N_CHECKS_LABEL_FLAG));
     verify(consoleWriterMock, times(1)).a("MOJITO_SKIP_I18N_PUSH=true");
     verify(this.consoleWriterMock, times(1))
         .a(String.format("%s=false", GithubPRInfoCommand.SKIP_MAX_STRINGS_BLOCK_FLAG));
@@ -126,6 +132,8 @@ public class GithubPRInfoCommandTest {
     verify(consoleWriterMock, times(1)).a("MOJITO_GITHUB_AUTHOR_USERNAME=");
     verify(consoleWriterMock, times(1)).a("some");
     verify(consoleWriterMock, times(1)).a("MOJITO_SKIP_I18N_CHECKS=false");
+    verify(this.consoleWriterMock, times(1))
+        .a(String.format("%s=false", GithubPRInfoCommand.SKIP_I18N_CHECKS_LABEL_FLAG));
     verify(consoleWriterMock, times(1)).a("MOJITO_SKIP_I18N_PUSH=true");
     verify(this.consoleWriterMock, times(1))
         .a(String.format("%s=false", GithubPRInfoCommand.SKIP_MAX_STRINGS_BLOCK_FLAG));
@@ -155,6 +163,8 @@ public class GithubPRInfoCommandTest {
     verify(this.consoleWriterMock, times(1)).a("MOJITO_GITHUB_AUTHOR_USERNAME=");
     verify(this.consoleWriterMock, times(1)).a("some");
     verify(this.consoleWriterMock, times(1)).a("MOJITO_SKIP_I18N_CHECKS=false");
+    verify(this.consoleWriterMock, times(1))
+        .a(String.format("%s=false", GithubPRInfoCommand.SKIP_I18N_CHECKS_LABEL_FLAG));
     verify(this.consoleWriterMock, times(1)).a("MOJITO_SKIP_I18N_PUSH=false");
     verify(this.consoleWriterMock, times(1))
         .a(String.format("%s=true", GithubPRInfoCommand.SKIP_MAX_STRINGS_BLOCK_FLAG));
@@ -170,7 +180,9 @@ public class GithubPRInfoCommandTest {
     verify(consoleWriterMock, times(1)).a("some@email.com");
     verify(consoleWriterMock, times(1)).a("MOJITO_GITHUB_AUTHOR_USERNAME=");
     verify(consoleWriterMock, times(1)).a("some");
-    verify(consoleWriterMock, times(1)).a("MOJITO_SKIP_I18N_CHECKS=true");
+    verify(consoleWriterMock, times(1)).a("MOJITO_SKIP_I18N_CHECKS=false");
+    verify(this.consoleWriterMock, times(1))
+        .a(String.format("%s=true", GithubPRInfoCommand.SKIP_I18N_CHECKS_LABEL_FLAG));
     verify(ghIssueCommentMock, times(0)).createReaction(ReactionContent.PLUS_ONE);
     verify(consoleWriterMock, times(1)).a("MOJITO_SKIP_I18N_PUSH=false");
     verify(this.consoleWriterMock, times(1))
@@ -189,6 +201,8 @@ public class GithubPRInfoCommandTest {
     verify(consoleWriterMock, times(1)).a("MOJITO_GITHUB_AUTHOR_USERNAME=");
     verify(consoleWriterMock, times(1)).a("some");
     verify(consoleWriterMock, times(1)).a("MOJITO_SKIP_I18N_CHECKS=true");
+    verify(this.consoleWriterMock, times(1))
+        .a(String.format("%s=true", GithubPRInfoCommand.SKIP_I18N_CHECKS_LABEL_FLAG));
     verify(ghIssueCommentMock, times(1)).createReaction(ReactionContent.PLUS_ONE);
     verify(consoleWriterMock, times(1)).a("MOJITO_SKIP_I18N_PUSH=false");
     verify(this.consoleWriterMock, times(1))
