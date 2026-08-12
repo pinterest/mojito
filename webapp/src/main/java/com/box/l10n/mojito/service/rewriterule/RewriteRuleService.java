@@ -15,6 +15,7 @@ import com.box.l10n.mojito.rest.rewriterule.RootRepositoryLocaleNotAllowedForRew
 import com.box.l10n.mojito.service.locale.LocaleRepository;
 import com.box.l10n.mojito.service.repository.RepositoryLocaleRepository;
 import com.box.l10n.mojito.service.repository.RepositoryRepository;
+import com.box.l10n.mojito.service.tm.search.SearchType;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +58,7 @@ public class RewriteRuleService {
       Boolean enabled,
       RewriteRuleScope scope,
       String rewriteFrom,
+      SearchType searchType,
       Pageable pageable) {
     Specification<RewriteRule> spec =
         (root, query, builder) -> {
@@ -81,7 +83,16 @@ public class RewriteRuleService {
           }
 
           if (rewriteFrom != null && !rewriteFrom.isEmpty()) {
-            predicates.add(builder.like(root.get("rewriteFrom"), "%" + rewriteFrom + "%"));
+            SearchType effectiveSearchType = searchType != null ? searchType : SearchType.CONTAINS;
+
+            if (effectiveSearchType == SearchType.EXACT) {
+              predicates.add(builder.equal(root.get("rewriteFrom"), rewriteFrom));
+            } else if (effectiveSearchType == SearchType.ILIKE) {
+              predicates.add(
+                  builder.like(builder.lower(root.get("rewriteFrom")), rewriteFrom.toLowerCase()));
+            } else {
+              predicates.add(builder.like(root.get("rewriteFrom"), "%" + rewriteFrom + "%"));
+            }
           }
 
           return builder.and(predicates.toArray(new Predicate[0]));

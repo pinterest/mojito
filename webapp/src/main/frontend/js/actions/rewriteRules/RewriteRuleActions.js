@@ -27,6 +27,7 @@ class RewriteRuleActions {
             "setSelectedRepoIds",
             "setSelectedLocaleIds",
             "setRewriteFrom",
+            "setSearchType",
             "resetError"
         );
     }
