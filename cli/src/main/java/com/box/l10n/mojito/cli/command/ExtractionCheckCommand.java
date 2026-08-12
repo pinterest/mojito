@@ -233,6 +233,13 @@ public class ExtractionCheckCommand extends Command {
   boolean areChecksSkipped = false;
 
   @Parameter(
+      names = {"--skip-i18n-checks-label-applied", "-sicl"},
+      arity = 1,
+      required = false,
+      description = "Github label name that is used to trigger skipping checks by label.")
+  boolean isSkipI18nChecksLabelApplied = false;
+
+  @Parameter(
       names = {"--checks-skipped-message", "-csm"},
       arity = 1,
       required = false,
@@ -620,6 +627,17 @@ public class ExtractionCheckCommand extends Command {
   }
 
   private void sendChecksSkippedNotifications() {
+    if (this.isSkipI18nChecksLabelApplied) {
+      consoleWriter
+          .fg(Ansi.Color.YELLOW)
+          .newLine()
+          .a(
+              String.format(
+                  "Checks skipped notifications suppressed because skip-i18n-checks label is applied."))
+          .println();
+      return;
+    }
+
     for (ExtractionCheckNotificationSender notificationSender :
         extractionCheckNotificationSenders) {
       try {

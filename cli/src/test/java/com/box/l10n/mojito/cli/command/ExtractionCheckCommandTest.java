@@ -791,6 +791,42 @@ public class ExtractionCheckCommandTest extends CLITestBase {
   }
 
   @Test
+  public void testChecksSkippedNotificationsSuppressedWhenSkipI18nChecksLabelApplied() {
+    ConsoleWriter consoleWriter = Mockito.mock(ConsoleWriter.class);
+    ExtractionCheckCommand extractionCheckCommand = Mockito.spy(new ExtractionCheckCommand());
+    extractionCheckCommand.consoleWriter = consoleWriter;
+    extractionCheckCommand.areChecksSkipped = true;
+    extractionCheckCommand.isSkipI18nChecksLabelApplied = true;
+    when(consoleWriter.fg(isA(Ansi.Color.class))).thenReturn(consoleWriter);
+    when(consoleWriter.newLine()).thenReturn(consoleWriter);
+    when(consoleWriter.a(isA(String.class))).thenReturn(consoleWriter);
+
+    extractionCheckCommand.execute();
+
+    verify(consoleWriter, times(1)).a("Checks disabled as --skip-checks is set to true.");
+    verify(consoleWriter, times(1))
+        .a("Checks skipped notifications suppressed because skip-i18n-checks label is applied.");
+  }
+
+  @Test
+  public void testChecksSkippedNotificationsNotSuppressedWhenSkipI18nChecksLabelNotApplied() {
+    ConsoleWriter consoleWriter = Mockito.mock(ConsoleWriter.class);
+    ExtractionCheckCommand extractionCheckCommand = Mockito.spy(new ExtractionCheckCommand());
+    extractionCheckCommand.consoleWriter = consoleWriter;
+    extractionCheckCommand.areChecksSkipped = true;
+    extractionCheckCommand.isSkipI18nChecksLabelApplied = false;
+    when(consoleWriter.fg(isA(Ansi.Color.class))).thenReturn(consoleWriter);
+    when(consoleWriter.newLine()).thenReturn(consoleWriter);
+    when(consoleWriter.a(isA(String.class))).thenReturn(consoleWriter);
+
+    extractionCheckCommand.execute();
+
+    verify(consoleWriter, times(1)).a("Checks disabled as --skip-checks is set to true.");
+    verify(consoleWriter, times(0))
+        .a("Checks skipped notifications suppressed because skip-i18n-checks label is applied.");
+  }
+
+  @Test
   public void testStatsAreReportedIfUrlTemplateSet() {
     ConsoleWriter consoleWriter = Mockito.mock(ConsoleWriter.class);
     RestTemplate restTemplateMock = Mockito.mock(RestTemplate.class);
