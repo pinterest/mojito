@@ -1971,6 +1971,16 @@ paths:
         required: false
         schema:
           type: string
+      - in: query
+        name: searchType
+        required: false
+        schema:
+          type: string
+          default: CONTAINS
+          enum:
+          - EXACT
+          - CONTAINS
+          - ILIKE
       - description: Zero-based page index (0..N)
         in: query
         name: page

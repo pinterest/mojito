@@ -21,6 +21,7 @@ import com.box.l10n.mojito.service.locale.LocaleService;
 import com.box.l10n.mojito.service.repository.RepositoryLocaleCreationException;
 import com.box.l10n.mojito.service.repository.RepositoryNameAlreadyUsedException;
 import com.box.l10n.mojito.service.repository.RepositoryService;
+import com.box.l10n.mojito.service.tm.search.SearchType;
 import com.box.l10n.mojito.test.TestIdWatcher;
 import com.google.common.collect.Sets;
 import java.text.MessageFormat;
@@ -380,15 +381,15 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
 
     Page<RewriteRule> globalEnabled =
         rewriteRuleService.findRewriteRules(
-            null, null, true, RewriteRuleScope.GLOBAL, null, PageRequest.of(0, 10));
+            null, null, true, RewriteRuleScope.GLOBAL, null, null, PageRequest.of(0, 10));
 
     Page<RewriteRule> repositoryEnabled =
         rewriteRuleService.findRewriteRules(
-            null, null, true, RewriteRuleScope.REPOSITORY, null, PageRequest.of(0, 10));
+            null, null, true, RewriteRuleScope.REPOSITORY, null, null, PageRequest.of(0, 10));
 
     Page<RewriteRule> repositoryDisabled =
         rewriteRuleService.findRewriteRules(
-            null, null, false, RewriteRuleScope.REPOSITORY, null, PageRequest.of(0, 10));
+            null, null, false, RewriteRuleScope.REPOSITORY, null, null, PageRequest.of(0, 10));
 
     assertEquals(1, globalEnabled.getTotalElements());
     assertNull(globalEnabled.getContent().get(0).getRepository());
@@ -440,6 +441,7 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
             true,
             null,
             null,
+            null,
             PageRequest.of(0, 10));
 
     assertEquals(1, filtered.getTotalElements());
@@ -464,6 +466,7 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
     Page<RewriteRule> filtered =
         rewriteRuleService.findRewriteRules(
             List.of(firstRepository.getId(), secondRepository.getId()),
+            null,
             null,
             null,
             null,
@@ -515,6 +518,7 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
             null,
             null,
             null,
+            null,
             PageRequest.of(0, 10));
 
     assertEquals(2, filtered.getTotalElements());
@@ -538,11 +542,52 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
         newRewriteRuleBody(repository.getId(), "something-else", "target-c", true));
 
     Page<RewriteRule> filtered =
-        rewriteRuleService.findRewriteRules(null, null, null, null, "world", PageRequest.of(0, 10));
+        rewriteRuleService.findRewriteRules(
+            null, null, null, null, "world", null, PageRequest.of(0, 10));
 
     assertEquals(2, filtered.getTotalElements());
     assertTrue(
         filtered.getContent().stream().allMatch(rule -> rule.getRewriteFrom().contains("world")));
+  }
+
+  @Test
+  public void testFindRewriteRules_filtersByRewriteFromExactMatch() throws Exception {
+    Repository repository = this.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
+
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(repository.getId(), "exact-match-key", "target-a", true));
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(repository.getId(), "exact-match-key-suffix", "target-b", true));
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(repository.getId(), "prefix-exact-match-key", "target-c", true));
+
+    Page<RewriteRule> filtered =
+        rewriteRuleService.findRewriteRules(
+            null, null, null, null, "exact-match-key", SearchType.EXACT, PageRequest.of(0, 10));
+
+    assertEquals(1, filtered.getTotalElements());
+    assertEquals("exact-match-key", filtered.getContent().getFirst().getRewriteFrom());
+  }
+
+  @Test
+  public void testFindRewriteRules_filtersByRewriteFromIlikeMatch() throws Exception {
+    Repository repository = this.createRepository(testIdWatcher.getEntityName("rewrite-rule-repo"));
+
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(repository.getId(), "hello-world-greeting", "target-a", true));
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(repository.getId(), "GOODBYE-WORLD-FAREWELL", "target-b", true));
+    rewriteRuleService.createRewriteRule(
+        newRewriteRuleBody(repository.getId(), "something-else", "target-c", true));
+
+    Page<RewriteRule> filtered =
+        rewriteRuleService.findRewriteRules(
+            null, null, null, null, "%WoRLd%", SearchType.ILIKE, PageRequest.of(0, 10));
+
+    assertEquals(2, filtered.getTotalElements());
+    assertTrue(
+        filtered.getContent().stream()
+            .allMatch(rule -> rule.getRewriteFrom().toLowerCase().contains("world")));
   }
 
   @Test
@@ -556,7 +601,7 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
 
     Page<RewriteRule> filtered =
         rewriteRuleService.findRewriteRules(
-            null, null, null, null, "nonexistent", PageRequest.of(0, 10));
+            null, null, null, null, "nonexistent", null, PageRequest.of(0, 10));
 
     assertEquals(0, filtered.getTotalElements());
   }
@@ -574,7 +619,13 @@ public class RewriteRuleServiceTest extends ServiceTestBase {
 
     Page<RewriteRule> filtered =
         rewriteRuleService.findRewriteRules(
-            List.of(repository.getId()), null, true, null, "common-prefix", PageRequest.of(0, 10));
+            List.of(repository.getId()),
+            null,
+            true,
+            null,
+            "common-prefix",
+            null,
+            PageRequest.of(0, 10));
 
     assertEquals(1, filtered.getTotalElements());
     assertEquals("common-prefix-enabled", filtered.getContent().getFirst().getRewriteFrom());

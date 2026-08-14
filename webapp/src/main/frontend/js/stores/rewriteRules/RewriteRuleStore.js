@@ -16,6 +16,7 @@ class RewriteRuleStore {
         this.repoIds = [];
         this.localeIds = [];
         this.rewriteFrom = "";
+        this.searchType = "CONTAINS";
         this.sortField = "rewriteFrom";
         this.sortDirection = "asc";
         this.bindActions(RewriteRuleActions);
@@ -166,6 +167,12 @@ class RewriteRuleStore {
 
     setRewriteFrom(rewriteFrom) {
         this.rewriteFrom = rewriteFrom;
+        this.page = 0;
+        this.getAllRewriteRules();
+    }
+
+    setSearchType(searchType) {
+        this.searchType = searchType;
         this.page = 0;
         this.getAllRewriteRules();
     }
