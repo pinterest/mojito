@@ -39,6 +39,7 @@ import com.box.l10n.mojito.service.branch.BranchService;
 import com.box.l10n.mojito.service.branch.BranchStatisticRepository;
 import com.box.l10n.mojito.service.branch.BranchStatisticService;
 import com.box.l10n.mojito.service.evolve.dto.CourseDTO;
+import com.box.l10n.mojito.service.evolve.dto.EquivalentParentDTO;
 import com.box.l10n.mojito.service.evolve.dto.TranslationStatusType;
 import com.box.l10n.mojito.service.gitblame.GitBlameService;
 import com.box.l10n.mojito.service.gitblame.GitBlameWithUsage;
@@ -212,13 +213,15 @@ public class EvolveServiceTest extends ServiceTestBase {
 
     CourseDTO courseDTO = new CourseDTO();
     courseDTO.setId(1);
-    courseDTO.setCode("COURSE_A");
     courseDTO.setTranslationStatus(READY_FOR_TRANSLATION);
     courseDTO.setType("CourseCurriculum");
 
     CourseDTO localizedCourseDTO = new CourseDTO();
     localizedCourseDTO.setId(2);
     localizedCourseDTO.setLocale("es-ES");
+    EquivalentParentDTO equivalentParentCourseDTO = new EquivalentParentDTO();
+    equivalentParentCourseDTO.setId(courseDTO.getId());
+    localizedCourseDTO.setEquivalentParent(equivalentParentCourseDTO);
     com.box.l10n.mojito.service.evolve.dto.PictureDTO picture =
         new com.box.l10n.mojito.service.evolve.dto.PictureDTO();
     picture.setTargetUrl("https://cdn.example.com/es.jpg");
@@ -235,13 +238,328 @@ public class EvolveServiceTest extends ServiceTestBase {
 
     verify(this.evolveClientMock, times(2)).getCourses(this.coursesGetRequestCaptor.capture());
     CoursesGetRequest localizedCoursesRequest = this.coursesGetRequestCaptor.getAllValues().get(1);
-    assertEquals(Set.of("COURSE_A-es-ES"), localizedCoursesRequest.codes());
-    assertNull(localizedCoursesRequest.locale());
+    assertEquals("es-ES", localizedCoursesRequest.locale());
 
     assertTrue(
         this.evolveCoursePictureService
             .findByCourseIdAndLocaleBcp47Tag(courseDTO.getId(), "es-ES")
             .map(p -> "https://cdn.example.com/es.jpg".equals(p.getPictureUrl()))
+            .orElse(false));
+  }
+
+  @Test
+  public void
+      testSyncReadyForTranslationFetchesSingleParentWithMultipleLocalizedCoursesSameLocaleAndUpsertsLatestPicture()
+          throws RepositoryNameAlreadyUsedException,
+              RepositoryLocaleCreationException,
+              IOException {
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
+    RepositoryLocale esRepositoryLocale = new RepositoryLocale();
+    esRepositoryLocale.setLocale(esLocale);
+    Repository repository =
+        repositoryService.createRepository(
+            testIdWatcher.getEntityName("test"),
+            "",
+            this.localeService.getDefaultLocale(),
+            false,
+            Sets.newHashSet(),
+            Sets.newHashSet(esRepositoryLocale));
+
+    CourseDTO courseDTO = new CourseDTO();
+    courseDTO.setId(1);
+    courseDTO.setTranslationStatus(READY_FOR_TRANSLATION);
+    courseDTO.setType("CourseCurriculum");
+
+    CourseDTO localizedCourseDTO1 = new CourseDTO();
+    localizedCourseDTO1.setId(2);
+    localizedCourseDTO1.setLocale("es-ES");
+    EquivalentParentDTO equivalentParent1 = new EquivalentParentDTO();
+    equivalentParent1.setId(courseDTO.getId());
+    localizedCourseDTO1.setEquivalentParent(equivalentParent1);
+    com.box.l10n.mojito.service.evolve.dto.PictureDTO picture1 =
+        new com.box.l10n.mojito.service.evolve.dto.PictureDTO();
+    picture1.setTargetUrl("https://cdn.example.com/es-v1.jpg");
+    localizedCourseDTO1.setPicture(picture1);
+
+    CourseDTO localizedCourseDTO2 = new CourseDTO();
+    localizedCourseDTO2.setId(3);
+    localizedCourseDTO2.setLocale("es-ES");
+    EquivalentParentDTO equivalentParent2 = new EquivalentParentDTO();
+    equivalentParent2.setId(courseDTO.getId());
+    localizedCourseDTO2.setEquivalentParent(equivalentParent2);
+    com.box.l10n.mojito.service.evolve.dto.PictureDTO picture2 =
+        new com.box.l10n.mojito.service.evolve.dto.PictureDTO();
+    picture2.setTargetUrl("https://cdn.example.com/es-v2.jpg");
+    localizedCourseDTO2.setPicture(picture2);
+
+    when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
+        .thenAnswer(invocation -> Stream.of(courseDTO))
+        .thenAnswer(invocation -> Stream.of(localizedCourseDTO1, localizedCourseDTO2));
+    when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
+        .thenReturn(this.getXliffContent());
+    this.initEvolveService();
+
+    this.evolveService.sync(repository.getId(), null);
+
+    verify(this.evolveClientMock, times(2)).getCourses(this.coursesGetRequestCaptor.capture());
+    CoursesGetRequest localizedCoursesRequest = this.coursesGetRequestCaptor.getAllValues().get(1);
+    assertEquals("es-ES", localizedCoursesRequest.locale());
+
+    assertTrue(
+        this.evolveCoursePictureService
+            .findByCourseIdAndLocaleBcp47Tag(courseDTO.getId(), "es-ES")
+            .map(p -> "https://cdn.example.com/es-v2.jpg".equals(p.getPictureUrl()))
+            .orElse(false));
+  }
+
+  @Test
+  public void
+      testSyncReadyForTranslationFetchesLocalizedCoursesForMultipleLocalesAndUpsertsPictures()
+          throws RepositoryNameAlreadyUsedException,
+              RepositoryLocaleCreationException,
+              IOException {
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
+    RepositoryLocale esRepositoryLocale = new RepositoryLocale();
+    esRepositoryLocale.setLocale(esLocale);
+    Locale frLocale = this.localeService.findByBcp47Tag("fr-FR");
+    RepositoryLocale frRepositoryLocale = new RepositoryLocale();
+    frRepositoryLocale.setLocale(frLocale);
+    Repository repository =
+        repositoryService.createRepository(
+            testIdWatcher.getEntityName("test"),
+            "",
+            this.localeService.getDefaultLocale(),
+            false,
+            Sets.newHashSet(),
+            Sets.newHashSet(esRepositoryLocale, frRepositoryLocale));
+
+    CourseDTO courseDTO = new CourseDTO();
+    courseDTO.setId(1);
+    courseDTO.setTranslationStatus(READY_FOR_TRANSLATION);
+    courseDTO.setType("CourseCurriculum");
+
+    CourseDTO localizedEsCourseDTO = new CourseDTO();
+    localizedEsCourseDTO.setId(2);
+    localizedEsCourseDTO.setLocale("es-ES");
+    EquivalentParentDTO esEquivalentParent = new EquivalentParentDTO();
+    esEquivalentParent.setId(courseDTO.getId());
+    localizedEsCourseDTO.setEquivalentParent(esEquivalentParent);
+    com.box.l10n.mojito.service.evolve.dto.PictureDTO esPicture =
+        new com.box.l10n.mojito.service.evolve.dto.PictureDTO();
+    esPicture.setTargetUrl("https://cdn.example.com/es.jpg");
+    localizedEsCourseDTO.setPicture(esPicture);
+
+    CourseDTO localizedFrCourseDTO = new CourseDTO();
+    localizedFrCourseDTO.setId(3);
+    localizedFrCourseDTO.setLocale("fr-FR");
+    EquivalentParentDTO frEquivalentParent = new EquivalentParentDTO();
+    frEquivalentParent.setId(courseDTO.getId());
+    localizedFrCourseDTO.setEquivalentParent(frEquivalentParent);
+    com.box.l10n.mojito.service.evolve.dto.PictureDTO frPicture =
+        new com.box.l10n.mojito.service.evolve.dto.PictureDTO();
+    frPicture.setTargetUrl("https://cdn.example.com/fr.jpg");
+    localizedFrCourseDTO.setPicture(frPicture);
+
+    when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
+        .thenAnswer(
+            invocation -> {
+              CoursesGetRequest req = invocation.getArgument(0);
+              if ("es-ES".equals(req.locale())) return Stream.of(localizedEsCourseDTO);
+              if ("fr-FR".equals(req.locale())) return Stream.of(localizedFrCourseDTO);
+              return Stream.of(courseDTO);
+            });
+    when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
+        .thenReturn(this.getXliffContent());
+    this.initEvolveService();
+
+    this.evolveService.sync(repository.getId(), null);
+
+    // 1 source call + 2 locale calls (es-ES and fr-FR)
+    verify(this.evolveClientMock, times(3)).getCourses(this.coursesGetRequestCaptor.capture());
+    List<String> localizedLocales =
+        this.coursesGetRequestCaptor.getAllValues().stream()
+            .map(CoursesGetRequest::locale)
+            .filter(locale -> "es-ES".equals(locale) || "fr-FR".equals(locale))
+            .toList();
+    assertEquals(2, localizedLocales.size());
+    assertTrue(localizedLocales.contains("es-ES"));
+    assertTrue(localizedLocales.contains("fr-FR"));
+
+    assertTrue(
+        this.evolveCoursePictureService
+            .findByCourseIdAndLocaleBcp47Tag(courseDTO.getId(), "es-ES")
+            .map(p -> "https://cdn.example.com/es.jpg".equals(p.getPictureUrl()))
+            .orElse(false));
+    assertTrue(
+        this.evolveCoursePictureService
+            .findByCourseIdAndLocaleBcp47Tag(courseDTO.getId(), "fr-FR")
+            .map(p -> "https://cdn.example.com/fr.jpg".equals(p.getPictureUrl()))
+            .orElse(false));
+  }
+
+  @Test
+  public void
+      testSyncReadyForTranslationFetchesMultipleLocalizedCoursesWithSameLocaleAndUpsertsPictures()
+          throws RepositoryNameAlreadyUsedException,
+              RepositoryLocaleCreationException,
+              IOException {
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
+    RepositoryLocale esRepositoryLocale = new RepositoryLocale();
+    esRepositoryLocale.setLocale(esLocale);
+    Repository repository =
+        repositoryService.createRepository(
+            testIdWatcher.getEntityName("test"),
+            "",
+            this.localeService.getDefaultLocale(),
+            false,
+            Sets.newHashSet(),
+            Sets.newHashSet(esRepositoryLocale));
+
+    CourseDTO courseDTO1 = new CourseDTO();
+    courseDTO1.setId(1);
+    courseDTO1.setTranslationStatus(READY_FOR_TRANSLATION);
+    courseDTO1.setType("CourseCurriculum");
+
+    CourseDTO courseDTO2 = new CourseDTO();
+    courseDTO2.setId(2);
+    courseDTO2.setTranslationStatus(READY_FOR_TRANSLATION);
+    courseDTO2.setType("CourseCurriculum");
+
+    CourseDTO localizedCourse1DTO = new CourseDTO();
+    localizedCourse1DTO.setId(3);
+    localizedCourse1DTO.setLocale("es-ES");
+    EquivalentParentDTO equivalentParent1 = new EquivalentParentDTO();
+    equivalentParent1.setId(courseDTO1.getId());
+    localizedCourse1DTO.setEquivalentParent(equivalentParent1);
+    com.box.l10n.mojito.service.evolve.dto.PictureDTO picture1 =
+        new com.box.l10n.mojito.service.evolve.dto.PictureDTO();
+    picture1.setTargetUrl("https://cdn.example.com/course1-es.jpg");
+    localizedCourse1DTO.setPicture(picture1);
+
+    CourseDTO localizedCourse2DTO = new CourseDTO();
+    localizedCourse2DTO.setId(4);
+    localizedCourse2DTO.setLocale("es-ES");
+    EquivalentParentDTO equivalentParent2 = new EquivalentParentDTO();
+    equivalentParent2.setId(courseDTO2.getId());
+    localizedCourse2DTO.setEquivalentParent(equivalentParent2);
+    com.box.l10n.mojito.service.evolve.dto.PictureDTO picture2 =
+        new com.box.l10n.mojito.service.evolve.dto.PictureDTO();
+    picture2.setTargetUrl("https://cdn.example.com/course2-es.jpg");
+    localizedCourse2DTO.setPicture(picture2);
+
+    when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
+        .thenAnswer(invocation -> Stream.of(courseDTO1, courseDTO2))
+        .thenAnswer(invocation -> Stream.of(localizedCourse1DTO, localizedCourse2DTO));
+    when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
+        .thenReturn(this.getXliffContent());
+    this.initEvolveService();
+
+    this.evolveService.sync(repository.getId(), null);
+
+    // 1 source call + 1 locale call (es-ES covers both courses)
+    verify(this.evolveClientMock, times(2)).getCourses(this.coursesGetRequestCaptor.capture());
+    assertEquals("es-ES", this.coursesGetRequestCaptor.getAllValues().get(1).locale());
+
+    assertTrue(
+        this.evolveCoursePictureService
+            .findByCourseIdAndLocaleBcp47Tag(courseDTO1.getId(), "es-ES")
+            .map(p -> "https://cdn.example.com/course1-es.jpg".equals(p.getPictureUrl()))
+            .orElse(false));
+    assertTrue(
+        this.evolveCoursePictureService
+            .findByCourseIdAndLocaleBcp47Tag(courseDTO2.getId(), "es-ES")
+            .map(p -> "https://cdn.example.com/course2-es.jpg".equals(p.getPictureUrl()))
+            .orElse(false));
+  }
+
+  @Test
+  public void
+      testSyncReadyForTranslationFetchesTwoDifferentParentCoursesWithDifferentLocalesAndUpsertsPictures()
+          throws RepositoryNameAlreadyUsedException,
+              RepositoryLocaleCreationException,
+              IOException {
+    Locale esLocale = this.localeService.findByBcp47Tag("es-ES");
+    RepositoryLocale esRepositoryLocale = new RepositoryLocale();
+    esRepositoryLocale.setLocale(esLocale);
+    Locale frLocale = this.localeService.findByBcp47Tag("fr-FR");
+    RepositoryLocale frRepositoryLocale = new RepositoryLocale();
+    frRepositoryLocale.setLocale(frLocale);
+    Repository repository =
+        repositoryService.createRepository(
+            testIdWatcher.getEntityName("test"),
+            "",
+            this.localeService.getDefaultLocale(),
+            false,
+            Sets.newHashSet(),
+            Sets.newHashSet(esRepositoryLocale, frRepositoryLocale));
+
+    CourseDTO courseDTO1 = new CourseDTO();
+    courseDTO1.setId(1);
+    courseDTO1.setTranslationStatus(READY_FOR_TRANSLATION);
+    courseDTO1.setType("CourseCurriculum");
+
+    CourseDTO courseDTO2 = new CourseDTO();
+    courseDTO2.setId(2);
+    courseDTO2.setTranslationStatus(READY_FOR_TRANSLATION);
+    courseDTO2.setType("CourseCurriculum");
+
+    // course 1 has an es-ES localization, course 2 has a fr-FR localization
+    CourseDTO localizedCourse1EsDTO = new CourseDTO();
+    localizedCourse1EsDTO.setId(3);
+    localizedCourse1EsDTO.setLocale("es-ES");
+    EquivalentParentDTO equivalentParent1 = new EquivalentParentDTO();
+    equivalentParent1.setId(courseDTO1.getId());
+    localizedCourse1EsDTO.setEquivalentParent(equivalentParent1);
+    com.box.l10n.mojito.service.evolve.dto.PictureDTO picture1 =
+        new com.box.l10n.mojito.service.evolve.dto.PictureDTO();
+    picture1.setTargetUrl("https://cdn.example.com/course1-es.jpg");
+    localizedCourse1EsDTO.setPicture(picture1);
+
+    CourseDTO localizedCourse2FrDTO = new CourseDTO();
+    localizedCourse2FrDTO.setId(4);
+    localizedCourse2FrDTO.setLocale("fr-FR");
+    EquivalentParentDTO equivalentParent2 = new EquivalentParentDTO();
+    equivalentParent2.setId(courseDTO2.getId());
+    localizedCourse2FrDTO.setEquivalentParent(equivalentParent2);
+    com.box.l10n.mojito.service.evolve.dto.PictureDTO picture2 =
+        new com.box.l10n.mojito.service.evolve.dto.PictureDTO();
+    picture2.setTargetUrl("https://cdn.example.com/course2-fr.jpg");
+    localizedCourse2FrDTO.setPicture(picture2);
+
+    when(this.evolveClientMock.getCourses(any(CoursesGetRequest.class)))
+        .thenAnswer(
+            invocation -> {
+              CoursesGetRequest req = invocation.getArgument(0);
+              if ("es-ES".equals(req.locale())) return Stream.of(localizedCourse1EsDTO);
+              if ("fr-FR".equals(req.locale())) return Stream.of(localizedCourse2FrDTO);
+              return Stream.of(courseDTO1, courseDTO2);
+            });
+    when(this.evolveClientMock.startCourseTranslation(anyInt(), anyString(), anySet()))
+        .thenReturn(this.getXliffContent());
+    this.initEvolveService();
+
+    this.evolveService.sync(repository.getId(), null);
+
+    // 1 source call + 2 locale calls (es-ES and fr-FR)
+    verify(this.evolveClientMock, times(3)).getCourses(this.coursesGetRequestCaptor.capture());
+    List<String> localizedLocales =
+        this.coursesGetRequestCaptor.getAllValues().stream()
+            .map(CoursesGetRequest::locale)
+            .filter(locale -> "es-ES".equals(locale) || "fr-FR".equals(locale))
+            .toList();
+    assertEquals(2, localizedLocales.size());
+    assertTrue(localizedLocales.contains("es-ES"));
+    assertTrue(localizedLocales.contains("fr-FR"));
+
+    assertTrue(
+        this.evolveCoursePictureService
+            .findByCourseIdAndLocaleBcp47Tag(courseDTO1.getId(), "es-ES")
+            .map(p -> "https://cdn.example.com/course1-es.jpg".equals(p.getPictureUrl()))
+            .orElse(false));
+    assertTrue(
+        this.evolveCoursePictureService
+            .findByCourseIdAndLocaleBcp47Tag(courseDTO2.getId(), "fr-FR")
+            .map(p -> "https://cdn.example.com/course2-fr.jpg".equals(p.getPictureUrl()))
             .orElse(false));
   }
 

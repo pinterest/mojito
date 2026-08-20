@@ -1,7 +1,9 @@
 package com.box.l10n.mojito.service.evolve.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PictureDTO {
   @JsonProperty("mobile_target_url")
   private String mobileTargetUrl;

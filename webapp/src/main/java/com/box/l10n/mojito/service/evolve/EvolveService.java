@@ -440,28 +440,13 @@ public class EvolveService {
     this.sendSlackNotification(courseDTO.getId());
   }
 
-  private List<CourseDTO> getCourses(
-      String parentCourseCode, Set<String> localeBcp47Tags, ZonedDateTime startDateTime) {
-    Set<String> codes =
-        localeBcp47Tags.stream()
-            .map(localeBcp47Tag -> parentCourseCode + "-" + localeBcp47Tag)
-            .collect(Collectors.toSet());
-    CoursesGetRequest request = new CoursesGetRequest(codes, startDateTime);
-    return Mono.fromCallable(
-            () -> this.evolveClient.getCourses(request).collect(Collectors.toList()))
-        .retryWhen(
-            Retry.backoff(this.evolveConfigurationProperties.getMaxRetries(), this.retryMinBackoff)
-                .maxBackoff(this.retryMaxBackoff))
-        .doOnError(e -> log.error("Unable to fetch courses", e))
-        .block();
-  }
-
   private void syncReadyForTranslation(
       CourseDTO courseDTO,
       ZonedDateTime startDateTime,
       long repositoryId,
       String targetLocaleBcp47Tag,
-      Set<String> additionalTargetLocaleBcp47Tags)
+      Set<String> additionalTargetLocaleBcp47Tags,
+      Map<Integer, List<CourseDTO>> localizedCoursesByParentCourseId)
       throws XPathExpressionException,
           UnsupportedAssetFilterTypeException,
           ParserConfigurationException,
@@ -470,10 +455,8 @@ public class EvolveService {
           InterruptedException,
           TransformerException,
           SAXException {
-    Set<String> localeBcp47Tags = new HashSet<>(additionalTargetLocaleBcp47Tags);
-    localeBcp47Tags.add(targetLocaleBcp47Tag);
     List<CourseDTO> currentLocalizedCourseDTOs =
-        this.getCourses(courseDTO.getCode(), localeBcp47Tags, startDateTime);
+        localizedCoursesByParentCourseId.getOrDefault(courseDTO.getId(), List.of());
     this.startCourseTranslations(
         courseDTO.getId(),
         courseDTO.getType(),
@@ -570,6 +553,77 @@ public class EvolveService {
     }
   }
 
+  /**
+   * Fetches localized courses for the provided locales and keeps only courses whose equivalent
+   * parent belongs to the provided parent course IDs.
+   *
+   * <p>Each locale request is retried using the configured backoff policy before failing.
+   *
+   * @param parentCourseIds set of source/parent course IDs used to filter localized courses
+   * @param localeBcp47Tags set of locales to query from Evolve
+   * @param startDateTime timestamp used by Evolve to scope the course query
+   * @return flattened list of localized courses matching the requested parent course IDs across all
+   *     requested locales
+   */
+  private List<CourseDTO> getCourses(
+      Set<Integer> parentCourseIds, Set<String> localeBcp47Tags, ZonedDateTime startDateTime) {
+    return localeBcp47Tags.stream()
+        .map(
+            localeBcp47Tag ->
+                Mono.fromCallable(
+                        () ->
+                            this.evolveClient
+                                .getCourses(new CoursesGetRequest(localeBcp47Tag, startDateTime))
+                                .filter(
+                                    courseDTO ->
+                                        courseDTO.getEquivalentParent() != null
+                                            && parentCourseIds.contains(
+                                                courseDTO.getEquivalentParent().getId()))
+                                .collect(Collectors.toList()))
+                    .retryWhen(
+                        Retry.backoff(
+                                this.evolveConfigurationProperties.getMaxRetries(),
+                                this.retryMinBackoff)
+                            .maxBackoff(this.retryMaxBackoff))
+                    .doOnError(
+                        e -> log.error("Unable to fetch courses for locale: {}", localeBcp47Tag, e))
+                    .block())
+        .flatMap(List::stream)
+        .toList();
+  }
+
+  /**
+   * Fetches localized courses for the provided parent course IDs and groups them by parent course
+   * ID.
+   *
+   * <p>For each parent course group, duplicate localized courses for the same locale are
+   * de-duplicated by keeping the course with the highest course ID.
+   *
+   * @param parentCourseIds set of source/parent course IDs to match against
+   * @param localeBcp47Tags set of locales to fetch from Evolve
+   * @param startDateTime timestamp used by Evolve to scope the course query
+   * @return map keyed by parent course ID with one course per locale (latest by ID)
+   */
+  private Map<Integer, List<CourseDTO>> getCoursesByParentCourseId(
+      Set<Integer> parentCourseIds, Set<String> localeBcp47Tags, ZonedDateTime startDateTime) {
+    return this.getCourses(parentCourseIds, localeBcp47Tags, startDateTime).stream()
+        .collect(
+            Collectors.groupingBy(
+                courseDTO -> courseDTO.getEquivalentParent().getId(),
+                Collectors.collectingAndThen(
+                    Collectors.toList(),
+                    courses ->
+                        courses.stream()
+                            .collect(
+                                Collectors.toMap(
+                                    CourseDTO::getLocale,
+                                    c -> c,
+                                    (c1, c2) -> c1.getId() >= c2.getId() ? c1 : c2))
+                            .values()
+                            .stream()
+                            .toList())));
+  }
+
   public void sync(Long repositoryId, String localeMapping) {
     Optional<Repository> repositoryOptional = this.repositoryRepository.findById(repositoryId);
     if (repositoryOptional.isEmpty()) {
@@ -588,10 +642,24 @@ public class EvolveService {
         this.getTargetLocaleBcp47Tag(localeMappings, targetRepositoryLocales);
     Set<String> additionalTargetLocaleBcp47Tags =
         this.getAdditionalTargetLocaleBcp47Tags(localeMappings, targetRepositoryLocales);
+    Set<String> localeBcp47Tags = new HashSet<>(additionalTargetLocaleBcp47Tags);
+    localeBcp47Tags.add(targetLocaleBcp47Tag);
     ZonedDateTime startDateTime = ZonedDateTime.now();
     CoursesGetRequest request = new CoursesGetRequest(sourceLocaleBcp47Tag, startDateTime);
+    List<CourseDTO> sourceCourses =
+        this.evolveClient
+            .getCourses(request)
+            .filter(
+                courseDTO ->
+                    courseDTO.getTranslationStatus() == READY_FOR_TRANSLATION
+                        || courseDTO.getTranslationStatus() == IN_TRANSLATION)
+            .toList();
+    Set<Integer> sourceCourseIds =
+        sourceCourses.stream().map(CourseDTO::getId).collect(Collectors.toSet());
+    Map<Integer, List<CourseDTO>> localizedCoursesByParentCourseId =
+        this.getCoursesByParentCourseId(sourceCourseIds, localeBcp47Tags, startDateTime);
     int failureCount = 0;
-    for (CourseDTO courseDTO : this.evolveClient.getCourses(request).toList()) {
+    for (CourseDTO courseDTO : sourceCourses) {
       try {
         if (courseDTO.getTranslationStatus() == READY_FOR_TRANSLATION) {
           this.syncReadyForTranslation(
@@ -599,7 +667,8 @@ public class EvolveService {
               startDateTime,
               repository.getId(),
               targetLocaleBcp47Tag,
-              additionalTargetLocaleBcp47Tags);
+              additionalTargetLocaleBcp47Tags,
+              localizedCoursesByParentCourseId);
         } else if (courseDTO.getTranslationStatus() == IN_TRANSLATION) {
           this.syncInTranslation(
               courseDTO, startDateTime, repository, localeMappings, targetRepositoryLocales);

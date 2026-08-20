@@ -72,9 +72,6 @@ public class EvolveClient {
     UriComponentsBuilder builder =
         UriComponentsBuilder.fromUriString(this.getFullEndpointPath("courses"))
             .queryParam("is_active", request.active());
-    if (request.codes() != null && !request.codes().isEmpty()) {
-      builder.queryParam("code[]", request.codes());
-    }
     if (request.locale() != null) {
       builder.queryParam("locale", request.locale());
     }
