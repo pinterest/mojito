@@ -1,12 +1,12 @@
 package com.box.l10n.mojito.service.evolve.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CourseDTO {
 
   private int id;
-
-  private String code;
 
   private String locale;
 
@@ -24,6 +24,9 @@ public class CourseDTO {
   @JsonProperty("hero_picture")
   private PictureDTO heroPicture;
 
+  @JsonProperty("equivalent_parent")
+  private EquivalentParentDTO equivalentParent;
+
   public int getId() {
     return id;
   }
@@ -32,20 +35,12 @@ public class CourseDTO {
     this.id = id;
   }
 
-  public String getCode() {
-    return code;
-  }
-
   public String getLocale() {
     return locale;
   }
 
   public void setLocale(String locale) {
     this.locale = locale;
-  }
-
-  public void setCode(String code) {
-    this.code = code;
   }
 
   public TranslationStatusType getTranslationStatus() {
@@ -86,6 +81,14 @@ public class CourseDTO {
 
   public void setHeroPicture(PictureDTO heroPicture) {
     this.heroPicture = heroPicture;
+  }
+
+  public EquivalentParentDTO getEquivalentParent() {
+    return equivalentParent;
+  }
+
+  public void setEquivalentParent(EquivalentParentDTO equivalentParent) {
+    this.equivalentParent = equivalentParent;
   }
 
   public String getPictureUrl() {
