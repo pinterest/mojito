@@ -36,8 +36,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 /**
- * Component for scheduling jobs inside the scheduled jobs table. Currently, jobs are pulled from
- * the application.properties and pushed to the scheduled_job table.
+ * Component for scheduling jobs inside the scheduled jobs table.
  *
  * @author mattwilshire
  */
@@ -52,6 +51,7 @@ public class ScheduledJobManager {
   private final ScheduledJobStatusRepository scheduledJobStatusRepository;
   private final ScheduledJobTypeRepository scheduledJobTypeRepository;
   private final RepositoryRepository repositoryRepository;
+  private final ScheduledJobListenerRetryConfiguration scheduledJobListenerRetryConfiguration;
 
   /* Quartz scheduler dedicated to scheduled jobs using in memory data source.
    * The value is also set using equals as this is not managed by Spring Boot in the tests. */
@@ -72,13 +72,15 @@ public class ScheduledJobManager {
       ScheduledJobRepository scheduledJobRepository,
       ScheduledJobStatusRepository scheduledJobStatusRepository,
       ScheduledJobTypeRepository scheduledJobTypeRepository,
-      RepositoryRepository repositoryRepository) {
+      RepositoryRepository repositoryRepository,
+      ScheduledJobListenerRetryConfiguration scheduledJobListenerRetryConfiguration) {
     this.thirdPartySyncJobsConfig = thirdPartySyncJobConfig;
     this.schedulerManager = schedulerManager;
     this.scheduledJobRepository = scheduledJobRepository;
     this.scheduledJobStatusRepository = scheduledJobStatusRepository;
     this.scheduledJobTypeRepository = scheduledJobTypeRepository;
     this.repositoryRepository = repositoryRepository;
+    this.scheduledJobListenerRetryConfiguration = scheduledJobListenerRetryConfiguration;
   }
 
   @PostConstruct
@@ -88,7 +90,10 @@ public class ScheduledJobManager {
     getScheduler()
         .getListenerManager()
         .addJobListener(
-            new ScheduledJobListener(scheduledJobRepository, scheduledJobStatusRepository));
+            new ScheduledJobListener(
+                scheduledJobRepository,
+                scheduledJobStatusRepository,
+                scheduledJobListenerRetryConfiguration));
     // Add Trigger Listener
     getScheduler()
         .getListenerManager()

@@ -3,6 +3,7 @@ package com.box.l10n.mojito.rest.rewriterule;
 import com.box.l10n.mojito.entity.RewriteRule;
 import com.box.l10n.mojito.rest.EntityWithIdNotFoundException;
 import com.box.l10n.mojito.service.rewriterule.RewriteRuleService;
+import com.box.l10n.mojito.service.tm.search.SearchType;
 import io.swagger.v3.oas.annotations.Operation;
 import java.util.List;
 import org.springdoc.core.annotations.ParameterObject;
@@ -37,12 +38,14 @@ public class RewriteRuleWS {
       @RequestParam(required = false) Boolean enabled,
       @RequestParam(required = false) String scope,
       @RequestParam(required = false) String rewriteFrom,
+      @RequestParam(required = false, defaultValue = "CONTAINS") SearchType searchType,
       @ParameterObject @PageableDefault(sort = "id", direction = Sort.Direction.ASC)
           Pageable pageable) {
     RewriteRuleScope parsedScope = scope != null ? RewriteRuleScope.fromValue(scope) : null;
 
     return rewriteRuleService
-        .findRewriteRules(repositoryIds, localeIds, enabled, parsedScope, rewriteFrom, pageable)
+        .findRewriteRules(
+            repositoryIds, localeIds, enabled, parsedScope, rewriteFrom, searchType, pageable)
         .map(RewriteRuleDTO::fromEntity);
   }
 

@@ -37,7 +37,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = {EvolveClientTest.class})
@@ -117,10 +116,10 @@ public class EvolveClientTest {
 
     assertEquals(urlCaptor.getAllValues().size(), 2);
     assertEquals(
-        this.apiPath + "courses?locale=en&is_active=true&page=1",
+        this.apiPath + "courses?is_active=true&locale=en&page=1",
         urlCaptor.getAllValues().getFirst());
     assertEquals(
-        this.apiPath + "courses?locale=en&is_active=true&page=2",
+        this.apiPath + "courses?is_active=true&locale=en&page=2",
         urlCaptor.getAllValues().getLast());
 
     for (CourseDTO courseDTO : courses) {
@@ -168,8 +167,7 @@ public class EvolveClientTest {
     assertEquals(
         this.apiPath
             + String.format(
-                "courses?locale=en&is_active=true&updated_on_to=%s&page=1",
-                UriComponentsBuilder.fromPath(updatedOnTo.toString()).toUriString()),
+                "courses?is_active=true&locale=en&updated_on_to=%s&page=1", updatedOnTo),
         urlCaptor.getValue());
   }
 

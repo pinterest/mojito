@@ -36,6 +36,8 @@ public class GithubPRInfoCommand extends Command {
 
   protected static final String SKIP_I18N_CHECKS_FLAG = "SKIP_I18N_CHECKS";
 
+  protected static final String SKIP_I18N_CHECKS_LABEL_FLAG = "MOJITO_SKIP_I18N_CHECKS_LABEL";
+
   protected static final String SKIP_MAX_STRINGS_BLOCK_FLAG = "MOJITO_SKIP_MAX_STRINGS_BLOCK";
 
   @Qualifier("ansiCodeEnabledFalse")
@@ -123,15 +125,22 @@ public class GithubPRInfoCommand extends Command {
           .println();
       List<GHIssueComment> prComments = github.getPRComments(repository, prNumber);
       boolean skipChecksViaComment = isSkipChecks(prComments);
-      boolean skipChecksViaLabel =
-          github.isLabelAppliedToPR(repository, prNumber, skipI18NChecksLabel);
-      if (skipChecksViaComment || skipChecksViaLabel) {
-        if (skipChecksViaComment) {
-          addReactionToSkipChecksComment(prComments);
-        }
+      if (skipChecksViaComment) {
+        addReactionToSkipChecksComment(prComments);
         consoleWriterAnsiCodeEnabledFalse.a("MOJITO_SKIP_I18N_CHECKS=true").println();
       } else {
         consoleWriterAnsiCodeEnabledFalse.a("MOJITO_SKIP_I18N_CHECKS=false").println();
+      }
+      boolean skipChecksViaLabel =
+          github.isLabelAppliedToPR(repository, prNumber, skipI18NChecksLabel);
+      if (skipChecksViaLabel) {
+        consoleWriterAnsiCodeEnabledFalse
+            .a(String.format("%s=true", SKIP_I18N_CHECKS_LABEL_FLAG))
+            .println();
+      } else {
+        consoleWriterAnsiCodeEnabledFalse
+            .a(String.format("%s=false", SKIP_I18N_CHECKS_LABEL_FLAG))
+            .println();
       }
 
       if (github.isLabelAppliedToPR(repository, prNumber, skipI18NPushLabel)) {

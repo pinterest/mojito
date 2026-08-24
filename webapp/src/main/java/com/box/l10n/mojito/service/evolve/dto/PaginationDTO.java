@@ -1,7 +1,9 @@
 package com.box.l10n.mojito.service.evolve.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PaginationDTO {
   @JsonProperty("current_page")
   private long currentPage;

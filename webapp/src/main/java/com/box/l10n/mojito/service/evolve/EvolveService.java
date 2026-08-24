@@ -12,6 +12,7 @@ import com.box.l10n.mojito.entity.AssetContent;
 import com.box.l10n.mojito.entity.AssetExtractionByBranch;
 import com.box.l10n.mojito.entity.Branch;
 import com.box.l10n.mojito.entity.BranchStatistic;
+import com.box.l10n.mojito.entity.EvolveCoursePicture;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
@@ -40,6 +41,7 @@ import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -95,6 +97,8 @@ public class EvolveService {
 
   private final TranslationModeMapper translationModeMapper;
 
+  private final EvolveCoursePictureService evolveCoursePictureService;
+
   private final Duration retryMinBackoff;
 
   private final Duration retryMaxBackoff;
@@ -121,6 +125,7 @@ public class EvolveService {
       AssetExtractionByBranchRepository assetExtractionByBranchRepository,
       LocaleMappingHelper localeMappingHelper,
       TranslationModeMapper translationModeMapper,
+      EvolveCoursePictureService evolveCoursePictureService,
       @Autowired(required = false) ContentService contentService,
       EvolveSlackNotificationSender evolveSlackNotificationSender) {
     this.evolveConfigurationProperties = evolveConfigurationProperties;
@@ -137,6 +142,7 @@ public class EvolveService {
     this.assetExtractionByBranchRepository = assetExtractionByBranchRepository;
     this.localeMappingHelper = localeMappingHelper;
     this.translationModeMapper = translationModeMapper;
+    this.evolveCoursePictureService = evolveCoursePictureService;
     this.contentService = ofNullable(contentService);
     this.retryMinBackoff =
         Duration.ofSeconds(evolveConfigurationProperties.getRetryMinBackoffSecs());
@@ -195,8 +201,7 @@ public class EvolveService {
     sourceAsset.setRepositoryId(repositoryId);
     sourceAsset.setPath(this.getAssetPath(courseId));
     sourceAsset.setBranchCreatedByUsername(SYSTEM_USERNAME);
-    sourceAsset.setContent(
-        this.xliffUtils.removeAttribute(localizedAssetContent, "target-language"));
+    sourceAsset.setContent(this.xliffUtils.removeTargetLanguageAttribute(localizedAssetContent));
     ofNullable(this.evolveConfigurationProperties.getUsagesKeyRegexp())
         .ifPresent(
             usagesKeyRegexp ->
@@ -294,6 +299,34 @@ public class EvolveService {
         TEN_SECONDS);
   }
 
+  private String applyCoursePictureUrls(
+      int courseId,
+      String localizedContent,
+      Boolean refreshWithParentAssetsAndStructure,
+      String outputBcp47Tag)
+      throws XPathExpressionException,
+          ParserConfigurationException,
+          IOException,
+          SAXException,
+          TransformerException {
+    if (!this.xliffUtils.containsBinUnitElement(localizedContent)) {
+      return localizedContent;
+    }
+    if (refreshWithParentAssetsAndStructure == null || refreshWithParentAssetsAndStructure) {
+      return this.xliffUtils.removeBinUnitElements(localizedContent);
+    }
+    EvolveCoursePicture evolveCoursePicture =
+        this.evolveCoursePictureService
+            .findByCourseIdAndLocaleBcp47Tag(courseId, outputBcp47Tag)
+            .orElseGet(EvolveCoursePicture::new);
+    return this.xliffUtils.replaceTargetMediaTargetUrls(
+        courseId,
+        localizedContent,
+        evolveCoursePicture.getPictureUrl(),
+        evolveCoursePicture.getHeroPictureUrl(),
+        evolveCoursePicture.getHeroPictureMobileUrl());
+  }
+
   private void updateCourseTranslations(
       CourseDTO courseDTO,
       Asset asset,
@@ -301,17 +334,22 @@ public class EvolveService {
       Map<String, String> localeMappings,
       List<RepositoryLocale> targetRepositoryLocales) {
     String normalizedContent = NormalizationUtils.normalize(content);
+    Boolean refreshWithParentAssetsAndStructure =
+        this.translationModeMapper
+            .toRefreshWithParentAssetsAndStructure(courseDTO.getTranslationMode())
+            .orElse(null);
     targetRepositoryLocales.forEach(
         repositoryLocale -> {
           String localeBcp47Tag = repositoryLocale.getLocale().getBcp47Tag();
-          String generateLocalized;
+          String outputBcp47Tag = localeMappings.getOrDefault(localeBcp47Tag, localeBcp47Tag);
+          String localizedContent;
           try {
-            generateLocalized =
+            localizedContent =
                 tmService.generateLocalized(
                     asset,
                     normalizedContent,
                     repositoryLocale,
-                    localeMappings.getOrDefault(localeBcp47Tag, localeBcp47Tag),
+                    outputBcp47Tag,
                     null,
                     ImmutableList.of(),
                     Status.ACCEPTED,
@@ -320,25 +358,30 @@ public class EvolveService {
           } catch (UnsupportedAssetFilterTypeException e) {
             throw new EvolveSyncException(e.getMessage(), e);
           }
-          Boolean replaceLegacyEvolveLocaleContent =
-              this.translationModeMapper
-                  .mapTranslationModeToReplaceLegacyEvolveLocaleContent(
-                      courseDTO.getTranslationMode())
-                  .orElse(null);
+
+          String localizedContentWithUpdatedTargetUrls;
+          try {
+            localizedContentWithUpdatedTargetUrls =
+                this.applyCoursePictureUrls(
+                    courseDTO.getId(),
+                    localizedContent,
+                    refreshWithParentAssetsAndStructure,
+                    outputBcp47Tag);
+          } catch (XPathExpressionException
+              | ParserConfigurationException
+              | IOException
+              | SAXException
+              | TransformerException e) {
+            throw new EvolveSyncException(
+                "Error while updating picture and hero picture target URLs", e);
+          }
+
           Mono.fromRunnable(
-                  () -> {
-                    try {
+                  () ->
                       this.evolveClient.updateCourseTranslation(
                           courseDTO.getId(),
-                          replaceLegacyEvolveLocaleContent,
-                          this.xliffUtils.removeElement(generateLocalized, "bin-unit"));
-                    } catch (ParserConfigurationException
-                        | IOException
-                        | SAXException
-                        | TransformerException e) {
-                      throw new EvolveSyncException(e.getMessage(), e);
-                    }
-                  })
+                          refreshWithParentAssetsAndStructure,
+                          localizedContentWithUpdatedTargetUrls))
               .retryWhen(
                   Retry.backoff(
                           this.evolveConfigurationProperties.getMaxRetries(), this.retryMinBackoff)
@@ -402,7 +445,8 @@ public class EvolveService {
       ZonedDateTime startDateTime,
       long repositoryId,
       String targetLocaleBcp47Tag,
-      Set<String> additionalTargetLocaleBcp47Tags)
+      Set<String> additionalTargetLocaleBcp47Tags,
+      Map<Integer, List<CourseDTO>> localizedCoursesByParentCourseId)
       throws XPathExpressionException,
           UnsupportedAssetFilterTypeException,
           ParserConfigurationException,
@@ -411,6 +455,8 @@ public class EvolveService {
           InterruptedException,
           TransformerException,
           SAXException {
+    List<CourseDTO> currentLocalizedCourseDTOs =
+        localizedCoursesByParentCourseId.getOrDefault(courseDTO.getId(), List.of());
     this.startCourseTranslations(
         courseDTO.getId(),
         courseDTO.getType(),
@@ -419,6 +465,8 @@ public class EvolveService {
         additionalTargetLocaleBcp47Tags);
     courseDTO.setTranslationStatus(IN_TRANSLATION);
     this.updateCourse(courseDTO, startDateTime);
+    this.evolveCoursePictureService.upsertLocalizedCoursePictureUrls(
+        courseDTO.getId(), currentLocalizedCourseDTOs);
   }
 
   private Optional<String> getContent(
@@ -464,6 +512,7 @@ public class EvolveService {
     }
     this.updateCourseTranslations(
         courseDTO, asset, content.get(), localeMappings, targetRepositoryLocales);
+    this.evolveCoursePictureService.deleteByCourseId(courseDTO.getId());
     if (branchStatistic != null
         && branchStatistic.getTotalCount() > 0
         && branchStatistic.getForTranslationCount() == 0) {
@@ -504,6 +553,77 @@ public class EvolveService {
     }
   }
 
+  /**
+   * Fetches localized courses for the provided locales and keeps only courses whose equivalent
+   * parent belongs to the provided parent course IDs.
+   *
+   * <p>Each locale request is retried using the configured backoff policy before failing.
+   *
+   * @param parentCourseIds set of source/parent course IDs used to filter localized courses
+   * @param localeBcp47Tags set of locales to query from Evolve
+   * @param startDateTime timestamp used by Evolve to scope the course query
+   * @return flattened list of localized courses matching the requested parent course IDs across all
+   *     requested locales
+   */
+  private List<CourseDTO> getCourses(
+      Set<Integer> parentCourseIds, Set<String> localeBcp47Tags, ZonedDateTime startDateTime) {
+    return localeBcp47Tags.stream()
+        .map(
+            localeBcp47Tag ->
+                Mono.fromCallable(
+                        () ->
+                            this.evolveClient
+                                .getCourses(new CoursesGetRequest(localeBcp47Tag, startDateTime))
+                                .filter(
+                                    courseDTO ->
+                                        courseDTO.getEquivalentParent() != null
+                                            && parentCourseIds.contains(
+                                                courseDTO.getEquivalentParent().getId()))
+                                .collect(Collectors.toList()))
+                    .retryWhen(
+                        Retry.backoff(
+                                this.evolveConfigurationProperties.getMaxRetries(),
+                                this.retryMinBackoff)
+                            .maxBackoff(this.retryMaxBackoff))
+                    .doOnError(
+                        e -> log.error("Unable to fetch courses for locale: {}", localeBcp47Tag, e))
+                    .block())
+        .flatMap(List::stream)
+        .toList();
+  }
+
+  /**
+   * Fetches localized courses for the provided parent course IDs and groups them by parent course
+   * ID.
+   *
+   * <p>For each parent course group, duplicate localized courses for the same locale are
+   * de-duplicated by keeping the course with the highest course ID.
+   *
+   * @param parentCourseIds set of source/parent course IDs to match against
+   * @param localeBcp47Tags set of locales to fetch from Evolve
+   * @param startDateTime timestamp used by Evolve to scope the course query
+   * @return map keyed by parent course ID with one course per locale (latest by ID)
+   */
+  private Map<Integer, List<CourseDTO>> getCoursesByParentCourseId(
+      Set<Integer> parentCourseIds, Set<String> localeBcp47Tags, ZonedDateTime startDateTime) {
+    return this.getCourses(parentCourseIds, localeBcp47Tags, startDateTime).stream()
+        .collect(
+            Collectors.groupingBy(
+                courseDTO -> courseDTO.getEquivalentParent().getId(),
+                Collectors.collectingAndThen(
+                    Collectors.toList(),
+                    courses ->
+                        courses.stream()
+                            .collect(
+                                Collectors.toMap(
+                                    CourseDTO::getLocale,
+                                    c -> c,
+                                    (c1, c2) -> c1.getId() >= c2.getId() ? c1 : c2))
+                            .values()
+                            .stream()
+                            .toList())));
+  }
+
   public void sync(Long repositoryId, String localeMapping) {
     Optional<Repository> repositoryOptional = this.repositoryRepository.findById(repositoryId);
     if (repositoryOptional.isEmpty()) {
@@ -522,10 +642,24 @@ public class EvolveService {
         this.getTargetLocaleBcp47Tag(localeMappings, targetRepositoryLocales);
     Set<String> additionalTargetLocaleBcp47Tags =
         this.getAdditionalTargetLocaleBcp47Tags(localeMappings, targetRepositoryLocales);
+    Set<String> localeBcp47Tags = new HashSet<>(additionalTargetLocaleBcp47Tags);
+    localeBcp47Tags.add(targetLocaleBcp47Tag);
     ZonedDateTime startDateTime = ZonedDateTime.now();
     CoursesGetRequest request = new CoursesGetRequest(sourceLocaleBcp47Tag, startDateTime);
+    List<CourseDTO> sourceCourses =
+        this.evolveClient
+            .getCourses(request)
+            .filter(
+                courseDTO ->
+                    courseDTO.getTranslationStatus() == READY_FOR_TRANSLATION
+                        || courseDTO.getTranslationStatus() == IN_TRANSLATION)
+            .toList();
+    Set<Integer> sourceCourseIds =
+        sourceCourses.stream().map(CourseDTO::getId).collect(Collectors.toSet());
+    Map<Integer, List<CourseDTO>> localizedCoursesByParentCourseId =
+        this.getCoursesByParentCourseId(sourceCourseIds, localeBcp47Tags, startDateTime);
     int failureCount = 0;
-    for (CourseDTO courseDTO : this.evolveClient.getCourses(request).toList()) {
+    for (CourseDTO courseDTO : sourceCourses) {
       try {
         if (courseDTO.getTranslationStatus() == READY_FOR_TRANSLATION) {
           this.syncReadyForTranslation(
@@ -533,7 +667,8 @@ public class EvolveService {
               startDateTime,
               repository.getId(),
               targetLocaleBcp47Tag,
-              additionalTargetLocaleBcp47Tags);
+              additionalTargetLocaleBcp47Tags,
+              localizedCoursesByParentCourseId);
         } else if (courseDTO.getTranslationStatus() == IN_TRANSLATION) {
           this.syncInTranslation(
               courseDTO, startDateTime, repository, localeMappings, targetRepositoryLocales);

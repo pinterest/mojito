@@ -56,8 +56,8 @@ public class EvolveClient {
     return this.apiPath + endpointPath;
   }
 
-  private ListWithLastPage<CourseDTO> getCourses(String url) {
-    CoursesDTO coursesDTO = this.restTemplate.getForObject(url, CoursesDTO.class);
+  private ListWithLastPage<CourseDTO> getCourses(String uriTemplate) {
+    CoursesDTO coursesDTO = this.restTemplate.getForObject(uriTemplate, CoursesDTO.class);
     if (coursesDTO == null) {
       logger.error("Get Courses response is empty");
       throw new EvolveSyncException("Empty response");
@@ -70,18 +70,20 @@ public class EvolveClient {
 
   public Stream<CourseDTO> getCourses(CoursesGetRequest request) {
     UriComponentsBuilder builder =
-        UriComponentsBuilder.fromPath(this.getFullEndpointPath("courses"))
-            .queryParam("locale", request.locale())
+        UriComponentsBuilder.fromUriString(this.getFullEndpointPath("courses"))
             .queryParam("is_active", request.active());
+    if (request.locale() != null) {
+      builder.queryParam("locale", request.locale());
+    }
     if (request.updatedOnTo() != null) {
       builder.queryParam("updated_on_to", request.updatedOnTo());
     }
     PageFetcherCurrentAndTotalPagesSplitIterator<CourseDTO> iterator =
         new PageFetcherCurrentAndTotalPagesSplitIterator<>(
             pageToFetch -> {
-              UriComponentsBuilder builderWithPage =
-                  builder.cloneBuilder().queryParam("page", pageToFetch);
-              return Mono.fromCallable(() -> this.getCourses(builderWithPage.toUriString()))
+              String uriTemplate =
+                  builder.cloneBuilder().queryParam("page", pageToFetch).build().toUriString();
+              return Mono.fromCallable(() -> this.getCourses(uriTemplate))
                   .retryWhen(
                       Retry.backoff(this.maxRetries, this.retryMinBackoff)
                           .maxBackoff(this.retryMaxBackoff))

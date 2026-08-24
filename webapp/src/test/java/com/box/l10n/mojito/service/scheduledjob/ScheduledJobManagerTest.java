@@ -108,7 +108,8 @@ public class ScheduledJobManagerTest extends ServiceTestBase {
                 scheduledJobRepository,
                 scheduledJobStatusRepository,
                 scheduledJobTypeRepository,
-                repositoryRepository));
+                repositoryRepository,
+                new ScheduledJobListenerRetryConfiguration()));
 
     Mockito.doReturn(NoOpScheduledJobTest.class).when(scheduledJobManager).loadJobClass(any());
 
