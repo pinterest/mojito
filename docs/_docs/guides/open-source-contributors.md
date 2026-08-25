@@ -189,22 +189,12 @@ cd ${PROJECT_DIR}
 git config blame.ignoreRevsFile .git-blame-ignore-revs
 mvn clean install -DskipTests=true
 ```
-    
-## Setup `npm`
-
-It is advised to reuse the `npm` version that was downloaded during {{ site.mojito_green }}'s build.
-
-```sh
-source webapp/use_local_npm.sh
-```
-    
-Else, make sure the global `npm` is compatible.
  
 ## Run {{ site.mojito_green }}
 
 ```sh
 cd ${PROJECT_DIR}/webapp
-npm run start-dev
+mvn spring-boot:run
 ```
 
 {{ site.mojito_green }} should be running on <http://localhost:8080/login>.  
@@ -218,21 +208,13 @@ with in-memory `HSQL DB`. When you restart the server, all data will be lost. Fo
 Make sure {{ site.mojito_green }} is up and running.
 
 ```sh
-cd ${PROJECT_DIR}/webapp
-npm run create-demo-data
+alias mojito='java -Dspring.config.additional-location=optional:~/.l10n/config/cli/application.properties -jar ${PROJECT_DIR}/cli/target/mojito-cli-*-SNAPSHOT-exec.jar'
+mojito demo-create -n Demo
 ```
-    
+
+Change `${PROJECT_DIR}` to the path of your local Mojito clone.
+
 This creates `Demo` repository in {{ site.mojito_green }} with 21 languages.  17 languages are fully translated.  A Demo directory is created in ${Project_DIR} with source file.
-
-## Alias for the CLI
-
-To easily run `CLI` commands using the latest code, you can create an alias that point to the `jar` that was previously built. 
-
-```sh
-alias mojito='java -Dspring.config.additional-location=optional:~/.l10n/config/cli/application.properties -jar ${PROJECT_DIR}/cli/target/mojito-cli-*-SNAPSHOT-exec.jar '
-```
-
-For example to create Demo data, you can now run: `mojito demo-create -n DemoCLI`.
 
 Alternatively, install the CLI using the [install scripts]({{ site.url }}/docs/guides/install/#cli-install-script).
 
