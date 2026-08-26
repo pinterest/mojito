@@ -56,7 +56,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.xml.sax.SAXException;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
@@ -66,6 +68,8 @@ public class EvolveService {
   private static final Logger log = LoggerFactory.getLogger(EvolveService.class);
 
   private static final long TEN_SECONDS = 10000;
+
+  private static final int LOCALIZED_CONTENT_LOG_MAX_CHARS = 10000;
 
   private final RepositoryRepository repositoryRepository;
 
@@ -327,6 +331,77 @@ public class EvolveService {
         evolveCoursePicture.getHeroPictureMobileUrl());
   }
 
+  private boolean isUnprocessableEntity(Throwable throwable) {
+    Throwable current = Exceptions.unwrap(throwable);
+    while (current != null) {
+      if (current instanceof HttpClientErrorException httpClientErrorException
+          && httpClientErrorException.getStatusCode().value() == 422) {
+        return true;
+      }
+      current = current.getCause();
+    }
+    return false;
+  }
+
+  // Evolve rejects the whole payload with 422 when a referenced image has no content.
+  private Mono<Void> retryCourseTranslationWithoutMedia(
+      int courseId, Boolean refreshWithParentAssetsAndStructure, String content, Throwable cause) {
+    log.warn(
+        "Course translation update for course {} rejected with 422, retrying without embedded media",
+        courseId,
+        cause);
+    String contentWithoutMedia;
+    try {
+      contentWithoutMedia = this.xliffUtils.removeBinUnitElements(content);
+    } catch (ParserConfigurationException | IOException | SAXException | TransformerException e) {
+      throw new EvolveSyncException("Error while stripping media elements after a 422 response", e);
+    }
+    return Mono.<Void>fromRunnable(
+            () ->
+                this.evolveClient.updateCourseTranslation(
+                    courseId, refreshWithParentAssetsAndStructure, contentWithoutMedia))
+        .doOnError(
+            e -> log.error("Course translation update still failed without embedded media", e));
+  }
+
+  private String getLocalizedContentForLog(String localizedContent) {
+    if (localizedContent == null) {
+      return null;
+    }
+    if (localizedContent.length() <= LOCALIZED_CONTENT_LOG_MAX_CHARS) {
+      return localizedContent;
+    }
+    return localizedContent.substring(0, LOCALIZED_CONTENT_LOG_MAX_CHARS)
+        + "... [truncated, total chars="
+        + localizedContent.length()
+        + "]";
+  }
+
+  private void sendCourseTranslation(
+      int courseId, Boolean refreshWithParentAssetsAndStructure, String content) {
+    Mono.<Void>fromRunnable(
+            () ->
+                this.evolveClient.updateCourseTranslation(
+                    courseId, refreshWithParentAssetsAndStructure, content))
+        .retryWhen(
+            Retry.backoff(this.evolveConfigurationProperties.getMaxRetries(), this.retryMinBackoff)
+                .maxBackoff(this.retryMaxBackoff))
+        .doOnError(
+          e ->
+            log.error(
+              "Error while updating course translation for course {}. refreshWithParentAssetsAndStructure: {}, localizedContent: {}",
+              courseId,
+              refreshWithParentAssetsAndStructure,
+              this.getLocalizedContentForLog(content),
+              e))
+        .onErrorResume(
+            this::isUnprocessableEntity,
+            e ->
+                this.retryCourseTranslationWithoutMedia(
+                    courseId, refreshWithParentAssetsAndStructure, content, e))
+        .block();
+  }
+
   private void updateCourseTranslations(
       CourseDTO courseDTO,
       Asset asset,
@@ -376,18 +451,10 @@ public class EvolveService {
                 "Error while updating picture and hero picture target URLs", e);
           }
 
-          Mono.fromRunnable(
-                  () ->
-                      this.evolveClient.updateCourseTranslation(
-                          courseDTO.getId(),
-                          refreshWithParentAssetsAndStructure,
-                          localizedContentWithUpdatedTargetUrls))
-              .retryWhen(
-                  Retry.backoff(
-                          this.evolveConfigurationProperties.getMaxRetries(), this.retryMinBackoff)
-                      .maxBackoff(this.retryMaxBackoff))
-              .doOnError(e -> log.error("Error while updating course translation", e))
-              .block();
+          this.sendCourseTranslation(
+              courseDTO.getId(),
+              refreshWithParentAssetsAndStructure,
+              localizedContentWithUpdatedTargetUrls);
         });
   }
 
