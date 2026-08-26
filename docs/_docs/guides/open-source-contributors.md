@@ -133,11 +133,11 @@ Run the following commands to create the databases. Change the user name, databa
  so you'll have to update the configuration files accordingly later.
    
 ```sql
-CREATE USER 'mojito'@'localhost' IDENTIFIED BY 'mojito';
+CREATE USER IF NOT EXISTS 'mojito'@'localhost' IDENTIFIED BY 'mojito';
 CREATE DATABASE IF NOT EXISTS mojito CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_bin';
 CREATE DATABASE IF NOT EXISTS mojito_dev CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_bin';
-GRANT ALL ON mojito.* TO 'mojito'@'localhost' IDENTIFIED BY 'mojito';
-GRANT ALL ON mojito_dev.* TO 'mojito'@'localhost' IDENTIFIED BY 'mojito';
+GRANT ALL ON mojito.* TO 'mojito'@'localhost';
+GRANT ALL ON mojito_dev.* TO 'mojito'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
@@ -153,7 +153,7 @@ l10n.flyway.clean=true
 spring.datasource.url=jdbc:mysql://localhost:3306/mojito?characterEncoding=UTF-8&useUnicode=true
 spring.datasource.username=mojito
 spring.datasource.password=mojito
-spring.datasource.driverClassName=com.mysql.jdbc.Driver
+spring.datasource.driverClassName=com.mysql.cj.jdbc.Driver
 
 l10n.org.quartz.jobStore.useProperties=true
 l10n.org.quartz.scheduler.instanceId=AUTO
@@ -163,7 +163,7 @@ l10n.org.quartz.jobStore.class=org.quartz.impl.jdbcjobstore.JobStoreTX
 l10n.org.quartz.jobStore.driverDelegateClass=org.quartz.impl.jdbcjobstore.StdJDBCDelegate
 l10n.org.quartz.jobStore.dataSource=myDS
 l10n.org.quartz.dataSource.myDS.provider=hikaricp
-l10n.org.quartz.dataSource.myDS.driver=com.mysql.jdbc.Driver
+l10n.org.quartz.dataSource.myDS.driver=com.mysql.cj.jdbc.Driver
 l10n.org.quartz.dataSource.myDS.URL=jdbc:mysql://localhost:3306/mojito?characterEncoding=UTF-8&useUnicode=true
 l10n.org.quartz.dataSource.myDS.user=mojito
 l10n.org.quartz.dataSource.myDS.password=mojito
@@ -189,13 +189,25 @@ cd ${PROJECT_DIR}
 git config blame.ignoreRevsFile .git-blame-ignore-revs
 mvn clean install -DskipTests=true
 ```
+    
+## Setup `npm`
+
+It is advised to reuse the `npm` version that was downloaded during {{ site.mojito_green }}'s build.
+
+```sh
+source webapp/src/main/frontend/use_local_npm.sh
+```
+    
+Else, make sure the global `npm` is compatible.
  
 ## Run {{ site.mojito_green }}
 
 ```sh
-cd ${PROJECT_DIR}/webapp
-mvn spring-boot:run
+cd ${PROJECT_DIR}/webapp/src/main/frontend
+npm run start-dev
 ```
+
+This uses the `start-server-nofe` npm script, which starts Spring Boot with config from `~/.l10n/config/webapp/` (`application.properties`, `application-npm.properties`, and `application-$USER.properties`) and the `$USER,npm` Spring profiles.
 
 {{ site.mojito_green }} should be running on <http://localhost:8080/login>.  
 
@@ -271,7 +283,7 @@ docker run -v $(pwd):/mnt/mojito -v ~/.m2:/root/.m2 -p 8080:8080 -it aurambaj/mo
     
 # and then build commands
 mvn install -DskipTests
-cd webapp/
+cd webapp/src/main/frontend
 npm run start-dev
 ```
     
