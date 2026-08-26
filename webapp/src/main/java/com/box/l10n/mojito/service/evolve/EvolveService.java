@@ -387,13 +387,13 @@ public class EvolveService {
             Retry.backoff(this.evolveConfigurationProperties.getMaxRetries(), this.retryMinBackoff)
                 .maxBackoff(this.retryMaxBackoff))
         .doOnError(
-          e ->
-            log.error(
-              "Error while updating course translation for course {}. refreshWithParentAssetsAndStructure: {}, localizedContent: {}",
-              courseId,
-              refreshWithParentAssetsAndStructure,
-              this.getLocalizedContentForLog(content),
-              e))
+            e ->
+                log.error(
+                    "Error while updating course translation for course {}. refreshWithParentAssetsAndStructure: {}, localizedContent: {}",
+                    courseId,
+                    refreshWithParentAssetsAndStructure,
+                    this.getLocalizedContentForLog(content),
+                    e))
         .onErrorResume(
             this::isUnprocessableEntity,
             e ->
