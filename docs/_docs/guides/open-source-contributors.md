@@ -207,8 +207,6 @@ cd ${PROJECT_DIR}/webapp/src/main/frontend
 npm run start-dev
 ```
 
-This uses the `start-server-nofe` npm script, which starts Spring Boot with config from `~/.l10n/config/webapp/` (`application.properties`, `application-npm.properties`, and `application-$USER.properties`) and the `$USER,npm` Spring profiles.
-
 {{ site.mojito_green }} should be running on <http://localhost:8080/login>.  
 
 You can login with username: `admin` and password: `ChangeMe`.
