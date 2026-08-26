@@ -133,11 +133,11 @@ Run the following commands to create the databases. Change the user name, databa
  so you'll have to update the configuration files accordingly later.
    
 ```sql
-CREATE USER 'mojito'@'localhost' IDENTIFIED BY 'mojito';
+CREATE USER IF NOT EXISTS 'mojito'@'localhost' IDENTIFIED BY 'mojito';
 CREATE DATABASE IF NOT EXISTS mojito CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_bin';
 CREATE DATABASE IF NOT EXISTS mojito_dev CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_bin';
-GRANT ALL ON mojito.* TO 'mojito'@'localhost' IDENTIFIED BY 'mojito';
-GRANT ALL ON mojito_dev.* TO 'mojito'@'localhost' IDENTIFIED BY 'mojito';
+GRANT ALL ON mojito.* TO 'mojito'@'localhost';
+GRANT ALL ON mojito_dev.* TO 'mojito'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
@@ -153,7 +153,7 @@ l10n.flyway.clean=true
 spring.datasource.url=jdbc:mysql://localhost:3306/mojito?characterEncoding=UTF-8&useUnicode=true
 spring.datasource.username=mojito
 spring.datasource.password=mojito
-spring.datasource.driverClassName=com.mysql.jdbc.Driver
+spring.datasource.driverClassName=com.mysql.cj.jdbc.Driver
 
 l10n.org.quartz.jobStore.useProperties=true
 l10n.org.quartz.scheduler.instanceId=AUTO
@@ -163,7 +163,7 @@ l10n.org.quartz.jobStore.class=org.quartz.impl.jdbcjobstore.JobStoreTX
 l10n.org.quartz.jobStore.driverDelegateClass=org.quartz.impl.jdbcjobstore.StdJDBCDelegate
 l10n.org.quartz.jobStore.dataSource=myDS
 l10n.org.quartz.dataSource.myDS.provider=hikaricp
-l10n.org.quartz.dataSource.myDS.driver=com.mysql.jdbc.Driver
+l10n.org.quartz.dataSource.myDS.driver=com.mysql.cj.jdbc.Driver
 l10n.org.quartz.dataSource.myDS.URL=jdbc:mysql://localhost:3306/mojito?characterEncoding=UTF-8&useUnicode=true
 l10n.org.quartz.dataSource.myDS.user=mojito
 l10n.org.quartz.dataSource.myDS.password=mojito
@@ -195,7 +195,7 @@ mvn clean install -DskipTests=true
 It is advised to reuse the `npm` version that was downloaded during {{ site.mojito_green }}'s build.
 
 ```sh
-source webapp/use_local_npm.sh
+source webapp/src/main/frontend/use_local_npm.sh
 ```
     
 Else, make sure the global `npm` is compatible.
@@ -203,7 +203,7 @@ Else, make sure the global `npm` is compatible.
 ## Run {{ site.mojito_green }}
 
 ```sh
-cd ${PROJECT_DIR}/webapp
+cd ${PROJECT_DIR}/webapp/src/main/frontend
 npm run start-dev
 ```
 
@@ -218,21 +218,13 @@ with in-memory `HSQL DB`. When you restart the server, all data will be lost. Fo
 Make sure {{ site.mojito_green }} is up and running.
 
 ```sh
-cd ${PROJECT_DIR}/webapp
-npm run create-demo-data
+alias mojito='java -Dspring.config.additional-location=optional:~/.l10n/config/cli/application.properties -jar ${PROJECT_DIR}/cli/target/mojito-cli-*-SNAPSHOT-exec.jar'
+mojito demo-create -n Demo
 ```
-    
+
+Change `${PROJECT_DIR}` to the path of your local Mojito clone.
+
 This creates `Demo` repository in {{ site.mojito_green }} with 21 languages.  17 languages are fully translated.  A Demo directory is created in ${Project_DIR} with source file.
-
-## Alias for the CLI
-
-To easily run `CLI` commands using the latest code, you can create an alias that point to the `jar` that was previously built. 
-
-```sh
-alias mojito='java -Dspring.config.additional-location=optional:~/.l10n/config/cli/application.properties -jar ${PROJECT_DIR}/cli/target/mojito-cli-*-SNAPSHOT-exec.jar '
-```
-
-For example to create Demo data, you can now run: `mojito demo-create -n DemoCLI`.
 
 Alternatively, install the CLI using the [install scripts]({{ site.url }}/docs/guides/install/#cli-install-script).
 
@@ -289,7 +281,7 @@ docker run -v $(pwd):/mnt/mojito -v ~/.m2:/root/.m2 -p 8080:8080 -it aurambaj/mo
     
 # and then build commands
 mvn install -DskipTests
-cd webapp/
+cd webapp/src/main/frontend
 npm run start-dev
 ```
     
