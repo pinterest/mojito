@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -26,6 +27,7 @@ import com.box.l10n.mojito.entity.EvolveCoursePicture;
 import com.box.l10n.mojito.entity.Locale;
 import com.box.l10n.mojito.entity.Repository;
 import com.box.l10n.mojito.entity.RepositoryLocale;
+import com.box.l10n.mojito.okapi.asset.UnsupportedAssetFilterTypeException;
 import com.box.l10n.mojito.service.asset.AssetService;
 import com.box.l10n.mojito.service.assetExtraction.AssetExtractionByBranchRepository;
 import com.box.l10n.mojito.service.assetcontent.AssetContentRepository;
@@ -50,6 +52,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,10 +60,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.web.client.HttpClientErrorException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 /**
  * Unit tests for {@link EvolveService}'s course picture URL handling, i.e. the private {@code
@@ -546,5 +552,74 @@ public class EvolveServiceMockTest {
     assertThrows(EvolveSyncException.class, () -> this.evolveService.sync(REPOSITORY_ID, null));
 
     verify(this.evolveClientMock, never()).updateCourseTranslation(anyInt(), any(), anyString());
+  }
+
+  @Test
+  public void testSyncWithUpdateCourseTranslationThrows422ThenFallbackSucceeds()
+      throws IOException,
+          UnsupportedAssetFilterTypeException,
+          ParserConfigurationException,
+          SAXException {
+    this.stubInTranslationSync(PRESERVE_ASSETS_AND_STRUCTURE, "es-ES");
+    String localizedContent = this.getCourseWithPicturesXliffContent();
+    this.stubGenerateLocalized(localizedContent);
+    when(this.evolveCoursePictureServiceMock.findByCourseIdAndLocaleBcp47Tag(COURSE_ID, "es-ES"))
+        .thenReturn(
+            Optional.of(
+                this.createCoursePicture(
+                    "es-ES", "https://cdn.test.com/es/picture.png", null, null)));
+
+    HttpClientErrorException httpClientErrorException =
+        new HttpClientErrorException(HttpStatusCode.valueOf(422), "Image reference has no content");
+    doThrow(httpClientErrorException)
+        .doAnswer(invocation -> null)
+        .when(this.evolveClientMock)
+        .updateCourseTranslation(eq(COURSE_ID), any(), anyString());
+    this.evolveService.sync(REPOSITORY_ID, null);
+
+    ArgumentCaptor<String> localizedContentCaptor = ArgumentCaptor.forClass(String.class);
+    verify(this.evolveClientMock, times(2))
+        .updateCourseTranslation(eq(COURSE_ID), any(), localizedContentCaptor.capture());
+
+    XliffUtils xliffUtils = new XliffUtils();
+    List<String> localizedContents = localizedContentCaptor.getAllValues();
+    assertEquals(2, localizedContents.size());
+    assertTrue(xliffUtils.containsBinUnitElement(localizedContents.get(0)));
+    assertFalse(xliffUtils.containsBinUnitElement(localizedContents.get(1)));
+  }
+
+  @Test
+  public void testSyncWithUpdateCourseTranslationThrows422AndFallbackAlsoFails()
+      throws IOException,
+          UnsupportedAssetFilterTypeException,
+          ParserConfigurationException,
+          SAXException {
+    this.stubInTranslationSync(PRESERVE_ASSETS_AND_STRUCTURE, "es-ES");
+    String localizedContent = this.getCourseWithPicturesXliffContent();
+    this.stubGenerateLocalized(localizedContent);
+    when(this.evolveCoursePictureServiceMock.findByCourseIdAndLocaleBcp47Tag(COURSE_ID, "es-ES"))
+        .thenReturn(
+            Optional.of(
+                this.createCoursePicture(
+                    "es-ES", "https://cdn.test.com/es/picture.png", null, null)));
+
+    HttpClientErrorException httpClientErrorException =
+        new HttpClientErrorException(HttpStatusCode.valueOf(422), "Image reference has no content");
+    doThrow(httpClientErrorException)
+        .doThrow(httpClientErrorException)
+        .when(this.evolveClientMock)
+        .updateCourseTranslation(eq(COURSE_ID), any(), anyString());
+
+    assertThrows(EvolveSyncException.class, () -> this.evolveService.sync(REPOSITORY_ID, null));
+
+    ArgumentCaptor<String> localizedContentCaptor = ArgumentCaptor.forClass(String.class);
+    verify(this.evolveClientMock, times(2))
+        .updateCourseTranslation(eq(COURSE_ID), any(), localizedContentCaptor.capture());
+
+    XliffUtils xliffUtils = new XliffUtils();
+    List<String> localizedContents = localizedContentCaptor.getAllValues();
+    assertEquals(2, localizedContents.size());
+    assertTrue(xliffUtils.containsBinUnitElement(localizedContents.get(0)));
+    assertFalse(xliffUtils.containsBinUnitElement(localizedContents.get(1)));
   }
 }
