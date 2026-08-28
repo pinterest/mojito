@@ -11,11 +11,14 @@ import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import org.apache.commons.codec.binary.Base64;
@@ -24,6 +27,8 @@ import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestFileDetail;
+import org.kohsuke.github.GHPullRequestReviewComment;
+import org.kohsuke.github.GHPullRequestReviewEvent;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
 import org.kohsuke.github.HttpException;
@@ -584,7 +589,76 @@ public class GithubClient {
   }
 
   /**
+   * Filters out the review comments that would duplicate a comment already posted on the pull
+   * request, ie. an existing review comment with the same body on the same file and line, as well
+   * as duplicates within the given list.
+   *
+   * <p>Both the current and the original line of the existing comments are considered: when a
+   * comment becomes outdated GitHub stops reporting a current line, in which case the original line
+   * is the only reference available to detect the duplicate.
+   *
+   * @param pullRequest the pull request the comments are about to be posted to
+   * @param reviewComments the comments to post
+   * @param repository the repository name, used for metrics
+   * @return the comments that are not already present on the pull request, in the original order
+   */
+  private List<ReviewComment> removeAlreadyPostedComments(
+      GHPullRequest pullRequest, List<ReviewComment> reviewComments, String repository)
+      throws IOException {
+
+    Set<ReviewCommentKey> existingCommentKeys = new HashSet<>();
+    for (GHPullRequestReviewComment existingComment : pullRequest.listReviewComments().toList()) {
+      String body = existingComment.getBody();
+      String path = existingComment.getPath();
+      if (existingComment.getLine() > 0) {
+        existingCommentKeys.add(new ReviewCommentKey(path, existingComment.getLine(), body));
+      }
+      if (existingComment.getOriginalLine() > 0) {
+        existingCommentKeys.add(
+            new ReviewCommentKey(path, existingComment.getOriginalLine(), body));
+      }
+    }
+
+    List<ReviewComment> commentsToPost = new ArrayList<>();
+    Set<ReviewCommentKey> seenCommentKeys = new HashSet<>();
+    for (ReviewComment comment : reviewComments) {
+      ReviewCommentKey key =
+          new ReviewCommentKey(comment.getPath(), comment.getLine(), comment.getBody());
+      if (existingCommentKeys.contains(key) || !seenCommentKeys.add(key)) {
+        logger.debug(
+            "Skipping review comment for {}:{} in repository '{}', the same comment already exists",
+            comment.getPath(),
+            comment.getLine(),
+            repository);
+        continue;
+      }
+      commentsToPost.add(comment);
+    }
+
+    int skippedCommentCount = reviewComments.size() - commentsToPost.size();
+    if (skippedCommentCount > 0) {
+      meterRegistry
+          .counter("Mojito.GitHubClient.DuplicatedReviewCommentsSkipped", "repository", repository)
+          .increment(skippedCommentCount);
+      logger.info(
+          "Skipping {} of {} review comments for PR {} in repository '{}', the same comments"
+              + " already exist on the same lines",
+          skippedCommentCount,
+          reviewComments.size(),
+          pullRequest.getNumber(),
+          repository);
+    }
+
+    return commentsToPost;
+  }
+
+  /**
    * Posts review comments to a pull request. These are inline comments on specific lines of code.
+   *
+   * <p>Comments that are already present on the pull request, ie. an existing review comment with
+   * the same body on the same file and line, are skipped so that re-running the checks on a pull
+   * request does not create duplicated comments. Duplicates within the provided list are skipped
+   * too.
    *
    * @param repository The repository name
    * @param prNumber The pull request number
@@ -609,22 +683,40 @@ public class GithubClient {
                         .getRepository(repoFullPath)
                         .getPullRequest(prNumber);
 
-                // Create a review with comments
+                List<ReviewComment> commentsToPost =
+                    removeAlreadyPostedComments(pullRequest, reviewComments, repository);
+
+                if (commentsToPost.isEmpty()) {
+                  logger.info(
+                      "All {} review comments are already present on PR {} in repository '{}',"
+                          + " nothing to post",
+                      reviewComments.size(),
+                      prNumber,
+                      repoFullPath);
+                  return;
+                }
+
+                // Create a review with comments. The event must be set: leaving it blank creates
+                // the review in the PENDING state, ie. a draft that is only visible to the
+                // identity that created it and that still needs to be submitted, so the comments
+                // would never be published on the pull request.
                 var reviewBuilder =
                     pullRequest
                         .createReview()
                         .commitId(commitSha)
+                        .event(GHPullRequestReviewEvent.COMMENT)
                         .body("I18N source string validation findings:");
 
-                for (ReviewComment comment : reviewComments) {
-                  reviewBuilder.comment(comment.getBody(), comment.getPath(), comment.getLine());
+                for (ReviewComment comment : commentsToPost) {
+                  reviewBuilder.singleLineComment(
+                      comment.getBody(), comment.getPath(), comment.getLine());
                 }
 
                 reviewBuilder.create();
 
                 logger.info(
                     "Successfully posted {} review comments to PR {} in repository '{}'",
-                    reviewComments.size(),
+                    commentsToPost.size(),
                     prNumber,
                     repoFullPath);
 
@@ -651,6 +743,16 @@ public class GithubClient {
                   e);
             })
         .block();
+  }
+
+  /** Identifies a review comment by its location and content, used to detect duplicates */
+  private record ReviewCommentKey(String path, int line, String body) {
+    ReviewCommentKey(String path, int line, String body) {
+      this.path = path;
+      this.line = line;
+      // GitHub can return the body with normalized line endings, ignore them when comparing
+      this.body = body == null ? null : body.replace("\r\n", "\n").strip();
+    }
   }
 
   /** Data class representing a pull request review comment */

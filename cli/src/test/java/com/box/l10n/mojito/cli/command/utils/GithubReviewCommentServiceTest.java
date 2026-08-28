@@ -54,16 +54,20 @@ class GithubReviewCommentServiceTest {
             List.of(checkResult), List.of(diff), new HashMap<>(), "repoName", "");
 
     // Assert
-    assertThat(reviewComments).hasSize(2);
-    assertThat(reviewComments.get(0).getPath()).isEqualTo("file1.java");
-    assertThat(reviewComments.get(0).getLine()).isEqualTo(10);
-    assertThat(reviewComments.get(0).getBody()).contains("I18N_TestCheck");
-    assertThat(reviewComments.get(0).getBody()).contains("Error");
-    assertThat(reviewComments.get(0).getBody()).contains("Failure message 1");
-    assertThat(reviewComments.get(0).getBody()).contains("EMPTY_PLACEHOLDER_COMMENT");
+    List<GithubClient.ReviewComment> orderedReviewComments =
+        reviewComments.stream()
+            .sorted(Comparator.comparing(GithubClient.ReviewComment::getPath))
+            .toList();
+    assertThat(orderedReviewComments).hasSize(2);
+    assertThat(orderedReviewComments.getFirst().getPath()).isEqualTo("file1.java");
+    assertThat(orderedReviewComments.getFirst().getLine()).isEqualTo(10);
+    assertThat(orderedReviewComments.getFirst().getBody()).contains("I18N_TestCheck");
+    assertThat(orderedReviewComments.getFirst().getBody()).contains("Error");
+    assertThat(orderedReviewComments.getFirst().getBody()).contains("Failure message 1");
+    assertThat(orderedReviewComments.getFirst().getBody()).contains("EMPTY_PLACEHOLDER_COMMENT");
 
-    assertThat(reviewComments.get(1).getPath()).isEqualTo("file2.java");
-    assertThat(reviewComments.get(1).getLine()).isEqualTo(20);
+    assertThat(orderedReviewComments.get(1).getPath()).isEqualTo("file2.java");
+    assertThat(orderedReviewComments.get(1).getLine()).isEqualTo(20);
   }
 
   @Test
@@ -95,6 +99,40 @@ class GithubReviewCommentServiceTest {
   }
 
   @Test
+  void generateReviewComments_errorLevel() {
+    // Arrange
+    GithubReviewCommentService service =
+        new GithubReviewCommentService(new String[] {}, 1, new SimpleMeterRegistry());
+
+    AssetExtractorTextUnit textUnitWithUsage =
+        createAssetExtractorTextUnit("source1", Set.of("file1.java:15"));
+
+    AssetExtractionDiff diff = new AssetExtractionDiff();
+    diff.setAddedTextunits(List.of(textUnitWithUsage));
+
+    Map<String, CliCheckResult.CheckFailure> fieldFailures =
+        Map.of(
+            "source1",
+            new CliCheckResult.CheckFailure(
+                CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Error message"));
+
+    CliCheckResult checkResult = createCliCheckResult(true, "ErrorCheck", fieldFailures);
+
+    // Act
+    List<GithubClient.ReviewComment> reviewComments =
+        service.generateReviewComments(
+            List.of(checkResult), List.of(diff), new HashMap<>(), "repoName", "");
+
+    // Assert
+    assertThat(reviewComments).hasSize(1);
+    assertThat(reviewComments.getFirst().getBody()).contains("I18N_ErrorCheck");
+    assertThat(reviewComments.getFirst().getBody()).contains("Error");
+    assertThat(reviewComments.getFirst().getBody()).contains("Error message");
+    assertThat(reviewComments.getFirst().getBody()).contains("EMPTY_PLACEHOLDER_COMMENT");
+    assertThat(reviewComments.getFirst().getBody()).doesNotContain("Warning");
+  }
+
+  @Test
   void generateReviewComments_warningLevel() {
     // Arrange
     GithubReviewCommentService service =
@@ -122,9 +160,9 @@ class GithubReviewCommentServiceTest {
 
     // Assert
     assertThat(reviewComments).hasSize(1);
-    assertThat(reviewComments.get(0).getBody()).contains("Warning");
-    assertThat(reviewComments.get(0).getBody()).contains("⚠️");
-    assertThat(reviewComments.get(0).getBody()).doesNotContain("Error");
+    assertThat(reviewComments.getFirst().getBody()).contains("Warning");
+    assertThat(reviewComments.getFirst().getBody()).contains("⚠️");
+    assertThat(reviewComments.getFirst().getBody()).doesNotContain("Error");
   }
 
   @Test
@@ -153,8 +191,8 @@ class GithubReviewCommentServiceTest {
 
     // Assert
     assertThat(reviewComments).hasSize(1);
-    assertThat(reviewComments.get(0).getPath()).isEqualTo("src/file1.java");
-    assertThat(reviewComments.get(0).getLine()).isEqualTo(10);
+    assertThat(reviewComments.getFirst().getPath()).isEqualTo("src/file1.java");
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(10);
   }
 
   @Test
@@ -187,8 +225,8 @@ class GithubReviewCommentServiceTest {
 
     // Assert
     assertThat(reviewComments).hasSize(1);
-    assertThat(reviewComments.get(0).getPath()).isEqualTo("file1.py");
-    assertThat(reviewComments.get(0).getLine()).isEqualTo(11); // Adjusted from 10 to 11
+    assertThat(reviewComments.getFirst().getPath()).isEqualTo("file1.py");
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(11); // Adjusted from 10 to 11
   }
 
   @Test

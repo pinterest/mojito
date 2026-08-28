@@ -35,9 +35,9 @@ public class GithubReviewCommentService {
 
   GithubReviewCommentService(
       @Value(
-              "#{'${l10n.extraction-check.sarif.extracted-comments.fileExtensions:py,xml}'.split(',')}")
+              "#{'${l10n.extraction-check.review-comments.extracted-comments.fileExtensions:py,xml}'.split(',')}")
           String[] extractedCommentFileExtensions,
-      @Value("${l10n.extraction-check.sarif.lineNumberErrorAllowance:2}")
+      @Value("${l10n.extraction-check.review-comments.lineNumberErrorAllowance:2}")
           int lineNumberErrorAllowance,
       MeterRegistry meterRegistry) {
     this.extractedCommentFileExtensions = extractedCommentFileExtensions;
@@ -114,8 +114,7 @@ public class GithubReviewCommentService {
       String[] extractedCommentFileExtensions,
       Map<String, Set<Integer>> githubModifiedLines,
       String repoName,
-      String prefixToRemoveFromFileUri,
-      boolean isCommentRelatedCheck) {
+      String prefixToRemoveFromFileUri) {
     return assetExtractorTextUnit.getUsages().stream()
         .map(
             usage -> {
@@ -143,10 +142,6 @@ public class GithubReviewCommentService {
                       .counter(
                           "GithubReviewCommentService.LineNumberIncorrect", "repository", repoName)
                       .increment();
-                }
-
-                if (!isCommentRelatedCheck) {
-                  return new UsageLocation(fileUri, startLineNumber);
                 }
 
                 return estimateLocationLineNumber(
@@ -178,9 +173,7 @@ public class GithubReviewCommentService {
   }
 
   /**
-   * Generates GitHub PR review comments based on CLI check failures. This method mirrors the logic
-   * in SarifFileGenerator.generateSarifFile to ensure that review comments are consistent with
-   * SARIF annotations.
+   * Generates GitHub PR review comments based on CLI check failures.
    *
    * @param cliCheckerFailures List of check failures from CLI checkers
    * @param assetExtractionDiffs List of asset extraction diffs containing text units with usages
@@ -221,8 +214,7 @@ public class GithubReviewCommentService {
                   extractedCommentFileExtensions,
                   githubModifiedLines,
                   repoName,
-                  prefixToRemoveFromFileUris,
-                  ruleId.isCommentRelated());
+                  prefixToRemoveFromFileUris);
 
           for (UsageLocation location : usageLocations) {
             String commentBody =

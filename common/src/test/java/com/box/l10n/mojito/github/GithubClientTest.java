@@ -3,9 +3,12 @@ package com.box.l10n.mojito.github;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,11 +37,15 @@ import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHLabel;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestFileDetail;
+import org.kohsuke.github.GHPullRequestReviewBuilder;
+import org.kohsuke.github.GHPullRequestReviewComment;
+import org.kohsuke.github.GHPullRequestReviewEvent;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.PagedIterable;
 import org.kohsuke.github.PagedIterator;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,6 +75,8 @@ public class GithubClientTest {
 
   @Mock GHPullRequest ghPullRequestMock;
 
+  @Mock GHPullRequestReviewBuilder ghPullRequestReviewBuilderMock;
+
   @Mock GHCommit ghCommitMock;
 
   @Mock GHCommitPointer ghCommitPointerMock;
@@ -92,6 +101,8 @@ public class GithubClientTest {
     githubClient.retryMaxBackoff = Duration.ofMillis(10);
     when(this.meterRegistryMock.counter(
             anyString(), anyString(), anyString(), anyString(), anyString()))
+        .thenReturn(this.counterMock);
+    when(this.meterRegistryMock.counter(anyString(), anyString(), anyString()))
         .thenReturn(this.counterMock);
     githubClient.meterRegistry = meterRegistryMock;
     Mockito.reset(
@@ -125,6 +136,8 @@ public class GithubClientTest {
     when(pagedIteratorMock.next()).thenReturn(file1, file2);
     when(pagedIterableMock.iterator()).thenReturn(pagedIteratorMock);
     when(ghPullRequestMock.listFiles()).thenReturn(pagedIterableMock);
+
+    stubExistingReviewComments(List.of());
   }
 
   @Test
@@ -273,6 +286,286 @@ public class GithubClientTest {
     verify(this.gitHubMock, times(1)).getRepository("testOwner/testRepo");
     verify(this.ghRepoMock, times(1)).getPullRequest(1);
     verify(this.ghPullRequestMock, times(1)).listFiles();
+  }
+
+  @Test
+  public void testAddReviewCommentsToPR() throws IOException {
+    stubReviewBuilder();
+
+    githubClient.addReviewCommentsToPR(
+        "testRepo",
+        1,
+        List.of(new GithubClient.ReviewComment("Placeholder issue", "src/main/strings.xml", 42)),
+        "commitSha");
+
+    verify(gitHubMock, times(1)).getRepository("testOwner/testRepo");
+    verify(ghRepoMock, times(1)).getPullRequest(1);
+
+    InOrder inOrder = inOrder(ghPullRequestMock, ghPullRequestReviewBuilderMock);
+    inOrder.verify(ghPullRequestMock, times(1)).createReview();
+    inOrder.verify(ghPullRequestReviewBuilderMock, times(1)).commitId("commitSha");
+    inOrder
+        .verify(ghPullRequestReviewBuilderMock, times(1))
+        .event(GHPullRequestReviewEvent.COMMENT);
+    inOrder
+        .verify(ghPullRequestReviewBuilderMock, times(1))
+        .body("I18N source string validation findings:");
+    inOrder
+        .verify(ghPullRequestReviewBuilderMock, times(1))
+        .comment("Placeholder issue", "src/main/strings.xml", 42);
+    inOrder.verify(ghPullRequestReviewBuilderMock, times(1)).create();
+  }
+
+  @Test
+  public void testAddReviewCommentsToPRSubmitsTheReviewSoThatCommentsArePublished()
+      throws IOException {
+    stubReviewBuilder();
+
+    githubClient.addReviewCommentsToPR(
+        "testRepo",
+        1,
+        List.of(new GithubClient.ReviewComment("Placeholder issue", "src/main/strings.xml", 42)),
+        "commitSha");
+
+    // Without an event the review is created as a PENDING draft: GitHub accepts the call but the
+    // comments are only visible to the identity that created it, until the review is submitted
+    verify(ghPullRequestReviewBuilderMock, times(1)).event(GHPullRequestReviewEvent.COMMENT);
+    verify(ghPullRequestReviewBuilderMock, never()).event(GHPullRequestReviewEvent.PENDING);
+    verify(ghPullRequestReviewBuilderMock, times(1)).create();
+  }
+
+  @Test
+  public void testAddReviewCommentsToPRWithMultipleComments() throws IOException {
+    stubReviewBuilder();
+
+    githubClient.addReviewCommentsToPR(
+        "testRepo",
+        1,
+        List.of(
+            new GithubClient.ReviewComment("Comment 1", "src/main/strings.xml", 10),
+            new GithubClient.ReviewComment("Comment 2", "src/main/strings.xml", 20),
+            new GithubClient.ReviewComment("Comment 3", "src/main/other.xml", 30)),
+        "commitSha");
+
+    verify(ghPullRequestMock, times(1)).createReview();
+    verify(ghPullRequestReviewBuilderMock, times(1))
+        .comment("Comment 1", "src/main/strings.xml", 10);
+    verify(ghPullRequestReviewBuilderMock, times(1))
+        .comment("Comment 2", "src/main/strings.xml", 20);
+    verify(ghPullRequestReviewBuilderMock, times(1)).comment("Comment 3", "src/main/other.xml", 30);
+    // A single review is created, holding all the comments
+    verify(ghPullRequestReviewBuilderMock, times(1)).create();
+  }
+
+  @Test
+  public void testAddReviewCommentsToPRWithNullComments() throws IOException {
+    githubClient.addReviewCommentsToPR("testRepo", 1, null, "commitSha");
+
+    verify(gitHubMock, never()).getRepository(anyString());
+    verify(ghPullRequestMock, never()).createReview();
+  }
+
+  @Test
+  public void testAddReviewCommentsToPRWithEmptyComments() throws IOException {
+    githubClient.addReviewCommentsToPR("testRepo", 1, List.of(), "commitSha");
+
+    verify(gitHubMock, never()).getRepository(anyString());
+    verify(ghPullRequestMock, never()).createReview();
+  }
+
+  @Test
+  public void testAddReviewCommentsToPRWithRetry() throws IOException {
+    stubReviewBuilder();
+    when(gitHubMock.getRepository(isA(String.class)))
+        .thenThrow(new IOException("network issue"))
+        .thenThrow(new IOException("network issue"))
+        .thenReturn(ghRepoMock);
+
+    githubClient.addReviewCommentsToPR(
+        "testRepo",
+        1,
+        List.of(new GithubClient.ReviewComment("Placeholder issue", "src/main/strings.xml", 42)),
+        "commitSha");
+
+    verify(gitHubMock, times(3)).getRepository("testOwner/testRepo");
+    verify(ghPullRequestReviewBuilderMock, times(1)).create();
+  }
+
+  @Test
+  public void testAddReviewCommentsToPR_ThrowsExceptionWhenRetriesExhausted() throws IOException {
+    stubReviewBuilder();
+    when(ghPullRequestReviewBuilderMock.create()).thenThrow(new IOException("network issue"));
+
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            githubClient.addReviewCommentsToPR(
+                "testRepo",
+                1,
+                List.of(
+                    new GithubClient.ReviewComment(
+                        "Placeholder issue", "src/main/strings.xml", 42)),
+                "commitSha"));
+
+    // One initial attempt plus maxRetries
+    verify(ghPullRequestReviewBuilderMock, times(4)).create();
+    verify(meterRegistryMock, times(1))
+        .counter(
+            "Mojito.GitHubClient.RetriesExhausted",
+            "repository",
+            "testRepo",
+            "operation",
+            "addReviewCommentsToPR");
+    verify(counterMock, times(1)).increment();
+  }
+
+  @Test
+  public void testAddReviewCommentsToPRSkipsCommentAlreadyOnTheSameLine() throws IOException {
+    stubReviewBuilder();
+    stubExistingReviewComments(
+        List.of(stubExistingReviewComment("Placeholder issue", "src/main/strings.xml", 42, 42)));
+
+    githubClient.addReviewCommentsToPR(
+        "testRepo",
+        1,
+        List.of(
+            new GithubClient.ReviewComment("Placeholder issue", "src/main/strings.xml", 42),
+            new GithubClient.ReviewComment("Another issue", "src/main/strings.xml", 42)),
+        "commitSha");
+
+    verify(ghPullRequestReviewBuilderMock, never())
+        .comment("Placeholder issue", "src/main/strings.xml", 42);
+    verify(ghPullRequestReviewBuilderMock, times(1))
+        .comment("Another issue", "src/main/strings.xml", 42);
+    verify(ghPullRequestReviewBuilderMock, times(1)).create();
+    verify(meterRegistryMock, times(1))
+        .counter("Mojito.GitHubClient.DuplicatedReviewCommentsSkipped", "repository", "testRepo");
+    verify(counterMock, times(1)).increment(1);
+  }
+
+  @Test
+  public void testAddReviewCommentsToPRPostsCommentWhenExistingOneIsOnAnotherLineOrFile()
+      throws IOException {
+    stubReviewBuilder();
+    stubExistingReviewComments(
+        List.of(
+            stubExistingReviewComment("Placeholder issue", "src/main/strings.xml", 41, 41),
+            stubExistingReviewComment("Placeholder issue", "src/main/other.xml", 42, 42)));
+
+    githubClient.addReviewCommentsToPR(
+        "testRepo",
+        1,
+        List.of(new GithubClient.ReviewComment("Placeholder issue", "src/main/strings.xml", 42)),
+        "commitSha");
+
+    verify(ghPullRequestReviewBuilderMock, times(1))
+        .comment("Placeholder issue", "src/main/strings.xml", 42);
+    verify(ghPullRequestReviewBuilderMock, times(1)).create();
+  }
+
+  @Test
+  public void testAddReviewCommentsToPRPostsCommentWhenExistingOneHasAnotherBody()
+      throws IOException {
+    stubReviewBuilder();
+    stubExistingReviewComments(
+        List.of(stubExistingReviewComment("Another issue", "src/main/strings.xml", 42, 42)));
+
+    githubClient.addReviewCommentsToPR(
+        "testRepo",
+        1,
+        List.of(new GithubClient.ReviewComment("Placeholder issue", "src/main/strings.xml", 42)),
+        "commitSha");
+
+    verify(ghPullRequestReviewBuilderMock, times(1))
+        .comment("Placeholder issue", "src/main/strings.xml", 42);
+    verify(ghPullRequestReviewBuilderMock, times(1)).create();
+  }
+
+  @Test
+  public void testAddReviewCommentsToPRSkipsCommentMatchingOutdatedExistingComment()
+      throws IOException {
+    stubReviewBuilder();
+    // An outdated comment has no current line, only the original one it was posted on
+    stubExistingReviewComments(
+        List.of(stubExistingReviewComment("Placeholder issue", "src/main/strings.xml", 0, 42)));
+
+    githubClient.addReviewCommentsToPR(
+        "testRepo",
+        1,
+        List.of(new GithubClient.ReviewComment("Placeholder issue", "src/main/strings.xml", 42)),
+        "commitSha");
+
+    verify(ghPullRequestMock, never()).createReview();
+    verify(ghPullRequestReviewBuilderMock, never()).create();
+  }
+
+  @Test
+  public void testAddReviewCommentsToPRSkipsDuplicatesWithinTheProvidedComments()
+      throws IOException {
+    stubReviewBuilder();
+
+    githubClient.addReviewCommentsToPR(
+        "testRepo",
+        1,
+        List.of(
+            new GithubClient.ReviewComment("Placeholder issue", "src/main/strings.xml", 42),
+            new GithubClient.ReviewComment("Placeholder issue", "src/main/strings.xml", 42)),
+        "commitSha");
+
+    verify(ghPullRequestReviewBuilderMock, times(1))
+        .comment("Placeholder issue", "src/main/strings.xml", 42);
+    verify(ghPullRequestReviewBuilderMock, times(1)).create();
+  }
+
+  @Test
+  public void testAddReviewCommentsToPRSkipsReviewWhenAllCommentsAlreadyExist() throws IOException {
+    stubReviewBuilder();
+    stubExistingReviewComments(
+        List.of(
+            stubExistingReviewComment("Comment 1", "src/main/strings.xml", 10, 10),
+            stubExistingReviewComment("Comment 2", "src/main/other.xml", 20, 20)));
+
+    githubClient.addReviewCommentsToPR(
+        "testRepo",
+        1,
+        List.of(
+            new GithubClient.ReviewComment("Comment 1", "src/main/strings.xml", 10),
+            new GithubClient.ReviewComment("Comment 2", "src/main/other.xml", 20)),
+        "commitSha");
+
+    verify(ghPullRequestMock, never()).createReview();
+    verify(ghPullRequestReviewBuilderMock, never()).create();
+    verify(counterMock, times(1)).increment(2);
+  }
+
+  private void stubExistingReviewComments(List<GHPullRequestReviewComment> existingComments)
+      throws IOException {
+    PagedIterable<GHPullRequestReviewComment> reviewCommentsMock =
+        Mockito.mock(PagedIterable.class);
+    when(reviewCommentsMock.toList()).thenReturn(existingComments);
+    when(ghPullRequestMock.listReviewComments()).thenReturn(reviewCommentsMock);
+  }
+
+  private GHPullRequestReviewComment stubExistingReviewComment(
+      String body, String path, int line, int originalLine) {
+    GHPullRequestReviewComment reviewCommentMock = Mockito.mock(GHPullRequestReviewComment.class);
+    when(reviewCommentMock.getBody()).thenReturn(body);
+    when(reviewCommentMock.getPath()).thenReturn(path);
+    when(reviewCommentMock.getLine()).thenReturn(line);
+    when(reviewCommentMock.getOriginalLine()).thenReturn(originalLine);
+    return reviewCommentMock;
+  }
+
+  private void stubReviewBuilder() throws IOException {
+    when(ghPullRequestMock.createReview()).thenReturn(ghPullRequestReviewBuilderMock);
+    when(ghPullRequestReviewBuilderMock.commitId(anyString()))
+        .thenReturn(ghPullRequestReviewBuilderMock);
+    when(ghPullRequestReviewBuilderMock.event(isA(GHPullRequestReviewEvent.class)))
+        .thenReturn(ghPullRequestReviewBuilderMock);
+    when(ghPullRequestReviewBuilderMock.body(anyString()))
+        .thenReturn(ghPullRequestReviewBuilderMock);
+    when(ghPullRequestReviewBuilderMock.comment(anyString(), anyString(), anyInt()))
+        .thenReturn(ghPullRequestReviewBuilderMock);
   }
 
   @Test

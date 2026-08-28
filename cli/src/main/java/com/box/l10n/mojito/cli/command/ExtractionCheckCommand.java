@@ -576,6 +576,10 @@ public class ExtractionCheckCommand extends Command {
   }
 
   private void initNotificationSenders() {
+    if (thirdPartyNotificationTypes.isEmpty()) {
+      return;
+    }
+
     extractionCheckNotificationSenders =
         thirdPartyNotificationTypes.stream()
             .map(
@@ -894,7 +898,7 @@ public class ExtractionCheckCommand extends Command {
                 consoleWriter
                     .fg(Ansi.Color.GREEN)
                     .newLine()
-                    .a("Inline review comments added successfully")
+                    .a(String.format("%d inline review comments added", reviewComments.size()))
                     .println();
               },
               () -> {
