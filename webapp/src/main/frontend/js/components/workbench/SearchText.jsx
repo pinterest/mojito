@@ -63,7 +63,7 @@ let SearchText = createReactClass({
      * @return {string}
      */
     getInitialSearchAttribute() {
-        return this.props.searchAttribute ? this.props.searchAttribute : SearchParamsStore.SEARCH_ATTRIBUTES.TARGET;
+        return this.props.searchAttribute ? this.props.searchAttribute : SearchParamsStore.getState().searchAttribute;
     },
 
     /**
@@ -72,7 +72,9 @@ let SearchText = createReactClass({
      * @return {string}
      */
     getInitialSearchText() {
-        return this.props.searchText ? this.props.searchText : null;
+        return typeof this.props.searchText !== "undefined"
+            ? this.props.searchText
+            : SearchParamsStore.getState().searchText;
     },
 
     /**
@@ -81,7 +83,7 @@ let SearchText = createReactClass({
      * @return {string}
      */
     getInitialSearchType() {
-        return this.props.searchType ? this.props.searchType : SearchParamsStore.SEARCH_TYPES.CONTAINS;
+        return this.props.searchType ? this.props.searchType : SearchParamsStore.getState().searchType;
     },
 
     onSearchAttributeSelected(searchAttribute) {
