@@ -435,7 +435,9 @@ class BranchesSearchResults extends React.Component {
                                             this.props.onTextUnitNameClick(
                                                 branchStatistic,
                                                 branchTextUnitStatistic
-                                                    .tmTextUnit.id
+                                                    .tmTextUnit.id,
+                                                branchTextUnitStatistic
+                                                    .tmTextUnit.name
                                             );
                                         }}
                                     >
