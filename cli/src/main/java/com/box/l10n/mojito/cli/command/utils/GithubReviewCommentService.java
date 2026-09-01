@@ -146,7 +146,7 @@ public class GithubReviewCommentService {
                 }
 
                 if (!isCommentRelatedCheck) {
-                  return new UsageLocation(fileUri, startLineNumber);
+                  return new UsageLocation(fileUri, 300);
                 }
 
                 return estimateLocationLineNumber(
