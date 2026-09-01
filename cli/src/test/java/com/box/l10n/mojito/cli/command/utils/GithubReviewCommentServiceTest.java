@@ -13,6 +13,9 @@ import org.junit.jupiter.api.Test;
 
 class GithubReviewCommentServiceTest {
 
+  private static final String[] COMMENT_FILE_EXTENSIONS = new String[] {"py", "xml"};
+  private static final int DEFAULT_LINE_ERROR_ALLOWANCE = 2;
+
   private CliCheckResult createCliCheckResult(
       boolean isError, String checkName, Map<String, CliCheckResult.CheckFailure> fieldFailures) {
     CliCheckResult checkResult = new CliCheckResult(isError, checkName);
@@ -295,5 +298,244 @@ class GithubReviewCommentServiceTest {
 
     // Assert - invalid usages should be filtered out
     assertThat(reviewComments).isEmpty();
+  }
+
+  /**
+   * Test group for comment-related check logic (lines 148-150).
+   *
+   * <p>These tests verify the behavior when isCommentRelatedCheck is true/false, which determines
+   * whether line number estimation should occur.
+   */
+  @Test
+  void generateReviewComments_isCommentRelatedCheck_false_returnsOriginalLineNumber() {
+    // Arrange
+    // When isCommentRelatedCheck is false, the method should return the original line number
+    // without attempting to estimate/adjust it (lines 148-150).
+    GithubReviewCommentService service =
+        new GithubReviewCommentService(COMMENT_FILE_EXTENSIONS, DEFAULT_LINE_ERROR_ALLOWANCE,
+            new SimpleMeterRegistry());
+
+    String fileUri = "src/main/python/helper.py";
+    int originalLineNumber = 10;
+    AssetExtractorTextUnit textUnit =
+        createAssetExtractorTextUnit("pythonSource", Set.of(fileUri + ":" + originalLineNumber));
+
+    AssetExtractionDiff diff = new AssetExtractionDiff();
+    diff.setAddedTextunits(List.of(textUnit));
+
+    Map<String, CliCheckResult.CheckFailure> fieldFailures =
+        Map.of(
+            "pythonSource",
+            new CliCheckResult.CheckFailure(
+                CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Test failure"));
+
+    // Use a rule ID that is NOT comment-related (isCommentRelated() returns false)
+    CliCheckResult checkResult = createCliCheckResult(true, "TestCheck", fieldFailures);
+
+    Map<String, Set<Integer>> githubModifiedLines = new HashMap<>();
+    githubModifiedLines.put(fileUri, Set.of(8, 9, 10, 11, 12));
+
+    // Act
+    List<GithubClient.ReviewComment> reviewComments =
+        service.generateReviewComments(
+            List.of(checkResult), List.of(diff), githubModifiedLines, "test-repo", "");
+
+    // Assert - should return original line number, not estimated one
+    assertThat(reviewComments).hasSize(1);
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(originalLineNumber);
+    assertThat(reviewComments.getFirst().getPath()).isEqualTo(fileUri);
+  }
+
+  @Test
+  void
+      generateReviewComments_isCommentRelatedCheck_false_returnsOriginalLineEvenIfNotModified() {
+    // Arrange
+    // When isCommentRelatedCheck is false, should return original line even if it's not in
+    // modified lines
+    GithubReviewCommentService service =
+        new GithubReviewCommentService(COMMENT_FILE_EXTENSIONS, DEFAULT_LINE_ERROR_ALLOWANCE,
+            new SimpleMeterRegistry());
+
+    String fileUri = "src/main/resources/config.xml";
+    int originalLineNumber = 25;
+    AssetExtractorTextUnit textUnit =
+        createAssetExtractorTextUnit("xmlConfig", Set.of(fileUri + ":" + originalLineNumber));
+
+    AssetExtractionDiff diff = new AssetExtractionDiff();
+    diff.setAddedTextunits(List.of(textUnit));
+
+    Map<String, CliCheckResult.CheckFailure> fieldFailures =
+        Map.of(
+            "xmlConfig",
+            new CliCheckResult.CheckFailure(CheckerRuleId.EMPTY_COMMENT_STRING, "Test failure"));
+
+    CliCheckResult checkResult = createCliCheckResult(false, "TestCheck", fieldFailures);
+
+    Map<String, Set<Integer>> githubModifiedLines = new HashMap<>();
+    githubModifiedLines.put(fileUri, Set.of(1, 2, 3, 4, 5)); // Line 25 is NOT modified
+
+    // Act
+    List<GithubClient.ReviewComment> reviewComments =
+        service.generateReviewComments(
+            List.of(checkResult), List.of(diff), githubModifiedLines, "test-repo", "");
+
+    // Assert - should return original line number (25), not attempt estimation
+    assertThat(reviewComments).hasSize(1);
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(originalLineNumber);
+  }
+
+  @Test
+  void generateReviewComments_isCommentRelatedCheck_true_estimatesLineNumber() {
+    // Arrange
+    // When isCommentRelatedCheck is true and the original line is not modified,
+    // the method should attempt to estimate a nearby modified line
+    GithubReviewCommentService service =
+        new GithubReviewCommentService(COMMENT_FILE_EXTENSIONS, DEFAULT_LINE_ERROR_ALLOWANCE,
+            new SimpleMeterRegistry());
+
+    String fileUri = "src/main/python/messages.py";
+    int originalLineNumber = 20;
+    AssetExtractorTextUnit textUnit =
+        createAssetExtractorTextUnit("pythonSource", Set.of(fileUri + ":" + originalLineNumber));
+
+    AssetExtractionDiff diff = new AssetExtractionDiff();
+    diff.setAddedTextunits(List.of(textUnit));
+
+    Map<String, CliCheckResult.CheckFailure> fieldFailures =
+        Map.of(
+            "pythonSource",
+            new CliCheckResult.CheckFailure(
+                CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Test failure"));
+
+    CliCheckResult checkResult = createCliCheckResult(true, "TestCheck", fieldFailures);
+
+    Map<String, Set<Integer>> githubModifiedLines = new HashMap<>();
+    // Original line 20 is NOT modified, but line 21 is (within allowance of 2)
+    githubModifiedLines.put(fileUri, Set.of(8, 9, 10, 21, 22, 30));
+
+    // Act
+    List<GithubClient.ReviewComment> reviewComments =
+        service.generateReviewComments(
+            List.of(checkResult), List.of(diff), githubModifiedLines, "test-repo", "");
+
+    // Assert - should estimate and use line 21 instead of original 20
+    assertThat(reviewComments).hasSize(1);
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(21);
+  }
+
+  @Test
+  void generateReviewComments_isCommentRelatedCheck_true_noModifiedLinesReturnsOriginal() {
+    // Arrange
+    // When isCommentRelatedCheck is true but no nearby modified lines exist,
+    // should return original line number
+    GithubReviewCommentService service =
+        new GithubReviewCommentService(COMMENT_FILE_EXTENSIONS, DEFAULT_LINE_ERROR_ALLOWANCE,
+            new SimpleMeterRegistry());
+
+    String fileUri = "src/main/resources/data.xml";
+    int originalLineNumber = 50;
+    AssetExtractorTextUnit textUnit =
+        createAssetExtractorTextUnit("xmlData", Set.of(fileUri + ":" + originalLineNumber));
+
+    AssetExtractionDiff diff = new AssetExtractionDiff();
+    diff.setAddedTextunits(List.of(textUnit));
+
+    Map<String, CliCheckResult.CheckFailure> fieldFailures =
+        Map.of(
+            "xmlData",
+            new CliCheckResult.CheckFailure(
+                CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Test failure"));
+
+    CliCheckResult checkResult = createCliCheckResult(true, "TestCheck", fieldFailures);
+
+    Map<String, Set<Integer>> githubModifiedLines = new HashMap<>();
+    // No nearby lines are modified (50 ± 2 range is empty)
+    githubModifiedLines.put(fileUri, Set.of(1, 2, 3, 100));
+
+    // Act
+    List<GithubClient.ReviewComment> reviewComments =
+        service.generateReviewComments(
+            List.of(checkResult), List.of(diff), githubModifiedLines, "test-repo", "");
+
+    // Assert - should return original line when estimation fails
+    assertThat(reviewComments).hasSize(1);
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(originalLineNumber);
+  }
+
+  @Test
+  void generateReviewComments_isCommentRelatedCheck_skippedForNonCommentFileExtensions() {
+    // Arrange
+    // When isCommentRelatedCheck is true but file extension is not in
+    // extractedCommentFileExtensions,
+    // the estimation logic should be skipped
+    GithubReviewCommentService service =
+        new GithubReviewCommentService(COMMENT_FILE_EXTENSIONS, DEFAULT_LINE_ERROR_ALLOWANCE,
+            new SimpleMeterRegistry());
+
+    String fileUri = "src/main/java/Service.java"; // .java is NOT in comment file extensions
+    int originalLineNumber = 50;
+    AssetExtractorTextUnit textUnit =
+        createAssetExtractorTextUnit("javaSource", Set.of(fileUri + ":" + originalLineNumber));
+
+    AssetExtractionDiff diff = new AssetExtractionDiff();
+    diff.setAddedTextunits(List.of(textUnit));
+
+    Map<String, CliCheckResult.CheckFailure> fieldFailures =
+        Map.of(
+            "javaSource",
+            new CliCheckResult.CheckFailure(
+                CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Test failure"));
+
+    CliCheckResult checkResult = createCliCheckResult(true, "TestCheck", fieldFailures);
+
+    Map<String, Set<Integer>> githubModifiedLines = new HashMap<>();
+    githubModifiedLines.put(fileUri, Set.of(1, 2, 3, 100)); // Line 50 is NOT modified
+
+    // Act
+    List<GithubClient.ReviewComment> reviewComments =
+        service.generateReviewComments(
+            List.of(checkResult), List.of(diff), githubModifiedLines, "test-repo", "");
+
+    // Assert - should return original line, not attempt estimation for .java files
+    assertThat(reviewComments).hasSize(1);
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(originalLineNumber);
+  }
+
+  @Test
+  void generateReviewComments_isCommentRelatedCheck_true_usesCorrectLineWhenModified() {
+    // Arrange
+    // When isCommentRelatedCheck is true but the original line IS in modified lines,
+    // should return original line without estimation
+    GithubReviewCommentService service =
+        new GithubReviewCommentService(COMMENT_FILE_EXTENSIONS, DEFAULT_LINE_ERROR_ALLOWANCE,
+            new SimpleMeterRegistry());
+
+    String fileUri = "src/main/resources/strings.xml";
+    int originalLineNumber = 15;
+    AssetExtractorTextUnit textUnit =
+        createAssetExtractorTextUnit("stringsConfig", Set.of(fileUri + ":" + originalLineNumber));
+
+    AssetExtractionDiff diff = new AssetExtractionDiff();
+    diff.setAddedTextunits(List.of(textUnit));
+
+    Map<String, CliCheckResult.CheckFailure> fieldFailures =
+        Map.of(
+            "stringsConfig",
+            new CliCheckResult.CheckFailure(
+                CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Test failure"));
+
+    CliCheckResult checkResult = createCliCheckResult(true, "TestCheck", fieldFailures);
+
+    Map<String, Set<Integer>> githubModifiedLines = new HashMap<>();
+    githubModifiedLines.put(fileUri, Set.of(14, 15, 16)); // Line 15 IS modified
+
+    // Act
+    List<GithubClient.ReviewComment> reviewComments =
+        service.generateReviewComments(
+            List.of(checkResult), List.of(diff), githubModifiedLines, "test-repo", "");
+
+    // Assert - should use original line since it's already in modified lines
+    assertThat(reviewComments).hasSize(1);
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(originalLineNumber);
   }
 }
