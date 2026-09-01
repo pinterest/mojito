@@ -203,7 +203,7 @@ class BranchesPage extends React.Component {
                             this.props.router.push("/workbench", null, null);
                         }}
 
-                        onTextUnitNameClick={(branchStatistic, tmTextUnitId) => {
+                        onTextUnitNameClick={(branchStatistic, tmTextUnitId, stringId) => {
 
                             let repoIds = [branchStatistic.branch.repository.id];
 
@@ -211,6 +211,9 @@ class BranchesPage extends React.Component {
                                 "changedParam": SearchConstants.UPDATE_ALL,
                                 "repoIds": repoIds,
                                 "tmTextUnitIds": [tmTextUnitId],
+                                "searchText": stringId,
+                                "searchAttribute": SearchParamsStore.SEARCH_ATTRIBUTES.STRING_ID,
+                                "searchType": SearchParamsStore.SEARCH_TYPES.EXACT,
                                 "bcp47Tags": RepositoryStore.getAllBcp47TagsForRepositoryIds(repoIds, true),
                                 "status": SearchParamsStore.STATUS.ALL,
                             }

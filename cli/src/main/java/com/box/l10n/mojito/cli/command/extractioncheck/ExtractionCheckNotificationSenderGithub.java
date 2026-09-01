@@ -125,8 +125,6 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
 
       return reviewComments;
     } catch (Exception e) {
-      // Log error but don't fail the notification process
-      // The summary comment has already been posted
       throw new ExtractionCheckNotificationSenderException(
           "Failed to add inline review comments to PR", e);
     }
