@@ -312,7 +312,7 @@ public class GithubClientTest {
         .body("I18N source string validation findings:");
     inOrder
         .verify(ghPullRequestReviewBuilderMock, times(1))
-        .comment("Placeholder issue", "src/main/strings.xml", 42);
+        .singleLineComment("Placeholder issue", "src/main/strings.xml", 42);
     inOrder.verify(ghPullRequestReviewBuilderMock, times(1)).create();
   }
 
@@ -349,10 +349,11 @@ public class GithubClientTest {
 
     verify(ghPullRequestMock, times(1)).createReview();
     verify(ghPullRequestReviewBuilderMock, times(1))
-        .comment("Comment 1", "src/main/strings.xml", 10);
+        .singleLineComment("Comment 1", "src/main/strings.xml", 10);
     verify(ghPullRequestReviewBuilderMock, times(1))
-        .comment("Comment 2", "src/main/strings.xml", 20);
-    verify(ghPullRequestReviewBuilderMock, times(1)).comment("Comment 3", "src/main/other.xml", 30);
+        .singleLineComment("Comment 2", "src/main/strings.xml", 20);
+    verify(ghPullRequestReviewBuilderMock, times(1))
+        .singleLineComment("Comment 3", "src/main/other.xml", 30);
     // A single review is created, holding all the comments
     verify(ghPullRequestReviewBuilderMock, times(1)).create();
   }
@@ -434,9 +435,9 @@ public class GithubClientTest {
         "commitSha");
 
     verify(ghPullRequestReviewBuilderMock, never())
-        .comment("Placeholder issue", "src/main/strings.xml", 42);
+        .singleLineComment("Placeholder issue", "src/main/strings.xml", 42);
     verify(ghPullRequestReviewBuilderMock, times(1))
-        .comment("Another issue", "src/main/strings.xml", 42);
+        .singleLineComment("Another issue", "src/main/strings.xml", 42);
     verify(ghPullRequestReviewBuilderMock, times(1)).create();
     verify(meterRegistryMock, times(1))
         .counter("Mojito.GitHubClient.DuplicatedReviewCommentsSkipped", "repository", "testRepo");
@@ -459,7 +460,7 @@ public class GithubClientTest {
         "commitSha");
 
     verify(ghPullRequestReviewBuilderMock, times(1))
-        .comment("Placeholder issue", "src/main/strings.xml", 42);
+        .singleLineComment("Placeholder issue", "src/main/strings.xml", 42);
     verify(ghPullRequestReviewBuilderMock, times(1)).create();
   }
 
@@ -477,7 +478,7 @@ public class GithubClientTest {
         "commitSha");
 
     verify(ghPullRequestReviewBuilderMock, times(1))
-        .comment("Placeholder issue", "src/main/strings.xml", 42);
+        .singleLineComment("Placeholder issue", "src/main/strings.xml", 42);
     verify(ghPullRequestReviewBuilderMock, times(1)).create();
   }
 
@@ -513,7 +514,7 @@ public class GithubClientTest {
         "commitSha");
 
     verify(ghPullRequestReviewBuilderMock, times(1))
-        .comment("Placeholder issue", "src/main/strings.xml", 42);
+        .singleLineComment("Placeholder issue", "src/main/strings.xml", 42);
     verify(ghPullRequestReviewBuilderMock, times(1)).create();
   }
 
@@ -564,7 +565,7 @@ public class GithubClientTest {
         .thenReturn(ghPullRequestReviewBuilderMock);
     when(ghPullRequestReviewBuilderMock.body(anyString()))
         .thenReturn(ghPullRequestReviewBuilderMock);
-    when(ghPullRequestReviewBuilderMock.comment(anyString(), anyString(), anyInt()))
+    when(ghPullRequestReviewBuilderMock.singleLineComment(anyString(), anyString(), anyInt()))
         .thenReturn(ghPullRequestReviewBuilderMock);
   }
 
