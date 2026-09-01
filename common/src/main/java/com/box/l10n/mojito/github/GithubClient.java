@@ -700,7 +700,7 @@ public class GithubClient {
                         .getRepository(repoFullPath)
                         .getPullRequest(prNumber);
 
-                List<ReviewComment> commentsToPost =
+                /*List<ReviewComment> commentsToPost =
                     removeAlreadyPostedComments(pullRequest, reviewComments, repository);
 
                 if (commentsToPost.isEmpty()) {
@@ -711,7 +711,7 @@ public class GithubClient {
                       prNumber,
                       repoFullPath);
                   return;
-                }
+                }*/
 
                 // Create a review with comments. The event must be set: leaving it blank creates
                 // the review in the PENDING state, ie. a draft that is only visible to the
@@ -724,7 +724,7 @@ public class GithubClient {
                         .event(GHPullRequestReviewEvent.COMMENT)
                         .body("I18N source string validation findings:");
 
-                for (ReviewComment comment : commentsToPost) {
+                for (ReviewComment comment : reviewComments) {
                   reviewBuilder.singleLineComment(
                       comment.getBody(), comment.getPath(), comment.getLine());
                 }
@@ -733,7 +733,7 @@ public class GithubClient {
 
                 logger.info(
                     "Successfully posted {} review comments to PR {} in repository '{}'",
-                    commentsToPost.size(),
+                    reviewComments.size(),
                     prNumber,
                     repoFullPath);
 
