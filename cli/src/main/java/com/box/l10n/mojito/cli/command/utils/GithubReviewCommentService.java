@@ -114,7 +114,8 @@ public class GithubReviewCommentService {
       String[] extractedCommentFileExtensions,
       Map<String, Set<Integer>> githubModifiedLines,
       String repoName,
-      String prefixToRemoveFromFileUri) {
+      String prefixToRemoveFromFileUri,
+      boolean isCommentRelatedCheck) {
     return assetExtractorTextUnit.getUsages().stream()
         .map(
             usage -> {
@@ -142,6 +143,10 @@ public class GithubReviewCommentService {
                       .counter(
                           "GithubReviewCommentService.LineNumberIncorrect", "repository", repoName)
                       .increment();
+                }
+
+                if (!isCommentRelatedCheck) {
+                  return new UsageLocation(fileUri, startLineNumber);
                 }
 
                 return estimateLocationLineNumber(
@@ -214,7 +219,8 @@ public class GithubReviewCommentService {
                   extractedCommentFileExtensions,
                   githubModifiedLines,
                   repoName,
-                  prefixToRemoveFromFileUris);
+                  prefixToRemoveFromFileUris,
+                  ruleId.isCommentRelated());
 
           for (UsageLocation location : usageLocations) {
             String commentBody =
