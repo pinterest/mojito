@@ -67,7 +67,6 @@ class GithubReviewCommentServiceTest {
     assertThat(orderedReviewComments.getFirst().getBody()).contains("I18N_TestCheck");
     assertThat(orderedReviewComments.getFirst().getBody()).contains("Error");
     assertThat(orderedReviewComments.getFirst().getBody()).contains("Failure message 1");
-    assertThat(orderedReviewComments.getFirst().getBody()).contains("EMPTY_PLACEHOLDER_COMMENT");
 
     assertThat(orderedReviewComments.get(1).getPath()).isEqualTo("file2.java");
     assertThat(orderedReviewComments.get(1).getLine()).isEqualTo(20);
@@ -131,7 +130,6 @@ class GithubReviewCommentServiceTest {
     assertThat(reviewComments.getFirst().getBody()).contains("I18N_ErrorCheck");
     assertThat(reviewComments.getFirst().getBody()).contains("Error");
     assertThat(reviewComments.getFirst().getBody()).contains("Error message");
-    assertThat(reviewComments.getFirst().getBody()).contains("EMPTY_PLACEHOLDER_COMMENT");
     assertThat(reviewComments.getFirst().getBody()).doesNotContain("Warning");
   }
 
@@ -404,7 +402,7 @@ class GithubReviewCommentServiceTest {
         Map.of(
             "pythonSource",
             new CliCheckResult.CheckFailure(
-                CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Test failure"));
+                CheckerRuleId.MISSING_DESCRIPTION_FOR_NUMERIC_PLACEHOLDER, "Test failure"));
 
     CliCheckResult checkResult = createCliCheckResult(true, "TestCheck", fieldFailures);
 

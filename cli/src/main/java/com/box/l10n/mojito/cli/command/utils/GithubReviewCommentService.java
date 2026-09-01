@@ -167,14 +167,11 @@ public class GithubReviewCommentService {
         .toList();
   }
 
-  private String formatReviewCommentBody(
-      String checkName, ResultLevel level, CheckerRuleId ruleId, String message) {
+  private String formatReviewCommentBody(String checkName, ResultLevel level, String message) {
     String icon = level == ResultLevel.ERROR ? "🛑" : "⚠️";
     String levelText = level == ResultLevel.ERROR ? "Error" : "Warning";
 
-    return String.format(
-        "%s **%s: %s**\n\n**Rule:** %s\n\n%s",
-        icon, levelText, checkName, ruleId.toString(), message);
+    return String.format("%s **%s: %s**\n\n%s", icon, levelText, checkName, message);
   }
 
   /**
@@ -225,7 +222,7 @@ public class GithubReviewCommentService {
           for (UsageLocation location : usageLocations) {
             String commentBody =
                 formatReviewCommentBody(
-                    checkDisplayName, resultLevel, ruleId, resultCheckFailure.failureMessage());
+                    checkDisplayName, resultLevel, resultCheckFailure.failureMessage());
             reviewComments.add(
                 new GithubClient.ReviewComment(
                     commentBody, location.getFilePath(), location.getLineNumber()));
