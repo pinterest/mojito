@@ -35,6 +35,7 @@ import org.kohsuke.github.GHCommit;
 import org.kohsuke.github.GHCommitPointer;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHLabel;
+import org.kohsuke.github.GHMyself;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestFileDetail;
 import org.kohsuke.github.GHPullRequestReviewBuilder;
@@ -83,6 +84,8 @@ public class GithubClientTest {
 
   @Mock GHUser ghUserMock;
 
+  @Mock GHMyself ghMyselfMock;
+
   @Mock GHIssueComment ghCommentMock1;
 
   @Mock GHIssueComment ghCommentMock2;
@@ -121,6 +124,9 @@ public class GithubClientTest {
     when(ghCommitPointerMock.getSha()).thenReturn("mockSha");
     when(ghPullRequestMock.getUser()).thenReturn(ghUserMock);
     when(ghUserMock.getEmail()).thenReturn("some@email.com");
+    when(gitHubMock.getMyself()).thenReturn(ghMyselfMock);
+    when(ghMyselfMock.getLogin()).thenReturn("test-bot");
+    when(ghUserMock.getLogin()).thenReturn("test-bot");
     when(this.ghCommentMock1.getBody()).thenReturn("Test comment 1");
     when(this.ghCommentMock2.getBody()).thenReturn("Test 2");
     when(this.ghPullRequestMock.getComments())
@@ -420,6 +426,27 @@ public class GithubClientTest {
   }
 
   @Test
+  public void testAddReviewCommentsToPRIgnoresCommentsPostedByOtherUsers() throws IOException {
+    stubReviewBuilder();
+
+    GHUser otherUser = Mockito.mock(GHUser.class);
+    when(otherUser.getLogin()).thenReturn("other-user");
+
+    stubExistingReviewComments(
+        List.of(stubExistingReviewComment("Placeholder issue", "src/main/strings.xml", 42, 42, otherUser)));
+
+    githubClient.addReviewCommentsToPR(
+        "testRepo",
+        1,
+        List.of(new GithubClient.ReviewComment("Placeholder issue", "src/main/strings.xml", 42)),
+        "commitSha");
+
+    verify(ghPullRequestReviewBuilderMock, times(1))
+        .comment("Placeholder issue", "src/main/strings.xml", 42);
+    verify(ghPullRequestReviewBuilderMock, times(1)).create();
+  }
+
+  @Test
   public void testAddReviewCommentsToPRSkipsCommentAlreadyOnTheSameLine() throws IOException {
     stubReviewBuilder();
     stubExistingReviewComments(
@@ -547,15 +574,20 @@ public class GithubClientTest {
   }
 
   private GHPullRequestReviewComment stubExistingReviewComment(
-      String body, String path, int line, int originalLine) {
+      String body, String path, int line, int originalLine) throws IOException {
+    return stubExistingReviewComment(body, path, line, originalLine, ghUserMock);
+  }
+
+  private GHPullRequestReviewComment stubExistingReviewComment(
+      String body, String path, int line, int originalLine, GHUser author) throws IOException {
     GHPullRequestReviewComment reviewCommentMock = Mockito.mock(GHPullRequestReviewComment.class);
     when(reviewCommentMock.getBody()).thenReturn(body);
     when(reviewCommentMock.getPath()).thenReturn(path);
     when(reviewCommentMock.getLine()).thenReturn(line);
     when(reviewCommentMock.getOriginalLine()).thenReturn(originalLine);
+    when(reviewCommentMock.getUser()).thenReturn(author);
     return reviewCommentMock;
   }
-
   private void stubReviewBuilder() throws IOException {
     when(ghPullRequestMock.createReview()).thenReturn(ghPullRequestReviewBuilderMock);
     when(ghPullRequestReviewBuilderMock.commitId(anyString()))

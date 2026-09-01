@@ -606,8 +606,25 @@ public class GithubClient {
       GHPullRequest pullRequest, List<ReviewComment> reviewComments, String repository)
       throws IOException {
 
+    String currentUserLogin;
+    try {
+      currentUserLogin = getGithubClient(repository).getMyself().getLogin();
+    } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+      String message =
+          String.format(
+              "Error reading the authenticated GitHub user for duplicate review comment filtering in repository '%s': %s",
+              repository, e.getMessage());
+      logger.error(message, e);
+      throw new GithubException(message, e);
+    }
+
     Set<ReviewCommentKey> existingCommentKeys = new HashSet<>();
     for (GHPullRequestReviewComment existingComment : pullRequest.listReviewComments().toList()) {
+      if (existingComment.getUser() == null
+          || !currentUserLogin.equals(existingComment.getUser().getLogin())) {
+        continue;
+      }
+
       String body = existingComment.getBody();
       String path = existingComment.getPath();
       if (existingComment.getLine() > 0) {
