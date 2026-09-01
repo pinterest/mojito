@@ -312,8 +312,8 @@ class GithubReviewCommentServiceTest {
     // When isCommentRelatedCheck is false, the method should return the original line number
     // without attempting to estimate/adjust it (lines 148-150).
     GithubReviewCommentService service =
-        new GithubReviewCommentService(COMMENT_FILE_EXTENSIONS, DEFAULT_LINE_ERROR_ALLOWANCE,
-            new SimpleMeterRegistry());
+        new GithubReviewCommentService(
+            COMMENT_FILE_EXTENSIONS, DEFAULT_LINE_ERROR_ALLOWANCE, new SimpleMeterRegistry());
 
     String fileUri = "src/main/python/helper.py";
     int originalLineNumber = 10;
@@ -347,14 +347,13 @@ class GithubReviewCommentServiceTest {
   }
 
   @Test
-  void
-      generateReviewComments_isCommentRelatedCheck_false_returnsOriginalLineEvenIfNotModified() {
+  void generateReviewComments_isCommentRelatedCheck_false_returnsOriginalLineEvenIfNotModified() {
     // Arrange
     // When isCommentRelatedCheck is false, should return original line even if it's not in
     // modified lines
     GithubReviewCommentService service =
-        new GithubReviewCommentService(COMMENT_FILE_EXTENSIONS, DEFAULT_LINE_ERROR_ALLOWANCE,
-            new SimpleMeterRegistry());
+        new GithubReviewCommentService(
+            COMMENT_FILE_EXTENSIONS, DEFAULT_LINE_ERROR_ALLOWANCE, new SimpleMeterRegistry());
 
     String fileUri = "src/main/resources/config.xml";
     int originalLineNumber = 25;
@@ -390,8 +389,8 @@ class GithubReviewCommentServiceTest {
     // When isCommentRelatedCheck is true and the original line is not modified,
     // the method should attempt to estimate a nearby modified line
     GithubReviewCommentService service =
-        new GithubReviewCommentService(COMMENT_FILE_EXTENSIONS, DEFAULT_LINE_ERROR_ALLOWANCE,
-            new SimpleMeterRegistry());
+        new GithubReviewCommentService(
+            COMMENT_FILE_EXTENSIONS, DEFAULT_LINE_ERROR_ALLOWANCE, new SimpleMeterRegistry());
 
     String fileUri = "src/main/python/messages.py";
     int originalLineNumber = 20;
@@ -429,8 +428,8 @@ class GithubReviewCommentServiceTest {
     // When isCommentRelatedCheck is true but no nearby modified lines exist,
     // should return original line number
     GithubReviewCommentService service =
-        new GithubReviewCommentService(COMMENT_FILE_EXTENSIONS, DEFAULT_LINE_ERROR_ALLOWANCE,
-            new SimpleMeterRegistry());
+        new GithubReviewCommentService(
+            COMMENT_FILE_EXTENSIONS, DEFAULT_LINE_ERROR_ALLOWANCE, new SimpleMeterRegistry());
 
     String fileUri = "src/main/resources/data.xml";
     int originalLineNumber = 50;
@@ -469,8 +468,8 @@ class GithubReviewCommentServiceTest {
     // extractedCommentFileExtensions,
     // the estimation logic should be skipped
     GithubReviewCommentService service =
-        new GithubReviewCommentService(COMMENT_FILE_EXTENSIONS, DEFAULT_LINE_ERROR_ALLOWANCE,
-            new SimpleMeterRegistry());
+        new GithubReviewCommentService(
+            COMMENT_FILE_EXTENSIONS, DEFAULT_LINE_ERROR_ALLOWANCE, new SimpleMeterRegistry());
 
     String fileUri = "src/main/java/Service.java"; // .java is NOT in comment file extensions
     int originalLineNumber = 50;
@@ -507,8 +506,8 @@ class GithubReviewCommentServiceTest {
     // When isCommentRelatedCheck is true but the original line IS in modified lines,
     // should return original line without estimation
     GithubReviewCommentService service =
-        new GithubReviewCommentService(COMMENT_FILE_EXTENSIONS, DEFAULT_LINE_ERROR_ALLOWANCE,
-            new SimpleMeterRegistry());
+        new GithubReviewCommentService(
+            COMMENT_FILE_EXTENSIONS, DEFAULT_LINE_ERROR_ALLOWANCE, new SimpleMeterRegistry());
 
     String fileUri = "src/main/resources/strings.xml";
     int originalLineNumber = 15;
