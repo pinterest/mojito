@@ -1,16 +1,28 @@
 package com.box.l10n.mojito.cli.command;
 
 import static com.box.l10n.mojito.cli.command.checks.AbstractCliChecker.BULLET_POINT;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.box.l10n.mojito.cli.CLITestBase;
 import com.box.l10n.mojito.cli.command.checks.CliCheckResult;
+import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
+import com.box.l10n.mojito.cli.command.extraction.ExtractionDiffService;
+import com.box.l10n.mojito.cli.command.extraction.MissingExtractionDirectoryException;
+import com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificationSenderGithub;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
+import com.box.l10n.mojito.github.GithubClient;
+import com.box.l10n.mojito.github.GithubClients;
+import com.box.l10n.mojito.github.GithubPatchParser;
 import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -944,5 +956,189 @@ public class ExtractionCheckCommandTest extends CLITestBase {
   public void testPOMultiCommentForSameSourceAndTarget() {
     // we test that removing usage of a string does not re-trigger checking
 
+  }
+
+  @Test
+  public void testExecuteThrowsWhenSarifFileAndInlineReviewCommentsBothEnabled() {
+    ExtractionCheckCommand command = new ExtractionCheckCommand();
+    command.shouldGenerateSarifFile = true;
+    command.shouldAddInlineReviewComments = true;
+
+    try {
+      command.execute();
+      fail("Expected a CommandException to be thrown");
+    } catch (CommandException e) {
+      Assert.assertTrue(
+          e.getMessage()
+              .contains("Cannot use both --generate-sarif-file and --add-inline-review-comments"));
+    }
+  }
+
+  @Test
+  public void testExecuteDoesNotThrowMutualExclusivityErrorWhenBothDisabled() {
+    ExtractionCheckCommand command = new ExtractionCheckCommand();
+    command.shouldGenerateSarifFile = false;
+    command.shouldAddInlineReviewComments = false;
+    assertValidateParametersPassed(command);
+  }
+
+  @Test
+  public void testExecuteDoesNotThrowMutualExclusivityErrorWhenOnlySarifEnabled() {
+    ExtractionCheckCommand command = new ExtractionCheckCommand();
+    command.shouldGenerateSarifFile = true;
+    command.shouldAddInlineReviewComments = false;
+    assertValidateParametersPassed(command);
+  }
+
+  @Test
+  public void testExecuteDoesNotThrowMutualExclusivityErrorWhenOnlyInlineReviewCommentsEnabled() {
+    ExtractionCheckCommand command = new ExtractionCheckCommand();
+    command.shouldGenerateSarifFile = false;
+    command.shouldAddInlineReviewComments = true;
+    assertValidateParametersPassed(command);
+  }
+
+  /**
+   * Executes the command and asserts that no mutual-exclusivity {@link CommandException} is thrown.
+   * Any other exception (e.g. from unmocked dependencies further down execute()) is expected and
+   * ignored, since it proves validateParameters() let execution continue.
+   */
+  private void assertValidateParametersPassed(ExtractionCheckCommand command) {
+    try {
+      command.execute();
+    } catch (CommandException e) {
+      Assert.assertFalse(e.getMessage().contains("mutually exclusive"));
+    } catch (Exception e) {
+      // Expected: execution proceeded past validateParameters and failed later due to
+      // unconfigured dependencies (not under test here).
+    }
+  }
+
+  private ExtractionCheckCommand createCommandForInlineReviewComments(
+      ExtractionDiffService extractionDiffService,
+      GithubClients githubClients,
+      GithubPatchParser githubPatchParser) {
+    ExtractionCheckCommand command = new ExtractionCheckCommand();
+    command.extractionDiffService = extractionDiffService;
+    command.githubClients = githubClients;
+    command.githubPatchParser = githubPatchParser;
+    command.consoleWriter =
+        new ConsoleWriter(false, ConsoleWriter.OutputType.ANSI_CONSOLE_AND_LOGGER);
+    command.checkerList = new ArrayList<>();
+    command.currentExtractionName = "current";
+    command.baseExtractionName = "base";
+    command.shouldAddInlineReviewComments = true;
+    command.areChecksSkipped = false;
+    return command;
+  }
+
+  private void configureExtractionDiffs(ExtractionCheckCommand command)
+      throws MissingExtractionDirectoryException {
+    when(command.extractionDiffService.hasAddedTextUnits(any())).thenReturn(true);
+    when(command.extractionDiffService.findAssetExtractionDiffsWithAddedTextUnits(any()))
+        .thenReturn(List.of(new AssetExtractionDiff()));
+  }
+
+  @Test
+  public void testAddInlineReviewCommentsSkipsWhenGithubParametersAreMissing()
+      throws MissingExtractionDirectoryException {
+    ExtractionDiffService extractionDiffService = Mockito.mock(ExtractionDiffService.class);
+    GithubClients githubClients = Mockito.mock(GithubClients.class);
+    GithubPatchParser githubPatchParser = Mockito.mock(GithubPatchParser.class);
+    ExtractionCheckCommand command =
+        createCommandForInlineReviewComments(
+            extractionDiffService, githubClients, githubPatchParser);
+    configureExtractionDiffs(command);
+    command.githubOwner = null;
+    command.githubRepository = "testRepo";
+    command.githubPRNumber = 42;
+    command.commitSha = "abc123";
+
+    command.execute();
+
+    verifyNoInteractions(githubClients);
+    Assert.assertTrue(outputCapture.toString().contains("Required GitHub parameters not provided"));
+  }
+
+  @Test
+  public void testAddInlineReviewCommentsSkipsWhenGithubClientIsUnavailable()
+      throws MissingExtractionDirectoryException {
+    ExtractionDiffService extractionDiffService = Mockito.mock(ExtractionDiffService.class);
+    GithubClients githubClients = Mockito.mock(GithubClients.class);
+    GithubPatchParser githubPatchParser = Mockito.mock(GithubPatchParser.class);
+    ExtractionCheckCommand command =
+        createCommandForInlineReviewComments(
+            extractionDiffService, githubClients, githubPatchParser);
+    configureExtractionDiffs(command);
+    command.githubOwner = "testOwner";
+    command.githubRepository = "testRepo";
+    command.githubPRNumber = 42;
+    command.commitSha = "abc123";
+    when(githubClients.isClientAvailable("testOwner")).thenReturn(false);
+
+    command.execute();
+
+    verify(githubClients, times(1)).isClientAvailable("testOwner");
+    verify(githubClients, never()).getClient("testOwner");
+    Assert.assertTrue(outputCapture.toString().contains("GitHub client not available"));
+  }
+
+  @Test
+  public void testAddInlineReviewCommentsDelegatesToGithubSender()
+      throws MissingExtractionDirectoryException {
+    ExtractionDiffService extractionDiffService = Mockito.mock(ExtractionDiffService.class);
+    GithubClients githubClients = Mockito.mock(GithubClients.class);
+    GithubPatchParser githubPatchParser = Mockito.mock(GithubPatchParser.class);
+    GithubClient githubClient = Mockito.mock(GithubClient.class);
+    ExtractionCheckNotificationSenderGithub githubSender =
+        Mockito.mock(ExtractionCheckNotificationSenderGithub.class);
+    ExtractionCheckCommand command =
+        createCommandForInlineReviewComments(
+            extractionDiffService, githubClients, githubPatchParser);
+    configureExtractionDiffs(command);
+    command.githubOwner = "testOwner";
+    command.githubRepository = "testRepo";
+    command.githubPRNumber = 42;
+    command.commitSha = "abc123";
+    command.extractionCheckNotificationSenders = List.of(githubSender);
+    when(githubClients.isClientAvailable("testOwner")).thenReturn(true);
+    when(githubClients.getClient("testOwner")).thenReturn(githubClient);
+    when(githubClient.getPrFilePatches("testRepo", 42))
+        .thenReturn(Map.of("file.py", "@@ -1 +1 @@\n+new line"));
+    when(githubPatchParser.getAddedLines("@@ -1 +1 @@\n+new line")).thenReturn(Set.of(1));
+
+    command.execute();
+
+    verify(githubSender, times(1))
+        .addInlineReviewComments(
+            any(),
+            any(),
+            org.mockito.ArgumentMatchers.eq(Map.of("file.py", Set.of(1))),
+            org.mockito.ArgumentMatchers.eq(""));
+  }
+
+  @Test
+  public void testAddInlineReviewCommentsLogsWarningWhenGithubSenderIsNotConfigured()
+      throws MissingExtractionDirectoryException {
+    ExtractionDiffService extractionDiffService = Mockito.mock(ExtractionDiffService.class);
+    GithubClients githubClients = Mockito.mock(GithubClients.class);
+    GithubPatchParser githubPatchParser = Mockito.mock(GithubPatchParser.class);
+    GithubClient githubClient = Mockito.mock(GithubClient.class);
+    ExtractionCheckCommand command =
+        createCommandForInlineReviewComments(
+            extractionDiffService, githubClients, githubPatchParser);
+    configureExtractionDiffs(command);
+    command.githubOwner = "testOwner";
+    command.githubRepository = "testRepo";
+    command.githubPRNumber = 42;
+    command.commitSha = "abc123";
+    when(githubClients.isClientAvailable("testOwner")).thenReturn(true);
+    when(githubClients.getClient("testOwner")).thenReturn(githubClient);
+    when(githubClient.getPrFilePatches("testRepo", 42)).thenReturn(new HashMap<>());
+
+    command.execute();
+
+    Assert.assertTrue(
+        outputCapture.toString().contains("No GitHub notification sender found in configuration"));
   }
 }

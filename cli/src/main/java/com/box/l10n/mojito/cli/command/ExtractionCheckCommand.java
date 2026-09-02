@@ -325,6 +325,13 @@ public class ExtractionCheckCommand extends Command {
           "Use summarized message: count information without granular check details. Intended to be used with SARIF uploads")
   Boolean usesSummaryMessage = false;
 
+  @Parameter(
+      names = {"--add-inline-review-comments", "-airc"},
+      arity = 1,
+      description =
+          "Add inline PR review comments to GitHub. Cannot be used together with --generate-sarif-file")
+  Boolean shouldAddInlineReviewComments = false;
+
   @Autowired SarifFileGenerator sarifFileGenerator;
 
   @Autowired ObjectMapper objectMapper;
@@ -337,8 +344,23 @@ public class ExtractionCheckCommand extends Command {
     this.restTemplate = new RestTemplate();
   }
 
+  /**
+   * Validates that mutually exclusive parameters are not both set to true.
+   *
+   * @throws CommandException if both shouldGenerateSarifFile and shouldAddInlineReviewComments are
+   *     true
+   */
+  private void validateParameters() throws CommandException {
+    if (shouldGenerateSarifFile && shouldAddInlineReviewComments) {
+      throw new CommandException(
+          "Cannot use both --generate-sarif-file and --add-inline-review-comments. "
+              + "These options are mutually exclusive.");
+    }
+  }
+
   @Override
   protected void execute() throws CommandException {
+    validateParameters();
     initNotificationSenders();
 
     if (areChecksSkipped) {
@@ -375,6 +397,11 @@ public class ExtractionCheckCommand extends Command {
           if (shouldGenerateSarifFile) {
             generateSarifFile(cliCheckerFailures, assetExtractionDiffs);
           }
+
+          if (shouldAddInlineReviewComments) {
+            addInlineReviewComments(cliCheckerFailures, assetExtractionDiffs);
+          }
+
           reportStatistics(cliCheckerResults);
           checkForHardFail(cliCheckerFailures);
           if (!cliCheckerFailures.isEmpty()) {
@@ -549,6 +576,10 @@ public class ExtractionCheckCommand extends Command {
   }
 
   private void initNotificationSenders() {
+    if (thirdPartyNotificationTypes.isEmpty()) {
+      return;
+    }
+
     extractionCheckNotificationSenders =
         thirdPartyNotificationTypes.stream()
             .map(
@@ -792,6 +823,109 @@ public class ExtractionCheckCommand extends Command {
               String.format(
                   "Exception occurred when adding status to commit %s in repository %s: %s",
                   commitSha, githubRepository, e.getMessage()));
+    }
+  }
+
+  /**
+   * Adds inline PR review comments when the shouldAddInlineReviewComments flag is enabled. This
+   * method retrieves the modified lines from GitHub, then delegates to the GitHub notification
+   * sender's addInlineReviewComments method.
+   *
+   * @param cliCheckerFailures List of check failures to create review comments for
+   * @param assetExtractionDiffs List of asset extraction diffs containing text unit information
+   */
+  private void addInlineReviewComments(
+      List<CliCheckResult> cliCheckerFailures, List<AssetExtractionDiff> assetExtractionDiffs) {
+
+    // Validate required GitHub parameters
+    if (githubOwner == null
+        || githubOwner.isEmpty()
+        || githubRepository == null
+        || githubRepository.isEmpty()
+        || githubPRNumber == null
+        || commitSha == null
+        || commitSha.isEmpty()) {
+      logger.warn(
+          "Skipping inline review comments: Missing required GitHub parameters (owner, repository, PR number, or commit SHA)");
+      consoleWriter
+          .fg(Ansi.Color.YELLOW)
+          .newLine()
+          .a("Warning: Cannot add inline review comments. Required GitHub parameters not provided.")
+          .println();
+      return;
+    }
+
+    if (!githubClients.isClientAvailable(githubOwner)) {
+      logger.warn(
+          "Skipping inline review comments: GitHub client not available for owner: {}",
+          githubOwner);
+      consoleWriter
+          .fg(Ansi.Color.YELLOW)
+          .newLine()
+          .a("Warning: Cannot add inline review comments. GitHub client not available.")
+          .println();
+      return;
+    }
+
+    try {
+      consoleWriter.newLine().a("Adding inline review comments to PR").println();
+
+      // Get modified lines from GitHub PR
+      Map<String, Set<Integer>> githubModifiedLines =
+          githubClients
+              .getClient(githubOwner)
+              .getPrFilePatches(githubRepository, githubPRNumber)
+              .entrySet()
+              .stream()
+              .collect(
+                  Collectors.toMap(
+                      Map.Entry::getKey,
+                      entry -> githubPatchParser.getAddedLines(entry.getValue())));
+
+      // Find the GitHub notification sender and call addInlineReviewComments
+      extractionCheckNotificationSenders.stream()
+          .filter(ExtractionCheckNotificationSenderGithub.class::isInstance)
+          .map(ExtractionCheckNotificationSenderGithub.class::cast)
+          .findFirst()
+          .ifPresentOrElse(
+              githubSender -> {
+                List<GithubClient.ReviewComment> reviewComments =
+                    githubSender.addInlineReviewComments(
+                        cliCheckerFailures,
+                        assetExtractionDiffs,
+                        githubModifiedLines,
+                        fileMountPathPrefix);
+                consoleWriter
+                    .fg(Ansi.Color.GREEN)
+                    .newLine()
+                    .a(String.format("%d inline review comments added", reviewComments.size()))
+                    .println();
+              },
+              () -> {
+                // GitHub notification sender not found
+                logger.info("No GitHub notification sender found in configuration");
+                consoleWriter
+                    .fg(Ansi.Color.YELLOW)
+                    .newLine()
+                    .a(
+                        "Warning: No GitHub notification sender found in configuration. Inline review comments not added.")
+                    .println();
+              });
+
+    } catch (GithubException e) {
+      logger.error("Error adding inline review comments: " + e.getMessage(), e);
+      consoleWriter
+          .fg(Ansi.Color.RED)
+          .newLine()
+          .a("Error adding inline review comments: " + e.getMessage())
+          .println();
+    } catch (ExtractionCheckNotificationSenderException e) {
+      logger.error("Error adding inline review comments: " + e.getMessage(), e);
+      consoleWriter
+          .fg(Ansi.Color.RED)
+          .newLine()
+          .a("Error adding inline review comments: " + e.getMessage())
+          .println();
     }
   }
 }

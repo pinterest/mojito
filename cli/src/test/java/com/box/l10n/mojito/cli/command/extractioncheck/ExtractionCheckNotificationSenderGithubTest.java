@@ -5,18 +5,24 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.box.l10n.mojito.cli.command.checks.CheckerRuleId;
 import com.box.l10n.mojito.cli.command.checks.CliCheckResult;
+import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
+import com.box.l10n.mojito.cli.command.utils.GithubReviewCommentService;
 import com.box.l10n.mojito.github.GithubClient;
 import com.box.l10n.mojito.github.GithubClients;
 import com.box.l10n.mojito.thirdpartynotification.github.GithubIcon;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,7 +44,11 @@ public class ExtractionCheckNotificationSenderGithubTest {
 
   @Mock GithubClients githubClientsMock;
 
+  @Mock GithubReviewCommentService githubReviewCommentServiceMock;
+
   @Captor ArgumentCaptor<String> repoNameCaptor;
+
+  @Captor ArgumentCaptor<List<GithubClient.ReviewComment>> reviewCommentsCaptor;
 
   @Captor ArgumentCaptor<Integer> prNumberCaptor;
 
@@ -74,6 +84,8 @@ public class ExtractionCheckNotificationSenderGithubTest {
             "https://somewebaddress.com/",
             usesSummaryNotification);
     extractionCheckNotificationSenderGithub.githubClients = githubClientsMock;
+    extractionCheckNotificationSenderGithub.githubReviewCommentService =
+        githubReviewCommentServiceMock;
   }
 
   @Test
@@ -397,5 +409,124 @@ public class ExtractionCheckNotificationSenderGithubTest {
     Assert.assertTrue(messageCaptor.getValue().contains("Test Check"));
     Assert.assertTrue(messageCaptor.getValue().contains("Some notification text"));
     Assert.assertEquals(MESSAGE_REGEX, keyMessageCaptor.getValue());
+  }
+
+  @Test
+  public void testAddInlineReviewCommentsReturnsEmptyListWhenAssetExtractionDiffsNull() {
+    setup(true);
+    List<GithubClient.ReviewComment> result =
+        extractionCheckNotificationSenderGithub.addInlineReviewComments(
+            new ArrayList<>(), null, new HashMap<>(), "");
+    Assert.assertTrue(result.isEmpty());
+    verifyNoInteractions(githubReviewCommentServiceMock);
+  }
+
+  @Test
+  public void testAddInlineReviewCommentsReturnsEmptyListWhenAssetExtractionDiffsEmpty() {
+    setup(true);
+    List<GithubClient.ReviewComment> result =
+        extractionCheckNotificationSenderGithub.addInlineReviewComments(
+            new ArrayList<>(), new ArrayList<>(), new HashMap<>(), "");
+    Assert.assertTrue(result.isEmpty());
+    verifyNoInteractions(githubReviewCommentServiceMock);
+  }
+
+  @Test
+  public void testAddInlineReviewCommentsReturnsEmptyListWhenGithubModifiedLinesNull() {
+    setup(true);
+    List<GithubClient.ReviewComment> result =
+        extractionCheckNotificationSenderGithub.addInlineReviewComments(
+            new ArrayList<>(), List.of(new AssetExtractionDiff()), null, "");
+    Assert.assertTrue(result.isEmpty());
+    verifyNoInteractions(githubReviewCommentServiceMock);
+  }
+
+  @Test
+  public void testAddInlineReviewCommentsReturnsEmptyListWhenCommitShaNull() {
+    setup(true);
+    extractionCheckNotificationSenderGithub =
+        new ExtractionCheckNotificationSenderGithub(
+            "{baseMessage}",
+            MESSAGE_REGEX,
+            "This is a hard failure message",
+            "This is a checks skipped message",
+            "testOwner",
+            "testRepo",
+            100,
+            true,
+            null,
+            "https://somewebaddress.com/",
+            true);
+    extractionCheckNotificationSenderGithub.githubClients = githubClientsMock;
+    extractionCheckNotificationSenderGithub.githubReviewCommentService =
+        githubReviewCommentServiceMock;
+
+    List<GithubClient.ReviewComment> result =
+        extractionCheckNotificationSenderGithub.addInlineReviewComments(
+            new ArrayList<>(), List.of(new AssetExtractionDiff()), new HashMap<>(), "");
+    Assert.assertTrue(result.isEmpty());
+    verifyNoInteractions(githubReviewCommentServiceMock);
+  }
+
+  @Test
+  public void testAddInlineReviewCommentsPostsAndReturnsGeneratedComments() {
+    setup(true);
+    List<CliCheckResult> failures = new ArrayList<>();
+    List<AssetExtractionDiff> assetExtractionDiffs = List.of(new AssetExtractionDiff());
+    Map<String, Set<Integer>> githubModifiedLines = Map.of("file.py", Set.of(10));
+    List<GithubClient.ReviewComment> generatedComments =
+        List.of(new GithubClient.ReviewComment("Some comment body", "file.py", 10));
+
+    when(githubReviewCommentServiceMock.generateReviewComments(
+            failures, assetExtractionDiffs, githubModifiedLines, "testRepo", "prefix/"))
+        .thenReturn(generatedComments);
+
+    List<GithubClient.ReviewComment> result =
+        extractionCheckNotificationSenderGithub.addInlineReviewComments(
+            failures, assetExtractionDiffs, githubModifiedLines, "prefix/");
+
+    Assert.assertEquals(generatedComments, result);
+    verify(githubClientMock, times(1))
+        .addReviewCommentsToPR(
+            org.mockito.ArgumentMatchers.eq("testRepo"),
+            org.mockito.ArgumentMatchers.eq(100),
+            reviewCommentsCaptor.capture(),
+            org.mockito.ArgumentMatchers.eq("123456789"));
+    Assert.assertEquals(generatedComments, reviewCommentsCaptor.getValue());
+  }
+
+  @Test
+  public void testAddInlineReviewCommentsDoesNotPostWhenNoCommentsGenerated() {
+    setup(true);
+    List<CliCheckResult> failures = new ArrayList<>();
+    List<AssetExtractionDiff> assetExtractionDiffs = List.of(new AssetExtractionDiff());
+    Map<String, Set<Integer>> githubModifiedLines = new HashMap<>();
+
+    when(githubReviewCommentServiceMock.generateReviewComments(
+            any(), any(), any(), anyString(), any()))
+        .thenReturn(List.of());
+
+    List<GithubClient.ReviewComment> result =
+        extractionCheckNotificationSenderGithub.addInlineReviewComments(
+            failures, assetExtractionDiffs, githubModifiedLines, "");
+
+    Assert.assertTrue(result.isEmpty());
+    verify(githubClientMock, never())
+        .addReviewCommentsToPR(anyString(), anyInt(), any(), anyString());
+  }
+
+  @Test(expected = ExtractionCheckNotificationSenderException.class)
+  public void testAddInlineReviewCommentsThrowsWhenServiceFails() {
+    setup(true);
+    List<CliCheckResult> failures = new ArrayList<>();
+    List<AssetExtractionDiff> assetExtractionDiffs = List.of(new AssetExtractionDiff());
+    Map<String, Set<Integer>> githubModifiedLines = new HashMap<>();
+
+    when(githubReviewCommentServiceMock.generateReviewComments(
+            any(), any(), any(), anyString(), any()))
+        .thenThrow(new RuntimeException("Something went wrong"));
+
+    extractionCheckNotificationSenderGithub.addInlineReviewComments(
+        failures, assetExtractionDiffs, githubModifiedLines, "");
   }
 }
