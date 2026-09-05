@@ -912,15 +912,8 @@ public class ExtractionCheckCommand extends Command {
                     .println();
               });
 
-    } catch (GithubException e) {
-      logger.error("Error adding inline review comments: " + e.getMessage(), e);
-      consoleWriter
-          .fg(Ansi.Color.RED)
-          .newLine()
-          .a("Error adding inline review comments: " + e.getMessage())
-          .println();
-    } catch (ExtractionCheckNotificationSenderException e) {
-      logger.error("Error adding inline review comments: " + e.getMessage(), e);
+    } catch (GithubException | ExtractionCheckNotificationSenderException e) {
+      logger.error("Error adding inline review comments: {}", e.getMessage(), e);
       consoleWriter
           .fg(Ansi.Color.RED)
           .newLine()
