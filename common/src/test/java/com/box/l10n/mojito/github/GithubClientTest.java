@@ -360,16 +360,20 @@ public class GithubClientTest {
 
   @Test
   public void testAddReviewCommentsToPRWithNullComments() throws IOException {
-    githubClient.addReviewCommentsToPR("testRepo", 1, null, "commitSha");
+    List<GithubClient.ReviewComment> postedComments =
+        githubClient.addReviewCommentsToPR("testRepo", 1, null, "commitSha");
 
+    assertTrue(postedComments.isEmpty());
     verify(gitHubMock, never()).getRepository(anyString());
     verify(ghPullRequestMock, never()).createReview();
   }
 
   @Test
   public void testAddReviewCommentsToPRWithEmptyComments() throws IOException {
-    githubClient.addReviewCommentsToPR("testRepo", 1, List.of(), "commitSha");
+    List<GithubClient.ReviewComment> postedComments =
+        githubClient.addReviewCommentsToPR("testRepo", 1, List.of(), "commitSha");
 
+    assertTrue(postedComments.isEmpty());
     verify(gitHubMock, never()).getRepository(anyString());
     verify(ghPullRequestMock, never()).createReview();
   }
@@ -537,6 +541,55 @@ public class GithubClientTest {
     verify(ghPullRequestMock, never()).createReview();
     verify(ghPullRequestReviewBuilderMock, never()).create();
     verify(counterMock, times(1)).increment(2);
+  }
+
+  @Test
+  public void testAddReviewCommentsToPRReturnsThePostedComments() throws IOException {
+    stubReviewBuilder();
+    GithubClient.ReviewComment comment1 =
+        new GithubClient.ReviewComment("Comment 1", "src/main/strings.xml", 10);
+    GithubClient.ReviewComment comment2 =
+        new GithubClient.ReviewComment("Comment 2", "src/main/other.xml", 20);
+
+    List<GithubClient.ReviewComment> postedComments =
+        githubClient.addReviewCommentsToPR("testRepo", 1, List.of(comment1, comment2), "commitSha");
+
+    assertEquals(List.of(comment1, comment2), postedComments);
+  }
+
+  @Test
+  public void testAddReviewCommentsToPRReturnsOnlyTheCommentsThatWereNotSkipped()
+      throws IOException {
+    stubReviewBuilder();
+    stubExistingReviewComments(
+        List.of(stubExistingReviewComment("Placeholder issue", "src/main/strings.xml", 42, 42)));
+    GithubClient.ReviewComment alreadyPosted =
+        new GithubClient.ReviewComment("Placeholder issue", "src/main/strings.xml", 42);
+    GithubClient.ReviewComment newComment =
+        new GithubClient.ReviewComment("Another issue", "src/main/strings.xml", 42);
+
+    List<GithubClient.ReviewComment> postedComments =
+        githubClient.addReviewCommentsToPR(
+            "testRepo", 1, List.of(alreadyPosted, newComment), "commitSha");
+
+    assertEquals(List.of(newComment), postedComments);
+  }
+
+  @Test
+  public void testAddReviewCommentsToPRReturnsNoCommentsWhenAllCommentsAlreadyExist()
+      throws IOException {
+    stubReviewBuilder();
+    stubExistingReviewComments(
+        List.of(stubExistingReviewComment("Comment 1", "src/main/strings.xml", 10, 10)));
+
+    List<GithubClient.ReviewComment> postedComments =
+        githubClient.addReviewCommentsToPR(
+            "testRepo",
+            1,
+            List.of(new GithubClient.ReviewComment("Comment 1", "src/main/strings.xml", 10)),
+            "commitSha");
+
+    assertTrue(postedComments.isEmpty());
   }
 
   private void stubExistingReviewComments(List<GHPullRequestReviewComment> existingComments)

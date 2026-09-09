@@ -92,8 +92,8 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
    * method will only post comments if all required data is available.
    *
    * @param failures the check failures to create review comments for
-   * @return the review comments that were generated (and posted), or an empty list if none were
-   *     generated or required data was missing
+   * @return the review comments that were posted to the pull request, or an empty list if none were
+   *     generated, they were all already present on the pull request, or required data was missing
    */
   public List<GithubClient.ReviewComment> addInlineReviewComments(
       List<CliCheckResult> failures,
@@ -118,12 +118,12 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
               prefixToRemoveFromFileUris);
 
       if (!reviewComments.isEmpty()) {
-        githubClients
+        return githubClients
             .getClient(githubOwner)
             .addReviewCommentsToPR(githubRepo, prNumber, reviewComments, commitSha);
       }
 
-      return reviewComments;
+      return List.of();
     } catch (Exception e) {
       throw new ExtractionCheckNotificationSenderException(
           "Failed to add inline review comments to PR", e);

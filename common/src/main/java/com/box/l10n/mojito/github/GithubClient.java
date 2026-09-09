@@ -664,18 +664,20 @@ public class GithubClient {
    * @param prNumber The pull request number
    * @param reviewComments List of review comments to post
    * @param commitSha The commit SHA to attach the review to
+   * @return the review comments that were actually posted, ie. the provided comments minus the
+   *     skipped duplicates, in the original order. Empty if there was nothing to post.
    */
-  public void addReviewCommentsToPR(
+  public List<ReviewComment> addReviewCommentsToPR(
       String repository, int prNumber, List<ReviewComment> reviewComments, String commitSha) {
     String repoFullPath = getRepositoryPath(repository);
 
     if (reviewComments == null || reviewComments.isEmpty()) {
       logger.debug(
           "No review comments to post for PR {} in repository '{}'", prNumber, repoFullPath);
-      return;
+      return List.of();
     }
 
-    Mono.fromRunnable(
+    return Mono.fromCallable(
             () -> {
               try {
                 GHPullRequest pullRequest =
@@ -693,7 +695,7 @@ public class GithubClient {
                       reviewComments.size(),
                       prNumber,
                       repoFullPath);
-                  return;
+                  return List.<ReviewComment>of();
                 }
 
                 // Create a review with comments. The event must be set: leaving it blank creates
@@ -719,6 +721,8 @@ public class GithubClient {
                     commentsToPost.size(),
                     prNumber,
                     repoFullPath);
+
+                return List.copyOf(commentsToPost);
 
               } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
                 String message =
