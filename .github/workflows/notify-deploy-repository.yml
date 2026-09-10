@@ -1,0 +1,78 @@
+# Announces a new master to a downstream deploy repository via repository
+# dispatch. The target is configured per repository, so nothing here is tied to
+# a particular deploy repo:
+#
+#   vars.DEPLOY_DISPATCH_REPOSITORY    owner/repo to dispatch to (required)
+#   vars.DEPLOY_DISPATCH_EVENT_TYPE    event_type to send (default mojito-updated)
+#   secrets.DEPLOY_DISPATCH_APP_ID     GitHub App installed on the target repo
+#   secrets.DEPLOY_DISPATCH_APP_PRIVATE_KEY
+name: Notify deploy repository
+
+on:
+  push:
+    branches: [master]
+
+# The job's own GITHUB_TOKEN is unused: everything here targets another repo.
+permissions: {}
+
+jobs:
+  notify:
+    name: Dispatch deploy event
+    # Repository variables are not inherited by forks, so an unset target also
+    # means "this checkout has no downstream to notify" and the job is skipped
+    # rather than run without credentials.
+    if: vars.DEPLOY_DISPATCH_REPOSITORY != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Resolve dispatch target
+        id: target
+        env:
+          TARGET_REPOSITORY: ${{ vars.DEPLOY_DISPATCH_REPOSITORY }}
+        run: |
+          set -euo pipefail
+          # The value reaches both an action input and a URL path, so reject
+          # anything that is not a plain owner/repo pair before it is used.
+          if [[ ! "$TARGET_REPOSITORY" =~ ^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$ ]]; then
+            echo "DEPLOY_DISPATCH_REPOSITORY must be owner/repo, got '$TARGET_REPOSITORY'" >&2
+            exit 1
+          fi
+          echo "owner=${TARGET_REPOSITORY%/*}" >> "$GITHUB_OUTPUT"
+          echo "repository=${TARGET_REPOSITORY#*/}" >> "$GITHUB_OUTPUT"
+
+      - name: Mint app token for the target repository
+        id: app-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
+        with:
+          app-id: ${{ secrets.DEPLOY_DISPATCH_APP_ID }}
+          private-key: ${{ secrets.DEPLOY_DISPATCH_APP_PRIVATE_KEY }}
+          owner: ${{ steps.target.outputs.owner }}
+          repositories: ${{ steps.target.outputs.repository }}
+          # POST /dispatches needs contents: write. There is no narrower
+          # dispatch-specific permission, so this is the floor, not a choice.
+          permission-contents: write
+
+      - name: Dispatch to the target repository
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TARGET_REPOSITORY: ${{ vars.DEPLOY_DISPATCH_REPOSITORY }}
+          EVENT_TYPE: ${{ vars.DEPLOY_DISPATCH_EVENT_TYPE || 'mojito-updated' }}
+          SOURCE_SHA: ${{ github.sha }}
+          SOURCE_BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          # jq builds the payload so a branch or SHA can never break out of the
+          # JSON, and --input - keeps it off the command line.
+          jq -nc \
+            --arg event_type "$EVENT_TYPE" \
+            --arg sha "$SOURCE_SHA" \
+            --arg branch "$SOURCE_BRANCH" \
+            '{event_type: $event_type, client_payload: {sha: $sha, branch: $branch}}' \
+          | gh api "repos/$TARGET_REPOSITORY/dispatches" --input -
+
+      # The dispatch is a trigger, not an instruction: the receiving workflow
+      # re-resolves this repository's master itself and ignores the payload SHA.
+      # A later dispatch or manual run converges the target to the current branch
+      # head, so retrying an individual dispatch is unnecessary for eventual
+      # correctness. If no later event occurs, however, a lost dispatch can leave
+      # the target stale.
