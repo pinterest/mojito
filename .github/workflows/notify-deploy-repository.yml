@@ -20,25 +20,42 @@ jobs:
     name: Dispatch deploy event
     # Repository variables are not inherited by forks, so an unset target also
     # means "this checkout has no downstream to notify" and the job is skipped
-    # rather than run without credentials.
+    # rather than run without credentials. Note the cost of that: a target left
+    # unset is silent, and indistinguishable from this workflow not existing.
     if: vars.DEPLOY_DISPATCH_REPOSITORY != ''
     runs-on: ubuntu-latest
+    environment: deploy-dispatch
     timeout-minutes: 5
     steps:
       - name: Resolve dispatch target
         id: target
         env:
           TARGET_REPOSITORY: ${{ vars.DEPLOY_DISPATCH_REPOSITORY }}
+          EVENT_TYPE: ${{ vars.DEPLOY_DISPATCH_EVENT_TYPE || 'mojito-updated' }}
         run: |
           set -euo pipefail
           # The value reaches both an action input and a URL path, so reject
-          # anything that is not a plain owner/repo pair before it is used.
-          if [[ ! "$TARGET_REPOSITORY" =~ ^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$ ]]; then
+          # anything that is not a plain owner/repo pair before it is used. Each
+          # side must start alphanumeric and cannot contain '..', so no value
+          # that passes here can traverse out of the intended API path.
+          name='[A-Za-z0-9][A-Za-z0-9._-]*'
+          if [[ ! "$TARGET_REPOSITORY" =~ ^$name/$name$ || "$TARGET_REPOSITORY" == *..* ]]; then
             echo "DEPLOY_DISPATCH_REPOSITORY must be owner/repo, got '$TARGET_REPOSITORY'" >&2
+            exit 1
+          fi
+          # A mismatched event type is the one misconfiguration nothing detects:
+          # POST /dispatches returns 204 whether or not a workflow listens for
+          # the type, so a typo here is a green run and no build, forever. This
+          # only rejects malformed values; the value itself must equal the
+          # target's `repository_dispatch: types:` entry, which is not readable
+          # from this side. Change it only alongside the receiving workflow.
+          if [[ ! "$EVENT_TYPE" =~ ^[A-Za-z0-9._-]+$ ]]; then
+            echo "DEPLOY_DISPATCH_EVENT_TYPE must be a plain token, got '$EVENT_TYPE'" >&2
             exit 1
           fi
           echo "owner=${TARGET_REPOSITORY%/*}" >> "$GITHUB_OUTPUT"
           echo "repository=${TARGET_REPOSITORY#*/}" >> "$GITHUB_OUTPUT"
+          echo "event_type=$EVENT_TYPE" >> "$GITHUB_OUTPUT"
 
       - name: Mint app token for the target repository
         id: app-token
@@ -55,8 +72,8 @@ jobs:
       - name: Dispatch to the target repository
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          TARGET_REPOSITORY: ${{ vars.DEPLOY_DISPATCH_REPOSITORY }}
-          EVENT_TYPE: ${{ vars.DEPLOY_DISPATCH_EVENT_TYPE || 'mojito-updated' }}
+          TARGET_REPOSITORY: ${{ steps.target.outputs.owner }}/${{ steps.target.outputs.repository }}
+          EVENT_TYPE: ${{ steps.target.outputs.event_type }}
           SOURCE_SHA: ${{ github.sha }}
           SOURCE_BRANCH: ${{ github.ref_name }}
         run: |
@@ -69,6 +86,11 @@ jobs:
             --arg branch "$SOURCE_BRANCH" \
             '{event_type: $event_type, client_payload: {sha: $sha, branch: $branch}}' \
           | gh api "repos/$TARGET_REPOSITORY/dispatches" --input -
+          # Recorded because the dispatch itself cannot fail informatively: what
+          # was sent, and to whom, is the only evidence when the target stays
+          # still after a green run here.
+          echo "Sent \`$EVENT_TYPE\` to \`$TARGET_REPOSITORY\` for \`$SOURCE_BRANCH\` at \`${SOURCE_SHA:0:8}\`" \
+            >> "$GITHUB_STEP_SUMMARY"
 
       # The dispatch is a trigger, not an instruction: the receiving workflow
       # re-resolves this repository's master itself and ignores the payload SHA.
