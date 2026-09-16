@@ -6,6 +6,9 @@
 #   vars.DEPLOY_DISPATCH_EVENT_TYPE    event_type to send (default mojito-updated)
 #   secrets.DEPLOY_DISPATCH_APP_ID     GitHub App installed on the target repo
 #   secrets.DEPLOY_DISPATCH_APP_PRIVATE_KEY
+#   secrets.PAGERDUTY_ROUTING_KEY      Events API v2 integration key for the
+#                                      service that owns dispatch failures
+#                                      (optional; alerting is skipped when unset)
 name: Notify deploy repository
 
 on:
@@ -97,4 +100,73 @@ jobs:
       # A later dispatch or manual run converges the target to the current branch
       # head, so retrying an individual dispatch is unnecessary for eventual
       # correctness. If no later event occurs, however, a lost dispatch can leave
-      # the target stale.
+      # the target stale, so the two steps below make a failure visible and mark
+      # it recovered once a run gets through.
+      #
+      # Both steps share DEDUP_KEY: consecutive failures fold into the one open
+      # incident instead of paging per push, and the next success resolves it.
+
+      - name: Trigger PagerDuty incident
+        if: failure()
+        continue-on-error: true
+        env:
+          PAGERDUTY_ROUTING_KEY: ${{ secrets.PAGERDUTY_ROUTING_KEY }}
+          DEDUP_KEY: deploy-dispatch-${{ github.repository }}
+          TARGET_REPOSITORY: ${{ vars.DEPLOY_DISPATCH_REPOSITORY }}
+          SOURCE_BRANCH: ${{ github.ref_name }}
+          SOURCE_SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          # The secrets context is unavailable in step-level `if`, so an unset key
+          # is handled here to keep alerting optional rather than required.
+          if [[ -z "${PAGERDUTY_ROUTING_KEY:-}" ]]; then
+            echo "PAGERDUTY_ROUTING_KEY is not set; skipping the PagerDuty alert."
+            exit 0
+          fi
+          # jq builds the payload so a branch name cannot break out of the JSON,
+          # and --data-binary @- keeps the routing key off the command line.
+          jq -nc \
+            --arg routing_key "$PAGERDUTY_ROUTING_KEY" \
+            --arg dedup_key "$DEDUP_KEY" \
+            --arg target "$TARGET_REPOSITORY" \
+            --arg branch "$SOURCE_BRANCH" \
+            --arg sha "${SOURCE_SHA:0:8}" \
+            --arg run_url "$RUN_URL" \
+            '{routing_key: $routing_key,
+              event_action: "trigger",
+              dedup_key: $dedup_key,
+              payload: {
+                summary: "Failed to notify \($target) of \($branch) at \($sha); its deploy pin may be stale",
+                source: "github-actions",
+                component: "deploy-dispatch",
+                # severity maps to urgency in PagerDuty. A stale pin self-heals on
+                # the next push, so it warrants attention, not an immediate page.
+                severity: "warning",
+                custom_details: {target: $target, branch: $branch, sha: $sha}},
+              links: [{href: $run_url, text: "View workflow run"}]}' \
+          | curl -sSf --retry 3 --retry-connrefused -X POST \
+              -H 'Content-Type: application/json' \
+              --data-binary @- https://events.pagerduty.com/v2/enqueue
+
+      - name: Resolve PagerDuty incident
+        if: success()
+        continue-on-error: true
+        env:
+          PAGERDUTY_ROUTING_KEY: ${{ secrets.PAGERDUTY_ROUTING_KEY }}
+          DEDUP_KEY: deploy-dispatch-${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${PAGERDUTY_ROUTING_KEY:-}" ]]; then
+            echo "PAGERDUTY_ROUTING_KEY is not set; skipping the PagerDuty resolve."
+            exit 0
+          fi
+          # Resolving a dedup key with no open incident is accepted and does
+          # nothing, so this runs unconditionally on success.
+          jq -nc \
+            --arg routing_key "$PAGERDUTY_ROUTING_KEY" \
+            --arg dedup_key "$DEDUP_KEY" \
+            '{routing_key: $routing_key, event_action: "resolve", dedup_key: $dedup_key}' \
+          | curl -sSf --retry 3 --retry-connrefused -X POST \
+              -H 'Content-Type: application/json' \
+              --data-binary @- https://events.pagerduty.com/v2/enqueue
