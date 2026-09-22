@@ -175,23 +175,28 @@ public class GithubReviewCommentService {
   }
 
   /**
-   * Generates GitHub PR review comments based on CLI check failures.
+   * Generates GitHub PR review comments based on CLI check failures, keeping the association
+   * between each failure and the comments that represent it.
+   *
+   * <p>A failure that has no comment, ie. one whose source strings have no usage to point at, is
+   * mapped to an empty list: it has no inline representation on the pull request.
    *
    * @param cliCheckerFailures List of check failures from CLI checkers
    * @param assetExtractionDiffs List of asset extraction diffs containing text units with usages
    * @param githubModifiedLines Map of file paths to sets of modified line numbers in the PR
    * @param repoName Repository name for metrics tracking
    * @param prefixToRemoveFromFileUris Optional prefix to remove from file URIs
-   * @return List of ReviewComment objects ready to be posted to GitHub
+   * @return the review comments of each failure, in the order the failures were provided
    */
-  public List<GithubClient.ReviewComment> generateReviewComments(
+  public Map<CliCheckResult, List<GithubClient.ReviewComment>> generateReviewCommentsByFailure(
       List<CliCheckResult> cliCheckerFailures,
       List<AssetExtractionDiff> assetExtractionDiffs,
       Map<String, Set<Integer>> githubModifiedLines,
       String repoName,
       String prefixToRemoveFromFileUris) {
 
-    List<GithubClient.ReviewComment> reviewComments = new ArrayList<>();
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure =
+        new LinkedHashMap<>();
     Map<String, AssetExtractorTextUnit> nameToAssetTextUnitMap =
         assetExtractionDiffs.stream()
             .flatMap(diff -> diff.getAddedTextunits().stream())
@@ -200,6 +205,8 @@ public class GithubReviewCommentService {
     for (CliCheckResult checkFailure : cliCheckerFailures) {
       ResultLevel resultLevel = checkFailure.isHardFail() ? ResultLevel.ERROR : ResultLevel.WARNING;
       String checkDisplayName = buildCheckDisplayName(checkFailure);
+      List<GithubClient.ReviewComment> failureReviewComments =
+          reviewCommentsByFailure.computeIfAbsent(checkFailure, failure -> new ArrayList<>());
 
       for (Map.Entry<String, CliCheckResult.CheckFailure> entry :
           checkFailure.getNameToFailuresMap().entrySet()) {
@@ -223,7 +230,7 @@ public class GithubReviewCommentService {
             String commentBody =
                 formatReviewCommentBody(
                     checkDisplayName, resultLevel, resultCheckFailure.failureMessage());
-            reviewComments.add(
+            failureReviewComments.add(
                 new GithubClient.ReviewComment(
                     commentBody, location.getFilePath(), location.getLineNumber()));
           }
@@ -231,8 +238,10 @@ public class GithubReviewCommentService {
       }
     }
 
+    long commentCount = reviewCommentsByFailure.values().stream().mapToLong(List::size).sum();
     long droppedCommentCount =
-        reviewComments.stream()
+        reviewCommentsByFailure.values().stream()
+            .flatMap(List::stream)
             .filter(
                 comment -> {
                   Set<Integer> modifiedLines = githubModifiedLines.get(comment.getPath());
@@ -247,13 +256,12 @@ public class GithubReviewCommentService {
           "{} of {} review comments for repository '{}' do not fall on a modified line and will be"
               + " dropped by GitHub",
           droppedCommentCount,
-          reviewComments.size(),
+          commentCount,
           repoName);
     }
 
-    logger.info(
-        "Generated {} review comments for repository '{}'", reviewComments.size(), repoName);
-    return reviewComments;
+    logger.info("Generated {} review comments for repository '{}'", commentCount, repoName);
+    return reviewCommentsByFailure;
   }
 
   /** Data class for representing a usage location */

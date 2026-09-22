@@ -18,7 +18,6 @@ import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.cli.command.utils.GithubReviewCommentService;
 import com.box.l10n.mojito.github.GithubClient;
 import com.box.l10n.mojito.github.GithubClients;
-import com.box.l10n.mojito.github.GithubException;
 import com.box.l10n.mojito.thirdpartynotification.github.GithubIcon;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -414,9 +413,9 @@ public class ExtractionCheckNotificationSenderGithubTest {
   }
 
   @Test
-  public void testAddInlineReviewCommentsReturnsEmptyListWhenAssetExtractionDiffsNull() {
+  public void testAddInlineReviewCommentsReturnsEmptyMapWhenAssetExtractionDiffsNull() {
     setup(true);
-    List<GithubClient.ReviewComment> result =
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> result =
         extractionCheckNotificationSenderGithub.addInlineReviewComments(
             new ArrayList<>(), null, new HashMap<>(), "");
     Assert.assertTrue(result.isEmpty());
@@ -424,9 +423,9 @@ public class ExtractionCheckNotificationSenderGithubTest {
   }
 
   @Test
-  public void testAddInlineReviewCommentsReturnsEmptyListWhenAssetExtractionDiffsEmpty() {
+  public void testAddInlineReviewCommentsReturnsEmptyMapWhenAssetExtractionDiffsEmpty() {
     setup(true);
-    List<GithubClient.ReviewComment> result =
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> result =
         extractionCheckNotificationSenderGithub.addInlineReviewComments(
             new ArrayList<>(), new ArrayList<>(), new HashMap<>(), "");
     Assert.assertTrue(result.isEmpty());
@@ -434,9 +433,9 @@ public class ExtractionCheckNotificationSenderGithubTest {
   }
 
   @Test
-  public void testAddInlineReviewCommentsReturnsEmptyListWhenGithubModifiedLinesNull() {
+  public void testAddInlineReviewCommentsReturnsEmptyMapWhenGithubModifiedLinesNull() {
     setup(true);
-    List<GithubClient.ReviewComment> result =
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> result =
         extractionCheckNotificationSenderGithub.addInlineReviewComments(
             new ArrayList<>(), List.of(new AssetExtractionDiff()), null, "");
     Assert.assertTrue(result.isEmpty());
@@ -444,7 +443,7 @@ public class ExtractionCheckNotificationSenderGithubTest {
   }
 
   @Test
-  public void testAddInlineReviewCommentsReturnsEmptyListWhenCommitShaNull() {
+  public void testAddInlineReviewCommentsReturnsEmptyMapWhenCommitShaNull() {
     setup(true);
     extractionCheckNotificationSenderGithub =
         new ExtractionCheckNotificationSenderGithub(
@@ -463,7 +462,7 @@ public class ExtractionCheckNotificationSenderGithubTest {
     extractionCheckNotificationSenderGithub.githubReviewCommentService =
         githubReviewCommentServiceMock;
 
-    List<GithubClient.ReviewComment> result =
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> result =
         extractionCheckNotificationSenderGithub.addInlineReviewComments(
             new ArrayList<>(), List.of(new AssetExtractionDiff()), new HashMap<>(), "");
     Assert.assertTrue(result.isEmpty());
@@ -471,21 +470,25 @@ public class ExtractionCheckNotificationSenderGithubTest {
   }
 
   @Test
-  public void testAddInlineReviewCommentsPostsGeneratedCommentsAndReturnsThePostedOnes() {
+  public void testAddInlineReviewCommentsPostsAndReturnsGeneratedComments() {
     setup(true);
-    List<CliCheckResult> failures = new ArrayList<>();
+    CliCheckResult failure = createFailure("Test Check");
+    CliCheckResult otherFailure = createFailure("Other Check");
+    List<CliCheckResult> failures = List.of(failure, otherFailure);
     List<AssetExtractionDiff> assetExtractionDiffs = List.of(new AssetExtractionDiff());
-    Map<String, Set<Integer>> githubModifiedLines = Map.of("file.py", Set.of(10));
-    List<GithubClient.ReviewComment> generatedComments =
-        List.of(new GithubClient.ReviewComment("Some comment body", "file.py", 10));
+    Map<String, Set<Integer>> githubModifiedLines = Map.of("file.py", Set.of(10, 20));
+    GithubClient.ReviewComment firstComment =
+        new GithubClient.ReviewComment("Some comment body", "file.py", 10);
+    GithubClient.ReviewComment secondComment =
+        new GithubClient.ReviewComment("Some other comment body", "file.py", 20);
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> generatedComments =
+        Map.of(failure, List.of(firstComment), otherFailure, List.of(secondComment));
 
-    when(githubReviewCommentServiceMock.generateReviewComments(
+    when(githubReviewCommentServiceMock.generateReviewCommentsByFailure(
             failures, assetExtractionDiffs, githubModifiedLines, "testRepo", "prefix/"))
         .thenReturn(generatedComments);
-    when(githubClientMock.addReviewCommentsToPR(eq("testRepo"), eq(100), any(), eq("123456789")))
-        .thenReturn(generatedComments);
 
-    List<GithubClient.ReviewComment> result =
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> result =
         extractionCheckNotificationSenderGithub.addInlineReviewComments(
             failures, assetExtractionDiffs, githubModifiedLines, "prefix/");
 
@@ -493,80 +496,28 @@ public class ExtractionCheckNotificationSenderGithubTest {
     verify(githubClientMock, times(1))
         .addReviewCommentsToPR(
             eq("testRepo"), eq(100), reviewCommentsCaptor.capture(), eq("123456789"));
-    Assert.assertEquals(generatedComments, reviewCommentsCaptor.getValue());
-  }
-
-  @Test
-  public void testAddInlineReviewCommentsReturnsOnlyTheCommentsThatWereNotSkippedAsDuplicates() {
-    setup(true);
-    List<CliCheckResult> failures = new ArrayList<>();
-    List<AssetExtractionDiff> assetExtractionDiffs = List.of(new AssetExtractionDiff());
-    Map<String, Set<Integer>> githubModifiedLines = Map.of("file.py", Set.of(10, 20));
-    GithubClient.ReviewComment alreadyPosted =
-        new GithubClient.ReviewComment("Already on the PR", "file.py", 10);
-    GithubClient.ReviewComment newComment =
-        new GithubClient.ReviewComment("New finding", "file.py", 20);
-    List<GithubClient.ReviewComment> generatedComments = List.of(alreadyPosted, newComment);
-
-    when(githubReviewCommentServiceMock.generateReviewComments(
-            failures, assetExtractionDiffs, githubModifiedLines, "testRepo", ""))
-        .thenReturn(generatedComments);
-    when(githubClientMock.addReviewCommentsToPR(anyString(), anyInt(), any(), anyString()))
-        .thenReturn(List.of(newComment));
-
-    List<GithubClient.ReviewComment> result =
-        extractionCheckNotificationSenderGithub.addInlineReviewComments(
-            failures, assetExtractionDiffs, githubModifiedLines, "");
-
-    Assert.assertEquals(List.of(newComment), result);
-    verify(githubClientMock, times(1))
-        .addReviewCommentsToPR(
-            eq("testRepo"), eq(100), reviewCommentsCaptor.capture(), eq("123456789"));
-    Assert.assertEquals(generatedComments, reviewCommentsCaptor.getValue());
-  }
-
-  @Test
-  public void testAddInlineReviewCommentsReturnsEmptyListWhenAllCommentsAreAlreadyOnThePR() {
-    setup(true);
-    List<CliCheckResult> failures = new ArrayList<>();
-    List<AssetExtractionDiff> assetExtractionDiffs = List.of(new AssetExtractionDiff());
-    Map<String, Set<Integer>> githubModifiedLines = Map.of("file.py", Set.of(10));
-    List<GithubClient.ReviewComment> generatedComments =
-        List.of(new GithubClient.ReviewComment("Already on the PR", "file.py", 10));
-
-    when(githubReviewCommentServiceMock.generateReviewComments(
-            failures, assetExtractionDiffs, githubModifiedLines, "testRepo", ""))
-        .thenReturn(generatedComments);
-    when(githubClientMock.addReviewCommentsToPR(anyString(), anyInt(), any(), anyString()))
-        .thenReturn(List.of());
-
-    List<GithubClient.ReviewComment> result =
-        extractionCheckNotificationSenderGithub.addInlineReviewComments(
-            failures, assetExtractionDiffs, githubModifiedLines, "");
-
-    Assert.assertTrue(result.isEmpty());
-    verify(githubClientMock, times(1))
-        .addReviewCommentsToPR(
-            eq("testRepo"), eq(100), reviewCommentsCaptor.capture(), eq("123456789"));
-    Assert.assertEquals(generatedComments, reviewCommentsCaptor.getValue());
+    List<GithubClient.ReviewComment> postedComments = reviewCommentsCaptor.getValue();
+    Assert.assertEquals(2, postedComments.size());
+    Assert.assertTrue(postedComments.containsAll(List.of(firstComment, secondComment)));
   }
 
   @Test
   public void testAddInlineReviewCommentsDoesNotPostWhenNoCommentsGenerated() {
     setup(true);
-    List<CliCheckResult> failures = new ArrayList<>();
+    CliCheckResult failure = createFailure("Test Check");
+    List<CliCheckResult> failures = List.of(failure);
     List<AssetExtractionDiff> assetExtractionDiffs = List.of(new AssetExtractionDiff());
     Map<String, Set<Integer>> githubModifiedLines = new HashMap<>();
 
-    when(githubReviewCommentServiceMock.generateReviewComments(
+    when(githubReviewCommentServiceMock.generateReviewCommentsByFailure(
             any(), any(), any(), anyString(), any()))
-        .thenReturn(List.of());
+        .thenReturn(Map.of(failure, List.of()));
 
-    List<GithubClient.ReviewComment> result =
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> result =
         extractionCheckNotificationSenderGithub.addInlineReviewComments(
             failures, assetExtractionDiffs, githubModifiedLines, "");
 
-    Assert.assertTrue(result.isEmpty());
+    Assert.assertEquals(Map.of(failure, List.of()), result);
     verify(githubClientMock, never())
         .addReviewCommentsToPR(anyString(), anyInt(), any(), anyString());
   }
@@ -578,7 +529,7 @@ public class ExtractionCheckNotificationSenderGithubTest {
     List<AssetExtractionDiff> assetExtractionDiffs = List.of(new AssetExtractionDiff());
     Map<String, Set<Integer>> githubModifiedLines = new HashMap<>();
 
-    when(githubReviewCommentServiceMock.generateReviewComments(
+    when(githubReviewCommentServiceMock.generateReviewCommentsByFailure(
             any(), any(), any(), anyString(), any()))
         .thenThrow(new RuntimeException("Something went wrong"));
 
@@ -586,20 +537,112 @@ public class ExtractionCheckNotificationSenderGithubTest {
         failures, assetExtractionDiffs, githubModifiedLines, "");
   }
 
-  @Test(expected = ExtractionCheckNotificationSenderException.class)
-  public void testAddInlineReviewCommentsThrowsWhenPostingToTheClientFails() {
+  @Test
+  public void testAreAllFailuresResolvedOnPRWhenEveryReviewCommentIsResolved() {
     setup(true);
-    List<CliCheckResult> failures = new ArrayList<>();
-    List<AssetExtractionDiff> assetExtractionDiffs = List.of(new AssetExtractionDiff());
-    Map<String, Set<Integer>> githubModifiedLines = Map.of("file.py", Set.of(10));
+    CliCheckResult failure = createFailure("Test Check");
+    CliCheckResult otherFailure = createFailure("Other Check");
+    GithubClient.ReviewComment firstComment =
+        new GithubClient.ReviewComment("Some comment body", "file.py", 10);
+    GithubClient.ReviewComment secondComment =
+        new GithubClient.ReviewComment("Some other comment body", "file.py", 20);
 
-    when(githubReviewCommentServiceMock.generateReviewComments(
-            any(), any(), any(), anyString(), any()))
-        .thenReturn(List.of(new GithubClient.ReviewComment("Some comment body", "file.py", 10)));
-    when(githubClientMock.addReviewCommentsToPR(anyString(), anyInt(), any(), anyString()))
-        .thenThrow(new GithubException("Error adding review comments to PR"));
+    when(githubClientMock.areReviewCommentsResolved(anyString(), anyInt(), any())).thenReturn(true);
 
-    extractionCheckNotificationSenderGithub.addInlineReviewComments(
-        failures, assetExtractionDiffs, githubModifiedLines, "");
+    Assert.assertTrue(
+        extractionCheckNotificationSenderGithub.areAllFailuresResolvedOnPR(
+            List.of(failure, otherFailure),
+            Map.of(failure, List.of(firstComment), otherFailure, List.of(secondComment))));
+
+    verify(githubClientMock, times(1))
+        .areReviewCommentsResolved(eq("testRepo"), eq(100), reviewCommentsCaptor.capture());
+    Assert.assertEquals(2, reviewCommentsCaptor.getValue().size());
+    Assert.assertTrue(reviewCommentsCaptor.getValue().contains(firstComment));
+    Assert.assertTrue(reviewCommentsCaptor.getValue().contains(secondComment));
+  }
+
+  @Test
+  public void testAreAllFailuresResolvedOnPRWhenAReviewCommentIsNotResolved() {
+    setup(true);
+    CliCheckResult failure = createFailure("Test Check");
+
+    when(githubClientMock.areReviewCommentsResolved(anyString(), anyInt(), any()))
+        .thenReturn(false);
+
+    Assert.assertFalse(
+        extractionCheckNotificationSenderGithub.areAllFailuresResolvedOnPR(
+            List.of(failure),
+            Map.of(
+                failure,
+                List.of(new GithubClient.ReviewComment("Some comment body", "file.py", 10)))));
+  }
+
+  @Test
+  public void testAreAllFailuresResolvedOnPRWhenAFailureHasNoReviewComment() {
+    setup(true);
+    CliCheckResult failure = createFailure("Test Check");
+    CliCheckResult failureWithoutComment = createFailure("Check Without Usages");
+
+    Assert.assertFalse(
+        extractionCheckNotificationSenderGithub.areAllFailuresResolvedOnPR(
+            List.of(failure, failureWithoutComment),
+            Map.of(
+                failure,
+                List.of(new GithubClient.ReviewComment("Some comment body", "file.py", 10)),
+                failureWithoutComment,
+                List.of())));
+
+    verify(githubClientMock, never()).areReviewCommentsResolved(anyString(), anyInt(), any());
+  }
+
+  @Test
+  public void testAreAllFailuresResolvedOnPRWhenAFailureIsMissingFromTheMap() {
+    setup(true);
+    CliCheckResult failure = createFailure("Test Check");
+    CliCheckResult failureWithoutComment = createFailure("Check Without Usages");
+
+    Assert.assertFalse(
+        extractionCheckNotificationSenderGithub.areAllFailuresResolvedOnPR(
+            List.of(failure, failureWithoutComment),
+            Map.of(
+                failure,
+                List.of(new GithubClient.ReviewComment("Some comment body", "file.py", 10)))));
+
+    verify(githubClientMock, never()).areReviewCommentsResolved(anyString(), anyInt(), any());
+  }
+
+  @Test
+  public void testAreAllFailuresResolvedOnPRWithNoFailuresOrNoComments() {
+    setup(true);
+    CliCheckResult failure = createFailure("Test Check");
+
+    Assert.assertFalse(
+        extractionCheckNotificationSenderGithub.areAllFailuresResolvedOnPR(null, Map.of()));
+    Assert.assertFalse(
+        extractionCheckNotificationSenderGithub.areAllFailuresResolvedOnPR(List.of(), Map.of()));
+    Assert.assertFalse(
+        extractionCheckNotificationSenderGithub.areAllFailuresResolvedOnPR(List.of(failure), null));
+
+    verify(githubClientMock, never()).areReviewCommentsResolved(anyString(), anyInt(), any());
+  }
+
+  @Test(expected = ExtractionCheckNotificationSenderException.class)
+  public void testAreAllFailuresResolvedOnPRThrowsWhenTheClientFails() {
+    setup(true);
+    CliCheckResult failure = createFailure("Test Check");
+
+    when(githubClientMock.areReviewCommentsResolved(anyString(), anyInt(), any()))
+        .thenThrow(new RuntimeException("Something went wrong"));
+
+    extractionCheckNotificationSenderGithub.areAllFailuresResolvedOnPR(
+        List.of(failure),
+        Map.of(
+            failure, List.of(new GithubClient.ReviewComment("Some comment body", "file.py", 10))));
+  }
+
+  private static CliCheckResult createFailure(String checkName) {
+    CliCheckResult failure = new CliCheckResult(false, true, checkName);
+    failure.setNotificationText("Some notification text");
+    return failure;
   }
 }

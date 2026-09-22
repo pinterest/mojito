@@ -15,12 +15,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.kohsuke.github.GHCommitState;
 import org.kohsuke.github.GHIssueComment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import reactor.core.publisher.Mono;
 
 @Configurable
 public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNotificationSender {
+
+  static Logger logger = LoggerFactory.getLogger(ExtractionCheckNotificationSenderGithub.class);
 
   @Autowired GithubClients githubClients;
 
@@ -87,15 +91,20 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
     }
   }
 
+  private static List<GithubClient.ReviewComment> flatten(
+      Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure) {
+    return reviewCommentsByFailure.values().stream().flatMap(List::stream).toList();
+  }
+
   /**
    * Adds inline PR review comments for check failures using the GithubReviewCommentService. This
    * method will only post comments if all required data is available.
    *
    * @param failures the check failures to create review comments for
-   * @return the review comments that were posted to the pull request, or an empty list if none were
-   *     generated, they were all already present on the pull request, or required data was missing
+   * @return the review comments that were generated (and posted), or an empty list if none were
+   *     generated or required data was missing
    */
-  public List<GithubClient.ReviewComment> addInlineReviewComments(
+  public Map<CliCheckResult, List<GithubClient.ReviewComment>> addInlineReviewComments(
       List<CliCheckResult> failures,
       List<AssetExtractionDiff> assetExtractionDiffs,
       Map<String, Set<Integer>> githubModifiedLines,
@@ -105,28 +114,78 @@ public class ExtractionCheckNotificationSenderGithub extends ExtractionCheckNoti
         || githubModifiedLines == null
         || commitSha == null
         || commitSha.isEmpty()) {
-      return List.of();
+      return Map.of();
     }
 
     try {
-      List<GithubClient.ReviewComment> reviewComments =
-          githubReviewCommentService.generateReviewComments(
+      Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure =
+          githubReviewCommentService.generateReviewCommentsByFailure(
               failures,
               assetExtractionDiffs,
               githubModifiedLines,
               githubRepo,
               prefixToRemoveFromFileUris);
 
+      List<GithubClient.ReviewComment> reviewComments = flatten(reviewCommentsByFailure);
+
       if (!reviewComments.isEmpty()) {
-        return githubClients
+        githubClients
             .getClient(githubOwner)
             .addReviewCommentsToPR(githubRepo, prNumber, reviewComments, commitSha);
       }
 
-      return List.of();
+      return reviewCommentsByFailure;
     } catch (Exception e) {
       throw new ExtractionCheckNotificationSenderException(
           "Failed to add inline review comments to PR", e);
+    }
+  }
+
+  /**
+   * Indicates whether all the given check failures are already resolved on the pull request, ie.
+   * every review comment representing them sits on a review thread that has been resolved.
+   *
+   * <p>A failure that has no review comment has no inline representation on the pull request and
+   * can therefore never be considered resolved.
+   *
+   * @param failures the check failures to look for
+   * @param reviewCommentsByFailure the review comments of each failure, as returned by {@link
+   *     #addInlineReviewComments}
+   * @return true only if every failure is represented by at least one review comment and all those
+   *     comments are on a resolved review thread
+   */
+  public boolean areAllFailuresResolvedOnPR(
+      List<CliCheckResult> failures,
+      Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure) {
+    if (isNullOrEmpty(failures) || reviewCommentsByFailure == null) {
+      return false;
+    }
+
+    boolean allFailuresHaveReviewComments =
+        failures.stream()
+            .allMatch(
+                failure -> {
+                  List<GithubClient.ReviewComment> reviewComments =
+                      reviewCommentsByFailure.get(failure);
+                  return reviewComments != null && !reviewComments.isEmpty();
+                });
+
+    if (!allFailuresHaveReviewComments) {
+      logger.debug(
+          "Not all the check failures of PR {} in repository '{}' are represented by an inline review"
+              + " comment, they cannot be considered resolved",
+          prNumber,
+          githubRepo);
+      return false;
+    }
+
+    try {
+      return githubClients
+          .getClient(githubOwner)
+          .areReviewCommentsResolved(githubRepo, prNumber, flatten(reviewCommentsByFailure));
+    } catch (Exception e) {
+      throw new ExtractionCheckNotificationSenderException(
+          "Failed to check if the review comments are resolved on the PR", e);
     }
   }
 

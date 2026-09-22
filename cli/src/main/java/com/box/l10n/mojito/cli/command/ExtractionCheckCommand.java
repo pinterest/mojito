@@ -48,6 +48,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -358,6 +359,54 @@ public class ExtractionCheckCommand extends Command {
     }
   }
 
+  /**
+   * Indicates whether all the given check failures are already resolved on the pull request, ie.
+   * the inline review comments reporting them were posted by a previous run and their review
+   * threads have since been resolved on GitHub. In that case the failures were reviewed and
+   * accepted, so the run must not report them again.
+   *
+   * <p>Any missing parameter or error while reading the state of the pull request makes this return
+   * false, so that a run keeps failing rather than silently letting failures through.
+   *
+   * @param cliCheckerFailures the check failures of the current run
+   * @param reviewCommentsByFailure the review comments generated for each failure, as returned by
+   *     {@link #addInlineReviewComments}
+   */
+  boolean areAllFailuresResolvedOnPr(
+      List<CliCheckResult> cliCheckerFailures,
+      Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure) {
+
+    if (!shouldAddInlineReviewComments
+        || cliCheckerFailures.isEmpty()
+        || reviewCommentsByFailure.isEmpty()
+        || !hasRequiredGithubReviewCommentParameters()
+        || !githubClients.isClientAvailable(githubOwner)) {
+      return false;
+    }
+
+    Optional<ExtractionCheckNotificationSenderGithub> githubSender = getGithubNotificationSender();
+    if (githubSender.isEmpty()) {
+      return false;
+    }
+
+    try {
+      return githubSender
+          .get()
+          .areAllFailuresResolvedOnPR(cliCheckerFailures, reviewCommentsByFailure);
+    } catch (GithubException | ExtractionCheckNotificationSenderException e) {
+      logger.error(
+          "Error checking if the check failures are resolved on the PR: {}", e.getMessage(), e);
+      consoleWriter
+          .fg(Ansi.Color.YELLOW)
+          .newLine()
+          .a(
+              "Warning: Unable to check if the failed checks are already resolved on the PR: "
+                  + e.getMessage())
+          .println();
+      return false;
+    }
+  }
+
   @Override
   protected void execute() throws CommandException {
     validateParameters();
@@ -398,16 +447,36 @@ public class ExtractionCheckCommand extends Command {
             generateSarifFile(cliCheckerFailures, assetExtractionDiffs);
           }
 
+          List<CliCheckResult> blockingFailures = cliCheckerFailures;
           if (shouldAddInlineReviewComments) {
-            addInlineReviewComments(cliCheckerFailures, assetExtractionDiffs);
+            Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure =
+                addInlineReviewComments(cliCheckerFailures, assetExtractionDiffs);
+
+            // Failures whose review threads are all resolved on the PR were already reviewed and
+            // accepted, the run behaves as if there were no failures at all
+            if (areAllFailuresResolvedOnPr(cliCheckerFailures, reviewCommentsByFailure)) {
+              logger.info(
+                  "All {} failed checks are already resolved on PR {}, not reporting them again",
+                  cliCheckerFailures.size(),
+                  githubPRNumber);
+              consoleWriter
+                  .fg(Ansi.Color.GREEN)
+                  .newLine()
+                  .a(
+                      String.format(
+                          "All %d failed checks are already resolved on the PR",
+                          cliCheckerFailures.size()))
+                  .println();
+              blockingFailures = List.of();
+            }
           }
 
           reportStatistics(cliCheckerResults);
-          checkForHardFail(cliCheckerFailures);
-          if (!cliCheckerFailures.isEmpty()) {
+          checkForHardFail(blockingFailures);
+          if (!blockingFailures.isEmpty()) {
             printIfTextUnitInAddedAndRemoved(assetExtractionDiffs);
-            outputFailuresToCommandLine(cliCheckerFailures);
-            sendFailureNotifications(cliCheckerFailures, false);
+            outputFailuresToCommandLine(blockingFailures);
+            sendFailureNotifications(blockingFailures, false);
           } else if (isSetGithubStatus()) {
             createGithubCommitStatus();
           }
@@ -826,6 +895,23 @@ public class ExtractionCheckCommand extends Command {
     }
   }
 
+  private boolean hasRequiredGithubReviewCommentParameters() {
+    return githubOwner != null
+        && !githubOwner.isEmpty()
+        && githubRepository != null
+        && !githubRepository.isEmpty()
+        && githubPRNumber != null
+        && commitSha != null
+        && !commitSha.isEmpty();
+  }
+
+  private Optional<ExtractionCheckNotificationSenderGithub> getGithubNotificationSender() {
+    return extractionCheckNotificationSenders.stream()
+        .filter(ExtractionCheckNotificationSenderGithub.class::isInstance)
+        .map(ExtractionCheckNotificationSenderGithub.class::cast)
+        .findFirst();
+  }
+
   /**
    * Adds inline PR review comments when the shouldAddInlineReviewComments flag is enabled. This
    * method retrieves the modified lines from GitHub, then delegates to the GitHub notification
@@ -833,18 +919,14 @@ public class ExtractionCheckCommand extends Command {
    *
    * @param cliCheckerFailures List of check failures to create review comments for
    * @param assetExtractionDiffs List of asset extraction diffs containing text unit information
+   * @return the review comments that were generated for each failure, an empty map if none could be
+   *     generated
    */
-  private void addInlineReviewComments(
+  private Map<CliCheckResult, List<GithubClient.ReviewComment>> addInlineReviewComments(
       List<CliCheckResult> cliCheckerFailures, List<AssetExtractionDiff> assetExtractionDiffs) {
 
     // Validate required GitHub parameters
-    if (githubOwner == null
-        || githubOwner.isEmpty()
-        || githubRepository == null
-        || githubRepository.isEmpty()
-        || githubPRNumber == null
-        || commitSha == null
-        || commitSha.isEmpty()) {
+    if (!hasRequiredGithubReviewCommentParameters()) {
       logger.warn(
           "Skipping inline review comments: Missing required GitHub parameters (owner, repository, PR number, or commit SHA)");
       consoleWriter
@@ -852,7 +934,7 @@ public class ExtractionCheckCommand extends Command {
           .newLine()
           .a("Warning: Cannot add inline review comments. Required GitHub parameters not provided.")
           .println();
-      return;
+      return Map.of();
     }
 
     if (!githubClients.isClientAvailable(githubOwner)) {
@@ -864,7 +946,7 @@ public class ExtractionCheckCommand extends Command {
           .newLine()
           .a("Warning: Cannot add inline review comments. GitHub client not available.")
           .println();
-      return;
+      return Map.of();
     }
 
     try {
@@ -883,34 +965,38 @@ public class ExtractionCheckCommand extends Command {
                       entry -> githubPatchParser.getAddedLines(entry.getValue())));
 
       // Find the GitHub notification sender and call addInlineReviewComments
-      extractionCheckNotificationSenders.stream()
-          .filter(ExtractionCheckNotificationSenderGithub.class::isInstance)
-          .map(ExtractionCheckNotificationSenderGithub.class::cast)
-          .findFirst()
-          .ifPresentOrElse(
-              githubSender -> {
-                List<GithubClient.ReviewComment> reviewComments =
-                    githubSender.addInlineReviewComments(
-                        cliCheckerFailures,
-                        assetExtractionDiffs,
-                        githubModifiedLines,
-                        fileMountPathPrefix);
-                consoleWriter
-                    .fg(Ansi.Color.GREEN)
-                    .newLine()
-                    .a(String.format("%d inline review comments added", reviewComments.size()))
-                    .println();
-              },
-              () -> {
-                // GitHub notification sender not found
-                logger.info("No GitHub notification sender found in configuration");
-                consoleWriter
-                    .fg(Ansi.Color.YELLOW)
-                    .newLine()
-                    .a(
-                        "Warning: No GitHub notification sender found in configuration. Inline review comments not added.")
-                    .println();
-              });
+      Optional<ExtractionCheckNotificationSenderGithub> githubSender =
+          getGithubNotificationSender();
+
+      if (githubSender.isEmpty()) {
+        logger.info("No GitHub notification sender found in configuration");
+        consoleWriter
+            .fg(Ansi.Color.YELLOW)
+            .newLine()
+            .a(
+                "Warning: No GitHub notification sender found in configuration. Inline review comments not added.")
+            .println();
+        return Map.of();
+      }
+
+      Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure =
+          githubSender
+              .get()
+              .addInlineReviewComments(
+                  cliCheckerFailures,
+                  assetExtractionDiffs,
+                  githubModifiedLines,
+                  fileMountPathPrefix);
+      consoleWriter
+          .fg(Ansi.Color.GREEN)
+          .newLine()
+          .a(
+              String.format(
+                  "%d inline review comments added",
+                  reviewCommentsByFailure.values().stream().mapToInt(List::size).sum()))
+          .println();
+
+      return reviewCommentsByFailure;
 
     } catch (GithubException | ExtractionCheckNotificationSenderException e) {
       logger.error("Error adding inline review comments: {}", e.getMessage(), e);
@@ -919,6 +1005,7 @@ public class ExtractionCheckCommand extends Command {
           .newLine()
           .a("Error adding inline review comments: " + e.getMessage())
           .println();
+      return Map.of();
     }
   }
 }

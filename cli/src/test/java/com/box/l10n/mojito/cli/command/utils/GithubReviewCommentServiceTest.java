@@ -57,13 +57,14 @@ class GithubReviewCommentServiceTest {
     CliCheckResult checkResult = createCliCheckResult(true, "TestCheck", fieldFailures);
 
     // Act
-    List<GithubClient.ReviewComment> reviewComments =
-        service.generateReviewComments(
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure =
+        service.generateReviewCommentsByFailure(
             List.of(checkResult), List.of(diff), new HashMap<>(), "repoName", "");
 
     // Assert
+    assertThat(reviewCommentsByFailure).containsOnlyKeys(checkResult);
     List<GithubClient.ReviewComment> orderedReviewComments =
-        reviewComments.stream()
+        reviewCommentsByFailure.get(checkResult).stream()
             .sorted(Comparator.comparing(GithubClient.ReviewComment::getPath))
             .toList();
     assertThat(orderedReviewComments).hasSize(2);
@@ -97,12 +98,13 @@ class GithubReviewCommentServiceTest {
     CliCheckResult checkResult = createCliCheckResult(false, "TestCheck", fieldFailures);
 
     // Act
-    List<GithubClient.ReviewComment> reviewComments =
-        service.generateReviewComments(
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure =
+        service.generateReviewCommentsByFailure(
             List.of(checkResult), List.of(diff), new HashMap<>(), "repoName", "");
 
-    // Assert - no review comments should be generated for text units without usages
-    assertThat(reviewComments).isEmpty();
+    // Assert - the failure is mapped to an empty list as its text unit has no usage
+    assertThat(reviewCommentsByFailure).containsOnlyKeys(checkResult);
+    assertThat(reviewCommentsByFailure.get(checkResult)).isEmpty();
   }
 
   @Test
@@ -126,11 +128,13 @@ class GithubReviewCommentServiceTest {
     CliCheckResult checkResult = createCliCheckResult(true, "ErrorCheck", fieldFailures);
 
     // Act
-    List<GithubClient.ReviewComment> reviewComments =
-        service.generateReviewComments(
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure =
+        service.generateReviewCommentsByFailure(
             List.of(checkResult), List.of(diff), new HashMap<>(), "repoName", "");
 
     // Assert
+    assertThat(reviewCommentsByFailure).containsOnlyKeys(checkResult);
+    List<GithubClient.ReviewComment> reviewComments = reviewCommentsByFailure.get(checkResult);
     assertThat(reviewComments).hasSize(1);
     assertThat(reviewComments.getFirst().getBody()).contains("I18N_ErrorCheck");
     assertThat(reviewComments.getFirst().getBody()).contains("Error");
@@ -160,11 +164,13 @@ class GithubReviewCommentServiceTest {
     CliCheckResult checkResult = createCliCheckResult(false, "WarningCheck", fieldFailures);
 
     // Act
-    List<GithubClient.ReviewComment> reviewComments =
-        service.generateReviewComments(
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure =
+        service.generateReviewCommentsByFailure(
             List.of(checkResult), List.of(diff), new HashMap<>(), "repoName", "");
 
     // Assert
+    assertThat(reviewCommentsByFailure).containsOnlyKeys(checkResult);
+    List<GithubClient.ReviewComment> reviewComments = reviewCommentsByFailure.get(checkResult);
     assertThat(reviewComments).hasSize(1);
     assertThat(reviewComments.getFirst().getBody()).contains("Warning");
     assertThat(reviewComments.getFirst().getBody()).contains("⚠️");
@@ -191,11 +197,13 @@ class GithubReviewCommentServiceTest {
     CliCheckResult checkResult = createCliCheckResult(true, "TestCheck", fieldFailures);
 
     // Act - remove prefix "/project/"
-    List<GithubClient.ReviewComment> reviewComments =
-        service.generateReviewComments(
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure =
+        service.generateReviewCommentsByFailure(
             List.of(checkResult), List.of(diff), new HashMap<>(), "repoName", "/project/");
 
     // Assert
+    assertThat(reviewCommentsByFailure).containsOnlyKeys(checkResult);
+    List<GithubClient.ReviewComment> reviewComments = reviewCommentsByFailure.get(checkResult);
     assertThat(reviewComments).hasSize(1);
     assertThat(reviewComments.getFirst().getPath()).isEqualTo("src/file1.java");
     assertThat(reviewComments.getFirst().getLine()).isEqualTo(10);
@@ -225,11 +233,13 @@ class GithubReviewCommentServiceTest {
     Map<String, Set<Integer>> modifiedLines = Map.of("file1.py", Set.of(11, 12, 13));
 
     // Act - should adjust line number from 10 to 11 for comment-related check
-    List<GithubClient.ReviewComment> reviewComments =
-        service.generateReviewComments(
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure =
+        service.generateReviewCommentsByFailure(
             List.of(checkResult), List.of(diff), modifiedLines, "repoName", "");
 
     // Assert
+    assertThat(reviewCommentsByFailure).containsOnlyKeys(checkResult);
+    List<GithubClient.ReviewComment> reviewComments = reviewCommentsByFailure.get(checkResult);
     assertThat(reviewComments).hasSize(1);
     assertThat(reviewComments.getFirst().getPath()).isEqualTo("file1.py");
     assertThat(reviewComments.getFirst().getLine()).isEqualTo(11); // Adjusted from 10 to 11
@@ -263,16 +273,24 @@ class GithubReviewCommentServiceTest {
     CliCheckResult checkResult2 = createCliCheckResult(false, "Check2", fieldFailures2);
 
     // Act
-    List<GithubClient.ReviewComment> reviewComments =
-        service.generateReviewComments(
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure =
+        service.generateReviewCommentsByFailure(
             List.of(checkResult1, checkResult2), List.of(diff), new HashMap<>(), "repoName", "");
 
-    // Assert
-    assertThat(reviewComments).hasSize(2);
-    assertThat(reviewComments.get(0).getBody()).contains("I18N_Check1");
-    assertThat(reviewComments.get(0).getBody()).contains("Error");
-    assertThat(reviewComments.get(1).getBody()).contains("I18N_Check2");
-    assertThat(reviewComments.get(1).getBody()).contains("Warning");
+    // Assert - each failure is mapped to the comments that represent it
+    assertThat(reviewCommentsByFailure).containsOnlyKeys(checkResult1, checkResult2);
+
+    List<GithubClient.ReviewComment> check1Comments = reviewCommentsByFailure.get(checkResult1);
+    assertThat(check1Comments).hasSize(1);
+    assertThat(check1Comments.getFirst().getPath()).isEqualTo("file1.java");
+    assertThat(check1Comments.getFirst().getBody()).contains("I18N_Check1");
+    assertThat(check1Comments.getFirst().getBody()).contains("Error");
+
+    List<GithubClient.ReviewComment> check2Comments = reviewCommentsByFailure.get(checkResult2);
+    assertThat(check2Comments).hasSize(1);
+    assertThat(check2Comments.getFirst().getPath()).isEqualTo("file2.java");
+    assertThat(check2Comments.getFirst().getBody()).contains("I18N_Check2");
+    assertThat(check2Comments.getFirst().getBody()).contains("Warning");
   }
 
   @Test
@@ -295,12 +313,13 @@ class GithubReviewCommentServiceTest {
     CliCheckResult checkResult = createCliCheckResult(true, "TestCheck", fieldFailures);
 
     // Act
-    List<GithubClient.ReviewComment> reviewComments =
-        service.generateReviewComments(
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure =
+        service.generateReviewCommentsByFailure(
             List.of(checkResult), List.of(diff), new HashMap<>(), "repoName", "");
 
-    // Assert - invalid usages should be filtered out
-    assertThat(reviewComments).isEmpty();
+    // Assert - invalid usages should be filtered out, leaving the failure without any comment
+    assertThat(reviewCommentsByFailure).containsOnlyKeys(checkResult);
+    assertThat(reviewCommentsByFailure.get(checkResult)).isEmpty();
   }
 
   /**
@@ -339,11 +358,13 @@ class GithubReviewCommentServiceTest {
     githubModifiedLines.put(fileUri, Set.of(8, 9, 10, 11, 12));
 
     // Act
-    List<GithubClient.ReviewComment> reviewComments =
-        service.generateReviewComments(
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure =
+        service.generateReviewCommentsByFailure(
             List.of(checkResult), List.of(diff), githubModifiedLines, "test-repo", "");
 
     // Assert - should return original line number, not estimated one
+    assertThat(reviewCommentsByFailure).containsOnlyKeys(checkResult);
+    List<GithubClient.ReviewComment> reviewComments = reviewCommentsByFailure.get(checkResult);
     assertThat(reviewComments).hasSize(1);
     assertThat(reviewComments.getFirst().getLine()).isEqualTo(originalLineNumber);
     assertThat(reviewComments.getFirst().getPath()).isEqualTo(fileUri);
@@ -377,11 +398,13 @@ class GithubReviewCommentServiceTest {
     githubModifiedLines.put(fileUri, Set.of(1, 2, 3, 4, 5)); // Line 25 is NOT modified
 
     // Act
-    List<GithubClient.ReviewComment> reviewComments =
-        service.generateReviewComments(
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure =
+        service.generateReviewCommentsByFailure(
             List.of(checkResult), List.of(diff), githubModifiedLines, "test-repo", "");
 
     // Assert - should return original line number (25), not attempt estimation
+    assertThat(reviewCommentsByFailure).containsOnlyKeys(checkResult);
+    List<GithubClient.ReviewComment> reviewComments = reviewCommentsByFailure.get(checkResult);
     assertThat(reviewComments).hasSize(1);
     assertThat(reviewComments.getFirst().getLine()).isEqualTo(originalLineNumber);
   }
@@ -416,11 +439,13 @@ class GithubReviewCommentServiceTest {
     githubModifiedLines.put(fileUri, Set.of(8, 9, 10, 21, 22, 30));
 
     // Act
-    List<GithubClient.ReviewComment> reviewComments =
-        service.generateReviewComments(
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure =
+        service.generateReviewCommentsByFailure(
             List.of(checkResult), List.of(diff), githubModifiedLines, "test-repo", "");
 
     // Assert - should estimate and use line 21 instead of original 20
+    assertThat(reviewCommentsByFailure).containsOnlyKeys(checkResult);
+    List<GithubClient.ReviewComment> reviewComments = reviewCommentsByFailure.get(checkResult);
     assertThat(reviewComments).hasSize(1);
     assertThat(reviewComments.getFirst().getLine()).isEqualTo(21);
   }
@@ -455,11 +480,13 @@ class GithubReviewCommentServiceTest {
     githubModifiedLines.put(fileUri, Set.of(1, 2, 3, 100));
 
     // Act
-    List<GithubClient.ReviewComment> reviewComments =
-        service.generateReviewComments(
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure =
+        service.generateReviewCommentsByFailure(
             List.of(checkResult), List.of(diff), githubModifiedLines, "test-repo", "");
 
     // Assert - should return original line when estimation fails
+    assertThat(reviewCommentsByFailure).containsOnlyKeys(checkResult);
+    List<GithubClient.ReviewComment> reviewComments = reviewCommentsByFailure.get(checkResult);
     assertThat(reviewComments).hasSize(1);
     assertThat(reviewComments.getFirst().getLine()).isEqualTo(originalLineNumber);
   }
@@ -494,11 +521,13 @@ class GithubReviewCommentServiceTest {
     githubModifiedLines.put(fileUri, Set.of(1, 2, 3, 100)); // Line 50 is NOT modified
 
     // Act
-    List<GithubClient.ReviewComment> reviewComments =
-        service.generateReviewComments(
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure =
+        service.generateReviewCommentsByFailure(
             List.of(checkResult), List.of(diff), githubModifiedLines, "test-repo", "");
 
     // Assert - should return original line, not attempt estimation for .java files
+    assertThat(reviewCommentsByFailure).containsOnlyKeys(checkResult);
+    List<GithubClient.ReviewComment> reviewComments = reviewCommentsByFailure.get(checkResult);
     assertThat(reviewComments).hasSize(1);
     assertThat(reviewComments.getFirst().getLine()).isEqualTo(originalLineNumber);
   }
@@ -532,12 +561,84 @@ class GithubReviewCommentServiceTest {
     githubModifiedLines.put(fileUri, Set.of(14, 15, 16)); // Line 15 IS modified
 
     // Act
-    List<GithubClient.ReviewComment> reviewComments =
-        service.generateReviewComments(
+    Map<CliCheckResult, List<GithubClient.ReviewComment>> reviewCommentsByFailure =
+        service.generateReviewCommentsByFailure(
             List.of(checkResult), List.of(diff), githubModifiedLines, "test-repo", "");
 
     // Assert - should use original line since it's already in modified lines
+    assertThat(reviewCommentsByFailure).containsOnlyKeys(checkResult);
+    List<GithubClient.ReviewComment> reviewComments = reviewCommentsByFailure.get(checkResult);
     assertThat(reviewComments).hasSize(1);
     assertThat(reviewComments.getFirst().getLine()).isEqualTo(originalLineNumber);
+  }
+
+  @Test
+  void generateReviewComments_countsCommentsNotOnModifiedLine() {
+    // Arrange
+    SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+    GithubReviewCommentService service =
+        new GithubReviewCommentService(new String[] {}, 1, meterRegistry);
+
+    AssetExtractorTextUnit textUnit =
+        createAssetExtractorTextUnit("source1", Set.of("file1.java:10", "file1.java:20"));
+
+    AssetExtractionDiff diff = new AssetExtractionDiff();
+    diff.setAddedTextunits(List.of(textUnit));
+
+    Map<String, CliCheckResult.CheckFailure> fieldFailures =
+        Map.of(
+            "source1",
+            new CliCheckResult.CheckFailure(CheckerRuleId.EMPTY_COMMENT_STRING, "Failure message"));
+
+    CliCheckResult checkResult = createCliCheckResult(true, "TestCheck", fieldFailures);
+
+    Map<String, Set<Integer>> githubModifiedLines = new HashMap<>();
+    githubModifiedLines.put("file1.java", Set.of(10));
+
+    // Act
+    service.generateReviewCommentsByFailure(
+        List.of(checkResult), List.of(diff), githubModifiedLines, "test-repo", "");
+
+    // Assert - only the comment on line 20 will be dropped by GitHub
+    assertThat(
+            meterRegistry
+                .find("GithubReviewCommentService.CommentsNotOnModifiedLine")
+                .tag("repository", "test-repo")
+                .counter()
+                .count())
+        .isEqualTo(1.0);
+  }
+
+  @Test
+  void generateReviewComments_countsNothingWhenAllCommentsOnModifiedLines() {
+    // Arrange
+    SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+    GithubReviewCommentService service =
+        new GithubReviewCommentService(new String[] {}, 1, meterRegistry);
+
+    AssetExtractorTextUnit textUnit =
+        createAssetExtractorTextUnit("source1", Set.of("file1.java:10", "file2.java:20"));
+
+    AssetExtractionDiff diff = new AssetExtractionDiff();
+    diff.setAddedTextunits(List.of(textUnit));
+
+    Map<String, CliCheckResult.CheckFailure> fieldFailures =
+        Map.of(
+            "source1",
+            new CliCheckResult.CheckFailure(CheckerRuleId.EMPTY_COMMENT_STRING, "Failure message"));
+
+    CliCheckResult checkResult = createCliCheckResult(true, "TestCheck", fieldFailures);
+
+    Map<String, Set<Integer>> githubModifiedLines = new HashMap<>();
+    githubModifiedLines.put("file1.java", Set.of(10));
+    githubModifiedLines.put("file2.java", Set.of(20));
+
+    // Act
+    service.generateReviewCommentsByFailure(
+        List.of(checkResult), List.of(diff), githubModifiedLines, "test-repo", "");
+
+    // Assert
+    assertThat(meterRegistry.find("GithubReviewCommentService.CommentsNotOnModifiedLine").counter())
+        .isNull();
   }
 }

@@ -1,18 +1,26 @@
 package com.box.l10n.mojito.github;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -22,7 +30,9 @@ import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assume;
 import org.junit.Before;
@@ -45,22 +55,33 @@ import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.PagedIterable;
 import org.kohsuke.github.PagedIterator;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.stubbing.OngoingStubbing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 import reactor.core.publisher.Mono;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {GithubClientTest.class, GithubClientTest.TestConfig.class})
 @EnableConfigurationProperties
 public class GithubClientTest {
+
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Autowired(required = false)
   GithubClient githubClient;
@@ -91,11 +112,14 @@ public class GithubClientTest {
 
   @Mock Counter counterMock;
 
+  @Mock RestTemplate restTemplateMock;
+
   @Before
   public void setup() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
     Assume.assumeNotNull(githubClient);
     githubClient.gitHubClient = gitHubMock;
     githubClient.githubAppInstallationToken = ghAppInstallationTokenMock;
+    githubClient.restTemplate = restTemplateMock;
     githubClient.maxRetries = 3;
     githubClient.retryMinBackoff = Duration.ofMillis(1);
     githubClient.retryMaxBackoff = Duration.ofMillis(10);
@@ -113,6 +137,11 @@ public class GithubClientTest {
         ghCommitMock,
         ghCommitPointerMock,
         ghUserMock);
+    // Keep the installation token valid so that it is never refreshed, which would reach out to
+    // Github
+    when(ghAppInstallationTokenMock.getExpiresAt())
+        .thenReturn(new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1)));
+    when(ghAppInstallationTokenMock.getToken()).thenReturn("installationToken");
     when(gitHubMock.isCredentialValid()).thenReturn(true);
     when(gitHubMock.getRepository(isA(String.class))).thenReturn(ghRepoMock);
     when(ghRepoMock.getPullRequest(isA(Integer.class))).thenReturn(ghPullRequestMock);
@@ -590,6 +619,369 @@ public class GithubClientTest {
             "commitSha");
 
     assertTrue(postedComments.isEmpty());
+  }
+
+  @Test
+  public void testAreReviewCommentsResolvedWithNullComments() {
+    assertFalse(githubClient.areReviewCommentsResolved("testRepo", 1, null));
+
+    verifyNoInteractions(restTemplateMock);
+  }
+
+  @Test
+  public void testAreReviewCommentsResolvedWithEmptyComments() {
+    assertFalse(githubClient.areReviewCommentsResolved("testRepo", 1, List.of()));
+
+    verifyNoInteractions(restTemplateMock);
+  }
+
+  @Test
+  public void testAreReviewCommentsResolvedWhenAllCommentsAreOnResolvedThreads() {
+    stubReviewThreadsQuery(
+        reviewThreadsResponse(
+            resolvedReviewThread("Comment 1", "src/main/strings.xml", 10, 10),
+            resolvedReviewThread("Comment 2", "src/main/other.xml", 20, 20)));
+
+    assertTrue(
+        githubClient.areReviewCommentsResolved(
+            "testRepo",
+            1,
+            List.of(
+                new GithubClient.ReviewComment("Comment 1", "src/main/strings.xml", 10),
+                new GithubClient.ReviewComment("Comment 2", "src/main/other.xml", 20))));
+  }
+
+  @Test
+  public void testAreReviewCommentsResolvedWhenOneCommentIsOnAnUnresolvedThread() {
+    stubReviewThreadsQuery(
+        reviewThreadsResponse(
+            resolvedReviewThread("Comment 1", "src/main/strings.xml", 10, 10),
+            unresolvedReviewThread("Comment 2", "src/main/other.xml", 20, 20)));
+
+    assertFalse(
+        githubClient.areReviewCommentsResolved(
+            "testRepo",
+            1,
+            List.of(
+                new GithubClient.ReviewComment("Comment 1", "src/main/strings.xml", 10),
+                new GithubClient.ReviewComment("Comment 2", "src/main/other.xml", 20))));
+  }
+
+  @Test
+  public void testAreReviewCommentsResolvedWhenCommentIsNotOnThePullRequest() {
+    stubReviewThreadsQuery(reviewThreadsResponse());
+
+    assertFalse(
+        githubClient.areReviewCommentsResolved(
+            "testRepo",
+            1,
+            List.of(
+                new GithubClient.ReviewComment("Placeholder issue", "src/main/strings.xml", 42))));
+  }
+
+  @Test
+  public void testAreReviewCommentsResolvedWhenResolvedCommentIsOnAnotherLineOrFile() {
+    stubReviewThreadsQuery(
+        reviewThreadsResponse(
+            resolvedReviewThread("Placeholder issue", "src/main/strings.xml", 41, 41),
+            resolvedReviewThread("Placeholder issue", "src/main/other.xml", 42, 42)));
+
+    assertFalse(
+        githubClient.areReviewCommentsResolved(
+            "testRepo",
+            1,
+            List.of(
+                new GithubClient.ReviewComment("Placeholder issue", "src/main/strings.xml", 42))));
+  }
+
+  @Test
+  public void testAreReviewCommentsResolvedWhenResolvedCommentHasAnotherBody() {
+    stubReviewThreadsQuery(
+        reviewThreadsResponse(
+            resolvedReviewThread("Another issue", "src/main/strings.xml", 42, 42)));
+
+    assertFalse(
+        githubClient.areReviewCommentsResolved(
+            "testRepo",
+            1,
+            List.of(
+                new GithubClient.ReviewComment("Placeholder issue", "src/main/strings.xml", 42))));
+  }
+
+  @Test
+  public void testAreReviewCommentsResolvedMatchesOutdatedResolvedComment() {
+    // An outdated comment has no current line, only the original one it was posted on
+    stubReviewThreadsQuery(
+        reviewThreadsResponse(
+            resolvedReviewThread("Placeholder issue", "src/main/strings.xml", 0, 42)));
+
+    assertTrue(
+        githubClient.areReviewCommentsResolved(
+            "testRepo",
+            1,
+            List.of(
+                new GithubClient.ReviewComment("Placeholder issue", "src/main/strings.xml", 42))));
+  }
+
+  @Test
+  public void testAreReviewCommentsResolvedIgnoresLineEndingsAndSurroundingWhitespaceInTheBody() {
+    stubReviewThreadsQuery(
+        reviewThreadsResponse(
+            resolvedReviewThread(
+                "Placeholder issue:\r\nmissing placeholder\n", "src/main/strings.xml", 42, 42)));
+
+    assertTrue(
+        githubClient.areReviewCommentsResolved(
+            "testRepo",
+            1,
+            List.of(
+                new GithubClient.ReviewComment(
+                    "Placeholder issue:\nmissing placeholder", "src/main/strings.xml", 42))));
+  }
+
+  @Test
+  public void testAreReviewCommentsResolvedPaginatesTheReviewThreads() {
+    stubReviewThreadsQuery(
+        reviewThreadsResponse(
+            "cursor1", resolvedReviewThread("Comment 1", "src/main/strings.xml", 10, 10)),
+        reviewThreadsResponse(resolvedReviewThread("Comment 2", "src/main/other.xml", 20, 20)));
+
+    assertTrue(
+        githubClient.areReviewCommentsResolved(
+            "testRepo",
+            1,
+            List.of(
+                new GithubClient.ReviewComment("Comment 1", "src/main/strings.xml", 10),
+                new GithubClient.ReviewComment("Comment 2", "src/main/other.xml", 20))));
+
+    List<HttpEntity> requests = captureReviewThreadsRequests(2);
+    assertNull(getQueryVariables(requests.get(0)).get("after"));
+    assertEquals("cursor1", getQueryVariables(requests.get(1)).get("after"));
+  }
+
+  @Test
+  public void testAreReviewCommentsResolvedStopsPaginatingWhenTheCursorIsMissing() {
+    stubReviewThreadsQuery(
+        reviewThreadsResponse(
+            "", resolvedReviewThread("Comment 1", "src/main/strings.xml", 10, 10)));
+
+    assertFalse(
+        githubClient.areReviewCommentsResolved(
+            "testRepo",
+            1,
+            List.of(new GithubClient.ReviewComment("Comment 2", "src/main/other.xml", 20))));
+
+    captureReviewThreadsRequests(1);
+  }
+
+  @Test
+  public void testAreReviewCommentsResolvedStopsPaginatingAfterTheMaximumNumberOfPages() {
+    // Every page announces a next one, the client must not follow them indefinitely
+    stubReviewThreadsQuery(
+        reviewThreadsResponse(
+            "cursor", resolvedReviewThread("Comment 1", "src/main/strings.xml", 10, 10)));
+
+    assertFalse(
+        githubClient.areReviewCommentsResolved(
+            "testRepo",
+            1,
+            List.of(new GithubClient.ReviewComment("Comment 2", "src/main/other.xml", 20))));
+
+    captureReviewThreadsRequests(20);
+  }
+
+  @Test
+  public void testAreReviewCommentsResolvedWithRetry() {
+    whenReviewThreadsQueried()
+        .thenThrow(new RestClientException("network issue"))
+        .thenReturn(
+            ResponseEntity.ok(
+                reviewThreadsResponse(
+                    resolvedReviewThread("Placeholder issue", "src/main/strings.xml", 42, 42))));
+
+    assertTrue(
+        githubClient.areReviewCommentsResolved(
+            "testRepo",
+            1,
+            List.of(
+                new GithubClient.ReviewComment("Placeholder issue", "src/main/strings.xml", 42))));
+
+    captureReviewThreadsRequests(2);
+  }
+
+  @Test
+  public void testAreReviewCommentsResolved_ThrowsExceptionWhenRetriesExhausted() {
+    whenReviewThreadsQueried().thenThrow(new RestClientException("network issue"));
+
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            githubClient.areReviewCommentsResolved(
+                "testRepo",
+                1,
+                List.of(
+                    new GithubClient.ReviewComment(
+                        "Placeholder issue", "src/main/strings.xml", 42))));
+
+    // One initial attempt plus maxRetries
+    captureReviewThreadsRequests(4);
+    verify(meterRegistryMock, times(1))
+        .counter(
+            "Mojito.GitHubClient.RetriesExhausted",
+            "repository",
+            "testRepo",
+            "operation",
+            "areReviewCommentsResolved");
+    verify(counterMock, times(1)).increment();
+  }
+
+  @Test
+  public void testAreReviewCommentsResolved_ThrowsExceptionWhenTheApiReturnsErrors()
+      throws IOException {
+    JsonNode errorResponse =
+        objectMapper.readTree(
+            """
+            {"errors": [{"message": "Could not resolve to a Repository"}]}
+            """);
+    stubReviewThreadsQuery(errorResponse);
+
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            githubClient.areReviewCommentsResolved(
+                "testRepo",
+                1,
+                List.of(
+                    new GithubClient.ReviewComment(
+                        "Placeholder issue", "src/main/strings.xml", 42))));
+  }
+
+  @Test
+  public void testAreReviewCommentsResolved_ThrowsExceptionWhenTheResponseIsEmpty() {
+    whenReviewThreadsQueried().thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            githubClient.areReviewCommentsResolved(
+                "testRepo",
+                1,
+                List.of(
+                    new GithubClient.ReviewComment(
+                        "Placeholder issue", "src/main/strings.xml", 42))));
+  }
+
+  @Test
+  public void testAreReviewCommentsResolvedCallsTheGraphqlEndpointWithTheInstallationToken() {
+    stubReviewThreadsQuery(reviewThreadsResponse());
+
+    githubClient.areReviewCommentsResolved(
+        "testRepo",
+        1,
+        List.of(new GithubClient.ReviewComment("Placeholder issue", "src/main/strings.xml", 42)));
+
+    ArgumentCaptor<HttpEntity> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+    verify(restTemplateMock, times(1))
+        .exchange(
+            eq("https://api.github.com/graphql"),
+            eq(HttpMethod.POST),
+            requestCaptor.capture(),
+            eq(JsonNode.class));
+
+    HttpEntity<?> request = requestCaptor.getValue();
+    assertEquals(
+        List.of("Bearer installationToken"), request.getHeaders().get(HttpHeaders.AUTHORIZATION));
+    Map<String, Object> variables = getQueryVariables(request);
+    assertEquals("testOwner", variables.get("owner"));
+    assertEquals("testRepo", variables.get("name"));
+    assertEquals(1, variables.get("number"));
+  }
+
+  private OngoingStubbing<ResponseEntity<JsonNode>> whenReviewThreadsQueried() {
+    return when(
+        restTemplateMock.exchange(
+            anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(JsonNode.class)));
+  }
+
+  /** Stubs the GraphQL calls, one response per page of review threads */
+  private void stubReviewThreadsQuery(JsonNode... responses) {
+    OngoingStubbing<ResponseEntity<JsonNode>> stubbing = whenReviewThreadsQueried();
+    for (JsonNode response : responses) {
+      stubbing = stubbing.thenReturn(ResponseEntity.ok(response));
+    }
+  }
+
+  private List<HttpEntity> captureReviewThreadsRequests(int expectedCallCount) {
+    ArgumentCaptor<HttpEntity> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+    verify(restTemplateMock, times(expectedCallCount))
+        .exchange(anyString(), eq(HttpMethod.POST), requestCaptor.capture(), eq(JsonNode.class));
+    return requestCaptor.getAllValues();
+  }
+
+  private Map<String, Object> getQueryVariables(HttpEntity<?> request) {
+    return (Map<String, Object>) ((Map<String, Object>) request.getBody()).get("variables");
+  }
+
+  /** Builds a GraphQL response holding the given review threads, with no further page */
+  private JsonNode reviewThreadsResponse(ObjectNode... reviewThreads) {
+    return reviewThreadsResponse(null, reviewThreads);
+  }
+
+  /**
+   * Builds a GraphQL response holding the given review threads, announcing a next page when a
+   * cursor is provided
+   */
+  private JsonNode reviewThreadsResponse(String endCursor, ObjectNode... reviewThreads) {
+    ObjectNode pageInfo = objectMapper.createObjectNode();
+    pageInfo.put("hasNextPage", endCursor != null);
+    pageInfo.put("endCursor", endCursor);
+
+    ObjectNode reviewThreadsNode = objectMapper.createObjectNode();
+    reviewThreadsNode.set("pageInfo", pageInfo);
+    reviewThreadsNode.set(
+        "nodes", objectMapper.createArrayNode().addAll(Arrays.asList(reviewThreads)));
+
+    ObjectNode response = objectMapper.createObjectNode();
+    response
+        .putObject("data")
+        .putObject("repository")
+        .putObject("pullRequest")
+        .set("reviewThreads", reviewThreadsNode);
+    return response;
+  }
+
+  private ObjectNode resolvedReviewThread(String body, String path, int line, int originalLine) {
+    return reviewThread(true, body, path, line, originalLine);
+  }
+
+  private ObjectNode unresolvedReviewThread(String body, String path, int line, int originalLine) {
+    return reviewThread(false, body, path, line, originalLine);
+  }
+
+  /**
+   * Builds a review thread node holding a single comment. A line that is not strictly positive
+   * stands for the null Github returns when the comment is outdated.
+   */
+  private ObjectNode reviewThread(
+      boolean isResolved, String body, String path, int line, int originalLine) {
+    ObjectNode comment = objectMapper.createObjectNode();
+    comment.put("path", path);
+    comment.put("body", body);
+    if (line > 0) {
+      comment.put("line", line);
+    } else {
+      comment.putNull("line");
+    }
+    if (originalLine > 0) {
+      comment.put("originalLine", originalLine);
+    } else {
+      comment.putNull("originalLine");
+    }
+
+    ObjectNode reviewThread = objectMapper.createObjectNode();
+    reviewThread.put("isResolved", isResolved);
+    reviewThread.putObject("comments").set("nodes", objectMapper.createArrayNode().add(comment));
+    return reviewThread;
   }
 
   private void stubExistingReviewComments(List<GHPullRequestReviewComment> existingComments)

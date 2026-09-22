@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.github;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -34,6 +35,12 @@ import org.kohsuke.github.GitHubBuilder;
 import org.kohsuke.github.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
@@ -49,6 +56,30 @@ public class GithubClient {
 
   private static final long EXPIRY_REFRESH_THRESHOLD_MS = TimeUnit.SECONDS.toMillis(30);
 
+  /** Safety net to never loop indefinitely when paginating the review threads of a pull request */
+  private static final int MAX_REVIEW_THREAD_PAGES = 20;
+
+  /**
+   * Fetches the review threads of a pull request with their resolution state. The resolution state
+   * is not available through the REST API.
+   */
+  private static final String REVIEW_THREADS_QUERY =
+      """
+      query($owner:String!, $name:String!, $number:Int!, $after:String) {
+        repository(owner:$owner, name:$name) {
+          pullRequest(number:$number) {
+            reviewThreads(first:100, after:$after) {
+              pageInfo { hasNextPage endCursor }
+              nodes {
+                isResolved
+                comments(first:100) { nodes { path line originalLine body } }
+              }
+            }
+          }
+        }
+      }
+      """;
+
   private static Logger logger = LoggerFactory.getLogger(GithubClient.class);
 
   private final String appId;
@@ -62,6 +93,7 @@ public class GithubClient {
 
   protected GHAppInstallationToken githubAppInstallationToken;
   protected GitHub gitHubClient;
+  protected RestTemplate restTemplate = new RestTemplate();
   protected int maxRetries;
   protected Duration retryMinBackoff;
   protected Duration retryMaxBackoff;
@@ -650,6 +682,221 @@ public class GithubClient {
     }
 
     return commentsToPost;
+  }
+
+  /**
+   * The GraphQL API is served from a different path than the REST API: {@code
+   * https://api.github.com/graphql} for github.com, {@code https://HOST/api/graphql} for Github
+   * Enterprise, whose REST endpoint is {@code https://HOST/api/v3}.
+   */
+  String getGraphqlEndpoint() {
+    if (endpoint.endsWith("/api/v3")) {
+      return endpoint.substring(0, endpoint.length() - "/v3".length()) + "/graphql";
+    }
+    return endpoint + "/graphql";
+  }
+
+  /** Runs the review threads GraphQL query and returns the {@code reviewThreads} node */
+  private JsonNode executeReviewThreadsQuery(
+      String repository, String repoFullPath, int prNumber, String cursor) {
+    Map<String, Object> variables = new HashMap<>();
+    variables.put("owner", owner);
+    variables.put("name", repository);
+    variables.put("number", prNumber);
+    variables.put("after", cursor);
+
+    Map<String, Object> body = new HashMap<>();
+    body.put("query", REVIEW_THREADS_QUERY);
+    body.put("variables", variables);
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+    try {
+      headers.setBearerAuth(getGithubAppInstallationToken(repository).getToken());
+    } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+      throw new GithubException(
+          String.format(
+              "Error authenticating to the Github GraphQL API for repository '%s': %s",
+              repoFullPath, e.getMessage()),
+          e);
+    }
+
+    JsonNode response;
+    try {
+      response =
+          restTemplate
+              .exchange(
+                  getGraphqlEndpoint(),
+                  HttpMethod.POST,
+                  new HttpEntity<>(body, headers),
+                  JsonNode.class)
+              .getBody();
+    } catch (RestClientException e) {
+      throw new GithubException(
+          String.format(
+              "Error calling the Github GraphQL API for PR %d in repository '%s': %s",
+              prNumber, repoFullPath, e.getMessage()),
+          e);
+    }
+
+    if (response == null) {
+      throw new GithubException(
+          String.format(
+              "Empty response from the Github GraphQL API for PR %d in repository '%s'",
+              prNumber, repoFullPath));
+    }
+
+    JsonNode errors = response.path("errors");
+    if (errors.isArray() && !errors.isEmpty()) {
+      throw new GithubException(
+          String.format(
+              "Error returned by the Github GraphQL API for PR %d in repository '%s': %s",
+              prNumber, repoFullPath, errors));
+    }
+
+    return response.path("data").path("repository").path("pullRequest").path("reviewThreads");
+  }
+
+  /**
+   * Fetches the comments of the resolved review threads of a pull request through the GraphQL API.
+   *
+   * <p>Each comment is registered under both its current and its original line: when a thread
+   * becomes outdated Github stops reporting a current line, in which case the original line is the
+   * only reference available.
+   */
+  private Set<ReviewCommentKey> getResolvedReviewCommentKeys(
+      String repository, String repoFullPath, int prNumber) {
+    return Mono.fromCallable(
+            () -> {
+              Set<ReviewCommentKey> resolvedCommentKeys = new HashSet<>();
+              String cursor = null;
+
+              for (int page = 0; page < MAX_REVIEW_THREAD_PAGES; page++) {
+                JsonNode reviewThreads =
+                    executeReviewThreadsQuery(repository, repoFullPath, prNumber, cursor);
+
+                for (JsonNode thread : reviewThreads.path("nodes")) {
+                  if (!thread.path("isResolved").asBoolean(false)) {
+                    continue;
+                  }
+                  for (JsonNode comment : thread.path("comments").path("nodes")) {
+                    String path = comment.path("path").asText(null);
+                    String body = comment.path("body").asText(null);
+                    int line = comment.path("line").asInt(0);
+                    int originalLine = comment.path("originalLine").asInt(0);
+                    if (line > 0) {
+                      resolvedCommentKeys.add(new ReviewCommentKey(path, line, body));
+                    }
+                    if (originalLine > 0) {
+                      resolvedCommentKeys.add(new ReviewCommentKey(path, originalLine, body));
+                    }
+                  }
+                }
+
+                JsonNode pageInfo = reviewThreads.path("pageInfo");
+                if (!pageInfo.path("hasNextPage").asBoolean(false)) {
+                  return resolvedCommentKeys;
+                }
+                cursor = pageInfo.path("endCursor").asText(null);
+                if (cursor == null || cursor.isEmpty()) {
+                  return resolvedCommentKeys;
+                }
+              }
+
+              logger.warn(
+                  "Stopped reading the review threads of PR {} in repository '{}' after {} pages,"
+                      + " some resolved threads may have been ignored",
+                  prNumber,
+                  repoFullPath,
+                  MAX_REVIEW_THREAD_PAGES);
+
+              return resolvedCommentKeys;
+            })
+        .retryWhen(
+            Retry.backoff(maxRetries, (retryMinBackoff))
+                .maxBackoff(retryMaxBackoff)
+                .filter(e -> e instanceof IOException || e instanceof GithubException))
+        .doOnError(
+            e -> {
+              sendRetryExceededMetric(repository, "areReviewCommentsResolved");
+              logger.error(
+                  String.format(
+                      "Error retrieving the resolved review threads of PR %d in repository '%s': %s",
+                      prNumber, repoFullPath, e.getMessage()),
+                  e);
+            })
+        .block();
+  }
+
+  /**
+   * Indicates whether every one of the given review comments matches a comment of a review thread
+   * that is already resolved on the pull request.
+   *
+   * <p>The resolution state of a review thread is only available through the GraphQL API: the REST
+   * API, and hence the Github client library, does not expose it.
+   *
+   * <p>As for the duplicate detection, a comment is matched on its file, line and body, and both
+   * the current and the original line of the existing comments are considered so that a comment
+   * whose thread became outdated is still matched.
+   *
+   * @param repository The repository name
+   * @param prNumber The pull request number
+   * @param reviewComments The review comments to look for, typically the comments that represent
+   *     the current findings
+   * @return true if all the given review comments are on a resolved review thread, false if any of
+   *     them is on an unresolved thread or is not present on the pull request at all. False as well
+   *     when no comment is provided, as there is nothing that could have been resolved.
+   */
+  public boolean areReviewCommentsResolved(
+      String repository, int prNumber, List<ReviewComment> reviewComments) {
+    String repoFullPath = getRepositoryPath(repository);
+
+    if (reviewComments == null || reviewComments.isEmpty()) {
+      logger.debug(
+          "No review comments to check for resolution on PR {} in repository '{}'",
+          prNumber,
+          repoFullPath);
+      return false;
+    }
+
+    Set<ReviewCommentKey> resolvedCommentKeys =
+        getResolvedReviewCommentKeys(repository, repoFullPath, prNumber);
+
+    List<ReviewComment> unresolvedComments =
+        reviewComments.stream()
+            .filter(
+                comment ->
+                    !resolvedCommentKeys.contains(
+                        new ReviewCommentKey(
+                            comment.getPath(), comment.getLine(), comment.getBody())))
+            .toList();
+
+    if (!unresolvedComments.isEmpty()) {
+      logger.info(
+          "{} of {} review comments are not on a resolved review thread of PR {} in repository"
+              + " '{}'",
+          unresolvedComments.size(),
+          reviewComments.size(),
+          prNumber,
+          repoFullPath);
+      unresolvedComments.forEach(
+          comment ->
+              logger.debug(
+                  "Review comment for {}:{} in repository '{}' is not resolved",
+                  comment.getPath(),
+                  comment.getLine(),
+                  repository));
+      return false;
+    }
+
+    logger.info(
+        "All {} review comments are on a resolved review thread of PR {} in repository '{}'",
+        reviewComments.size(),
+        prNumber,
+        repoFullPath);
+
+    return true;
   }
 
   /**
