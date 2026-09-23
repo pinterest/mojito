@@ -711,7 +711,7 @@ public class GithubClient {
 
                 for (ReviewComment comment : commentsToPost) {
                   reviewBuilder.singleLineComment(
-                      comment.getBody(), comment.getPath(), comment.getLine());
+                      comment.getBody(), comment.getPath(), 300);
                 }
 
                 reviewBuilder.create();
