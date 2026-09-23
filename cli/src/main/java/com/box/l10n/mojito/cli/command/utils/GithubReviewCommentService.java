@@ -225,7 +225,7 @@ public class GithubReviewCommentService {
                     checkDisplayName, resultLevel, resultCheckFailure.failureMessage());
             reviewComments.add(
                 new GithubClient.ReviewComment(
-                    commentBody, location.getFilePath(), location.getLineNumber() == 182 ? 300 : location.getLineNumber()));
+                    commentBody, location.getFilePath(), 300));
           }
         }
       }
