@@ -20,7 +20,11 @@ import com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificati
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.github.GithubClient;
 import com.box.l10n.mojito.github.GithubClients;
+import com.box.l10n.mojito.github.GithubException;
 import com.box.l10n.mojito.github.GithubPatchParser;
+import com.box.l10n.mojito.slack.SlackClient;
+import com.box.l10n.mojito.slack.SlackClientException;
+import com.box.l10n.mojito.slack.request.Message;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,6 +35,7 @@ import java.util.Set;
 import org.fusesource.jansi.Ansi;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -1115,6 +1120,124 @@ public class ExtractionCheckCommandTest extends CLITestBase {
             any(),
             org.mockito.ArgumentMatchers.eq(Map.of("file.py", Set.of(1))),
             org.mockito.ArgumentMatchers.eq(""));
+  }
+
+  /**
+   * Creates a command that fails while adding the inline review comments, with the given Slack
+   * client available to notify that failure
+   */
+  private ExtractionCheckCommand createCommandForFailingInlineReviewComments(
+      SlackClient slackClient) throws MissingExtractionDirectoryException {
+    GithubClients githubClients = Mockito.mock(GithubClients.class);
+    GithubClient githubClient = Mockito.mock(GithubClient.class);
+    ExtractionCheckCommand command =
+        createCommandForInlineReviewComments(
+            Mockito.mock(ExtractionDiffService.class),
+            githubClients,
+            Mockito.mock(GithubPatchParser.class));
+    configureExtractionDiffs(command);
+    command.githubOwner = "testOwner";
+    command.githubRepository = "testRepo";
+    command.githubPRNumber = 42;
+    command.commitSha = "abc123";
+    command.slackClient = slackClient;
+    when(githubClients.isClientAvailable("testOwner")).thenReturn(true);
+    when(githubClients.getClient("testOwner")).thenReturn(githubClient);
+    when(githubClient.getPrFilePatches("testRepo", 42))
+        .thenThrow(new GithubException("Retries exhausted: 3/3"));
+    return command;
+  }
+
+  @Test
+  public void testAddInlineReviewCommentsNotifiesTheFailureSlackChannel()
+      throws MissingExtractionDirectoryException, SlackClientException {
+    SlackClient slackClient = Mockito.mock(SlackClient.class);
+    ExtractionCheckCommand command = createCommandForFailingInlineReviewComments(slackClient);
+    command.failureSlackNotificationChannel = "#failures";
+    command.failureUrl = "https://build.org/1234";
+
+    command.execute();
+
+    ArgumentCaptor<Message> messageCaptor = ArgumentCaptor.forClass(Message.class);
+    verify(slackClient, times(1)).sendInstantMessage(messageCaptor.capture());
+    Message message = messageCaptor.getValue();
+    Assert.assertEquals("#failures", message.getChannel());
+    String text = message.getAttachments().get(0).getText();
+    Assert.assertTrue(text.contains("extraction-check"));
+    Assert.assertTrue(text.contains("PR *42*"));
+    Assert.assertTrue(text.contains("*testOwner/testRepo*"));
+    Assert.assertTrue(text.contains("https://build.org/1234"));
+    Assert.assertTrue(text.contains("Retries exhausted: 3/3"));
+  }
+
+  @Test
+  public void testAddInlineReviewCommentsDoesNotNotifyWhenNoFailureChannelIsConfigured()
+      throws MissingExtractionDirectoryException {
+    SlackClient slackClient = Mockito.mock(SlackClient.class);
+    ExtractionCheckCommand command = createCommandForFailingInlineReviewComments(slackClient);
+    command.failureSlackNotificationChannel = null;
+
+    command.execute();
+
+    verifyNoInteractions(slackClient);
+    Assert.assertTrue(outputCapture.toString().contains("Error adding inline review comments"));
+  }
+
+  @Test
+  public void testAddInlineReviewCommentsFailureWithoutSlackClientDoesNotFailTheRun()
+      throws MissingExtractionDirectoryException {
+    ExtractionCheckCommand command = createCommandForFailingInlineReviewComments(null);
+    command.failureSlackNotificationChannel = "#failures";
+
+    command.execute();
+
+    Assert.assertTrue(outputCapture.toString().contains("Error adding inline review comments"));
+  }
+
+  @Test
+  public void testAddInlineReviewCommentsFailureNotificationErrorDoesNotFailTheRun()
+      throws MissingExtractionDirectoryException, SlackClientException {
+    SlackClient slackClient = Mockito.mock(SlackClient.class);
+    ExtractionCheckCommand command = createCommandForFailingInlineReviewComments(slackClient);
+    command.failureSlackNotificationChannel = "#failures";
+    doThrow(new SlackClientException("Slack is down"))
+        .when(slackClient)
+        .sendInstantMessage(isA(Message.class));
+
+    command.execute();
+
+    verify(slackClient, times(1)).sendInstantMessage(isA(Message.class));
+    Assert.assertTrue(outputCapture.toString().contains("Error adding inline review comments"));
+  }
+
+  @Test
+  public void testAddInlineReviewCommentsDoesNotNotifyWhenTheCommentsAreAdded()
+      throws MissingExtractionDirectoryException {
+    GithubClients githubClients = Mockito.mock(GithubClients.class);
+    GithubClient githubClient = Mockito.mock(GithubClient.class);
+    SlackClient slackClient = Mockito.mock(SlackClient.class);
+    ExtractionCheckNotificationSenderGithub githubSender =
+        Mockito.mock(ExtractionCheckNotificationSenderGithub.class);
+    ExtractionCheckCommand command =
+        createCommandForInlineReviewComments(
+            Mockito.mock(ExtractionDiffService.class),
+            githubClients,
+            Mockito.mock(GithubPatchParser.class));
+    configureExtractionDiffs(command);
+    command.githubOwner = "testOwner";
+    command.githubRepository = "testRepo";
+    command.githubPRNumber = 42;
+    command.commitSha = "abc123";
+    command.extractionCheckNotificationSenders = List.of(githubSender);
+    command.slackClient = slackClient;
+    command.failureSlackNotificationChannel = "#failures";
+    when(githubClients.isClientAvailable("testOwner")).thenReturn(true);
+    when(githubClients.getClient("testOwner")).thenReturn(githubClient);
+    when(githubClient.getPrFilePatches("testRepo", 42)).thenReturn(new HashMap<>());
+
+    command.execute();
+
+    verifyNoInteractions(slackClient);
   }
 
   @Test

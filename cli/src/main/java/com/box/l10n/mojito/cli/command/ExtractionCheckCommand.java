@@ -25,6 +25,8 @@ import com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckNotificati
 import com.box.l10n.mojito.cli.command.extractioncheck.ExtractionCheckThirdPartyNotificationService;
 import com.box.l10n.mojito.cli.command.utils.SarifFileGenerator;
 import com.box.l10n.mojito.cli.command.utils.SarifUtils;
+import com.box.l10n.mojito.cli.command.utils.SlackNotificationSender;
+import com.box.l10n.mojito.cli.command.utils.SlackNotificationSenderException;
 import com.box.l10n.mojito.cli.console.ConsoleWriter;
 import com.box.l10n.mojito.github.GithubClient;
 import com.box.l10n.mojito.github.GithubClients;
@@ -34,6 +36,7 @@ import com.box.l10n.mojito.json.ObjectMapper;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.regex.PlaceholderRegularExpressions;
 import com.box.l10n.mojito.sarif.model.Sarif;
+import com.box.l10n.mojito.slack.SlackClient;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
@@ -51,11 +54,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.fusesource.jansi.Ansi;
 import org.kohsuke.github.GHCommitState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
@@ -78,6 +83,15 @@ public class ExtractionCheckCommand extends Command {
   @Autowired ConsoleWriter consoleWriter;
 
   @Autowired GithubPatchParser githubPatchParser;
+
+  @Autowired(required = false)
+  SlackClient slackClient;
+
+  @Value("${FAILURE_SLACK_NOTIFICATION_CHANNEL:#{null}}")
+  String failureSlackNotificationChannel;
+
+  @Value("${FAILURE_URL:#{null}}")
+  String failureUrl;
 
   @Parameter(
       names = {"--checker-list", "-cl"},
@@ -919,6 +933,51 @@ public class ExtractionCheckCommand extends Command {
           .newLine()
           .a("Error adding inline review comments: " + e.getMessage())
           .println();
+      notifyInlineReviewCommentsFailure(
+          String.format("%s\n%s", e.getMessage(), ExceptionUtils.getStackTrace(e)));
+    }
+  }
+
+  /**
+   * Notifies the failure Slack channel that the inline review comments could not be added to the
+   * pull request.
+   *
+   * <p>The run keeps going and reports the check results when the comments cannot be added, so
+   * nothing else signals the failure: the command does not fail and hence never reaches the failure
+   * notification sent for a failed command.
+   *
+   * <p>Nothing is sent when no failure channel is configured. A failure to notify is logged and
+   * swallowed, it must not turn a failure that the run recovers from into a failed run.
+   */
+  private void notifyInlineReviewCommentsFailure(String errorMessage) {
+    if (Strings.isNullOrEmpty(failureSlackNotificationChannel)) {
+      return;
+    }
+
+    if (slackClient == null) {
+      logger.error(
+          "Slack client is not configured, cannot notify the failure to add inline review comments"
+              + " to PR {} in repository '{}'",
+          githubPRNumber,
+          githubRepository);
+      return;
+    }
+
+    try {
+      new SlackNotificationSender(slackClient)
+          .sendMessage(
+              failureSlackNotificationChannel,
+              String.format(
+                  ":warning: *%s* command failed to add inline review comments to PR *%s* of repository *%s/%s*\n\n*URL:*\n%s\n\n*ERROR MESSAGE:*\n%s",
+                  getName(),
+                  githubPRNumber,
+                  githubOwner,
+                  githubRepository,
+                  failureUrl == null ? "" : failureUrl,
+                  errorMessage));
+    } catch (SlackNotificationSenderException e) {
+      logger.error(
+          "Error notifying the failure to add inline review comments: " + e.getMessage(), e);
     }
   }
 }
