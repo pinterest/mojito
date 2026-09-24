@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.apache.commons.codec.binary.Base64;
 import org.kohsuke.github.GHAppInstallationToken;
 import org.kohsuke.github.GHCommitState;
@@ -653,6 +654,16 @@ public class GithubClient {
   }
 
   /**
+   * Formats the locations of review comments as {@code path:line} entries, used to report which
+   * comments could not be posted.
+   */
+  private static String formatCommentLocations(List<ReviewComment> reviewComments) {
+    return reviewComments.stream()
+        .map(comment -> comment.getPath() + ":" + comment.getLine())
+        .collect(Collectors.joining(", "));
+  }
+
+  /**
    * Posts review comments to a pull request. These are inline comments on specific lines of code.
    *
    * <p>Comments that are already present on the pull request, ie. an existing review comment with
@@ -727,8 +738,12 @@ public class GithubClient {
               } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
                 String message =
                     String.format(
-                        "Error adding review comments to PR %d in repository '%s': %s",
-                        prNumber, repoFullPath, e.getMessage());
+                        "Error adding review comments to PR %d in repository '%s' for locations"
+                            + " [%s]: %s",
+                        prNumber,
+                        repoFullPath,
+                        formatCommentLocations(reviewComments),
+                        e.getMessage());
                 logger.error(message, e);
                 throw new GithubException(message, e);
               }
@@ -742,8 +757,12 @@ public class GithubClient {
               sendRetryExceededMetric(repository, "addReviewCommentsToPR");
               logger.error(
                   String.format(
-                      "Error adding review comments to PR %d in repository '%s': %s",
-                      prNumber, repoFullPath, e.getMessage()),
+                      "Error adding review comments to PR %d in repository '%s' for locations"
+                          + " [%s]: %s",
+                      prNumber,
+                      repoFullPath,
+                      formatCommentLocations(reviewComments),
+                      e.getMessage()),
                   e);
             })
         .block();
