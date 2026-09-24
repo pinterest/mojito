@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 import net.sf.okapi.common.resource.TextUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -20,11 +19,15 @@ public class ExtractUsagesFromTextUnitComments {
   /** logger */
   static Logger logger = LoggerFactory.getLogger(ExtractUsagesFromTextUnitComments.class);
 
-  @Autowired TextUnitUtils textUnitUtils;
+  final TextUnitUtils textUnitUtils;
 
   public static final String USAGES_PATTERN =
       "\\s*?<locations>\n?(?<usages>(.*?\\s)*?)</locations>";
   public static final String USAGES_GROUP_NAME = "usages";
+
+  public ExtractUsagesFromTextUnitComments(TextUnitUtils textUnitUtils) {
+    this.textUnitUtils = textUnitUtils;
+  }
 
   /**
    * Add usage locations to the text unit
@@ -58,10 +61,15 @@ public class ExtractUsagesFromTextUnitComments {
   /**
    * @param textUnit used to remove usages from comments
    */
-  void removeUsagesFromTextUnitComment(TextUnit textUnit) {
+  public void removeUsagesFromTextUnitComment(TextUnit textUnit) {
     String comment = textUnitUtils.getNote(textUnit);
+
+    if (comment == null) {
+      return;
+    }
+
     Pattern pattern = Pattern.compile(USAGES_PATTERN);
-    Matcher matcher = pattern.matcher(textUnitUtils.getNote(textUnit));
+    Matcher matcher = pattern.matcher(comment);
 
     if (matcher.find()) {
       textUnitUtils.setNote(textUnit, comment.replace(matcher.group(0), ""));
@@ -74,7 +82,7 @@ public class ExtractUsagesFromTextUnitComments {
    * @param comment to get the usages from
    * @return the locations or empty set
    */
-  Set<String> getUsagesFromTextUnitComments(String comment) {
+  public Set<String> getUsagesFromTextUnitComments(String comment) {
 
     String locations_string = null;
     Set<String> locations = new LinkedHashSet<>();

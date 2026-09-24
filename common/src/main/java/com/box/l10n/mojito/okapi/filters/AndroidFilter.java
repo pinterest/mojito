@@ -1,8 +1,10 @@
 package com.box.l10n.mojito.okapi.filters;
 
+import com.box.l10n.mojito.okapi.ExtractUsagesFromTextUnitComments;
 import com.box.l10n.mojito.okapi.TextUnitUtils;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.sf.okapi.common.Event;
@@ -51,6 +53,8 @@ public class AndroidFilter extends XMLFilter {
   @Autowired TextUnitUtils textUnitUtils;
 
   @Autowired UnescapeUtils unescapeUtils;
+
+  @Autowired ExtractUsagesFromTextUnitComments extractUsagesFromTextUnitComments;
 
   @Override
   public String getName() {
@@ -127,7 +131,7 @@ public class AndroidFilter extends XMLFilter {
     return event;
   }
 
-  private void processTextUnit(Event event) {
+  void processTextUnit(Event event) {
     if (event != null && event.isTextUnit()) {
 
       TextUnit textUnit = (TextUnit) event.getTextUnit();
@@ -143,6 +147,7 @@ public class AndroidFilter extends XMLFilter {
 
       textUnitUtils.replaceSourceString(textUnit, unescapedSourceString);
       extractNoteFromXMLCommentInSkeletonIfNone(textUnit);
+      extractUsagesFromXMLCommentsInSkeleton(textUnit);
     }
   }
 
@@ -221,10 +226,7 @@ public class AndroidFilter extends XMLFilter {
 
     String note = null;
 
-    final Matcher matcherForLastTranslatableFalse = FIND_LAST_TRANSLATABLE_FALSE.matcher(skeleton);
-    if (matcherForLastTranslatableFalse.find()) {
-      skeleton = skeleton.substring(matcherForLastTranslatableFalse.group(0).length());
-    }
+    skeleton = skipUntranslatableStrings(skeleton);
 
     StringBuilder commentBuilder = new StringBuilder();
 
@@ -242,6 +244,42 @@ public class AndroidFilter extends XMLFilter {
     }
 
     return note;
+  }
+
+  /**
+   * The strings that are not translatable don't generate text units, so their XML comments are part
+   * of the skeleton of the next text unit and must be ignored.
+   *
+   * @param skeleton that may contain comments of untranslatable strings
+   * @return the skeleton that starts after the last untranslatable string
+   */
+  String skipUntranslatableStrings(String skeleton) {
+    final Matcher matcherForLastTranslatableFalse = FIND_LAST_TRANSLATABLE_FALSE.matcher(skeleton);
+    if (matcherForLastTranslatableFalse.find()) {
+      skeleton = skeleton.substring(matcherForLastTranslatableFalse.group(0).length());
+    }
+    return skeleton;
+  }
+
+  /**
+   * Extracts the usage locations from the {@code <locations>} block of the XML comments and removes
+   * that block from the note.
+   *
+   * <p>The locations are read from the skeleton instead of the note because a note is the
+   * concatenation of the XML comments on a single line while the locations need one line each.
+   *
+   * @param textUnit the text unit for which usages should be extracted
+   */
+  void extractUsagesFromXMLCommentsInSkeleton(TextUnit textUnit) {
+
+    String skeleton = skipUntranslatableStrings(textUnit.getSkeleton().toString());
+
+    Set<String> usages = extractUsagesFromTextUnitComments.getUsagesFromTextUnitComments(skeleton);
+
+    if (!usages.isEmpty()) {
+      textUnit.setAnnotation(new UsagesAnnotation(usages));
+      extractUsagesFromTextUnitComments.removeUsagesFromTextUnitComment(textUnit);
+    }
   }
 
   @Override
@@ -305,6 +343,7 @@ public class AndroidFilter extends XMLFilter {
 
     String firstForm = null;
     String comments = null;
+    Set<String> usages = null;
 
     @Override
     protected void loadEvents(List<Event> pluralEvents) {
@@ -314,6 +353,8 @@ public class AndroidFilter extends XMLFilter {
         firstForm = getPluralFormFromSkeleton(firstEvent.getResource());
         ITextUnit firstTextUnit = firstEvent.getTextUnit();
         comments = textUnitUtils.getNote(firstTextUnit);
+        UsagesAnnotation usagesAnnotation = firstTextUnit.getAnnotation(UsagesAnnotation.class);
+        usages = usagesAnnotation == null ? null : usagesAnnotation.getUsages();
       }
 
       super.loadEvents(pluralEvents);
@@ -328,6 +369,9 @@ public class AndroidFilter extends XMLFilter {
       for (Event newForm : completedForms) {
         if (comments != null) {
           textUnitUtils.setNote(newForm.getTextUnit(), comments);
+        }
+        if (usages != null && !usages.isEmpty()) {
+          newForm.getTextUnit().setAnnotation(new UsagesAnnotation(usages));
         }
       }
 
