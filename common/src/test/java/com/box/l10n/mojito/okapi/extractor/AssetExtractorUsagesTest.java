@@ -62,6 +62,39 @@ public class AssetExtractorUsagesTest {
   }
 
   @Test
+  public void addUsagesFromNameDeclarationLineWhenNameIsSingleQuoted() {
+    AssetExtractorTextUnit textUnit = createTextUnit("merge_board", null);
+
+    assetExtractor.addUsagesFromNameDeclarationLine(
+        List.of(textUnit),
+        """
+        <resources>
+            <string name='merge_board'>Merge board</string>
+        </resources>
+        """,
+        "res/values/strings.xml");
+
+    Assertions.assertThat(textUnit.getUsages()).containsExactly("res/values/strings.xml:2");
+  }
+
+  @Test
+  public void addUsagesFromNameDeclarationLineKeepsFirstDeclaration() {
+    AssetExtractorTextUnit textUnit = createTextUnit("merge_board", null);
+
+    assetExtractor.addUsagesFromNameDeclarationLine(
+        List.of(textUnit),
+        """
+        <resources>
+            <string name="merge_board">Merge board</string>
+            <string name="merge_board">Merge board</string>
+        </resources>
+        """,
+        "res/values/strings.xml");
+
+    Assertions.assertThat(textUnit.getUsages()).containsExactly("res/values/strings.xml:2");
+  }
+
+  @Test
   public void addUsagesFromNameDeclarationLineWhenNameIsNotDeclared() {
     AssetExtractorTextUnit textUnit = createTextUnit("key1", null);
 

@@ -6,8 +6,13 @@ import com.box.l10n.mojito.okapi.asset.AssetPathToFilterConfigMapper;
 import com.box.l10n.mojito.okapi.asset.UnsupportedAssetFilterTypeException;
 import com.box.l10n.mojito.okapi.filters.FilterOptions;
 import com.box.l10n.mojito.okapi.steps.CheckForDoNotTranslateStep;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import net.sf.okapi.common.LocaleId;
 import net.sf.okapi.common.filters.IFilterConfigurationMapper;
 import net.sf.okapi.common.pipelinedriver.IPipelineDriver;
@@ -22,6 +27,9 @@ import org.springframework.stereotype.Component;
 public class AssetExtractor {
 
   static Logger logger = LoggerFactory.getLogger(AssetExtractor.class);
+
+  /** Matches the name attribute of a string declaration, for example {@code name="merge_board"} */
+  static final Pattern NAME_ATTRIBUTE_PATTERN = Pattern.compile("name\\s*=\\s*[\"']([^\"']+)[\"']");
 
   @Autowired AssetPathToFilterConfigMapper assetPathToFilterConfigMapper;
 
@@ -68,6 +76,10 @@ public class AssetExtractor {
    * is the location that matters for a pull request anyway: it is the line that was just added or
    * modified.
    *
+   * <p>The name declarations are indexed in a single pass over the asset content and the first
+   * declaration of a name wins. All the forms of a plural group share the line of the block that
+   * declares them.
+   *
    * @param assetExtractorTextUnits the text units extracted from the asset
    * @param assetContent the content of the asset the text units were extracted from
    * @param assetPath the path of the asset, used as the file of the usage
@@ -75,7 +87,7 @@ public class AssetExtractor {
   void addUsagesFromNameDeclarationLine(
       List<AssetExtractorTextUnit> assetExtractorTextUnits, String assetContent, String assetPath) {
 
-    String[] lines = assetContent.split("\n", -1);
+    Map<String, List<AssetExtractorTextUnit>> textUnitsByDeclaredName = new HashMap<>();
 
     for (AssetExtractorTextUnit assetExtractorTextUnit : assetExtractorTextUnits) {
 
@@ -90,12 +102,31 @@ public class AssetExtractor {
         continue;
       }
 
-      String nameDeclaration = "name=\"" + name + "\"";
+      textUnitsByDeclaredName
+          .computeIfAbsent(name, declaredName -> new ArrayList<>())
+          .add(assetExtractorTextUnit);
+    }
 
-      for (int i = 0; i < lines.length; i++) {
-        if (lines[i].contains(nameDeclaration)) {
-          assetExtractorTextUnit.setUsages(Set.of(assetPath + ":" + (i + 1)));
-          break;
+    Matcher matcher = NAME_ATTRIBUTE_PATTERN.matcher(assetContent);
+    int lineNumber = 1;
+    int lineScanIndex = 0;
+
+    while (!textUnitsByDeclaredName.isEmpty() && matcher.find()) {
+
+      while (lineScanIndex < matcher.start()) {
+        if (assetContent.charAt(lineScanIndex) == '\n') {
+          lineNumber++;
+        }
+        lineScanIndex++;
+      }
+
+      List<AssetExtractorTextUnit> textUnitsForName =
+          textUnitsByDeclaredName.remove(matcher.group(1));
+
+      if (textUnitsForName != null) {
+        Set<String> usages = Set.of(assetPath + ":" + lineNumber);
+        for (AssetExtractorTextUnit assetExtractorTextUnit : textUnitsForName) {
+          assetExtractorTextUnit.setUsages(usages);
         }
       }
     }
