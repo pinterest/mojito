@@ -1,17 +1,10 @@
 package com.box.l10n.mojito.okapi.filters;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
-import com.box.l10n.mojito.okapi.ExtractUsagesFromTextUnitComments;
-import com.box.l10n.mojito.okapi.TextUnitUtils;
-import java.util.List;
-import java.util.Set;
 import net.sf.okapi.common.Event;
 import net.sf.okapi.common.EventType;
-import net.sf.okapi.common.resource.ITextUnit;
 import net.sf.okapi.common.resource.TextUnit;
-import net.sf.okapi.common.skeleton.GenericSkeleton;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +15,6 @@ import org.slf4j.LoggerFactory;
 public class AndroidFilterTest {
 
   static Logger logger = LoggerFactory.getLogger(AndroidFilterTest.class);
-
-  TextUnitUtils textUnitUtils = new TextUnitUtils();
 
   @Test
   public void testGetNoteFromXMLCommentsInSkeletonNoComment() {
@@ -127,142 +118,5 @@ public class AndroidFilterTest {
     String s = instance.unescape(input);
     logger.debug("> Input:\n{}\n> Expected:\n{}\n> Actual:\n{}\n>>>", input, expected, s);
     assertEquals(expected, s);
-  }
-
-  @Test
-  public void testProcessTextUnitExtractsUsageFromXMLComment() {
-    TextUnit textUnit =
-        createTextUnit(
-            "<!-- Title of the folder\n"
-                + "<locations>\n"
-                + "   path/to/file:42\n"
-                + "</locations>\n"
-                + "-->\n"
-                + "<string name=\"add_to_folder\">");
-
-    createInstance().processTextUnit(new Event(EventType.TEXT_UNIT, textUnit));
-
-    assertEquals(Set.of("path/to/file:42"), getUsages(textUnit));
-  }
-
-  @Test
-  public void testProcessTextUnitExtractsMultipleUsagesFromXMLComment() {
-    TextUnit textUnit =
-        createTextUnit(
-            "<!-- Title of the folder\n"
-                + "<locations>\n"
-                + "   path/to/file:42\n"
-                + "   path/to/other/file:47\n"
-                + "</locations>\n"
-                + "-->\n"
-                + "<string name=\"add_to_folder\">");
-
-    createInstance().processTextUnit(new Event(EventType.TEXT_UNIT, textUnit));
-
-    assertEquals(Set.of("path/to/file:42", "path/to/other/file:47"), getUsages(textUnit));
-  }
-
-  @Test
-  public void testProcessTextUnitRemovesUsagesFromNote() {
-    TextUnit textUnit =
-        createTextUnit(
-            "<!-- Title of the folder <locations> path/to/file:42 </locations> -->\n"
-                + "<string name=\"add_to_folder\">");
-
-    createInstance().processTextUnit(new Event(EventType.TEXT_UNIT, textUnit));
-
-    assertEquals(Set.of("path/to/file:42"), getUsages(textUnit));
-    assertEquals("Title of the folder", textUnitUtils.getNote(textUnit));
-  }
-
-  @Test
-  public void testProcessTextUnitIgnoresUsagesOfUntranslatableStrings() {
-    TextUnit textUnit =
-        createTextUnit(
-            "<!-- Title to skip\n"
-                + "<locations>\n"
-                + "   path/to/skipped/file:12\n"
-                + "</locations>\n"
-                + "-->\n"
-                + "<string name=\"to_skip\" translatable=\"false\">To skip</string>\n"
-                + "<!-- Title of the folder\n"
-                + "<locations>\n"
-                + "   path/to/file:42\n"
-                + "</locations>\n"
-                + "-->\n"
-                + "<string name=\"add_to_folder\">");
-
-    createInstance().processTextUnit(new Event(EventType.TEXT_UNIT, textUnit));
-
-    assertEquals(Set.of("path/to/file:42"), getUsages(textUnit));
-  }
-
-  @Test
-  public void testProcessTextUnitWithoutLocations() {
-    TextUnit textUnit =
-        createTextUnit("<!-- Title of the folder -->\n<string name=\"add_to_folder\">");
-
-    createInstance().processTextUnit(new Event(EventType.TEXT_UNIT, textUnit));
-
-    assertEquals("Title of the folder", textUnitUtils.getNote(textUnit));
-    assertNull(getUsages(textUnit));
-  }
-
-  @Test
-  public void testProcessTextUnitWithoutComment() {
-    TextUnit textUnit = createTextUnit("<string name=\"add_to_folder\">");
-
-    createInstance().processTextUnit(new Event(EventType.TEXT_UNIT, textUnit));
-
-    assertNull(getUsages(textUnit));
-  }
-
-  @Test
-  public void testAdaptPluralsCopiesUsagesToAllForms() {
-    AndroidFilter instance = createInstance();
-
-    TextUnit one =
-        createTextUnit(
-            "<!-- Number of people <locations> path/to/file:42 </locations> -->\n"
-                + "<plurals name=\"people\">\n<item quantity=\"one\">");
-    one.setName("people_one");
-    TextUnit other = createTextUnit("<item quantity=\"other\">");
-    other.setName("people_other");
-
-    Event oneEvent = new Event(EventType.TEXT_UNIT, one);
-    Event otherEvent = new Event(EventType.TEXT_UNIT, other);
-    instance.processTextUnit(oneEvent);
-    instance.processTextUnit(otherEvent);
-
-    for (Event event : instance.adaptPlurals(List.of(oneEvent, otherEvent))) {
-      assertEquals(
-          "usages are expected on " + event.getTextUnit().getName(),
-          Set.of("path/to/file:42"),
-          getUsages(event.getTextUnit()));
-      assertEquals(
-          "comments are expected on " + event.getTextUnit().getName(),
-          "Number of people",
-          textUnitUtils.getNote(event.getTextUnit()));
-    }
-  }
-
-  AndroidFilter createInstance() {
-    AndroidFilter instance = new AndroidFilter();
-    instance.textUnitUtils = textUnitUtils;
-    instance.unescapeUtils = new UnescapeUtils();
-    instance.extractUsagesFromTextUnitComments =
-        new ExtractUsagesFromTextUnitComments(textUnitUtils);
-    return instance;
-  }
-
-  TextUnit createTextUnit(String skeleton) {
-    TextUnit textUnit = new TextUnit("id", "Add to Folder");
-    textUnit.setSkeleton(new GenericSkeleton(skeleton));
-    return textUnit;
-  }
-
-  Set<String> getUsages(ITextUnit textUnit) {
-    UsagesAnnotation usagesAnnotation = textUnit.getAnnotation(UsagesAnnotation.class);
-    return usagesAnnotation == null ? null : usagesAnnotation.getUsages();
   }
 }

@@ -7,6 +7,7 @@ import com.box.l10n.mojito.okapi.TextUnitUtils;
 import com.box.l10n.mojito.okapi.asset.AssetPathToFilterConfigMapper;
 import com.box.l10n.mojito.okapi.asset.FilterConfigurationMappers;
 import com.box.l10n.mojito.okapi.asset.UnsupportedAssetFilterTypeException;
+import com.box.l10n.mojito.okapi.filters.UnescapeUtils;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -26,6 +27,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
       AssetPathToFilterConfigMapper.class,
       FilterConfigurationMappers.class,
       TextUnitUtils.class,
+      UnescapeUtils.class,
       AssetExtractorTest.class
     })
 @EnableSpringConfigured
