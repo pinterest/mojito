@@ -9,6 +9,7 @@ import com.box.l10n.mojito.okapi.asset.FilterConfigurationMappers;
 import com.box.l10n.mojito.okapi.asset.UnsupportedAssetFilterTypeException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -252,5 +253,45 @@ public class AssetExtractorTest {
             tuple(
                 "34a6a48789dd1ff7dff813a8fb627b91-8f1bdae06589d55b62184a76e0e70d0e-1",
                 "Image in text <br id='p1'/>."));
+  }
+
+  static final String ANDROID_STRINGS =
+      """
+      <?xml version="1.0" encoding="utf-8"?>
+      <resources>
+          <!-- Title of merge option within Edit board page -->
+          <string name="merge_board">Merge board</string>
+          <plurals name="people">
+              <item quantity="one">%1$d person</item>
+              <item quantity="other">%1$d people</item>
+          </plurals>
+      </resources>
+      """;
+
+  @Test
+  public void extractAndroidStringsWithUsagesFromDeclarationLine()
+      throws UnsupportedAssetFilterTypeException {
+    List<AssetExtractorTextUnit> assetExtractorTextUnitsForAsset =
+        assetExtractor.getAssetExtractorTextUnitsForAsset(
+            "res/values/strings.xml", ANDROID_STRINGS, null, null, true);
+
+    Assertions.assertThat(assetExtractorTextUnitsForAsset)
+        .extracting(AssetExtractorTextUnit::getName, AssetExtractorTextUnit::getUsages)
+        .contains(
+            tuple("merge_board", Set.of("res/values/strings.xml:4")),
+            tuple("people_one", Set.of("res/values/strings.xml:5")),
+            tuple("people_other", Set.of("res/values/strings.xml:5")));
+  }
+
+  @Test
+  public void extractAndroidStringsWithoutUsagesFromDeclarationLine()
+      throws UnsupportedAssetFilterTypeException {
+    List<AssetExtractorTextUnit> assetExtractorTextUnitsForAsset =
+        assetExtractor.getAssetExtractorTextUnitsForAsset(
+            "res/values/strings.xml", ANDROID_STRINGS, null, null);
+
+    Assertions.assertThat(assetExtractorTextUnitsForAsset)
+        .extracting(AssetExtractorTextUnit::getUsages)
+        .containsOnlyNulls();
   }
 }
