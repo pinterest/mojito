@@ -2,6 +2,7 @@ package com.box.l10n.mojito.cli.command.checks;
 
 import com.box.l10n.mojito.cli.command.CommandException;
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
+import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -16,6 +17,39 @@ public class GlossaryCaseChecker extends AbstractCliChecker {
 
   @Override
   public CliCheckResult run(List<AssetExtractionDiff> assetExtractionDiffs) {
+    // TEMPORARY, DO NOT MERGE: fail on every added text unit to exercise the PR review comments
+    return failEveryAddedTextUnit(assetExtractionDiffs);
+  }
+
+  /**
+   * Reports a failure for every added text unit, regardless of the glossary terms, so that a pull
+   * request always gets review comments for the usages of the strings it adds.
+   */
+  private CliCheckResult failEveryAddedTextUnit(List<AssetExtractionDiff> assetExtractionDiffs) {
+    CliCheckResult cliCheckResult = createCliCheckerResult();
+    cliCheckResult.setSuccessful(false);
+
+    Map<String, CliCheckResult.CheckFailure> failedFeatureMap =
+        getAddedTextUnitsExcludingInconsistentComments(assetExtractionDiffs).stream()
+            .collect(
+                Collectors.toMap(
+                    AssetExtractorTextUnit::getName,
+                    assetExtractorTextUnit ->
+                        new CliCheckResult.CheckFailure(
+                            CheckerRuleId.AGGREGATE_GLOSSARY_CASE_CHECKER_RESULTS,
+                            "Forced glossary case check failure"),
+                    (first, second) -> first));
+    cliCheckResult.appendToFailuresMap(failedFeatureMap);
+    cliCheckResult.setNotificationText(
+        "Glossary check failures:"
+            + System.lineSeparator()
+            + BULLET_POINT
+            + "Forced glossary case check failure");
+
+    return cliCheckResult;
+  }
+
+  private CliCheckResult runGlossaryCaseCheck(List<AssetExtractionDiff> assetExtractionDiffs) {
     CliCheckResult cliCheckResult = createCliCheckerResult();
     try {
       GlossaryTermCaseCheckerTrie glossaryTermCaseCheckerTrie = getGlossaryTermTrie();
