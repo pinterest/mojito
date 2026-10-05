@@ -355,7 +355,7 @@ class GithubReviewCommentServiceTest {
   }
 
   @Test
-  void generateReviewComments_lineAfterTheModifiedLine_isDiscarded() {
+  void generateReviewComments_lineAfterTheModifiedLine_isMovedOntoTheClosestModifiedLine() {
     // Arrange
     GithubReviewCommentService service = createService(DEFAULT_LINE_ERROR_ALLOWANCE);
 
@@ -368,8 +368,94 @@ class GithubReviewCommentServiceTest {
             "TestCheck",
             createFieldFailures("source1", CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Message"));
 
-    // Only lines before the usage were modified: the usage does not point at the modification
+    // Only lines before the usage were modified, as when only the comment written above the
+    // translation function call is changed
     Map<String, Set<Integer>> githubModifiedLines = Map.of("file1.py", Set.of(5, 8, 9));
+
+    // Act
+    List<GithubClient.ReviewComment> reviewComments =
+        service.generateReviewComments(
+            List.of(checkResult), List.of(diff), githubModifiedLines, "repoName", "");
+
+    // Assert
+    assertThat(reviewComments).hasSize(1);
+    assertThat(reviewComments.getFirst().getPath()).isEqualTo("file1.py");
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(9);
+  }
+
+  @Test
+  void generateReviewComments_modifiedLinesBeforeAndAfterTheUsage_preferTheLinesAfterIt() {
+    // Arrange
+    GithubReviewCommentService service = createService(DEFAULT_LINE_ERROR_ALLOWANCE);
+
+    AssetExtractionDiff diff =
+        createDiff(createAssetExtractorTextUnit("source1", Set.of("file1.py:10")));
+
+    CliCheckResult checkResult =
+        createCliCheckResult(
+            true,
+            "TestCheck",
+            createFieldFailures("source1", CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Message"));
+
+    // Line 9 is closer to the usage than line 12, but the lines following the usage are searched
+    // first
+    Map<String, Set<Integer>> githubModifiedLines = Map.of("file1.py", Set.of(9, 12));
+
+    // Act
+    List<GithubClient.ReviewComment> reviewComments =
+        service.generateReviewComments(
+            List.of(checkResult), List.of(diff), githubModifiedLines, "repoName", "");
+
+    // Assert
+    assertThat(reviewComments).hasSize(1);
+    assertThat(reviewComments.getFirst().getPath()).isEqualTo("file1.py");
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(12);
+  }
+
+  @Test
+  void generateReviewComments_modifiedLineBeforeTheUsageAtTheEdgeOfTheAllowance_isAccepted() {
+    // Arrange
+    GithubReviewCommentService service = createService(DEFAULT_LINE_ERROR_ALLOWANCE);
+
+    AssetExtractionDiff diff =
+        createDiff(createAssetExtractorTextUnit("source1", Set.of("file1.py:10")));
+
+    CliCheckResult checkResult =
+        createCliCheckResult(
+            true,
+            "TestCheck",
+            createFieldFailures("source1", CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Message"));
+
+    // Line 5 is exactly lineNumberErrorAllowance lines before the usage
+    Map<String, Set<Integer>> githubModifiedLines = Map.of("file1.py", Set.of(5));
+
+    // Act
+    List<GithubClient.ReviewComment> reviewComments =
+        service.generateReviewComments(
+            List.of(checkResult), List.of(diff), githubModifiedLines, "repoName", "");
+
+    // Assert
+    assertThat(reviewComments).hasSize(1);
+    assertThat(reviewComments.getFirst().getPath()).isEqualTo("file1.py");
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(5);
+  }
+
+  @Test
+  void generateReviewComments_modifiedLineBeforeTheUsageBeyondTheAllowance_isDiscarded() {
+    // Arrange
+    GithubReviewCommentService service = createService(DEFAULT_LINE_ERROR_ALLOWANCE);
+
+    AssetExtractionDiff diff =
+        createDiff(createAssetExtractorTextUnit("source1", Set.of("file1.py:10")));
+
+    CliCheckResult checkResult =
+        createCliCheckResult(
+            true,
+            "TestCheck",
+            createFieldFailures("source1", CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Message"));
+
+    // Line 4 is one line further than lineNumberErrorAllowance before the usage
+    Map<String, Set<Integer>> githubModifiedLines = Map.of("file1.py", Set.of(4));
 
     // Act
     List<GithubClient.ReviewComment> reviewComments =

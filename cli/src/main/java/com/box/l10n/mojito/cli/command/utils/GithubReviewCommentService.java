@@ -26,13 +26,13 @@ public class GithubReviewCommentService {
   private final MeterRegistry meterRegistry;
 
   /**
-   * Number of lines a usage is allowed to sit before a line modified in the PR to still be
+   * Number of lines a usage is allowed to sit before or after a line modified in the PR to still be
    * considered as pointing at that modification.
    */
   private final int lineNumberErrorAllowance;
 
   GithubReviewCommentService(
-      @Value("${l10n.extraction-check.review-comments.lineNumberErrorAllowance:5}")
+      @Value("${l10n.extraction-check.review-comments.lineNumberErrorAllowance:4}")
           int lineNumberErrorAllowance,
       MeterRegistry meterRegistry) {
     this.meterRegistry = meterRegistry;
@@ -54,17 +54,36 @@ public class GithubReviewCommentService {
   }
 
   /**
+   * Returns the closest modified line in the given direction from the usage (1 for the lines
+   * following it, -1 for the lines preceding it), up to a max (inclusive) of the {@link
+   * #lineNumberErrorAllowance}.
+   */
+  private Optional<Integer> findClosestModifiedLine(
+      Set<Integer> modifiedLines, int startLineNumber, int direction) {
+    for (int i = 1; i <= this.lineNumberErrorAllowance; i++) {
+      int lineNumber = startLineNumber + direction * i;
+      if (modifiedLines.contains(lineNumber)) {
+        return Optional.of(lineNumber);
+      }
+    }
+    return Optional.empty();
+  }
+
+  /**
    * Returns the line to comment on for a usage, or empty when the usage does not point at a change
    * made in the PR.
    *
    * <p>A usage points at a change made in the PR when its line was modified, or when a modified
-   * line follows it within {@link #lineNumberErrorAllowance} lines: the usage reported is the line
-   * where the call to the translation function starts, or the line a flagged comment was extracted
-   * from, which sits a few lines before the modified string declaration.
+   * line sits within {@link #lineNumberErrorAllowance} lines of it. The lines following the usage
+   * are searched first: the usage reported is the line where the call to the translation function
+   * starts, or the line a flagged comment was extracted from, which sits a few lines before the
+   * modified string declaration. The lines preceding the usage are searched next, for changes made
+   * only to a comment written above the translation function call.
    *
-   * <p>In the latter case the comment is reported on the first modified line following the usage.
-   * GitHub only accepts review comments on lines that are part of the PR diff, and the usage line
-   * is not guaranteed to be one: the diff only includes a few unchanged lines around each change.
+   * <p>When the usage line is not modified, the comment is reported on the closest modified line
+   * found. GitHub only accepts review comments on lines that are part of the PR diff, and the usage
+   * line is not guaranteed to be one: the diff only includes a few unchanged lines around each
+   * change.
    */
   private Optional<Integer> getCommentLineNumber(
       Set<Integer> modifiedLines, String repoName, String fileUri, int startLineNumber) {
@@ -77,22 +96,20 @@ public class GithubReviewCommentService {
         .counter("GithubReviewCommentService.LineNumberIncorrect", "repository", repoName)
         .increment();
 
-    // Look for the first modified line following the usage, up to a max (inclusive) of the
-    // lineNumberErrorAllowance
-    for (int i = 1; i <= this.lineNumberErrorAllowance; i++) {
-      if (modifiedLines.contains(startLineNumber + i)) {
-        return Optional.of(startLineNumber + i);
-      }
+    Optional<Integer> commentLineNumber =
+        findClosestModifiedLine(modifiedLines, startLineNumber, 1)
+            .or(() -> findClosestModifiedLine(modifiedLines, startLineNumber, -1));
+
+    if (commentLineNumber.isEmpty()) {
+      logger.debug(
+          "Review Comment Generation - Discarding usage {}:{}, no line modified in the PR within {}"
+              + " lines of it",
+          fileUri,
+          startLineNumber,
+          this.lineNumberErrorAllowance);
     }
 
-    logger.debug(
-        "Review Comment Generation - Discarding usage {}:{}, no line modified in the PR within {}"
-            + " lines after it",
-        fileUri,
-        startLineNumber,
-        this.lineNumberErrorAllowance);
-
-    return Optional.empty();
+    return commentLineNumber;
   }
 
   private List<UsageLocation> getUsageLocations(
