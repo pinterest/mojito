@@ -275,7 +275,7 @@ class GithubReviewCommentServiceTest {
   }
 
   @Test
-  void generateReviewComments_lineBeforeModifiedLineWithinAllowance_keepsTheReportedLine() {
+  void generateReviewComments_lineBeforeModifiedLineWithinAllowance_isMovedOntoTheModifiedLine() {
     // Arrange
     GithubReviewCommentService service = createService(2);
 
@@ -297,10 +297,10 @@ class GithubReviewCommentServiceTest {
         service.generateReviewComments(
             List.of(checkResult), List.of(diff), githubModifiedLines, "repoName", "");
 
-    // Assert - the usage is accepted and reported on its own line, not on the modified one
+    // Assert - the usage is accepted and reported on the first modified line following it
     assertThat(reviewComments).hasSize(1);
     assertThat(reviewComments.getFirst().getPath()).isEqualTo("file1.py");
-    assertThat(reviewComments.getFirst().getLine()).isEqualTo(10);
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(11);
   }
 
   @Test
@@ -326,7 +326,7 @@ class GithubReviewCommentServiceTest {
 
     // Assert
     assertThat(reviewComments).hasSize(1);
-    assertThat(reviewComments.getFirst().getLine()).isEqualTo(10);
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(15);
   }
 
   @Test
@@ -474,6 +474,37 @@ class GithubReviewCommentServiceTest {
     // Assert
     assertThat(reviewComments).hasSize(1);
     assertThat(reviewComments.getFirst().getPath()).isEqualTo(fileUri);
-    assertThat(reviewComments.getFirst().getLine()).isEqualTo(50);
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(52);
+  }
+
+  @Test
+  void generateReviewComments_usageOutsideOfTheDiffContext_isMovedOntoTheModifiedLine() {
+    // Arrange
+    // The usage is on the line where the call to the translation function starts, 4 lines before
+    // the modified lines: GitHub only includes 3 unchanged lines around a change in the PR diff, so
+    // a comment on the usage line would be rejected
+    GithubReviewCommentService service = createService(DEFAULT_LINE_ERROR_ALLOWANCE);
+
+    String fileUri = "webapp/app/getTemplateForSearchScope.ts";
+    AssetExtractionDiff diff =
+        createDiff(createAssetExtractorTextUnit("source1", Set.of(fileUri + ":78")));
+
+    CliCheckResult checkResult =
+        createCliCheckResult(
+            false,
+            "AI_CHECKER",
+            createFieldFailures("source1", CheckerRuleId.AI_CHECKER_SUGGESTION, "Message"));
+
+    Map<String, Set<Integer>> githubModifiedLines = Map.of(fileUri, Set.of(82, 83));
+
+    // Act
+    List<GithubClient.ReviewComment> reviewComments =
+        service.generateReviewComments(
+            List.of(checkResult), List.of(diff), githubModifiedLines, "repoName", "");
+
+    // Assert
+    assertThat(reviewComments).hasSize(1);
+    assertThat(reviewComments.getFirst().getPath()).isEqualTo(fileUri);
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(82);
   }
 }

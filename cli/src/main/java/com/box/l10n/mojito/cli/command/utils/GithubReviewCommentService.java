@@ -54,30 +54,34 @@ public class GithubReviewCommentService {
   }
 
   /**
-   * A usage is worth commenting on when it points at a change made in the PR. That is the case when
-   * its line was modified, or when a modified line follows it within {@link
-   * #lineNumberErrorAllowance} lines: when a check flags a comment, the usage reported is the line
-   * the comment was extracted from, which sits a few lines before the modified string declaration.
+   * Returns the line to comment on for a usage, or empty when the usage does not point at a change
+   * made in the PR.
    *
-   * <p>The line number of the usage is always kept as reported, it is never moved onto the modified
-   * line.
+   * <p>A usage points at a change made in the PR when its line was modified, or when a modified
+   * line follows it within {@link #lineNumberErrorAllowance} lines: the usage reported is the line
+   * where the call to the translation function starts, or the line a flagged comment was extracted
+   * from, which sits a few lines before the modified string declaration.
+   *
+   * <p>In the latter case the comment is reported on the first modified line following the usage.
+   * GitHub only accepts review comments on lines that are part of the PR diff, and the usage line
+   * is not guaranteed to be one: the diff only includes a few unchanged lines around each change.
    */
-  private boolean isUsageOnPrChange(
+  private Optional<Integer> getCommentLineNumber(
       Set<Integer> modifiedLines, String repoName, String fileUri, int startLineNumber) {
 
     if (modifiedLines.contains(startLineNumber)) {
-      return true;
+      return Optional.of(startLineNumber);
     }
 
     meterRegistry
         .counter("GithubReviewCommentService.LineNumberIncorrect", "repository", repoName)
         .increment();
 
-    // Accept the usage when it falls in the range of lines preceding a modified line, up to a max
-    // (inclusive) of the lineNumberErrorAllowance
+    // Look for the first modified line following the usage, up to a max (inclusive) of the
+    // lineNumberErrorAllowance
     for (int i = 1; i <= this.lineNumberErrorAllowance; i++) {
       if (modifiedLines.contains(startLineNumber + i)) {
-        return true;
+        return Optional.of(startLineNumber + i);
       }
     }
 
@@ -88,7 +92,7 @@ public class GithubReviewCommentService {
         startLineNumber,
         this.lineNumberErrorAllowance);
 
-    return false;
+    return Optional.empty();
   }
 
   private List<UsageLocation> getUsageLocations(
@@ -127,11 +131,13 @@ public class GithubReviewCommentService {
                   return null;
                 }
 
-                if (!isUsageOnPrChange(modifiedLines, repoName, fileUri, startLineNumber)) {
+                Optional<Integer> commentLineNumber =
+                    getCommentLineNumber(modifiedLines, repoName, fileUri, startLineNumber);
+                if (commentLineNumber.isEmpty()) {
                   return null;
                 }
 
-                return new UsageLocation(fileUri, startLineNumber);
+                return new UsageLocation(fileUri, commentLineNumber.get());
 
               } catch (NumberFormatException e) {
                 logger.warn(
@@ -155,8 +161,8 @@ public class GithubReviewCommentService {
    * Generates GitHub PR review comments based on CLI check failures.
    *
    * <p>Usages pointing at a file that has no line modified in the PR are discarded, as are usages
-   * that do not point at a change made in the PR (see {@link #isUsageOnPrChange}). The comments
-   * that are kept are reported on the line of the usage.
+   * that do not point at a change made in the PR. The comments that are kept are reported on a
+   * modified line (see {@link #getCommentLineNumber}).
    *
    * @param cliCheckerFailures List of check failures from CLI checkers
    * @param assetExtractionDiffs List of asset extraction diffs containing text units with usages
