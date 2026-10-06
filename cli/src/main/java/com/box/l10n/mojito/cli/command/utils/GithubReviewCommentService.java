@@ -1,12 +1,10 @@
 package com.box.l10n.mojito.cli.command.utils;
 
-import com.box.l10n.mojito.cli.command.checks.CheckerRuleId;
 import com.box.l10n.mojito.cli.command.checks.CliCheckResult;
 import com.box.l10n.mojito.cli.command.extraction.AssetExtractionDiff;
 import com.box.l10n.mojito.github.GithubClient;
 import com.box.l10n.mojito.okapi.extractor.AssetExtractorTextUnit;
 import com.box.l10n.mojito.sarif.model.ResultLevel;
-import com.google.common.io.Files;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,20 +25,16 @@ public class GithubReviewCommentService {
 
   private final MeterRegistry meterRegistry;
 
-  // File extensions for where the comments are extracted from comments above the translation
-  // function call
-  private final String[] extractedCommentFileExtensions;
-
+  /**
+   * Number of lines a usage is allowed to sit before or after a line modified in the PR to still be
+   * considered as pointing at that modification.
+   */
   private final int lineNumberErrorAllowance;
 
   GithubReviewCommentService(
-      @Value(
-              "#{'${l10n.extraction-check.review-comments.extracted-comments.fileExtensions:py,xml}'.split(',')}")
-          String[] extractedCommentFileExtensions,
-      @Value("${l10n.extraction-check.review-comments.lineNumberErrorAllowance:2}")
+      @Value("${l10n.extraction-check.review-comments.lineNumberErrorAllowance:4}")
           int lineNumberErrorAllowance,
       MeterRegistry meterRegistry) {
-    this.extractedCommentFileExtensions = extractedCommentFileExtensions;
     this.meterRegistry = meterRegistry;
     this.lineNumberErrorAllowance = lineNumberErrorAllowance;
   }
@@ -60,62 +54,69 @@ public class GithubReviewCommentService {
   }
 
   /**
-   * Github only accepts line numbers which were modified in the PR: all other lines are ignored. If
-   * a comment is flagged by the checker, the usage reported is the line where the string was added.
-   * Hence, if only a comment is changed, then the line number will be wrong. We try to add or
-   * subtract one to find a valid modified line (before or after the line) to get a line number
-   * Github will accept
+   * Returns the closest modified line in the given direction from the usage (1 for the lines
+   * following it, -1 for the lines preceding it), up to a max (inclusive) of the {@link
+   * #lineNumberErrorAllowance}.
    */
-  private UsageLocation estimateLocationLineNumber(
-      Set<Integer> modifiedLines,
-      String[] extractedCommentFileExtensions,
-      String repoName,
-      String fileUri,
-      int startLineNumber) {
-
-    int fullStopIndex = fileUri.lastIndexOf('.');
-    if (fullStopIndex == -1) {
-      return new UsageLocation(fileUri, startLineNumber);
+  private Optional<Integer> findClosestModifiedLine(
+      Set<Integer> modifiedLines, int startLineNumber, int direction) {
+    for (int i = 1; i <= this.lineNumberErrorAllowance; i++) {
+      int lineNumber = startLineNumber + direction * i;
+      if (modifiedLines.contains(lineNumber)) {
+        return Optional.of(lineNumber);
+      }
     }
+    return Optional.empty();
+  }
 
-    String fileExtension = Files.getFileExtension(fileUri);
-    if (Arrays.stream(extractedCommentFileExtensions)
-        .noneMatch(x -> x.equalsIgnoreCase(fileExtension))) {
-      return new UsageLocation(fileUri, startLineNumber);
-    }
+  /**
+   * Returns the line to comment on for a usage, or empty when the usage does not point at a change
+   * made in the PR.
+   *
+   * <p>A usage points at a change made in the PR when its line was modified, or when a modified
+   * line sits within {@link #lineNumberErrorAllowance} lines of it. The lines following the usage
+   * are searched first: the usage reported is the line where the call to the translation function
+   * starts, or the line a flagged comment was extracted from, which sits a few lines before the
+   * modified string declaration. The lines preceding the usage are searched next, for changes made
+   * only to a comment written above the translation function call.
+   *
+   * <p>When the usage line is not modified, the comment is reported on the closest modified line
+   * found. GitHub only accepts review comments on lines that are part of the PR diff, and the usage
+   * line is not guaranteed to be one: the diff only includes a few unchanged lines around each
+   * change.
+   */
+  private Optional<Integer> getCommentLineNumber(
+      Set<Integer> modifiedLines, String repoName, String fileUri, int startLineNumber) {
 
     if (modifiedLines.contains(startLineNumber)) {
-      return new UsageLocation(fileUri, startLineNumber);
-    }
-
-    // Find the first line which exists in the modified lines any range of line numbers
-    // up to a max (inclusive) of the lineNumberErrorAllowance
-    for (int i = 1; i < this.lineNumberErrorAllowance + 1; i++) {
-      int lineNumber = startLineNumber - i;
-      if (modifiedLines.contains(lineNumber)) {
-        return new UsageLocation(fileUri, lineNumber);
-      } else {
-        lineNumber = startLineNumber + i;
-        if (modifiedLines.contains(lineNumber)) {
-          return new UsageLocation(fileUri, lineNumber);
-        }
-      }
+      return Optional.of(startLineNumber);
     }
 
     meterRegistry
-        .counter("GithubReviewCommentService.LineNumberVariationNotFound", "repository", repoName)
+        .counter("GithubReviewCommentService.LineNumberIncorrect", "repository", repoName)
         .increment();
 
-    return new UsageLocation(fileUri, startLineNumber);
+    Optional<Integer> commentLineNumber =
+        findClosestModifiedLine(modifiedLines, startLineNumber, 1)
+            .or(() -> findClosestModifiedLine(modifiedLines, startLineNumber, -1));
+
+    if (commentLineNumber.isEmpty()) {
+      logger.debug(
+          "Review Comment Generation - Discarding usage {}:{}, no line modified in the PR within {}"
+              + " lines of it",
+          fileUri,
+          startLineNumber,
+          this.lineNumberErrorAllowance);
+    }
+
+    return commentLineNumber;
   }
 
   private List<UsageLocation> getUsageLocations(
       AssetExtractorTextUnit assetExtractorTextUnit,
-      String[] extractedCommentFileExtensions,
       Map<String, Set<Integer>> githubModifiedLines,
       String repoName,
-      String prefixToRemoveFromFileUri,
-      boolean isCommentRelatedCheck) {
+      String prefixToRemoveFromFileUri) {
     return assetExtractorTextUnit.getUsages().stream()
         .map(
             usage -> {
@@ -135,26 +136,25 @@ public class GithubReviewCommentService {
 
                 Set<Integer> modifiedLines = githubModifiedLines.get(fileUri);
                 if (modifiedLines == null || modifiedLines.isEmpty()) {
-                  return new UsageLocation(fileUri, startLineNumber);
-                }
-
-                if (!modifiedLines.contains(startLineNumber)) {
                   meterRegistry
                       .counter(
-                          "GithubReviewCommentService.LineNumberIncorrect", "repository", repoName)
+                          "GithubReviewCommentService.FileNotModifiedInPr", "repository", repoName)
                       .increment();
+                  logger.debug(
+                      "Review Comment Generation - Discarding usage {}:{}, the file has no line"
+                          + " modified in the PR",
+                      fileUri,
+                      startLineNumber);
+                  return null;
                 }
 
-                if (!isCommentRelatedCheck) {
-                  return new UsageLocation(fileUri, startLineNumber);
+                Optional<Integer> commentLineNumber =
+                    getCommentLineNumber(modifiedLines, repoName, fileUri, startLineNumber);
+                if (commentLineNumber.isEmpty()) {
+                  return null;
                 }
 
-                return estimateLocationLineNumber(
-                    modifiedLines,
-                    extractedCommentFileExtensions,
-                    repoName,
-                    fileUri,
-                    startLineNumber);
+                return new UsageLocation(fileUri, commentLineNumber.get());
 
               } catch (NumberFormatException e) {
                 logger.warn(
@@ -176,6 +176,10 @@ public class GithubReviewCommentService {
 
   /**
    * Generates GitHub PR review comments based on CLI check failures.
+   *
+   * <p>Usages pointing at a file that has no line modified in the PR are discarded, as are usages
+   * that do not point at a change made in the PR. The comments that are kept are reported on a
+   * modified line (see {@link #getCommentLineNumber}).
    *
    * @param cliCheckerFailures List of check failures from CLI checkers
    * @param assetExtractionDiffs List of asset extraction diffs containing text units with usages
@@ -207,17 +211,14 @@ public class GithubReviewCommentService {
         String source = entry.getKey();
         CliCheckResult.CheckFailure resultCheckFailure = entry.getValue();
         AssetExtractorTextUnit assetExtractorTextUnit = nameToAssetTextUnitMap.get(source);
-        CheckerRuleId ruleId = resultCheckFailure.ruleId();
 
         if (hasUsages(assetExtractorTextUnit)) {
           List<UsageLocation> usageLocations =
               getUsageLocations(
                   assetExtractorTextUnit,
-                  extractedCommentFileExtensions,
                   githubModifiedLines,
                   repoName,
-                  prefixToRemoveFromFileUris,
-                  ruleId.isCommentRelated());
+                  prefixToRemoveFromFileUris);
 
           for (UsageLocation location : usageLocations) {
             String commentBody =
@@ -229,26 +230,6 @@ public class GithubReviewCommentService {
           }
         }
       }
-    }
-
-    long droppedCommentCount =
-        reviewComments.stream()
-            .filter(
-                comment -> {
-                  Set<Integer> modifiedLines = githubModifiedLines.get(comment.getPath());
-                  return modifiedLines == null || !modifiedLines.contains(comment.getLine());
-                })
-            .count();
-    if (droppedCommentCount > 0) {
-      meterRegistry
-          .counter("GithubReviewCommentService.CommentsNotOnModifiedLine", "repository", repoName)
-          .increment(droppedCommentCount);
-      logger.info(
-          "{} of {} review comments for repository '{}' do not fall on a modified line and will be"
-              + " dropped by GitHub",
-          droppedCommentCount,
-          reviewComments.size(),
-          repoName);
     }
 
     logger.info(
