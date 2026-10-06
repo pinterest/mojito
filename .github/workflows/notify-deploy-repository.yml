@@ -4,7 +4,8 @@
 #
 #   vars.DEPLOY_DISPATCH_REPOSITORY    owner/repo to dispatch to (required)
 #   vars.DEPLOY_DISPATCH_EVENT_TYPE    event_type to send (default mojito-updated)
-#   secrets.DEPLOY_DISPATCH_APP_ID     GitHub App installed on the target repo
+#   vars.DEPLOY_DISPATCH_APP_CLIENT_ID Client ID of the GitHub App installed on
+#                                      the target repo
 #   secrets.DEPLOY_DISPATCH_APP_PRIVATE_KEY
 #   secrets.PAGERDUTY_ROUTING_KEY      Events API v2 integration key for the
 #                                      service that owns dispatch failures
@@ -62,9 +63,9 @@ jobs:
 
       - name: Mint app token for the target repository
         id: app-token
-        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ secrets.DEPLOY_DISPATCH_APP_ID }}
+          client-id: ${{ vars.DEPLOY_DISPATCH_APP_CLIENT_ID }}
           private-key: ${{ secrets.DEPLOY_DISPATCH_APP_PRIVATE_KEY }}
           owner: ${{ steps.target.outputs.owner }}
           repositories: ${{ steps.target.outputs.repository }}
