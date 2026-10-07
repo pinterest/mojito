@@ -275,7 +275,7 @@ class GithubReviewCommentServiceTest {
   }
 
   @Test
-  void generateReviewComments_lineBeforeModifiedLineWithinAllowance_keepsTheReportedLine() {
+  void generateReviewComments_lineBeforeModifiedLineWithinAllowance_isMovedOntoTheModifiedLine() {
     // Arrange
     GithubReviewCommentService service = createService(2);
 
@@ -297,10 +297,10 @@ class GithubReviewCommentServiceTest {
         service.generateReviewComments(
             List.of(checkResult), List.of(diff), githubModifiedLines, "repoName", "");
 
-    // Assert - the usage is accepted and reported on its own line, not on the modified one
+    // Assert - the usage is accepted and reported on the first modified line following it
     assertThat(reviewComments).hasSize(1);
     assertThat(reviewComments.getFirst().getPath()).isEqualTo("file1.py");
-    assertThat(reviewComments.getFirst().getLine()).isEqualTo(10);
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(11);
   }
 
   @Test
@@ -326,7 +326,7 @@ class GithubReviewCommentServiceTest {
 
     // Assert
     assertThat(reviewComments).hasSize(1);
-    assertThat(reviewComments.getFirst().getLine()).isEqualTo(10);
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(15);
   }
 
   @Test
@@ -355,7 +355,7 @@ class GithubReviewCommentServiceTest {
   }
 
   @Test
-  void generateReviewComments_lineAfterTheModifiedLine_isDiscarded() {
+  void generateReviewComments_lineAfterTheModifiedLine_isMovedOntoTheClosestModifiedLine() {
     // Arrange
     GithubReviewCommentService service = createService(DEFAULT_LINE_ERROR_ALLOWANCE);
 
@@ -368,8 +368,94 @@ class GithubReviewCommentServiceTest {
             "TestCheck",
             createFieldFailures("source1", CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Message"));
 
-    // Only lines before the usage were modified: the usage does not point at the modification
+    // Only lines before the usage were modified, as when only the comment written above the
+    // translation function call is changed
     Map<String, Set<Integer>> githubModifiedLines = Map.of("file1.py", Set.of(5, 8, 9));
+
+    // Act
+    List<GithubClient.ReviewComment> reviewComments =
+        service.generateReviewComments(
+            List.of(checkResult), List.of(diff), githubModifiedLines, "repoName", "");
+
+    // Assert
+    assertThat(reviewComments).hasSize(1);
+    assertThat(reviewComments.getFirst().getPath()).isEqualTo("file1.py");
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(9);
+  }
+
+  @Test
+  void generateReviewComments_modifiedLinesBeforeAndAfterTheUsage_preferTheLinesAfterIt() {
+    // Arrange
+    GithubReviewCommentService service = createService(DEFAULT_LINE_ERROR_ALLOWANCE);
+
+    AssetExtractionDiff diff =
+        createDiff(createAssetExtractorTextUnit("source1", Set.of("file1.py:10")));
+
+    CliCheckResult checkResult =
+        createCliCheckResult(
+            true,
+            "TestCheck",
+            createFieldFailures("source1", CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Message"));
+
+    // Line 9 is closer to the usage than line 12, but the lines following the usage are searched
+    // first
+    Map<String, Set<Integer>> githubModifiedLines = Map.of("file1.py", Set.of(9, 12));
+
+    // Act
+    List<GithubClient.ReviewComment> reviewComments =
+        service.generateReviewComments(
+            List.of(checkResult), List.of(diff), githubModifiedLines, "repoName", "");
+
+    // Assert
+    assertThat(reviewComments).hasSize(1);
+    assertThat(reviewComments.getFirst().getPath()).isEqualTo("file1.py");
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(12);
+  }
+
+  @Test
+  void generateReviewComments_modifiedLineBeforeTheUsageAtTheEdgeOfTheAllowance_isAccepted() {
+    // Arrange
+    GithubReviewCommentService service = createService(DEFAULT_LINE_ERROR_ALLOWANCE);
+
+    AssetExtractionDiff diff =
+        createDiff(createAssetExtractorTextUnit("source1", Set.of("file1.py:10")));
+
+    CliCheckResult checkResult =
+        createCliCheckResult(
+            true,
+            "TestCheck",
+            createFieldFailures("source1", CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Message"));
+
+    // Line 5 is exactly lineNumberErrorAllowance lines before the usage
+    Map<String, Set<Integer>> githubModifiedLines = Map.of("file1.py", Set.of(5));
+
+    // Act
+    List<GithubClient.ReviewComment> reviewComments =
+        service.generateReviewComments(
+            List.of(checkResult), List.of(diff), githubModifiedLines, "repoName", "");
+
+    // Assert
+    assertThat(reviewComments).hasSize(1);
+    assertThat(reviewComments.getFirst().getPath()).isEqualTo("file1.py");
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(5);
+  }
+
+  @Test
+  void generateReviewComments_modifiedLineBeforeTheUsageBeyondTheAllowance_isDiscarded() {
+    // Arrange
+    GithubReviewCommentService service = createService(DEFAULT_LINE_ERROR_ALLOWANCE);
+
+    AssetExtractionDiff diff =
+        createDiff(createAssetExtractorTextUnit("source1", Set.of("file1.py:10")));
+
+    CliCheckResult checkResult =
+        createCliCheckResult(
+            true,
+            "TestCheck",
+            createFieldFailures("source1", CheckerRuleId.EMPTY_PLACEHOLDER_COMMENT, "Message"));
+
+    // Line 4 is one line further than lineNumberErrorAllowance before the usage
+    Map<String, Set<Integer>> githubModifiedLines = Map.of("file1.py", Set.of(4));
 
     // Act
     List<GithubClient.ReviewComment> reviewComments =
@@ -474,6 +560,37 @@ class GithubReviewCommentServiceTest {
     // Assert
     assertThat(reviewComments).hasSize(1);
     assertThat(reviewComments.getFirst().getPath()).isEqualTo(fileUri);
-    assertThat(reviewComments.getFirst().getLine()).isEqualTo(50);
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(52);
+  }
+
+  @Test
+  void generateReviewComments_usageOutsideOfTheDiffContext_isMovedOntoTheModifiedLine() {
+    // Arrange
+    // The usage is on the line where the call to the translation function starts, 4 lines before
+    // the modified lines: GitHub only includes 3 unchanged lines around a change in the PR diff, so
+    // a comment on the usage line would be rejected
+    GithubReviewCommentService service = createService(DEFAULT_LINE_ERROR_ALLOWANCE);
+
+    String fileUri = "webapp/app/getTemplateForSearchScope.ts";
+    AssetExtractionDiff diff =
+        createDiff(createAssetExtractorTextUnit("source1", Set.of(fileUri + ":78")));
+
+    CliCheckResult checkResult =
+        createCliCheckResult(
+            false,
+            "AI_CHECKER",
+            createFieldFailures("source1", CheckerRuleId.AI_CHECKER_SUGGESTION, "Message"));
+
+    Map<String, Set<Integer>> githubModifiedLines = Map.of(fileUri, Set.of(82, 83));
+
+    // Act
+    List<GithubClient.ReviewComment> reviewComments =
+        service.generateReviewComments(
+            List.of(checkResult), List.of(diff), githubModifiedLines, "repoName", "");
+
+    // Assert
+    assertThat(reviewComments).hasSize(1);
+    assertThat(reviewComments.getFirst().getPath()).isEqualTo(fileUri);
+    assertThat(reviewComments.getFirst().getLine()).isEqualTo(82);
   }
 }
