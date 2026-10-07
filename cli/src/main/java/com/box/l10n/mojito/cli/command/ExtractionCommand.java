@@ -102,7 +102,7 @@ public class ExtractionCommand extends Command {
       arity = 1,
       required = false,
       description =
-          "Use the line that declares the string in the asset as its usage, for the assets whose format doesn't reference the source code")
+          "Record the line that declares the string in the asset, used as the location of the PR review comments when the asset format doesn't reference the source code")
   Boolean usagesFromDeclarationLine = false;
 
   @Autowired CommandHelper commandHelper;

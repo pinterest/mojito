@@ -31,6 +31,8 @@ public class ExtractionService {
 
   @Autowired AssetExtractor assetExtractor;
 
+  @Autowired DeclarationLineLocator declarationLineLocator;
+
   public void fileMatchToAssetExtractionAndSaveToJsonFile(
       ExtractionPaths extractionPaths,
       List<String> filterOptions,
@@ -85,15 +87,20 @@ public class ExtractionService {
     FilterConfigIdOverride filterConfigIdOverride =
         sourceFileMatch.getFileType().getFilterConfigIdOverride();
 
+    List<AssetExtractorTextUnit> assetExtractorTextUnits;
     try {
-      return assetExtractor.getAssetExtractorTextUnitsForAsset(
-          sourcePath,
-          assetContent,
-          filterConfigIdOverride,
-          filterOptions,
-          usagesFromDeclarationLine);
+      assetExtractorTextUnits =
+          assetExtractor.getAssetExtractorTextUnitsForAsset(
+              sourcePath, assetContent, filterConfigIdOverride, filterOptions);
     } catch (UnsupportedAssetFilterTypeException uasft) {
       throw new RuntimeException("Source file match must be for a supported file type", uasft);
     }
+
+    if (usagesFromDeclarationLine) {
+      declarationLineLocator.setDeclarationLocations(
+          assetExtractorTextUnits, assetContent, sourcePath, sourceFileMatch.getFileType());
+    }
+
+    return assetExtractorTextUnits;
   }
 }

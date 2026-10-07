@@ -11,6 +11,12 @@ public class AssetExtractorTextUnit implements Serializable {
   String pluralFormOther;
   Set<String> usages;
 
+  /**
+   * Location of the line that declares the text unit in the asset, for example {@code
+   * res/values/strings.xml:4}
+   */
+  String declarationLocation;
+
   public String getName() {
     return name;
   }
@@ -57,5 +63,13 @@ public class AssetExtractorTextUnit implements Serializable {
 
   public void setUsages(Set<String> usages) {
     this.usages = usages;
+  }
+
+  public String getDeclarationLocation() {
+    return declarationLocation;
+  }
+
+  public void setDeclarationLocation(String declarationLocation) {
+    this.declarationLocation = declarationLocation;
   }
 }
