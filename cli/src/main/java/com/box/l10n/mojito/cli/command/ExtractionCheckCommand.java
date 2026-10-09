@@ -250,7 +250,8 @@ public class ExtractionCheckCommand extends Command {
       names = {"--skip-i18n-checks-label-applied", "-sicl"},
       arity = 1,
       required = false,
-      description = "Github label name that is used to trigger skipping checks by label.")
+      description =
+          "Skips all checks and suppresses checks skipped notifications if set to true, used when the skip-i18n-checks Github label is applied to the PR.")
   boolean isSkipI18nChecksLabelApplied = false;
 
   @Parameter(
@@ -377,11 +378,14 @@ public class ExtractionCheckCommand extends Command {
     validateParameters();
     initNotificationSenders();
 
-    if (areChecksSkipped) {
+    if (areChecksSkipped || isSkipI18nChecksLabelApplied) {
       consoleWriter
           .fg(Ansi.Color.YELLOW)
           .newLine()
-          .a("Checks disabled as --skip-checks is set to true.")
+          .a(
+              areChecksSkipped
+                  ? "Checks disabled as --skip-checks is set to true."
+                  : "Checks disabled as skip-i18n-checks label is applied.")
           .println();
       sendChecksSkippedNotifications();
     } else {
