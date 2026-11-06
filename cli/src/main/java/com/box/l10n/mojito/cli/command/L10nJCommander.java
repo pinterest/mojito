@@ -269,7 +269,7 @@ public class L10nJCommander {
     logger.debug("Set the main command for version/help directly on the JCommander");
     jCommander.addObject(mainCommand);
 
-    logger.debug("Register Commands retreived using Spring");
+    logger.debug("Register Commands retrieved using Spring");
     for (Command command : applicationContext.getBeansOfType(Command.class).values()) {
 
       Map<String, JCommander> jCommands = jCommander.getCommands();
