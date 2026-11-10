@@ -16,6 +16,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 public class BranchServiceTest extends ServiceTestBase {
 
@@ -33,6 +34,7 @@ public class BranchServiceTest extends ServiceTestBase {
   @Autowired BranchMergeTargetRepository branchMergeTargetRepository;
 
   @Test
+  @Transactional
   public void createBranch() throws RepositoryNameAlreadyUsedException, BranchNotFoundException {
     Repository repository =
         repositoryService.createRepository(testIdWatcher.getEntityName("repository"));
