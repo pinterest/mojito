@@ -7,6 +7,7 @@ public class BranchStatusDTO {
 
   private Long branchId;
   private String branchName;
+  private Long repositoryId;
   private String repositoryName;
   private ZonedDateTime createdDate;
   private long forTranslationCount;
@@ -29,6 +30,14 @@ public class BranchStatusDTO {
 
   public void setBranchName(String branchName) {
     this.branchName = branchName;
+  }
+
+  public Long getRepositoryId() {
+    return repositoryId;
+  }
+
+  public void setRepositoryId(Long repositoryId) {
+    this.repositoryId = repositoryId;
   }
 
   public String getRepositoryName() {

@@ -16,6 +16,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 public class BranchServiceTest extends ServiceTestBase {
 
@@ -33,14 +34,20 @@ public class BranchServiceTest extends ServiceTestBase {
   @Autowired BranchMergeTargetRepository branchMergeTargetRepository;
 
   @Test
-  public void createBranch() throws RepositoryNameAlreadyUsedException {
+  @Transactional
+  public void createBranch() throws RepositoryNameAlreadyUsedException, BranchNotFoundException {
     Repository repository =
         repositoryService.createRepository(testIdWatcher.getEntityName("repository"));
-    Branch master = branchService.createBranch(repository, "master", null, null);
+    Branch branch = branchService.createBranch(repository, "branch", null, null);
 
-    Branch fromFind = branchRepository.findByNameAndRepository("master", repository);
-    assertEquals("master", fromFind.getName());
+    Branch fromFind = branchRepository.findByNameAndRepository("branch", repository);
+    assertEquals("branch", fromFind.getName());
     assertEquals(repository.getId(), fromFind.getRepository().getId());
+
+    BranchStatusDTO branchStatus = branchService.getBranchStatus("branch");
+    assertEquals(branch.getId(), branchStatus.getBranchId());
+    assertEquals(repository.getId(), branchStatus.getRepositoryId());
+    assertEquals(repository.getName(), branchStatus.getRepositoryName());
   }
 
   @Test

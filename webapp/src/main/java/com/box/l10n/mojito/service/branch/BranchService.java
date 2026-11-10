@@ -172,6 +172,7 @@ public class BranchService {
     BranchStatusDTO dto = new BranchStatusDTO();
     dto.setBranchId(branch.getId());
     dto.setBranchName(branch.getName());
+    dto.setRepositoryId(repository.getId());
     dto.setRepositoryName(repository.getName());
     dto.setCreatedDate(branch.getCreatedDate());
 
