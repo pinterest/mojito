@@ -3492,6 +3492,9 @@ components:
           format: int64
         mergeTargetCommitName:
           type: string
+        repositoryId:
+          type: integer
+          format: int64
         repositoryName:
           type: string
         safeI18nEnabled:
