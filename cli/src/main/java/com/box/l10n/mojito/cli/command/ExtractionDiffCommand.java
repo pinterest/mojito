@@ -197,7 +197,8 @@ public class ExtractionDiffCommand extends Command {
       names = "--fail-safe",
       arity = 1,
       required = false,
-      description = "To fail safe, the command will exit succesfuly even if the processing failed")
+      description =
+          "To fail safe, the command will exit successfully even if the processing failed")
   boolean failSafe = false;
 
   @Parameter(
