@@ -2,6 +2,7 @@ package com.box.l10n.mojito.json;
 
 import com.box.l10n.mojito.io.Files;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -23,23 +24,39 @@ import java.nio.file.Path;
  */
 public class ObjectMapper extends com.fasterxml.jackson.databind.ObjectMapper {
 
+  /**
+   * Maximum length, in characters, of a single JSON string value accepted when reading. Localized
+   * assets are transferred as one string (e.g. {@code LocalizedAssetBody#content}) and large files
+   * can exceed Jackson's default limit of 20,000,000 characters.
+   */
+  public static final int MAX_STRING_LENGTH = 100_000_000;
+
   public ObjectMapper() {
+    configureStreamReadConstraints();
     registerJavaTimeModule();
     registerGuavaModule();
   }
 
   public ObjectMapper(ObjectMapper objectMapper) {
     super(objectMapper);
+    configureStreamReadConstraints();
     registerJavaTimeModule();
     registerGuavaModule();
   }
 
   public ObjectMapper(SmileFactory smileFactory) {
     super(smileFactory);
+    configureStreamReadConstraints();
     registerJavaTimeModule();
     registerGuavaModule();
     // Blackbird module uses bytecode generation to further speed up serialization/deserialization
     registerBlackbirdModule();
+  }
+
+  private void configureStreamReadConstraints() {
+    getFactory()
+        .setStreamReadConstraints(
+            StreamReadConstraints.builder().maxStringLength(MAX_STRING_LENGTH).build());
   }
 
   private void registerBlackbirdModule() {
