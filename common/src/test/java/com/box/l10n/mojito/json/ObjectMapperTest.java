@@ -1,5 +1,6 @@
 package com.box.l10n.mojito.json;
 
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -103,6 +104,50 @@ public class ObjectMapperTest {
     Pojo pojo = objectMapper.readValueUnchecked(SERIALIZED_DATE_TIME_MILLIS, Pojo.class);
     Assertions.assertThat(pojo.getZonedDateTime())
         .isEqualTo(ZonedDateTime.of(2023, 12, 06, 15, 22, 5, 123_000_000, ZoneOffset.UTC));
+  }
+
+  @Test
+  public void deserializationStringLongerThanJacksonDefaultLimit() {
+    int length = StreamReadConstraints.DEFAULT_MAX_STRING_LEN + 10_000;
+    String content = "a".repeat(length);
+    String json = "{\"content\":\"" + content + "\"}";
+
+    StringPojo stringPojo = new ObjectMapper().readValueUnchecked(json, StringPojo.class);
+
+    Assertions.assertThat(stringPojo.getContent()).hasSize(length);
+  }
+
+  @Test
+  public void maxStringLengthIsConfigured() {
+    Assertions.assertThat(
+            new ObjectMapper().getFactory().streamReadConstraints().getMaxStringLength())
+        .isEqualTo(ObjectMapper.MAX_STRING_LENGTH);
+    Assertions.assertThat(
+            ObjectMapper.withSmileEnabled()
+                .getFactory()
+                .streamReadConstraints()
+                .getMaxStringLength())
+        .isEqualTo(ObjectMapper.MAX_STRING_LENGTH);
+  }
+
+  @Test
+  public void copyKeepsMaxStringLength() {
+    ObjectMapper copy = (ObjectMapper) new ObjectMapper().copy();
+
+    Assertions.assertThat(copy.getFactory().streamReadConstraints().getMaxStringLength())
+        .isEqualTo(ObjectMapper.MAX_STRING_LENGTH);
+  }
+
+  static class StringPojo {
+    String content;
+
+    public String getContent() {
+      return content;
+    }
+
+    public void setContent(String content) {
+      this.content = content;
+    }
   }
 
   static class Pojo {
