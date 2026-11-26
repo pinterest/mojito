@@ -210,11 +210,26 @@ public class AICheckerTest {
   public void testRetryExhausted() {
     AIChecker.retryConfiguration =
         Retry.backoff(10, Duration.ofMillis(1)).maxBackoff(Duration.ofMillis(1));
-    when(aiServiceClient.executeAIChecks(any())).thenThrow(new AIException("Test error"));
+    AICheckResponse aiCheckResponse = new AICheckResponse();
+    aiCheckResponse.setError(true);
+    aiCheckResponse.setRetryable(true);
+    aiCheckResponse.setErrorMessage("OpenAI API requests failed");
+    when(aiServiceClient.executeAIChecks(any())).thenReturn(aiCheckResponse);
     CliCheckResult result = AIChecker.run(assetExtractionDiffs);
     verify(aiServiceClient, times(11)).executeAIChecks(any());
     assertTrue(result.isSuccessful());
     assertTrue(result.getNotificationText().contains("Retries exhausted for OpenAI check"));
+  }
+
+  @Test
+  public void testExceptionFailsWithoutRetry() {
+    AIChecker.retryConfiguration =
+        Retry.backoff(10, Duration.ofMillis(1)).maxBackoff(Duration.ofMillis(1));
+    when(aiServiceClient.executeAIChecks(any())).thenThrow(new AIException("Test error"));
+    CliCheckResult result = AIChecker.run(assetExtractionDiffs);
+    verify(aiServiceClient, times(1)).executeAIChecks(any());
+    assertFalse(result.isSuccessful());
+    assertTrue(result.getNotificationText().contains("Test error"));
   }
 
   @Test
@@ -241,8 +256,9 @@ public class AICheckerTest {
     AICheckResponse.setErrorMessage("Some error message");
     when(aiServiceClient.executeAIChecks(any())).thenReturn(AICheckResponse);
     CliCheckResult result = AIChecker.run(assetExtractionDiffs);
-    assertTrue(result.isSuccessful());
-    assertTrue(result.getNotificationText().contains("Retries exhausted for OpenAI check"));
+    verify(aiServiceClient, times(1)).executeAIChecks(any());
+    assertFalse(result.isSuccessful());
+    assertTrue(result.getNotificationText().contains("Some error message"));
   }
 
   @Test

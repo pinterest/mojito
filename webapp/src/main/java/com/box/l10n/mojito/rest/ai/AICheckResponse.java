@@ -11,6 +11,7 @@ public class AICheckResponse implements Serializable {
   boolean error;
 
   String errorMessage;
+  boolean retryable;
 
   Map<String, List<AICheckResult>> results;
 
@@ -28,6 +29,14 @@ public class AICheckResponse implements Serializable {
 
   public void setError(boolean error) {
     this.error = error;
+  }
+
+  public boolean isRetryable() {
+    return retryable;
+  }
+
+  public void setRetryable(boolean retryable) {
+    this.retryable = retryable;
   }
 
   public String getErrorMessage() {

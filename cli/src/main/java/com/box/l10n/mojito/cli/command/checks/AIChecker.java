@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 import reactor.util.retry.RetryBackoffSpec;
@@ -81,12 +82,19 @@ public class AIChecker extends AbstractCliChecker {
     aiCheckRequest.setRepositoryName(repositoryName);
 
     return Mono.fromCallable(() -> executeChecks(aiCheckRequest, textUnits))
-        .retryWhen(retryConfiguration)
-        .doOnError(
-            ex ->
-                logger.error(
-                    "Failed to run AI checks, skipping the check: {}", ex.getMessage(), ex))
-        .onErrorReturn(getRetriesExhaustedResult())
+        .retryWhen(retryConfiguration.filter(OpenAIRequestFailedException.class::isInstance))
+        .onErrorResume(
+            Exceptions::isRetryExhausted,
+            ex -> {
+              logger.error(
+                  "OpenAI API retries exhausted, skipping the AI checks: {}", ex.getMessage(), ex);
+              return Mono.just(getRetriesExhaustedResult());
+            })
+        .onErrorResume(
+            ex -> {
+              logger.error("Failed to run AI checks: {}", ex.getMessage(), ex);
+              return Mono.just(getFailedResult(ex));
+            })
         .block();
   }
 
@@ -95,8 +103,11 @@ public class AIChecker extends AbstractCliChecker {
     AICheckResponse response = aiServiceClient.executeAIChecks(aiCheckRequest);
 
     logger.debug("AI checks returned: {}", response);
-    if (response.isError()) {
-      throw new CommandException("Failed to run AI checks: " + response.getErrorMessage());
+    if (Boolean.TRUE.equals(response.isError())) {
+      if (Boolean.TRUE.equals(response.isRetryable())) {
+        throw new OpenAIRequestFailedException(response.getErrorMessage());
+      }
+      throw new CommandException(response.getErrorMessage());
     }
 
     String suggestedFixMessage = this.cliCheckerOptions.getSuggestedFixMessage();
@@ -185,6 +196,13 @@ public class AIChecker extends AbstractCliChecker {
     return failureText.toString();
   }
 
+  private CliCheckResult getFailedResult(Throwable ex) {
+    CliCheckResult cliCheckResult = createCliCheckerResult();
+    cliCheckResult.setSuccessful(false);
+    cliCheckResult.setNotificationText("Failed to run AI checks: " + ex.getMessage());
+    return cliCheckResult;
+  }
+
   private CliCheckResult getRetriesExhaustedResult() {
     // Nothing the user can do about this, so just skip the check
     CliCheckResult cliCheckResult = createCliCheckerResult();
@@ -195,5 +213,12 @@ public class AIChecker extends AbstractCliChecker {
       cliCheckResult.setNotificationText("Failed to run AI checks.");
     }
     return cliCheckResult;
+  }
+
+  /** The OpenAI API requests failed on the server. Only this error is retried. */
+  static class OpenAIRequestFailedException extends RuntimeException {
+    OpenAIRequestFailedException(String message) {
+      super(message);
+    }
   }
 }

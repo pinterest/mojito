@@ -2998,6 +2998,8 @@ components:
           type: boolean
         errorMessage:
           type: string
+        retryable:
+          type: boolean
         results:
           type: object
           additionalProperties:
