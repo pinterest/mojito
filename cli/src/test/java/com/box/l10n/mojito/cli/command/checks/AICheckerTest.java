@@ -213,7 +213,7 @@ public class AICheckerTest {
     when(aiServiceClient.executeAIChecks(any())).thenThrow(new AIException("Test error"));
     CliCheckResult result = AIChecker.run(assetExtractionDiffs);
     verify(aiServiceClient, times(11)).executeAIChecks(any());
-    assertFalse(result.isSuccessful());
+    assertTrue(result.isSuccessful());
     assertTrue(result.getNotificationText().contains("Retries exhausted for OpenAI check"));
   }
 
@@ -241,7 +241,7 @@ public class AICheckerTest {
     AICheckResponse.setErrorMessage("Some error message");
     when(aiServiceClient.executeAIChecks(any())).thenReturn(AICheckResponse);
     CliCheckResult result = AIChecker.run(assetExtractionDiffs);
-    assertFalse(result.isSuccessful());
+    assertTrue(result.isSuccessful());
     assertTrue(result.getNotificationText().contains("Retries exhausted for OpenAI check"));
   }
 

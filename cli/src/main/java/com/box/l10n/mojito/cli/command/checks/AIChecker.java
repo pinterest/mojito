@@ -82,7 +82,10 @@ public class AIChecker extends AbstractCliChecker {
 
     return Mono.fromCallable(() -> executeChecks(aiCheckRequest, textUnits))
         .retryWhen(retryConfiguration)
-        .doOnError(ex -> logger.error("Failed to run AI checks: {}", ex.getMessage(), ex))
+        .doOnError(
+            ex ->
+                logger.error(
+                    "Failed to run AI checks, skipping the check: {}", ex.getMessage(), ex))
         .onErrorReturn(getRetriesExhaustedResult())
         .block();
   }
@@ -183,8 +186,9 @@ public class AIChecker extends AbstractCliChecker {
   }
 
   private CliCheckResult getRetriesExhaustedResult() {
+    // Nothing the user can do about this, so just skip the check
     CliCheckResult cliCheckResult = createCliCheckerResult();
-    cliCheckResult.setSuccessful(false);
+    cliCheckResult.setSuccessful(true);
     if (!Strings.isNullOrEmpty(cliCheckerOptions.getOpenAIErrorMessage())) {
       cliCheckResult.setNotificationText(cliCheckerOptions.getOpenAIErrorMessage());
     } else {
