@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
-import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 import reactor.util.retry.RetryBackoffSpec;
@@ -82,12 +81,21 @@ public class AIChecker extends AbstractCliChecker {
     aiCheckRequest.setRepositoryName(repositoryName);
 
     return Mono.fromCallable(() -> executeChecks(aiCheckRequest, textUnits))
-        .retryWhen(retryConfiguration.filter(OpenAIRequestFailedException.class::isInstance))
+        .retryWhen(
+            retryConfiguration
+                .filter(OpenAIRequestFailedException.class::isInstance)
+                .onRetryExhaustedThrow(
+                    (retryBackoffSpec, retrySignal) ->
+                        new OpenAIRetriesExhaustedException(
+                            "OpenAI API retries exhausted after "
+                                + retrySignal.totalRetries()
+                                + " retries: "
+                                + retrySignal.failure().getMessage(),
+                            retrySignal.failure())))
         .onErrorResume(
-            Exceptions::isRetryExhausted,
+            OpenAIRetriesExhaustedException.class,
             ex -> {
-              logger.error(
-                  "OpenAI API retries exhausted, skipping the AI checks: {}", ex.getMessage(), ex);
+              logger.error("Skipping the AI checks: {}", ex.getMessage(), ex);
               return Mono.just(getRetriesExhaustedResult());
             })
         .onErrorResume(
@@ -213,12 +221,5 @@ public class AIChecker extends AbstractCliChecker {
       cliCheckResult.setNotificationText("Failed to run AI checks.");
     }
     return cliCheckResult;
-  }
-
-  /** The OpenAI API requests failed on the server. Only this error is retried. */
-  static class OpenAIRequestFailedException extends RuntimeException {
-    OpenAIRequestFailedException(String message) {
-      super(message);
-    }
   }
 }
