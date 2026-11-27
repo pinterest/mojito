@@ -1,6 +1,7 @@
 package com.box.l10n.mojito.rest.ai;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,6 +44,7 @@ public class AIChecksWSTest extends WSTestBase {
 
     AICheckResponse response = aiChecksWS.executeAIChecks(request);
     assertTrue(response.isError());
+    assertFalse(response.isLlmRequestFailed());
     assertEquals("Failure in processing", response.getErrorMessage());
   }
 }

@@ -2998,6 +2998,8 @@ components:
           type: boolean
         errorMessage:
           type: string
+        llmRequestFailed:
+          type: boolean
         results:
           type: object
           additionalProperties:

@@ -11,6 +11,7 @@ public class AICheckResponse implements Serializable {
   boolean error;
 
   String errorMessage;
+  boolean llmRequestFailed;
 
   Map<String, List<AICheckResult>> results;
 
@@ -28,6 +29,14 @@ public class AICheckResponse implements Serializable {
 
   public void setError(boolean error) {
     this.error = error;
+  }
+
+  public boolean isLlmRequestFailed() {
+    return llmRequestFailed;
+  }
+
+  public void setLlmRequestFailed(boolean llmRequestFailed) {
+    this.llmRequestFailed = llmRequestFailed;
   }
 
   public String getErrorMessage() {

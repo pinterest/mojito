@@ -212,6 +212,7 @@ class OpenAILLMServiceTest {
     assertNotNull(response);
     assertEquals(0, response.getResults().size());
     assertTrue(response.isError());
+    assertTrue(response.isLlmRequestFailed());
     assertEquals("java.lang.RuntimeException: Something went wrong", response.getErrorMessage());
   }
 

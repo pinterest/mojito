@@ -152,6 +152,7 @@ public class OpenAILLMService implements LLMService {
       checkResults.get();
     } catch (InterruptedException | ExecutionException e) {
       aiCheckResponse.setError(true);
+      aiCheckResponse.setLlmRequestFailed(true);
       aiCheckResponse.setErrorMessage(e.getMessage());
       logger.error("OpenAI API requests failed", e);
       this.meterRegistry.counter("OpenAILLMService.executeAIChecks.failedRequests").increment();
