@@ -112,7 +112,7 @@ public class AIChecker extends AbstractCliChecker {
 
     logger.debug("AI checks returned: {}", response);
     if (Boolean.TRUE.equals(response.isError())) {
-      if (Boolean.TRUE.equals(response.isRetryable())) {
+      if (Boolean.TRUE.equals(response.isLlmRequestFailed())) {
         throw new OpenAIRequestFailedException(response.getErrorMessage());
       }
       throw new CommandException(response.getErrorMessage());

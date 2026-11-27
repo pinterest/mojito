@@ -212,7 +212,7 @@ public class AICheckerTest {
         Retry.backoff(10, Duration.ofMillis(1)).maxBackoff(Duration.ofMillis(1));
     AICheckResponse aiCheckResponse = new AICheckResponse();
     aiCheckResponse.setError(true);
-    aiCheckResponse.setRetryable(true);
+    aiCheckResponse.setLlmRequestFailed(true);
     aiCheckResponse.setErrorMessage("OpenAI API requests failed");
     when(aiServiceClient.executeAIChecks(any())).thenReturn(aiCheckResponse);
     CliCheckResult result = AIChecker.run(assetExtractionDiffs);

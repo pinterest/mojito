@@ -44,7 +44,7 @@ public class AIChecksWSTest extends WSTestBase {
 
     AICheckResponse response = aiChecksWS.executeAIChecks(request);
     assertTrue(response.isError());
-    assertFalse(response.isRetryable());
+    assertFalse(response.isLlmRequestFailed());
     assertEquals("Failure in processing", response.getErrorMessage());
   }
 }

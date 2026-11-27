@@ -2998,7 +2998,7 @@ components:
           type: boolean
         errorMessage:
           type: string
-        retryable:
+        llmRequestFailed:
           type: boolean
         results:
           type: object
